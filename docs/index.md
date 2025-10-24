@@ -27,6 +27,7 @@ data/sync
 - [r5 sdk](r5-sdk.md) - unified api for local/remote data access
 - [r5 cli](cli.md) - wraps the r5 sdk in a CLI and adds a `download` command
 - [v1 data](v1-data.md) - how we deal with firebase v1 data
+- [tanstack](tanstack.md) - reactive client store extending tanstack query
 
 features
 

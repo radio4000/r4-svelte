@@ -132,7 +132,7 @@ class YouTube2Element extends HTMLElement {
 
 			// @ts-expect-error onVolumeChange is undocumented but works
 			this.api.addEventListener('onVolumeChange', () => {
-				log.debug('onVolumeChange fired, dispatching volumechange')
+				// log.debug('onVolumeChange fired, dispatching volumechange')
 				this.dispatchEvent(new Event('volumechange'))
 			})
 		} catch (error) {
