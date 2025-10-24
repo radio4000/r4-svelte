@@ -1,7 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 
+	const appState = $derived(useAppState().data)
 	const sha = $derived(__GIT_INFO__.sha)
 
 	async function logout() {
@@ -14,12 +15,12 @@
 </svelte:head>
 
 <article class="SmallContainer">
-	{#if appState.user}
+	{#if appState?.user}
 		<p class="row row--vcenter">Signed in as {appState.user.email} <button onclick={() => logout()}>Log out</button></p>
 	{/if}
 
 	<menu vertical>
-		{#if !appState.user}
+		{#if !appState?.user}
 			<a href="/auth">Create account or sign in</a>
 		{/if}
 		<a href="/settings/appearance">Appearance</a>

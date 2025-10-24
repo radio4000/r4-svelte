@@ -1,38 +1,23 @@
 <script>
 	import fuzzysort from 'fuzzysort'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
-	import {incrementalLiveQuery, liveQuery} from '$lib/live-query'
-	import {pg} from '$lib/r5/db'
+	import {getTracksCollection, playHistoryCollection} from '$lib/collections'
 	import {relativeTime} from '$lib/dates'
 	import Modal from './modal.svelte'
 	import SearchInput from './search-input.svelte'
 	import TrackCard from './track-card.svelte'
 	import Tracklist from './tracklist.svelte'
 
+	const appState = $derived(useAppState().data)
+
 	let view = $state('queue') // 'queue' or 'history'
 	let showClearHistoryModal = $state(false)
 	let searchQuery = $state('')
 
 	/** @type {string[]} */
-	let trackIds = $derived(appState.playlist_tracks || [])
-
-	/** @type {import('$lib/types').Track[]} */
-	let queueTracks = $state([])
-
-	/** @type {(import('$lib/types').Track & import('$lib/types').PlayHistory)[]} */
-	let playHistory = $state([])
-
-	let filteredQueueTracks = $derived(
-		searchQuery
-			? fuzzysort
-					.go(searchQuery, queueTracks, {
-						keys: ['title', 'tags', 'channel_name'],
-						threshold: -10000
-					})
-					.map((result) => result.obj)
-			: queueTracks
-	)
+	let trackIds = $derived(appState?.playlist_tracks || [])
 
 	let filteredPlayHistory = $derived(
 		searchQuery
@@ -45,46 +30,61 @@
 			: playHistory
 	)
 
-	$effect(() => {
-		if (trackIds.length === 0) {
-			queueTracks = []
-			return
-		}
+	let tracksCollection = getTracksCollection()
 
-		const uniqueIds = [...new Set(trackIds)]
-		return incrementalLiveQuery(
-			`SELECT twm.*
-			 FROM tracks_with_meta twm
-			 WHERE twm.id IN (select unnest($1::uuid[]))`,
-			[uniqueIds],
-			'id',
-			(res) => {
-				const trackMap = new Map(res.rows.map((track) => [track.id, track]))
-				queueTracks = trackIds.map((id) => trackMap.get(id)).filter(Boolean)
-			}
-		)
+	// Get all tracks from collection, filter in derived
+	let allTracks = $derived(tracksCollection.toArray)
+
+	// Maintain queue order (trackIds order, not query result order)
+	let queueTracks = $derived.by(() => {
+		if (!trackIds.length || !allTracks.length) return []
+		const trackMap = new Map(allTracks.map((track) => [track.id, track]))
+		return trackIds.map((id) => trackMap.get(id)).filter(Boolean)
 	})
 
-	$effect(() => {
-		return liveQuery(
-			`SELECT twm.*, h.started_at, h.ended_at, h.ms_played, h.reason_start, h.reason_end, h.skipped
-			 FROM play_history h
-			 JOIN tracks_with_meta twm ON h.track_id = twm.id
-			 ORDER BY h.started_at DESC`,
-			[],
-			(res) => {
-				playHistory = res.rows
-			}
-		)
+	let filteredQueueTracks = $derived(
+		searchQuery
+			? fuzzysort
+					.go(searchQuery, queueTracks, {
+						keys: ['title', 'tags', 'channel_name'],
+						threshold: -10000
+					})
+					.map((result) => result.obj)
+			: queueTracks
+	)
+
+	// Get play history from collection directly
+	let allPlayHistory = $derived(playHistoryCollection.toArray)
+
+	// Client-side join: merge history entries with track data
+	/** @type {(import('$lib/types').Track & import('$lib/types').PlayHistory)[]} */
+	let playHistory = $derived.by(() => {
+		if (!allPlayHistory?.length) return []
+
+		const tracks = allTracks
+		const trackMap = new Map(tracks.map((t) => [t.id, t]))
+
+		return allPlayHistory
+			.map((entry) => {
+				const track = trackMap.get(entry.track_id)
+				return track ? {...track, ...entry} : null
+			})
+			.filter(Boolean)
+			.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
 	})
 
 	function clearQueue() {
-		appState.playlist_tracks = []
-		appState.playlist_track = undefined
+		appStateCollection.update(1, (draft) => {
+			draft.playlist_tracks = []
+			draft.playlist_track = undefined
+		})
 	}
 
-	async function clearHistory() {
-		await pg.sql`DELETE FROM play_history`
+	function clearHistory() {
+		// Delete all play history entries
+		for (const entry of playHistoryCollection.toArray) {
+			playHistoryCollection.delete(entry.id)
+		}
 		showClearHistoryModal = false
 	}
 </script>

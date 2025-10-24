@@ -1,22 +1,14 @@
 <script>
 	import {createQuery, useQueryClient} from '@tanstack/svelte-query'
 	import {r5} from '$lib/r5'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import Tracklist from '$lib/components/tracklist.svelte'
 
+	const appState = $derived(useAppState().data)
 	const queryClient = useQueryClient()
 
-	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && appState.channels?.includes(channelQuery.data?.id))
-
-	// Invalidate cache when track is updated
-	$effect(() => {
-		function handleTrackUpdate() {
-			queryClient.invalidateQueries({queryKey: ['tracks']})
-		}
-		document.addEventListener('r5:trackUpdated', handleTrackUpdate)
-		return () => document.removeEventListener('r5:trackUpdated', handleTrackUpdate)
-	})
+	const isSignedIn = $derived(!!appState?.user)
+	const canEdit = $derived(isSignedIn && appState?.channels?.includes(channelQuery.data?.id))
 
 	let channelSlug = $state('oskar')
 	let trackLimit = $state(5)

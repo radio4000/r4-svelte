@@ -1,12 +1,13 @@
 import {getFollowers} from '$lib/api'
-import {appState} from '$lib/app-state.svelte'
+import {appStateCollection} from '$lib/collections'
 
 /** @type {import('./$types').PageLoad} */
 export async function load({parent}) {
 	const {preload} = await parent()
 	await preload()
 
-	const followerId = appState.channels?.[0] || 'local-user'
+	const appState = await appStateCollection.getOne(1)
+	const followerId = appState?.channels?.[0] || 'local-user'
 	const followings = await getFollowers(followerId)
 
 	return {followings}

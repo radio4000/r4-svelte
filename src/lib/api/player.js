@@ -1,5 +1,5 @@
 import {playTrack} from '$lib/api'
-import {appState} from '$lib/app-state.svelte'
+import {appStateCollection} from '$lib/collections'
 import {logger} from '$lib/logger'
 import {shuffleArray} from '$lib/utils.ts'
 
@@ -111,26 +111,35 @@ export function previous(track, activeQueue, endReason) {
 }
 
 export function toggleShuffle() {
-	const newShuffleState = !appState.shuffle
+	const appState = appStateCollection.get(1)
+	const newShuffleState = !appState?.shuffle
 	if (newShuffleState) {
 		// Generate fresh shuffle from current playlist
-		appState.playlist_tracks_shuffled = shuffleArray(appState.playlist_tracks || [])
-		appState.shuffle = true
+		appStateCollection.update(1, (draft) => {
+			draft.playlist_tracks_shuffled = shuffleArray(draft.playlist_tracks || [])
+			draft.shuffle = true
+		})
 	} else {
 		// Just toggle off, keep shuffled array for next time
-		appState.shuffle = false
+		appStateCollection.update(1, (draft) => {
+			draft.shuffle = false
+		})
 	}
 }
 
 export function toggleVideo() {
-	appState.show_video_player = !appState.show_video_player
+	appStateCollection.update(1, (draft) => {
+		draft.show_video_player = !draft.show_video_player
+	})
 }
 
 export function eject() {
-	appState.playlist_track = null
-	appState.playlist_tracks = []
-	appState.playlist_tracks_shuffled = []
-	appState.show_video_player = false
-	appState.shuffle = false
-	appState.is_playing = false
+	appStateCollection.update(1, (draft) => {
+		draft.playlist_track = null
+		draft.playlist_tracks = []
+		draft.playlist_tracks_shuffled = []
+		draft.show_video_player = false
+		draft.shuffle = false
+		draft.is_playing = false
+	})
 }

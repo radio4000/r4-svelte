@@ -2,8 +2,11 @@
 	import gsap from 'gsap'
 	import {Draggable} from 'gsap/Draggable'
 	import {InertiaPlugin} from 'gsap/InertiaPlugin'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import Player from '$lib/components/player.svelte'
+
+	const appState = $derived(useAppState().data)
 
 	// This component wraps the player and controls the "expanded" state,
 	// via a toggle button and a draggable element.
@@ -30,7 +33,9 @@
 			onDragEnd: function () {
 				// const velocity = InertiaPlugin.getVelocity(this.target, 'y')
 				const dragY = this.y
-				appState.player_expanded = dragY < 0
+				appStateCollection.update(1, (draft) => {
+					draft.player_expanded = dragY < 0
+				})
 			}
 		})
 		return () => {
@@ -42,8 +47,8 @@
 <footer
 	bind:this={footerElement}
 	class={{
-		expanded: appState.player_expanded,
-		showVideo: appState.show_video_player
+		expanded: appState?.player_expanded,
+		showVideo: appState?.show_video_player
 	}}
 >
 	<Player />

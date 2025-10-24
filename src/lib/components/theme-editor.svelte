@@ -1,9 +1,12 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import InputColor from '$lib/components/input-color.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import ThemeToggle from '$lib/components/theme-toggle.svelte'
+
+	const appState = $derived(useAppState().data)
 
 	const uid = $props.id()
 
@@ -75,7 +78,7 @@
 	let applyTimer = $state()
 
 	const prefersLight = $derived(window.matchMedia('(prefers-color-scheme: light)').matches)
-	const currentTheme = $derived(appState.theme ?? (prefersLight ? 'light' : 'dark'))
+	const currentTheme = $derived(appState?.theme ?? (prefersLight ? 'light' : 'dark'))
 
 	const isActiveVariable = (variable) => {
 		// if (variable.theme === 'both') return true
@@ -83,7 +86,7 @@
 		return variable.theme === currentTheme
 	}
 
-	const customVariables = $derived(appState.custom_css_variables || {})
+	const customVariables = $derived(appState?.custom_css_variables || {})
 	const getCurrentValue = (variable) => customVariables[variable.name] || variable.default
 
 	const updateVariable = (name, value) => {
@@ -96,21 +99,25 @@
 		}, 50)
 
 		debounceTimer = setTimeout(() => {
-			if (value.trim()) {
-				appState.custom_css_variables[name] = value.trim()
-			} else {
-				delete appState.custom_css_variables[name]
-			}
+			appStateCollection.update(1, (draft) => {
+				if (value.trim()) {
+					draft.custom_css_variables[name] = value.trim()
+				} else {
+					delete draft.custom_css_variables[name]
+				}
+			})
 		}, 300)
 	}
 	const resetToDefaults = () => {
-		appState.custom_css_variables = {}
-		applyCustomCssVariables($state.snapshot(appState.custom_css_variables))
+		appStateCollection.update(1, (draft) => {
+			draft.custom_css_variables = {}
+		})
+		applyCustomCssVariables({})
 	}
 
 	let importText = $state('')
 	let exportString = $derived.by(() => {
-		const variables = appState.custom_css_variables || {}
+		const variables = appState?.custom_css_variables || {}
 		const themeString = Object.entries(variables)
 			.map(([key, value]) => `${key}:${value}`)
 			.join(';')
@@ -141,8 +148,10 @@
 				variables[cleanKey] = value.trim()
 			}
 
-			appState.custom_css_variables = {...appState.custom_css_variables, ...variables}
-			applyCustomCssVariables($state.snapshot(appState.custom_css_variables))
+			appStateCollection.update(1, (draft) => {
+				draft.custom_css_variables = {...draft.custom_css_variables, ...variables}
+			})
+			applyCustomCssVariables({...appState?.custom_css_variables, ...variables})
 			importText = ''
 		} catch (error) {
 			console.error('Failed to import theme:', error)
@@ -204,7 +213,15 @@
 
 			<div>
 				<label for={`${uid}-hide-artwork`}>hide track artwork</label>
-				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
+				<input
+					type="checkbox"
+					checked={appState?.hide_track_artwork}
+					onchange={(e) =>
+						appStateCollection.update(1, (draft) => {
+							draft.hide_track_artwork = e.target.checked
+						})}
+					id={`${uid}-hide-artwork`}
+				/>
 				<span></span>
 				<small>Toggle track thumbnails in track lists and player</small>
 			</div>

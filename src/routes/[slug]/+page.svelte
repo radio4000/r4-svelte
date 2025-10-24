@@ -6,56 +6,69 @@
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import {relativeDate, relativeDateSolar} from '$lib/dates'
-	import {r5} from '$lib/r5'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {getChannelsCollection, getTracksCollection, fetchChannelTracks} from '$lib/collections'
 
 	let {data} = $props()
 
-	let channel = $derived(data.channel)
+	const appState = $derived(useAppState().data)
+	const channelsCollection = getChannelsCollection()
+	const tracksCollection = getTracksCollection()
+	const slug = $derived(data.slug)
 
-	/** @type {import('$lib/types').Track[]} */
+	let channel = $state(undefined)
+	let channelLoading = $state(false)
+	let channelError = $state(false)
+
 	let tracks = $state([])
+	let tracksLoading = $state(false)
+	let tracksError = $state(false)
+
+	// Get channel from preloaded collection
+	$effect(() => {
+		if (slug) {
+			const found = channelsCollection.toArray.find((c) => c.slug === slug)
+			console.log('Found channel:', found)
+			channel = found
+		}
+	})
+
+	// Fetch tracks when channel is loaded
+	$effect(() => {
+		if (slug && channel) {
+			tracksLoading = true
+			tracksError = false
+
+			fetchChannelTracks(slug)
+				.then((fetchedTracks) => {
+					console.log('Tracks fetched:', fetchedTracks.length)
+					tracks = tracksCollection.toArray.filter((t) => t.channel_slug === slug)
+					console.log('Tracks from collection:', tracks.length)
+					tracksLoading = false
+				})
+				.catch((err) => {
+					console.error('Failed to fetch tracks:', err)
+					tracksError = true
+					tracksLoading = false
+				})
+		}
+	})
+
+	const isSignedIn = $derived(!!appState?.user)
+	const canEdit = $derived(isSignedIn && appState?.channels?.includes(channel?.id))
 
 	let latestTrackDate = $derived(tracks[0]?.created_at)
-
-	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && appState.channels?.includes(channel?.id))
-
-	$effect(() => {
-		// Load tracks whenever the slug changes
-		const loadAndSetTracks = async () => {
-			const slug = data.slug // Capture slug for closure
-
-			const loadTracks = !channel.tracks_synced_at ? r5.tracks.pull({slug}) : r5.tracks.local({slug})
-
-			const loadedTracks = await loadTracks
-			tracks = loadedTracks
-
-			// Check for updates in background without blocking render
-			if (channel.tracks_synced_at) {
-				r5.channels.outdated(slug).then((isOutdated) => {
-					if (isOutdated) {
-						console.log(`refreshing outdated tracks for ${slug} in background`)
-						r5.tracks.pull({slug}).then((updatedTracks) => {
-							// Only update if still on the same channel
-							if (data.slug === slug) {
-								tracks = updatedTracks
-							}
-						})
-					}
-				})
-			}
-		}
-
-		loadAndSetTracks()
-	})
 </script>
 
 <svelte:head>
 	<title>{channel?.name || 'Channel'} - R5</title>
 </svelte:head>
 
-{#if channel}
+{#if channelLoading}
+	<p style="margin: 2rem 0.5rem;">Loading channel...</p>
+{:else if channelError}
+	<p style="margin: 2rem 0.5rem; color: var(--color-danger);">Failed to load channel</p>
+{:else if channel}
 	<article>
 		<header>
 			<ChannelHero {channel} />
@@ -94,16 +107,20 @@
 		</header>
 
 		<section>
-			{#if tracks.length > 0}
+			{#if tracksError}
+				<p style="margin-top:1rem; margin-left: 0.5rem; color: var(--color-danger);">Failed to load tracks</p>
+			{:else if tracks.length > 0}
 				<!-- <CoverFlip tracks={tracks} /> -->
 				<Tracklist {tracks} grouped={1} />
-			{:else}
+			{:else if tracksLoading}
 				<p style="margin-top:1rem; margin-left: 0.5rem;">Loading tracks…</p>
+			{:else}
+				<p style="margin-top:1rem; margin-left: 0.5rem;">No tracks yet</p>
 			{/if}
 		</section>
 	</article>
 {:else}
-	<p>No channel</p>
+	<p style="margin: 2rem 0.5rem;">Channel not found</p>
 {/if}
 
 <style>

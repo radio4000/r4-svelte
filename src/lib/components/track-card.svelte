@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
 	import {playTrack, deleteTrack} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import type {Track} from '$lib/types'
 	import {extractYouTubeId} from '$lib/utils.ts'
 	import Icon from './icon.svelte'
@@ -18,11 +18,13 @@
 
 	let {track, index, showImage = true, showSlug = false, canEdit = false, children}: Props = $props()
 
+	const appState = $derived(useAppState().data)
+
 	const permalink = $derived(`/${track.channel_slug}/tracks/${track.id}`)
-	const active = $derived(track.id === appState.playlist_track)
+	const active = $derived(track.id === appState?.playlist_track)
 	// Only extract YouTube ID when we need it for images
 	const ytid = $derived.by(() => {
-		if (!showImage || appState.hide_track_artwork) return null
+		if (!showImage || appState?.hide_track_artwork) return null
 		return extractYouTubeId(track.url)
 	})
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
@@ -84,7 +86,7 @@
 <article class:active>
 	<a href={permalink} onclick={click} ondblclick={doubleClick} data-sveltekit-preload-data="tap">
 		<span class="index"> {(index ?? 0) + 1}. </span>
-		{#if ytid && showImage && !appState.hide_track_artwork}<img
+		{#if ytid && showImage && !appState?.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
 				class="artwork"

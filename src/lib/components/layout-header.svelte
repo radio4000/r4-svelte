@@ -1,11 +1,11 @@
 <script>
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {watchBroadcasts} from '$lib/broadcast'
 	import AddTrackModal from '$lib/components/add-track-modal.svelte'
 	import EditTrackModal from '$lib/components/edit-track-modal.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import HeaderSearch from '$lib/components/header-search.svelte'
+	// import HeaderSearch from '$lib/components/header-search.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import TestCounter from '$lib/components/test-counter.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
@@ -14,15 +14,17 @@
 
 	const {preloading} = $props()
 
+	const appState = $derived(useAppState().data)
+
 	const userChannel = $derived.by(async () => {
-		const id = appState.channels?.[0]
+		const id = appState?.channels?.[0]
 		if (!id) return null
 		const channels = await r5.channels.pull({id, limit: 1})
 		return channels[0] || null
 	})
 
 	let broadcastCount = $state(0)
-	let editModalRef
+	let editModalRef = $state()
 
 	const unsubscribe = watchBroadcasts((data) => {
 		broadcastCount = data.broadcasts.length
@@ -45,7 +47,7 @@
 			<TestCounter />
 		{/await}
 	</a>
-	<HeaderSearch />
+	<!-- <HeaderSearch /> -->
 
 	<menu class="row right">
 		{#await preloading then}

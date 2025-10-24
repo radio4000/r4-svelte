@@ -1,8 +1,24 @@
 import {logger} from '$lib/logger'
 import {appStateCollection} from '$lib/collections'
+import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
+import {r4} from '$lib/r4'
 import type {AppState} from './types.ts'
 
 const log = logger.ns('app_state').seal()
+
+/**
+ * Reactive hook for components to access app state
+ * Usage: const appState = useAppState()
+ * Returns object with reactive getter for app state
+ */
+export function useAppState() {
+	const query = useLiveQuery((q) => q.from({state: appStateCollection}).findOne())
+	return {
+		get current() {
+			return query.data
+		}
+	}
+}
 
 export const defaultAppState: AppState = {
 	id: 1,
@@ -36,76 +52,71 @@ export const defaultAppState: AppState = {
 	user: undefined
 }
 
-// Reactive proxy - ergonomic API for all components
-export const appState: AppState = $state({...defaultAppState})
-
 let initialized = false
 
-// Initialize: collection → appState, subscribe to cross-tab changes
+/**
+ * Initialize app state collection
+ * Inserts default state if none exists
+ */
 export async function initAppState() {
 	if (initialized) return
 	try {
+		// Wait a tick for localStorage collection to hydrate
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
 		const stored = appStateCollection.get(1)
+		log.log('init_check', {
+			stored_exists: !!stored,
+			hide_track_artwork: stored?.hide_track_artwork,
+			collection_size: appStateCollection.toArray.length
+		})
 
 		if (!stored) {
 			// No stored state - insert defaults into collection
 			appStateCollection.insert({...defaultAppState})
 			log.log('init', 'inserted_defaults')
 		} else {
-			// Load from collection into reactive proxy
-			stored.is_playing = false // Always reset on init
-			Object.assign(appState, stored)
-			log.log('init', stored)
+			// Reset is_playing on init
+			appStateCollection.update(1, (draft) => {
+				draft.is_playing = false
+			})
+			log.log('init', 'found_stored_state', {hide_track_artwork: stored.hide_track_artwork})
 		}
-
-		// Subscribe to collection changes (cross-tab sync)
-		appStateCollection.subscribeChanges((changes) => {
-			for (const change of changes) {
-				if (change.type === 'update' || change.type === 'insert') {
-					// Update appState from collection (another tab changed it)
-					Object.assign(appState, change.value)
-					log.debug('synced_from_collection', change.value)
-				}
-			}
-		})
 	} catch (err) {
 		log.warn('Failed to load app state from collection:', err)
 	}
 	initialized = true
 }
 
-// Persist: appState → collection (called from layout $effect)
-export async function persistAppState() {
-	if (!initialized) return
-
-	// Sync reactive proxy to collection
-	appStateCollection.update(1, (draft) => {
-		Object.assign(draft, appState)
-	})
-}
-
-/** Validate that listening_to_channel_id points to an active broadcast */
+/**
+ * Validate that listening_to_channel_id points to an active broadcast
+ * Clears invalid state
+ */
 export async function validateListeningState() {
-	if (!appState.listening_to_channel_id) return
+	const state = appStateCollection.get(1)
+	if (!state?.listening_to_channel_id) return
 
 	try {
-		const {r4} = await import('$lib/r4')
 		const {data} = await r4.sdk.supabase
 			.from('broadcast')
 			.select('channel_id')
-			.eq('channel_id', appState.listening_to_channel_id)
+			.eq('channel_id', state.listening_to_channel_id)
 			.single()
 
 		if (!data) {
 			log.log('clearing_invalid_listening_state', {
-				invalid_channel_id: appState.listening_to_channel_id
+				invalid_channel_id: state.listening_to_channel_id
 			})
-			appState.listening_to_channel_id = undefined
+			appStateCollection.update(1, (draft) => {
+				draft.listening_to_channel_id = undefined
+			})
 		}
 	} catch {
 		log.log('clearing_invalid_listening_state_error', {
-			invalid_channel_id: appState.listening_to_channel_id
+			invalid_channel_id: state.listening_to_channel_id
 		})
-		appState.listening_to_channel_id = undefined
+		appStateCollection.update(1, (draft) => {
+			draft.listening_to_channel_id = undefined
+		})
 	}
 }

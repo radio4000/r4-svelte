@@ -2,27 +2,37 @@
 	import {page} from '$app/state'
 	import Icon from '$lib/components/icon.svelte'
 	import {formatDate} from '$lib/dates'
-	import {pg} from '$lib/r5/db'
+	import {playHistoryCollection, getTracksCollection, getChannelsCollection} from '$lib/collections'
 
-	const historyPromise = $derived.by(async () => {
-		const result = await pg.sql`SELECT * FROM play_history ORDER BY started_at DESC`
-		return result.rows
-	})
+	// Get history sorted by started_at DESC
+	const history = $derived(
+		playHistoryCollection.toArray.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+	)
 
-	const tracksLookup = $derived.by(async () => {
-		const history = await historyPromise
-		const trackIds = [...new Set(history.map((h) => h.track_id))]
-		if (trackIds.length === 0) return new Map()
+	// Client-side join: create lookup of tracks with channel info
+	const tracksLookup = $derived.by(() => {
+		const tracksCollection = getTracksCollection()
+		const channelsCollection = getChannelsCollection()
 
-		console.log('getting', trackIds.length)
+		const tracks = tracksCollection.toArray
+		const channels = channelsCollection.toArray
+		const channelMap = new Map(channels.map((c) => [c.id, c]))
 
-		const result = await pg.sql`
-			SELECT t.id, t.title, t.url, c.name as channel_name, c.slug as channel_slug
-			FROM tracks t
-			JOIN channels c ON t.channel_id = c.id
-			WHERE t.id = ANY(${trackIds})
-		`
-		return new Map(result.rows.map((t) => [t.id, t]))
+		return new Map(
+			tracks.map((t) => {
+				const channel = channelMap.get(t.channel_id)
+				return [
+					t.id,
+					{
+						id: t.id,
+						title: t.title,
+						url: t.url,
+						channel_name: channel?.name,
+						channel_slug: channel?.slug || t.channel_slug
+					}
+				]
+			})
+		)
 	})
 </script>
 
@@ -45,23 +55,17 @@
 		<p>Note, this data is all local. Only you see it.</p>
 	</header>
 
-	{#await Promise.all([historyPromise, tracksLookup])}
-		<p>loading...</p>
-	{:then [history, tracks]}
-		{#if history.length === 0}
-			<p>no play history found</p>
-		{:else}
-			<ul class="list">
-				{#each history as play (play.id)}
-					<li>
-						{@render playRecord(play, tracks.get(play.track_id))}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	{:catch error}
-		<p>error loading history: {error.message}</p>
-	{/await}
+	{#if history.length === 0}
+		<p>no play history found</p>
+	{:else}
+		<ul class="list">
+			{#each history as play (play.id)}
+				<li>
+					{@render playRecord(play, tracksLookup.get(play.track_id))}
+				</li>
+			{/each}
+		</ul>
+	{/if}
 </article>
 
 {#snippet playRecord(play, track)}

@@ -1,7 +1,9 @@
 <script>
 	import {page} from '$app/stores'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {pg} from '$lib/r5/db'
+
+	const appState = $derived(useAppState().data)
 
 	const slug = $derived(page.params.slug)
 
@@ -12,7 +14,7 @@
 
 	const isOwner = $derived.by(async () => {
 		const channelData = await channel
-		return channelData && appState.channels?.includes(channelData.id)
+		return channelData && appState?.channels?.includes(channelData.id)
 	})
 </script>
 

@@ -2,6 +2,10 @@
 // https://github.com/TanStack/db/blob/main/packages/svelte-db/src/useLiveQuery.svelte.ts
 // Original calls flushSync inside $effect which violates Svelte 5 async mode
 // This version removes flushSync and relies on normal reactivity
+//
+// ADDITIONAL PATCH: Added findOne() support
+// When a query uses .findOne(), return single object instead of array
+// TODO: Open PR to TanStack DB upstream for findOne() support in framework adapters
 
 import {untrack} from 'svelte'
 import {SvelteMap} from 'svelte/reactivity'
@@ -57,12 +61,24 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 
 	const state = new SvelteMap()
 	let internalData = $state([])
-	let status = $state(collection.status)
+	let status = $derived(collection.status)
+
+	// Check if this query uses findOne() by inspecting the collection config
+	// React version uses collection.options.singleResult to detect findOne()
+	const isFindOne = $derived(collection?.options?.singleResult || collection?.config?.singleResult || false)
 
 	const syncDataFromCollection = (currentCollection) => {
 		untrack(() => {
-			internalData = []
-			internalData.push(...Array.from(currentCollection.values()))
+			const values = Array.from(currentCollection.values())
+
+			// For findOne queries, return single object or undefined
+			if (isFindOne) {
+				internalData = values[0]
+			} else {
+				// For regular queries, return array
+				internalData = []
+				internalData.push(...values)
+			}
 		})
 	}
 

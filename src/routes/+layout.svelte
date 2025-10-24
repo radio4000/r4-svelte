@@ -1,7 +1,8 @@
 <script>
 	import '../styles/style.css'
 	import 'leaflet/dist/leaflet.css'
-	import {appState, initAppState, persistAppState} from '$lib/app-state.svelte'
+	import {initAppState, useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
 	import KeyboardShortcuts from '$lib/components/keyboard-shortcuts.svelte'
@@ -11,7 +12,6 @@
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 	import '@radio4000/components'
 	import {onMount} from 'svelte'
-	import {goto} from '$app/navigation'
 	import {checkUser} from '$lib/api'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -53,23 +53,28 @@
 	/** @type {import('./$types').LayoutProps} */
 	const {data, children} = $props()
 
-	let skipPersist = $state(true)
 	let chatPanelVisible = $state(false)
+
+	// Get app state from collection
+	const appState = $derived(useAppState().data)
 
 	onMount(async () => {
 		await initAppState()
 		await checkUser()
-		applyCustomCssVariables(appState.custom_css_variables)
-		// Ensure channels_display has a value before persisting
-		if (!appState.channels_display) {
-			appState.channels_display = 'grid'
+		if (appState) {
+			applyCustomCssVariables(appState.custom_css_variables)
+			// Ensure channels_display has a value
+			if (!appState.channels_display) {
+				appStateCollection.update(1, (draft) => {
+					draft.channels_display = 'grid'
+				})
+			}
 		}
-		skipPersist = false
 	})
 
 	// Theme application
 	const prefersLight = $derived(window.matchMedia('(prefers-color-scheme: light)').matches)
-	const theme = $derived(appState.theme ?? (prefersLight ? 'light' : 'dark'))
+	const theme = $derived(appState?.theme ?? (prefersLight ? 'light' : 'dark'))
 
 	$effect(() => {
 		if (theme === 'dark') {
@@ -82,29 +87,18 @@
 	})
 
 	$effect(() => {
-		applyCustomCssVariables(appState.custom_css_variables)
+		if (appState) {
+			applyCustomCssVariables(appState.custom_css_variables)
+		}
 	})
 
-	$effect(() => {
-		if (skipPersist) return
-		// Take a snapshot to track all property changes
-		$state.snapshot(appState)
-		persistAppState()
-			.then(() => {
-				log.debug('app_state', $state.snapshot(appState))
-			})
-			.catch((err) => {
-				goto(`/recovery?err=${err.message}`)
-			})
-	})
-
-	// "Close" the database on page unload. I have not noticed any difference, but seems like a good thing to do.
+	// Clean up on page unload
 	$effect(() => {
 		const handler = async () => {
-			log.log('beforeunload_closing_db')
-			// event.preventDefault()
-			appState.broadcasting_channel_id = undefined
-			//await pg.close()
+			log.log('beforeunload_cleanup')
+			appStateCollection.update(1, (draft) => {
+				draft.broadcasting_channel_id = undefined
+			})
 		}
 		window.addEventListener('beforeunload', handler)
 		return () => window.removeEventListener('beforeunload', handler)
@@ -118,7 +112,7 @@
 			<KeyboardShortcuts />
 		{/await}
 
-		<div class={['layout', {asideVisible: appState.queue_panel_visible}]}>
+		<div class={['layout', {asideVisible: appState?.queue_panel_visible}]}>
 			{#await data.preloading then}
 				<LayoutHeader preloading={data.preloading} />
 			{/await}

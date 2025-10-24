@@ -1,11 +1,14 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {joinBroadcast, leaveBroadcast, watchBroadcasts} from '$lib/broadcast'
+
+	const appState = $derived(useAppState().data)
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import EnsureTrack from '$lib/components/ensure-track.svelte'
 	import {timeAgo} from '$lib/utils'
 
+	/** @type {{broadcasts: import('$lib/types').BroadcastWithChannel[], error: string|null}} */
 	const broadcastState = $state({
 		broadcasts: [],
 		error: null
@@ -43,7 +46,7 @@
 
 <section class="list">
 	{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-		{@const joined = broadcast.channel_id === appState.listening_to_channel_id}
+		{@const joined = broadcast.channel_id === appState?.listening_to_channel_id}
 		<div class:active={joined}>
 			<div class="live-dot"></div>
 			<ChannelCard channel={broadcast.channels}>

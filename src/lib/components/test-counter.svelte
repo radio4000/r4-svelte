@@ -1,12 +1,17 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
+
+	const appState = $derived(useAppState().data)
 
 	function inc() {
-		appState.counter++
+		appStateCollection.update(1, (draft) => {
+			draft.counter++
+		})
 	}
 </script>
 
-<button onclick={inc}> R{appState.counter}</button>
+<button onclick={inc}> R{appState?.counter}</button>
 
 <style>
 	button {

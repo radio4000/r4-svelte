@@ -1,11 +1,27 @@
 <script>
 	// import {liveQuery} from '$lib/live-query'
 	import {toggleQueuePanel} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import InputRange from '$lib/components/input-range.svelte'
 
+	const appState = $derived(useAppState().data)
 	let count = $state()
 	const double = $derived(count * 2)
+
+	let localVolume = $state(appState?.volume ?? 0.5)
+
+	$effect(() => {
+		if (appState?.volume !== undefined) {
+			localVolume = appState.volume
+		}
+	})
+
+	function updateVolume(newVolume) {
+		appStateCollection.update(1, (draft) => {
+			draft.volume = newVolume
+		})
+	}
 
 	// $effect(() => {
 	// 	return liveQuery(`select counter from app_state where id = 1`, [], (stuff) => {
@@ -28,9 +44,9 @@
 
 <section>
 	<button onclick={toggleQueuePanel}> 🔄 Toggle Queue Panel </button>
-	<p>queue_panel_visible: {appState.queue_panel_visible}</p>
-	<InputRange bind:value={appState.volume} min={0} max={1} step={0.1} />
-	<p>volume: {appState.volume}</p>
+	<p>queue_panel_visible: {appState?.queue_panel_visible}</p>
+	<InputRange bind:value={localVolume} min={0} max={1} step={0.1} oninput={(e) => updateVolume(e.target.value)} />
+	<p>volume: {appState?.volume}</p>
 </section>
 
 <hr />

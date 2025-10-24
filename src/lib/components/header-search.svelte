@@ -1,14 +1,17 @@
 <script>
-	import {onMount} from 'svelte'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {toggleQueuePanel, toggleTheme} from '$lib/api'
 	import SearchInput from '$lib/components/search-input.svelte'
-	import {getPg, pg} from '$lib/r5/db'
+	import {getChannelsCollection} from '$lib/collections'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
 
 	let debounceTimer = $state()
-	let allChannels = $state([])
+
+	// Get all channels from collection
+	const channelsCollection = getChannelsCollection()
+	const {data: allChannels} = useLiveQuery((q) => q.from({channel: channelsCollection}))
 
 	// Reactive URL params - recreate when page URL changes
 	let params = $derived(new SvelteURLSearchParams(page.url.searchParams))
@@ -16,6 +19,7 @@
 
 	// Filtered channels for @mention autocomplete
 	let filteredChannels = $derived.by(() => {
+		if (!allChannels || !allChannels.length) return []
 		if (!searchQuery.includes('@')) return allChannels.slice(0, 5)
 		const mentionQuery = searchQuery.slice(searchQuery.lastIndexOf('@') + 1)
 		if (mentionQuery.length < 1) return allChannels.slice(0, 5)
@@ -33,19 +37,6 @@
 			{id: 'toggle-queue', title: 'Toggle queue panel', type: 'command', action: toggleQueuePanel}
 		]
 	})
-
-	onMount(() => {
-		getPg().then(() => queryChannels())
-	})
-
-	async function queryChannels() {
-		try {
-			const result = await pg.query('SELECT id, name, slug FROM channels ORDER BY name')
-			allChannels = result.rows
-		} catch (error) {
-			console.error('Failed to load channels:', error)
-		}
-	}
 
 	function debouncedSearch(value) {
 		clearTimeout(debounceTimer)

@@ -1,12 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {r5} from '$lib/r5'
 
+	const appState = $derived(useAppState().data)
 	let userChannelSlug = $state(null)
 
 	$effect(async () => {
-		if (appState.channels?.length > 0) {
+		if (appState?.channels?.length > 0) {
 			const channelId = appState.channels[0]
 			try {
 				const channels = await r5.channels.local()
@@ -25,9 +26,9 @@
 </script>
 
 <article class="MiniContainer">
-	{#if !appState.user}
+	{#if !appState?.user}
 		<p><a href="/auth?redirect=/create-channel">Sign in</a> to create a channel</p>
-	{:else if appState.channels.length > 0}
+	{:else if appState?.channels?.length > 0}
 		<p>You have a channel: <a href="/{userChannelSlug}">{userChannelSlug}</a></p>
 	{:else}
 		<header>
