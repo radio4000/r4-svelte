@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
-	import {playTrack} from '$lib/api'
+	import {playTrack, deleteTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track} from '$lib/types'
 	import {extractYouTubeId} from '$lib/utils.ts'
@@ -49,6 +49,13 @@
 	const editTrack = () => {
 		// Trigger global edit modal via custom event
 		window.dispatchEvent(new CustomEvent('r5:openEditModal', {detail: {track}}))
+	}
+
+	let showDeleteConfirm = $state(false)
+
+	async function handleDelete() {
+		await deleteTrack(track.id)
+		showDeleteConfirm = false
 	}
 
 	let menuElement: HTMLElement
@@ -105,10 +112,18 @@
 			<Icon icon="options-horizontal" size={16} />
 		</button>
 		<menu popover="auto" id="menu-{track.id}" bind:this={menuElement}>
-			<a class="btn" href={permalink} role="menuitem">Details</a>
-			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>Edit</button>{/if}
-			<button type="button" role="menuitem" onclick={() => addToRadio(track.url)}>Add track</button>
-			<!-- <button type="button" role="menuitem">Share</button> -->
+			{#if showDeleteConfirm}
+				<div class="delete-confirm">
+					<p>Delete "{track.title}"?</p>
+					<button type="button" class="danger" role="menuitem" onclick={handleDelete}>Confirm</button>
+					<button type="button" role="menuitem" onclick={() => (showDeleteConfirm = false)}>Cancel</button>
+				</div>
+			{:else}
+				<a class="btn" href={permalink} role="menuitem">Details</a>
+				{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>Edit</button>{/if}
+				<button type="button" role="menuitem" onclick={() => addToRadio(track.url)}>Add track</button>
+				{#if canEdit}<button type="button" class="danger" role="menuitem" onclick={() => (showDeleteConfirm = true)}>Delete</button>{/if}
+			{/if}
 		</menu>
 	</r4-actions>
 	{@render children?.({track})}

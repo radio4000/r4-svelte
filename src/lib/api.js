@@ -311,3 +311,30 @@ export async function isFollowing(followerId, channelId) {
 	`
 	return rows.length > 0
 }
+
+/**
+ * @param {string} trackId
+ */
+export async function deleteTrack(trackId) {
+	log.log('delete_track', {trackId})
+
+	// Delete locally
+	await pg.sql`DELETE FROM tracks WHERE id = ${trackId}`
+
+	// Delete remotely if authenticated
+	if (appState.channels?.length) {
+		try {
+			await r4.tracks.deleteTrack(trackId)
+			log.log('track_deleted_remotely', {trackId})
+		} catch (error) {
+			log.error('remote_delete_failed', {trackId, error})
+		}
+	}
+
+	// Dispatch event for UI updates
+	document.dispatchEvent(
+		new CustomEvent('r5:trackDeleted', {
+			detail: {trackId}
+		})
+	)
+}
