@@ -36,38 +36,52 @@ export const defaultAppState: AppState = {
 	user: undefined
 }
 
+// Reactive proxy - ergonomic API for all components
 export const appState: AppState = $state({...defaultAppState})
 
 let initialized = false
 
-// Initialize from localStorage collection
+// Initialize: collection → appState, subscribe to cross-tab changes
 export async function initAppState() {
 	if (initialized) return
 	try {
-		// Get current state from collection (localStorage)
-		const items = appStateCollection.getAll()
-		const stored = items.find((item) => item.id === 1)
+		const stored = appStateCollection.get(1)
 
-		log.log('init', stored)
-
-		if (stored) {
-			// Always override is_playing to false
-			stored.is_playing = false
-			Object.assign(appState, stored)
+		if (!stored) {
+			// No stored state - insert defaults into collection
+			appStateCollection.insert({...defaultAppState})
+			log.log('init', 'inserted_defaults')
 		} else {
-			// Initialize with default state
-			appStateCollection.upsert(defaultAppState)
+			// Load from collection into reactive proxy
+			stored.is_playing = false // Always reset on init
+			Object.assign(appState, stored)
+			log.log('init', stored)
 		}
+
+		// Subscribe to collection changes (cross-tab sync)
+		appStateCollection.subscribeChanges((changes) => {
+			for (const change of changes) {
+				if (change.type === 'update' || change.type === 'insert') {
+					// Update appState from collection (another tab changed it)
+					Object.assign(appState, change.value)
+					log.debug('synced_from_collection', change.value)
+				}
+			}
+		})
 	} catch (err) {
 		log.warn('Failed to load app state from collection:', err)
 	}
 	initialized = true
 }
 
-/** Persist to localStorage collection */
+// Persist: appState → collection (called from layout $effect)
 export async function persistAppState() {
 	if (!initialized) return
-	appStateCollection.upsert(appState)
+
+	// Sync reactive proxy to collection
+	appStateCollection.update(1, (draft) => {
+		Object.assign(draft, appState)
+	})
 }
 
 /** Validate that listening_to_channel_id points to an active broadcast */

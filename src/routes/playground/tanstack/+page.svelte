@@ -1,5 +1,5 @@
 <script>
-	import {useLiveQuery} from '$lib/tanstack-patches/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
 	import {createCollection, localOnlyCollectionOptions, eq} from '@tanstack/db'
 
 	const todoCollectionOptions = localOnlyCollectionOptions({

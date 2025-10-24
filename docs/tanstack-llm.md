@@ -96,6 +96,7 @@ TanStack DB = reactive client store with 3 primitives:
 // 1. Define collection with data loading
 const todoCollection = createCollection(
 	queryCollectionOptions({
+		queryClient,
 		queryKey: ['todos'],
 		queryFn: async () => fetch('/api/todos').then((r) => r.json()),
 		getKey: (item) => item.id,
@@ -144,6 +145,8 @@ Collections decouple **loading data** from **binding data to components**.
 // Load data (various sources)
 const channels = createCollection(
 	queryCollectionOptions({
+		queryClient,
+		queryKey: ['channels'],
 		queryFn: () => r5.channels.r4(), // Supabase
 		getKey: (ch) => ch.id
 	})
@@ -190,6 +193,7 @@ import {queryCollectionOptions} from '@tanstack/query-db-collection'
 
 const channelsCollection = createCollection(
 	queryCollectionOptions({
+		queryClient, // Required: pass QueryClient instance from context
 		queryKey: ['channels'],
 		queryFn: async () => {
 			// Fetch with r5→r4 fallback
@@ -521,7 +525,10 @@ todoCollection.update([id1, id2], (drafts) => {
 ```ts
 const todoCollection = createCollection(
 	queryCollectionOptions({
-		// ... other options
+		queryClient,
+		queryKey: ['todos'],
+		queryFn: async () => fetch('/api/todos').then(r => r.json()),
+		getKey: (item) => item.id,
 		onInsert: async ({transaction}) => {
 			await Promise.all(transaction.mutations.map((m) => api.todos.create(m.modified)))
 			// Auto-refetch unless: return { refetch: false }
@@ -692,8 +699,7 @@ npm install @tanstack/svelte-db @tanstack/query-db-collection
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script>
-	import {QueryClient} from '@tanstack/query-core'
-	import {setQueryClientContext} from '@tanstack/svelte-db'
+	import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query'
 
 	const queryClient = new QueryClient({
 		defaultOptions: {
@@ -703,10 +709,12 @@ npm install @tanstack/svelte-db @tanstack/query-db-collection
 		}
 	})
 
-	setQueryClientContext(queryClient)
+	const {children} = $props()
 </script>
 
-<slot />
+<QueryClientProvider client={queryClient}>
+	{@render children()}
+</QueryClientProvider>
 ```
 
 ### useLiveQuery Hook
@@ -729,7 +737,7 @@ npm install @tanstack/svelte-db @tanstack/query-db-collection
 	<p>Error loading todos</p>
 {:else}
 	<ul>
-		{#each $data as todo (todo.id)}
+		{#each todos as todo (todo.id)}
 			<li>{todo.text}</li>
 		{/each}
 	</ul>
@@ -771,7 +779,7 @@ npm install @tanstack/svelte-db @tanstack/query-db-collection
 <input bind:value={searchTerm} placeholder="Search channels..." />
 
 <ul>
-	{#each $data as channel (channel.id)}
+	{#each channels as channel (channel.id)}
 		<li>
 			<a href="/{channel.slug}">{channel.name}</a>
 		</li>
@@ -833,6 +841,7 @@ export const appStateCollection = createCollection(
 // Channels (QueryCollection with r4→v1 fallback)
 export const channelsCollection = createCollection(
 	queryCollectionOptions({
+		queryClient,
 		queryKey: ['channels'],
 		queryFn: async () => {
 			// Try r4 first, fallback to v1
@@ -859,6 +868,7 @@ export const channelsCollection = createCollection(
 // Tracks (QueryCollection)
 export const tracksCollection = createCollection(
 	queryCollectionOptions({
+		queryClient,
 		queryKey: ['tracks'],
 		queryFn: async ({queryKey}) => {
 			// Fetch tracks for all channels in channelsCollection
@@ -909,7 +919,7 @@ export const tracksCollection = createCollection(
 {:else}
 	<button onclick={refreshChannels}>Refresh</button>
 	<ul>
-		{#each $data as channel (channel.id)}
+		{#each channels as channel (channel.id)}
 			<li>
 				<a href="/{channel.slug}">{channel.name}</a>
 			</li>
@@ -1048,12 +1058,12 @@ const collection = createCollection(options)
 ```ts
 queryCollectionOptions({
   // Required
+  queryClient: QueryClient,
   queryKey: string[],
   queryFn: () => Promise<Item[]>,
   getKey: (item: Item) => string | number,
 
   // Optional
-  queryClient?: QueryClient,
   schema?: StandardSchema,
   id?: string,
 
@@ -1242,6 +1252,7 @@ const { data, isLoading, isReady, isError, isEnabled, status } = useLiveQuery(
 ```ts
 // Collections
 const col = createCollection(queryCollectionOptions({
+  queryClient,
   queryKey: ['items'],
   queryFn: () => api.getItems(),
   getKey: (item) => item.id,

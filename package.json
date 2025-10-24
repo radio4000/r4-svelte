@@ -47,6 +47,7 @@
 		"@radio4000/sdk": "^0.4.13",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@tanstack/db": "^0.4.13",
+		"@tanstack/query-db-collection": "^0.2.35",
 		"@tanstack/query-persist-client-core": "^5.91.4",
 		"@tanstack/query-sync-storage-persister": "^5.90.7",
 		"@tanstack/svelte-db": "^0.1.35",

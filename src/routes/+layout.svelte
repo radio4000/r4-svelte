@@ -1,7 +1,7 @@
 <script>
 	import '../styles/style.css'
 	import 'leaflet/dist/leaflet.css'
-	import {appState, persistAppState} from '$lib/app-state.svelte'
+	import {appState, initAppState, persistAppState} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
 	import KeyboardShortcuts from '$lib/components/keyboard-shortcuts.svelte'
@@ -15,8 +15,40 @@
 	import {checkUser} from '$lib/api'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
+	import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query'
+	import {persistQueryClient} from '@tanstack/query-persist-client-core'
+	import {createSyncStoragePersister} from '@tanstack/query-sync-storage-persister'
 
 	const log = logger.ns('layout').seal()
+
+	// Create TanStack Query client for collections
+	const persister = createSyncStoragePersister({
+		storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+		key: 'r5-tanstack-cache'
+	})
+
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				gcTime: 1000 * 60 * 60 * 24, // 24 hours
+				staleTime: 1000 * 60 * 5, // 5 minutes
+				refetchOnMount: false,
+				refetchOnWindowFocus: false
+			}
+		}
+	})
+
+	if (typeof window !== 'undefined') {
+		persistQueryClient({
+			queryClient,
+			persister,
+			maxAge: Infinity
+		})
+	}
+
+	// Initialize TanStack DB collections with queryClient
+	import {initCollections} from '$lib/collections'
+	initCollections(queryClient)
 
 	/** @type {import('./$types').LayoutProps} */
 	const {data, children} = $props()
@@ -25,6 +57,7 @@
 	let chatPanelVisible = $state(false)
 
 	onMount(async () => {
+		await initAppState()
 		await checkUser()
 		applyCustomCssVariables(appState.custom_css_variables)
 		// Ensure channels_display has a value before persisting
@@ -78,48 +111,50 @@
 	})
 </script>
 
-<svelte:boundary>
-	{#await data.preloading then}
-		<AuthListener />
-		<KeyboardShortcuts />
-	{/await}
-
-	<div class={['layout', {asideVisible: appState.queue_panel_visible}]}>
+<QueryClientProvider client={queryClient}>
+	<svelte:boundary>
 		{#await data.preloading then}
-			<LayoutHeader preloading={data.preloading} />
+			<AuthListener />
+			<KeyboardShortcuts />
 		{/await}
 
-		<div class="content">
-			<main class="scroll">
-				{#await data.preloading}
-					<div class="loader">
-						<p>Preparing R5&hellip;</p>
-						<r4-loading></r4-loading>
-					</div>
-				{:then}
-					{@render children()}
-				{/await}
-			</main>
-
+		<div class={['layout', {asideVisible: appState.queue_panel_visible}]}>
 			{#await data.preloading then}
-				<QueuePanel />
+				<LayoutHeader preloading={data.preloading} />
 			{/await}
 
-			{#if chatPanelVisible}
-				<DraggablePanel title="R4 Chat">
-					<LiveChat />
-				</DraggablePanel>
-			{/if}
-		</div>
+			<div class="content">
+				<main class="scroll">
+					{#await data.preloading}
+						<div class="loader">
+							<p>Preparing R5&hellip;</p>
+							<r4-loading></r4-loading>
+						</div>
+					{:then}
+						{@render children()}
+					{/await}
+				</main>
 
-		{#await data.preloading then}
-			<LayoutFooter />
-		{/await}
-	</div>
-	{#snippet pending()}
-		<p>loading...</p>
-	{/snippet}
-</svelte:boundary>
+				{#await data.preloading then}
+					<QueuePanel />
+				{/await}
+
+				{#if chatPanelVisible}
+					<DraggablePanel title="R4 Chat">
+						<LiveChat />
+					</DraggablePanel>
+				{/if}
+			</div>
+
+			{#await data.preloading then}
+				<LayoutFooter />
+			{/await}
+		</div>
+		{#snippet pending()}
+			<p>loading...</p>
+		{/snippet}
+	</svelte:boundary>
+</QueryClientProvider>
 
 <style>
 	.layout {

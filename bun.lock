@@ -11,6 +11,7 @@
         "@radio4000/sdk": "^0.4.13",
         "@sveltejs/adapter-static": "^3.0.10",
         "@tanstack/db": "^0.4.13",
+        "@tanstack/query-db-collection": "^0.2.35",
         "@tanstack/query-persist-client-core": "^5.91.4",
         "@tanstack/query-sync-storage-persister": "^5.90.7",
         "@tanstack/svelte-db": "^0.1.35",
@@ -373,6 +374,8 @@
     "@tanstack/db-ivm": ["@tanstack/db-ivm@0.1.12", "", { "dependencies": { "fractional-indexing": "^3.2.0", "sorted-btree": "^1.8.1" }, "peerDependencies": { "typescript": ">=4.7" } }, "sha512-QTs2dgrjTCkATZh12nb854K/Of80QyyR6URYyxnGPnJgXFchvw25Ve3TtFW51fHR5hheQltkbtpPgBjSZvoMVA=="],
 
     "@tanstack/query-core": ["@tanstack/query-core@5.90.5", "", {}, "sha512-wLamYp7FaDq6ZnNehypKI5fNvxHPfTYylE0m/ZpuuzJfJqhR5Pxg9gvGBHZx4n7J+V5Rg5mZxHHTlv25Zt5u+w=="],
+
+    "@tanstack/query-db-collection": ["@tanstack/query-db-collection@0.2.35", "", { "dependencies": { "@standard-schema/spec": "^1.0.0", "@tanstack/db": "0.4.13" }, "peerDependencies": { "@tanstack/query-core": "^5.0.0", "typescript": ">=4.7" } }, "sha512-s+uIgHURrjqkueknrABSCD4fpPF+g/aSrMxYuyCZtt9X9PqisIIRFECgp6XsOEjZlvJ3rVgePP7Ucu3xu4qntA=="],
 
     "@tanstack/query-persist-client-core": ["@tanstack/query-persist-client-core@5.91.4", "", { "dependencies": { "@tanstack/query-core": "5.90.5" } }, "sha512-HZ8kvAbhttLZKUO4ASHl49u7dQXzRVEogi7/6CCZ5BBItWh2hoEUqy9QHUS4ji7iZiuXe4jwTJNzq2VIuxlnsQ=="],
 

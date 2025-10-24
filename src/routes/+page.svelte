@@ -1,14 +1,12 @@
 <script>
-	import {onMount} from 'svelte'
-	import {invalidateAll} from '$app/navigation'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import Channels from '$lib/components/channels.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import {r5} from '$lib/r5'
-	import {getPg} from '$lib/r5/db.js'
+	import {getChannelsCollection} from '$lib/collections'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
 
-	// const {data} = $props()
+	const channelsCollection = getChannelsCollection()
 
 	const slug = $derived(page?.url?.searchParams?.get('slug'))
 	const display = $derived(page?.url?.searchParams?.get('display'))
@@ -16,29 +14,26 @@
 	const latitude = $derived(Number(page?.url?.searchParams?.get('latitude')))
 	const zoom = $derived(page?.url?.searchParams?.get('zoom') ? Number(page?.url?.searchParams?.get('zoom')) : 4)
 
-	let syncing = $state(false)
-
-	/** @type {import('$lib/types').Channel[]} */
-	let channels = $state([])
-
-	onMount(() => {
-		getPg().then((pg) => {
-			if (Boolean(display) && display !== appState.channels_display) {
-				appState.channels_display = display
-			}
-			pg.query('SELECT * FROM channels ORDER BY created_at DESC').then((result) => {
-				channels = result.rows
-			})
-		})
+	// Update display preference from URL
+	$effect(() => {
+		if (Boolean(display) && display !== appState.channels_display) {
+			appState.channels_display = display
+		}
 	})
 
-	const channelCount = $derived(channels?.length || 0)
+	// Live query for all channels
+	const channelsQuery = useLiveQuery((q) => q.from({channel: channelsCollection}))
+
+	const channels = $derived(channelsQuery.data || [])
+	const channelCount = $derived(channels.length)
+
+	let syncing = $state(false)
 
 	async function pullRadios() {
 		syncing = true
 		try {
-			await r5.channels.pull()
-			await invalidateAll()
+			// Refetch the collection (triggers queryFn)
+			await channelsCollection.utils.refetch()
 		} finally {
 			syncing = false
 		}

@@ -28,37 +28,63 @@ r5 (pure fetch)         →  TanStack Collections  →  Live Queries (in compone
 - [TanStack DB Docs](https://tanstack.com/db/latest/docs/overview)
 - Current tests: `/playground/tanstack`, `/playground/tanstack-channel`
 
+## Phase 0: App State Refactor ✅
+
+**Solution**: Hybrid approach - `appStateCollection` as source of truth, `appState` as ergonomic reactive proxy.
+
+**Architecture:**
+- `appStateCollection` (LocalStorageCollection) = single source of truth
+- `appState` ($state object) = ergonomic API, all 35 imports unchanged
+- Bidirectional sync:
+  - Init: collection → appState
+  - Changes: appState → collection (via $effect in layout)
+  - Cross-tab: collection → appState (via subscribeChanges)
+
+**Implementation:**
+- [x] Keep `appState` $state object for ergonomics
+- [x] Load from collection on init
+- [x] Subscribe to collection changes for cross-tab sync
+- [x] Persist via existing $effect in layout.svelte
+- [x] Call `initAppState()` in layout onMount
+
+**Dev experience achieved**: `appState.volume = 0.5` works, auto-persists to localStorage, syncs across tabs. Zero changes to 35 existing imports.
+
 ## Phase 1: Collections (Foundation)
 
 Build the core collections that replace PGlite tables.
 
-### 1.1 App State Collection
+### 1.1 App State Collection ✅
 
-- [ ] Create `appStateCollection` using LocalStorageCollection
-- [ ] Use existing `appStateSchema` from src/lib/schemas.ts
-- [ ] Replace `$lib/app-state.svelte` PGlite dependency
-- [ ] Test: changes persist to localStorage, sync across tabs
+- [x] Create `appStateCollection` using LocalStorageCollection
+- [x] Use existing `appStateSchema` from src/lib/schemas.ts
+- [x] Replace `$lib/app-state.svelte` PGlite dependency
+- [x] Test: changes persist to localStorage, sync across tabs
+- [x] Refactor to use collection as single source of truth (completed in Phase 0)
 
 **Dev experience goal**: `appState.volume = 0.5` just works, no PGlite.
 
-### 1.2 Channels Collection
+### 1.2 Channels Collection ✅
 
-- [ ] Create `channelsCollection` using QueryCollection
-- [ ] `queryFn`: call r5.channels.r4() with r5.channels.v1() fallback
-- [ ] Use existing `channelSchema` from src/lib/schemas.ts
-- [ ] Add onUpdate/onDelete handlers (call r4 SDK)
+- [x] Create `channelsCollection` using QueryCollection
+- [x] `queryFn`: call r5.channels.r4() with r5.channels.v1() fallback
+- [x] Use existing `channelSchema` from src/lib/schemas.ts
+- [x] Add onUpdate/onDelete handlers (call r4 SDK)
 
 **Dev experience goal**: One collection, handles r4→v1 fallback automatically.
 
-### 1.3 Tracks Collection
+**Implementation**: queryFn fetches both r4 and v1 channels, merges and deduplicates by slug (r4 takes precedence).
 
-- [ ] Create `tracksCollection` using QueryCollection
-- [ ] `queryFn`: call r5.tracks.r4() with r5.tracks.v1() fallback
-- [ ] Use existing `trackSchema` from src/lib/schemas.ts
-- [ ] Add onUpdate/onDelete handlers (call r4 SDK)
-- [ ] Denormalize: add `channel_slug` to track objects client-side
+### 1.3 Tracks Collection ✅
+
+- [x] Create `tracksCollection` using QueryCollection
+- [x] `queryFn`: call r5.tracks.r4() with r5.tracks.v1() fallback
+- [x] Use existing `trackSchema` from src/lib/schemas.ts
+- [x] Add onUpdate/onDelete/onInsert handlers (call r4 SDK)
+- [x] Denormalize: add `channel_slug` to track objects client-side
 
 **Dev experience goal**: No SQL views, client-side denormalization.
+
+**Implementation**: Collection starts empty. Use `fetchChannelTracks(slug)` helper to populate tracks for a channel - handles r4/v1 fallback based on channel source, denormalizes channel_slug, inserts into collection. Components use useLiveQuery() to filter by channel_slug.
 
 **Location**: Create new file `src/lib/collections.ts` for all collections.
 
@@ -139,14 +165,18 @@ Leverage live queries for complex use cases.
 
 **Completed:**
 
+- ✅ Phase 0: App State Refactor - collection as source of truth, ergonomic proxy pattern
+- ✅ Phase 1.2: Channels Collection - fetches and merges r4/v1 channels
+- ✅ Phase 1.3: Tracks Collection - fetchChannelTracks() helper with r4/v1 fallback and denormalization
 - ✅ r5 fetch methods exist (r4/v1) without PGlite insertion
 - ✅ Reactivity pattern validated in `/playground/tanstack-channel`
   - Custom events → `queryClient.invalidateQueries()` → refetch
   - See ChannelView.svelte:14-20
+- ✅ App state persists to localStorage, syncs across tabs
 
-**In Progress:**
+**Next:**
 
-- 🚧 Phase 1: Collections (not started)
+- Phase 2: Route Migration (replace PGlite queries with live queries)
 
 **Notes:**
 
