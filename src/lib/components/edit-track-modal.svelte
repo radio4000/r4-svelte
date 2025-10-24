@@ -62,7 +62,6 @@
 
 		showModal = false
 	}
-
 </script>
 
 <Modal bind:showModal>

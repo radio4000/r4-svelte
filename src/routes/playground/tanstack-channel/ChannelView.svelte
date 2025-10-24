@@ -51,7 +51,7 @@
 			}
 
 			// Add channel_slug to each track for tracklist component
-			return tracks.map(t => ({...t, channel_slug: channelSlug}))
+			return tracks.map((t) => ({...t, channel_slug: channelSlug}))
 		},
 		enabled: !!channelQuery.data
 	}))
@@ -64,7 +64,7 @@
 		if (typeof localStorage === 'undefined') return 0
 		let total = 0
 		for (let key in localStorage) {
-			if (localStorage.hasOwnProperty(key)) {
+			if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
 				total += localStorage[key].length + key.length
 			}
 		}
@@ -104,7 +104,7 @@
 				<dd>{tracksQuery.data.length}</dd>
 
 				<dt>Est. 40k tracks</dt>
-				<dd>{((40000 / tracksQuery.data.length) * storageSize / 1024 / 1024).toFixed(2)} MB</dd>
+				<dd>{(((40000 / tracksQuery.data.length) * storageSize) / 1024 / 1024).toFixed(2)} MB</dd>
 			{/if}
 		</dl>
 		<div class="row" style:gap="0.5rem" style:margin-top="1rem">

@@ -66,7 +66,7 @@
 	<section>
 		<h2>All Todos ({allTodos.data?.length ?? 0})</h2>
 		<ul class="list">
-			{#each allTodos.data ?? [] as todo}
+			{#each allTodos.data ?? [] as todo (todo.id)}
 				<li>
 					<div class="row">
 						<label>
@@ -85,7 +85,7 @@
 	<section>
 		<h2>Pending Todos ({pendingTodos.data?.length ?? 0})</h2>
 		<ul class="list">
-			{#each pendingTodos.data ?? [] as todo}
+			{#each pendingTodos.data ?? [] as todo (todo.id)}
 				<li style:padding="0.5rem">{todo.text}</li>
 			{/each}
 		</ul>
@@ -94,7 +94,7 @@
 	<section>
 		<h2>Completed Todos ({completedTodos.data?.length ?? 0})</h2>
 		<ul class="list">
-			{#each completedTodos.data ?? [] as todo}
+			{#each completedTodos.data ?? [] as todo (todo.id)}
 				<li style:padding="0.5rem">{todo.text}</li>
 			{/each}
 		</ul>

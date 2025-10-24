@@ -11,7 +11,7 @@
 	})
 
 	// Create QueryClient with persistence config
-	export const queryClient = new QueryClient({
+	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
 				gcTime: 1000 * 60 * 60 * 24, // 24 hours

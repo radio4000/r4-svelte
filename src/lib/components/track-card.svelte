@@ -122,7 +122,9 @@
 				<a class="btn" href={permalink} role="menuitem">Details</a>
 				{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>Edit</button>{/if}
 				<button type="button" role="menuitem" onclick={() => addToRadio(track.url)}>Add track</button>
-				{#if canEdit}<button type="button" class="danger" role="menuitem" onclick={() => (showDeleteConfirm = true)}>Delete</button>{/if}
+				{#if canEdit}<button type="button" class="danger" role="menuitem" onclick={() => (showDeleteConfirm = true)}
+						>Delete</button
+					>{/if}
 			{/if}
 		</menu>
 	</r4-actions>

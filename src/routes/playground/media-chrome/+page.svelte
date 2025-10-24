@@ -110,7 +110,7 @@
 	<section class="controls">
 		<h2>Test URLs</h2>
 		<ul>
-			{#each testUrls as test}
+			{#each testUrls as test (test.url)}
 				<li>
 					<button onclick={() => selectTrack(test.url)} class:active={currentUrl === test.url}>
 						{test.title}
