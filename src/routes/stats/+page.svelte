@@ -2,7 +2,7 @@
 	import {onMount} from 'svelte'
 	import {page} from '$app/state'
 	import Icon from '$lib/components/icon.svelte'
-	import {pg} from '$lib/r5/db'
+	import {channelsCollection, tracksCollection, playHistoryCollection} from '$lib/collections'
 	import {extractHashtags} from '$lib/utils.ts'
 
 	let stats = $state({
@@ -42,23 +42,32 @@
 
 	async function generateStats() {
 		try {
-			// Load core data with simple queries
-			const [playHistory, channels, tracks] = await Promise.all([
-				pg.sql`
-					SELECT 
-						ph.*,
-						twm.title, twm.duration, twm.description,
-						twm.channel_id,
-						c.name as channel_name, c.slug as channel_slug
-					FROM play_history ph
-					JOIN tracks_with_meta twm ON ph.track_id = twm.id
-					JOIN channels c ON twm.channel_id = c.id
-				`,
-				pg.sql`SELECT * FROM channels`,
-				pg.sql`SELECT * FROM tracks_with_meta`
-			])
+			// Get data from collections
 
-			const plays = playHistory.rows
+			const channels = channelsCollection.toArray
+			const tracks = tracksCollection.toArray
+			const playHistory = playHistoryCollection.toArray
+
+			// Create lookup maps for client-side joins
+			const trackMap = new Map(tracks.map((t) => [t.id, t]))
+			const channelMap = new Map(channels.map((c) => [c.id, c]))
+
+			// Join play history with tracks and channels
+			const plays = playHistory
+				.map((ph) => {
+					const track = trackMap.get(ph.track_id)
+					const channel = track ? channelMap.get(track.channel_id) : null
+					return {
+						...ph,
+						title: track?.title,
+						duration: track?.duration,
+						description: track?.description,
+						channel_id: track?.channel_id,
+						channel_name: channel?.name,
+						channel_slug: channel?.slug
+					}
+				})
+				.filter((p) => p.title) // Only include plays where track was found
 
 			// Basic stats
 			stats.totalPlays = plays.length
@@ -114,13 +123,13 @@
 				.map(([tag, count]) => ({tag, count}))
 
 			// Database stats
-			stats.totalChannelsInDb = channels.rows.length
-			stats.totalTracksInDb = tracks.rows.length
-			stats.tracksWithoutMeta = tracks.rows.filter((t) => !t.duration || !t.title).length
+			stats.totalChannelsInDb = channels.length
+			stats.totalTracksInDb = tracks.length
+			stats.tracksWithoutMeta = tracks.filter((t) => !t.duration || !t.title).length
 
 			// Average tracks per channel
 			const tracksByChannel = {}
-			tracks.rows.forEach((t) => {
+			tracks.forEach((t) => {
 				tracksByChannel[t.channel_id] = (tracksByChannel[t.channel_id] || 0) + 1
 			})
 			const trackCounts = Object.values(tracksByChannel)
@@ -129,7 +138,7 @@
 
 			// Channel timeline
 			const monthlyChannels = {}
-			channels.rows
+			channels
 				.filter((c) => c.created_at)
 				.forEach((c) => {
 					const createdAt = new Date(c.created_at)

@@ -1,9 +1,12 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Modal from '$lib/components/modal.svelte'
 	import {tooltip} from './tooltip-attachment'
+	import {tracksCollection, channelsCollection} from '$lib/collections'
+
+	const appState = useAppState()
 
 	let showModal = $state(false)
 	let recentTracks = $state([])
@@ -22,8 +25,8 @@
 		}
 	}
 
-	const channelId = $derived(appState.channels?.length > 0 ? appState.channels[0] : undefined)
-	const isSignedIn = $derived(!!appState.user)
+	const channelId = $derived(appState?.channels?.length > 0 ? appState.channels[0] : undefined)
+	const isSignedIn = $derived(!!appState?.user)
 	const canAddTrack = $derived(isSignedIn && channelId)
 
 	/** @param {KeyboardEvent} event */
@@ -51,22 +54,33 @@
 		}
 	}
 
-	function submit(event) {
+	async function submit(event) {
 		const track = event.detail.data
 		recentTracks.unshift(track)
 		if (recentTracks.length > 3) recentTracks.pop()
-		console.log({track, recentTracks})
+
+		// Get channel to denormalize channel_slug
+		const channel = channelsCollection.get(channelId)
+		const trackWithSlug = {
+			...track,
+			channel_slug: channel?.slug
+		}
+
+		// Optimistic insert via TanStack DB collection
+		const tx = tracksCollection.insert(trackWithSlug)
 
 		// Clear prefilled URL and close modal
 		prefilledUrl = ''
 		showModal = false
 
-		// Dispatch event for parent to handle track insertion
-		document.dispatchEvent(
-			new CustomEvent('r5:trackAdded', {
-				detail: {track, channelId}
-			})
-		)
+		// Wait for server persistence
+		try {
+			await tx.isPersisted.promise
+			console.log('track added and persisted', {track: trackWithSlug})
+		} catch (error) {
+			console.error('track insert failed', {track: trackWithSlug, error})
+			// Optimistic insert automatically rolled back
+		}
 	}
 </script>
 

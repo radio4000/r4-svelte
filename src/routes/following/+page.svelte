@@ -1,7 +1,9 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
+
+	const appState = useAppState()
 
 	/** @type {import('./$types').PageData} */
 	let {data} = $props()
@@ -16,7 +18,7 @@
 <article>
 	<header>
 		<h1>Following {followings?.length || 0} channels</h1>
-		{#if appState.user}
+		{#if appState?.user}
 			<p>Your favorites are synced with your R4 account</p>
 		{:else}
 			<p>Tip: <a href="/auth?redirect=/following">sign in</a> to sync your followers with R4</p>

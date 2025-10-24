@@ -1,7 +1,8 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {shuffleArray} from '$lib/utils.ts'
 	import ChannelCard from './channel-card.svelte'
@@ -12,13 +13,15 @@
 
 	const {channels = [], slug: initialSlug, display: initialDisplay, longitude, latitude, zoom} = $props()
 
+	const appState = useAppState()
+
 	let limit = $state(30)
 	let perPage = $state(100)
-	let filter = $derived(appState.channels_filter || '20+')
-	let shuffled = $derived(appState.channels_shuffled ?? true)
+	let filter = $derived(appState?.channels_filter || '20+')
+	let shuffled = $derived(appState?.channels_shuffled ?? true)
 
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
-	let display = $derived(appState.channels_display || initialDisplay || 'grid')
+	let display = $derived(appState?.channels_display || initialDisplay || 'grid')
 
 	/*
 	const channelsPromise = $derived.by(
@@ -59,7 +62,9 @@
 
 	function setDisplay(value = 'grid') {
 		display = value
-		appState.channels_display = display
+		appStateCollection.update(1, (draft) => {
+			draft.channels_display = display
+		})
 		const query = new URL(page.url).searchParams
 		query.set('display', display)
 		// Preserve map params if switching to map view
@@ -72,11 +77,15 @@
 	}
 
 	function setFilter(value) {
-		appState.channels_filter = value
+		appStateCollection.update(1, (draft) => {
+			draft.channels_filter = value
+		})
 	}
 
 	function toggleShuffle() {
-		appState.channels_shuffled = !appState.channels_shuffled
+		appStateCollection.update(1, (draft) => {
+			draft.channels_shuffled = !draft.channels_shuffled
+		})
 	}
 
 	function handleMapChange({latitude, longitude, zoom}) {
@@ -111,7 +120,7 @@
 					<option value="v2">v2</option>
 				</select>
 			</label>
-			<button title="Show random channels" class:active={appState.channels_shuffled} onclick={toggleShuffle}>
+			<button title="Show random channels" class:active={appState?.channels_shuffled} onclick={toggleShuffle}>
 				<Icon icon="shuffle" />
 			</button>
 		</div>

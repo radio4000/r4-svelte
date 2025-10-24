@@ -1,6 +1,5 @@
 <script>
 	import TrackCard from '$lib/components/track-card.svelte'
-	import {incrementalLiveQuery} from '$lib/live-query'
 
 	/** @typedef {import('$lib/types').Track} Track */
 
@@ -54,20 +53,20 @@
 			return
 		}
 
-		// Turn the list of ids into real tracks.
-		return incrementalLiveQuery(
-			`
-		SELECT *
-		FROM tracks_with_meta
-		WHERE id IN (select unnest($1::uuid[]))
-		ORDER BY created_at desc
-	`,
-			[ids],
-			'id',
-			(res) => {
-				internalTracks = res.rows
-			}
-		)
+		// 	// Turn the list of ids into real tracks.
+		// 	return incrementalLiveQuery(
+		// 		`
+		// 	SELECT *
+		// 	FROM tracks_with_meta
+		// 	WHERE id IN (select unnest($1::uuid[]))
+		// 	ORDER BY created_at desc
+		// `,
+		// 		[ids],
+		// 		'id',
+		// 		(res) => {
+		// 			internalTracks = res.rows
+		// 		}
+		// 	)
 	})
 </script>
 

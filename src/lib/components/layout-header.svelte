@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {watchBroadcasts} from '$lib/broadcast'
 	import AddTrackModal from '$lib/components/add-track-modal.svelte'
 	import EditTrackModal from '$lib/components/edit-track-modal.svelte'
@@ -14,15 +14,18 @@
 
 	const {preloading} = $props()
 
+	const appState = useAppState()
+
+	const userChannelId = appState?.channels?.[0]
+
 	const userChannel = $derived.by(async () => {
-		const id = appState.channels?.[0]
-		if (!id) return null
-		const channels = await r5.channels.pull({id, limit: 1})
+		if (!userChannelId) return null
+		const channels = await r5.channels.pull({id: userChannelId, limit: 1})
 		return channels[0] || null
 	})
 
 	let broadcastCount = $state(0)
-	let editModalRef
+	let editModalRef = $state()
 
 	const unsubscribe = watchBroadcasts((data) => {
 		broadcastCount = data.broadcasts.length
@@ -45,12 +48,14 @@
 			<TestCounter />
 		{/await}
 	</a>
+
 	<HeaderSearch />
 
 	<menu class="row right">
 		{#await preloading then}
 			<AddTrackModal />
 			<EditTrackModal bind:this={editModalRef} />
+
 			{#await userChannel then channel}
 				{#if channel}
 					<a href="/{channel.slug}">
@@ -58,6 +63,7 @@
 					</a>
 				{/if}
 			{/await}
+
 			<hr />
 			<a
 				href="/broadcasts"
@@ -86,7 +92,9 @@
 				<Icon icon="terminal" size={20} />
 			</a>
 		{/await}
-		<ThemeToggle showLabel={false} />
+
+		<!-- <ThemeToggle showLabel={false} /> -->
+
 		<a
 			href="/settings"
 			class="btn"

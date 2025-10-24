@@ -1,7 +1,13 @@
 // Patched version of @tanstack/svelte-db useLiveQuery
 // https://github.com/TanStack/db/blob/main/packages/svelte-db/src/useLiveQuery.svelte.ts
-// Original calls flushSync inside $effect which violates Svelte 5 async mode
+//
+// First patch: Original calls flushSync inside $effect which violates Svelte 5 async mode
 // This version removes flushSync and relies on normal reactivity
+//
+// Second patch: Added findOne() support
+// When a query uses .findOne(), return single object instead of array
+//
+// TODO: Open PR to TanStack DB upstream for findOne() support in framework adapters
 
 import {untrack} from 'svelte'
 import {SvelteMap} from 'svelte/reactivity'
@@ -22,7 +28,8 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 			if (potentiallyUnwrapped !== configOrQueryOrCollection) {
 				unwrappedParam = potentiallyUnwrapped
 			}
-		} catch {
+		} catch (error) {
+			console.error('[useLiveQuery] Error unwrapping param:', error)
 			unwrappedParam = configOrQueryOrCollection
 		}
 
@@ -43,26 +50,47 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		deps.forEach((dep) => toValue(dep))
 
 		if (typeof unwrappedParam === `function`) {
-			return createLiveQueryCollection({
-				query: unwrappedParam,
-				startSync: true
-			})
+			try {
+				return createLiveQueryCollection({
+					query: unwrappedParam,
+					startSync: true
+				})
+			} catch (error) {
+				console.error('[useLiveQuery] Error creating LiveQueryCollection from function:', error)
+				throw error
+			}
 		} else {
-			return createLiveQueryCollection({
-				...unwrappedParam,
-				startSync: true
-			})
+			try {
+				return createLiveQueryCollection({
+					...unwrappedParam,
+					startSync: true
+				})
+			} catch (error) {
+				console.error('[useLiveQuery] Error creating LiveQueryCollection from object:', error)
+				throw error
+			}
 		}
 	})
 
 	const state = new SvelteMap()
 	let internalData = $state([])
-	let status = $state(collection.status)
+	let status = $derived(collection.status)
+
+	// Check if this query uses findOne() by inspecting the collection config
+	// React version uses collection.options.singleResult to detect findOne()
+	const isFindOne = $derived(collection?.options?.singleResult || collection?.config?.singleResult || false)
 
 	const syncDataFromCollection = (currentCollection) => {
 		untrack(() => {
-			internalData = []
-			internalData.push(...Array.from(currentCollection.values()))
+			const values = Array.from(currentCollection.values())
+
+			// For findOne queries, return single object or undefined
+			if (isFindOne) {
+				internalData = values[0]
+			} else {
+				// For regular queries, return array - assign directly to avoid flicker
+				internalData = values
+			}
 		})
 	}
 
@@ -75,6 +103,49 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		if (currentUnsubscribe) {
 			currentUnsubscribe()
 		}
+
+		// PATCH: Call loadSubset if collection provides it
+		// This implements naive RFC #676 on-demand loading
+		const loadSubsetIfNeeded = async () => {
+			// Check if this is a LiveQueryCollection wrapping a subset collection
+			// LiveQueryCollections have source collections that might have loadSubset
+			const sourceCollections = currentCollection.sourceCollections
+
+			if (sourceCollections && sourceCollections.size > 0) {
+				console.log('[useLiveQuery] Found source collections:', Array.from(sourceCollections.keys()))
+
+				// Get the query config to extract predicates
+				const queryConfig = currentCollection.config?.query || currentCollection.options?.query
+				console.log('[useLiveQuery] Query config:', queryConfig)
+
+				// For each source collection, check if it has loadSubset
+				for (const [alias, sourceCollection] of sourceCollections) {
+					if (typeof sourceCollection.loadSubset === 'function') {
+						console.log(`[useLiveQuery] Source collection "${alias}" has loadSubset`)
+
+						// TODO: Extract predicates specific to this source
+						// For now, call with empty to debug
+						try {
+							const result = await sourceCollection.loadSubset({})
+							console.log(`[useLiveQuery] loadSubset for "${alias}" returned:`, result)
+						} catch (error) {
+							console.error(`[useLiveQuery] loadSubset for "${alias}" failed:`, error)
+						}
+					}
+				}
+			} else if (typeof currentCollection.loadSubset === 'function') {
+				// Direct collection with loadSubset
+				console.log('[useLiveQuery] Collection has loadSubset directly')
+				try {
+					const result = await currentCollection.loadSubset({})
+					console.log('[useLiveQuery] loadSubset returned:', result)
+				} catch (error) {
+					console.error('[useLiveQuery] loadSubset failed:', error)
+				}
+			}
+		}
+
+		loadSubsetIfNeeded()
 
 		untrack(() => {
 			state.clear()

@@ -9,7 +9,7 @@ export const r4 = {
 	channels: {
 		readChannels: async (limit = debugLimit) => {
 			const {data, error} = await sdk.supabase
-				.from('channels_with_tracks')
+				.from('channels')
 				.select('*')
 				.order('updated_at', {ascending: false})
 				.limit(limit)
@@ -17,7 +17,7 @@ export const r4 = {
 			return data || []
 		},
 		readChannel: async (slug: string) => {
-			const {data, error} = await sdk.supabase.from('channels_with_tracks').select('*').eq('slug', slug).single()
+			const {data, error} = await sdk.supabase.from('channels').select('*').eq('slug', slug).single()
 			if (error) throw error
 			return data
 		},

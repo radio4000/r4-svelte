@@ -1,12 +1,14 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+
+	const appState = useAppState()
 
 	let {data} = $props()
 
 	const channel = $derived(data.channel)
-	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && appState.channels?.includes(channel?.id))
+	const isSignedIn = $derived(!!appState?.user)
+	const canEdit = $derived(isSignedIn && appState?.channels?.includes(channel?.id))
 
 	let error = $state('')
 	let success = $state(false)

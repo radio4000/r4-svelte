@@ -1,10 +1,18 @@
 import {play} from '$lib/api/player'
-import {appState, defaultAppState} from '$lib/app-state.svelte'
+import {defaultAppState} from '$lib/app-state.svelte'
 import {leaveBroadcast, upsertRemoteBroadcast} from '$lib/broadcast'
+import {
+	channelsCollection,
+	isChannelOutdated,
+	fetchChannelTracks,
+	playHistoryCollection,
+	followersCollection,
+	appStateCollection,
+	tracksCollection
+} from '$lib/collections'
 import {logger} from '$lib/logger'
 import {r4} from '$lib/r4'
 import {r5} from '$lib/r5'
-import {pg} from '$lib/r5/db'
 import {pull as pullFollowers, sync as syncFollowers} from '$lib/r5/followers'
 import {shuffleArray} from '$lib/utils.ts'
 
@@ -20,23 +28,29 @@ export async function checkUser() {
 	try {
 		const user = await r4.users.readUser()
 		if (!user) {
-			appState.channels = []
-			appState.broadcasting_channel_id = undefined
+			appStateCollection.update(1, (draft) => {
+				draft.channels = []
+				draft.broadcasting_channel_id = undefined
+			})
 			return null
 		}
 
 		const channels = await r4.channels.readUserChannels()
-		const wasSignedOut = !appState.channels?.length
+		const appState = appStateCollection.get(1)
+		const wasSignedOut = !appState?.channels?.length
 
 		for (const c of channels) {
 			await r5.channels.pull({slug: c.slug})
 		}
 
-		appState.channels = channels.map((/** @type {any} */ c) => c.id)
+		const channelIds = channels.map((/** @type {any} */ c) => c.id)
+		appStateCollection.update(1, (draft) => {
+			draft.channels = channelIds
+		})
 
 		// Sync followers when user signs in (not on every check)
-		if (wasSignedOut && appState.channels.length) {
-			syncFollowers(appState.channels[0]).catch((err) => log.error('sync_followers_on_signin_error', err))
+		if (wasSignedOut && channelIds.length) {
+			syncFollowers(channelIds[0]).catch((err) => log.error('sync_followers_on_signin_error', err))
 		}
 
 		return user
@@ -53,7 +67,8 @@ export async function checkUser() {
 export async function playTrack(id, endReason, startReason) {
 	log.log('play_track', {id, endReason, startReason})
 
-	const track = (await pg.sql`SELECT * FROM tracks WHERE id = ${id}`).rows[0]
+	// Get track from collection
+	const track = tracksCollection.toArray.find((t) => t.id === id)
 	if (!track) throw new Error(`play_track_error: Missing local track: ${id}`)
 
 	// Set flag for user-initiated playback
@@ -63,28 +78,34 @@ export async function playTrack(id, endReason, startReason) {
 	}
 
 	// Get current track before we change it
-	const previousTrackId = appState.playlist_track
+	const appState = appStateCollection.get(1)
+	const previousTrackId = appState?.playlist_track
 
-	const tracks = (await pg.sql`select id from tracks where channel_id = ${track.channel_id} order by created_at desc`)
-		.rows
+	// Get all track IDs for this channel
+	const tracks = tracksCollection.toArray
+		.filter((t) => t.channel_id === track.channel_id)
+		.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 	const ids = tracks.map((t) => t.id)
 
-	appState.playlist_track = id
-	if (!appState.playlist_tracks.length || !appState.playlist_tracks.includes(id)) await setPlaylist(ids)
+	appStateCollection.update(1, (draft) => {
+		draft.playlist_track = id
+	})
+	if (!appState?.playlist_tracks.length || !appState?.playlist_tracks.includes(id)) await setPlaylist(ids)
 	await addPlayHistory({nextTrackId: id, previousTrackId, endReason, startReason})
 
 	// Auto-update broadcast if currently broadcasting
-	if (appState.broadcasting_channel_id && startReason !== 'broadcast_sync') {
+	const currentState = appStateCollection.get(1)
+	if (currentState?.broadcasting_channel_id && startReason !== 'broadcast_sync') {
 		try {
-			await upsertRemoteBroadcast(appState.broadcasting_channel_id, id)
+			await upsertRemoteBroadcast(currentState.broadcasting_channel_id, id)
 			log.log('broadcast_auto_updated', {
-				channelId: appState.broadcasting_channel_id,
+				channelId: currentState.broadcasting_channel_id,
 				trackId: id,
 				startReason
 			})
 		} catch (error) {
 			log.error('broadcast_auto_update_failed', {
-				channelId: appState.broadcasting_channel_id,
+				channelId: currentState.broadcasting_channel_id,
 				trackId: id,
 				error: /** @type {Error} */ (error).message
 			})
@@ -102,8 +123,17 @@ export async function playTrack(id, endReason, startReason) {
 export async function playChannel({id, slug}, index = 0) {
 	log.log('play_channel', {id, slug})
 	leaveBroadcast()
-	if (await r5.channels.outdated(slug)) await r5.pull(slug)
-	const tracks = (await pg.sql`select * from tracks where channel_id = ${id} order by created_at desc`).rows
+
+	// Check if tracks need updating using smart staleness check
+	if (await isChannelOutdated(slug)) {
+		await fetchChannelTracks(slug)
+	}
+
+	// Get tracks from collection
+	const tracks = tracksCollection.toArray
+		.filter((t) => t.channel_id === id)
+		.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
 	const ids = tracks.map((t) => t.id)
 	await setPlaylist(ids)
 	await playTrack(tracks[index].id, '', 'play_channel')
@@ -111,19 +141,25 @@ export async function playChannel({id, slug}, index = 0) {
 
 /** @param {string[]} trackIds */
 export async function setPlaylist(trackIds) {
-	appState.playlist_tracks = trackIds
-	appState.playlist_tracks_shuffled = shuffleArray(trackIds)
+	appStateCollection.update(1, (draft) => {
+		draft.playlist_tracks = trackIds
+		draft.playlist_tracks_shuffled = shuffleArray(trackIds)
+	})
 }
 
 /** @param {string[]} trackIds */
 export async function addToPlaylist(trackIds) {
-	const currentTracks = appState.playlist_tracks || []
-	appState.playlist_tracks = [...currentTracks, ...trackIds]
+	const appState = appStateCollection.get(1)
+	const currentTracks = appState?.playlist_tracks || []
+	const newTracks = [...currentTracks, ...trackIds]
 
-	// If shuffle is on, regenerate the shuffled playlist
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = shuffleArray(appState.playlist_tracks)
-	}
+	appStateCollection.update(1, (draft) => {
+		draft.playlist_tracks = newTracks
+		// If shuffle is on, regenerate the shuffled playlist
+		if (draft.shuffle) {
+			draft.playlist_tracks_shuffled = shuffleArray(newTracks)
+		}
+	})
 }
 
 export async function toggleTheme() {
@@ -136,22 +172,28 @@ export async function toggleTheme() {
 		document.documentElement.classList.remove('dark')
 		document.documentElement.classList.add('light')
 	}
-	appState.theme = newTheme
+	appStateCollection.update(1, (draft) => {
+		draft.theme = newTheme
+	})
 }
 
 export async function toggleQueuePanel() {
-	appState.queue_panel_visible = !appState.queue_panel_visible
+	appStateCollection.update(1, (draft) => {
+		draft.queue_panel_visible = !draft.queue_panel_visible
+	})
 }
 
 export async function resetDatabase() {
-	Object.assign(appState, defaultAppState)
+	appStateCollection.update(1, () => ({...defaultAppState}))
 	await new Promise((resolve) => setTimeout(resolve, 100))
 	await r5.db.reset()
 }
 
 export function togglePlayerExpanded() {
-	appState.player_expanded = !appState.player_expanded
-	appState.show_video_player = !appState.show_video_player
+	appStateCollection.update(1, (draft) => {
+		draft.player_expanded = !draft.player_expanded
+		draft.show_video_player = !draft.show_video_player
+	})
 }
 
 export function openSearch() {
@@ -184,34 +226,41 @@ export function togglePlayPause() {
  * @param {string} options.startReason
  */
 export async function addPlayHistory({previousTrackId, nextTrackId, endReason = '', startReason}) {
-	const {rows} = await pg.sql`SELECT shuffle FROM app_state WHERE id = 1`
-	const shuffleState = rows[0]?.shuffle || false
+	const appState = appStateCollection.get(1)
+	const shuffleState = appState?.shuffle
 
 	if (previousTrackId && previousTrackId !== nextTrackId && endReason) {
 		const mediaController = document.querySelector('media-controller#r5')
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 
-		await pg.sql`
-			UPDATE play_history
-			SET ended_at = CURRENT_TIMESTAMP,
-				ms_played = ${msPlayed},
-				reason_end = ${endReason}
-			WHERE track_id = ${previousTrackId} AND ended_at IS NULL
-		`
+		// Find and update the most recent unclosed entry for this track
+		const entries = playHistoryCollection.toArray
+			.filter((e) => e.track_id === previousTrackId && !e.ended_at)
+			.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+
+		if (entries[0]) {
+			playHistoryCollection.update(entries[0].id, (draft) => {
+				draft.ended_at = new Date().toISOString()
+				draft.ms_played = msPlayed
+				draft.reason_end = endReason
+			})
+		}
 	}
 
 	// Start new track if reason provided
 	if (startReason) {
-		await pg.sql`
-			INSERT INTO play_history (
-				track_id, started_at, ended_at, ms_played,
-				reason_start, reason_end, shuffle, skipped
-			) VALUES (
-				${nextTrackId}, CURRENT_TIMESTAMP, NULL, 0,
-				${startReason}, NULL, ${shuffleState}, FALSE
-			)
-		`
+		playHistoryCollection.insert({
+			id: crypto.randomUUID(),
+			track_id: nextTrackId,
+			started_at: new Date().toISOString(),
+			ended_at: null,
+			ms_played: 0,
+			reason_start: startReason,
+			reason_end: null,
+			shuffle: shuffleState,
+			skipped: false
+		})
 	}
 }
 
@@ -220,23 +269,28 @@ export async function addPlayHistory({previousTrackId, nextTrackId, endReason = 
  * @param {string} channelId - ID of the channel to follow
  */
 export async function followChannel(followerId, channelId) {
-	await pg.sql`
-		INSERT INTO followers (follower_id, channel_id, created_at, synced_at)
-		VALUES (${followerId}, ${channelId}, CURRENT_TIMESTAMP, NULL)
-		ON CONFLICT (follower_id, channel_id) DO NOTHING
-	`
+	const key = `${followerId}:${channelId}`
+	const existing = followersCollection.toArray.find((f) => f.follower_id === followerId && f.channel_id === channelId)
+
+	if (!existing) {
+		followersCollection.insert({
+			follower_id: followerId,
+			channel_id: channelId,
+			created_at: new Date().toISOString(),
+			synced_at: null
+		})
+	}
 
 	// If authenticated and not a v1 channel, sync to R4 immediately
-	if (appState.channels?.length && followerId !== 'local-user') {
-		const channel = await pg.sql`SELECT source FROM channels WHERE id = ${channelId}`.then((r) => r.rows[0])
+	const appState = appStateCollection.get(1)
+	if (appState?.channels?.length && followerId !== 'local-user') {
+		const channel = channelsCollection.toArray.find((c) => c.id === channelId)
 		if (channel?.source !== 'v1') {
 			try {
 				await r4.channels.followChannel(followerId, channelId)
-				await pg.sql`
-					UPDATE followers
-					SET synced_at = CURRENT_TIMESTAMP
-					WHERE follower_id = ${followerId} AND channel_id = ${channelId}
-				`
+				followersCollection.update(key, (draft) => {
+					draft.synced_at = new Date().toISOString()
+				})
 				log.log('follow_synced', {followerId, channelId})
 			} catch (err) {
 				log.error('follow_sync_error', {followerId, channelId, err})
@@ -251,8 +305,9 @@ export async function followChannel(followerId, channelId) {
  */
 export async function unfollowChannel(followerId, channelId) {
 	// If authenticated and not a v1 channel, unfollow from R4 first
-	if (appState.channels?.length && followerId !== 'local-user') {
-		const channel = await pg.sql`SELECT source FROM channels WHERE id = ${channelId}`.then((r) => r.rows[0])
+	const appState = appStateCollection.get(1)
+	if (appState?.channels?.length && followerId !== 'local-user') {
+		const channel = channelsCollection.toArray.find((c) => c.id === channelId)
 		if (channel?.source !== 'v1') {
 			try {
 				await r4.channels.unfollowChannel(followerId, channelId)
@@ -263,10 +318,8 @@ export async function unfollowChannel(followerId, channelId) {
 		}
 	}
 
-	await pg.sql`
-		DELETE FROM followers
-		WHERE follower_id = ${followerId} AND channel_id = ${channelId}
-	`
+	const key = `${followerId}:${channelId}`
+	followersCollection.delete(key)
 }
 
 /**
@@ -276,26 +329,32 @@ export async function unfollowChannel(followerId, channelId) {
  */
 export async function getFollowers(followerId) {
 	log.log('getting_followers', followerId)
-	const {rows} = await pg.sql`
-		SELECT c.*
-		FROM followers f
-		JOIN channels c ON f.channel_id = c.id
-		WHERE f.follower_id = ${followerId}
-		ORDER BY f.created_at DESC
-	`
-	if (rows.length === 0 && followerId !== 'local-user') {
+
+	// Get channel IDs from followers collection
+	const followerRecords = followersCollection.toArray
+		.filter((f) => f.follower_id === followerId)
+		.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+	// Join with channels
+	const channels = followerRecords
+		.map((f) => channelsCollection.toArray.find((c) => c.id === f.channel_id))
+		.filter((c) => c !== undefined)
+
+	if (channels.length === 0 && followerId !== 'local-user') {
 		log.log('pulling_followers', {followerId, reason: 'no_local_followers'})
 		await pullFollowers(followerId)
-		const {rows: newRows} = await pg.sql`
-			SELECT c.*
-			FROM followers f
-			JOIN channels c ON f.channel_id = c.id
-			WHERE f.follower_id = ${followerId}
-			ORDER BY f.created_at DESC
-		`
-		return newRows
+
+		// Re-fetch after pull
+		const newFollowerRecords = followersCollection.toArray
+			.filter((f) => f.follower_id === followerId)
+			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+		return newFollowerRecords
+			.map((f) => channelsCollection.toArray.find((c) => c.id === f.channel_id))
+			.filter((c) => c !== undefined)
 	}
-	return rows
+
+	return channels
 }
 
 /**
@@ -304,12 +363,7 @@ export async function getFollowers(followerId) {
  * @returns {Promise<boolean>}
  */
 export async function isFollowing(followerId, channelId) {
-	const {rows} = await pg.sql`
-		SELECT 1 FROM followers
-		WHERE follower_id = ${followerId} AND channel_id = ${channelId}
-		LIMIT 1
-	`
-	return rows.length > 0
+	return followersCollection.toArray.some((f) => f.follower_id === followerId && f.channel_id === channelId)
 }
 
 /**
@@ -319,10 +373,11 @@ export async function deleteTrack(trackId) {
 	log.log('delete_track', {trackId})
 
 	// Delete locally
-	await pg.sql`DELETE FROM tracks WHERE id = ${trackId}`
+	tracksCollection.delete(trackId)
 
 	// Delete remotely if authenticated
-	if (appState.channels?.length) {
+	const appState = appStateCollection.get(1)
+	if (appState?.channels?.length) {
 		try {
 			await r4.tracks.deleteTrack(trackId)
 			log.log('track_deleted_remotely', {trackId})

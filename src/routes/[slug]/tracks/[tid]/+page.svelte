@@ -1,6 +1,9 @@
 <script>
-	import {invalidate} from '$app/navigation'
 	import {page} from '$app/state'
+	import {tracksCollection, channelsCollection, trackMetaCollection} from '$lib/collections'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
+	import {eq} from '@tanstack/svelte-db'
+	import {extractYouTubeId} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
 	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
@@ -9,19 +12,59 @@
 	import TrackMetaYoutube from '$lib/components/track-meta-youtube.svelte'
 	import TrackRelated from '$lib/components/track-related.svelte'
 
-	// import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	// import ButtonPlay from '$lib/components/button-play.svelte'
-	// import ChannelCard from '$lib/components/channel-card.svelte'
-
 	let {data} = $props()
-	const track = $derived(data.track)
-	const channel = $derived(data.channel)
+	const {slug, tid} = data
+
+	// Live query for track
+	const trackQuery = useLiveQuery(
+		(q) => {
+			if (!tid) return undefined
+			return q
+				.from({track: tracksCollection})
+				.where(({track}) => eq(track.id, tid))
+				.findOne()
+		},
+		[tid]
+	)
+	const baseTrack = $derived(trackQuery.data)
+
+	// Live query for channel
+	const channelQuery = useLiveQuery(
+		(q) => {
+			if (!slug) return undefined
+			return q
+				.from({channel: channelsCollection})
+				.where(({channel}) => eq(channel.slug, slug))
+				.findOne()
+		},
+		[slug]
+	)
+	const channel = $derived(channelQuery.data)
+
+	// Get ytid for metadata lookup
+	const ytid = $derived(baseTrack?.ytid || (baseTrack?.url ? extractYouTubeId(baseTrack.url) : null))
+
+	// Find metadata from collection (localStorage collection, direct access)
+	const meta = $derived(ytid ? trackMetaCollection.toArray.find((m) => m.ytid === ytid) : undefined)
+
+	// Merge track with metadata
+	const track = $derived(
+		baseTrack
+			? {
+					...baseTrack,
+					duration: meta?.duration || baseTrack.duration,
+					youtube_data: meta?.youtube_data || baseTrack.youtube_data,
+					musicbrainz_data: meta?.musicbrainz_data || baseTrack.musicbrainz_data,
+					discogs_data: meta?.discogs_data || baseTrack.discogs_data
+				}
+			: undefined
+	)
+
 	const activeTab = $derived(page.url.searchParams.get('tab') || 'r5')
 
-	async function updateTrackMeta(meta) {
+	function updateTrackMeta(meta) {
 		console.log('Metadata updated:', meta)
-		// Re-run the load function to get fresh data
-		await invalidate('track:meta')
+		// Data will auto-update via reactive $derived
 	}
 </script>
 
@@ -29,36 +72,40 @@
 	<title>{track?.title || 'Track'} by {channel?.name || 'Channel'} - R5</title>
 </svelte:head>
 
-<article>
-	<header>
-		<p><a href="/{channel.slug}">@{channel.slug}</a> / {track.title}</p>
-		<menu class="tree">
-			<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>r5</a>
-			<a href="?tab=youtube" class:active={activeTab === 'youtube'}>youtube</a>
-			<a href="?tab=musicbrainz" class:active={activeTab === 'musicbrainz'}>musicbrainz</a>
-			<a href="?tab=discogs" class:active={activeTab === 'discogs'}>discogs</a>
-			<a href="?tab=related" class:active={activeTab === 'related'}>related</a>
-		</menu>
-		<!-- <ChannelCard {channel} /> -->
-		<!-- <ButtonPlay {channel} /> -->
-	</header>
+{#if !track || !channel}
+	<p>Loading...</p>
+{:else}
+	<article>
+		<header>
+			<p><a href="/{channel.slug}">@{channel.slug}</a> / {track.title}</p>
+			<menu class="tree">
+				<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>r5</a>
+				<a href="?tab=youtube" class:active={activeTab === 'youtube'}>youtube</a>
+				<a href="?tab=musicbrainz" class:active={activeTab === 'musicbrainz'}>musicbrainz</a>
+				<a href="?tab=discogs" class:active={activeTab === 'discogs'}>discogs</a>
+				<a href="?tab=related" class:active={activeTab === 'related'}>related</a>
+			</menu>
+			<!-- <ChannelCard {channel} /> -->
+			<!-- <ButtonPlay {channel} /> -->
+		</header>
 
-	{#if activeTab === 'youtube'}
-		<TrackMetaYoutube data={track.youtube_data} {track} />
-	{:else if activeTab === 'musicbrainz'}
-		<TrackMetaMusicbrainz data={track.musicbrainz_data} {track} />
-	{:else if activeTab === 'discogs'}
-		<TrackMetaDiscogs data={track.discogs_data} {track} />
-	{:else if activeTab === 'related'}
-		<TrackRelated {track} />
-	{:else}
-		<TrackCard {track} />
-		<TrackMetaR5 data={track} />
-	{/if}
+		{#if activeTab === 'youtube'}
+			<TrackMetaYoutube data={track.youtube_data} {track} />
+		{:else if activeTab === 'musicbrainz'}
+			<TrackMetaMusicbrainz data={track.musicbrainz_data} {track} />
+		{:else if activeTab === 'discogs'}
+			<TrackMetaDiscogs data={track.discogs_data} {track} />
+		{:else if activeTab === 'related'}
+			<TrackRelated {track} />
+		{:else}
+			<TrackCard {track} />
+			<TrackMetaR5 data={track} />
+		{/if}
 
-	<hr />
-	<TrackMeta {track} onResult={updateTrackMeta} />
-</article>
+		<hr />
+		<TrackMeta {track} onResult={updateTrackMeta} />
+	</article>
+{/if}
 
 <style>
 	article {

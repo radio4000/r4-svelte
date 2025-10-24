@@ -5,49 +5,100 @@
 	import SearchStatus from '$lib/components/search-status.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {trap} from '$lib/focus'
-	import {r5} from '$lib/r5'
-
-	/** @type {import('$lib/types.ts').Channel[]} */
-	let channels = $state([])
-
-	/** @type {import('$lib/types.ts').Track[]} */
-	let tracks = $state([])
+	import {channelsCollection, tracksCollection} from '$lib/collections'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
+	import {or, and, ilike, eq} from '@tanstack/svelte-db'
 
 	let searchQuery = $state('')
-	let isLoading = $state(false)
 
 	// Watch for URL changes and update search
 	$effect(() => {
 		const urlSearch = page.url.searchParams.get('search')
 		if (urlSearch && urlSearch !== searchQuery) {
 			searchQuery = urlSearch
-			search()
 		} else if (!urlSearch && searchQuery) {
 			searchQuery = ''
-			clear()
 		}
 	})
 
-	function clear() {
-		channels = []
-		tracks = []
-	}
+	// Parse @mention syntax: "@slug query" or "@slug"
+	const parsedQuery = $derived(() => {
+		const query = searchQuery.trim()
+		if (!query || query.length < 2) return {type: 'empty'}
 
-	async function search() {
-		if (searchQuery.trim().length < 2) return clear()
+		if (query.startsWith('@')) {
+			const mentionContent = query.slice(1).trim()
+			const spaceIndex = mentionContent.indexOf(' ')
 
-		isLoading = true
-
-		try {
-			const results = await r5.search.all(searchQuery)
-			channels = results.channels
-			tracks = results.tracks
-		} catch (error) {
-			console.error('search:error', error)
+			if (spaceIndex > -1) {
+				return {
+					type: 'mention',
+					channelSlug: mentionContent.slice(0, spaceIndex),
+					trackQuery: mentionContent.slice(spaceIndex + 1).trim()
+				}
+			}
+			return {type: 'mention', channelSlug: mentionContent, trackQuery: ''}
 		}
 
-		isLoading = false
-	}
+		return {type: 'all', query}
+	})
+
+	// Search channels
+	const channelsQuery = useLiveQuery(
+		(q) => {
+			const parsed = parsedQuery()
+			if (parsed.type === 'empty') return undefined
+
+			let query = q.from({channel: channelsCollection})
+
+			if (parsed.type === 'mention') {
+				// Exact slug match for @mention
+				query = query.where(({channel}) => eq(channel.slug, parsed.channelSlug))
+			} else {
+				// Search in name, description, slug
+				const pattern = `%${parsed.query}%`
+				query = query.where(({channel}) =>
+					or(ilike(channel.name, pattern), ilike(channel.description || '', pattern), ilike(channel.slug, pattern))
+				)
+			}
+
+			return query.orderBy(({channel}) => channel.name, 'asc')
+		},
+		[searchQuery]
+	)
+
+	// Search tracks
+	const tracksQuery = useLiveQuery(
+		(q) => {
+			const parsed = parsedQuery()
+			if (parsed.type === 'empty') return undefined
+			if (parsed.type === 'mention' && !parsed.trackQuery) return undefined
+
+			let query = q.from({track: tracksCollection})
+
+			if (parsed.type === 'mention') {
+				// Filter by channel slug and track query
+				const pattern = `%${parsed.trackQuery}%`
+				query = query.where(({track}) =>
+					and(
+						eq(track.channel_slug, parsed.channelSlug),
+						or(ilike(track.title, pattern), ilike(track.description || '', pattern))
+					)
+				)
+			} else {
+				// Search all tracks
+				const pattern = `%${parsed.query}%`
+				query = query.where(({track}) => or(ilike(track.title, pattern), ilike(track.description || '', pattern)))
+			}
+
+			return query.orderBy(({track}) => track.title, 'asc')
+		},
+		[searchQuery]
+	)
+
+	const channels = $derived(channelsQuery.data || [])
+	const tracks = $derived(tracksQuery.data || [])
+	const isLoading = $derived(channelsQuery.status === 'loading' || tracksQuery.status === 'loading')
 
 	async function playSearchResults() {
 		const ids = tracks.map((t) => t.id)

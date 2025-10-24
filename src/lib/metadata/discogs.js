@@ -1,10 +1,10 @@
 import {logger} from '$lib/logger'
-import {getPg} from '../r5/db.js'
+import {trackMetaCollection, tracksCollection} from '$lib/collections'
 
 const log = logger.ns('metadata/discogs').seal()
 
 /**
- * Fetch Discogs data from URL and save to track_meta
+ * Fetch Discogs data from URL and save to trackMetaCollection
  * @param {string} ytid YouTube video ID
  * @param {string} discogsUrl Discogs release/master URL
  * @returns {Promise<Object|null>} Discogs data
@@ -16,15 +16,20 @@ export async function pull(ytid, discogsUrl) {
 	if (!discogsData) return null
 
 	try {
-		const pg = await getPg()
-		await pg.sql`
-			INSERT INTO track_meta (ytid, discogs_data, discogs_updated_at, updated_at)
-			VALUES (${ytid}, ${JSON.stringify(discogsData)}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-			ON CONFLICT (ytid) DO UPDATE SET
-				discogs_data = EXCLUDED.discogs_data,
-				discogs_updated_at = EXCLUDED.discogs_updated_at,
-				updated_at = EXCLUDED.updated_at
-		`
+		const existing = trackMetaCollection.toArray.find((m) => m.ytid === ytid)
+		const meta = {
+			ytid,
+			discogs_data: discogsData,
+			discogs_updated_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
+		}
+
+		if (existing) {
+			trackMetaCollection.update(ytid, (draft) => ({...draft, ...meta}))
+		} else {
+			trackMetaCollection.insert(meta)
+		}
+
 		log.info('updated', discogsData)
 		return discogsData
 	} catch (error) {
@@ -122,7 +127,7 @@ export async function searchUrl(title) {
 }
 
 /**
- * Hunt for Discogs URL via MusicBrainz chain and save URL to tracks table
+ * Hunt for Discogs URL via MusicBrainz chain and save URL to tracks collection
  * @param {string} trackId Track UUID
  * @param {string} ytid YouTube video ID
  * @param {string} title Track title for search
@@ -135,14 +140,9 @@ export async function hunt(trackId, ytid, title) {
 		// Check if we already have MusicBrainz data locally
 		let musicbrainzData = null
 
-		// Check local track_meta table
-		const pg = await getPg()
-		const result = await pg.sql`
-			SELECT musicbrainz_data 
-			FROM track_meta 
-			WHERE ytid = ${ytid}
-		`
-		musicbrainzData = result.rows[0]?.musicbrainz_data
+		// Check trackMetaCollection
+		const meta = trackMetaCollection.toArray.find((m) => m.ytid === ytid)
+		musicbrainzData = meta?.musicbrainz_data
 
 		// If we have cached MusicBrainz data with releases, use it
 		if (musicbrainzData?.releases?.length > 0) {
@@ -274,7 +274,7 @@ async function getDiscogsUrlFromRelease(releaseId) {
 }
 
 /**
- * Save discovered Discogs URL to track
+ * Save discovered Discogs URL to tracks collection
  * @param {string} trackId Track UUID
  * @param {string} discogsUrl Discovered Discogs URL
  */
@@ -282,32 +282,15 @@ async function saveDiscogsUrl(trackId, discogsUrl) {
 	if (!trackId || !discogsUrl) return false
 
 	try {
-		const pg = await getPg()
-		await pg.sql`
-			UPDATE tracks 
-			SET discogs_url = ${discogsUrl}
-			WHERE id = ${trackId}
-		`
+		tracksCollection.update(trackId, (draft) => {
+			draft.discogs_url = discogsUrl
+		})
 		log.info('saved discogs url', {trackId})
 		return true
 	} catch (error) {
 		log.error('save discogs url failed', {trackId, discogsUrl, error})
 		return false
 	}
-}
-
-/**
- * Read Discogs metadata from local track_meta
- * @param {string[]} ytids YouTube video IDs
- * @returns {Promise<Object[]>} Local metadata
- */
-export async function local(ytids) {
-	const pg = await getPg()
-	const res = await pg.sql`
-		SELECT * FROM track_meta 
-		WHERE ytid = ANY(${ytids}) AND discogs_data IS NOT NULL
-	`
-	return res.rows
 }
 
 /**

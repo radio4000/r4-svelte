@@ -1,6 +1,13 @@
 <script>
 	import {page} from '$app/state'
-	import {r5} from '$lib/r5'
+	import {
+		appStateCollection,
+		playHistoryCollection,
+		followersCollection,
+		trackMetaCollection,
+		channelsCollection,
+		tracksCollection
+	} from '$lib/collections'
 	import {delay} from '$lib/utils.ts'
 
 	let isResetting = $state(false)
@@ -11,10 +18,18 @@
 	async function resetDatabase() {
 		isResetting = true
 		try {
-			await r5.db.reset()
-			await r5.db.migrate()
+			// Clear all TanStack DB collections from localStorage
+			localStorage.removeItem('r5-app-state')
+			localStorage.removeItem('r5-play-history')
+			localStorage.removeItem('r5-followers')
+			localStorage.removeItem('r5-track-meta')
+			localStorage.removeItem('r5-channels')
+			localStorage.removeItem('r5-tracks')
+			// Clear TanStack Query cache
+			localStorage.removeItem('r5-tanstack-cache')
+
 			await delay(1000)
-			console.log('Database recreated and migrated')
+			console.log('All collections and cache cleared from localStorage')
 			resetSuccess = true
 		} catch (err) {
 			console.error('Reset failed:', err)

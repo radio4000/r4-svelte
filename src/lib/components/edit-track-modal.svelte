@@ -1,6 +1,7 @@
 <script>
 	import {logger} from '$lib/logger'
 	import Modal from '$lib/components/modal.svelte'
+	import {tracksCollection} from '$lib/collections'
 
 	const log = logger.ns('edit_track_modal').seal()
 
@@ -40,27 +41,27 @@
 	async function handleUpdate(event) {
 		log.info('handleUpdate called', {event_detail: event.detail})
 
-		// @radio4000/components returns {data: null, error: null} - use currentTrack instead
 		if (!currentTrack?.id) {
 			log.warn('no currentTrack available')
 			return
 		}
 
-		log.info('track updated remotely', {trackId: currentTrack.id})
+		// Optimistic update via TanStack DB collection
+		const tx = tracksCollection.update(currentTrack.id, (draft) => {
+			draft.title = editData.title
+			draft.description = editData.description
+			draft.url = editData.url
+		})
 
-		// Update the track object
-		currentTrack.title = editData.title
-		currentTrack.description = editData.description
-		currentTrack.url = editData.url
-
-		// Dispatch event for parent to handle track update
-		document.dispatchEvent(
-			new CustomEvent('r5:trackUpdated', {
-				detail: {track: currentTrack}
-			})
-		)
-
-		showModal = false
+		// Wait for server persistence
+		try {
+			await tx.isPersisted.promise
+			log.info('track updated and persisted', {trackId: currentTrack.id})
+			showModal = false
+		} catch (error) {
+			log.error('track update failed', {trackId: currentTrack.id, error})
+			// Optimistic update automatically rolled back
+		}
 	}
 </script>
 

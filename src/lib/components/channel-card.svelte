@@ -1,12 +1,12 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {trimWithEllipsis} from '$lib/utils.ts'
 	import ChannelHero from './channel-hero.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel}}*/
 	let {channel, children} = $props()
 
-	const broadcasting = $derived(channel.broadcasting || appState.listening_to_channel_id === channel.id)
+	const appState = useAppState()
+	const broadcasting = $derived(channel.broadcasting || appState?.listening_to_channel_id === channel.id)
 
 	/** @param {MouseEvent} event */
 	async function doubleclick({currentTarget}) {

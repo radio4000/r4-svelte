@@ -1,4 +1,5 @@
 <script>
+	import {tracksCollection} from '$lib/collections'
 	import {r5} from '$lib/r5'
 
 	const {tid} = $props()
@@ -8,18 +9,15 @@
 	$effect(async () => {
 		if (!tid) return
 
-		track = (await r5.db.pg.sql`select * from tracks where id = ${tid}`).rows[0]
+		// Try to find track in collection
+		track = tracksCollection.toArray.find((t) => t.id === tid)
 
-		// if no local track, get it!
+		// If not found, pull from remote
 		if (!track) {
 			await r5.tracks.pull({id: tid})
-			track = (await r5.db.pg.sql`select * from tracks where id = ${tid}`).rows[0]
+			track = tracksCollection.toArray.find((t) => t.id === tid)
 		}
 	})
-
-	// const promise = $derived.by(() => {
-	// 	return r5.db.pg.sql`select * from tracks where id = ${tid}`
-	// })
 </script>
 
 {#if track}

@@ -1,14 +1,13 @@
 import {createCollection, localStorageCollectionOptions} from '@tanstack/svelte-db'
 import {queryCollectionOptions} from '@tanstack/query-db-collection'
-import {appStateSchema, channelSchema, trackSchema} from './schemas'
-import {r5} from './r5'
+import {appStateSchema, channelSchema, trackSchema, playHistorySchema, followerSchema, trackMetaSchema} from './schemas'
 import {r4} from './r4'
+import {r5} from './r5'
 import type {QueryClient} from '@tanstack/svelte-query'
 
-// Svelte equivalent:
-// - createCollection from @tanstack/svelte-db (not react-db)
+// All collections now use localStorage for persistence (PGlite removed)
+// - createCollection from @tanstack/svelte-db
 // - useLiveQuery from @tanstack/svelte-db (Svelte rune-based)
-// - queryCollectionOptions from @tanstack/query-db-collection (universal)
 
 /**
  * App state collection - persists to localStorage, syncs across tabs
@@ -22,114 +21,139 @@ export const appStateCollection = createCollection(
 	})
 )
 
-// Collections that require QueryClient are created lazily
-let _channelsCollection: ReturnType<typeof createCollection> | null = null
-let _tracksCollection: ReturnType<typeof createCollection> | null = null
+/**
+ * Play history collection - persists listening history to localStorage
+ */
+export const playHistoryCollection = createCollection(
+	localStorageCollectionOptions({
+		id: 'play-history',
+		storageKey: 'r5-play-history',
+		getKey: (item) => item.id,
+		schema: playHistorySchema
+	})
+)
 
-export function initCollections(queryClient: QueryClient) {
-	if (_channelsCollection && _tracksCollection) return
+/**
+ * Followers collection - persists follower relationships to localStorage
+ */
+export const followersCollection = createCollection(
+	localStorageCollectionOptions({
+		id: 'followers',
+		storageKey: 'r5-followers',
+		getKey: (item) => `${item.follower_id}:${item.channel_id}`,
+		schema: followerSchema
+	})
+)
 
-	_channelsCollection = createCollection(
+/**
+ * Track metadata collection - persists enriched metadata to localStorage
+ */
+export const trackMetaCollection = createCollection(
+	localStorageCollectionOptions({
+		id: 'track-meta',
+		storageKey: 'r5-track-meta',
+		getKey: (item) => item.ytid,
+		schema: trackMetaSchema
+	})
+)
+
+/**
+ * Initialize channels collection with queryClient
+ * Must be called once from layout before using channelsCollection
+ */
+export function initChannelsCollection(queryClient: QueryClient) {
+	if (channelsCollection) return channelsCollection
+
+	channelsCollection = createCollection(
 		queryCollectionOptions({
-			queryClient,
 			queryKey: ['channels'],
 			queryFn: async () => {
-				// Fetch r4 channels first
+				// Fetch r4 channels
 				const r4Channels = await r5.channels.r4()
-
 				// Fetch v1 channels
 				const v1Channels = await r5.channels.v1()
-
 				// Merge: deduplicate by slug (r4 takes precedence)
-				const r4Slugs = new Set(r4Channels.map(c => c.slug))
-				const uniqueV1 = v1Channels.filter(c => !r4Slugs.has(c.slug))
-
+				const r4Slugs = new Set(r4Channels.map((c) => c.slug))
+				const uniqueV1 = v1Channels.filter((c) => !r4Slugs.has(c.slug))
 				return [...r4Channels, ...uniqueV1]
 			},
-			getKey: (item) => item.id,
-			schema: channelSchema,
-
-			// Mutations
-			onUpdate: async ({transaction}) => {
-				const mutation = transaction.mutations[0]
-				const channelId = mutation.original.id
-
-				// Call r4 SDK to update on server
-				await r4.sdk.channels.updateChannel(channelId, mutation.changes)
-			},
-
-			onDelete: async ({transaction}) => {
-				const channelId = transaction.mutations[0].original.id
-
-				// Call r4 SDK to delete on server
-				await r4.sdk.channels.deleteChannel(channelId)
-			}
-		})
-	)
-
-	_tracksCollection = createCollection(
-		queryCollectionOptions({
 			queryClient,
-			queryKey: ['tracks'],
-			queryFn: async () => {
-				// Return empty array by default
-				// Tracks will be loaded per-channel via query parameters or mutations
-				return []
-			},
 			getKey: (item) => item.id,
-			schema: trackSchema,
-
-			// Mutations
-			onUpdate: async ({transaction}) => {
-				const mutation = transaction.mutations[0]
-				const trackId = mutation.original.id
-
-				// Call r4 SDK to update track on server
-				await r4.sdk.tracks.updateTrack(trackId, mutation.changes)
-			},
-
-			onDelete: async ({transaction}) => {
-				const trackId = transaction.mutations[0].original.id
-
-				// Call r4 SDK to delete track on server
-				await r4.sdk.tracks.deleteTrack(trackId)
-			},
-
-			onInsert: async ({transaction}) => {
-				const newTrack = transaction.mutations[0].value
-
-				// Call r4 SDK to create track on server
-				await r4.sdk.tracks.createTrack(newTrack)
-			}
+			schema: channelSchema
 		})
 	)
+
+	return channelsCollection
 }
 
-export function getChannelsCollection() {
-	if (!_channelsCollection) {
-		throw new Error('Collections not initialized. Call initCollections(queryClient) first.')
-	}
-	return _channelsCollection
-}
+/**
+ * Channels collection - auto-fetches from r4+v1, persists via TanStack Query cache
+ * Must call initChannelsCollection() before using
+ */
+export let channelsCollection: ReturnType<typeof createCollection<any>>
 
-export function getTracksCollection() {
-	if (!_tracksCollection) {
-		throw new Error('Collections not initialized. Call initCollections(queryClient) first.')
+/**
+ * Tracks collection - persists tracks to localStorage
+ */
+export const tracksCollection = createCollection(
+	localStorageCollectionOptions({
+		id: 'tracks',
+		storageKey: 'r5-tracks',
+		getKey: (item) => item.id,
+		schema: trackSchema
+	})
+)
+
+/**
+ * Preload all channels from remote into collection
+ * Called once on app startup if collection is empty
+ * Note: channelsCollection auto-fetches via queryFn, so this is rarely needed
+ */
+export async function preloadChannels() {
+	// Fetch r4 channels
+	const r4Channels = await r5.channels.r4()
+
+	// Fetch v1 channels
+	const v1Channels = await r5.channels.v1()
+
+	// Merge: deduplicate by slug (r4 takes precedence)
+	const r4Slugs = new Set(r4Channels.map((c) => c.slug))
+	const uniqueV1 = v1Channels.filter((c) => !r4Slugs.has(c.slug))
+
+	const allChannels = [...r4Channels, ...uniqueV1]
+
+	// Batch insert/update (much faster than one-by-one)
+	const existingIds = new Set(channelsCollection.toArray.map((c) => c.id))
+	const toInsert = allChannels.filter((c) => !existingIds.has(c.id))
+	const toUpdate = allChannels.filter((c) => existingIds.has(c.id))
+
+	if (toInsert.length > 0) {
+		channelsCollection.insert(toInsert)
 	}
-	return _tracksCollection
+	if (toUpdate.length > 0) {
+		toUpdate.forEach((channel) => {
+			channelsCollection.update(channel.id, () => channel)
+		})
+	}
+
+	return allChannels
 }
 
 /**
  * Fetch and populate tracks for a specific channel
  * Handles r4/v1 fallback and denormalization
+ * Returns existing tracks if already loaded (prevents duplicate fetches)
  */
 export async function fetchChannelTracks(slug: string, limit?: number) {
-	const channelsCollection = getChannelsCollection()
-	const tracksCollection = getTracksCollection()
+	// Check if tracks already loaded for this channel
+	const existingTracks = tracksCollection.toArray.filter((t) => t.channel_slug === slug)
+	if (existingTracks.length > 0) {
+		return existingTracks
+	}
 
 	// Get channel to determine source
-	const channels = channelsCollection.getAll()
-	const channel = channels.find(c => c.slug === slug)
+	const channels = channelsCollection.toArray
+	const channel = channels.find((c) => c.slug === slug)
 	if (!channel) {
 		throw new Error(`Channel not found: ${slug}`)
 	}
@@ -149,15 +173,68 @@ export async function fetchChannelTracks(slug: string, limit?: number) {
 	}
 
 	// Denormalize: add channel_slug to each track
-	const denormalized = tracks.map(t => ({
+	const denormalized = tracks.map((t) => ({
 		...t,
 		channel_slug: slug
 	}))
 
-	// Insert into collection
-	for (const track of denormalized) {
-		tracksCollection.insert(track)
+	// Batch insert into collection (much faster than one-by-one)
+	const existingIds = new Set(tracksCollection.toArray.map((t) => t.id))
+	const toInsert = denormalized.filter((t) => !existingIds.has(t.id))
+	const toUpdate = denormalized.filter((t) => existingIds.has(t.id))
+
+	if (toInsert.length > 0) {
+		tracksCollection.insert(toInsert)
+	}
+	if (toUpdate.length > 0) {
+		toUpdate.forEach((track) => {
+			tracksCollection.update(track.id, () => track)
+		})
 	}
 
 	return denormalized
+}
+
+/**
+ * Check if a channel's tracks are outdated and need refetching
+ * Uses collection data
+ */
+export async function isChannelOutdated(slug: string): Promise<boolean> {
+	// Get channel from collection
+	const channel = channelsCollection.toArray.find((ch) => ch.slug === slug)
+	if (!channel?.id) return true
+	if (!channel.tracks_synced_at) return true
+
+	// Get latest local track from collection
+	const localTracks = tracksCollection.toArray
+		.filter((t) => t.channel_id === channel.id)
+		.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+
+	if (!localTracks[0]) return true
+
+	// v1 channels are frozen (read-only archive)
+	if (channel.source === 'v1' && localTracks[0]) return false
+
+	try {
+		// Compare with remote latest track timestamp
+		const {data: remoteLatest} = await r4.sdk.supabase
+			.from('channel_track')
+			.select('updated_at')
+			.eq('channel_id', channel.id)
+			.order('updated_at', {ascending: false})
+			.limit(1)
+			.single()
+
+		if (!remoteLatest) return true
+
+		// Compare timestamps (20s tolerance)
+		const remoteMsRemoved = new Date(remoteLatest.updated_at || 0).setMilliseconds(0)
+		const localMsRemoved = new Date(localTracks[0].updated_at || 0).setMilliseconds(0)
+		const toleranceMs = 20 * 1000
+		return remoteMsRemoved - localMsRemoved > toleranceMs
+	} catch (error) {
+		// On error, suggest update to be safe
+		console.warn('isChannelOutdated error:', error)
+		return true
+	}
 }

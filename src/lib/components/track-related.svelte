@@ -1,20 +1,22 @@
 <script>
-	import {pg} from '$lib/r5/db'
+	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {tracksCollection} from '$lib/collections'
+	import {extractYouTubeId} from '$lib/utils'
 
 	let {track} = $props()
-	let relatedTracks = $state([])
 
-	// Find other tracks with same ytid
-	$effect(async () => {
-		if (!track?.url) return
-		const result = await pg.sql`
-			SELECT * FROM tracks_with_meta
-			WHERE ytid(url) = ytid(${track.url})
-			AND id != ${track.id}
-			ORDER BY created_at DESC
-		`
-		relatedTracks = result.rows
+	const trackYtid = $derived(track?.url ? extractYouTubeId(track.url) : null)
+
+	// Find other tracks with same ytid using live query
+	const relatedQuery = useLiveQuery({
+		collection: tracksCollection,
+		filter: (t) => {
+			if (!trackYtid || !t.url || t.id === track?.id) return false
+			return extractYouTubeId(t.url) === trackYtid
+		}
 	})
+
+	const relatedTracks = $derived(relatedQuery.data || [])
 </script>
 
 {#if relatedTracks.length > 0}

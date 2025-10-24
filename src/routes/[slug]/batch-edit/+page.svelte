@@ -1,15 +1,17 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import {batchEdit} from '$lib/batch-edit.svelte'
 	import {r5} from '$lib/r5'
 	import EditsPanel from './EditsPanel.svelte'
 	import TrackRow from './TrackRow.svelte'
 
+	const appState = useAppState()
+
 	let {data} = $props()
 
 	let {channel, tracks} = $derived(data)
 	const readonly = $derived(channel?.source === 'v1')
-	const canEdit = $derived(!readonly && appState.channels && appState.channels.includes(channel.id))
+	const canEdit = $derived(!readonly && appState?.channels && appState.channels.includes(channel.id))
 
 	let {edits, appliedEdits} = $derived(data)
 	let hasEdits = $derived(edits?.length > 0)

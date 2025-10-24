@@ -1,12 +1,12 @@
 <script>
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection, channelsCollection, preloadChannels} from '$lib/collections'
 	import Channels from '$lib/components/channels.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import {getChannelsCollection} from '$lib/collections'
 	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
 
-	const channelsCollection = getChannelsCollection()
+	const appState = useAppState()
 
 	const slug = $derived(page?.url?.searchParams?.get('slug'))
 	const display = $derived(page?.url?.searchParams?.get('display'))
@@ -16,8 +16,10 @@
 
 	// Update display preference from URL
 	$effect(() => {
-		if (Boolean(display) && display !== appState.channels_display) {
-			appState.channels_display = display
+		if (Boolean(display) && display !== appState?.channels_display) {
+			appStateCollection.update(1, (draft) => {
+				draft.channels_display = display
+			})
 		}
 	})
 
@@ -26,14 +28,15 @@
 
 	const channels = $derived(channelsQuery.data || [])
 	const channelCount = $derived(channels.length)
+	const isLoading = $derived(channelsQuery.status === 'pending')
+	const isError = $derived(channelsQuery.status === 'error')
 
 	let syncing = $state(false)
 
 	async function pullRadios() {
 		syncing = true
 		try {
-			// Refetch the collection (triggers queryFn)
-			await channelsCollection.utils.refetch()
+			await preloadChannels()
 		} finally {
 			syncing = false
 		}
@@ -44,17 +47,28 @@
 	<title>R5</title>
 </svelte:head>
 
-{#if channelCount < 100}
+{#if isLoading}
+	<p style="margin: 2rem 0.5rem;">Loading channels...</p>
+{:else if isError}
 	<menu>
+		<p style="color: var(--color-danger);">Failed to load channels</p>
 		<button onclick={pullRadios} disabled={syncing}>
-			<Icon icon="cloud-download-alt">
-				{syncing ? 'Pulling radios...' : 'Pull radios from radio4000.com'}
-			</Icon>
+			<Icon icon="cloud-download-alt">Retry</Icon>
 		</button>
 	</menu>
-{/if}
+{:else}
+	{#if channelCount < 100}
+		<menu>
+			<button onclick={pullRadios} disabled={syncing}>
+				<Icon icon="cloud-download-alt">
+					{syncing ? 'Pulling radios...' : 'Pull radios from radio4000.com'}
+				</Icon>
+			</button>
+		</menu>
+	{/if}
 
-<Channels {channels} {slug} {display} {longitude} {latitude} {zoom} />
+	<Channels {channels} {slug} {display} {longitude} {latitude} {zoom} />
+{/if}
 
 <style>
 	menu {

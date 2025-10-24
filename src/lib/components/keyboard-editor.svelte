@@ -1,14 +1,17 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import Icon from '$lib/components/icon.svelte'
 	import {DEFAULT_KEY_BINDINGS, initializeKeyboardShortcuts} from '$lib/keyboard'
+
+	const appState = useAppState()
 
 	const uid = $props.id()
 
 	let editing = $state(false)
 
 	let keyBindings = $derived.by(() => {
-		return appState.shortcuts || DEFAULT_KEY_BINDINGS
+		return appState?.shortcuts || DEFAULT_KEY_BINDINGS
 	})
 
 	const shortcutActions = [
@@ -31,35 +34,45 @@
 	}
 
 	function addKeyBinding() {
-		const shortcuts = {...appState.shortcuts}
-		shortcuts[''] = 'togglePlayPause'
-		appState.shortcuts = shortcuts
+		appStateCollection.update(1, (draft) => {
+			const shortcuts = {...draft.shortcuts}
+			shortcuts[''] = 'togglePlayPause'
+			draft.shortcuts = shortcuts
+		})
 	}
 
 	function removeKeyBinding(key) {
-		const shortcuts = {...appState.shortcuts}
-		delete shortcuts[key]
-		appState.shortcuts = shortcuts
+		appStateCollection.update(1, (draft) => {
+			const shortcuts = {...draft.shortcuts}
+			delete shortcuts[key]
+			draft.shortcuts = shortcuts
+		})
 	}
 
 	function updateKeyBindingKey(oldKey, newKey) {
 		if (oldKey !== newKey) {
-			const shortcuts = {...appState.shortcuts}
-			const action = shortcuts[oldKey]
-			delete shortcuts[oldKey]
-			shortcuts[newKey] = action
-			appState.shortcuts = shortcuts
+			appStateCollection.update(1, (draft) => {
+				const shortcuts = {...draft.shortcuts}
+				const action = shortcuts[oldKey]
+				delete shortcuts[oldKey]
+				shortcuts[newKey] = action
+				draft.shortcuts = shortcuts
+			})
 		}
 	}
 
 	function updateKeyBindingAction(key, action) {
-		const shortcuts = {...appState.shortcuts}
-		shortcuts[key] = action
-		appState.shortcuts = shortcuts
+		appStateCollection.update(1, (draft) => {
+			const shortcuts = {...draft.shortcuts}
+			shortcuts[key] = action
+			draft.shortcuts = shortcuts
+		})
 	}
 
 	function resetToDefaults() {
-		appState.shortcuts = structuredClone(DEFAULT_KEY_BINDINGS)
+		appStateCollection.update(1, (draft) => {
+			draft.shortcuts = structuredClone(DEFAULT_KEY_BINDINGS)
+		})
 	}
 </script>
 

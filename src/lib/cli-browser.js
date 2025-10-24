@@ -4,9 +4,10 @@
  */
 
 import * as playerApi from './api/player.js'
-import {appState} from './app-state.svelte'
+import {appStateCollection} from './collections'
 import {pg} from './r5/db'
 import {r5} from './r5/index.js'
+import {useAppState} from './app-state.svelte'
 
 const COMMANDS = {
 	channels: {
@@ -96,6 +97,7 @@ Examples:
 export function createBrowserCli(onOutput) {
 	const log = (text, data) => onOutput('success', text, data)
 	const error = (text) => onOutput('error', text)
+	const appState = useAppState()
 
 	async function handlePlayerCommand(cmd) {
 		const ytPlayer = document.querySelector('youtube-video')

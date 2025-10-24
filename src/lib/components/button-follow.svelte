@@ -1,12 +1,14 @@
 <script>
 	import {followChannel, isFollowing as isFollowingChannel, unfollowChannel} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 
 	/** @type {{channel: import('$lib/types').Channel, label?: string, class?: string}} */
 	let {channel, label, ...rest} = $props()
 
-	let followerId = $derived(appState.channels?.[0] || 'local-user')
+	const appState = useAppState()
+
+	let followerId = $derived(appState?.channels?.[0] || 'local-user')
 	let isFollowing = $state(false)
 
 	$effect(() => {

@@ -1,12 +1,14 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+
+	const appState = useAppState()
 
 	function inc() {
 		appState.counter++
 	}
 </script>
 
-<button onclick={inc}> R{appState.counter}</button>
+<button onclick={inc}> R{appState?.counter}</button>
 
 <style>
 	button {

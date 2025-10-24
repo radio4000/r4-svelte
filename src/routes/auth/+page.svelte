@@ -1,16 +1,18 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import IconR4 from '$lib/icon-r4.svelte'
 	import {pg} from '$lib/r5/db.js'
+
+	const appState = useAppState()
 
 	const redirect = page.url.searchParams.get('redirect')
 	const redirectParam = redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''
 
 	const userChannels = $derived.by(async () => {
-		if (!appState.channels?.length) return []
+		if (!appState?.channels?.length) return []
 		const result = await pg.sql`select * from channels where id = ANY(${appState.channels})`
 		return result.rows
 	})
@@ -25,7 +27,7 @@
 		<IconR4 />
 	</figure>
 
-	{#if appState.user}
+	{#if appState?.user}
 		<p>You are signed in with {appState.user.email}.</p>
 		<p><button type="button" onclick={() => sdk.auth.signOut()}>Logout</button></p>
 

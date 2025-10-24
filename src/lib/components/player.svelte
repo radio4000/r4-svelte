@@ -4,20 +4,23 @@
 	import '$lib/soundcloud-player-custom-element.js'
 	import {togglePlayerExpanded, toggleQueuePanel} from '$lib/api'
 	import {next, play, previous, togglePlay, toggleShuffle} from '$lib/api/player'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {appStateCollection} from '$lib/collections'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {logger} from '$lib/logger'
-	import {pg} from '$lib/r5/db'
-	import {r5} from '$lib/r5/index'
+	import {channelsCollection, tracksCollection} from '$lib/collections'
 	import {extractYouTubeId, detectMediaProvider} from '$lib/utils.ts'
 
 	/** @typedef {import('$lib/types').Track} Track */
 	/** @typedef {import('$lib/types').Channel} Channel */
 
 	const log = logger.ns('player').seal()
+
+	// Get app state
+	const appState = useAppState()
 
 	// Both media player elements
 	let youtubePlayer = $state()
@@ -34,16 +37,16 @@
 	let channel = $state()
 
 	/** @type {string[]} */
-	let trackIds = $derived(appState.playlist_tracks || [])
+	let trackIds = $derived(appState?.playlist_tracks || [])
 
 	/** @type {string[]} */
-	let activeQueue = $derived(appState.shuffle ? appState.playlist_tracks_shuffled || [] : trackIds)
+	let activeQueue = $derived(appState?.shuffle ? appState.playlist_tracks_shuffled || [] : trackIds)
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const canPlay = $derived(Boolean(channel && track))
 	// const autoplay = $derived(userHasPlayed ? 1 : 0)
-	const isListeningToBroadcast = $derived(Boolean(appState.listening_to_channel_id))
+	const isListeningToBroadcast = $derived(Boolean(appState?.listening_to_channel_id))
 
 	/** @type {string} */
 	let trackImage = $derived.by(() => {
@@ -53,7 +56,7 @@
 	})
 
 	$effect(async () => {
-		const tid = appState.playlist_track
+		const tid = appState?.playlist_track
 		const trackChanged = tid && tid !== track?.id
 
 		if (!trackChanged) {
@@ -84,21 +87,27 @@
 	/** @param {string} tid */
 	async function setChannelFromTrack(tid) {
 		if (!tid || tid === track?.id) return
-		track = (await pg.sql`select * from tracks_with_meta where id = ${tid}`).rows[0]
+
+		track = tracksCollection.get(tid)
 		if (!track) throw new Error(`Track not found: ${tid}`)
-		channel = (await r5.channels.local({slug: track.channel_slug}))[0]
+
+		channel = channelsCollection.toArray.find((c) => c.slug === track.channel_slug)
 	}
 
 	function handlePlay() {
 		log.log('handlePlay')
 		didPlay = true
 		userHasPlayed = true
-		appState.is_playing = true
+		appStateCollection.update(1, (draft) => {
+			draft.is_playing = true
+		})
 	}
 
 	function handlePause() {
 		log.log('handlePause')
-		appState.is_playing = false
+		appStateCollection.update(1, (draft) => {
+			draft.is_playing = false
+		})
 	}
 
 	/** @param {any} event */
@@ -119,14 +128,16 @@
 
 	function applyInitialVolume() {
 		if (!mediaElement) return
-		mediaElement.volume = appState.volume
-		mediaElement.muted = appState.volume === 0
+		mediaElement.volume = appState?.volume ?? 0.7
+		mediaElement.muted = appState?.volume === 0
 	}
 
 	function handleVolumeChange(e) {
 		const {volume} = e.target
-		if (appState.volume === volume) return
-		appState.volume = volume
+		if (appState?.volume === volume) return
+		appStateCollection.update(1, (draft) => {
+			draft.volume = volume
+		})
 		log.log('volumeChange', volume)
 	}
 

@@ -1,6 +1,6 @@
 import {logger} from '$lib/logger'
 import {r4} from '$lib/r4'
-import {getPg, pg} from '$lib/r5/db'
+import {followersCollection, channelsCollection} from '$lib/collections'
 
 const log = logger.ns('r5:followers').seal()
 
@@ -12,39 +12,55 @@ const log = logger.ns('r5:followers').seal()
 export async function pull(userChannelId) {
 	const remoteFollows = await r4.channels.readFollowings(userChannelId)
 
-	await pg.transaction(async (tx) => {
-		for (const followedChannel of remoteFollows || []) {
-			// Insert follower relationship, mark as synced
-			await tx.sql`
-				INSERT INTO followers (follower_id, channel_id, created_at, synced_at)
-				VALUES (${userChannelId}, ${followedChannel.id}, ${followedChannel.created_at}, CURRENT_TIMESTAMP)
-				ON CONFLICT (follower_id, channel_id) DO UPDATE SET
-					created_at = ${followedChannel.created_at},
-					synced_at = CURRENT_TIMESTAMP
-			`
+	for (const followedChannel of remoteFollows || []) {
+		// Upsert follower relationship, mark as synced
+		const key = `${userChannelId}:${followedChannel.id}`
+		const existing = followersCollection.toArray.find(
+			(f) => f.follower_id === userChannelId && f.channel_id === followedChannel.id
+		)
 
-			// Insert/update channel metadata
-			await tx.sql`
-				INSERT INTO channels (id, name, slug, description, image, created_at, updated_at, latitude, longitude, url)
-				VALUES (
-					${followedChannel.id}, ${followedChannel.name}, ${followedChannel.slug},
-					${followedChannel.description}, ${followedChannel.image},
-					${followedChannel.created_at}, ${followedChannel.updated_at},
-					${followedChannel.latitude}, ${followedChannel.longitude},
-					${followedChannel.url}
-				)
-				ON CONFLICT (id) DO UPDATE SET
-					name = EXCLUDED.name,
-					slug = EXCLUDED.slug,
-					description = EXCLUDED.description,
-					image = EXCLUDED.image,
-					updated_at = EXCLUDED.updated_at,
-					latitude = EXCLUDED.latitude,
-					longitude = EXCLUDED.longitude,
-					url = EXCLUDED.url
-			`
+		if (existing) {
+			followersCollection.update(key, (draft) => {
+				draft.created_at = followedChannel.created_at
+				draft.synced_at = new Date().toISOString()
+			})
+		} else {
+			followersCollection.insert({
+				follower_id: userChannelId,
+				channel_id: followedChannel.id,
+				created_at: followedChannel.created_at,
+				synced_at: new Date().toISOString()
+			})
 		}
-	})
+
+		// Upsert channel metadata in channels collection
+		const channelExists = channelsCollection.toArray.find((c) => c.id === followedChannel.id)
+		if (channelExists) {
+			channelsCollection.update(followedChannel.id, (draft) => {
+				draft.name = followedChannel.name
+				draft.slug = followedChannel.slug
+				draft.description = followedChannel.description
+				draft.image = followedChannel.image
+				draft.updated_at = followedChannel.updated_at
+				draft.latitude = followedChannel.latitude
+				draft.longitude = followedChannel.longitude
+				draft.url = followedChannel.url
+			})
+		} else {
+			channelsCollection.insert({
+				...followedChannel,
+				tracks_outdated: null,
+				track_count: null,
+				firebase_id: null,
+				source: 'r4',
+				broadcasting: null,
+				broadcast_track_id: null,
+				broadcast_started_at: null,
+				tracks_synced_at: null,
+				spam: null
+			})
+		}
+	}
 
 	log.log('pull_followers', {userChannelId, count: remoteFollows?.length || 0})
 }
@@ -55,72 +71,75 @@ export async function pull(userChannelId) {
  * @returns {Promise<void>}
  */
 export async function sync(userChannelId) {
-	await getPg()
 	log.log('sync_start', userChannelId)
 
 	// 1. Get local favorites before sync with channel metadata
-	const {rows: localFavorites} = await pg.sql`
-		SELECT f.channel_id, c.source 
-		FROM followers f
-		JOIN channels c ON f.channel_id = c.id
-		WHERE f.follower_id = 'local-user'
-	`
+	const localFavorites = followersCollection.toArray
+		.filter((f) => f.follower_id === 'local-user')
+		.map((f) => {
+			const channel = channelsCollection.toArray.find((c) => c.id === f.channel_id)
+			return {
+				channel_id: f.channel_id,
+				source: channel?.source || 'unknown'
+			}
+		})
 
 	// 2. Pull remote followers (marks remote ones as synced)
 	await pull(userChannelId)
 
-	await pg.transaction(async (tx) => {
-		// 3. Process each local favorite
-		for (const {channel_id, source} of localFavorites) {
-			// Check if this channel is already followed by the authenticated user
-			const {rows: existing} = await tx.sql`
-				SELECT 1 FROM followers 
-				WHERE follower_id = ${userChannelId} AND channel_id = ${channel_id}
-				LIMIT 1
-			`
+	// 3. Process each local favorite
+	for (const {channel_id, source} of localFavorites) {
+		// Check if this channel is already followed by the authenticated user
+		const existing = followersCollection.toArray.find(
+			(f) => f.follower_id === userChannelId && f.channel_id === channel_id
+		)
 
-			if (existing.length === 0) {
-				if (source === 'v1') {
-					// v1 channel: migrate locally only (can't sync to r4)
-					await tx.sql`
-						INSERT INTO followers (follower_id, channel_id, created_at, synced_at)
-						VALUES (${userChannelId}, ${channel_id}, CURRENT_TIMESTAMP, NULL)
-						ON CONFLICT (follower_id, channel_id) DO NOTHING
-					`
-				} else {
-					// r4 channel: add locally and attempt to sync
-					await tx.sql`
-						INSERT INTO followers (follower_id, channel_id, created_at, synced_at)
-						VALUES (${userChannelId}, ${channel_id}, CURRENT_TIMESTAMP, NULL)
-						ON CONFLICT (follower_id, channel_id) DO NOTHING
-					`
+		if (!existing) {
+			const key = `${userChannelId}:${channel_id}`
+			if (source === 'v1') {
+				// v1 channel: migrate locally only (can't sync to r4)
+				followersCollection.insert({
+					follower_id: userChannelId,
+					channel_id: channel_id,
+					created_at: new Date().toISOString(),
+					synced_at: null
+				})
+			} else {
+				// r4 channel: add locally and attempt to sync
+				followersCollection.insert({
+					follower_id: userChannelId,
+					channel_id: channel_id,
+					created_at: new Date().toISOString(),
+					synced_at: null
+				})
 
-					// Try to push to remote
-					try {
-						await r4.channels.followChannel(userChannelId, channel_id)
-						await tx.sql`
-							UPDATE followers
-							SET synced_at = CURRENT_TIMESTAMP
-							WHERE follower_id = ${userChannelId} AND channel_id = ${channel_id}
-						`
-					} catch (err) {
-						log.error('sync_push_error', {userChannelId, channel_id, err})
-					}
+				// Try to push to remote
+				try {
+					await r4.channels.followChannel(userChannelId, channel_id)
+					followersCollection.update(key, (draft) => {
+						draft.synced_at = new Date().toISOString()
+					})
+				} catch (err) {
+					log.error('sync_push_error', {userChannelId, channel_id, err})
 				}
 			}
 		}
+	}
 
-		// 4. Clean up local-user followers
-		await tx.sql`DELETE FROM followers WHERE follower_id = 'local-user'`
+	// 4. Clean up local-user followers
+	const localUserFollowers = followersCollection.toArray.filter((f) => f.follower_id === 'local-user')
+	for (const follower of localUserFollowers) {
+		const key = `${follower.follower_id}:${follower.channel_id}`
+		followersCollection.delete(key)
+	}
 
-		const v1Count = localFavorites.filter((f) => f.source === 'v1').length
-		const r4Count = localFavorites.filter((f) => f.source !== 'v1').length
+	const v1Count = localFavorites.filter((f) => f.source === 'v1').length
+	const r4Count = localFavorites.filter((f) => f.source !== 'v1').length
 
-		log.log('sync_complete', {
-			userChannelId,
-			localCount: localFavorites.length,
-			v1Count,
-			r4Count
-		})
+	log.log('sync_complete', {
+		userChannelId,
+		localCount: localFavorites.length,
+		v1Count,
+		r4Count
 	})
 }

@@ -6,56 +6,66 @@
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import {relativeDate, relativeDateSolar} from '$lib/dates'
-	import {r5} from '$lib/r5'
-	import {appState} from '$lib/app-state.svelte'
+	import {useAppState} from '$lib/app-state.svelte'
+	import {channelsCollection, tracksCollection, fetchChannelTracks} from '$lib/collections'
+	import {useLiveQuery} from '$lib/tanstack-svelte-db-useLiveQuery-patched.svelte'
+	import {eq} from '@tanstack/svelte-db'
 
 	let {data} = $props()
 
-	let channel = $derived(data.channel)
+	const appState = useAppState()
+	const slug = $derived(data.slug)
 
-	/** @type {import('$lib/types').Track[]} */
-	let tracks = $state([])
+	// Get channel from collection using live query
+	const channelQuery = useLiveQuery(
+		(q) => {
+			if (!slug) return undefined
+			return q
+				.from({channel: channelsCollection})
+				.where(({channel}) => eq(channel.slug, slug))
+				.findOne()
+		},
+		[slug]
+	)
+
+	const channel = $derived(channelQuery.data)
+
+	// Get tracks from collection using live query
+	const tracksQuery = useLiveQuery(
+		(q) => {
+			if (!slug) return undefined
+			return q
+				.from({track: tracksCollection})
+				.where(({track}) => eq(track.channel_slug, slug))
+				.orderBy(({track}) => track.created_at, 'desc')
+		},
+		[slug]
+	)
+
+	const tracks = $derived(tracksQuery.data || [])
+
+	// Fetch tracks if not in collection yet
+	$effect(() => {
+		if (slug && channel && tracks.length === 0 && !tracksQuery.isLoading) {
+			fetchChannelTracks(slug).catch((err) => {
+				console.error('Failed to fetch tracks:', err)
+			})
+		}
+	})
+
+	const isSignedIn = $derived(!!appState?.user)
+	const canEdit = $derived(isSignedIn && appState?.channels?.includes(channel?.id))
 
 	let latestTrackDate = $derived(tracks[0]?.created_at)
-
-	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && appState.channels?.includes(channel?.id))
-
-	$effect(() => {
-		// Load tracks whenever the slug changes
-		const loadAndSetTracks = async () => {
-			const slug = data.slug // Capture slug for closure
-
-			const loadTracks = !channel.tracks_synced_at ? r5.tracks.pull({slug}) : r5.tracks.local({slug})
-
-			const loadedTracks = await loadTracks
-			tracks = loadedTracks
-
-			// Check for updates in background without blocking render
-			if (channel.tracks_synced_at) {
-				r5.channels.outdated(slug).then((isOutdated) => {
-					if (isOutdated) {
-						console.log(`refreshing outdated tracks for ${slug} in background`)
-						r5.tracks.pull({slug}).then((updatedTracks) => {
-							// Only update if still on the same channel
-							if (data.slug === slug) {
-								tracks = updatedTracks
-							}
-						})
-					}
-				})
-			}
-		}
-
-		loadAndSetTracks()
-	})
 </script>
 
 <svelte:head>
 	<title>{channel?.name || 'Channel'} - R5</title>
 </svelte:head>
 
-{#if channel}
+{#if channelQuery.isLoading}
+	<p style="margin: 2rem 0.5rem;">Loading channel...</p>
+{:else if channel}
 	<article>
 		<header>
 			<ChannelHero {channel} />
@@ -97,13 +107,15 @@
 			{#if tracks.length > 0}
 				<!-- <CoverFlip tracks={tracks} /> -->
 				<Tracklist {tracks} grouped={1} />
-			{:else}
+			{:else if tracksQuery.isLoading}
 				<p style="margin-top:1rem; margin-left: 0.5rem;">Loading tracks…</p>
+			{:else}
+				<p style="margin-top:1rem; margin-left: 0.5rem;">No tracks yet</p>
 			{/if}
 		</section>
 	</article>
 {:else}
-	<p>No channel</p>
+	<p style="margin: 2rem 0.5rem;">Channel not found</p>
 {/if}
 
 <style>

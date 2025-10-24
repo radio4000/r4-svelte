@@ -1,9 +1,8 @@
 import {playTrack} from '$lib/api'
-import {appState} from '$lib/app-state.svelte'
+import {appStateCollection, channelsCollection} from '$lib/collections'
 import {logger} from '$lib/logger'
 import {r4} from '$lib/r4'
 import {r5} from '$lib/r5'
-import {pg} from '$lib/r5/db'
 import {trackIdToSlug} from '$lib/r5/tracks'
 
 const log = logger.ns('broadcast').seal()
@@ -35,7 +34,9 @@ export async function joinBroadcast(channelId) {
 
 export function leaveBroadcast() {
 	stopBroadcastSync()
-	appState.listening_to_channel_id = undefined
+	appStateCollection.update(1, (draft) => {
+		draft.listening_to_channel_id = undefined
+	})
 	log.log('left')
 }
 
@@ -68,7 +69,11 @@ export async function startBroadcast(channelId, trackId) {
 	}
 
 	// Check if track is from v1 channel - these can't be broadcast
-	const channel = (await pg.sql`SELECT source, slug FROM channels where id = ${channelId}`).rows[0]
+	const channel = channelsCollection.toArray.find((c) => c.id === channelId)
+	if (!channel) {
+		log.error('channel_not_found', {channelId, trackId})
+		throw new Error('Channel not found')
+	}
 	if (channel.source === 'v1') {
 		log.error('failed_v1_track', {channelId, trackId, channel})
 		throw new Error('Cannot broadcast v1 channels')
@@ -124,8 +129,11 @@ export function watchBroadcasts(onChange) {
 				log.log('broadcast_removed_from_ui', {channel_id: channelId})
 
 				// Clear local broadcasting state if this was our broadcast
-				if (channelId === appState.channels?.[0]) {
-					appState.broadcasting_channel_id = null
+				const state = appStateCollection.get(1)
+				if (channelId === state?.channels?.[0]) {
+					appStateCollection.update(1, (draft) => {
+						draft.broadcasting_channel_id = null
+					})
 					log.log('my_broadcast_removed_remotely', {channel_id: channelId})
 				}
 			}
@@ -139,7 +147,7 @@ export function watchBroadcasts(onChange) {
 			}
 		})
 		.subscribe((status) => {
-			log.log('broadcasts_subscription_status', {status})
+			log.debug('broadcasts_subscription_status', {status})
 		})
 
 	return () => {
@@ -199,7 +207,9 @@ export async function playBroadcastTrack(broadcast) {
 
 	try {
 		await playTrack(track_id, '', 'broadcast_sync')
-		appState.listening_to_channel_id = channel_id
+		appStateCollection.update(1, (draft) => {
+			draft.listening_to_channel_id = channel_id
+		})
 		return true
 	} catch {
 		// if it failed, fetch and retry
@@ -208,7 +218,9 @@ export async function playBroadcastTrack(broadcast) {
 			if (!slug) throw new Error('No channel found for track')
 			await r5.pull(slug)
 			await playTrack(track_id, '', 'broadcast_sync')
-			appState.listening_to_channel_id = channel_id
+			appStateCollection.update(1, (draft) => {
+				draft.listening_to_channel_id = channel_id
+			})
 			log.log('play_success_after_fetch', {track_id, channel_id, slug})
 			return true
 		} catch (error) {
