@@ -11,23 +11,22 @@
 	})
 
 	// Create QueryClient with persistence config
-	const queryClient = new QueryClient({
+	export const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
-				gcTime: 1000 * 60 * 60 * 24, // 24 hours - keep in cache
-				staleTime: 1000 * 60 * 5, // 5 minutes - consider fresh
-				refetchOnMount: true, // Check for updates on mount
-				refetchOnWindowFocus: true // Check when window regains focus
+				gcTime: 1000 * 60 * 60 * 24, // 24 hours
+				staleTime: 1000 * 60 * 5, // 5 minutes - allows refetch on param changes
+				refetchOnMount: false,
+				refetchOnWindowFocus: false
 			}
 		}
 	})
 
-	// Set up persistence (restore on load, subscribe to changes)
 	if (typeof window !== 'undefined') {
 		persistQueryClient({
 			queryClient,
 			persister,
-			maxAge: 1000 * 60 * 60 * 24 // 24 hours
+			maxAge: Infinity
 		})
 	}
 </script>

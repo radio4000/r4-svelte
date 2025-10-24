@@ -1,5 +1,4 @@
 <script>
-	// Using patched useLiveQuery that removes flushSync call to work with Svelte 5 async mode
 	import {useLiveQuery} from '$lib/tanstack-patches/useLiveQuery.svelte.js'
 	import {createCollection, localOnlyCollectionOptions, eq} from '@tanstack/db'
 
@@ -11,13 +10,10 @@
 			{id: '2', text: 'Compare with r5 SDK', completed: false, created_at: Date.now()}
 		]
 	})
-
 	const todoCollection = createCollection(todoCollectionOptions)
 
 	const allTodos = useLiveQuery((q) => q.from({todo: todoCollection}))
-
 	const completedTodos = useLiveQuery((q) => q.from({todo: todoCollection}).where(({todo}) => eq(todo.completed, true)))
-
 	const pendingTodos = useLiveQuery((q) => q.from({todo: todoCollection}).where(({todo}) => eq(todo.completed, false)))
 
 	let newTodoText = $state('')
@@ -50,14 +46,6 @@
 	<header>
 		<h1>TanStack DB Playground</h1>
 		<p>Testing local-only collection with live queries and optimistic mutations</p>
-		<p
-			style:color="var(--green-9)"
-			style:background="var(--green-3)"
-			style:padding="0.5rem"
-			style:border-radius="var(--border-radius)"
-		>
-			✓ Using patched useLiveQuery (removed flushSync) - compatible with Svelte 5 async mode
-		</p>
 	</header>
 
 	<section>
@@ -80,8 +68,8 @@
 		<ul class="list">
 			{#each allTodos.data ?? [] as todo}
 				<li>
-					<div class="row" style:padding="0.5rem" style:gap="1rem">
-						<label style:flex="1">
+					<div class="row">
+						<label>
 							<input type="checkbox" checked={todo.completed} onchange={() => toggleTodo(todo)} />
 							<span style:text-decoration={todo.completed ? 'line-through' : 'none'}>
 								{todo.text}
@@ -112,3 +100,11 @@
 		</ul>
 	</section>
 </div>
+
+<style>
+	.SmallContainer {
+		display: flex;
+		flex-flow: column;
+		gap: 1rem;
+	}
+</style>

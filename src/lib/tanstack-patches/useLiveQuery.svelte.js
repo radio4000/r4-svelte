@@ -1,4 +1,5 @@
 // Patched version of @tanstack/svelte-db useLiveQuery
+// https://github.com/TanStack/db/blob/main/packages/svelte-db/src/useLiveQuery.svelte.ts
 // Original calls flushSync inside $effect which violates Svelte 5 async mode
 // This version removes flushSync and relies on normal reactivity
 

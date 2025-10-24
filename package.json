@@ -51,7 +51,7 @@
 		"@tanstack/query-sync-storage-persister": "^5.90.7",
 		"@tanstack/svelte-db": "^0.1.35",
 		"@tanstack/svelte-query": "^6.0.3",
-		"@types/yargs": "^17.0.33",
+		"@types/yargs": "^17.0.34",
 		"adze": "^2.2.5",
 		"filenamify": "^7.0.0",
 		"fuzzysort": "^3.1.0",
@@ -63,6 +63,7 @@
 		"p-limit": "^7.2.0",
 		"svelte-awesome-color-picker": "^4.0.2",
 		"tinykeys": "^3.0.0",
-		"youtube-video-element": "^1.6.2"
+		"youtube-video-element": "^1.6.2",
+		"zod": "^4.1.12"
 	}
 }
