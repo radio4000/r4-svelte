@@ -37,7 +37,7 @@
 			// Check URL hash for existing doc
 			const docUrl = window.location.hash.slice(1)
 			if (docUrl && docUrl.startsWith('automerge:')) {
-				handle = repo.find(docUrl)
+				handle = await repo.find(docUrl)
 			} else {
 				// Create a new document with realistic data structure
 				handle = repo.create({
@@ -50,16 +50,15 @@
 				window.location.hash = handle.url
 			}
 
-			await handle.whenReady()
-
 			// Get initial doc
-			doc = handle.docSync()
-			status = 'ready'
+			doc = await handle.doc()
 
-			// Listen for changes (this is the key reactivity bridge!)
+			// Now set up change listener after handle is ready
 			handle.on('change', ({doc: newDoc}) => {
 				doc = newDoc
 			})
+
+			status = doc ? 'ready' : 'waiting for document...'
 		} catch (err) {
 			status = `Error: ${err.message}`
 			console.error(err)
@@ -112,7 +111,7 @@
 	}
 
 	async function loadRealChannel(slug) {
-		if (!handle) return
+		if (!handle || !doc) return
 		loading = true
 		status = `Loading ${slug}...`
 
@@ -121,26 +120,25 @@
 			const channels = await r5.channels.pull({slug})
 			const tracks = await r5.tracks.pull({slug})
 
-			status = `Loaded ${channels.length} channel(s) and ${tracks.length} tracks`
+			status = `Loaded ${channels.length} channel(s) and ${tracks.length} tracks, inserting...`
 
-			// Add to Automerge document
+			// Build lookup sets from existing data ONCE outside the change
+			const existingChannelIds = new Set((doc.channels || []).map((c) => c.id))
+			const existingTrackIds = new Set((doc.tracks || []).map((t) => t.id))
+
+			// Filter new items before mutation
+			const newChannels = channels.filter((c) => !existingChannelIds.has(c.id))
+			const newTracks = tracks.filter((t) => !existingTrackIds.has(t.id))
+
+			status = `Inserting ${newChannels.length} new channels and ${newTracks.length} new tracks...`
+
+			// Single mutation with pre-filtered data
 			handle.change((d) => {
-				// Add channels (if not already present)
-				channels.forEach((channel) => {
-					const exists = d.channels.find((c) => c.id === channel.id)
-					if (!exists) {
-						d.channels.push(channel)
-					}
-				})
-
-				// Add tracks (if not already present)
-				tracks.forEach((track) => {
-					const exists = d.tracks.find((t) => t.id === track.id)
-					if (!exists) {
-						d.tracks.push(track)
-					}
-				})
+				newChannels.forEach((channel) => d.channels.push(channel))
+				newTracks.forEach((track) => d.tracks.push(track))
 			})
+
+			status = `Done! Total: ${doc.channels.length} channels, ${doc.tracks.length} tracks`
 		} catch (err) {
 			status = `Error loading ${slug}: ${err.message}`
 			console.error(err)
@@ -175,9 +173,9 @@
 
 			<div class="controls">
 				<h3>Load Real Data from r5 SDK</h3>
-				<button onclick={() => loadRealChannel('oskar')} disabled={loading}> Load "oskar" channel </button>
-				<button onclick={() => loadRealChannel('ko002')} disabled={loading}> Load "ko002" channel </button>
-				<button onclick={clearData} disabled={loading}>Clear All Data</button>
+				<button onclick={() => loadRealChannel('oskar')} disabled={loading || !doc}> Load "oskar" channel </button>
+				<button onclick={() => loadRealChannel('ko002')} disabled={loading || !doc}> Load "ko002" channel </button>
+				<button onclick={clearData} disabled={loading || !doc}>Clear All Data</button>
 			</div>
 
 			<div class="controls">
@@ -239,9 +237,7 @@
 
 <style>
 	.test-page {
-		padding: 2rem;
-		max-width: 1200px;
-		margin: 0 auto;
+		padding: 0.5rem;
 	}
 
 	.stats {
@@ -249,8 +245,6 @@
 		gap: 2rem;
 		margin: 1rem 0;
 		padding: 1rem;
-		background: var(--bg-secondary, #f5f5f5);
-		border-radius: 4px;
 	}
 
 	.stats p {
@@ -258,9 +252,7 @@
 	}
 
 	.doc-display {
-		background: var(--bg-secondary, #f5f5f5);
 		padding: 1rem;
-		border-radius: 4px;
 		margin: 1rem 0;
 		max-height: 400px;
 		overflow: auto;
@@ -290,8 +282,6 @@
 	}
 
 	input[type='text'] {
-		padding: 0.5rem;
-		width: 100%;
 		max-width: 400px;
 	}
 
@@ -309,21 +299,10 @@
 
 	.track-item {
 		padding: 0.5rem;
-		background: var(--bg-secondary, #f5f5f5);
 		border-radius: 4px;
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-	}
-
-	.track-item small {
-		color: var(--text-secondary, #666);
-		font-size: 0.875rem;
-	}
-
-	.track-item small.description {
-		font-style: italic;
-		opacity: 0.8;
 	}
 
 	details {
@@ -333,7 +312,6 @@
 	summary {
 		cursor: pointer;
 		padding: 0.5rem;
-		background: var(--bg-secondary, #f5f5f5);
 		border-radius: 4px;
 	}
 </style>

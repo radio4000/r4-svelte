@@ -2,6 +2,7 @@ import devtoolsJson from 'vite-plugin-devtools-json'
 import {sveltekit} from '@sveltejs/kit/vite'
 import {defineConfig} from 'vite'
 import {execSync} from 'child_process'
+import wasm from 'vite-plugin-wasm'
 
 // Get git info at build time
 function getGitInfo() {
@@ -18,7 +19,7 @@ function getGitInfo() {
 }
 
 export default defineConfig({
-	plugins: [sveltekit(), devtoolsJson()],
+	plugins: [wasm(), sveltekit(), devtoolsJson()],
 	optimizeDeps: {
 		// https://pglite.dev/docs/bundler-support#vite
 		exclude: ['@electric-sql/pglite']

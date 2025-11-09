@@ -33,6 +33,7 @@
 		"typescript-eslint": "^8.46.3",
 		"vite": "^7.2.2",
 		"vite-plugin-devtools-json": "^1.0.0",
+		"vite-plugin-wasm": "^3.5.0",
 		"vitest": "^4.0.8",
 		"yargs": "^18.0.0"
 	},
