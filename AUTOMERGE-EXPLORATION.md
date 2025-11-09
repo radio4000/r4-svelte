@@ -3,6 +3,14 @@
 ## Test Route
 Visit `/automerge-test` to explore the working prototype.
 
+**Quick Start:**
+1. Click "Load oskar channel" or "Load ko002 channel" to fetch real data
+2. Wait for tracks to load (will show count in stats)
+3. Try searching for track titles/descriptions
+4. Adjust "Show" limit (50, 200, 1000, All) to test rendering performance
+5. Use browser DevTools Performance tab to profile
+6. Compare filter speed vs SQL queries in PGlite
+
 ## Key Findings
 
 ### ✅ What Works Well
