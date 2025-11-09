@@ -37,6 +37,8 @@
 		"yargs": "^18.0.0"
 	},
 	"dependencies": {
+		"@automerge/automerge-repo": "^2.4.0",
+		"@automerge/automerge-repo-storage-indexeddb": "^2.4.0",
 		"@electric-sql/pglite": "^0.3.14",
 		"@electric-sql/pglite-repl": "^0.2.32",
 		"@humanspeak/svelte-virtual-list": "^0.3.5",
