@@ -1,8 +1,8 @@
 <script>
-	import { onMount } from 'svelte'
-	import { Repo } from '@automerge/automerge-repo'
-	import { IndexedDBStorageAdapter } from '@automerge/automerge-repo-storage-indexeddb'
-	import { r5 } from '$lib/r5'
+	import {onMount} from 'svelte'
+	import {Repo} from '@automerge/automerge-repo'
+	import {IndexedDBStorageAdapter} from '@automerge/automerge-repo-storage-indexeddb'
+	import {r5} from '$lib/r5'
 
 	let repo = $state(null)
 	let handle = $state(null)
@@ -24,18 +24,6 @@
 							track.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
 							track.url?.toLowerCase().includes(searchQuery.toLowerCase())
 					)
-	)
-
-	// Derived state - group tracks by channel (unused but shows pattern)
-	let tracksByChannel = $derived(
-		!doc?.tracks
-			? {}
-			: doc.tracks.reduce((acc, track) => {
-					const channelId = track.channel_id || 'unknown'
-					if (!acc[channelId]) acc[channelId] = []
-					acc[channelId].push(track)
-					return acc
-				}, {})
 	)
 
 	onMount(async () => {
@@ -69,7 +57,7 @@
 			status = 'ready'
 
 			// Listen for changes (this is the key reactivity bridge!)
-			handle.on('change', ({ doc: newDoc }) => {
+			handle.on('change', ({doc: newDoc}) => {
 				doc = newDoc
 			})
 		} catch (err) {
@@ -130,8 +118,8 @@
 
 		try {
 			// Pull channel and tracks from r4 (remote)
-			const channels = await r5.channels.pull({ slug })
-			const tracks = await r5.tracks.pull({ slug })
+			const channels = await r5.channels.pull({slug})
+			const tracks = await r5.tracks.pull({slug})
 
 			status = `Loaded ${channels.length} channel(s) and ${tracks.length} tracks`
 
@@ -187,12 +175,8 @@
 
 			<div class="controls">
 				<h3>Load Real Data from r5 SDK</h3>
-				<button onclick={() => loadRealChannel('oskar')} disabled={loading}>
-					Load "oskar" channel
-				</button>
-				<button onclick={() => loadRealChannel('ko002')} disabled={loading}>
-					Load "ko002" channel
-				</button>
+				<button onclick={() => loadRealChannel('oskar')} disabled={loading}> Load "oskar" channel </button>
+				<button onclick={() => loadRealChannel('ko002')} disabled={loading}> Load "ko002" channel </button>
 				<button onclick={clearData} disabled={loading}>Clear All Data</button>
 			</div>
 
@@ -200,12 +184,8 @@
 				<h3>Test Data</h3>
 				<button onclick={addChannel}>Add Channel</button>
 				<button onclick={addTrack} disabled={!doc.channels?.length}>Add Track</button>
-				<button onclick={() => addManyTracks(100)} disabled={!doc.channels?.length}>
-					Add 100 Tracks
-				</button>
-				<button onclick={() => addManyTracks(1000)} disabled={!doc.channels?.length}>
-					Add 1000 Tracks
-				</button>
+				<button onclick={() => addManyTracks(100)} disabled={!doc.channels?.length}> Add 100 Tracks </button>
+				<button onclick={() => addManyTracks(1000)} disabled={!doc.channels?.length}> Add 1000 Tracks </button>
 			</div>
 
 			<div class="search">
@@ -220,17 +200,14 @@
 						<button onclick={() => (showLimit = 50)} disabled={showLimit === 50}>50</button>
 						<button onclick={() => (showLimit = 200)} disabled={showLimit === 200}>200</button>
 						<button onclick={() => (showLimit = 1000)} disabled={showLimit === 1000}>1000</button>
-						<button
-							onclick={() => (showLimit = filteredTracks.length)}
-							disabled={showLimit >= filteredTracks.length}
-						>
+						<button onclick={() => (showLimit = filteredTracks.length)} disabled={showLimit >= filteredTracks.length}>
 							All ({filteredTracks.length})
 						</button>
 					</div>
 				</div>
 				{#if filteredTracks.length > 0}
 					<div class="track-items">
-						{#each filteredTracks.slice(0, showLimit) as track}
+						{#each filteredTracks.slice(0, showLimit) as track (track.id)}
 							<div class="track-item">
 								<strong>{track.title}</strong>
 								<small>{track.url}</small>
