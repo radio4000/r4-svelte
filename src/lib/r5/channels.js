@@ -160,7 +160,7 @@ export async function outdated(slug) {
 
 		// v1 channels dont need updating because it is in read-only state since before this project
 		if (channel.source === 'v1' && localLatest) {
-			log.log('outdated because v1 and has tracks already')
+			log.log('already up to date because v1 and has tracks already')
 			return false
 		}
 

@@ -30,6 +30,7 @@
 	function filterChannels() {
 		return channels.filter((c) => {
 			if (filter === 'all') return true
+			if (filter === 'v1') return c.source === 'v1'
 			if (filter === 'v2') return c.source !== 'v1'
 			if (filter === 'artwork' && !c.image) return false
 			if (filter === '20+' && (!c.track_count || c.track_count < 20)) return false
@@ -108,6 +109,7 @@
 					<option value="100+">100+ tracks</option>
 					<option value="1000+">1000+ tracks</option>
 					<option value="artwork">Has artwork</option>
+					<option value="v1">v1</option>
 					<option value="v2">v2</option>
 				</select>
 			</label>

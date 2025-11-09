@@ -22,7 +22,8 @@
 	const canEdit = $derived(isSignedIn && appState.channels?.includes(channel?.id))
 
 	$effect(() => {
-		// Explicitly track channel.id to ensure effect re-runs on navigation
+		if (!channel) return
+
 		const slug = channel.slug
 		const channelId = channel.id
 
@@ -105,7 +106,9 @@
 		</section>
 	</article>
 {:else}
-	<p>No channel</p>
+	<article class="SmallContainer">
+		<p>Channel not found</p>
+	</article>
 {/if}
 
 <style>

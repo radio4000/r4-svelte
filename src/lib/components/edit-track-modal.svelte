@@ -1,7 +1,7 @@
 <script>
 	import {updateTrack} from '$lib/api'
-	import {logger} from '$lib/logger'
 	import Modal from '$lib/components/modal.svelte'
+	import {logger} from '$lib/logger'
 
 	const log = logger.ns('edit_track_modal').seal()
 

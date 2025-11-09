@@ -99,8 +99,8 @@
 
 			&:hover {
 				background: var(--accent-3);
-				color: light-dark(var(--gray-12), var(--gray-1));
-				border-color: var(--accent-1);
+				color: light-dark(var(--gray-12), var(--gray-12));
+				border-color: light-dark(var(--accent-1), var(--accent-12));
 			}
 		}
 

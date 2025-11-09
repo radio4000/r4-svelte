@@ -2,7 +2,8 @@ List of possible improvements to the architecture, idea, cli and web application
 Verify and evaluate todos before taking them on. They might be outdated or just not good ideas.
 
 - ✅ improve initial loading performance
-- replace pglite/electric with tanstack db (pr#40)
+- explore replacing pglite with automerge v3
+- expore replace pglite/electric with tanstack db (pr#40)
 - consider https://turso.tech/blog/introducing-turso-in-the-browser to replace pgsql (tough performance at times)
 - crud channels: create/edit/delete channel functionality
 - crud tracks: edit/delete track functionality (we have add)

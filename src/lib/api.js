@@ -314,6 +314,7 @@ export async function isFollowing(followerId, channelId) {
 }
 
 /**
+ * Updates a local track, then remote
  * @param {string} trackId
  * @param {object} updates
  * @param {string} [updates.title]
@@ -333,14 +334,11 @@ export async function updateTrack(trackId, updates) {
 		WHERE id = ${trackId}
 	`
 
-	// Update remotely if authenticated
-	if (appState.channels?.length) {
-		try {
-			await r4.tracks.updateTrack(trackId, updates)
-			log.log('track_updated_remotely', {trackId})
-		} catch (error) {
-			log.error('remote_update_failed', {trackId, error})
-		}
+	try {
+		await r4.tracks.updateTrack(trackId, updates)
+		log.log('track_updated_remotely', {trackId})
+	} catch (error) {
+		log.error('remote_update_failed', {trackId, error})
 	}
 
 	// Dispatch event for UI updates
@@ -373,14 +371,11 @@ export async function deleteTrack(trackId) {
 	// Delete locally
 	await pg.sql`DELETE FROM tracks WHERE id = ${trackId}`
 
-	// Delete remotely if authenticated
-	if (appState.channels?.length) {
-		try {
-			await r4.tracks.deleteTrack(trackId)
-			log.log('track_deleted_remotely', {trackId})
-		} catch (error) {
-			log.error('remote_delete_failed', {trackId, error})
-		}
+	try {
+		await r4.tracks.deleteTrack(trackId)
+		log.log('track_deleted_remotely', {trackId})
+	} catch (error) {
+		log.error('remote_delete_failed', {trackId, error})
 	}
 
 	// Dispatch event for UI updates

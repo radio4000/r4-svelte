@@ -14,7 +14,7 @@
 		"test": "vitest run"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.1",
+		"@biomejs/biome": "2.3.4",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
 		"@sveltejs/kit": "^2.48.4",
@@ -27,7 +27,7 @@
 		"globals": "^16.5.0",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.4.0",
-		"svelte": "^5.43.4",
+		"svelte": "^5.43.5",
 		"svelte-check": "^4.3.3",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.46.3",
@@ -43,7 +43,7 @@
 		"@electric-sql/pglite-repl": "^0.2.32",
 		"@humanspeak/svelte-virtual-list": "^0.3.5",
 		"@radio4000/components": "^0.2.16",
-		"@radio4000/sdk": "^0.4.13",
+		"@radio4000/sdk": "^0.5.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@types/yargs": "^17.0.34",
 		"adze": "^2.2.5",

@@ -106,7 +106,7 @@ See @docs/cli.md. The project has a CLI tool for database operations, run it wit
 
 ## Task-based agent approach
 
-1. Operate on tasks with `todo.txt` as your scratchpad
+1. Operate on tasks with `plan.md` as your scratchpad
 2. Research, ask user for guidance when things aren't clear, or strategically important
 3. Review research, create a plan
 4. Implement plan
