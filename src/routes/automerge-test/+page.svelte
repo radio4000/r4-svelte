@@ -10,29 +10,30 @@
 	let searchQuery = $state('')
 
 	// Derived state - filtering tracks without SQL
-	let filteredTracks = $derived(() => {
-		if (!doc?.tracks) return []
-		if (!searchQuery) return doc.tracks
+	let filteredTracks = $derived(
+		!doc?.tracks
+			? []
+			: !searchQuery
+				? doc.tracks
+				: doc.tracks.filter(
+						(track) =>
+							track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+							track.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+							track.url?.toLowerCase().includes(searchQuery.toLowerCase())
+					)
+	)
 
-		const query = searchQuery.toLowerCase()
-		return doc.tracks.filter(
-			(track) =>
-				track.title?.toLowerCase().includes(query) ||
-				track.description?.toLowerCase().includes(query) ||
-				track.url?.toLowerCase().includes(query)
-		)
-	})
-
-	// Derived state - group tracks by channel
-	let tracksByChannel = $derived(() => {
-		if (!doc?.tracks) return {}
-		return doc.tracks.reduce((acc, track) => {
-			const channelId = track.channel_id || 'unknown'
-			if (!acc[channelId]) acc[channelId] = []
-			acc[channelId].push(track)
-			return acc
-		}, {})
-	})
+	// Derived state - group tracks by channel (unused but shows pattern)
+	let tracksByChannel = $derived(
+		!doc?.tracks
+			? {}
+			: doc.tracks.reduce((acc, track) => {
+					const channelId = track.channel_id || 'unknown'
+					if (!acc[channelId]) acc[channelId] = []
+					acc[channelId].push(track)
+					return acc
+				}, {})
+	)
 
 	onMount(async () => {
 		try {
@@ -130,7 +131,7 @@
 			<div class="stats">
 				<p><strong>Channels:</strong> {doc.channels?.length || 0}</p>
 				<p><strong>Tracks:</strong> {doc.tracks?.length || 0}</p>
-				<p><strong>Filtered:</strong> {filteredTracks()?.length || 0}</p>
+				<p><strong>Filtered:</strong> {filteredTracks?.length || 0}</p>
 			</div>
 
 			<div class="controls">
@@ -151,17 +152,17 @@
 			</div>
 
 			<div class="tracks-list">
-				<h3>Tracks ({filteredTracks()?.length})</h3>
-				{#if filteredTracks().length > 0}
+				<h3>Tracks ({filteredTracks?.length || 0})</h3>
+				{#if filteredTracks.length > 0}
 					<div class="track-items">
-						{#each filteredTracks().slice(0, 50) as track}
+						{#each filteredTracks.slice(0, 50) as track}
 							<div class="track-item">
 								<strong>{track.title}</strong>
 								<small>{track.url}</small>
 							</div>
 						{/each}
-						{#if filteredTracks().length > 50}
-							<p><em>...showing 50 of {filteredTracks().length} tracks</em></p>
+						{#if filteredTracks.length > 50}
+							<p><em>...showing 50 of {filteredTracks.length} tracks</em></p>
 						{/if}
 					</div>
 				{:else}
