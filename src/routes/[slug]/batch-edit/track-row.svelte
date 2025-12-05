@@ -31,7 +31,7 @@
 
 <div class="track-row" class:selected={isSelected} onclick={onSelect} style:grid-template-columns={gridTemplate}>
 	<div class="col-checkbox">
-		<input type="checkbox" checked={isSelected} onclick|stopPropagation={onSelect} />
+		<input type="checkbox" checked={isSelected} onclick={(e) => { e.stopPropagation(); onSelect(); }} />
 	</div>
 
 	<div class="col-link">
