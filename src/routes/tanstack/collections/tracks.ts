@@ -9,10 +9,11 @@ import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, completedIdempotencyKeys, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
+import type {Track} from '$lib/types'
 
 // Tracks collection - NO mutation hooks, mutations go through offline actions
 export const tracksCollection = createCollection(
-	queryCollectionOptions({
+	queryCollectionOptions<Track>({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
 			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value

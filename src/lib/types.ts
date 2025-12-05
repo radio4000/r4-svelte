@@ -30,7 +30,7 @@ export interface Channel {
 
 	// Link to v1 channel
 	firebase_id?: string
-	source?: string // set to "v1" for firebase ones
+	source?: 'v1' | 'v2'
 
 	// for broadcasting
 	broadcasting?: boolean
@@ -54,9 +54,9 @@ export type Track = {
 	mentions?: string[]
 	// fields below this line do not exist on remote r4 track
 	firebase_id?: string
-	// sometimes we include this, too
 	channel_id?: string
 	slug?: string
+	source?: 'v1' | 'v2'
 	// when joined with track_meta table
 	ytid?: string
 	duration?: number

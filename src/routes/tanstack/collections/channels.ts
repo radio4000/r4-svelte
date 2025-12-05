@@ -8,12 +8,13 @@ import {fetchAllChannels, fetchChannelBySlug} from '$lib/api/fetch-channels'
 import {queryClient} from './query-client'
 import {log, txLog, completedIdempotencyKeys, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
+import type {Channel} from '$lib/types'
 
-export type Channel = {id: string; slug: string; source?: 'v1' | 'v2'; firebase_id?: string}
+export type {Channel}
 
 // Channels collection - on-demand: queries dictate what gets fetched
 export const channelsCollection = createCollection(
-	queryCollectionOptions({
+	queryCollectionOptions<Channel>({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
 			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
