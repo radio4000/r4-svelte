@@ -184,7 +184,7 @@
 				<input
 					type="checkbox"
 					checked={customVariables['--border-radius'] ? customVariables['--border-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--border-radius', e.target.checked ? '0.4rem' : '0')}
+					onchange={(e) => updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--border-radius`}
 				/>
 				<span></span>
@@ -196,7 +196,7 @@
 				<input
 					type="checkbox"
 					checked={customVariables['--media-radius'] ? customVariables['--media-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--media-radius', e.target.checked ? '0.4rem' : '0')}
+					onchange={(e) => updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--media-radius`}
 				/>
 				<span></span>
@@ -220,14 +220,14 @@
 				<InputColor
 					label={variable.label()}
 					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
+					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
 				/>
 				<input
 					hidden
 					type="text"
 					value={getCurrentValue(variable)}
 					placeholder={m.theme_input_placeholder_hex()}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
+					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
 				/>
 				<small>{variable.description()}</small>
 			</div>
@@ -239,7 +239,7 @@
 				<InputColor
 					label={variable.label()}
 					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
+					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
 					disabled={!getCurrentValue(variable)}
 				/>
 				<input
@@ -247,7 +247,7 @@
 					type="text"
 					value={getCurrentValue(variable)}
 					placeholder={m.theme_input_placeholder_inherit()}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
+					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
 				/>
 				<small>{variable.description()}</small>
 			</div>

@@ -136,7 +136,7 @@
 	<menu class="filtermenu">
 		<div class="filters">
 			<label title={m.channels_filter_label()}>
-				<select value={filter} onchange={(e) => setFilter(e.target.value)}>
+				<select value={filter} onchange={(e) => setFilter(e.currentTarget.value)}>
 					<option value="all">{m.channels_filter_option_all()}</option>
 					<option value="20+">{m.channels_filter_option_20()}</option>
 					<option value="100+">{m.channels_filter_option_100()}</option>
@@ -147,7 +147,7 @@
 				</select>
 			</label>
 			<label title={m.channels_order_label()}>
-				<select value={order} onchange={(e) => setOrder(e.target.value)} disabled={shuffled}>
+				<select value={order} onchange={(e) => setOrder(e.currentTarget.value)} disabled={shuffled}>
 					<option value="updated">{m.channels_order_updated()}</option>
 					<option value="created">{m.channels_order_created()}</option>
 					<option value="name">{m.channels_order_name()}</option>

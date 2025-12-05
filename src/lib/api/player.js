@@ -81,7 +81,8 @@ export function next(track, activeQueue, endReason) {
 	const next = activeQueue[idx + 1]
 	if (next) {
 		/** @type {PlayStartReason} */
-		const startReason = endReason === 'track_completed' ? 'auto_next' : endReason === 'youtube_error' ? 'track_error' : 'auto_next'
+		const startReason =
+			endReason === 'track_completed' ? 'auto_next' : endReason === 'youtube_error' ? 'track_error' : 'auto_next'
 		playTrack(next, endReason, startReason)
 	} else {
 		log.info('No next track available')

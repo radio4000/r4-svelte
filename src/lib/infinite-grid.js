@@ -62,6 +62,10 @@ export class InfiniteGrid {
 
 /**
  * Creates a throttled function that limits execution rate
+ * @template {(...args: any[]) => any} T
+ * @param {T} fn
+ * @param {number} [ms]
+ * @returns {T}
  */
 export function throttle(fn, ms = 16) {
 	let lastCall = 0

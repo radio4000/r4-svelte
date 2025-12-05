@@ -1,8 +1,14 @@
 <script lang="ts">
 	import {getOfflineExecutor} from './collections'
 
+	interface PendingTransaction {
+		mutations?: Array<{type?: string; modified?: {title?: string}; original?: {title?: string}}>
+		lastError?: {message: string}
+		retryCount?: number
+	}
+
 	let isOnline = $state(navigator.onLine)
-	let pendingTransactions = $state<unknown[]>([])
+	let pendingTransactions = $state<PendingTransaction[]>([])
 
 	$effect(() => {
 		const onOnline = () => (isOnline = true)

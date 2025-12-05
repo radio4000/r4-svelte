@@ -12,7 +12,7 @@
 		if (!ytid) return []
 		return [...tracksCollection.state.values()]
 			.filter((t) => t.id !== track.id && extractYouTubeId(t.url) === ytid)
-			.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 	})
 </script>
 

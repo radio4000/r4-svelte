@@ -77,7 +77,7 @@
 		if (!dateStr) return '?'
 		const d = new Date(dateStr)
 		const now = new Date()
-		const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24))
+		const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 		if (diffDays < 7) return `${diffDays}d ago`
 		if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
 		if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`

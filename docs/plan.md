@@ -3,6 +3,47 @@
 List of possible improvements to the architecture, idea, cli and web application.
 Verify and evaluate todos before taking them on. They might be outdated or just not good ideas.
 
+## Agent Continuation: Reduce svelte-check errors
+
+**Status:** Reduced from 247 to 168 errors (32% reduction)
+
+**Run:** `bun run check` to see current errors
+
+**What was fixed:**
+
+- `src/lib/utils.ts` - Array type annotations for parseEntities, extractHashtags, extractMentions
+- `src/lib/api/player.js` - JSDoc types for PlayEndReason, PlayStartReason, MediaPlayer
+- `src/lib/api/fetch-channels.ts` - Proper Channel type returns (using `as Channel` cast)
+- `src/lib/types.ts` - Added `| null` to optional fields to match SDK/Supabase types
+- `src/lib/api.js` - Date arithmetic `.getTime()`, null→undefined fixes
+- `src/lib/dates.js` - Date arithmetic `.getTime()` fixes
+- `src/routes/tanstack/collections/channels.ts` - Moved user_id to transaction metadata
+- Various `.svelte` and `.js` files - Date arithmetic, type annotations
+
+**Remaining high-value fixes:**
+
+1. **SDK return types** (`@radio4000/sdk`): `createChannel` returns union with `PostgrestResponseSuccess<unknown>` which loses typed data. Needs SDK fix to remove `unknown` from union.
+2. **Svelte 5 attachment types** (17 errors): `{@attach}` directive adds symbols to props that HTMLProps doesn't expect. May need Svelte type updates.
+3. **map.svelte** (19 errors): Leaflet integration with possibly-null checks
+4. **spectrum-scanner.svelte** (12 errors): Canvas/animation type issues
+5. **broadcast.js** (9 errors): SDK type issues, null handling
+6. **vertical-loop.js** (7 errors): GSAP `getProperty` returns `string | number`
+
+**Files with most errors:**
+
+- `src/lib/components/map.svelte` (19)
+- `src/lib/components/spectrum-scanner.svelte` (12)
+- `src/lib/broadcast.js` (9)
+- `src/routes/[slug]/batch-edit/+page.svelte` (8)
+- `src/lib/components/tool-tip.svelte` (8)
+
+**Approach for remaining fixes:**
+
+- For SDK types: Fix in `@radio4000/sdk` package
+- For Svelte attachments: Consider `// @ts-expect-error` or wait for Svelte type updates
+- For possibly-null: Add optional chaining or guards
+- For GSAP: Cast to number with `Number()` or type assertions
+
 # BACKLOG
 
 - **Refine offline error handling:** In `syncTracks` and `syncChannels`, use `NonRetriableError` from `@tanstack/offline-transactions` for server-side validation errors (e.g., HTTP 4xx) to prevent unnecessary retries.

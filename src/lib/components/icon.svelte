@@ -11,10 +11,11 @@
 		return parts.join('')
 	}
 
+	/** @type {import('svelte').Component | null} */
 	let Icon = $state(null)
 	let currentIcon = $state('')
 
-	$effect(async () => {
+	$effect(() => {
 		if (icon === currentIcon) return
 		currentIcon = icon
 
@@ -23,13 +24,14 @@
 			return
 		}
 
-		try {
-			const iconName = toImportName(icon)
-			const module = await import('obra-icons-svelte')
-			Icon = module[iconName]
-		} catch {
-			Icon = null
-		}
+		const iconName = toImportName(icon)
+		import('obra-icons-svelte')
+			.then((module) => {
+				Icon = module[iconName]
+			})
+			.catch(() => {
+				Icon = null
+			})
 	})
 </script>
 

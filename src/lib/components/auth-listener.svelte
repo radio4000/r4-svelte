@@ -19,7 +19,7 @@
 
 		if (!user) {
 			if (appState.channels?.length) {
-				appState.channel = null
+				appState.channel = undefined
 				appState.channels = []
 			}
 			return

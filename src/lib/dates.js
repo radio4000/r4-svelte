@@ -38,7 +38,7 @@ export function relativeDateDetailed(dateString) {
 	if (!dateString) return ''
 	const date = new Date(dateString)
 	const now = new Date()
-	const diffMs = now - date
+	const diffMs = now.getTime() - date.getTime()
 	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
 	if (diffDays < 30) return `${diffDays} days ago`
@@ -51,7 +51,7 @@ export function relativeDateDetailed(dateString) {
 export function relativeTime(dateInput) {
 	if (!dateInput) return ''
 	const date = new Date(dateInput)
-	const diffMs = Date.now() - date
+	const diffMs = Date.now() - date.getTime()
 	const diffMins = Math.floor(diffMs / 60000)
 
 	// Recent: relative time

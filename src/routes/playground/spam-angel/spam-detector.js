@@ -69,6 +69,7 @@ export function analyzeChannel(channel, tracks = []) {
 	const text = `${title} ${description}`
 
 	// Evidence collectors
+	/** @type {{keywords: string[], phrases: string[], locations: string[], patterns: string[], musicTerms: string[]}} */
 	const evidence = {
 		keywords: [],
 		phrases: [],

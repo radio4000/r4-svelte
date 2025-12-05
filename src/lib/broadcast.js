@@ -118,6 +118,7 @@ export function watchBroadcasts(onChange) {
 		.then((broadcasts) => onChange({broadcasts, error: null}))
 		.catch((error) => onChange({broadcasts: [], error: error.message}))
 
+	/** @type {import('@supabase/supabase-js').RealtimeChannel | null} */
 	let watchChannel = sdk.supabase
 		.channel('broadcasts-page')
 		.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
@@ -134,7 +135,7 @@ export function watchBroadcasts(onChange) {
 
 				// Clear local broadcasting state if this was our broadcast
 				if (channelId === appState.channels?.[0]) {
-					appState.broadcasting_channel_id = null
+					appState.broadcasting_channel_id = undefined
 					log.log('my_broadcast_removed_remotely', {channel_id: channelId})
 				}
 			}
@@ -207,7 +208,7 @@ export async function playBroadcastTrack(broadcast) {
 	const {track_id, channel_id} = broadcast
 
 	try {
-		await playTrack(track_id, '', 'broadcast_sync')
+		await playTrack(track_id, null, 'broadcast_sync')
 		appState.listening_to_channel_id = channel_id
 		return true
 	} catch {
@@ -218,7 +219,7 @@ export async function playBroadcastTrack(broadcast) {
 			const slug = channel?.slug
 			if (!slug) throw new Error('No channel found for broadcast')
 			await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-			await playTrack(track_id, '', 'broadcast_sync')
+			await playTrack(track_id, null, 'broadcast_sync')
 			appState.listening_to_channel_id = channel_id
 			log.log('play_success_after_fetch', {track_id, channel_id, slug})
 			return true

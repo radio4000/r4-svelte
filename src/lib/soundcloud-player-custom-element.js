@@ -87,7 +87,6 @@ class SoundCloudPlayerElement extends HTMLElement {
 		}
 
 		try {
-			// @ts-expect-error SC is global
 			this.api = globalThis.SC.Widget(iframe)
 
 			// Bind events

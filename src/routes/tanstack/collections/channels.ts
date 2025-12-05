@@ -50,16 +50,16 @@ const channelMutationHandlers: Record<string, MutationHandler> = {
 		if (!userId) throw new NonRetriableError('userId required in transaction metadata')
 		log.info('channel_insert_start', {id: channel.id, name: channel.name})
 		try {
-			const {data, error} = await sdk.channels.createChannel({
+			const response = await sdk.channels.createChannel({
 				id: channel.id,
 				name: channel.name,
 				slug: channel.slug,
 				userId
 			})
-			log.info('channel_insert_done', {clientId: channel.id, serverId: data?.id, error})
-			if (error) throw new NonRetriableError(getErrorMessage(error))
-			if (data?.id) {
-				appState.channels = [...(appState.channels || []), data.id]
+			log.info('channel_insert_done', {clientId: channel.id, serverId: response.data?.id, error: response.error})
+			if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
+			if (response.data?.id) {
+				appState.channels = [...(appState.channels || []), response.data.id]
 			}
 		} catch (err) {
 			if (err instanceof NonRetriableError) throw err

@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 // Simple function to test the text parsing logic without Svelte component complexity
+/** @param {any} text @param {{slug: string} | null} [track] */
 function createLinkedParts(text, track = null) {
 	if (typeof text !== 'string') return [{type: 'text', content: ''}]
 	if (!text) return [{type: 'text', content: ''}]

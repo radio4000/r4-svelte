@@ -52,7 +52,7 @@ export function verticalLoop(items, config = {}) {
 	const snap = createSnapFunction(config.snap)
 	const getTotalHeight = () => {
 		const lastItem = items[length - 1]
-		const scaleY = gsap.getProperty(lastItem, 'scaleY') || 1
+		const scaleY = Number(gsap.getProperty(lastItem, 'scaleY')) || 1
 		return (
 			lastItem.offsetTop +
 			(yPercents[length - 1] / 100) * heights[length - 1] -
@@ -68,9 +68,9 @@ export function verticalLoop(items, config = {}) {
 		let b2
 
 		items.forEach((el, i) => {
-			heights[i] = parseFloat(gsap.getProperty(el, 'height', 'px'))
+			heights[i] = Number(gsap.getProperty(el, 'height', 'px'))
 			yPercents[i] = snap(
-				(Number(gsap.getProperty(el, 'y', 'px')) / heights[i]) * 100 + gsap.getProperty(el, 'yPercent')
+				(Number(gsap.getProperty(el, 'y', 'px')) / heights[i]) * 100 + Number(gsap.getProperty(el, 'yPercent'))
 			)
 			b2 = el.getBoundingClientRect()
 			spaceBefore[i] = b2.top - (i ? b1.bottom : b1.top)
@@ -112,7 +112,7 @@ export function verticalLoop(items, config = {}) {
 			const item = items[i]
 			const curY = (yPercents[i] / 100) * heights[i]
 			const distanceToStart = item.offsetTop + curY - startY + spaceBefore[0]
-			const scaleY = gsap.getProperty(item, 'scaleY') || 1
+			const scaleY = Number(gsap.getProperty(item, 'scaleY')) || 1
 			const distanceToLoop = distanceToStart + heights[i] * scaleY
 
 			// Animation to loop point
@@ -213,7 +213,7 @@ export function verticalLoop(items, config = {}) {
 	tl.progress(1, true).progress(0, true)
 
 	if (config.reversed) {
-		tl.vars.onReverseComplete()
+		tl.vars.onReverseComplete?.()
 		tl.reverse()
 	}
 
@@ -245,7 +245,9 @@ export function verticalLoop(items, config = {}) {
 	const cleanup = () => window.removeEventListener('resize', onResize)
 
 	// Store cleanup in context if using gsap.context
-	if (gsap.context.current) {
+	// @ts-ignore - gsap.context.current exists at runtime
+	if (gsap.context?.current) {
+		// @ts-ignore
 		gsap.context.current.add(cleanup)
 	}
 

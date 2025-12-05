@@ -30,11 +30,13 @@
 		}
 
 		targetElement.setAttribute('aria-describedby', id)
+		// @ts-ignore - CSS Anchor Positioning API
 		targetElement.style.anchorName = anchorName
+		// @ts-ignore - CSS Anchor Positioning API
 		tooltipElement.style.positionAnchor = anchorName
 
-		const showTooltip = () => tooltipElement.showPopover()
-		const hideTooltip = () => tooltipElement.hidePopover()
+		const showTooltip = () => tooltipElement?.showPopover()
+		const hideTooltip = () => tooltipElement?.hidePopover()
 
 		targetElement.addEventListener('mouseenter', showTooltip)
 		targetElement.addEventListener('mouseleave', hideTooltip)
@@ -42,10 +44,10 @@
 		targetElement.addEventListener('blur', hideTooltip)
 
 		return () => {
-			targetElement.removeEventListener('mouseenter', showTooltip)
-			targetElement.removeEventListener('mouseleave', hideTooltip)
-			targetElement.removeEventListener('focus', showTooltip)
-			targetElement.removeEventListener('blur', hideTooltip)
+			targetElement?.removeEventListener('mouseenter', showTooltip)
+			targetElement?.removeEventListener('mouseleave', hideTooltip)
+			targetElement?.removeEventListener('focus', showTooltip)
+			targetElement?.removeEventListener('blur', hideTooltip)
 		}
 	})
 </script>
