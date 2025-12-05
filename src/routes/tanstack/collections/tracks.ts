@@ -12,8 +12,8 @@ import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
 // Tracks collection - NO mutation hooks, mutations go through offline actions
-export const tracksCollection = createCollection(
-	queryCollectionOptions<Track>({
+export const tracksCollection = createCollection<Track, string>(
+	queryCollectionOptions({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
 			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value

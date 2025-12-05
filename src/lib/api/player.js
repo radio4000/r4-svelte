@@ -6,15 +6,18 @@ import {shuffleArray} from '$lib/utils.ts'
 /** @typedef {import('$lib/types').AppState} AppState */
 /** @typedef {import('$lib/types').Track} Track */
 /** @typedef {import('$lib/types').Channel} Channel */
-/** @typedef {HTMLElement & {paused: boolean, play(): void, pause(): void} | null} MediaPlayer */
+/** @typedef {import('$lib/types').PlayEndReason} PlayEndReason */
+/** @typedef {import('$lib/types').PlayStartReason} PlayStartReason */
+/** @typedef {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void}} MediaPlayer */
 
 const log = logger.ns('api/player').seal()
 
-/** @param {MediaPlayer} [player] */
+/** @param {MediaPlayer | null} [player] */
 export function play(player) {
 	// If no player provided, try to find one
 	if (!player) {
-		player = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+		const el = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+		if (el && 'paused' in el) player = /** @type {MediaPlayer} */ (el)
 	}
 
 	if (!player) {
@@ -24,9 +27,9 @@ export function play(player) {
 
 	log.debug('play() check', player, 'paused?', player.paused)
 
-	const promise = player.play()
-	if (promise !== undefined) {
-		return promise
+	const result = player.play()
+	if (result instanceof Promise) {
+		return result
 			.then(() => {
 				log.log('play() succeeded')
 			})
@@ -63,7 +66,7 @@ export function togglePlay(player) {
 /**
  * @param {Track | undefined} track
  * @param {string[]} activeQueue - we need to know whether we're playing the playlist_tracks or playlist_tracks_shuffled
- * @param {string} endReason - why the current track is ending
+ * @param {PlayEndReason} endReason - why the current track is ending
  */
 export function next(track, activeQueue, endReason) {
 	if (!track?.id) {
@@ -77,9 +80,8 @@ export function next(track, activeQueue, endReason) {
 	const idx = activeQueue.indexOf(track.id)
 	const next = activeQueue[idx + 1]
 	if (next) {
-		// Keep the endReason as-is, but use descriptive startReason
-		const startReason =
-			endReason === 'track_completed' ? 'auto_next' : endReason.startsWith('youtube_error') ? 'track_error' : endReason
+		/** @type {PlayStartReason} */
+		const startReason = endReason === 'track_completed' ? 'auto_next' : endReason === 'youtube_error' ? 'track_error' : 'auto_next'
 		playTrack(next, endReason, startReason)
 	} else {
 		log.info('No next track available')
@@ -89,7 +91,7 @@ export function next(track, activeQueue, endReason) {
 /**
  * @param {Track | undefined} track
  * @param {string[]} activeQueue
- * @param {string} endReason - why the current track is ending
+ * @param {PlayEndReason} endReason - why the current track is ending
  */
 export function previous(track, activeQueue, endReason) {
 	if (!track?.id) {

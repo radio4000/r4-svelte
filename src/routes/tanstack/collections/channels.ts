@@ -13,8 +13,8 @@ import type {Channel} from '$lib/types'
 export type {Channel}
 
 // Channels collection - on-demand: queries dictate what gets fetched
-export const channelsCollection = createCollection(
-	queryCollectionOptions<Channel>({
+export const channelsCollection = createCollection<Channel, string>(
+	queryCollectionOptions({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
 			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value

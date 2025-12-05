@@ -75,7 +75,7 @@ export function parseEntities(
 ): unknown[] {
 	if (!text || typeof text !== 'string') return []
 
-	const entities = []
+	const entities: unknown[] = []
 	text.replace(ENTITY_REGEX, (match, prefix, entity, offset) => {
 		entities.push(callback(match, prefix, entity, offset))
 		return match
@@ -90,7 +90,7 @@ export function parseEntities(
 export function extractHashtags(text: string): string[] {
 	if (!text || typeof text !== 'string') return []
 
-	const hashtags = []
+	const hashtags: string[] = []
 	text.replace(ENTITY_REGEX, (match, _prefix, entity) => {
 		if (entity.startsWith('#')) {
 			hashtags.push(entity.toLowerCase())
@@ -107,7 +107,7 @@ export function extractHashtags(text: string): string[] {
 export function extractMentions(text: string): string[] {
 	if (!text || typeof text !== 'string') return []
 
-	const mentions = []
+	const mentions: string[] = []
 	text.replace(ENTITY_REGEX, (match, _prefix, entity) => {
 		if (entity.startsWith('@')) {
 			mentions.push(entity.toLowerCase())

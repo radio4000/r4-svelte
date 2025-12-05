@@ -17,26 +17,26 @@ export interface Channel {
 	updated_at: string
 	name: string
 	slug: string
-	description?: string
-	image?: string
-	url?: string
+	description?: string | null
+	image?: string | null
+	url?: string | null
 	// custom ones
 	tracks_outdated?: boolean
 	track_count?: number
-	latest_track_at?: string
+	latest_track_at?: string | null
 
-	latitude?: number
-	longitude?: number
+	latitude?: number | null
+	longitude?: number | null
 
 	// Link to v1 channel
-	firebase_id?: string
+	firebase_id?: string | null
 	source?: 'v1' | 'v2'
 
 	// for broadcasting
 	broadcasting?: boolean
-	broadcast_track_id?: string
-	broadcast_started_at?: string
-	tracks_synced_at?: string
+	broadcast_track_id?: string | null
+	broadcast_started_at?: string | null
+	tracks_synced_at?: string | null
 
 	// local only
 	spam?: boolean
