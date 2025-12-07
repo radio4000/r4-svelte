@@ -7,6 +7,7 @@
 	import {timeAgo} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
+	/** @type {{broadcasts: import('$lib/types').BroadcastWithChannel[], error: string | null}} */
 	const broadcastState = $state({
 		broadcasts: [],
 		error: null

@@ -8,7 +8,7 @@ export async function delay(ms: number) {
 	})
 }
 
-export function trimWithEllipsis(text?: string, maxLength: number = 267) {
+export function trimWithEllipsis(text?: string | null, maxLength: number = 267) {
 	return !text || text.length <= maxLength ? text || '' : `${text.substring(0, maxLength)}…`
 }
 

@@ -178,11 +178,10 @@
 			.map(([reason, count]) => ({reason, count}))
 	})
 
+	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
 	const userInitiatedRate = $derived.by(() => {
 		if (plays.length === 0) return 0
-		const userInitiated = plays.filter((p) =>
-			['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search'].includes(p.reason_start)
-		).length
+		const userInitiated = plays.filter((p) => p.reason_start && userInitiatedReasons.includes(p.reason_start)).length
 		return Math.round((userInitiated / plays.length) * 100)
 	})
 </script>

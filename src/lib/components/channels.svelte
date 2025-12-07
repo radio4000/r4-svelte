@@ -75,6 +75,7 @@
 			}))
 	})
 
+	/** @param {typeof display} value */
 	function setDisplay(value = 'grid') {
 		display = value
 		appState.channels_display = display

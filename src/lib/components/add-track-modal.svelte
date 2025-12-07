@@ -15,6 +15,7 @@
 		showModal = true
 	}
 
+	/** @param {CustomEvent<{url: string}>} event */
 	function handleGlobalModalEvent(event) {
 		if (canAddTrack) {
 			openWithUrl(event.detail.url)
@@ -22,6 +23,11 @@
 			goto('/auth')
 		}
 	}
+
+	$effect(() => {
+		window.addEventListener('r5:openAddModal', /** @type {EventListener} */ (handleGlobalModalEvent))
+		return () => window.removeEventListener('r5:openAddModal', /** @type {EventListener} */ (handleGlobalModalEvent))
+	})
 
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
@@ -66,7 +72,7 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleKeyDown} on:r5:openAddModal={handleGlobalModalEvent} />
+<svelte:window onkeydown={handleKeyDown} />
 
 <button onclick={handleAddTrackClick} {@attach tooltip({content: m.track_add_title()})}>
 	<Icon icon="add" size={20}></Icon>

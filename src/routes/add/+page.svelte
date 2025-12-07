@@ -22,13 +22,13 @@
 	<title>{m.page_title_add_track()}</title>
 </svelte:head>
 
-{#if canAddTrack}
+{#if canAddTrack && channel}
 	<h2>
 		{m.track_add_title()}
 		<a href={`/${channel.slug}`}>{m.track_add_destination({channel: channel.name})}</a>
 	</h2>
 
-	<r4-track-create channel_id={channel?.id} url={initialUrl} onsubmit={handleSubmit}></r4-track-create>
+	<r4-track-create channel_id={channel.id} url={initialUrl} onsubmit={handleSubmit}></r4-track-create>
 {:else}
 	<p><a href="/auth">{m.auth_sign_in_to_add()}</a></p>
 {/if}

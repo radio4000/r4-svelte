@@ -5,44 +5,39 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## Agent Continuation: Reduce svelte-check errors
 
-**Status:** Reduced from 247 to 168 errors (32% reduction)
+**Status:** Reduced from 138 to 98 errors (29% reduction in this session, ongoing effort)
 
 **Run:** `bun run check` to see current errors
 
-**What was fixed:**
+**What was fixed (latest session):**
 
-- `src/lib/utils.ts` - Array type annotations for parseEntities, extractHashtags, extractMentions
-- `src/lib/api/player.js` - JSDoc types for PlayEndReason, PlayStartReason, MediaPlayer
-- `src/lib/api/fetch-channels.ts` - Proper Channel type returns (using `as Channel` cast)
-- `src/lib/types.ts` - Added `| null` to optional fields to match SDK/Supabase types
-- `src/lib/api.js` - Date arithmetic `.getTime()`, null→undefined fixes
-- `src/lib/dates.js` - Date arithmetic `.getTime()` fixes
-- `src/routes/tanstack/collections/channels.ts` - Moved user_id to transaction metadata
-- Various `.svelte` and `.js` files - Date arithmetic, type annotations
+- `src/lib/components/tooltip-attachment.js` - Return `() => void` instead of `{destroy: fn}`
+- `src/styles/layout.css` + `src/routes/settings/+page.svelte` - `menu[vertical]` → `menu[data-vertical]`
+- `src/lib/infinite-grid.js` - Throttle JSDoc types + `@this` annotation
+- `src/routes/tanstack/tracks/+page.svelte` - Use `userChannel` variable instead of `appState.channel`
+- `src/routes/stats/+page.svelte` - Guard for optional `reason_start`
+- `src/lib/components/map.svelte` - JSDoc types for Leaflet state (L.Map, L.FeatureGroup, etc.)
+- `src/lib/components/channel-card.svelte` - Added `children?: Snippet` to props type
+- `src/lib/components/icon.svelte` - Added `[key: string]: any` for rest props
+- `src/lib/utils.ts` - `trimWithEllipsis` accepts `string | null`
+- `src/lib/components/input-range.svelte` - Props type + webkitAudioContext cast
+- `src/lib/components/channels.svelte` - `setDisplay` param type
+- `src/lib/components/add-track-modal.svelte` - Custom event listener via $effect
+- `src/routes/create-channel/+page.svelte` - `appState.channels?.length` guard
 
-**Remaining high-value fixes:**
+**Remaining errors (98) are mostly:**
 
-1. **SDK return types** (`@radio4000/sdk`): `createChannel` returns union with `PostgrestResponseSuccess<unknown>` which loses typed data. Needs SDK fix to remove `unknown` from union.
-2. **Svelte 5 attachment types** (17 errors): `{@attach}` directive adds symbols to props that HTMLProps doesn't expect. May need Svelte type updates.
-3. **map.svelte** (19 errors): Leaflet integration with possibly-null checks
-4. **spectrum-scanner.svelte** (12 errors): Canvas/animation type issues
-5. **broadcast.js** (9 errors): SDK type issues, null handling
-6. **vertical-loop.js** (7 errors): GSAP `getProperty` returns `string | number`
-
-**Files with most errors:**
-
-- `src/lib/components/map.svelte` (19)
-- `src/lib/components/spectrum-scanner.svelte` (12)
-- `src/lib/broadcast.js` (9)
-- `src/routes/[slug]/batch-edit/+page.svelte` (8)
-- `src/lib/components/tool-tip.svelte` (8)
+1. **SDK/Supabase return types**: `createChannel` returns `{}` losing typed data
+2. **Tanstack `useLiveQuery`**: `.error` property not typed on query result
+3. **broadcast.js**: SDK type issues with realtime payload types
+4. **spectrum-scanner.svelte**: Canvas/animation type issues
 
 **Approach for remaining fixes:**
 
-- For SDK types: Fix in `@radio4000/sdk` package
-- For Svelte attachments: Consider `// @ts-expect-error` or wait for Svelte type updates
-- For possibly-null: Add optional chaining or guards
-- For GSAP: Cast to number with `Number()` or type assertions
+- SDK types: Fix in `@radio4000/sdk` package
+- Tanstack query types: May need upstream fix or local type augmentation
+- For possibly-null: Add guards where semantically correct
+- Avoid `?.` as a bandaid - fix root cause types instead
 
 # BACKLOG
 
@@ -107,6 +102,7 @@ References:
 
 ## General backlog
 
+- add an url param to directly queueplay a track. maybe slug?play=trackid
 - implement password reset flow (supabase auth)
 - share buttons/embeds (evaluate if needed)
 - local file player for mp3/m4a uploads

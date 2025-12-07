@@ -7,7 +7,7 @@ import TooltipComponent from './tool-tip.svelte'
 
 /**
  * @param {{content: string, position?: TooltipPosition}} options
- * @returns {function(HTMLElement): {destroy: function}}
+ * @returns {function(HTMLElement): () => void}
  */
 export function tooltip(options) {
 	return (element) => {
@@ -25,10 +25,6 @@ export function tooltip(options) {
 			}
 		})
 
-		return {
-			destroy() {
-				unmount(tooltipComponent)
-			}
-		}
+		return () => unmount(tooltipComponent)
 	}
 }

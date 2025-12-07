@@ -22,7 +22,7 @@
 		</p>
 	{/if}
 
-	<menu vertical>
+	<menu data-vertical>
 		{#if !appState.user}
 			<a href="/auth">{m.auth_create_or_signin()}</a>
 		{/if}
@@ -30,7 +30,7 @@
 		<a href="/settings/keyboard">{m.settings_keyboard()}</a>
 	</menu>
 
-	<menu vertical>
+	<menu data-vertical>
 		<a href="/about">{m.nav_about()}</a>
 		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">{m.nav_chat()} &rarr;</a>
 		{#if sha}

@@ -56,10 +56,11 @@ export async function hunt(trackId, ytid, title) {
 	try {
 		// Check if we already have MusicBrainz data locally
 		const meta = trackMetaCollection.get(ytid)
-		const musicbrainzData = meta?.musicbrainz_data
+		/** @type {{recording?: {releases?: {id?: string}[]}} | undefined} */
+		const musicbrainzData = /** @type {any} */ (meta?.musicbrainz_data)
 
 		// If we have cached MusicBrainz data with releases, use it
-		if (musicbrainzData?.recording?.releases?.length > 0) {
+		if (musicbrainzData?.recording?.releases?.length) {
 			log.info('using cached musicbrainz data', {title})
 			// Check each release for Discogs URL
 			for (const release of musicbrainzData.recording.releases) {

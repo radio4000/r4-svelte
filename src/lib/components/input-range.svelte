@@ -1,4 +1,5 @@
 <script>
+	/** @type {{value?: number, min?: number, max?: number, step?: number, visualStep?: number, oninput?: (e: Event) => void, [key: string]: any}} */
 	let {value = $bindable(0), min = 0, max = 100, step = 4, visualStep, oninput, ...props} = $props()
 
 	let marks = $derived(Math.floor((max - min) / (visualStep ?? step)) + 1)

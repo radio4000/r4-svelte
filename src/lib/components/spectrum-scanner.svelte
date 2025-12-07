@@ -5,20 +5,29 @@
 	import InputRange from './input-range.svelte'
 	import * as m from '$lib/paraglide/messages'
 
+	/** @typedef {import('$lib/types').Channel & {frequency: number, signalStrength: number, reception?: number}} ChannelWithFrequency */
+
 	const {channels = [], min = 88.0, max = 108.0} = $props()
 
 	let frequency = $state(Math.random() * (max - min) + min)
+	/** @type {ChannelWithFrequency[]} */
 	let channelsWithFrequency = $state([])
+	/** @type {ChannelWithFrequency | null} */
 	let selectedChannel = $state(null)
 	let isScanning = $state(false)
 	let scanDirection = $state(1) // 1 for up, -1 for down
 	let autoplay = $state(true)
+	/** @type {string | null} */
 	let lastPlayedChannelId = $state(null)
+	/** @type {ReturnType<typeof setTimeout> | null} */
 	let autoplayTimeout = null
 
-	let audioContext
-	let staticNode
-	let gainNode
+	/** @type {AudioContext | null} */
+	let audioContext = null
+	/** @type {AudioBufferSourceNode | null} */
+	let staticNode = null
+	/** @type {GainNode | null} */
+	let gainNode = null
 
 	// Initialize channels with frequencies and track counts
 	$effect(async () => {
@@ -75,7 +84,7 @@
 
 	function initAudio() {
 		if (!audioContext) {
-			audioContext = new (window.AudioContext || window.webkitAudioContext)()
+			audioContext = new (window.AudioContext || /** @type {typeof AudioContext} */ (/** @type {any} */ (window).webkitAudioContext))()
 
 			// Create static noise
 			const bufferSize = audioContext.sampleRate * 2
@@ -99,7 +108,7 @@
 	}
 
 	function updateStaticLevel(reception) {
-		if (gainNode) {
+		if (gainNode && audioContext) {
 			const staticLevel = Math.max(0, 0.05 - reception * 0.04)
 			gainNode.gain.exponentialRampToValueAtTime(Math.max(staticLevel, 0.001), audioContext.currentTime + 0.1)
 		}

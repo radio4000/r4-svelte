@@ -78,7 +78,7 @@ menu {
 	}
 }
 
-menu[vertical] {
+menu[data-vertical] {
 	flex-flow: column;
 	border: 1px solid var(--gray-6);
 	border-radius: var(--border-radius);

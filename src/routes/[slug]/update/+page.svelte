@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.channel_update_page_title({name: channel?.name || page.params.slug})}</title>
+	<title>{m.channel_update_page_title({name: channel?.name ?? page.params.slug})}</title>
 </svelte:head>
 
 {#if channelQuery.isLoading}
