@@ -58,6 +58,7 @@ Read more in `docs/local-database.md`
 - Use domain-specific verbs that match user mental models
 - Pure functions for composability in api/utils/data operations
 - Optimistic execution - trust in methods, let errors throw
+-  Avoid type casts to silence errors. Casts like `/** @type {any} */` or `as Type` are bloat that hide real issues. 
 
 ## HTML/CSS
 

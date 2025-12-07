@@ -14,6 +14,7 @@
 	 * with youtube_data, musicbrainz_data, and discogs_data
 	 */
 
+	/** @type {{track: import('$lib/types').Track, channel?: import('$lib/types').Channel, showResult?: boolean, onResult?: (result: any) => void}} */
 	const {track, channel, showResult = false, onResult} = $props()
 
 	let loading = $state(false)

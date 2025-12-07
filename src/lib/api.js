@@ -31,7 +31,7 @@ export async function checkUser() {
 		const wasSignedOut = !appState.channels?.length
 
 		// Store IDs - collection handles fetching when needed
-		appState.channels = channels.map((/** @type {any} */ c) => c.id)
+		appState.channels = channels.map((c) => c.id)
 		appState.channel = channels[0] || undefined
 
 		// Pull follows when user signs in (not on every check)
@@ -80,7 +80,7 @@ export async function playTrack(id, endReason, startReason) {
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
 	}
-	if (startReason) {
+	if (startReason && track.slug) {
 		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: appState.shuffle})
 	}
 
@@ -110,7 +110,7 @@ export async function playTrack(id, endReason, startReason) {
 }
 
 /**
- * @param {import('$lib/types').Channel} channel
+ * @param {{id: string, slug: string}} channel
  * @param {number} index
  */
 export async function playChannel({id, slug}, index = 0) {

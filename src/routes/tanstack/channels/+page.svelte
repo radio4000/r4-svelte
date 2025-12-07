@@ -94,7 +94,7 @@
 		{#if myChannelQuery.isLoading}
 			<p>Loading…</p>
 		{:else if myChannelQuery.isError}
-			<p style="color: var(--red)">{myChannelQuery.collection?.utils?.lastError?.message || 'Unknown error'}</p>
+			<p style="color: var(--red)">{channelsCollection.utils.lastError instanceof Error ? channelsCollection.utils.lastError.message : 'Sync failed'}</p>
 		{:else if myChannels.length}
 			<table>
 				<thead>
@@ -126,7 +126,7 @@
 		{#if latestQuery.isLoading}
 			<p>Loading…</p>
 		{:else if latestQuery.isError}
-			<p style="color: var(--red)">{latestQuery.collection?.utils?.lastError?.message || 'Unknown error'}</p>
+			<p style="color: var(--red)">{channelsCollection.utils.lastError instanceof Error ? channelsCollection.utils.lastError.message : 'Sync failed'}</p>
 		{:else if latestChannels.length}
 			<table>
 				<thead>

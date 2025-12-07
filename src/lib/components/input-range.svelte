@@ -4,13 +4,18 @@
 
 	let marks = $derived(Math.floor((max - min) / (visualStep ?? step)) + 1)
 
+	/** @type {AudioContext | undefined} */
 	let audioContext
 
 	// Create multiple click sound variations using Web Audio API
 	function createClickSound(frequency = 800, duration = 0.05) {
 		if (!audioContext) {
-			audioContext = new (window.AudioContext || window.webkitAudioContext)()
+			// Safari fallback for older versions
+			const w = /** @type {{AudioContext?: typeof AudioContext, webkitAudioContext?: typeof AudioContext}} */ (window)
+			const AudioContextClass = w.AudioContext || w.webkitAudioContext
+			if (AudioContextClass) audioContext = new AudioContextClass()
 		}
+		if (!audioContext) return
 		const oscillator = audioContext.createOscillator()
 		const gainNode = audioContext.createGain()
 

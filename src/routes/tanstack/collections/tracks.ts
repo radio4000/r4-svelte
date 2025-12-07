@@ -185,7 +185,7 @@ export function addTrack(channel: Channel, input: {url: string; title: string; d
 	return tx.commit()
 }
 
-export function updateTrack(channel: Channel, id: string, changes: Record<string, unknown>) {
+export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
 	const tx = getOfflineExecutor().createOfflineTransaction({
 		mutationFnName: 'syncTracks',
 		metadata: {channelId: channel.id, slug: channel.slug},
@@ -201,7 +201,7 @@ export function updateTrack(channel: Channel, id: string, changes: Record<string
 	return tx.commit()
 }
 
-export function deleteTrack(channel: Channel, id: string) {
+export function deleteTrack(channel: {id: string; slug: string}, id: string) {
 	const tx = getOfflineExecutor().createOfflineTransaction({
 		mutationFnName: 'syncTracks',
 		metadata: {channelId: channel.id, slug: channel.slug},

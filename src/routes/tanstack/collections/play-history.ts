@@ -25,9 +25,10 @@ export const playHistoryCollection = createCollection<PlayHistoryEntry, string>(
 )
 
 export function addPlayHistoryEntry(
-	track: {id: string; slug: string; title: string; url: string},
+	track: {id: string; slug?: string; title: string; url: string},
 	opts: {reason_start?: string; shuffle?: boolean}
 ) {
+	if (!track.slug) return
 	playHistoryCollection.insert({
 		id: crypto.randomUUID(),
 		track_id: track.id,

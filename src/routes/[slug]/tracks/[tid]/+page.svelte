@@ -82,11 +82,11 @@
 		</header>
 
 		{#if activeTab === 'youtube'}
-			<TrackMetaYoutube data={meta?.youtube_data} {track} />
+			<TrackMetaYoutube data={meta?.youtube_data} />
 		{:else if activeTab === 'musicbrainz'}
-			<TrackMetaMusicbrainz data={meta?.musicbrainz_data} {track} />
+			<TrackMetaMusicbrainz data={meta?.musicbrainz_data} />
 		{:else if activeTab === 'discogs'}
-			<TrackMetaDiscogs data={meta?.discogs_data} {track} />
+			<TrackMetaDiscogs data={meta?.discogs_data} />
 		{:else if activeTab === 'related'}
 			<TrackRelated {track} />
 		{:else}

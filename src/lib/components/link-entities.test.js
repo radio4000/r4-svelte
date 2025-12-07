@@ -151,7 +151,7 @@ describe('link-entities', () => {
 		// Check that special characters in hashtags are handled
 		const accentedHashtag = linkParts.find((p) => p.content === '#séance-centre')
 		expect(accentedHashtag).toBeDefined()
-		expect(accentedHashtag.href).toContain('%C3%A9') // URL-encoded é
+		expect(accentedHashtag?.href).toContain('%C3%A9') // URL-encoded é
 	})
 
 	test('handles creative Unicode hashtags', () => {

@@ -30,23 +30,22 @@
 	let gainNode = null
 
 	// Initialize channels with frequencies and track counts
-	$effect(async () => {
+	$effect(() => {
+		processChannels()
+	})
+
+	async function processChannels() {
 		const processed = []
 		for (const channel of channels) {
 			const freq = await generateFrequency(channel.name, channel.slug, min, max)
 			processed.push({
 				...channel,
 				frequency: freq,
-				//signalStrength: Math.log10(Math.max(channel.track_count || 1, 1)) / Math.log10(2000) ** 5
-				//signalStrength: Math.log10(channel.track_count + 10) / 3.7
-				signalStrength: Math.min(1, (channel.track_count / 400) ** 0.8)
-				//signalStrength: channel.track_count < 100
-				//? channel.track_count / 200  // linear for small stations
-				//: 0.5 + Math.log10(channel.track_count / 100) / 3  // log for established ones
+				signalStrength: Math.min(1, ((channel.track_count ?? 0) / 400) ** 0.8)
 			})
 		}
 		channelsWithFrequency = processed.sort((a, b) => a.frequency - b.frequency)
-	})
+	}
 
 	// Find closest channel and calculate signal strength
 	$effect(() => {
@@ -68,14 +67,14 @@
 
 		// Debounced autoplay when landing on a new channel
 		if (autoplay && newChannel && newChannel.id !== lastPlayedChannelId) {
-			clearTimeout(autoplayTimeout)
+			if (autoplayTimeout) clearTimeout(autoplayTimeout)
 			autoplayTimeout = setTimeout(() => {
 				if (selectedChannel?.id === newChannel.id) {
 					lastPlayedChannelId = newChannel.id
 					playChannel(newChannel).catch((err) => console.warn('Autoplay failed:', err))
 				}
 			}, 500)
-		} else if (!newChannel) {
+		} else if (!newChannel && autoplayTimeout) {
 			clearTimeout(autoplayTimeout)
 		}
 
@@ -84,7 +83,10 @@
 
 	function initAudio() {
 		if (!audioContext) {
-			audioContext = new (window.AudioContext || /** @type {typeof AudioContext} */ (/** @type {any} */ (window).webkitAudioContext))()
+			const w = /** @type {{AudioContext?: typeof AudioContext, webkitAudioContext?: typeof AudioContext}} */ (window)
+			const AudioContextClass = w.AudioContext || w.webkitAudioContext
+			if (!AudioContextClass) return
+			audioContext = new AudioContextClass()
 
 			// Create static noise
 			const bufferSize = audioContext.sampleRate * 2

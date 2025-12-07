@@ -109,7 +109,7 @@
 	let focusedTrackId = $state(null)
 	let focusedField = $state(null)
 
-	/** @type {'title' | 'description' | 'tags' | 'mentions' | 'created_at' | 'duration' | 'error' | 'meta' | null} */
+	/** @type {'title' | 'description' | 'tags' | 'mentions' | 'created_at' | 'updated_at' | 'duration' | 'error' | 'meta' | null} */
 	let sortBy = $state(null)
 	let sortDir = $state('asc')
 
@@ -205,7 +205,7 @@
 				case 'has-error':
 					return !!track.playback_error
 				case 'has-duration':
-					return track.duration > 0
+					return (track.duration ?? 0) > 0
 				case 'no-duration':
 					return !track.duration
 				default:
@@ -302,9 +302,9 @@
 		</nav>
 
 		{#if readonly}
-			<p class="hint" warn>READ ONLY, this is a v1 channel</p>
+			<p class="hint warn">READ ONLY, this is a v1 channel</p>
 		{:else if !canEdit}
-			<p class="hint" warn>(READ ONLY, you do not have edit access)</p>
+			<p class="hint warn">(READ ONLY, you do not have edit access)</p>
 		{/if}
 
 		<p class="hint">
@@ -621,7 +621,7 @@
 		margin-right: 0.5rem;
 	}
 
-	p[warn] {
+	p.warn {
 		background: yellow;
 	}
 </style>

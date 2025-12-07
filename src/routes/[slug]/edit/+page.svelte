@@ -29,7 +29,7 @@
 		try {
 			const channelData = event.detail.data
 
-			const {error: updateError} = await window.r4sdk.channels.updateChannel(channel.id, channelData)
+			const {error: updateError} = await /** @type {any} */ (window).r4sdk.channels.updateChannel(channel.id, channelData)
 
 			if (updateError) {
 				throw updateError

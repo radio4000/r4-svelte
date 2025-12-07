@@ -122,12 +122,14 @@ export function watchBroadcasts(onChange) {
 	let watchChannel = sdk.supabase
 		.channel('broadcasts-page')
 		.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
-			const channelId = payload.new?.channel_id || payload.old?.channel_id
+			const newData = /** @type {import('$lib/types').Broadcast | undefined} */ (payload.new)
+			const oldData = /** @type {Partial<import('$lib/types').Broadcast> | undefined} */ (payload.old)
+			const channelId = newData?.channel_id || oldData?.channel_id
 			log.log('realtime_event', {
 				event: payload.eventType,
 				channel_id: channelId,
-				track_id: payload.new?.track_id,
-				old_track_id: payload.old?.track_id
+				track_id: newData?.track_id,
+				old_track_id: oldData?.track_id
 			})
 
 			if (payload.eventType === 'DELETE' && channelId) {
@@ -178,7 +180,7 @@ function startBroadcastSync(channelId) {
 				filter: `channel_id=eq.${channelId}`
 			},
 			(payload) => {
-				const broadcast = payload.new
+				const broadcast = /** @type {import('$lib/types').Broadcast} */ (payload.new)
 				log.log('change_received', {
 					channelId,
 					track_id: broadcast.track_id,

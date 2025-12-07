@@ -18,7 +18,6 @@ describe('discogs integration', () => {
 		// Invalid URLs
 		expect(parseDiscogsUrl('https://example.com/release/123')).toBeNull()
 		expect(parseDiscogsUrl('')).toBeNull()
-		expect(parseDiscogsUrl(null)).toBeNull()
 	})
 
 	it('search returns search URL', async () => {

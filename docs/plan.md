@@ -39,6 +39,19 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - For possibly-null: Add guards where semantically correct
 - Avoid `?.` as a bandaid - fix root cause types instead
 
+## Type Handling Rules
+
+**Never use type casts to silence errors.** Casts like `/** @type {any} */` or `as Type` are bloat that hide real issues.
+
+Instead:
+
+1. **Fix the function signature** to accept what callers actually pass. If a function only uses `{id, slug}`, don't require a full `Channel` type.
+2. **Fix the type definition** to match reality. If SDK returns `created_at: string | null`, update the interface.
+3. **Add guards inside functions** to handle edge cases. Return early if a required field is missing.
+4. **Pass explicit values** when narrowing doesn't work: `{id: track.id, slug: track.slug}` instead of passing the whole object.
+
+Type errors often reveal actual bugs or design issues. Casting them away loses that signal.
+
 # BACKLOG
 
 - **Refine offline error handling:** In `syncTracks` and `syncChannels`, use `NonRetriableError` from `@tanstack/offline-transactions` for server-side validation errors (e.g., HTTP 4xx) to prevent unnecessary retries.

@@ -32,7 +32,7 @@
 		{#if userChannelsQuery.isLoading}
 			<p>{m.auth_loading_channels()}</p>
 		{:else if userChannelsQuery.isError}
-			<p>{m.auth_error_loading_channels({message: userChannelsQuery.error.message})}</p>
+			<p>{m.auth_error_loading_channels({message: channelsCollection.utils.lastError instanceof Error ? channelsCollection.utils.lastError.message : 'Sync failed'})}</p>
 			<br />
 			<p><a href="/create-channel">{m.auth_create_radio_cta()}</a></p>
 		{:else if userChannelsQuery.data?.length}

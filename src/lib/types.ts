@@ -13,8 +13,8 @@ export interface ChannelFirebase {
 
 export interface Channel {
 	id: string
-	created_at: string
-	updated_at: string
+	created_at: string | null
+	updated_at: string | null
 	name: string
 	slug: string
 	description?: string | null
