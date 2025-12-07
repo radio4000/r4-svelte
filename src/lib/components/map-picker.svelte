@@ -1,5 +1,5 @@
 <script>
-	import {_} from 'svelte-i18n'
+	import * as m from '$lib/paraglide/messages'
 	import MapComponent from '$lib/components/map.svelte'
 
 	const {latitude = null, longitude = null, title = '', onselect = () => {}} = $props()
@@ -35,6 +35,6 @@
 
 {#if selected}
 	<button type="button" onclick={clearSelection}>
-		{$_('common.cancel')}
+		{m.common_cancel()}
 	</button>
 {/if}

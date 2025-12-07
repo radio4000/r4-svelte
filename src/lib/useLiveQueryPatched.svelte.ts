@@ -21,7 +21,11 @@ type QueryFn = (q: BaseQueryBuilder) => unknown
 type LiveQueryConfig = {query: QueryFn; [key: string]: unknown}
 
 export function useLiveQueryPatched<T>(
-	configOrQueryOrCollection: QueryFn | LiveQueryConfig | Collection<T, string> | (() => QueryFn | LiveQueryConfig | Collection<T, string> | null),
+	configOrQueryOrCollection:
+		| QueryFn
+		| LiveQueryConfig
+		| Collection<T, string>
+		| (() => QueryFn | LiveQueryConfig | Collection<T, string> | null),
 	deps: Array<unknown | (() => unknown)> = []
 ) {
 	const collection = $derived.by(() => {

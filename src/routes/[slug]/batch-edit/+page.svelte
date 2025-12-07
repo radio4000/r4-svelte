@@ -106,7 +106,9 @@
 	)
 
 	// Focus state for tab navigation
+	/** @type {string | null} */
 	let focusedTrackId = $state(null)
+	/** @type {string | null} */
 	let focusedField = $state(null)
 
 	/** @type {'title' | 'description' | 'tags' | 'mentions' | 'created_at' | 'updated_at' | 'duration' | 'error' | 'meta' | null} */

@@ -3,6 +3,7 @@
 
 	const {children, title = 'Panel'} = $props()
 
+	/** @type {HTMLDivElement | null} */
 	let panel = $state(null)
 	let isMinimized = $state(false)
 	let isDragging = $state(false)
@@ -29,6 +30,7 @@
 
 	function startDrag(event) {
 		if (event.target.closest('button')) return
+		if (!panel) return
 
 		isDragging = true
 		const rect = panel.getBoundingClientRect()

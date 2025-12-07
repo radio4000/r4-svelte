@@ -84,7 +84,7 @@
 		{#if activeTab === 'youtube'}
 			<TrackMetaYoutube data={meta?.youtube_data} />
 		{:else if activeTab === 'musicbrainz'}
-			<TrackMetaMusicbrainz data={meta?.musicbrainz_data} />
+			<TrackMetaMusicbrainz data={meta?.musicbrainz_data} {track} />
 		{:else if activeTab === 'discogs'}
 			<TrackMetaDiscogs data={meta?.discogs_data} />
 		{:else if activeTab === 'related'}

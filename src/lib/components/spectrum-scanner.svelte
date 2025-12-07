@@ -200,9 +200,9 @@
 	<InputRange bind:value={frequency} {min} {max} step={0.1} />
 
 	{#if selectedChannel}
-		<div class="station" style="opacity: {selectedChannel.reception}">
+		<div class="station" style="opacity: {selectedChannel.reception ?? 1}">
 			<div class="reception">
-				{m.spectrum_signal_strength({percent: Math.round(selectedChannel.reception * 100)})}
+				{m.spectrum_signal_strength({percent: Math.round((selectedChannel.reception ?? 0) * 100)})}
 			</div>
 			<ChannelCard channel={selectedChannel} />
 		</div>

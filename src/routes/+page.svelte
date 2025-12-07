@@ -15,7 +15,7 @@
 	const channels = $derived(getChannels())
 
 	onMount(() => {
-		if (Boolean(display) && display !== appState.channels_display) {
+		if (display && display !== appState.channels_display) {
 			appState.channels_display = display
 		}
 	})

@@ -61,7 +61,7 @@ export type Track = {
 	ytid?: string
 	duration?: number
 	playback_error?: string
-	youtube_data?: object
+	youtube_data?: {id?: string; duration?: number; [key: string]: unknown}
 	musicbrainz_data?: object
 	discogs_data?: object
 }

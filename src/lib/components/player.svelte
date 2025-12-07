@@ -39,7 +39,7 @@
 	})
 
 	let src = $derived(track?.url)
-	let trackType = $derived(detectMediaProvider(src))
+	let trackType = $derived(detectMediaProvider(src || ''))
 	let mediaElement = $derived(trackType === 'youtube' ? youtubePlayer : soundcloudPlayer)
 
 	/** @type {string[]} */
@@ -64,7 +64,7 @@
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))
 
-	$effect(async () => {
+	$effect(() => {
 		if (!track) return // Wait for data to load
 
 		const trackChanged = track.id !== prevTrackId
@@ -82,11 +82,7 @@
 		// Auto-play if we were already playing when track changed
 		if (didPlay) {
 			log.log('Auto-playing next track')
-			try {
-				await play()
-			} catch (error) {
-				log.warn('Playback failed:', error)
-			}
+			play().catch((error) => log.warn('Playback failed:', error))
 		}
 	})
 
@@ -128,7 +124,7 @@
 				.then(() => log.log('playback_error saved', {id: track.id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
 		}
-		next(track, activeQueue, msg)
+		next(track, activeQueue, 'youtube_error')
 	}
 
 	function handleEndTrack() {

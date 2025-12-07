@@ -41,7 +41,7 @@
 		event.preventDefault()
 		//playTrack(track.id, '', 'user_click_track')
 	}
-	const doubleClick = () => playTrack(track.id, '', 'user_click_track')
+	const doubleClick = () => playTrack(track.id, null, 'user_click_track')
 
 	const addToRadio = (url: string) => {
 		// Trigger global modal via custom event
@@ -93,7 +93,7 @@
 				src={imageSrc}
 				alt={track.title}
 				class="artwork"
-				loading={index > 20 ? 'lazy' : null}
+				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
 			<h3 class="title">{track.title}</h3>
@@ -133,7 +133,7 @@
 			{/if}
 		</menu>
 	</r4-actions>
-	{@render children?.({track})}
+	{@render children?.(track)}
 </article>
 
 <style>

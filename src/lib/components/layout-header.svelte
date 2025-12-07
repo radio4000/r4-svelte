@@ -24,14 +24,19 @@
 		broadcastCount = data.broadcasts.length
 	})
 
+	/** @param {CustomEvent<{track: import('$lib/types').Track}>} event */
 	function handleEditTrackEvent(event) {
 		editModalRef?.openWithTrack(event.detail.track)
 	}
 
 	$effect(() => unsubscribe)
-</script>
 
-<svelte:window on:r5:openEditModal={handleEditTrackEvent} />
+	$effect(() => {
+		// Custom event listener - cast to EventListener for type compatibility
+		window.addEventListener('r5:openEditModal', /** @type {EventListener} */ (handleEditTrackEvent))
+		return () => window.removeEventListener('r5:openEditModal', /** @type {EventListener} */ (handleEditTrackEvent))
+	})
+</script>
 
 <header>
 	<a href="/" class:active={page.route.id === '/'}>

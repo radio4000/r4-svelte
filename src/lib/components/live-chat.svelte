@@ -4,7 +4,9 @@
 	import * as m from '$lib/paraglide/messages'
 
 	let message = $state('')
+	/** @type {{text: string, username: string, timestamp: string}[]} */
 	let messages = $state([])
+	/** @type {ReturnType<typeof sdk.supabase.channel> | null} */
 	let channel = $state(null)
 	let username = $state('')
 

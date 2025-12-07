@@ -1,7 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import Icon from '$lib/components/icon'
+	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {search = '', order = 'created', dir = 'desc', onSearchChange} = $props()

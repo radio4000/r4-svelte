@@ -1,7 +1,8 @@
 <script>
 	import ColorPicker from 'svelte-awesome-color-picker'
 
-	let {label, value = $bindable('#000000'), oninput, onchange} = $props()
+	/** @type {{label?: string, value?: string, oninput?: (e: {target: {value: string}}) => void, onchange?: (e: {target: {value: string}}) => void, disabled?: boolean}} */
+	let {label, value = $bindable('#000000'), oninput, onchange, disabled} = $props()
 
 	const handleInput = (event) => {
 		value = event.hex

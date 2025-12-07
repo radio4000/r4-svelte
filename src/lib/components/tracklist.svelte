@@ -43,10 +43,10 @@
 		<div class="timeline">
 			{#each groupedTracks as [year, months] (year)}
 				<section>
-					<h2 caps>{year}</h2>
+					<h2 class="caps">{year}</h2>
 					{#each months as [month, monthTracks] (month)}
 						<section class="month">
-							<h3 caps>{month}</h3>
+							<h3 class="caps">{month}</h3>
 							<ul class="list tracks">
 								{#each monthTracks as track, index (track.id)}
 									<li>

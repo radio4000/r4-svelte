@@ -88,7 +88,9 @@
 	{#if tracksQuery.isLoading}
 		<p>Loading…</p>
 	{:else if tracksQuery.isError}
-		<p style="color: var(--red)">{tracksCollection.utils.lastError instanceof Error ? tracksCollection.utils.lastError.message : 'Sync failed'}</p>
+		<p style="color: var(--red)">
+			{tracksCollection.utils.lastError instanceof Error ? tracksCollection.utils.lastError.message : 'Sync failed'}
+		</p>
 	{:else if tracksQuery.data?.length}
 		<h2>Latest 20 tracks</h2>
 		<ul>

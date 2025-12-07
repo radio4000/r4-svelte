@@ -5,39 +5,21 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## Agent Continuation: Reduce svelte-check errors
 
-**Status:** Reduced from 138 to 98 errors (29% reduction in this session, ongoing effort)
+**Status:** Reduced from 98 to 16 errors (84% reduction this session)
 
 **Run:** `bun run check` to see current errors
 
-**What was fixed (latest session):**
+**Remaining errors are:**
 
-- `src/lib/components/tooltip-attachment.js` - Return `() => void` instead of `{destroy: fn}`
-- `src/styles/layout.css` + `src/routes/settings/+page.svelte` - `menu[vertical]` → `menu[data-vertical]`
-- `src/lib/infinite-grid.js` - Throttle JSDoc types + `@this` annotation
-- `src/routes/tanstack/tracks/+page.svelte` - Use `userChannel` variable instead of `appState.channel`
-- `src/routes/stats/+page.svelte` - Guard for optional `reason_start`
-- `src/lib/components/map.svelte` - JSDoc types for Leaflet state (L.Map, L.FeatureGroup, etc.)
-- `src/lib/components/channel-card.svelte` - Added `children?: Snippet` to props type
-- `src/lib/components/icon.svelte` - Added `[key: string]: any` for rest props
-- `src/lib/utils.ts` - `trimWithEllipsis` accepts `string | null`
-- `src/lib/components/input-range.svelte` - Props type + webkitAudioContext cast
-- `src/lib/components/channels.svelte` - `setDisplay` param type
-- `src/lib/components/add-track-modal.svelte` - Custom event listener via $effect
-- `src/routes/create-channel/+page.svelte` - `appState.channels?.length` guard
+1. **useLiveQueryPatched.svelte.ts** (10 errors) - don't touch..
+2. **channels.ts** (3 errors) - SDK `createChannel` returns `{}`, needs SDK fix
+3. **offline-executor.ts** (1 error) - `onTransactionComplete` removed from Tanstack API
+4. **channels.svelte** (1 error) - Circular type reference in derived
+5. **following/+page.svelte** (1 error) - ChannelCard prop type mismatch
 
-**Remaining errors (98) are mostly:**
+**Plus 11 warnings:** Empty CSS rulesets, state_referenced_locally
 
-1. **SDK/Supabase return types**: `createChannel` returns `{}` losing typed data
-2. **Tanstack `useLiveQuery`**: `.error` property not typed on query result
-3. **broadcast.js**: SDK type issues with realtime payload types
-4. **spectrum-scanner.svelte**: Canvas/animation type issues
-
-**Approach for remaining fixes:**
-
-- SDK types: Fix in `@radio4000/sdk` package
-- Tanstack query types: May need upstream fix or local type augmentation
-- For possibly-null: Add guards where semantically correct
-- Avoid `?.` as a bandaid - fix root cause types instead
+**Remaining require upstream/SDK fixes or architectural decisions.**
 
 ## Type Handling Rules
 

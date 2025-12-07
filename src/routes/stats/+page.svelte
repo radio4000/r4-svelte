@@ -75,6 +75,7 @@
 		channels
 			.filter((c) => c.created_at)
 			.forEach((c) => {
+				if (!c.created_at) return
 				const createdAt = new Date(c.created_at)
 				const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-01`
 				monthlyChannels[monthKey] = (monthlyChannels[monthKey] || 0) + 1

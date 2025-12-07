@@ -43,8 +43,8 @@
 				const [youtube_data, musicbrainz_data] = await Promise.all(promises)
 
 				const meta = trackMetaCollection.get(ytid)
-				if (meta?.duration && !track.duration && channel) {
-					updateTrack(channel, track.id, {duration: meta.duration})
+				if (meta?.youtube_data?.duration && !track.duration && channel) {
+					updateTrack(channel, track.id, {duration: meta.youtube_data.duration})
 				}
 
 				// Sequential follow-up for discogs

@@ -94,7 +94,11 @@
 		{#if myChannelQuery.isLoading}
 			<p>Loading…</p>
 		{:else if myChannelQuery.isError}
-			<p style="color: var(--red)">{channelsCollection.utils.lastError instanceof Error ? channelsCollection.utils.lastError.message : 'Sync failed'}</p>
+			<p style="color: var(--red)">
+				{channelsCollection.utils.lastError instanceof Error
+					? channelsCollection.utils.lastError.message
+					: 'Sync failed'}
+			</p>
 		{:else if myChannels.length}
 			<table>
 				<thead>
@@ -126,7 +130,11 @@
 		{#if latestQuery.isLoading}
 			<p>Loading…</p>
 		{:else if latestQuery.isError}
-			<p style="color: var(--red)">{channelsCollection.utils.lastError instanceof Error ? channelsCollection.utils.lastError.message : 'Sync failed'}</p>
+			<p style="color: var(--red)">
+				{channelsCollection.utils.lastError instanceof Error
+					? channelsCollection.utils.lastError.message
+					: 'Sync failed'}
+			</p>
 		{:else if latestChannels.length}
 			<table>
 				<thead>
@@ -137,7 +145,7 @@
 						<tr>
 							<td>{ch.slug}</td>
 							<td>{ch.name}</td>
-							<td>{new Date(ch.created_at).toLocaleDateString()}</td>
+							<td>{ch.created_at ? new Date(ch.created_at).toLocaleDateString() : '-'}</td>
 						</tr>
 					{/each}
 				</tbody>

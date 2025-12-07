@@ -22,9 +22,10 @@
 	const tracksQuery = useLiveQuery((q) =>
 		q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, trackIds))
 	)
+	/** @type {import('$lib/types').Track[]} */
 	let queueTracks = $derived.by(() => {
 		const trackMap = new Map((tracksQuery.data || []).map((t) => [t.id, t]))
-		return trackIds.map((id) => trackMap.get(id)).filter(Boolean)
+		return trackIds.map((id) => trackMap.get(id)).filter((t) => t !== undefined)
 	})
 
 	const historyQuery = useLiveQuery((q) =>
@@ -64,9 +65,19 @@
 		showClearHistoryModal = false
 	}
 
-	/** Transform history entry to track-like shape for TrackCard */
+	/** Transform history entry to track-like shape for TrackCard
+	 * @param {import('$lib/types').PlayHistory & {title?: string, url?: string, slug?: string}} entry
+	 * @returns {import('$lib/types').Track}
+	 */
 	function historyToTrack(entry) {
-		return {id: entry.track_id, slug: entry.slug, title: entry.title, url: entry.url}
+		return {
+			id: entry.track_id,
+			slug: entry.slug,
+			title: entry.title || '',
+			url: entry.url || '',
+			created_at: entry.started_at,
+			updated_at: entry.started_at
+		}
 	}
 </script>
 

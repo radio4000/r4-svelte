@@ -1,6 +1,7 @@
 <script>
 	import {tracksCollection, batchUpdateTracks, batchDeleteTracks} from '../../tanstack/collections'
 
+	/** @type {{selectedIds?: string[], channel: import('$lib/types').Channel | null, allTags?: {tag: string, count: number}[], onClear?: () => void}} */
 	let {selectedIds = [], channel, allTags = [], onClear = () => {}} = $props()
 
 	let showAddTag = $state(false)
@@ -9,7 +10,8 @@
 	let newTag = $state('')
 	let deleteConfirmInput = $state('')
 
-	let selectedTracks = $derived(selectedIds.map((id) => tracksCollection.get(id)).filter(Boolean))
+	/** @type {import('$lib/types').Track[]} */
+	let selectedTracks = $derived(selectedIds.map((id) => tracksCollection.get(id)).filter((t) => t !== undefined))
 
 	// Tags present in selected tracks
 	let selectedTracksTags = $derived.by(() => {

@@ -166,13 +166,13 @@
 			<div>
 				<label for={`${uid}--scaling`}>{m.theme_scale_label()}</label>
 				<InputRange
-					value={customVariables['--scaling'] || 1}
+					value={Number(customVariables['--scaling']) || 1}
 					min={0.9}
 					max={1.1}
 					step={0.05}
 					id={`${uid}--scaling`}
 					oninput={(e) => {
-						updateVariable('--scaling', e.target.value)
+						updateVariable('--scaling', /** @type {HTMLInputElement} */ (e.target).value)
 					}}
 				/>
 				<span>{customVariables['--scaling'] || '1'}</span>
@@ -220,7 +220,7 @@
 				<InputColor
 					label={variable.label()}
 					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
+					onchange={(e) => updateVariable(variable.name, e.target.value)}
 				/>
 				<input
 					hidden
@@ -239,7 +239,7 @@
 				<InputColor
 					label={variable.label()}
 					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
+					onchange={(e) => updateVariable(variable.name, e.target.value)}
 					disabled={!getCurrentValue(variable)}
 				/>
 				<input

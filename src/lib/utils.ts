@@ -123,7 +123,7 @@ export function extractMentions(text: string): string[] {
  * All frequency values are rounded to one decimal place.
  * Values are generated inside a given range.
  */
-export async function generateFrequency(channelName: string, channelSlug: string, minFreq: 80, maxFreq: 120) {
+export async function generateFrequency(channelName: string, channelSlug: string, minFreq: number, maxFreq: number) {
 	// Combine the channel name and slug
 	const inputString = channelName + channelSlug
 

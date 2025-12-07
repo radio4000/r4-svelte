@@ -5,7 +5,7 @@ import {localStorageCollectionOptions} from '@tanstack/db'
 // No server sync needed, persists to localStorage, syncs across tabs
 export interface TrackMeta {
 	ytid: string
-	youtube_data?: object
+	youtube_data?: {id?: string; duration?: number; [key: string]: unknown}
 	musicbrainz_data?: object
 	discogs_data?: object
 }
