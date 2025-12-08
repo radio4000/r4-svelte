@@ -49,7 +49,9 @@
 {#if channelQuery.isLoading}
 	<p style="padding: 1rem;">Loading...</p>
 {:else if channelQuery.isError}
-	<p style="padding: 1rem; color: var(--red);">{channelQuery.error?.message || 'Error loading channel'}</p>
+	<p style="padding: 1rem; color: var(--red);">
+		{channelsCollection.utils.lastError?.message || 'Error loading channel'}
+	</p>
 {:else if !channel}
 	<p style="padding: 1rem;">Channel not found</p>
 {:else}
