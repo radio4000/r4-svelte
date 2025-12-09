@@ -112,7 +112,7 @@ export function watchBroadcasts(onChange) {
 		.then((broadcasts) => onChange({broadcasts, error: null}))
 		.catch((error) => onChange({broadcasts: [], error: error.message}))
 
-	/** @type {import('@supabase/supabase-js').RealtimeChannel | null} */
+	/** @type {ReturnType<typeof sdk.supabase.channel> | null} */
 	let watchChannel = sdk.supabase
 		.channel('broadcasts-page')
 		.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
