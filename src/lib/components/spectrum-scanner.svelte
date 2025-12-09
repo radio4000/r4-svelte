@@ -9,7 +9,7 @@
 
 	const {channels = [], min = 88.0, max = 108.0} = $props()
 
-	let frequency = $state(Math.random() * (max - min) + min)
+	let frequency = $derived(Math.random() * (max - min) + min)
 	/** @type {ChannelWithFrequency[]} */
 	let channelsWithFrequency = $state([])
 	/** @type {ChannelWithFrequency | null} */

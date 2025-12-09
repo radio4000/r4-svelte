@@ -558,19 +558,7 @@
 		min-height: 0;
 	}
 
-	:global(.col-checkbox),
-	:global(.col-link),
-	:global(.col-title),
-	:global(.col-tags),
-	:global(.col-mentions),
-	:global(.col-description),
-	:global(.col-url),
-	:global(.col-discogs),
-	:global(.col-meta),
-	:global(.col-duration),
-	:global(.col-error),
-	:global(.col-date) {
-	}
+
 
 	:global(.col-discogs) {
 		border-right: none;

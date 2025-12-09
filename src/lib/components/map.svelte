@@ -229,8 +229,7 @@
 			font-size: 1rem;
 			white-space: pre;
 		}
-		:global(.leaflet-popup-content) {
-		}
+
 		:global(.leaflet-popup-content-wrapper, .leaflet-popup-tip) {
 			background-color: var(--gray-2);
 		}
