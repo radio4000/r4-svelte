@@ -14,7 +14,7 @@
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
 	import * as m from '$lib/paraglide/messages'
-	import {getLocale, setLocale, locales} from '$lib/paraglide/runtime'
+	import {getLocale, setLocale, locales, isLocale} from '$lib/paraglide/runtime'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
 	import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
 	import {queryClient, channelsCollection} from './tanstack/collections'
@@ -62,7 +62,8 @@
 			appState.channels_display = 'grid'
 		}
 		const storedLocale = appState.language
-		const currentLocale = storedLocale || inferNavigatorLocale() || getLocale()
+		const validStoredLocale = storedLocale && isLocale(storedLocale) ? storedLocale : null
+		const currentLocale = validStoredLocale || inferNavigatorLocale() || getLocale()
 		await setLocale(currentLocale, {reload: false})
 		if (!storedLocale) {
 			appState.language = currentLocale

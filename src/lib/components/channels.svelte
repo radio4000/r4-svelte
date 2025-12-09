@@ -75,7 +75,7 @@
 			}))
 	})
 
-	/** @param {typeof display} value */
+	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
 	function setDisplay(value = 'grid') {
 		display = value
 		appState.channels_display = display

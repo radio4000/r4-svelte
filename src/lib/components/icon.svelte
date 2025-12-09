@@ -11,27 +11,21 @@
 		return parts.join('')
 	}
 
+	/** @type {Promise<typeof import('obra-icons-svelte')>} */
+	const iconsModule = import('obra-icons-svelte')
+
 	/** @type {import('svelte').Component | null} */
 	let Icon = $state(null)
-	let currentIcon = $state('')
 
 	$effect(() => {
-		if (icon === currentIcon) return
-		currentIcon = icon
-
 		if (!icon) {
 			Icon = null
 			return
 		}
-
 		const iconName = toImportName(icon)
-		import('obra-icons-svelte')
-			.then((module) => {
-				Icon = module[iconName]
-			})
-			.catch(() => {
-				Icon = null
-			})
+		iconsModule.then((module) => {
+			Icon = module[iconName] ?? null
+		})
 	})
 </script>
 

@@ -1,6 +1,7 @@
 <script>
 	import {ENTITY_REGEX} from '$lib/utils.ts'
 
+	/** @type {{text: string, slug?: string}} */
 	const {text, slug} = $props()
 
 	const parts = $derived.by(() => {

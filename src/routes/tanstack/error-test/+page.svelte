@@ -25,9 +25,9 @@
 		return queryClient.getQueryCache().subscribe(() => cacheVersion++)
 	})
 
-	// These re-read when cacheVersion changes
-	let lastError = $derived.by(() => (cacheVersion, channelsCollection.utils.lastError))
-	let isError = $derived.by(() => (cacheVersion, channelsCollection.utils.isError))
+	// These re-read when cacheVersion changes (void suppresses "unused" warning)
+	let lastError = $derived.by(() => (void cacheVersion, channelsCollection.utils.lastError))
+	let isError = $derived.by(() => (void cacheVersion, channelsCollection.utils.isError))
 </script>
 
 <h1>TanStack Error Handling Test</h1>
