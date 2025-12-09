@@ -15,7 +15,7 @@
 
 	let enableDrag = $state(false)
 
-	let footerElement = $state(/** @type {HTMLElement | null} */(null))
+	let footerElement = $state(/** @type {HTMLElement | null} */ (null))
 
 	// Setup GSAP swipe gestures
 	$effect(() => {

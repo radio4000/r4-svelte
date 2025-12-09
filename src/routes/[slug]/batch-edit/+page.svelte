@@ -558,8 +558,6 @@
 		min-height: 0;
 	}
 
-
-
 	:global(.col-discogs) {
 		border-right: none;
 	}
