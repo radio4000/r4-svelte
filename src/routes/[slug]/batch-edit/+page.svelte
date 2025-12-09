@@ -33,6 +33,7 @@
 	let channel = $derived(channelQuery.data?.[0])
 	let rawTracks = $derived(tracksQuery.data || [])
 	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [m.ytid, m]) || []))
+	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
 			const ytid = extractYouTubeId(track.url)

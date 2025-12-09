@@ -57,6 +57,3 @@ _executor = startOfflineExecutor({
 1. Check Tanstack offline-transactions docs for replacement callback (maybe renamed?)
 2. Remove the logging callback if no equivalent exists
 3. Use a different hook point if available (e.g., wrap mutationFns)
-
-
-

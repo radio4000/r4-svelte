@@ -179,7 +179,13 @@ export function addTrack(channel: Channel, input: {url: string; title: string; d
 			description: input.description || '',
 			slug: channel.slug,
 			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString()
+			updated_at: new Date().toISOString(),
+			discogs_url: null,
+			duration: null,
+			fts: null,
+			mentions: null,
+			playback_error: null,
+			tags: null
 		})
 	})
 	return tx.commit()

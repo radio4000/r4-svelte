@@ -72,11 +72,18 @@
 	function historyToTrack(entry) {
 		return {
 			id: entry.track_id,
-			slug: entry.slug,
+			slug: entry.slug ?? null,
 			title: entry.title || '',
 			url: entry.url || '',
 			created_at: entry.started_at,
-			updated_at: entry.started_at
+			updated_at: entry.started_at,
+			description: null,
+			discogs_url: null,
+			duration: null,
+			fts: null,
+			mentions: null,
+			playback_error: null,
+			tags: null
 		}
 	}
 </script>

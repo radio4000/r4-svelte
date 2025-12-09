@@ -25,7 +25,7 @@ export const playHistoryCollection = createCollection<PlayHistoryEntry, string>(
 )
 
 export function addPlayHistoryEntry(
-	track: {id: string; slug?: string; title: string; url: string},
+	track: {id: string; slug?: string | null; title: string; url: string},
 	opts: {reason_start?: string; shuffle?: boolean}
 ) {
 	if (!track.slug) return

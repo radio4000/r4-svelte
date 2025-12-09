@@ -1,4 +1,6 @@
-// from r5-channels.json
+import type {Channel as SDKChannel, ChannelTrack as SDKChannelTrack} from '@radio4000/sdk'
+
+// From r5-channels.json (v1 firebase export)
 export interface ChannelFirebase {
 	firebase_id: string
 	created_at: number
@@ -11,56 +13,39 @@ export interface ChannelFirebase {
 	track_ids?: string[]
 }
 
-export interface Channel {
-	id: string
-	created_at: string | null
-	updated_at: string | null
+// Extends SDK Channel, omitting internal DB fields
+export interface Channel extends Omit<SDKChannel, 'coordinates' | 'fts' | 'latest_track_at' | 'track_count'> {
+	id: string // override nullable from view
 	name: string
 	slug: string
-	description?: string | null
-	image?: string | null
-	url?: string | null
-	// custom ones
-	tracks_outdated?: boolean
-	track_count?: number
+	// from channels_with_tracks view (optional when from base table)
 	latest_track_at?: string | null
-
-	latitude?: number | null
-	longitude?: number | null
-
-	// Link to v1 channel
-	firebase_id?: string | null
+	track_count?: number | null
 	source?: 'v1' | 'v2'
-
-	// for broadcasting
+	// broadcasting
 	broadcasting?: boolean
 	broadcast_track_id?: string | null
 	broadcast_started_at?: string | null
-	tracks_synced_at?: string | null
-
 	// local only
 	spam?: boolean
 }
 
-export type Track = {
-	id: string
+// Extends SDK ChannelTrack (includes slug, duration, playback_error from view)
+export interface Track extends SDKChannelTrack {
+	id: string // override nullable from view
 	created_at: string
 	updated_at: string
 	url: string
 	title: string
-	description?: string
-	discogs_url?: string
-	tags?: string[]
-	mentions?: string[]
-	// fields below this line do not exist on remote r4 track
+	// local extensions
 	firebase_id?: string
 	channel_id?: string
-	slug?: string
 	source?: 'v1' | 'v2'
-	// when joined with track_meta table
+}
+
+// Track joined with metadata from TrackMeta collection
+export interface TrackWithMeta extends Track {
 	ytid?: string
-	duration?: number
-	playback_error?: string
 	youtube_data?: {id?: string; duration?: number; [key: string]: unknown}
 	musicbrainz_data?: object
 	discogs_data?: object
@@ -111,13 +96,7 @@ export interface Broadcast {
 }
 
 export interface BroadcastWithChannel extends Broadcast {
-	channels: {
-		id: string
-		name: string
-		slug: string
-		image: string | null
-		description: string | null
-	}
+	channels: Channel
 }
 
 export interface PlayHistory {

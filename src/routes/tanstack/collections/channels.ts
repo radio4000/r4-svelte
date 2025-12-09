@@ -144,7 +144,14 @@ export function createChannel(input: {name: string; slug: string; description?: 
 			slug: input.slug,
 			description: input.description || '',
 			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString()
+			updated_at: new Date().toISOString(),
+			image: null,
+			url: null,
+			firebase_id: null,
+			latitude: null,
+			longitude: null,
+			favorites: null,
+			followers: null
 		})
 	})
 	return tx.commit().then(() => ({id, slug: input.slug}))

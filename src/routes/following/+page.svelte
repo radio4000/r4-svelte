@@ -5,14 +5,15 @@
 	import * as m from '$lib/paraglide/messages'
 	import {followsCollection, channelsCollection} from '../tanstack/collections'
 
+	/** @type {import('$lib/types').Channel[]} */
 	let followings = $derived(
 		[...followsCollection.state.values()]
 			.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-			.map((f) => ({...channelsCollection.get(f.channelId), source: f.source}))
-			.filter(
-				/** @type {(ch: unknown) => ch is {id: string, slug: string, name: string, source: 'v1' | 'v2'}} */ (ch) =>
-					!!ch && typeof ch === 'object' && 'id' in ch && 'slug' in ch && 'name' in ch
-			)
+			.map((f) => {
+				const channel = channelsCollection.get(f.channelId)
+				return channel ? {...channel, source: f.source} : null
+			})
+			.filter((ch) => ch !== null)
 	)
 </script>
 

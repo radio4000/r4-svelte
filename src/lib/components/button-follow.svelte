@@ -4,7 +4,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	/** @type {{channel: Partial<import('$lib/types').Channel> & {id: string}, label?: string, class?: string}} */
+	/** @type {{channel: import('$lib/types').Channel, label?: string, class?: string}} */
 	let {channel, label, ...rest} = $props()
 
 	const query = useLiveQuery((q) => q.from({f: followsCollection}).where(({f}) => eq(f.channelId, channel.id)))

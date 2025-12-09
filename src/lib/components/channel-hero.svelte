@@ -3,7 +3,7 @@
 	import ButtonPlay from './button-play.svelte'
 	import ChannelAvatar from './channel-avatar.svelte'
 
-	/** @type {{channel: Partial<import('$lib/types').Channel> & {id: string, slug: string, name: string}, size?: number}}*/
+	/** @type {{channel: import('$lib/types').Channel, size?: number}}*/
 	let {channel, size = 250} = $props()
 </script>
 

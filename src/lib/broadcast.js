@@ -11,16 +11,10 @@ async function readBroadcastsWithChannel() {
 		channel_id,
 		track_id,
 		track_played_at,
-		channels (
-			id,
-			name,
-			slug,
-			image,
-			description
-		)
+		channels:channels_with_tracks (*)
 	`)
 	if (error) throw error
-	return data || []
+	return /** @type {import('$lib/types').BroadcastWithChannel[]} */ (data || [])
 }
 
 /** This will be the Supabase "channel" for broadcast updates

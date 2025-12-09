@@ -5,7 +5,7 @@
 	import {trimWithEllipsis} from '$lib/utils.ts'
 	import ChannelHero from './channel-hero.svelte'
 
-	/** @type {{channel: Partial<import('$lib/types').Channel> & {id: string, slug: string, name: string}, children?: import('svelte').Snippet}}*/
+	/** @type {{channel: import('$lib/types').Channel, children?: import('svelte').Snippet}}*/
 	let {channel, children} = $props()
 
 	const broadcasting = $derived(channel.broadcasting || appState.listening_to_channel_id === channel.id)
