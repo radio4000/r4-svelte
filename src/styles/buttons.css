@@ -46,15 +46,17 @@ button:focus,
 	outline-offset: -2px;
 }
 
-button:active,
-.btn:active {
-	transform: scaleX(0.97) scaleY(0.97);
-}
+/* button:active, */
+/* .btn:active { */
+/* 	i { */
+/* 		transform: scaleX(0.97) scaleY(0.97) rotate(0.02deg); */
+/* 	} */
+/* } */
 
 select:focus,
 button:disabled,
 .btn:disabled {
-	background: var(--gray-1);
+	color: var(--gray-8);
 
 	:global(.icon) {
 		opacity: 0.2;
@@ -124,4 +126,8 @@ button.primary,
 	&:hover {
 		background: var(--accent-10);
 	}
+}
+
+button:has(svg, i) {
+	gap: 0.3rem;
 }

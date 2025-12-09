@@ -2,12 +2,12 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {shuffleArray} from '$lib/utils.ts'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import InfiniteGrid from './infinite-grid.svelte'
 	import MapComponent from './map.svelte'
+	import PopoverMenu from './popover-menu.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -96,6 +96,7 @@
 
 	function setOrder(value) {
 		appState.channels_order = value
+		appState.channels_shuffled = false
 	}
 
 	function toggleShuffle() {
@@ -104,6 +105,7 @@
 
 	function toggleOrderDirection() {
 		appState.channels_order_direction = orderDirection === 'asc' ? 'desc' : 'asc'
+		appState.channels_shuffled = false
 	}
 
 	function handleMapChange({latitude, longitude, zoom}) {
@@ -121,60 +123,74 @@
 		tuner: () => m.channels_view_label_tuner(),
 		infinite: () => m.channels_view_label_infinite()
 	}
-</script>
 
-{#snippet displayBtn(prop, icon)}
-	<button
-		{@attach tooltip({content: m.channels_view_mode({mode: viewLabelMap[prop]()})})}
-		class:active={display === prop}
-		onclick={() => setDisplay(prop)}
-	>
-		<Icon {icon} />
-	</button>
-{/snippet}
+	const filterLabelMap = {
+		all: () => m.channels_filter_option_all(),
+		'20+': () => m.channels_filter_option_20(),
+		'100+': () => m.channels_filter_option_100(),
+		'1000+': () => m.channels_filter_option_1000(),
+		artwork: () => m.channels_filter_option_artwork(),
+		v1: () => m.channels_filter_option_v1(),
+		v2: () => m.channels_filter_option_v2()
+	}
+</script>
 
 <div class={`layout layout--${display}`}>
 	<menu class="filtermenu">
-		<div class="filters">
-			<label title={m.channels_filter_label()}>
-				<select value={filter} onchange={(e) => setFilter(e.currentTarget.value)}>
-					<option value="all">{m.channels_filter_option_all()}</option>
-					<option value="20+">{m.channels_filter_option_20()}</option>
-					<option value="100+">{m.channels_filter_option_100()}</option>
-					<option value="1000+">{m.channels_filter_option_1000()}</option>
-					<option value="artwork">{m.channels_filter_option_artwork()}</option>
-					<option value="v1">{m.channels_filter_option_v1()}</option>
-					<option value="v2">{m.channels_filter_option_v2()}</option>
-				</select>
-			</label>
-			<label title={m.channels_order_label()}>
-				<select value={order} onchange={(e) => setOrder(e.currentTarget.value)} disabled={shuffled}>
-					<option value="updated">{m.channels_order_updated()}</option>
-					<option value="created">{m.channels_order_created()}</option>
-					<option value="name">{m.channels_order_name()}</option>
-					<option value="tracks">{m.channels_order_tracks()}</option>
-				</select>
-			</label>
-			<button
-				title={m.channels_order_direction_tooltip({
-					direction: orderDirection === 'asc' ? m.channels_order_asc() : m.channels_order_desc()
-				})}
-				onclick={toggleOrderDirection}
-				disabled={shuffled}
+		<PopoverMenu id="channels-filter">
+			{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabelMap[filter]()}{/snippet}
+			<button class:active={filter === 'all'} onclick={() => setFilter('all')}>{m.channels_filter_option_all()}</button>
+			<button class:active={filter === '20+'} onclick={() => setFilter('20+')}>{m.channels_filter_option_20()}</button>
+			<button class:active={filter === '100+'} onclick={() => setFilter('100+')}
+				>{m.channels_filter_option_100()}</button
 			>
-				<Icon icon={orderDirection === 'asc' ? 'arrow-up' : 'arrow-down'} />
+			<button class:active={filter === '1000+'} onclick={() => setFilter('1000+')}
+				>{m.channels_filter_option_1000()}</button
+			>
+			<button class:active={filter === 'artwork'} onclick={() => setFilter('artwork')}
+				>{m.channels_filter_option_artwork()}</button
+			>
+			<button class:active={filter === 'v1'} onclick={() => setFilter('v1')}>{m.channels_filter_option_v1()}</button>
+			<button class:active={filter === 'v2'} onclick={() => setFilter('v2')}>{m.channels_filter_option_v2()}</button>
+		</PopoverMenu>
+
+		<PopoverMenu id="channels-display" closeOnClick={false}>
+			{#snippet trigger()}<Icon icon="grid" size="20" /> {viewLabelMap[display]()}{/snippet}
+			<div class="view-modes">
+				<button class:active={display === 'grid'} onclick={() => setDisplay('grid')}
+					><Icon icon="grid" size="20" /><small>{m.channels_view_label_grid()}</small></button
+				>
+				<button class:active={display === 'list'} onclick={() => setDisplay('list')}
+					><Icon icon="unordered-list" size="20" /><small>{m.channels_view_label_list()}</small></button
+				>
+				<button class:active={display === 'map'} onclick={() => setDisplay('map')}
+					><Icon icon="map" size="20" /><small>{m.channels_view_label_map()}</small></button
+				>
+				<button class:active={display === 'tuner'} onclick={() => setDisplay('tuner')}
+					><Icon icon="radio" size="20" /><small>{m.channels_view_label_tuner()}</small></button
+				>
+				<button class:active={display === 'infinite'} onclick={() => setDisplay('infinite')}
+					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
+				>
+			</div>
+			<button class:active={order === 'updated'} onclick={() => setOrder('updated')}
+				>{m.channels_order_updated()}</button
+			>
+			<button class:active={order === 'created'} onclick={() => setOrder('created')}
+				>{m.channels_order_created()}</button
+			>
+			<button class:active={order === 'name'} onclick={() => setOrder('name')}>{m.channels_order_name()}</button>
+			<button class:active={order === 'tracks'} onclick={() => setOrder('tracks')}>{m.channels_order_tracks()}</button>
+			<hr />
+			<button onclick={toggleOrderDirection}>
+				<Icon icon={orderDirection === 'asc' ? 'arrow-up' : 'arrow-down'} size="20" />
+				{orderDirection === 'asc' ? m.channels_order_asc() : m.channels_order_desc()}
 			</button>
-			<button title={m.channels_shuffle_tooltip()} class:active={appState.channels_shuffled} onclick={toggleShuffle}>
-				<Icon icon="shuffle" />
+			<button class:active={appState.channels_shuffled} onclick={toggleShuffle}>
+				<Icon icon="shuffle" size="20" />
+				{m.channels_shuffle_tooltip()}
 			</button>
-		</div>
-		<div class="display">
-			{@render displayBtn('grid', 'grid')}
-			{@render displayBtn('list', 'unordered-list')}
-			{@render displayBtn('map', 'map')}
-			{@render displayBtn('tuner', 'radio')}
-			{@render displayBtn('infinite', 'infinite')}
-		</div>
+		</PopoverMenu>
 	</menu>
 
 	{#if display === 'map'}
@@ -231,29 +247,29 @@
 		top: 0.5rem;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 0.5rem;
 		margin: 0.5rem 0.5rem 1rem;
-		gap: 0.2rem;
 		z-index: 1;
-
-		.filters,
-		.display {
-			display: flex;
-			align-items: center;
-			gap: 0.2rem;
-		}
-
-		label {
-			user-select: none;
-			display: flex;
-			align-items: center;
-			gap: 0.3rem;
-		}
 	}
 
-	.filtermenu :global(svg) {
-		width: var(--font-5);
-		margin-right: 0.2em;
+	.view-modes {
+		display: flex;
+		gap: 0.2rem;
+		padding-bottom: 0.5rem;
+		margin-bottom: 0.2rem;
+		border-bottom: 1px solid var(--gray-6);
+
+		button {
+			flex: 1;
+			flex-direction: column;
+			gap: 0.2rem;
+			padding: 0.2rem;
+			min-width: 3rem;
+
+			small {
+				color: initial;
+			}
+		}
 	}
 
 	footer p {

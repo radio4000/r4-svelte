@@ -38,7 +38,7 @@
 
 .grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); /* < 180 ensures two cols on most mobile */
+	grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 20vw, 280px), 1fr));
 	margin: 0.5rem;
 	gap: 2rem 1rem;
 	padding: 0;

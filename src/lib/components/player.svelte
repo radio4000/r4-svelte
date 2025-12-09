@@ -154,10 +154,6 @@
 <div class={['player', appState.player_expanded ? 'expanded' : 'compact']}>
 	{@render channelHeader()}
 
-	{#if !channel}
-		<p style="margin-left: 0.5rem">{m.player_empty_prompt()}</p>
-	{/if}
-
 	{#if channel}
 		{@render trackContent()}
 	{/if}

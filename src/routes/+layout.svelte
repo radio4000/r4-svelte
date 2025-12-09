@@ -154,19 +154,17 @@
 	}
 
 	.content {
-		/*display: grid;
-		grid-template-columns: 1fr;
-		height: 100%;
-		overflow: hidden;
-		position: relative;*/
-
-		display: flex;
+		/*display: grid;*/
+		/*grid-template-columns: 1fr;*/
+		/*overflow: hidden;*/
+		/*height: 100%;*/
+		/*position: relative;*/
 
 		> :global(aside) {
-			/* position: absolute; */
-			/* right: 0; */
-			/* top: 0; */
-			/* bottom: 0; */
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
 			width: 0;
 			transform: translate3d(100%, 0, 0);
 			transition: transform 1000ms ease-out;

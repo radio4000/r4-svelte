@@ -90,7 +90,9 @@
 </form>
 
 <style>
-	:global(input[type='search']) {
-		min-width: 24ch;
+	@media (max-width: 500px) {
+		:global(input[type='search']) {
+			width: 10ch;
+		}
 	}
 </style>
