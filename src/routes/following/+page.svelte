@@ -9,7 +9,10 @@
 		[...followsCollection.state.values()]
 			.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 			.map((f) => ({...channelsCollection.get(f.channelId), source: f.source}))
-			.filter((ch) => ch.id)
+			.filter(
+				/** @type {(ch: unknown) => ch is {id: string, slug: string, name: string, source: 'v1' | 'v2'}} */ (ch) =>
+					!!ch && typeof ch === 'object' && 'id' in ch && 'slug' in ch && 'name' in ch
+			)
 	)
 </script>
 

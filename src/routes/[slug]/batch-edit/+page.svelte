@@ -570,7 +570,6 @@
 	:global(.col-duration),
 	:global(.col-error),
 	:global(.col-date) {
-		/*border-right: 1px solid var(--gray-2);*/
 	}
 
 	:global(.col-discogs) {

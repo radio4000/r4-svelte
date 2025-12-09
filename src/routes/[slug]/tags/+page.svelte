@@ -263,11 +263,5 @@
 
 	.list {
 		margin: 0 0.5rem;
-
-		.tag {
-		}
-
-		.count {
-		}
 	}
 </style>

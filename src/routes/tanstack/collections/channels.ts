@@ -56,10 +56,14 @@ const channelMutationHandlers: Record<string, MutationHandler> = {
 				slug: channel.slug,
 				userId
 			})
-			log.info('channel_insert_done', {clientId: channel.id, serverId: response.data?.id, error: response.error})
-			if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
-			if (response.data?.id) {
-				appState.channels = [...(appState.channels || []), response.data.id]
+			if ('error' in response && response.error) {
+				log.info('channel_insert_done', {clientId: channel.id, error: response.error})
+				throw new NonRetriableError(getErrorMessage(response.error))
+			}
+			const data = 'data' in response ? (response.data as {id: string} | null) : null
+			log.info('channel_insert_done', {clientId: channel.id, serverId: data?.id})
+			if (data?.id) {
+				appState.channels = [...(appState.channels || []), data.id]
 			}
 		} catch (err) {
 			if (err instanceof NonRetriableError) throw err

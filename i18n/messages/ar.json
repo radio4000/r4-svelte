@@ -328,9 +328,6 @@
 	"chat_input_placeholder": "اكتب رسالة…",
 	"chat_send_button": "أرسل",
 	"modal_close_label": "إغلاق النافذة",
-	"pglite_heading": "PGLite repl",
-	"pglite_button_enable": "ادخل REPL",
-	"pglite_description": "جرّب استعلام القنوات، المسارات أو app_state باستخدام SQL.",
 	"player_empty_prompt": "ابحث عن موسيقى رائعة",
 	"player_live_indicator": "🔴 مباشر",
 	"queue_select_channel": "اختر قناة لبدء التشغيل",

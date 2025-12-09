@@ -5,7 +5,7 @@ r5 is a local-first music player prototype.
 - is built as a SvelteKit client-only web app
 
 +------------------+ +-------------------+ +------------------+
-| Local PGlite | <-> | r5 client | <-> | Remote Sources |
+
 | (primary data) | | (unified layer) | | (r4/v1 sync) |
 +------------------+ +-------------------+ +------------------+
 

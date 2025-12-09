@@ -20,6 +20,5 @@ The `main` branch deploys to https://pg.radio4000.com for now.
 ## Credits
 
 - framework = https://svelte.dev/
-- local database = https://pglite.dev/
 - font = https://github.com/hellogreg/firava
 - icons = https://icons.obra.studio/

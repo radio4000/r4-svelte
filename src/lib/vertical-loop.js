@@ -245,9 +245,9 @@ export function verticalLoop(items, config = {}) {
 	const cleanup = () => window.removeEventListener('resize', onResize)
 
 	// Store cleanup in context if using gsap.context
-	// @ts-ignore - gsap.context.current exists at runtime
+	// @ts-expect-error - gsap.context.current exists at runtime
 	if (gsap.context?.current) {
-		// @ts-ignore
+		// @ts-expect-error - GSAP context might not exist or be typed in this environment
 		gsap.context.current.add(cleanup)
 	}
 

@@ -30,9 +30,9 @@
 		}
 
 		targetElement.setAttribute('aria-describedby', id)
-		// @ts-ignore - CSS Anchor Positioning API
+		// @ts-expect-error - CSS Anchor Positioning API
 		targetElement.style.anchorName = anchorName
-		// @ts-ignore - CSS Anchor Positioning API
+		// @ts-expect-error - CSS Anchor Positioning API
 		tooltipElement.style.positionAnchor = anchorName
 
 		const showTooltip = () => tooltipElement?.showPopover()

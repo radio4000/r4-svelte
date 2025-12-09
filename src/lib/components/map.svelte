@@ -234,8 +234,7 @@
 		:global(.leaflet-popup-content-wrapper, .leaflet-popup-tip) {
 			background-color: var(--gray-2);
 		}
-		:global(.leaflet-popup a.leaflet-popup-close-button) {
-		}
+
 		@media (prefers-color-scheme: dark) {
 			:global(.Map-tiles) {
 				filter: var(--map-tiles-filter, none);

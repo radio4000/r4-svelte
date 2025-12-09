@@ -1,6 +1,5 @@
 <script>
-	import {eq} from '@tanstack/svelte-db'
-	import {useLiveQueryPatched as useLiveQuery} from '$lib/useLiveQueryPatched.svelte'
+	import {eq, useLiveQuery} from '@tanstack/svelte-db'
 	import {page} from '$app/state'
 	import {channelsCollection, tracksCollection, checkTracksFreshness} from '../tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
@@ -98,7 +97,7 @@
 		<section>
 			{#if tracks.length > 0}
 				<Tracklist {tracks} {canEdit} grouped={true} />
-			{:else if tracksQuery.isLoading || channel.track_count > 0}
+			{:else if tracksQuery.isLoading || (channel.track_count ?? 0) > 0}
 				<p style="margin-top:1rem; margin-left: 0.5rem;">{m.channel_loading_tracks()}</p>
 			{:else}
 				<p style="margin-top:1rem; margin-left: 0.5rem;">No tracks yet</p>

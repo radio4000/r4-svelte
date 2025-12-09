@@ -27,14 +27,15 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 Tanstack DB API changed between versions. The patched hook was written for an older API.
 
-| Line | Error |
-|------|-------|
-| 11 | `LiveQueryCollection` not exported (now `LiveQueryCollectionUtils`) |
-| 27, 28, 45-47 | `Type 'T' does not satisfy constraint 'object'` |
-| 36 | `Type 'unknown' is not assignable` |
-| 66 | `createLiveQueryCollection` signature changed |
+| Line          | Error                                                               |
+| ------------- | ------------------------------------------------------------------- |
+| 11            | `LiveQueryCollection` not exported (now `LiveQueryCollectionUtils`) |
+| 27, 28, 45-47 | `Type 'T' does not satisfy constraint 'object'`                     |
+| 36            | `Type 'unknown' is not assignable`                                  |
+| 66            | `createLiveQueryCollection` signature changed                       |
 
 **Fix options:**
+
 1. Update generics to `T extends object` and fix imports to match current Tanstack API
 2. Pin to older Tanstack version (not recommended)
 3. Remove patch if upstream fixed the `state_unsafe_mutation` issue — check if still needed
@@ -51,6 +52,7 @@ _executor = startOfflineExecutor({
 ```
 
 **Fix options:**
+
 1. Check Tanstack offline-transactions docs for replacement callback (maybe renamed?)
 2. Remove the logging callback if no equivalent exists
 3. Use a different hook point if available (e.g., wrap mutationFns)
