@@ -16,7 +16,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale, setLocale, locales, isLocale} from '$lib/paraglide/runtime'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
-	import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
+	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
 	import {queryClient, channelsCollection} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
 
@@ -146,7 +146,7 @@
 			<p>{m.loading_generic()}</p>
 		{/await}
 	</svelte:boundary>
-	<SvelteQueryDevtools buttonPosition="bottom-left" />
+	<!-- <SvelteQueryDevtools buttonPosition="bottom-left" /> -->
 </QueryClientProvider>
 
 <style>

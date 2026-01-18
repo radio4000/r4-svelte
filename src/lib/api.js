@@ -338,6 +338,17 @@ export function togglePlay(player) {
 	}
 }
 
+/** @param {number} seconds */
+export function seekTo(seconds) {
+	const mediaEl = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+	if (!mediaEl) {
+		log.warn('seekTo: no media element found')
+		return
+	}
+	// @ts-expect-error custom element currentTime setter
+	mediaEl.currentTime = seconds
+}
+
 /**
  * @param {import('$lib/types').Track | undefined} track
  * @param {string[]} activeQueue

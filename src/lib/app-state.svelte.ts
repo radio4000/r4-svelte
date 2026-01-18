@@ -55,6 +55,7 @@ function loadState(): AppState {
 		if (stored) {
 			const parsed = JSON.parse(stored)
 			parsed.is_playing = false
+			parsed.listening_to_channel_id = undefined
 			return {...defaultAppState, ...parsed}
 		}
 	} catch (err) {
