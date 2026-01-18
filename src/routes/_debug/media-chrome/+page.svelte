@@ -108,37 +108,39 @@
 		<a href="/_debug">&larr;</a>
 	</menu>
 	<h1>Media Chrome</h1>
+	<p>Tests media-chrome with YouTube and SoundCloud custom elements.</p>
 
-	<section class="controls">
+	<section>
 		<h2>Test URLs</h2>
-		<ul>
+		<menu>
 			{#each testUrls as test (test.url)}
-				<li>
-					<button onclick={() => selectTrack(test.url)} class:active={currentUrl === test.url}>
-						{test.title}
-					</button>
-				</li>
+				<button onclick={() => selectTrack(test.url)} class:active={currentUrl === test.url}>
+					{test.title}
+				</button>
 			{/each}
-		</ul>
-
+		</menu>
 		<label>
 			<input type="checkbox" bind:checked={autoplay} />
 			Autoplay
 		</label>
-
-		<h3>Manual Controls</h3>
-		<button onclick={testTogglePlay}>Toggle (JS)</button>
-		<button onclick={seekToStart}>Seek 0</button>
-		<button onclick={seekTo30}>Seek 30</button>
-		<button onclick={() => setVolume(0.5)}>Vol 50%</button>
-		<button onclick={() => setVolume(1)}>Vol 100%</button>
-		<button onclick={() => setMuted(true)}>Mute</button>
-		<button onclick={() => setMuted(false)}>Unmute</button>
 	</section>
 
-	<section class="player-info">
-		<h2>Current State</h2>
-		<dl>
+	<section>
+		<h2>Manual controls</h2>
+		<menu>
+			<button onclick={testTogglePlay}>Toggle (JS)</button>
+			<button onclick={seekToStart}>Seek 0</button>
+			<button onclick={seekTo30}>Seek 30</button>
+			<button onclick={() => setVolume(0.5)}>Vol 50%</button>
+			<button onclick={() => setVolume(1)}>Vol 100%</button>
+			<button onclick={() => setMuted(true)}>Mute</button>
+			<button onclick={() => setMuted(false)}>Unmute</button>
+		</menu>
+	</section>
+
+	<section>
+		<h2>Current state</h2>
+		<dl class="meta">
 			<dt>URL</dt>
 			<dd><code>{currentUrl}</code></dd>
 			<dt>Provider</dt>
@@ -158,7 +160,7 @@
 		</dl>
 	</section>
 
-	<section class="player-section">
+	<section>
 		<h2>Player</h2>
 		<media-controller>
 			{#if trackType === 'youtube'}
@@ -202,3 +204,9 @@
 		</media-controller>
 	</section>
 </div>
+
+<style>
+	section {
+		margin-block-start: 2rem;
+	}
+</style>

@@ -94,7 +94,8 @@
 
 <div class="constrained">
 	<Menu />
-
+	<h1>Tanstack Diagnostics</h1>
+	<p>Collection sizes, query cache state, and persistence status.</p>
 	<menu>
 		<button onclick={refresh}>Refresh</button>
 		<button onclick={invalidateAll}>Invalidate all</button>
@@ -103,7 +104,6 @@
 	</menu>
 
 	<section>
-		<h1>Diagnostics</h1>
 		<p>{persistenceReady ? 'Persistence ready (restored from IDB)' : 'Loading...'}</p>
 	</section>
 

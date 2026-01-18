@@ -96,8 +96,13 @@
 		<menu data-grouped>
 			<a href="/_debug">&larr;</a>
 		</menu>
-		<h1>Spam Angel</h1>
-		<button onclick={clearAll} disabled={toDelete.length === 0 && toKeep.length === 0}>Clear all</button>
+		<div>
+			<h1>Spam Angel</h1>
+			<p>Triage suspected spam channels for deletion.</p>
+		</div>
+		<menu>
+			<button onclick={clearAll} disabled={toDelete.length === 0 && toKeep.length === 0}>Clear all</button>
+		</menu>
 	</header>
 
 	<div class="triage">

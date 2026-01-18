@@ -190,6 +190,9 @@
 {/snippet}
 
 <article class="constrained">
+	<menu data-grouped>
+		<a href="/_debug/tanstack">&larr;</a>
+	</menu>
 	<h1>TanStack Query + DB</h1>
 	<p>Interactive exploration of TanStack's data fetching and caching abstractions.</p>
 

@@ -68,6 +68,8 @@
 
 <div class="constrained">
 	<Menu />
+	<h1>Channels</h1>
+	<p>CRUD operations on channels using TanStack DB collections.</p>
 
 	{#if !user}
 		<p>Sign in to manage channels</p>

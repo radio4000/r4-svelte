@@ -96,6 +96,8 @@
 
 <div class="constrained">
 	<Menu />
+	<h1>Tracks</h1>
+	<p>CRUD operations on tracks using TanStack DB collections.</p>
 
 	{#if !userChannel}
 		<p>Sign in to test tracks</p>

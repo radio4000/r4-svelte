@@ -14,25 +14,31 @@
 	<menu data-grouped>
 		<a href="/_debug">&larr;</a>
 	</menu>
+
 	<h1>App State</h1>
+	<p>
+		Global reactive state persisted to localStorage. Changes here reflect immediately across the app. Also available at <code
+			>window.r5.appState</code
+		>.
+	</p>
 
 	<section>
-		<menu>
-			<button onclick={clearAll}>Clear all data</button>
-		</menu>
+		<p>Clears any custom, local user settings, application state as well as cached channels and tracks in idb.</p>
+		<button onclick={clearAll}>Reset localstorage + IndexedDB</button>
 	</section>
 
 	<section>
-		<h2>Reactivity test</h2>
-		<button onclick={toggleQueuePanel}>Toggle queue</button>
-		<p>Queue visible: {appState.queue_panel_visible}</p>
+		<h2>Reactivity tests</h2>
+		<button onclick={toggleQueuePanel} class:active={appState.queue_panel_visible}>Toggle queue</button>
+		<br />
+		<br />
 		<InputRange bind:value={appState.volume} min={0} max={1} step={0.1} />
 		<p>Volume: {appState.volume}</p>
 	</section>
 </div>
 
 <style>
-	h2 {
-		margin-block-start: 2rem;
+	section {
+		margin-block-start: 1rem;
 	}
 </style>

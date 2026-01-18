@@ -8,19 +8,22 @@
 		<a href="/_debug">&larr;</a>
 	</menu>
 	<h1>Tooltips</h1>
-
 	<p>Testing tooltip components and attachments.</p>
 
 	<section>
-		<h3>Inline component</h3>
-		<button id="save-btn" type="button">Save</button>
+		<h2>Inline component</h2>
+		<menu>
+			<button id="save-btn" type="button">Save</button>
+		</menu>
 		<ToolTip targetId="save-btn" content="Save your changes" />
 
 		<p>Positioned tooltips:</p>
-		<button id="top-btn" type="button">Top</button>
-		<button id="right-btn" type="button">Right</button>
-		<button id="bottom-btn" type="button">Bottom</button>
-		<button id="left-btn" type="button">Left</button>
+		<menu>
+			<button id="top-btn" type="button">Top</button>
+			<button id="right-btn" type="button">Right</button>
+			<button id="bottom-btn" type="button">Bottom</button>
+			<button id="left-btn" type="button">Left</button>
+		</menu>
 
 		<ToolTip targetId="top-btn" content="Positioned above" position="top" />
 		<ToolTip targetId="right-btn" content="Positioned right" position="right" />
@@ -29,12 +32,20 @@
 	</section>
 
 	<section>
-		<h3>Attachments</h3>
-		<button {@attach tooltip({content: 'Via attachment', position: 'bottom'})}> Hover me </button>
-		<button {@attach tooltip({content: '<em>HTML</em> content', position: 'bottom'})}> HTML </button>
-		<button {@attach tooltip({content: 'Positioned above', position: 'top'})}> Top </button>
-		<button {@attach tooltip({content: 'Positioned below', position: 'bottom'})}> Bottom </button>
-		<button {@attach tooltip({content: 'Positioned left', position: 'left'})}> Left </button>
-		<button {@attach tooltip({content: 'Positioned right', position: 'right'})}> Right </button>
+		<h2>Attachments</h2>
+		<menu>
+			<button {@attach tooltip({content: 'Via attachment', position: 'bottom'})}> Hover me </button>
+			<button {@attach tooltip({content: '<em>HTML</em> content', position: 'bottom'})}> HTML </button>
+			<button {@attach tooltip({content: 'Positioned above', position: 'top'})}> Top </button>
+			<button {@attach tooltip({content: 'Positioned below', position: 'bottom'})}> Bottom </button>
+			<button {@attach tooltip({content: 'Positioned left', position: 'left'})}> Left </button>
+			<button {@attach tooltip({content: 'Positioned right', position: 'right'})}> Right </button>
+		</menu>
 	</section>
 </div>
+
+<style>
+	section {
+		margin-block-start: 2rem;
+	}
+</style>

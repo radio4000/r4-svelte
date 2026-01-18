@@ -38,8 +38,11 @@
 
 <article>
 	<header>
+		<menu data-grouped>
+			<a href="/_debug">&larr;</a>
+		</menu>
 		<h1>Infinite Canvas</h1>
-		<p>Use <kbd>WASD</kbd>/<kbd>arrows</kbd> to move, <kbd>QE</kbd> for up/down, scroll to zoom, drag to pan</p>
+		<p>Use <kbd>WASD</kbd>/<kbd>arrows</kbd> to move, <kbd>QE</kbd> for up/down, scroll to zoom, drag to pan.</p>
 	</header>
 	<section>
 		<InfiniteCanvas {media} onclick={handleClick} />

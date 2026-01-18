@@ -126,32 +126,42 @@
 		<a href="/_debug">&larr;</a>
 	</menu>
 	<h1>Async Test</h1>
-	<BatchProgress total={trackCount} {chunkSize} chunks={batches} {elapsed} {running} onRun={runTest} onAbort={abort}>
-		{#snippet controls()}
-			<label>
-				Items
-				<input type="number" bind:value={trackCount} min="10" max="1000" step="10" />
-			</label>
-			<label>
-				Chunk
-				<input type="number" bind:value={chunkSize} min="5" max="100" step="5" />
-			</label>
-			<label>
-				Concurrency
-				<input type="number" bind:value={concurrency} min="1" max="10" />
-			</label>
-			<label>
-				Min ms
-				<input type="number" bind:value={minDelay} min="0" max="5000" step="100" />
-			</label>
-			<label>
-				Max ms
-				<input type="number" bind:value={maxDelay} min="0" max="5000" step="100" />
-			</label>
-			<label>
-				Error %
-				<input type="number" bind:value={errorRate} min="0" max="1" step="0.05" />
-			</label>
-		{/snippet}
-	</BatchProgress>
+	<p>Visualizes chunked async operations with configurable concurrency, delays and error rates.</p>
+
+	<section>
+		<BatchProgress total={trackCount} {chunkSize} chunks={batches} {elapsed} {running} onRun={runTest} onAbort={abort}>
+			{#snippet controls()}
+				<label>
+					Items
+					<input type="number" bind:value={trackCount} min="10" max="1000" step="10" />
+				</label>
+				<label>
+					Chunk
+					<input type="number" bind:value={chunkSize} min="5" max="100" step="5" />
+				</label>
+				<label>
+					Concurrency
+					<input type="number" bind:value={concurrency} min="1" max="10" />
+				</label>
+				<label>
+					Min ms
+					<input type="number" bind:value={minDelay} min="0" max="5000" step="100" />
+				</label>
+				<label>
+					Max ms
+					<input type="number" bind:value={maxDelay} min="0" max="5000" step="100" />
+				</label>
+				<label>
+					Error %
+					<input type="number" bind:value={errorRate} min="0" max="1" step="0.05" />
+				</label>
+			{/snippet}
+		</BatchProgress>
+	</section>
 </div>
+
+<style>
+	section {
+		margin-block-start: 2rem;
+	}
+</style>
