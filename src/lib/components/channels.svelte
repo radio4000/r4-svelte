@@ -71,7 +71,8 @@
 			width: 250,
 			height: 250,
 			slug: c.slug,
-			id: c.id
+			id: c.id,
+			name: c.name
 		}))
 	)
 

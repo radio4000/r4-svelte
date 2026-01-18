@@ -78,8 +78,10 @@ export class InfiniteCanvas {
 		this.textureCache = new Map()
 		this.planeCache = new Map()
 		this.disposed = false
+		this.hoveredItem = null
 
 		this.init()
+		this.createTooltip()
 	}
 
 	init() {
@@ -142,6 +144,7 @@ export class InfiniteCanvas {
 				this.targetVel.y += dy * 0.025
 				this.lastMouse = {x: e.clientX, y: e.clientY}
 			}
+			this.updateTooltip(e)
 		})
 
 		canvas.addEventListener('mouseleave', () => {
@@ -212,6 +215,66 @@ export class InfiniteCanvas {
 			},
 			{passive: false}
 		)
+	}
+
+	createTooltip() {
+		this.tooltip = document.createElement('div')
+		Object.assign(this.tooltip.style, {
+			position: 'absolute',
+			padding: '6px 10px',
+			background: 'rgba(0, 0, 0, 0.85)',
+			color: '#fff',
+			fontSize: '13px',
+			borderRadius: '4px',
+			pointerEvents: 'none',
+			opacity: '0',
+			transition: 'opacity 0.15s',
+			maxWidth: '280px',
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			textOverflow: 'ellipsis',
+			zIndex: '1000'
+		})
+		this.container.appendChild(this.tooltip)
+	}
+
+	updateTooltip(e) {
+		if (this.isDragging) {
+			this.tooltip.style.opacity = '0'
+			return
+		}
+
+		const rect = this.renderer.domElement.getBoundingClientRect()
+		const mouse = new THREE.Vector2(
+			((e.clientX - rect.left) / rect.width) * 2 - 1,
+			-((e.clientY - rect.top) / rect.height) * 2 + 1
+		)
+		this.raycaster.setFromCamera(mouse, this.camera)
+
+		const meshes = []
+		for (const group of this.chunks.values()) {
+			for (const mesh of group.children) {
+				if (mesh.visible) meshes.push(mesh)
+			}
+		}
+
+		const intersects = this.raycaster.intersectObjects(meshes)
+		if (intersects.length > 0) {
+			const mediaItem = intersects[0].object.userData.mediaItem
+			if (mediaItem && mediaItem !== this.hoveredItem) {
+				this.hoveredItem = mediaItem
+				const name = mediaItem.name || mediaItem.title || mediaItem.slug || ''
+				this.tooltip.textContent = name
+			}
+			this.tooltip.style.opacity = '1'
+			this.tooltip.style.left = `${e.clientX - rect.left + 12}px`
+			this.tooltip.style.top = `${e.clientY - rect.top + 12}px`
+			this.renderer.domElement.style.cursor = 'pointer'
+		} else {
+			this.tooltip.style.opacity = '0'
+			this.hoveredItem = null
+			this.renderer.domElement.style.cursor = this.isDragging ? 'grabbing' : 'grab'
+		}
 	}
 
 	handleClick(e) {
@@ -490,5 +553,6 @@ export class InfiniteCanvas {
 		this.planeGeometry.dispose()
 		this.renderer.dispose()
 		this.container.removeChild(this.renderer.domElement)
+		this.tooltip?.remove()
 	}
 }
