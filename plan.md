@@ -5,7 +5,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
-- Broadcast seek-to-position: when rejoining a broadcast, calculate elapsed time from `track_played_at` and seek. Approach: `playBroadcastTrack` calculates seekTime, calls `playTrack()` then `seekTo()` using media-chrome. Alternatives considered: appState.pending_seek_time (explicit state), player calculates from context (implicit).
 - On-demand predicate push-down: we set `syncMode: 'on-demand'` but don't use `parseLoadSubsetOptions` in queryFn. Currently we manually check for slug and call different SDK methods. With proper on-demand, live query `where()` clauses flow through to backend:
   ```ts
   const {where} = parseLoadSubsetOptions(ctx.meta.loadSubsetOptions)

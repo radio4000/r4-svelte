@@ -4,6 +4,7 @@
 	import '$lib/youtube-video-custom-element.js'
 	import '$lib/soundcloud-player-custom-element.js'
 	import {next, play, previous, togglePlay, togglePlayerExpanded, toggleQueuePanel, toggleShuffle} from '$lib/api'
+	import {leaveBroadcast} from '$lib/broadcast.js'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -52,6 +53,13 @@
 	const canPlay = $derived(Boolean(channel && track))
 	// const autoplay = $derived(userHasPlayed ? 1 : 0)
 	const isListeningToBroadcast = $derived(Boolean(appState.listening_to_channel_id))
+
+	// The channel that is broadcasting (the DJ), looked up by ID
+	let broadcastingChannel = $derived.by(() => {
+		const id = appState.listening_to_channel_id
+		if (!id) return undefined
+		return untrack(() => channelsCollection.state.get(id))
+	})
 
 	/** @type {string} */
 	let trackImage = $derived.by(() => {
@@ -188,13 +196,14 @@
 
 	<menu>
 		<media-control-bar mediacontroller="r5">
-			{@render btnShuffle()}
-			{@render btnPrev()}
-			<!-- <media-play-button class="btn"></media-play-button> -->
-			{@render btnPlay()}
-			{@render btnNext()}
-			<media-time-range></media-time-range>
-			<media-time-display showduration></media-time-display>
+			{#if !isListeningToBroadcast}
+				{@render btnShuffle()}
+				{@render btnPrev()}
+				{@render btnPlay()}
+				{@render btnNext()}
+				<media-time-range></media-time-range>
+				<media-time-display showduration></media-time-display>
+			{/if}
 			<media-mute-button class="btn"></media-mute-button>
 			<media-volume-range></media-volume-range>
 			{@render btnToggleQueuePanel()}
@@ -202,10 +211,12 @@
 		</media-control-bar>
 	</menu>
 
-	<media-control-bar class="timebar" mediacontroller="r5">
-		<media-time-range></media-time-range>
-		<media-time-display showduration></media-time-display>
-	</media-control-bar>
+	{#if !isListeningToBroadcast}
+		<media-control-bar class="timebar" mediacontroller="r5">
+			<media-time-range></media-time-range>
+			<media-time-display showduration></media-time-display>
+		</media-control-bar>
+	{/if}
 </div>
 
 {#snippet btnPrev()}
@@ -282,6 +293,15 @@
 
 {#snippet channelHeader()}
 	{#if channel}
+		{#if isListeningToBroadcast && broadcastingChannel}
+			<header class="broadcast">
+				<a href={`/${broadcastingChannel.slug}`}>
+					<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
+				</a>
+				<button onclick={leaveBroadcast} caps>Leave<br />broadcast</button>
+			</header>
+		{/if}
+
 		<header class="channel">
 			<a href={`/${channel.slug}`}>
 				<ChannelAvatar id={channel.image} alt={channel.name} />
@@ -309,3 +329,14 @@
 		</div>
 	{/if}
 {/snippet}
+
+<style>
+	.broadcast {
+		display: flex;
+		gap: 0.2rem;
+		> a {
+			width: 3rem;
+		}
+		margin-right: 0.4rem;
+	}
+</style>
