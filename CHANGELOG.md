@@ -2,6 +2,9 @@
 
 ## January 2026
 
+- Batch edit overhaul: faster, clearer UI, easy buttons for metadata and durations
+- Broadcast stability improvements, rewritten with tanstack collections
+- Unified alerts/warnings UI
 - Added and improved channel and track forms, including dedicated edit/delete routes for tracks
 - Infinite canvas replaces infinite grid for browsing channels
 - Experimental /mix page
