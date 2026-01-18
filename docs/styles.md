@@ -44,3 +44,5 @@ From `layout.css`:
 - `.row` / `.row--vcenter` — flex row
 - `menu` / `menu[data-vertical]` / `menu[data-grouped]` — menus
 - `dl.meta` — key-value pairs
+
+Assume all elements have default styling we can rely on.

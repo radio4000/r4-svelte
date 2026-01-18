@@ -171,6 +171,9 @@
 	}
 
 	.asideVisible .content {
+		> main {
+			margin-right: var(--queue-panel-width, 400px);
+		}
 		> :global(aside) {
 			display: flex;
 			transform: translate3d(0, 0, 0);
@@ -182,6 +185,9 @@
 	}
 
 	@media (max-width: 768px) {
+		.asideVisible .content > main {
+			margin-right: 0;
+		}
 		.asideVisible .content > :global(aside) {
 			max-width: 100%;
 		}
