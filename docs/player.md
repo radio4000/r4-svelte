@@ -15,6 +15,12 @@ Uses [media-chrome](https://www.media-chrome.org/) with custom YouTube and Sound
 - YouTube URLs converted to embed format (`/embed/VIDEO_ID`) in `#initializePlayer()`
 - Use `loadVideoById()` for track changes, avoiding player re-initialization
 
+## Seeking
+
+`seekTo(seconds)` in `api.js` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
+
+When seeking after a track change, use `requestAnimationFrame` to wait for Svelte to render the new element.
+
 ## State
 
 `app_state` table stores all application state including player state.

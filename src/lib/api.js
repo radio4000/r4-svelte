@@ -340,16 +340,13 @@ export function togglePlay(player) {
 
 /** @param {number} seconds */
 export function seekTo(seconds) {
-	const media = document.querySelector('media-controller#r5')
-	if (!media) return
-	// @ts-expect-error media-chrome extends HTMLMediaElement
-	if (media.media?.readyState >= 1) {
-		// @ts-expect-error media-chrome .media property
-		media.media.currentTime = seconds
-	} else {
-		// @ts-expect-error media-chrome .media property
-		media.media?.addEventListener('loadedmetadata', () => (media.media.currentTime = seconds), {once: true})
+	const mediaEl = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+	if (!mediaEl) {
+		log.warn('seekTo: no media element found')
+		return
 	}
+	// @ts-expect-error custom element currentTime setter
+	mediaEl.currentTime = seconds
 }
 
 /**

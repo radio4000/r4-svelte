@@ -6,6 +6,11 @@ import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracks
 
 const log = logger.ns('broadcast').seal()
 
+/** Get slug for a channel ID, or short ID if not found */
+function label(channelId) {
+	return channelsCollection.get(channelId)?.slug || channelId?.slice(0, 8)
+}
+
 /** @param {string} channelId */
 function isV1Channel(channelId) {
 	return channelsCollection.get(channelId)?.source === 'v1'
@@ -34,17 +39,14 @@ export async function joinBroadcast(channelId) {
 		const slug = broadcast?.channels.slug
 		if (slug) {
 			ensureTracksLoaded(slug)
-			log.log('prefetching_tracks', {slug})
+			log.log(`prefetching ${slug}`)
 		}
 
 		await playBroadcastTrack(data)
 		startBroadcastSync(channelId)
-		log.log('joined', {channelId})
+		log.log(`joined ${label(channelId)}`)
 	} catch (error) {
-		log.error('join_failed', {
-			channelId,
-			error: /** @type {Error} */ (error).message
-		})
+		log.error(`join failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
 	}
 }
 
@@ -79,10 +81,8 @@ export async function upsertRemoteBroadcast(channelId, trackId) {
  * @param {string} [trackId]
  */
 export async function startBroadcast(channelId, trackId) {
-	log.log('start_requested', {channelId, trackId})
-
 	if (!trackId) {
-		log.log('skipped_no_track', {channelId})
+		log.log(`skipped ${label(channelId)} (no track)`)
 		return
 	}
 	if (isV1Channel(channelId)) {
@@ -93,31 +93,25 @@ export async function startBroadcast(channelId, trackId) {
 	}
 
 	await upsertRemoteBroadcast(channelId, trackId)
-	log.log('created', {channelId, trackId})
+	log.log(`started ${label(channelId)}`)
 }
 
 /**
  * @param {string} channelId
  */
 export async function stopBroadcast(channelId) {
-	log.log('stop_requested', {channelId})
 	if (!channelId) return
 	try {
 		await sdk.supabase.from('broadcast').delete().eq('channel_id', channelId).throwOnError()
-		log.log('deleted remote broadcast', {channelId})
+		log.log(`stopped ${label(channelId)}`)
 	} catch (error) {
-		log.error('failed to delete remote broadcast', {
-			channelId,
-			error: /** @type {Error} */ (error).message
-		})
+		log.error(`stop failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
 	}
 }
 
 /** @param {string} channelId */
 function startBroadcastSync(channelId) {
 	stopBroadcastSync()
-
-	log.log('starting_sync', {channelId})
 
 	broadcastChannel = sdk.supabase
 		.channel(`broadcast:${channelId}`)
@@ -131,17 +125,13 @@ function startBroadcastSync(channelId) {
 			},
 			(payload) => {
 				const broadcast = /** @type {import('$lib/types').Broadcast} */ (payload.new)
-				log.log('change_received', {
-					channelId,
-					track_id: broadcast.track_id,
-					track_played_at: broadcast.track_played_at,
-					payload_event: payload.eventType
-				})
+				const track = tracksCollection.get(broadcast.track_id)
+				log.log(`track changed: ${track?.title?.slice(0, 30) || broadcast.track_id.slice(0, 8)}`)
 				playBroadcastTrack(broadcast)
 			}
 		)
 		.subscribe((status) => {
-			log.log('subscription_status', {channelId, status})
+			if (status === 'SUBSCRIBED') log.log(`syncing ${label(channelId)}`)
 		})
 }
 
@@ -160,9 +150,11 @@ function stopBroadcastSync() {
  * @returns {number|undefined}
  */
 function calculateSeekTime(broadcast, track) {
-	if (!broadcast.track_played_at || !track.duration) return undefined
+	if (!broadcast.track_played_at) return undefined
 	const elapsed = (Date.now() - new Date(broadcast.track_played_at).getTime()) / 1000
-	if (elapsed < 0 || elapsed >= track.duration) return undefined
+	if (elapsed < 0) return undefined
+	// If we know duration, don't seek past end. Otherwise let player handle it.
+	if (track.duration && elapsed >= track.duration) return undefined
 	return Math.floor(elapsed)
 }
 
@@ -182,15 +174,17 @@ async function playBroadcastTrack(broadcast) {
 			tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
 			track = /** @type {import('$lib/types').Track} */ (data)
 		} catch (error) {
-			log.error('failed_to_play', {track_id, channel_id, error: /** @type {Error} */ (error).message})
+			log.error(`play failed:`, /** @type {Error} */ (error).message)
 			return false
 		}
 	}
 
 	const seekTime = calculateSeekTime(broadcast, track)
-	log.log('play_broadcast_track', {track_id, seekTime})
 	await playTrack(track_id, null, 'broadcast_sync')
-	if (seekTime) seekTo(seekTime)
+	if (seekTime !== undefined) {
+		requestAnimationFrame(() => seekTo(seekTime))
+		log.log(`seek +${seekTime}s`)
+	}
 	appState.listening_to_channel_id = channel_id
 	return true
 }
