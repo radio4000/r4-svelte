@@ -81,6 +81,7 @@ h3 {
 	font-weight: 400;
 }
 
+.caps,
 [caps] {
 	text-transform: uppercase;
 	font-size: var(--font-2);
