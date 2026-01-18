@@ -82,7 +82,7 @@ button.active:active,
 	background-color: var(--accent-2);
 }
 
-.IconBtn {
+.icon-btn {
 	border: 0;
 	background: none;
 	padding: 0;
@@ -132,14 +132,14 @@ button:has(svg, i) {
 	gap: 0.3rem;
 }
 
-button.btn--chip,
-.btn.btn--chip {
+button.chip,
+.btn.chip {
 	border-radius: 1rem;
 	background: var(--accent-3);
 	border-color: var(--accent-6);
 }
 
-button.btn--chip:hover,
-.btn.btn--chip:hover {
+button.chip:hover,
+.btn.chip:hover {
 	background: var(--accent-4);
 }

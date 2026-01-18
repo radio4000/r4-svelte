@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 </script>
 
-<menu class="grouped">
+<menu data-grouped>
 	<a href="/_debug">&larr;</a>
 	<a href="/_debug/tanstack" aria-current={page.url.pathname === '/_debug/tanstack' ? 'page' : undefined}>tanstack</a>
 	<a

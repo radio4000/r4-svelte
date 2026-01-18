@@ -93,7 +93,7 @@
 
 <main>
 	<header>
-		<menu class="grouped">
+		<menu data-grouped>
 			<a href="/_debug">&larr;</a>
 		</menu>
 		<h1>Spam Angel</h1>

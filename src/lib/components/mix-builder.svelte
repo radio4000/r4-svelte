@@ -236,7 +236,7 @@
 		{#if sources.length > 0}
 			<p>
 				{#each sources as source (source.type + source.value)}
-					<button type="button" class="btn--chip" onclick={() => removeSource(source)}>
+					<button type="button" class="chip" onclick={() => removeSource(source)}>
 						{source.label} ×
 					</button>
 				{/each}

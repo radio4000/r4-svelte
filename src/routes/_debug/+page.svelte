@@ -3,7 +3,7 @@
 </svelte:head>
 
 <div class="constrained">
-	<menu class="grouped">
+	<menu data-grouped>
 		<a href="/_debug/appstate">appstate</a>
 		<a href="/_debug/async-test">async-test</a>
 		<a href="/_debug/media-chrome">media-chrome</a>

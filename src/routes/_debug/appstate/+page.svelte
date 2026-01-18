@@ -11,7 +11,7 @@
 </script>
 
 <div class="constrained">
-	<menu class="grouped">
+	<menu data-grouped>
 		<a href="/_debug">&larr;</a>
 	</menu>
 	<h1>App State</h1>

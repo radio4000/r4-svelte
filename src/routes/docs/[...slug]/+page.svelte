@@ -6,7 +6,7 @@
 	<title>{data.slug} - r5 docs</title>
 </svelte:head>
 
-<menu class="grouped">
+<menu data-grouped>
 	<a href="/docs">index</a>
 	<a href="/docs/overview">overview</a>
 	{#each data.docs.filter((d) => d !== 'index' && d !== 'overview') as doc (doc)}

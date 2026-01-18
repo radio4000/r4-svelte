@@ -124,7 +124,7 @@ menu[data-vertical] {
 	}
 }
 
-menu.grouped {
+menu[data-grouped] {
 	display: inline-flex;
 	flex-flow: row wrap;
 	gap: 0;
