@@ -54,6 +54,8 @@ export class InfiniteCanvas {
 	constructor(container, config = {}) {
 		this.container = container
 		this.media = config.media || []
+		this.activeId = config.activeId
+		this.accentColor = config.accentColor || '#ff0000'
 		this.onProgress = config.onProgress
 		this.onClick = config.onClick
 		this.backgroundColor = config.backgroundColor ?? null
@@ -103,8 +105,17 @@ export class InfiniteCanvas {
 		this.container.appendChild(this.renderer.domElement)
 
 		this.planeGeometry = new THREE.PlaneGeometry(1, 1)
+		// Radius 0.75 to fit around 1x1 plane (0.5 radius), tube 0.02
+		this.torusGeometry = new THREE.TorusGeometry(0.75, 0.015, 8, 64)
 		this.textureLoader = new THREE.TextureLoader()
 		this.raycaster = new THREE.Raycaster()
+
+		this.borderMaterial = new THREE.MeshBasicMaterial({
+			color: this.accentColor,
+			transparent: true,
+			opacity: 0,
+			side: THREE.DoubleSide
+		})
 
 		this.bindEvents()
 		this.updateChunks(true)
@@ -379,6 +390,57 @@ export class InfiniteCanvas {
 		return planes
 	}
 
+	setActiveId(id) {
+		if (this.activeId === id) return
+		this.activeId = id
+		// Update existing meshes
+		for (const group of this.chunks.values()) {
+			for (const mesh of group.children) {
+				if (mesh.userData.isBorder) continue
+				const isActive = mesh.userData.mediaItem?.id === this.activeId
+				this.updateMeshBorder(mesh, isActive, group)
+			}
+		}
+	}
+
+	setAccentColor(color) {
+		this.accentColor = color
+		this.borderMaterial.color.set(color)
+		for (const group of this.chunks.values()) {
+			for (const mesh of group.children) {
+				if (mesh.userData.isBorder) {
+					mesh.material.color.set(color)
+				}
+			}
+		}
+	}
+
+	updateMeshBorder(mesh, isActive, group) {
+		if (isActive) {
+			if (!mesh.userData.border) {
+				// Scale torus to fit the largest dimension of the mesh
+				const maxScale = Math.max(mesh.scale.x, mesh.scale.y)
+				const border = new THREE.Mesh(this.torusGeometry, this.borderMaterial.clone())
+				border.position.copy(mesh.position)
+				// border.position.z -= 0.05 // Keep it centered or slightly behind?
+				// For a 3D rotating ring, centering usually looks best, maybe slightly behind to avoid clipping if flat
+				border.position.z -= 0.1
+				
+				// Scale the torus to match the mesh size
+				border.scale.setScalar(maxScale)
+				// border.scale.multiplyScalar(1.0)
+				
+				border.userData = {isBorder: true, mainMesh: mesh, isRotating: true}
+				group.add(border)
+				mesh.userData.border = border
+			}
+		} else if (mesh.userData.border) {
+			group.remove(mesh.userData.border)
+			mesh.userData.border.material.dispose()
+			delete mesh.userData.border
+		}
+	}
+
 	createChunk(cx, cy, cz) {
 		const key = `${cx},${cy},${cz}`
 		if (this.chunks.has(key)) return
@@ -414,6 +476,11 @@ export class InfiniteCanvas {
 			mesh.userData = {targetOpacity: 1, chunkCx: cx, chunkCy: cy, chunkCz: cz, mediaItem}
 			mesh.visible = false
 			group.add(mesh)
+
+			// Add border if active
+			if (mediaItem.id === this.activeId) {
+				this.updateMeshBorder(mesh, true, group)
+			}
 		}
 
 		this.scene.add(group)
@@ -476,7 +543,15 @@ export class InfiniteCanvas {
 				dist <= RENDER_DISTANCE ? 1 : Math.max(0, 1 - (dist - RENDER_DISTANCE) / (CHUNK_FADE_MARGIN || 0.0001))
 
 			for (const mesh of group.children) {
-				const absDepth = Math.abs(mesh.position.z - camZ)
+				// Rotate borders
+				if (mesh.userData.isRotating) {
+					mesh.rotation.x += 0.02
+					mesh.rotation.y += 0.03
+				}
+
+				if (mesh.userData.isBorder) continue
+
+				const absDepth = Math.abs((mesh.userData.mainMesh?.position.z || mesh.position.z) - camZ)
 
 				if (absDepth > DEPTH_FADE_END + 50) {
 					mesh.material.opacity = 0
@@ -492,6 +567,11 @@ export class InfiniteCanvas {
 				mesh.material.opacity = newOpacity > 0.99 ? 1 : newOpacity
 				mesh.material.depthWrite = newOpacity > 0.99
 				mesh.visible = newOpacity > INVIS_THRESHOLD
+
+				if (mesh.userData.border) {
+					mesh.userData.border.material.opacity = mesh.material.opacity
+					mesh.userData.border.visible = mesh.visible
+				}
 			}
 		}
 	}

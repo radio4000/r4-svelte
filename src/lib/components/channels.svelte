@@ -4,6 +4,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
 	import {shuffleArray, channelAvatarUrl} from '$lib/utils.ts'
+	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import InfiniteCanvas from './infinite-canvas.svelte'
@@ -15,6 +16,16 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const {channels = [], display: initialDisplay} = $props()
+
+	const activeChannelId = $derived.by(() => {
+		if (appState.listening_to_channel_id) return appState.listening_to_channel_id
+		const trackId = appState.playlist_track
+		if (!trackId) return null
+		const track = tracksCollection.state.get(trackId)
+		if (!track?.slug) return null
+		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+		return channel?.id || null
+	})
 
 	let limit = $state(16)
 	let perPage = $state(100)
@@ -229,7 +240,7 @@
 	{:else if display === 'tuner'}
 		<SpectrumScanner channels={realChannels.filtered} />
 	{:else if display === 'infinite'}
-		<InfiniteCanvas media={canvasMedia} onclick={handleCanvasClick} />
+		<InfiniteCanvas media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
 	{:else}
 		<ol class={display}>
 			{#each realChannels.displayed as channel (channel.id)}
