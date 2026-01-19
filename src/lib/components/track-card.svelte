@@ -134,10 +134,11 @@
 
 <style>
 	a {
+		flex: 1;
 		display: flex;
 		flex-flow: row nowrap;
 		gap: 0 0.5rem;
-		padding: 0.5rem 2rem 0.5rem 0.5rem;
+		padding: 0.5rem;
 		line-height: 1.2;
 		text-decoration: none;
 		cursor: default;
@@ -218,14 +219,12 @@
 	}
 
 	article {
-		position: relative;
+		display: flex;
+		align-items: center;
 		/* container-type: inline-size; */
 
 		:global(.popover-menu) {
-			position: absolute;
-			top: 0;
-			right: 0;
-			height: 100%;
+			padding: 0.5rem;
 		}
 	}
 </style>
