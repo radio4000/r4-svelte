@@ -70,6 +70,9 @@ export const appState: AppState = $state(loadState())
 $effect.root(() => {
 	$effect(() => {
 		const serialized = JSON.stringify(appState)
-		localStorage.setItem(STORAGE_KEY, serialized)
+		const timeout = setTimeout(() => {
+			localStorage.setItem(STORAGE_KEY, serialized)
+		}, 200)
+		return () => clearTimeout(timeout)
 	})
 })
