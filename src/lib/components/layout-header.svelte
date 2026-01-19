@@ -57,7 +57,7 @@
 				class:active={page.route.id === '/following'}
 				{@attach tooltip({content: m.nav_following()})}
 			>
-				<Icon icon="favorite" size={20} />
+				<Icon icon="sparkles" size={20} />
 			</a>
 			<!--
 			<a

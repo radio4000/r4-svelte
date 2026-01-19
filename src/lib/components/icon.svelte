@@ -29,9 +29,11 @@
 		IconSidebarFillRight,
 		IconSignal,
 		IconSort,
+		IconSparkles,
 		IconTag,
 		IconUnorderedList,
 		IconUser,
+		IconUsers,
 		IconWifiOff,
 		IconWifi
 	} from 'obra-icons-svelte'
@@ -69,9 +71,11 @@
 		'sidebar-fill-right': IconSidebarFillRight,
 		signal: IconSignal,
 		sort: IconSort,
+		sparkles: IconSparkles,
 		tag: IconTag,
 		'unordered-list': IconUnorderedList,
 		user: IconUser,
+		users: IconUsers,
 		'wifi-off': IconWifiOff,
 		wifi: IconWifi
 	}

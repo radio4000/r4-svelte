@@ -9,6 +9,7 @@
 	import InfiniteCanvas from './infinite-canvas.svelte'
 	import MapChannels from './map-channels.svelte'
 	import PopoverMenu from './popover-menu.svelte'
+	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import * as m from '$lib/paraglide/messages'
@@ -98,20 +99,6 @@
 
 	function setFilter(value) {
 		appState.channels_filter = value
-	}
-
-	function setOrder(value) {
-		appState.channels_order = value
-		appState.channels_shuffled = false
-	}
-
-	function toggleShuffle() {
-		appState.channels_shuffled = !appState.channels_shuffled
-	}
-
-	function toggleOrderDirection() {
-		appState.channels_order_direction = orderDirection === 'asc' ? 'desc' : 'asc'
-		appState.channels_shuffled = false
 	}
 
 	const viewIconMap = {
@@ -228,48 +215,13 @@
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
 					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
 				>
-			</div>
-			<div class="sort-row">
-				<select value={order} onchange={(e) => setOrder(e.currentTarget.value)}>
-					<option value="updated">{m.channels_order_updated()}</option>
-					<option value="created">{m.channels_order_created()}</option>
-					<option value="name">{m.channels_order_name()}</option>
-					<option value="tracks">{m.channels_order_tracks()}</option>
-				</select>
-				<button
-					onclick={toggleOrderDirection}
-					{@attach tooltip({
-						content: orderDirection === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
-					})}
-				>
-					<Icon icon={orderDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} size="20" />
-				</button>
-				<button
-					class:active={appState.channels_shuffled}
-					onclick={toggleShuffle}
-					{@attach tooltip({content: m.channels_tooltip_shuffle()})}
-				>
-					<Icon icon="shuffle" size="20" />
-				</button>
-			</div>
-			<!-- <button class:active={order === 'updated'} onclick={() => setOrder('updated')}
-				>{m.channels_order_updated()}</button
-			>
-			<button class:active={order === 'created'} onclick={() => setOrder('created')}
-				>{m.channels_order_created()}</button
-			>
-			<button class:active={order === 'name'} onclick={() => setOrder('name')}>{m.channels_order_name()}</button>
-			<button class:active={order === 'tracks'} onclick={() => setOrder('tracks')}>{m.channels_order_tracks()}</button>
-			<hr />
-			<button onclick={toggleOrderDirection}>
-				<Icon icon={orderDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} size="20" />
-				{orderDirection === 'asc' ? m.channels_order_asc() : m.channels_order_desc()}
-			</button>
-			<button class:active={appState.channels_shuffled} onclick={toggleShuffle}>
-				<Icon icon="shuffle" size="20" />
-				{m.channels_shuffle_tooltip()}
-			</button> -->
-		</PopoverMenu>
+						</div>
+						<SortControls
+							bind:order={appState.channels_order}
+							bind:direction={appState.channels_order_direction}
+							bind:shuffled={appState.channels_shuffled}
+						/>
+					</PopoverMenu>
 	</menu>
 
 	{#if display === 'map'}
