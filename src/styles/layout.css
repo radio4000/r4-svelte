@@ -112,6 +112,9 @@ menu[data-vertical] {
 	gap: 0;
 
 	a {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		padding: 0.5rem;
 		text-decoration: none;
 		&:hover {

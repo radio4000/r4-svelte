@@ -2,6 +2,7 @@
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 
 	const sha = $derived(__GIT_INFO__.sha)
@@ -24,19 +25,35 @@
 
 	<menu data-vertical>
 		{#if !appState.user}
-			<a href="/auth">{m.auth_create_or_signin()}</a>
+			<a href="/auth">
+				<Icon icon="user" />
+				{m.auth_create_or_signin()}
+			</a>
 		{/if}
-		<a href="/settings/appearance">{m.settings_appearance()}</a>
-		<a href="/settings/keyboard">{m.settings_keyboard()}</a>
+		<a href="/settings/appearance">
+			<Icon icon="palette" />
+			{m.settings_appearance()}
+		</a>
+		<a href="/settings/keyboard">
+			<Icon icon="keyboard" />
+			{m.settings_keyboard()}
+		</a>
 	</menu>
 
 	<menu data-vertical>
-		<a href="/about">{m.nav_about()}</a>
-		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">{m.nav_chat()} &rarr;</a>
+		<a href="/about">
+			<Icon icon="circle-info" />
+			{m.nav_about()}
+		</a>
+		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">
+			<Icon icon="message-circle" />
+			{m.nav_chat()} &rarr;
+		</a>
 		{#if sha}
-			<a href="https://github.com/radio4000/r4-sync-tests/commit/{sha}" target="_blank" rel="noreferrer"
-				>Source code {sha} &rarr;</a
-			>
+			<a href="https://github.com/radio4000/r4-sync-tests/commit/{sha}" target="_blank" rel="noreferrer">
+				<Icon icon="code" />
+				Source code {sha} &rarr;
+			</a>
 		{/if}
 	</menu>
 
