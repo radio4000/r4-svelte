@@ -74,10 +74,6 @@
 				<menu>
 					<ButtonPlay {channel} label={m.button_play_label()} />
 					<ButtonFollow {channel} />
-					{#if canEdit}
-						<a href="/{channel.slug}/edit" class="btn">{m.common_edit()}</a>
-						<a href="/{channel.slug}/batch-edit" class="btn">Batch edit</a>
-					{/if}
 				</menu>
 				<h1>
 					{channel.name}

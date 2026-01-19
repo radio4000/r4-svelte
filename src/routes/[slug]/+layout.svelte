@@ -1,9 +1,23 @@
 <script>
 	import {page} from '$app/state'
+	import {appState} from '$lib/app-state.svelte'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {channelsCollection} from '$lib/tanstack/collections'
+	import {eq} from '@tanstack/db'
 	import * as m from '$lib/paraglide/messages'
+
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
 	let routeId = $derived(page.route.id)
+
+	const channelQuery = useLiveQuery((q) =>
+		q
+			.from({channels: channelsCollection})
+			.where(({channels}) => eq(channels.slug, slug))
+			.limit(1)
+	)
+	let channel = $derived(channelQuery.data?.[0])
+	let canEdit = $derived(!!appState.user && appState.channels?.includes(channel?.id))
 </script>
 
 <div class="slug-layout">
@@ -14,6 +28,10 @@
 			<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>{m.channel_tags_link()}</a>
 			<a href="/{slug}/favorites" class:active={routeId?.startsWith('/[slug]/favorites')}>{m.nav_following()}</a>
 			<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>{m.nav_followers()}</a>
+			{#if canEdit}
+				<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>{m.common_edit()}</a>
+				<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>Batch edit</a>
+			{/if}
 		</div>
 	</nav>
 	{@render children()}
