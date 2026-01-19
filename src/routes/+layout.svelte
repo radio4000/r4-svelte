@@ -200,14 +200,13 @@
 	}
 
 	.loader {
-		margin: 1rem;
-		min-height: 80vh;
-		align-self: center;
+		height: 100dvh;
 		display: flex;
 		flex-flow: column;
 		place-content: center;
 		place-items: center;
 		max-width: 40ch;
+		margin: 0 auto;
 	}
 
 	r4-loading {
