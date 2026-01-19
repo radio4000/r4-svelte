@@ -152,13 +152,15 @@
 
 	h2,
 	h3 {
-		margin-left: 0.5rem;
+		margin-right: 0.5rem;
 		font-weight: 600;
+		text-align: right;
 	}
 
 	/* sticky year - only for non-virtual timeline */
 	.timeline h2 {
-		display: inline-flex;
+		display: flex;
+		justify-content: flex-end;
 		position: sticky;
 		top: 0;
 		z-index: 1;
