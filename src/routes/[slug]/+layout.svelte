@@ -14,6 +14,7 @@
 		q
 			.from({channels: channelsCollection})
 			.where(({channels}) => eq(channels.slug, slug))
+			.orderBy(({channels}) => channels.created_at, 'desc')
 			.limit(1)
 	)
 	let channel = $derived(channelQuery.data?.[0])
