@@ -128,7 +128,8 @@ button.primary,
 	}
 }
 
-button:has(svg, i) {
+button:has(svg, i),
+.btn:has(svg, i) {
 	gap: 0.3rem;
 }
 
