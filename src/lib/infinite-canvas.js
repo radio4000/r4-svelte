@@ -182,6 +182,8 @@ export class InfiniteCanvas {
 		// Touch events
 		let lastTouches = []
 		let lastTouchDist = 0
+		let touchStartPos = null
+		let touchDragDistance = 0
 
 		const getTouchDistance = (touches) => {
 			if (touches.length < 2) return 0
@@ -196,6 +198,10 @@ export class InfiniteCanvas {
 				e.preventDefault()
 				lastTouches = Array.from(e.touches)
 				lastTouchDist = getTouchDistance(lastTouches)
+				if (e.touches.length === 1) {
+					touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY}
+					touchDragDistance = 0
+				}
 			},
 			{passive: false}
 		)
@@ -206,8 +212,11 @@ export class InfiniteCanvas {
 				e.preventDefault()
 				const touches = Array.from(e.touches)
 				if (touches.length === 1 && lastTouches.length >= 1) {
-					this.targetVel.x -= (touches[0].clientX - lastTouches[0].clientX) * 0.02
-					this.targetVel.y += (touches[0].clientY - lastTouches[0].clientY) * 0.02
+					const dx = touches[0].clientX - lastTouches[0].clientX
+					const dy = touches[0].clientY - lastTouches[0].clientY
+					touchDragDistance += Math.abs(dx) + Math.abs(dy)
+					this.targetVel.x -= dx * 0.02
+					this.targetVel.y += dy * 0.02
 				} else if (touches.length === 2 && lastTouchDist > 0) {
 					const dist = getTouchDistance(touches)
 					this.scrollAccum += (lastTouchDist - dist) * 0.006
@@ -221,6 +230,10 @@ export class InfiniteCanvas {
 		canvas.addEventListener(
 			'touchend',
 			(e) => {
+				if (touchStartPos && touchDragDistance < 10 && this.onClick) {
+					this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
+				}
+				touchStartPos = null
 				lastTouches = Array.from(e.touches)
 				lastTouchDist = getTouchDistance(lastTouches)
 			},
@@ -425,11 +438,11 @@ export class InfiniteCanvas {
 				// border.position.z -= 0.05 // Keep it centered or slightly behind?
 				// For a 3D rotating ring, centering usually looks best, maybe slightly behind to avoid clipping if flat
 				border.position.z -= 0.1
-				
+
 				// Scale the torus to match the mesh size
 				border.scale.setScalar(maxScale)
 				// border.scale.multiplyScalar(1.0)
-				
+
 				border.userData = {isBorder: true, mainMesh: mesh, isRotating: true}
 				group.add(border)
 				mesh.userData.border = border
