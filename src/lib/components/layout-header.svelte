@@ -4,7 +4,6 @@
 	import AddTrackModal from '$lib/components/add-track-modal.svelte'
 	import EditTrackModal from '$lib/components/edit-track-modal.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import HeaderSearch from '$lib/components/header-search.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import TestCounter from '$lib/components/test-counter.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
@@ -21,16 +20,18 @@
 </script>
 
 <header>
-	<a href="/" class:active={page.route.id === '/'}>
+	<a href="/" class="home-link" class:active={page.route.id === '/'}>
 		{#await preloading}
 			{m.app_name()}
 		{:then}
 			<TestCounter />
 		{/await}
 	</a>
-	<HeaderSearch />
+	<a href="/search" class="btn" class:active={page.route.id === '/search'} {@attach tooltip({content: m.nav_search()})}>
+		<Icon icon="search" size={20} />
+	</a>
 
-	<menu class="row right">
+	<nav>
 		{#await preloading then}
 			<AddTrackModal />
 			<EditTrackModal />
@@ -39,7 +40,6 @@
 					<ChannelAvatar id={userChannel.image} size={32} alt={userChannel.name} />
 				</a>
 			{/if}
-			<!--<hr />-->
 			<a
 				href="/broadcasts"
 				class="btn"
@@ -59,28 +59,16 @@
 			>
 				<Icon icon="sparkles" size={20} />
 			</a>
-			<!--
-			<a
-				href="/stats"
-				class="btn"
-				class:active={page.route.id === '/stats'}
-				{@attach tooltip({content: m.nav_stats()})}
-			>
-				<Icon icon="chart-scatter" size={20} />
-			</a>
-			-->
-			<!-- <button onclick={toggleChatPanel}>Chat</button> -->
 		{/await}
-		<!-- <ThemeToggle showLabel={false} /> -->
-		<a
-			href="/settings"
-			class="btn"
-			class:active={page.route.id?.startsWith('/settings')}
-			{@attach tooltip({content: m.nav_settings()})}
-		>
-			<Icon icon="settings" size={20} />
-		</a>
-	</menu>
+	</nav>
+	<a
+		href="/settings"
+		class="btn settings-link"
+		class:active={page.route.id?.startsWith('/settings')}
+		{@attach tooltip({content: m.nav_settings()})}
+	>
+		<Icon icon="settings" size={20} />
+	</a>
 </header>
 
 <style>
@@ -91,26 +79,29 @@
 
 	header {
 		display: flex;
-		flex-flow: row nowrap;
-		place-items: center;
-		gap: 0.2rem;
+		flex-flow: column nowrap;
+		align-items: center;
+		gap: 0.5rem;
 		padding: 0.5rem;
 		background: var(--header-bg);
-		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
+		border-right: 1px solid light-dark(var(--gray-5), var(--gray-5));
 		transition: background 150ms;
-
-		position: sticky;
-		top: 0;
 		z-index: 50;
-
-		.right {
-			margin-left: auto;
-			place-content: end;
-		}
 
 		a {
 			text-decoration: none;
 		}
+	}
+
+	nav {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		flex: 1;
+	}
+
+	.settings-link {
+		margin-top: auto;
 	}
 
 	.count {
@@ -130,5 +121,23 @@
 
 	.btn:has(.count) {
 		position: relative;
+	}
+
+	@media (max-width: 768px) {
+		header {
+			flex-direction: row;
+			border-right: none;
+			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
+		}
+
+		nav {
+			flex-direction: row;
+			flex: 1;
+			justify-content: flex-end;
+		}
+
+		.settings-link {
+			margin-top: 0;
+		}
 	}
 </style>

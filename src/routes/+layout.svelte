@@ -123,19 +123,21 @@
 					data-locale={uiLocale}
 					style:--queue-panel-width={appState.queue_panel_width ? `${appState.queue_panel_width}px` : null}
 				>
-					<section class="content">
-						<div class="scroll-area">
-							<LayoutHeader preloading={data.preloading} />
+					<LayoutHeader preloading={data.preloading} />
 
-							<main>
-								{@render children()}
-							</main>
-						</div>
+					<div class="content-wrapper">
+						<section class="content">
+							<div class="scroll-area">
+								<main>
+									{@render children()}
+								</main>
+							</div>
 
-						<QueuePanel />
-					</section>
+							<QueuePanel />
+						</section>
 
-					<LayoutFooter />
+						<LayoutFooter />
+					</div>
 
 					{#if chatPanelVisible}
 						<DraggablePanel title={m.chat_panel_title()}>
@@ -154,15 +156,31 @@
 <style>
 	.layout {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		height: 100vh;
 		height: 100dvh;
 		overflow: hidden;
 	}
 
+	.layout > :global(header) {
+		position: sticky;
+		top: 0;
+		height: 100dvh;
+		flex-shrink: 0;
+	}
+
+	.content-wrapper {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+	}
+
 	.content {
 		display: flex;
 		flex: 1;
+		min-width: 0;
 		min-height: 0;
 	}
 
@@ -192,6 +210,16 @@
 	}
 
 	@media (max-width: 768px) {
+		.layout {
+			flex-direction: column;
+		}
+
+		.layout > :global(header) {
+			position: sticky;
+			top: 0;
+			height: auto;
+		}
+
 		.asideVisible .content {
 			flex-direction: column;
 		}

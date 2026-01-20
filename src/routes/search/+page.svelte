@@ -1,8 +1,12 @@
 <script>
 	import {page} from '$app/state'
+	import {goto} from '$app/navigation'
+	import {untrack} from 'svelte'
+	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import ChannelCard from '$lib/components/channel-card.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
 	import SearchStatus from '$lib/components/search-status.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {trap} from '$lib/focus'
@@ -13,6 +17,41 @@
 
 	// Trigger channels to load into collection state (needed for search on direct page load)
 	const channelsQuery = useLiveQuery((q) => q.from({channels: channelsCollection}))
+
+	let inputValue = $state('')
+	let debounceTimer = $state()
+
+	// Sync input with URL param when URL changes externally
+	$effect(() => {
+		const urlSearch = page.url.searchParams.get('search') || ''
+		const currentInput = untrack(() => inputValue)
+		if (urlSearch !== currentInput.trim()) {
+			inputValue = urlSearch
+		}
+	})
+
+	function debouncedSearch(value) {
+		clearTimeout(debounceTimer)
+		debounceTimer = setTimeout(() => {
+			const params = new SvelteURLSearchParams(page.url.searchParams)
+			if (value.trim()) {
+				params.set('search', value.trim())
+			} else {
+				params.delete('search')
+			}
+			goto(`/search?${params}`, {replaceState: true})
+		}, 300)
+	}
+
+	function handleSubmit(event) {
+		event.preventDefault()
+		clearTimeout(debounceTimer)
+		const params = new SvelteURLSearchParams(page.url.searchParams)
+		if (inputValue.trim()) {
+			params.set('search', inputValue.trim())
+			goto(`/search?${params}`, {replaceState: true})
+		}
+	}
 
 	/** @type {import('$lib/types.ts').Channel[]} */
 	let channels = $state([])
@@ -81,6 +120,15 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
+	<form onsubmit={handleSubmit} class="search-form">
+		<SearchInput
+			bind:value={inputValue}
+			placeholder={m.header_search_placeholder()}
+			oninput={(e) => debouncedSearch(e.target.value)}
+			autofocus
+		/>
+	</form>
+
 	<menu>
 		{#if searchQuery && !isLoading && tracks.length > 0}
 			<button type="button" onclick={playSearchResults}>{m.search_play_all()}</button>
@@ -144,6 +192,19 @@
 </article>
 
 <style>
+	.search-form {
+		padding: 0.5rem;
+		position: sticky;
+		top: 0;
+		background: var(--body-bg);
+		z-index: 10;
+	}
+
+	.search-form :global(input) {
+		width: 100%;
+		font-size: var(--font-3);
+	}
+
 	article > p {
 		margin-left: 0.5rem;
 		margin-right: 0.5rem;
