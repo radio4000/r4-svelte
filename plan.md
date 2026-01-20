@@ -5,6 +5,7 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
+- Going to homepage / and choosing "tuner" viewmode seems to start playback on a random channel byitself. It should not do that byitself..
 - On-demand predicate push-down: we set `syncMode: 'on-demand'` but don't use `parseLoadSubsetOptions` in queryFn. Currently we manually check for slug and call different SDK methods. With proper on-demand, live query `where()` clauses flow through to backend:
   ```ts
   const {where} = parseLoadSubsetOptions(ctx.meta.loadSubsetOptions)
