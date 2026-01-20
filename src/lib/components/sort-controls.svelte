@@ -36,11 +36,7 @@
 		<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} size="20" />
 	</button>
 	{#if shuffled !== undefined}
-		<button
-			class:active={shuffled}
-			onclick={toggleShuffle}
-			{@attach tooltip({content: m.channels_tooltip_shuffle()})}
-		>
+		<button class:active={shuffled} onclick={toggleShuffle} {@attach tooltip({content: m.channels_tooltip_shuffle()})}>
 			<Icon icon="shuffle" size="20" />
 		</button>
 	{/if}

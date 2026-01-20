@@ -25,7 +25,7 @@
 
 	function getThemeColor(variable) {
 		if (typeof document === 'undefined') return '#ff0000'
-		
+
 		// 1. Get the raw CSS value (likely containing oklch/light-dark)
 		const div = document.createElement('div')
 		div.style.color = `var(${variable})`
@@ -44,7 +44,7 @@
 		if (!ctx) return cssColor // Fallback
 		ctx.fillStyle = cssColor
 		ctx.fillRect(0, 0, 1, 1)
-		
+
 		// Get hex or rgb
 		const col = ctx.fillStyle // This often returns hex
 		return col
@@ -107,5 +107,4 @@
 		line-height: 1.6;
 		pointer-events: none;
 	}
-
 </style>

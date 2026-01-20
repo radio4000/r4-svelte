@@ -226,13 +226,13 @@
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
 					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
 				>
-						</div>
-						<SortControls
-							bind:order={appState.channels_order}
-							bind:direction={appState.channels_order_direction}
-							bind:shuffled={appState.channels_shuffled}
-						/>
-					</PopoverMenu>
+			</div>
+			<SortControls
+				bind:order={appState.channels_order}
+				bind:direction={appState.channels_order_direction}
+				bind:shuffled={appState.channels_shuffled}
+			/>
+		</PopoverMenu>
 	</menu>
 
 	{#if display === 'map'}
