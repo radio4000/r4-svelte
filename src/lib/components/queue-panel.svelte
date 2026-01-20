@@ -265,7 +265,6 @@
 
 	main {
 		flex: 1;
-		padding-bottom: var(--player-compact-size);
 	}
 
 	.empty-state {

@@ -57,11 +57,5 @@
 <style>
 	div {
 		flex: 1;
-		min-height: 100dvh;
-		background: yellow;
-
-		:global(.map) {
-			height: 100dvh;
-		}
 	}
 </style>

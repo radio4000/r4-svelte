@@ -120,10 +120,6 @@
 {/if}
 
 <style>
-	article {
-		margin-bottom: var(--player-compact-size);
-	}
-
 	header {
 		overflow: hidden;
 		margin-bottom: 1rem;

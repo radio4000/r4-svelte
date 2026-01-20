@@ -99,6 +99,10 @@
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 		transition: background 150ms;
 
+		position: sticky;
+		top: 0;
+		z-index: 50;
+
 		.right {
 			margin-left: auto;
 			place-content: end;
