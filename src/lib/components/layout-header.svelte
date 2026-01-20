@@ -51,14 +51,6 @@
 					<span class="count">{broadcastCount}</span>
 				{/if}
 			</a>
-			<a
-				href="/following"
-				class="btn"
-				class:active={page.route.id === '/following'}
-				{@attach tooltip({content: m.nav_following()})}
-			>
-				<Icon icon="sparkles" size={20} />
-			</a>
 		{/await}
 	</nav>
 	<a
