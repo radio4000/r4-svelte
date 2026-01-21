@@ -3,19 +3,8 @@
 List of possible improvements to the architecture, idea, cli and web application.
 Verify and evaluate todos before taking them on. They might be outdated or just not good ideas.
 
-## TanStack DB upgrade cleanup
-
-Updated to `@tanstack/db@0.5.21`, `@tanstack/query-db-collection@1.0.19`, `@tanstack/offline-transactions@1.0.11`. These fixes may allow removing workarounds:
-
-1. **Remove custom useLiveQuery wrapper** (`src/lib/tanstack/useLiveQuery.svelte.js`): We patched `await tick()` into `subscribeChanges` to avoid `state_unsafe_mutation` during render. The `syncedData` fix in 0.5.21 may make this unnecessary. Test: swap to upstream `useLiveQuery` from `@tanstack/svelte-db`, exercise add/edit/navigate flows.
-
-2. ~~**Remove redundant $derived wrappers around useLiveQuery**~~: Done. Simplified `src/routes/[slug]/+page.svelte` to use `tracksQuery.data` directly. Optimistic updates work, cache hydration is fast (not instant, but acceptable).
-
-3. **Date field corruption**: ISO strings were incorrectly converted to Date objects. Fixed in offline-transactions@1.0.11. Check if we have any date-handling workarounds.
-
 ## BACKLOG
 
-- Edit track modal is empty
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
 - Our appState is serialized into localstorage on every edit to persist it. But since appState.playlist_tracks (and the shuffled) versions potentially include 3k items, it might get slow. More than this, it's just unecessary to serialize all on every change. It is however easy to reason about in the app. One appState, done. How could we improve the perf here? First thought is to split it into appState + playerState for example, if we can that way split the tracklist arrays that are only updated on channel/queue changes anyway.
 - Going to homepage / and choosing "tuner" viewmode seems to start playback on a random channel byitself. It should not do that byitself..
