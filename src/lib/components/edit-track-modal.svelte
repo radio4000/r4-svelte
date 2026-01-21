@@ -1,5 +1,6 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import Modal from '$lib/components/modal.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -8,6 +9,12 @@
 
 	/** @type {import('$lib/types').Track | null} */
 	let track = $state(null)
+
+	// Look up channel by slug since channel_tracks view doesn't include channel_id
+	const channel = $derived.by(() => {
+		if (!track?.slug) return null
+		return [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+	})
 
 	/** @param {{track: import('$lib/types').Track}} data */
 	function open(data) {
@@ -38,10 +45,10 @@
 		<h2>{m.track_edit_title()}</h2>
 	{/snippet}
 
-	{#if showModal && track && track.channel_id && track.slug}
+	{#if showModal && track && channel}
 		<TrackForm
 			mode="edit"
-			channel={{id: track.channel_id, slug: track.slug}}
+			channel={{id: channel.id, slug: channel.slug}}
 			trackId={track.id}
 			url={track.url}
 			title={track.title}
