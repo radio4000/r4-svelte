@@ -274,8 +274,8 @@
 			flex-direction: column;
 			flex-grow: 1;
 		}
-		&.layout--infinite :global(.canvas-container) {
-			min-height: 100dvh;
+		&.layout--infinite :global(.canvas-wrapper) {
+			flex: 1;
 		}
 		&.layout--infinite .filtermenu,
 		&.layout--map .filtermenu {

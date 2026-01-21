@@ -18,14 +18,14 @@
 	)
 	let channel = $derived(channelQuery.data?.[0])
 
-	let followers = $state([])
+	let following = $state([])
 	let loading = $state(true)
 
 	$effect(() => {
 		if (channel?.id) {
 			loading = true
-			sdk.channels.readFollowers(channel.id).then(({data}) => {
-				if (data) followers = data
+			sdk.channels.readFollowings(channel.id).then(({data}) => {
+				if (data) following = data
 				loading = false
 			})
 		}
@@ -33,19 +33,19 @@
 </script>
 
 <svelte:head>
-	<title>{m.nav_followers()} - {channel?.name}</title>
+	<title>{m.nav_following()} - {channel?.name}</title>
 </svelte:head>
 
 <article>
 	{#if loading}
-		<h1>{m.nav_followers()}</h1>
+		<h1>{m.nav_following()}</h1>
 		<p>{m.common_loading()}</p>
-	{:else if followers.length === 0}
-		<h1>{m.nav_followers()}</h1>
-		<p>{m.empty_placeholder()}</p>
+	{:else if following.length === 0}
+		<h1>{m.nav_following()}</h1>
+		<p>{m.following_empty()}</p>
 	{:else}
-		<ChannelsView channels={followers}>
-			{#snippet header()}<h1>{m.nav_followers()} <small>({followers.length})</small></h1>{/snippet}
+		<ChannelsView channels={following}>
+			{#snippet header()}<h1>{m.nav_following()} <small>({following.length})</small></h1>{/snippet}
 		</ChannelsView>
 	{/if}
 </article>

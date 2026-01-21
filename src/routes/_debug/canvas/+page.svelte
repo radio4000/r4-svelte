@@ -53,7 +53,6 @@
 	article {
 		display: flex;
 		flex-direction: column;
-		height: 100dvh;
 	}
 	header {
 		padding: 0.5rem;

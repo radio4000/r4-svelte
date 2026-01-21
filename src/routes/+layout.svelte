@@ -125,21 +125,25 @@
 				>
 					<LayoutHeader preloading={data.preloading} />
 
-					<div class="content">
-						<main class="scroll">
-							{@render children()}
-						</main>
+					<div class="content-wrapper">
+						<section class="content">
+							<div class="scroll-area">
+								<main>
+									{@render children()}
+								</main>
+							</div>
 
-						<QueuePanel />
+							<QueuePanel />
+						</section>
 
-						{#if chatPanelVisible}
-							<DraggablePanel title={m.chat_panel_title()}>
-								<LiveChat />
-							</DraggablePanel>
-						{/if}
+						<LayoutFooter />
 					</div>
 
-					<LayoutFooter />
+					{#if chatPanelVisible}
+						<DraggablePanel title={m.chat_panel_title()}>
+							<LiveChat />
+						</DraggablePanel>
+					{/if}
 				</div>
 			{/key}
 		{:catch}
@@ -151,52 +155,86 @@
 
 <style>
 	.layout {
-		display: grid;
-		grid-template-rows: auto 1fr auto;
+		display: flex;
+		flex-direction: row;
 		height: 100vh;
+		height: 100dvh;
+		overflow: hidden;
+	}
+
+	.layout > :global(header) {
+		position: sticky;
+		top: 0;
+		height: 100dvh;
+		flex-shrink: 0;
+	}
+
+	.content-wrapper {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
 	}
 
 	.content {
-		position: relative;
-
-		> :global(aside) {
-			position: absolute;
-			right: 0;
-			top: 0;
-			bottom: 0;
-			width: 0;
-			transform: translate3d(100%, 0, 0);
-			transition: transform 1000ms ease-out;
-		}
+		display: flex;
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
 	}
 
-	.asideVisible .content {
-		> main {
-			margin-right: var(--queue-panel-width, 400px);
-		}
-		> :global(aside) {
-			display: flex;
-			transform: translate3d(0, 0, 0);
-			transition-duration: 100ms;
-			transition-timing-function: ease-in;
-			width: 100%;
-			max-width: var(--queue-panel-width, 400px);
-		}
+	.scroll-area {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.content > :global(aside) {
+		display: none;
+		width: var(--queue-panel-width, 400px);
+		flex-shrink: 0;
+	}
+
+	.asideVisible .content > :global(aside) {
+		display: flex;
 	}
 
 	@media (max-width: 768px) {
-		.asideVisible .content > main {
-			margin-right: 0;
+		.layout {
+			flex-direction: column;
 		}
-		.asideVisible .content > :global(aside) {
-			max-width: 100%;
-		}
-	}
 
-	.scroll {
-		display: flex;
-		flex-direction: column;
-		flex-grow: 1;
+		.layout > :global(header) {
+			position: sticky;
+			top: 0;
+			height: auto;
+		}
+
+		.asideVisible .content {
+			flex-direction: column;
+		}
+
+		.asideVisible .scroll-area {
+			display: none;
+		}
+
+		.asideVisible .content > :global(aside) {
+			position: static;
+			inset: auto;
+			width: 100%;
+			height: 100%;
+			z-index: 100;
+		}
 	}
 
 	.loader {

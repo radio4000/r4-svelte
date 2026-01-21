@@ -9,7 +9,8 @@
 		const lng = longitude ?? (syncUrl ? Number(params.get('longitude')) || 0 : 0)
 		const z = zoom ?? (syncUrl ? Number(params.get('zoom')) || 2 : 2)
 
-		const map = L.map(node).setView([lat, lng], z)
+		const map = L.map(node, {zoomControl: false}).setView([lat, lng], z)
+		L.control.zoom({position: 'bottomright'}).addTo(map)
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; OpenStreetMap'

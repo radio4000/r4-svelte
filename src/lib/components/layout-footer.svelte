@@ -57,19 +57,17 @@
 		border: 1px solid var(--gray-7);
 		border-radius: var(--border-radius);
 
-		position: absolute;
-		left: 0.2rem;
-		right: 0.2rem;
-		bottom: 0.2rem;
-		z-index: 10;
-		/* transition: all 300ms ease-in-out; */
+		position: sticky;
+		bottom: 0;
+		margin: 0.2rem;
+		z-index: 200;
 
 		&.expanded {
-			height: 100dvh;
-			left: 0;
-			right: 0;
-			bottom: 0;
+			position: fixed;
+			inset: 0;
+			margin: 0;
 			border: 0;
+			border-radius: 0;
 		}
 	}
 </style>
