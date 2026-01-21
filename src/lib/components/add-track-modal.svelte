@@ -101,7 +101,7 @@
 	{#if recentTracks.length > 0}
 		<div class="recent-tracks">
 			<h3>{m.track_recently_saved()}</h3>
-			{#each recentTracks as track (track.url)}
+			{#each recentTracks as track, i (i)}
 				<div>{track.title || track.url}</div>
 			{/each}
 		</div>
