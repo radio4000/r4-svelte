@@ -1,4 +1,6 @@
 <script>
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {eq} from '@tanstack/db'
 	import {page} from '$app/state'
 	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
@@ -7,19 +9,28 @@
 
 	let slug = $derived(page.params.slug)
 
-	// Trigger fetch if tracks are stale
+	// Check if remote has newer tracks on page load
 	$effect(() => {
 		if (slug) checkTracksFreshness(slug)
 	})
 
-	// Read directly from collection state
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let tracks = $derived(
+	// Live query triggers fetch on cache miss
+	const tracksQuery = useLiveQuery((q) =>
+		q
+			.from({tracks: tracksCollection})
+			.where(({tracks}) => eq(tracks.slug, slug))
+			.orderBy(({tracks}) => tracks.created_at, 'desc')
+	)
+
+	// Collection state (hydrated from cache) or live query data (after fetch)
+	const collectionTracks = $derived(
 		[...tracksCollection.state.values()]
 			.filter((t) => t.slug === slug)
 			.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
 	)
+	let tracks = $derived(collectionTracks.length ? collectionTracks : tracksQuery.data || [])
 
+	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let canEdit = $derived(!!appState.user && appState.channels?.includes(channel?.id))
 
 	function openAddTrackModal() {
