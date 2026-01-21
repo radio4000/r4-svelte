@@ -221,7 +221,7 @@
 	"error_repair_try": "Try this first",
 	"error_reset_app": "Reset the app",
 	"error_unknown": "Unexpected error",
-	"following_empty": "You are not following any radios yet.",
+	"following_empty": "Not following any radios",
 	"following_synced": "Following is synced with your Radio4000 account.",
 	"following_tip_signin": "Sign in to sync followed radios across devices.",
 	"following_title": "Following ({count})",
