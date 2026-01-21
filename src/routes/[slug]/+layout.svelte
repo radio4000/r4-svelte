@@ -27,7 +27,7 @@
 				<h1>{channel.name}</h1>
 				<p class="stats">
 					<span><strong>{channel.track_count ?? 0}</strong> {m.nav_tracks().toLowerCase()}</span>
-					<a href="/{slug}/favorites">{m.nav_following().toLowerCase()}</a>
+					<a href="/{slug}/following">{m.nav_following().toLowerCase()}</a>
 					<a href="/{slug}/followers">{m.nav_followers().toLowerCase()}</a>
 				</p>
 				{#if channel.description}
@@ -52,7 +52,7 @@
 				<Icon icon="unordered-list" size={16} />
 				{m.nav_tracks()}
 			</a>
-			<a href="/{slug}/favorites" class:active={routeId?.startsWith('/[slug]/favorites')}>
+			<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
 				<Icon icon="sparkles" size={16} />
 				{m.nav_following()}
 			</a>
@@ -190,8 +190,6 @@
 		text-decoration: none;
 		color: var(--gray-12);
 		white-space: nowrap;
-		border-bottom: 2px solid transparent;
-		margin-bottom: -1px;
 	}
 
 	nav a:hover {
@@ -200,7 +198,7 @@
 
 	nav a.active {
 		color: var(--accent-9);
-		border-bottom-color: var(--accent-9);
+		box-shadow: inset 0 -2px 0 var(--accent-9);
 	}
 
 	@media (max-width: 500px) {

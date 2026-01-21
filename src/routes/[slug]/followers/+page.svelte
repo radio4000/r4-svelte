@@ -79,6 +79,9 @@
 </article>
 
 <style>
+	article {
+		padding: 0.5rem;
+	}
 	.header-top {
 		display: flex;
 		justify-content: space-between;
