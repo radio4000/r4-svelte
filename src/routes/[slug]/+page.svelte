@@ -1,5 +1,5 @@
 <script>
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {page} from '$app/state'
 	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
@@ -22,14 +22,6 @@
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 	)
 
-	// Collection state (hydrated from cache) or live query data (after fetch)
-	const collectionTracks = $derived(
-		[...tracksCollection.state.values()]
-			.filter((t) => t.slug === slug)
-			.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
-	)
-	let tracks = $derived(collectionTracks.length ? collectionTracks : tracksQuery.data || [])
-
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let canEdit = $derived(!!appState.user && appState.channels?.includes(channel?.id))
 
@@ -44,8 +36,8 @@
 
 {#if channel}
 	<section>
-		{#if tracks.length > 0}
-			<Tracklist {tracks} {canEdit} grouped={true} virtual={false} />
+		{#if tracksQuery.data.length > 0}
+			<Tracklist tracks={tracksQuery.data} {canEdit} grouped={true} virtual={false} />
 		{:else if (channel.track_count ?? 0) > 0}
 			<p class="empty">{m.channel_loading_tracks()}</p>
 		{:else if canEdit}

@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'

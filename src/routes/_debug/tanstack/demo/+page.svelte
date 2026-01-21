@@ -3,7 +3,7 @@
 	import {queryClient} from '$lib/tanstack/collections/query-client'
 	import {browser} from '$app/environment'
 	import {demoCollection, demoState, fakeAPI} from './demo-state.svelte'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 
 	const QUERY_KEY = ['todos-cached']
 

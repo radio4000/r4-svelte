@@ -1,7 +1,7 @@
 <script>
 	import {replaceState} from '$app/navigation'
 	import {page} from '$app/state'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, updateChannel} from '$lib/tanstack/collections'

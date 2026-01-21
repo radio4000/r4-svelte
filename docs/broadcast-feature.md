@@ -51,7 +51,7 @@ stop:  stopBroadcast → delete remote
 
 ```js
 import {broadcastsCollection, channelsCollection, tracksCollection} from '$lib/tanstack/collections'
-import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+import {useLiveQuery} from '@tanstack/svelte-db'
 
 // Reactive list of broadcasts
 const broadcasts = useLiveQuery(broadcastsCollection)
