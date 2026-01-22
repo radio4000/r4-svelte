@@ -2,7 +2,7 @@
 
 Investigation into whether recent commits in the tanstakc ecosystem allow removing our workarounds. 
 
-## Test results (2026-01-22)
+## Existing workarounds
 
 ### tracks.ts workarounds - STILL NEEDED
 
@@ -14,33 +14,7 @@ The `writeUpsert` workaround updates both collection AND query cache, preventing
 
 ---
 
-## The fixes
-
-### PR #1130 - syncedData stale after async operations
-
-https://github.com/TanStack/db/pull/1130
-
-Previously, calling `writeUpsert`/`writeInsert` after async operations in mutation handlers left `syncedData` stale until the next sync cycle. The sync transaction was blocked by the persisting user transaction.
-
-**Impact**: High. We have explicit workarounds for this in `tracks.ts`.
-
-### PR #1155 - directWrite on on-demand collections
-
-https://github.com/TanStack/db/pull/1155
-
-`directWrite` operations only updated the base query key cache for on-demand collections, causing stale data when components remounted.
-
-**Impact**: Medium. Both `tracksCollection` and `channelsCollection` use `syncMode: 'on-demand'` with `writeUpsert`/`writeBatch`.
-
-### PR #1135 - gcTime: Infinity causing immediate GC
-
-https://github.com/TanStack/db/pull/1135
-
-JavaScript's `setTimeout` coerces `Infinity` to 0 via `ToInt32`, so `gcTime: Infinity` caused immediate garbage collection instead of disabling it.
-
-**Impact**: Low. We use `staleTime: Infinity` in broadcasts.js but not `gcTime`.
-
-## Workarounds to remove after updating
+## Workarounds to review
 
 ### `src/lib/tanstack/collections/tracks.ts`
 
@@ -80,26 +54,6 @@ tracksCollection.utils.writeBatch(() => {
 
 **Tested 2026-01-22**: Still needed. Offline transactions don't update query cache, so `syncedData` reverts optimistic updates.
 
-### `src/lib/tanstack/useLiveQuery.svelte.js`
-
-~~This 213-line custom implementation exists because the official `useLiveQuery` had stale `syncedData`.~~
-
-**Tested 2026-01-22**: File doesn't exist on `db-fixes` branch. All 27 usages already import from `@tanstack/svelte-db`. Either removed or never adopted. No action needed.
-
-### `src/lib/tanstack/collections/tracks.ts` - ensureTracksLoaded
-
-**Lines 312-316**:
-
-```typescript
-tracksCollection.utils.writeBatch(() => {
-	for (const track of data) {
-		tracksCollection.utils.writeUpsert(track)
-	}
-})
-```
-
-**Tested 2026-01-22**: This is **by design**, not a bug workaround. `fetchQuery` only writes to the query cache, not to collections. The `writeBatch` bridges query cache → collection for imperative loads outside of `useLiveQuery`. Used by `api.js`, `broadcast.js`, and `mix-builder.svelte` to preload tracks before querying. Keep as-is.
-
 ## Affected files using collection.state directly
 
 The codebase has 50+ places accessing `collection.state.values()` instead of relying on reactive data. Some may be necessary for immediate reads, but others might be workarounds:
@@ -124,8 +78,6 @@ Updated to 1.0.19. Tested all workarounds on 2026-01-22:
 | `updateTrack()` writeUpsert | **Keep** | Offline tx doesn't update query cache |
 | `batchUpdateTracksUniform()` writeBatch | **Keep** | Same pattern as above |
 | `batchUpdateTracksIndividual()` writeBatch | **Keep** | Same pattern as above |
-| Custom `useLiveQuery.svelte.js` | **Gone** | Already deleted, official version works |
-| `ensureTracksLoaded()` writeBatch | **Keep** | By design: fetchQuery → cache only |
 
 The PRs fix simpler patterns (`onInsert`/`onUpdate` callbacks), but our offline executor flow still needs the workarounds.
 
