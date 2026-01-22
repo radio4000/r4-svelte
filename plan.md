@@ -1,10 +1,16 @@
 # PLAN
 
-List of possible improvements to the architecture, idea, cli and web application.
-Verify and evaluate todos before taking them on. They might be outdated or just not good ideas.
+List of possible improvements to the architecture, idea and web application.
+
+Verify and evaluate todos before taking them on. They might be outdated or just not good ideas. Do not blindly implement!
 
 ## BACKLOG
 
+- improved broadcast icons on active channels → when a channel is broadcasting, show a "live" icon on the channel card and on the channel's homepage. We have this "live dot" to reuse maybe
+- improved channel filters/search for tags, mention, search etc. maybe inside the channel view → when clicking on a channel's tags, it should filter the tracks of this channel, by the selected tag(s)/mention(s), directly on the channel (not a global search). Can it work with useLiveQuery where on track.tags for instance?
+- second/third player to have mix between tracks and a few decks to make transitions; possibility to show not just one player, but several (with tracklist queue, and controls) so a user can play with multiple tracks like a dj deck (old mix.radio4000.com, and libli.org also had this feature) → for example "cue track in deck B" or "play track in deck C". Also see /mix route for inspiration
+- improved fullscreen? if player does not have a track, fullscreen layout looks weirdly empty; if player has a track, maybe fullscreen should be a real full screen (questions of the display mode for the play: docker, mini, full etc.).
+- move broadcast view to a channels list filter → instead of having /broadcast, we could have "broadcast" as a filter on the channels list (like "with artworks" or "v1/v2" or "1000+ tracks
 - Fix active Fullscreen btn not active like sidebar open
 - Share track modal?
 - How do I reset password? Magic link? Reset PW?
@@ -17,7 +23,7 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - The subroutes on /@slug keep fetching data remotely when it could be cached
 - We compute track.ytid via regex from track.url all the time. Consider setting track.ytid via a database trigger when track.url is updated
 - As the track/channel.description fields can contain links, we want to turn the strings into HTML and parse links. This is pretty heavy when you're rendering tons of items. How to avoid? Another DB trigger that stored descrtipion_parsed or similar?
-- Make sure a search for "ko00" also finds the "ko002" channel (as example). The search uses the r4 sdk search method afaik. Check that in the SDK repo using websearch and test it. Maybe test via the r4 cli as well. What results are returned is not a r5 issue, but sdk->cli+r4.
+- Search partial matching: "ko00" should find "ko002". **Root cause**: r5 uses `.textSearch('fts', query, {type: 'websearch'})` while CLI uses `.textSearch('fts', `'${query}':*`)`. The `:*` is PostgreSQL prefix syntax. websearch gives natural language (AND/OR/negation/phrases) but no partial matching. **Options**: (1) revert to prefix, (2) hybrid: websearch first, prefix fallback on empty results, (3) user signal like `ko00*` for prefix, (4) run both in parallel and merge. Hybrid seems best - keeps websearch benefits, rescues empty results. See Supabase docs "Partial search" section.
 - The /search doesn't show an indicator while loading, meaning you sometimes think there are no results, and then they appear
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
 - Sometimes on /search when you double-click to play a track, it won't play but log "track not loaded" (which obv isn't true since it was there to click)
