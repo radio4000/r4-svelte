@@ -146,15 +146,15 @@
 {/if}
 
 <style>
-	.month {
-		margin-bottom: 1rem;
-	}
-
 	h2,
 	h3 {
 		margin-right: 0.5rem;
-		font-weight: 600;
 		text-align: right;
+	}
+
+	.timeline > section {
+		margin-top: 0.5rem;
+		margin-bottom: 1rem;
 	}
 
 	/* sticky year - only for non-virtual timeline */

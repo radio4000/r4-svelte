@@ -20,16 +20,23 @@
 </script>
 
 <header>
-	<a href="/" class="home-link" class:active={page.route.id === '/'}>
-		{#await preloading}
-			{m.app_name()}
-		{:then}
-			<TestCounter />
-		{/await}
-	</a>
-	<a href="/search" class="btn" class:active={page.route.id === '/search'} {@attach tooltip({content: m.nav_search()})}>
-		<Icon icon="search" size={20} />
-	</a>
+	<nav>
+		<a href="/" class="home-link" class:active={page.route.id === '/'}>
+			{#await preloading}
+				{m.app_name()}
+			{:then}
+				<TestCounter />
+			{/await}
+		</a>
+		<a
+			href="/search"
+			class="btn"
+			class:active={page.route.id === '/search'}
+			{@attach tooltip({content: m.nav_search()})}
+		>
+			<Icon icon="search" size={20} />
+		</a>
+	</nav>
 
 	<nav>
 		{#await preloading then}
@@ -52,15 +59,15 @@
 				{/if}
 			</a>
 		{/await}
+		<a
+			href="/settings"
+			class="btn settings-link"
+			class:active={page.route.id?.startsWith('/settings')}
+			{@attach tooltip({content: m.nav_settings()})}
+		>
+			<Icon icon="settings" size={20} />
+		</a>
 	</nav>
-	<a
-		href="/settings"
-		class="btn settings-link"
-		class:active={page.route.id?.startsWith('/settings')}
-		{@attach tooltip({content: m.nav_settings()})}
-	>
-		<Icon icon="settings" size={20} />
-	</a>
 </header>
 
 <style>
@@ -72,7 +79,6 @@
 	header {
 		display: flex;
 		flex-flow: column nowrap;
-		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem;
 		background: var(--header-bg);
@@ -88,7 +94,10 @@
 	nav {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.2rem;
+	}
+
+	nav:has(.settings-link) {
 		flex: 1;
 	}
 
@@ -117,14 +126,18 @@
 
 	@media (max-width: 768px) {
 		header {
+			align-items: center;
 			flex-direction: row;
 			border-right: none;
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 		}
 
+		nav:first-of-type {
+			margin-right: auto;
+		}
+
 		nav {
 			flex-direction: row;
-			flex: 1;
 			justify-content: flex-end;
 		}
 

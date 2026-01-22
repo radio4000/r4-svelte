@@ -23,13 +23,8 @@
 	<div class="channel-layout">
 		<header>
 			<div class="info">
-				<p class="slug">@{slug}</p>
+				<p class="slug"><small>@{slug}</small></p>
 				<h1>{channel.name}</h1>
-				<p class="stats">
-					<span><strong>{channel.track_count ?? 0}</strong> {m.nav_tracks().toLowerCase()}</span>
-					<a href="/{slug}/following">{m.nav_following().toLowerCase()}</a>
-					<a href="/{slug}/followers">{m.nav_followers().toLowerCase()}</a>
-				</p>
 				{#if channel.description}
 					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 				{/if}
@@ -37,7 +32,9 @@
 					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
 				{/if}
 				<p class="dates">
-					Since {relativeDateSolar(channel.created_at)} · Updated {relativeDate(channel.updated_at)}
+					<small>
+						Since {relativeDateSolar(channel.created_at)} · Updated {relativeDate(channel.updated_at)}
+					</small>
 				</p>
 				<menu>
 					<ButtonPlay {channel} label={m.button_play_label()} />
@@ -50,6 +47,7 @@
 		<nav>
 			<a href="/{slug}" class:active={routeId === '/[slug]'}>
 				<Icon icon="unordered-list" size={16} />
+				{channel.track_count ?? 0}
 				{m.nav_tracks()}
 			</a>
 			<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
@@ -114,66 +112,20 @@
 	}
 
 	h1 {
-		font-size: var(--font-6);
+		font-size: var(--font-9);
 		margin: 0;
-	}
-
-	.slug {
-		color: var(--gray-9);
-		margin: 0;
-	}
-
-	.stats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin: 0.5rem 0;
-		font-size: var(--font-2);
-	}
-
-	.stats a {
-		color: inherit;
-		text-decoration: none;
-	}
-
-	.stats a:hover {
-		text-decoration: underline;
-	}
-
-	.stats strong {
-		color: var(--gray-12);
 	}
 
 	.description {
-		margin: 0.5rem 0;
-		line-height: 1.4;
 		white-space: pre-wrap;
 	}
 
-	.url {
-		margin: 0;
-		font-size: var(--font-2);
-	}
-
 	.dates {
-		margin: 0.5rem 0 0;
-		font-size: var(--font-1);
-		color: var(--gray-9);
+		margin-top: 0.5rem;
 	}
 
 	menu {
 		margin-top: 0.75rem;
-	}
-
-	nav {
-		display: flex;
-		gap: 0;
-		border-bottom: 1px solid var(--gray-5);
-		overflow-x: auto;
-		position: sticky;
-		top: 0;
-		background: var(--gray-1);
-		z-index: 20;
 	}
 
 	main {
@@ -182,23 +134,31 @@
 		z-index: 15;
 	}
 
+	nav {
+		/*stickyontop*/
+		position: sticky;
+		top: 0;
+		background: var(--gray-1);
+		z-index: 20;
+		border-bottom: 1px solid var(--gray-5);
+		/*responsive*/
+		overflow-x: auto;
+	}
+
 	nav a {
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
-		padding: 0.75rem 1rem;
+		padding: 0.5rem 0.75rem;
 		text-decoration: none;
-		color: var(--gray-12);
 		white-space: nowrap;
-	}
 
-	nav a:hover {
-		background: var(--gray-3);
-	}
+		&:hover {
+			background: var(--gray-3);
+		}
 
-	nav a.active {
-		color: var(--accent-9);
-		box-shadow: inset 0 -2px 0 var(--accent-9);
+		&.active {
+			box-shadow: inset 0 -2px 0 var(--accent-9);
+		}
 	}
 
 	@media (max-width: 500px) {
