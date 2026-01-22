@@ -3,9 +3,38 @@ import {sdk} from '@radio4000/sdk'
 import {channelsCollection} from '$lib/tanstack/collections'
 
 /**
- * Search channels and tracks using Supabase FTS with websearch syntax.
- * Supports: "jazz house" (AND), "jazz or house" (OR), "jazz -disco" (exclude), "exact phrase" (quoted).
+ * Search channels and tracks using Supabase FTS.
+ * Combines websearch (for natural language: "jazz or house", "radio -pop", "exact phrase")
+ * with prefix matching (for partial matches: "ko00" finds "ko002").
  */
+
+/** Detect websearch operators that would break prefix syntax */
+const hasWebsearchSyntax = (q) => /\bor\b|^-|\s-|"/.test(q.toLowerCase())
+
+/** Convert query to prefix format: "jazz house" → "jazz:* & house:*" */
+const toPrefix = (q) => {
+	if (hasWebsearchSyntax(q)) return null
+	const words = q
+		.trim()
+		.split(/\s+/)
+		.map((w) => w.replace(/[^\p{L}\p{N}]/gu, ''))
+		.filter(Boolean)
+	if (!words.length) return null
+	return words.map((w) => w + ':*').join(' & ')
+}
+
+/** Sanitize query for PostgREST filter syntax (commas and parens break parsing) */
+const sanitizeForFilter = (q) => q.replace(/[,()]/g, ' ').replace(/\s+/g, ' ').trim()
+
+/** Build FTS filter combining websearch + prefix */
+const buildFtsFilter = (query) => {
+	const safe = sanitizeForFilter(query)
+	if (!safe) return null
+	const prefix = toPrefix(safe)
+	let filter = `fts.wfts.${safe}`
+	if (prefix) filter += `,fts.fts.${prefix}`
+	return filter
+}
 
 /**
  * Search channels remotely
@@ -15,11 +44,9 @@ import {channelsCollection} from '$lib/tanstack/collections'
  */
 export async function searchChannels(query, {limit = 100} = {}) {
 	if (!query?.trim()) return []
-	const {data, error} = await sdk.supabase
-		.from('channels_with_tracks')
-		.select('*')
-		.textSearch('fts', query, {type: 'websearch'})
-		.limit(limit)
+	const filter = buildFtsFilter(query)
+	if (!filter) return []
+	const {data, error} = await sdk.supabase.from('channels_with_tracks').select('*').or(filter).limit(limit)
 	if (error) throw new Error(error.message)
 	return /** @type {import('$lib/types').Channel[]} */ (data ?? [])
 }
@@ -32,7 +59,9 @@ export async function searchChannels(query, {limit = 100} = {}) {
  */
 export async function searchTracks(query, {limit = 100, channelSlug} = {}) {
 	if (!query?.trim()) return []
-	let q = sdk.supabase.from('channel_tracks').select('*').textSearch('fts', query, {type: 'websearch'}).limit(limit)
+	const filter = buildFtsFilter(query)
+	if (!filter) return []
+	let q = sdk.supabase.from('channel_tracks').select('*').or(filter).limit(limit)
 	if (channelSlug) q = q.eq('slug', channelSlug)
 	const {data, error} = await q
 	if (error) throw new Error(error.message)
@@ -44,11 +73,11 @@ export async function searchTracks(query, {limit = 100, channelSlug} = {}) {
  * @param {string} query
  */
 export function parseMentionQuery(query) {
-	const parts = query.trim().split(/\s+/)
+	const parts = query.trim().split(/\s+/).filter(Boolean)
 	const channelSlugs = []
 	const trackQueryParts = []
 	for (const part of parts) {
-		if (part.startsWith('@')) {
+		if (part.startsWith('@') && part.length > 1) {
 			channelSlugs.push(part.slice(1))
 		} else {
 			trackQueryParts.push(part)
@@ -58,11 +87,16 @@ export function parseMentionQuery(query) {
 }
 
 /**
- * Find channel by slug from local collection
+ * Find channel by slug - tries local collection first, falls back to remote
  * @param {string} slug
+ * @returns {Promise<import('$lib/types').Channel | undefined>}
  */
-function findChannelBySlug(slug) {
-	return [...channelsCollection.state.values()].find((c) => c.slug === slug)
+async function findChannelBySlug(slug) {
+	const local = [...channelsCollection.state.values()].find((c) => c.slug === slug)
+	if (local) return local
+	// Fallback to remote
+	const {data} = await sdk.supabase.from('channels_with_tracks').select('*').eq('slug', slug).single()
+	return data ?? undefined
 }
 
 /**
@@ -76,9 +110,8 @@ export async function searchAll(query, {limit = 100} = {}) {
 
 	if (query.includes('@')) {
 		const {channelSlugs, trackQuery} = parseMentionQuery(query)
-		const channels = /** @type {import('$lib/types').Channel[]} */ (
-			channelSlugs.map(findChannelBySlug).filter((c) => c !== undefined)
-		)
+		const channelResults = await Promise.all(channelSlugs.map(findChannelBySlug))
+		const channels = /** @type {import('$lib/types').Channel[]} */ (channelResults.filter((c) => c !== undefined))
 		if (!trackQuery) return {channels, tracks: []}
 		const results = await Promise.all(channelSlugs.map((slug) => searchTracks(trackQuery, {limit, channelSlug: slug})))
 		return {channels, tracks: results.flat()}

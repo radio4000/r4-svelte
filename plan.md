@@ -14,17 +14,15 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - Fix active Fullscreen btn not active like sidebar open
 - Share track modal?
 - How do I reset password? Magic link? Reset PW?
-- Change user email flow 
+- Change user email flow
 - How do I manage our different authentication providers for a single account? E.g. add google oauth to my email login, or vice versa
-- Brainstorm "auto live" to complement broadcast feature. Autolive (name TBD) would reduce the track.durations for a channel. This would allow people to tune in to a radio and listen to the same track without the owner broadcasting anything 
+- Brainstorm "auto live" to complement broadcast feature. Autolive (name TBD) would reduce the track.durations for a channel. This would allow people to tune in to a radio and listen to the same track without the owner broadcasting anything
 - Simplify design and UI on /settings/appearance to what's relevant to the end user
 - Alternate map view as a 3D globe view
 - Migrate v1 data to v2 https://github.com/radio4000/migration-2026
 - The subroutes on /@slug keep fetching data remotely when it could be cached
 - We compute track.ytid via regex from track.url all the time. Consider setting track.ytid via a database trigger when track.url is updated
 - As the track/channel.description fields can contain links, we want to turn the strings into HTML and parse links. This is pretty heavy when you're rendering tons of items. How to avoid? Another DB trigger that stored descrtipion_parsed or similar?
-- Search partial matching: "ko00" should find "ko002". **Root cause**: r5 uses `.textSearch('fts', query, {type: 'websearch'})` while CLI uses `.textSearch('fts', `'${query}':*`)`. The `:*` is PostgreSQL prefix syntax. websearch gives natural language (AND/OR/negation/phrases) but no partial matching. **Options**: (1) revert to prefix, (2) hybrid: websearch first, prefix fallback on empty results, (3) user signal like `ko00*` for prefix, (4) run both in parallel and merge. Hybrid seems best - keeps websearch benefits, rescues empty results. See Supabase docs "Partial search" section.
-- The /search doesn't show an indicator while loading, meaning you sometimes think there are no results, and then they appear
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
 - Sometimes on /search when you double-click to play a track, it won't play but log "track not loaded" (which obv isn't true since it was there to click)
 - Our appState is serialized into localstorage on every edit to persist it. But since appState.playlist_tracks (and the shuffled) versions potentially include 3k items, it might get slow. More than this, it's just unecessary to serialize all on every change. It is however easy to reason about in the app. One appState, done. How could we improve the perf here? First thought is to split it into appState + playerState for example, if we can that way split the tracklist arrays that are only updated on channel/queue changes anyway.
