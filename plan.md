@@ -5,6 +5,19 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
+- Fix active Fullscreen btn not active like sidebar open
+- Share track modal?
+- How do I reset password? Magic link? Reset PW?
+- Change user email flow 
+- How do I manage our different authentication providers for a single account? E.g. add google oauth to my email login, or vice versa
+- Brainstorm "auto live" to complement broadcast feature. Autolive (name TBD) would reduce the track.durations for a channel. This would allow people to tune in to a radio and listen to the same track without the owner broadcasting anything 
+- Simplify design and UI on /settings/appearance to what's relevant to the end user
+- Alternate map view as a 3D globe view
+- Migrate v1 data to v2 https://github.com/radio4000/migration-2026
+- The subroutes on /@slug keep fetching data remotely when it could be cached
+- We compute track.ytid via regex from track.url all the time. Consider setting track.ytid via a database trigger when track.url is updated
+- As the track/channel.description fields can contain links, we want to turn the strings into HTML and parse links. This is pretty heavy when you're rendering tons of items. How to avoid? Another DB trigger that stored descrtipion_parsed or similar?
+- Make sure a search for "ko00" also finds the "ko002" channel (as example). The search uses the r4 sdk search method afaik. Check that in the SDK repo using websearch and test it. Maybe test via the r4 cli as well. What results are returned is not a r5 issue, but sdk->cli+r4.
 - The /search doesn't show an indicator while loading, meaning you sometimes think there are no results, and then they appear
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
 - Sometimes on /search when you double-click to play a track, it won't play but log "track not loaded" (which obv isn't true since it was there to click)
