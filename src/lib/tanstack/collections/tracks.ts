@@ -179,7 +179,7 @@ export async function updateTrack(channel: {id: string; slug: string}, id: strin
 		})
 	})
 	await tx.commit()
-	// Derived live queries don't react to transaction updates, so manually trigger
+	// Workaround: offline tx commit doesn't update query cache, causing syncedData revert
 	const track = tracksCollection.get(id)
 	if (track) tracksCollection.utils.writeUpsert({...track, ...changes})
 }
