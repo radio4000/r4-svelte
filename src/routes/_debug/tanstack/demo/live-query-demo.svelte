@@ -1,5 +1,5 @@
 <script>
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {demoCollection} from './demo-state.svelte'
 
 	const query = useLiveQuery((/** @type {any} */ q) =>

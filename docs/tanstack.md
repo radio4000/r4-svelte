@@ -264,18 +264,10 @@ r5.queryClient.getQueryCache().getAll()
 
 ```
 src/lib/tanstack/
-├── collections/
-│   ├── index.ts           - re-exports
-│   ├── query-client.ts    - QueryClient instance
-│   ├── tracks.ts          - tracksCollection + actions
-│   ├── channels.ts        - channelsCollection + actions
-│   ├── follows.ts         - followsCollection (localStorage)
-│   ├── track-meta.ts      - trackMetaCollection (localStorage)
-│   ├── play-history.ts    - playHistoryCollection (localStorage)
-│   ├── offline-executor.ts
-│   └── utils.ts
+├── collections/             - collection definitions + actions
+├── collections.ts           - re-exports
 ├── query-cache-persistence.ts  - query cache → IndexedDB
-├── collection-persistence.ts   - collection state → IndexedDB (interim, see plan-data-flow-bug.md)
+├── collection-persistence.ts   - collection state → IndexedDB (disabled)
 
 src/lib/components/
 └── sync-status.svelte

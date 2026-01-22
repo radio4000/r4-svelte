@@ -1,6 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {appState} from '$lib/app-state.svelte'
 	import {tracksCollection, channelsCollection, deleteTrack} from '$lib/tanstack/collections'

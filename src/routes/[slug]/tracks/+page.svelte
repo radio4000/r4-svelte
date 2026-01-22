@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {playTrack} from '$lib/api'
 	import CoverFlip from '$lib/components/cover-flip.svelte'
@@ -15,17 +15,15 @@
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 			.limit(100)
 	)
-
-	let tracks = $derived(tracksQuery.data || [])
 </script>
 
 <div class="page">
 	{#if tracksQuery.isLoading}
 		<p>{m.common_loading()}</p>
-	{:else if tracks.length === 0}
+	{:else if tracksQuery.data.length === 0}
 		<p>{m.tracks_no_results()}</p>
 	{:else}
-		<CoverFlip items={tracks} scrollItemsPerNotch={1}>
+		<CoverFlip items={tracksQuery.data} scrollItemsPerNotch={1}>
 			{#snippet item({item, active})}
 				{@const ytid = extractYouTubeId(item.url)}
 				<button class="item" class:active onclick={() => playTrack(item.id, null, 'user_click_track')}>

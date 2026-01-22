@@ -3,7 +3,7 @@
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte.js'
+	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import {timeAgo} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
