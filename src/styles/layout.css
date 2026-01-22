@@ -82,7 +82,8 @@
 	place-items: center;
 }
 
-menu {
+menu,
+nav {
 	display: flex;
 	gap: 0.2rem;
 	margin: 0;
@@ -102,6 +103,10 @@ menu {
 	a,
 	button {
 		cursor: default;
+	}
+
+	a:has(svg, i) {
+		gap: 0.2rem;
 	}
 }
 
@@ -127,6 +132,7 @@ menu[data-vertical] {
 	}
 }
 
+nav[data-grouped],
 menu[data-grouped] {
 	display: inline-flex;
 	flex-flow: row wrap;

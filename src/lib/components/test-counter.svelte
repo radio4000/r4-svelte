@@ -34,7 +34,8 @@
 
 <style>
 	button {
-		min-width: 2.7rem;
+		/* avoids ui jumps */
+		min-width: 2.8rem;
 	}
 
 	:global(a.active) button {
