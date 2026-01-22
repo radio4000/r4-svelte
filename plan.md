@@ -6,6 +6,7 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
+- Follow button bug: clicking follow when already following triggers insert instead of detecting existing relationship → 409 "duplicate key value violates unique constraint followers_pkey". The `followChannel` function in `follows.ts` doesn't check if follow already exists before inserting. Need to either query first or use upsert.
 - improved broadcast icons on active channels → when a channel is broadcasting, show a "live" icon on the channel card and on the channel's homepage. We have this "live dot" to reuse maybe
 - improved channel filters/search for tags, mention, search etc. maybe inside the channel view → when clicking on a channel's tags, it should filter the tracks of this channel, by the selected tag(s)/mention(s), directly on the channel (not a global search). Can it work with useLiveQuery where on track.tags for instance?
 - second/third player to have mix between tracks and a few decks to make transitions; possibility to show not just one player, but several (with tracklist queue, and controls) so a user can play with multiple tracks like a dj deck (old mix.radio4000.com, and libli.org also had this feature) → for example "cue track in deck B" or "play track in deck C". Also see /mix route for inspiration
@@ -38,7 +39,7 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - Seek/position support: add `seekTo(seconds)`, `getPosition()` via media-chrome player. Support `?t=` URL param like YouTube for deep-linking into tracks.
 - add validation layer at sync boundaries (remote->local) using lib like zod 4 shared types from sdk?
 - what should happen when you play a track that is not part of the current loaded playlist? Replace playlist (with what?)? Just play, ignore playlist?
-- v1 compatibility: v1 channels can't be followed/broadcasted because remote supabase doesn't know about their foreign keys. V1 channels have firebase_id but don't exist in remote postgres, causing FK constraint failures. Solution ideas: use string-based IDs instead of proper foreign keys, or create placeholder records in remote for v1 channels.
+- v1 compatibility: v1 channels can't be followed/broadcasted because remote supabase doesn't know about their foreign keys. V1 channels have firebase_id but don't exist in remote postgres, causing FK constraint failures. Addressed by migration-2026 task above.
 - create standardized loading/error boundaries for async operations in ui
 - share buttons/embeds (evaluate if needed)
 - look into atproto as backend alternative to supabase. sign in with bluesky, your channel + tracks are now synced into. one way sync? probably for now unforunately. See github.com/radio4000/r4atproto
