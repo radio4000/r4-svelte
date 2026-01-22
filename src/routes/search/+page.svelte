@@ -134,10 +134,15 @@
 			<button type="button" onclick={playSearchResults}>{m.search_play_all()}</button>
 			<button type="button" onclick={queueSearchResults}>{m.search_queue_all()}</button>
 		{/if}
-		<SearchStatus {searchQuery} channelCount={channels.length} trackCount={tracks.length} />
 	</menu>
 
-	{#if searchQuery && !isLoading}
+	<p>
+		<SearchStatus {searchQuery} channelCount={channels.length} trackCount={tracks.length} />
+	</p>
+
+	{#if searchQuery && isLoading}
+		<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching…</p>
+	{:else if searchQuery}
 		{#if channels.length === 0 && tracks.length === 0}
 			<p>{m.search_no_results()} "{searchQuery}"</p>
 			<p>{m.search_tip_slug()}</p>
@@ -145,7 +150,7 @@
 
 		{#if channels.length > 0}
 			<section>
-				<h2 style="margin-left:0.5rem">
+				<h2>
 					{channels.length === 1
 						? m.search_channel_one({count: channels.length})
 						: m.search_channel_other({count: channels.length})}
@@ -205,19 +210,20 @@
 		font-size: var(--font-3);
 	}
 
-	article > p {
+	article > p,
+	section > h2 {
 		margin-left: 0.5rem;
 		margin-right: 0.5rem;
 	}
 
 	menu {
-		margin: 0.5rem 0.5rem 2rem;
+		margin-left: 0.5rem;
 		align-items: center;
 	}
 
 	menu,
 	section {
-		margin-bottom: 2rem;
+		margin-bottom: 1rem;
 	}
 
 	.grid :global(article h3 + p) {
