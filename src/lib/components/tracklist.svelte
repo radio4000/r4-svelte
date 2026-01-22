@@ -4,6 +4,7 @@
 	import {SvelteMap} from 'svelte/reactivity'
 
 	/** @typedef {import('$lib/types').Track} Track */
+
 	/** @typedef {{type: 'year' | 'month' | 'track', value?: string, data?: Track, index?: number, id: string}} FlatItem */
 
 	/** @type {{
@@ -170,8 +171,11 @@
 	.virtual-tracklist {
 		display: flex;
 		flex-direction: column;
+		/*
 		height: calc(100vh - 350px);
 		height: calc(100dvh - 350px);
+		 */
+		height: 100dvh;
 		min-height: 400px;
 		overflow: hidden;
 	}

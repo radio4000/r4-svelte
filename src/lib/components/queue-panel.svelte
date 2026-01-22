@@ -22,32 +22,6 @@
 	const MAX_WIDTH = 800
 	let isDragging = $state(false)
 
-	/** @param {PointerEvent} e */
-	function startDrag(e) {
-		if (window.matchMedia('(max-width: 768px)').matches) return
-		isDragging = true
-		document.body.style.cursor = 'ew-resize'
-		document.body.style.userSelect = 'none'
-		window.addEventListener('pointermove', onDrag)
-		window.addEventListener('pointerup', stopDrag)
-		e.preventDefault()
-	}
-
-	/** @param {PointerEvent} e */
-	function onDrag(e) {
-		if (!isDragging) return
-		const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - e.clientX))
-		appState.queue_panel_width = newWidth
-	}
-
-	function stopDrag() {
-		isDragging = false
-		document.body.style.cursor = ''
-		document.body.style.userSelect = ''
-		window.removeEventListener('pointermove', onDrag)
-		window.removeEventListener('pointerup', stopDrag)
-	}
-
 	/** @type {string[]} */
 	let trackIds = $derived(appState.playlist_tracks || [])
 
@@ -55,6 +29,7 @@
 	const tracksQuery = useLiveQuery((q) =>
 		q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, trackIds))
 	)
+
 	/** @type {import('$lib/types').Track[]} */
 	let queueTracks = $derived.by(() => {
 		const trackMap = new Map((tracksQuery.data || []).map((t) => [t.id, t]))
@@ -87,6 +62,32 @@
 					.map((result) => result.obj)
 			: playHistory
 	)
+
+	/** @param {PointerEvent} e */
+	function startDrag(e) {
+		if (window.matchMedia('(max-width: 768px)').matches) return
+		isDragging = true
+		document.body.style.cursor = 'ew-resize'
+		document.body.style.userSelect = 'none'
+		window.addEventListener('pointermove', onDrag)
+		window.addEventListener('pointerup', stopDrag)
+		e.preventDefault()
+	}
+
+	/** @param {PointerEvent} e */
+	function onDrag(e) {
+		if (!isDragging) return
+		const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - e.clientX))
+		appState.queue_panel_width = newWidth
+	}
+
+	function stopDrag() {
+		isDragging = false
+		document.body.style.cursor = ''
+		document.body.style.userSelect = ''
+		window.removeEventListener('pointermove', onDrag)
+		window.removeEventListener('pointerup', stopDrag)
+	}
 
 	function clearQueue() {
 		appState.playlist_tracks = []
@@ -156,7 +157,7 @@
 	<main class="scroll">
 		{#if view === 'queue'}
 			{#if filteredQueueTracks.length > 0}
-				<Tracklist tracks={filteredQueueTracks} />
+				<Tracklist tracks={filteredQueueTracks} virtual={true} />
 			{:else if trackIds.length === 0}
 				<div class="empty-state">
 					<p>{m.queue_no_tracks()}</p>
