@@ -1,9 +1,18 @@
 <script>
 	import Icon from '$lib/components/icon.svelte'
+	import {afterNavigate} from '$app/navigation'
 
 	/* A normal input, but with a search icon "inside" (on top) */
-
 	let {value = $bindable(''), placeholder = 'Search...', ...restProps} = $props()
+
+	afterNavigate(() => {
+		// workaround for autofocus attr not always being enough
+		if (restProps.autofocus) {
+			/** @type {HTMLElement | null} */
+			const to_focus = document.querySelector('input[type="search"]')
+			to_focus?.focus()
+		}
+	})
 </script>
 
 <div>
