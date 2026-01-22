@@ -1,3 +1,8 @@
+<script module>
+	/** @typedef {'channel' | 'tag'} SourceType */
+	/** @typedef {{type: SourceType, value: string, label: string}} Source */
+</script>
+
 <script>
 	import {mix, mixAll} from '$lib/lab/mix'
 	import {pickRandomN} from '$lib/lab/selectors'
@@ -5,11 +10,9 @@
 	import {channelsCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
 	import InputRange from './input-range.svelte'
 
-	/** @typedef {'channel' | 'tag'} SourceType */
-	/** @typedef {{type: SourceType, value: string, label: string}} Source */
+	/** @type {{sources: Source[], options: {shuffle: boolean, withoutErrors: boolean, limit: number}}} */
+	let {sources = $bindable([]), options = $bindable({shuffle: false, withoutErrors: false, limit: 50})} = $props()
 
-	/** @type {Source[]} */
-	let sources = $state([])
 	let loading = $state(false)
 
 	// Load tracks for selected channels reactively
@@ -20,12 +23,6 @@
 		Promise.all(slugs.map(ensureTracksLoaded)).finally(() => {
 			loading = false
 		})
-	})
-
-	let options = $state({
-		shuffle: false,
-		withoutErrors: false,
-		limit: 50
 	})
 
 	let searchQuery = $state('')
@@ -42,9 +39,9 @@
 		/** @type {Source[]} */
 		const all = []
 
-		// Add channels from local collection
+		// Add channels from local collection (with at least 1 track)
 		for (const ch of channelsCollection.state.values()) {
-			if (ch.slug) {
+			if (ch.slug && (ch.track_count ?? 0) >= 1) {
 				all.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug})
 			}
 		}
@@ -134,14 +131,16 @@
 		}
 
 		const channels = await searchChannels(searchQuery, {limit: 10})
-		searchResults = channels.map((ch) => ({
-			type: 'channel',
-			value: ch.slug,
-			label: ch.name || ch.slug
-		}))
+		searchResults = channels
+			.filter((ch) => (ch.track_count ?? 0) >= 1)
+			.map((ch) => ({
+				type: 'channel',
+				value: ch.slug,
+				label: ch.name || ch.slug
+			}))
 
 		const localChannels = [...channelsCollection.state.values()]
-			.filter((ch) => ch.slug?.toLowerCase().includes(searchQuery.toLowerCase()))
+			.filter((ch) => ch.slug?.toLowerCase().includes(searchQuery.toLowerCase()) && (ch.track_count ?? 0) >= 1)
 			.slice(0, 5)
 
 		const existingSlugs = new Set(searchResults.map((r) => r.value))
