@@ -16,7 +16,8 @@ export function getOfflineExecutor() {
 				syncChannels: channelsAPI.syncChannels
 			},
 			onLeadershipChange: (isLeader) => offlineLog.debug('leader', {isLeader}),
-			onStorageFailure: (diagnostic) => offlineLog.warn('storage failed', diagnostic)
+			onStorageFailure: (diagnostic) => offlineLog.warn('storage failed', diagnostic),
+			onUnknownMutationFn: (name, tx) => offlineLog.error('unknown mutationFn', {name, id: tx.id})
 		})
 	}
 	return _executor

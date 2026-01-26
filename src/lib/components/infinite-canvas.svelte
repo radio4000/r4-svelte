@@ -65,15 +65,6 @@
 	})
 
 	$effect(() => {
-		// Update color when theme changes
-		const _ = appState.theme
-		if (canvas) {
-			const color = getThemeColor('--accent-9')
-			canvas.setAccentColor(color)
-		}
-	})
-
-	$effect(() => {
 		if (canvas && media) canvas.setMedia(media)
 	})
 
