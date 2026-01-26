@@ -2,11 +2,22 @@
 
 ## January 2026
 
+- Vertical header layout (moved to left side, flex + sticky positioning)
+- Channel pages now have following/followers subroutes with nav and display modes
+- Broadcast sync: listeners rejoin at the broadcaster's current position via seek-to-position
+- Virtual tracklist in queue panel
+- /mix now persists props and excludes channels without tracks
+- Infinite canvas for browsing channels: mobile touch-to-play, active channel marker, hover names
+- Fixed partial query support in search
+- Fixed track edit modal
+- Fixed fullscreen button active state
+- Hide follow button for v1 channels (can't follow due to missing remote data)
+- Performance: deferred tuner rendering, throttled appState persistence
+- Renamed favorites → followings for consistency
 - Batch edit overhaul: faster, clearer UI, easy buttons for metadata and durations
 - Broadcast stability improvements, rewritten with tanstack collections
 - Unified alerts/warnings UI
 - Added and improved channel and track forms, including dedicated edit/delete routes for tracks
-- Infinite canvas replaces infinite grid for browsing channels
 - Experimental /mix page
 - Simplified and split map components
 - Auth UI polish with social providers
