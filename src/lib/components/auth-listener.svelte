@@ -2,6 +2,7 @@
 	import {sdk} from '@radio4000/sdk'
 	import {checkUser} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
+	import {loadUserFollows} from '$lib/tanstack/collections'
 
 	let unsubscribe = null
 
@@ -30,9 +31,10 @@
 
 		if (isNewSession || isNewSignIn) {
 			await checkUser()
+			loadUserFollows()
 		} else if (event === 'INITIAL_SESSION' && user) {
-			// Background sync - verify channels match remote
 			checkUser()
+			loadUserFollows()
 		}
 	}
 </script>

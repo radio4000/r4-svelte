@@ -28,7 +28,7 @@
 		return [
 			{name: 'tracks', size: tracksCollection.state.size, cached: cacheItemCount('tracks')},
 			{name: 'channels', size: channelsCollection.state.size, cached: cacheItemCount('channels')},
-			{name: 'follows', size: followsCollection.state.size, cached: 0},
+			{name: 'follows', size: followsCollection.state.size, cached: cacheItemCount('follows')},
 			{name: 'trackMeta', size: trackMetaCollection.state.size, cached: 0},
 			{name: 'playHistory', size: playHistoryCollection.state.size, cached: 0}
 		]

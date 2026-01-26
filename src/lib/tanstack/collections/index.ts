@@ -16,7 +16,7 @@ export {
 export {spamDecisionsCollection, type SpamDecision} from './spam-decisions'
 
 // Synced collections (with offline support)
-export {followsCollection, followsAPI, pullFollows, followChannel, unfollowChannel, type Follow} from './follows'
+export {followsCollection, followChannel, unfollowChannel, loadUserFollows} from './follows'
 export {channelsCollection, channelsAPI, createChannel, updateChannel, deleteChannel, type Channel} from './channels'
 export {broadcastsCollection, readBroadcasts, readBroadcast} from './broadcasts'
 export {

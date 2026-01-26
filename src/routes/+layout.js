@@ -7,7 +7,8 @@ import {
 	tracksCollection,
 	channelsCollection,
 	spamDecisionsCollection,
-	broadcastsCollection
+	broadcastsCollection,
+	followsCollection
 } from '$lib/tanstack/collections'
 import {cacheReady} from '$lib/tanstack/query-cache-persistence'
 import {collectionsHydrated} from '$lib/tanstack/collection-persistence'
@@ -63,6 +64,7 @@ async function preload() {
 			tracksCollection,
 			channelsCollection,
 			broadcastsCollection,
+			followsCollection,
 			spamDecisionsCollection,
 			queue,
 			api
