@@ -18,6 +18,10 @@
 	let channelsWithFrequency = $state([])
 	/** @type {ChannelWithFrequency | null} */
 	let selectedChannel = $state(null)
+	/** @type {ChannelWithFrequency | null} */
+	let deferredChannel = $state(null)
+	/** @type {ReturnType<typeof setTimeout> | null} */
+	let deferTimeout = null
 	let isScanning = $state(false)
 	let scanDirection = $state(1) // 1 for up, -1 for down
 	let autoplay = $state(true)
@@ -156,6 +160,18 @@
 
 	const isStandby = $derived(autoplay && selectedChannel && frequency === initialFrequency)
 
+	// Defer channel card render so it doesn't thrash during rapid tuning
+	$effect(() => {
+		if (deferTimeout) clearTimeout(deferTimeout)
+		if (selectedChannel) {
+			deferTimeout = setTimeout(() => {
+				deferredChannel = selectedChannel
+			}, 60)
+		} else {
+			deferredChannel = null
+		}
+	})
+
 	// Signal strength visualization
 	const signalBars = $derived.by(() => {
 		if (!selectedChannel) return []
@@ -214,9 +230,9 @@
 
 		<InputRange bind:value={frequency} {min} {max} step={0.1} />
 
-		{#if selectedChannel}
-			<div class="station" style="opacity: {selectedChannel.reception ?? 1}">
-				<ChannelCard channel={selectedChannel} />
+		{#if deferredChannel}
+			<div class="station" style="opacity: {deferredChannel.reception ?? 1}">
+				<ChannelCard channel={deferredChannel} />
 			</div>
 		{:else}
 			<div class="static-display">
