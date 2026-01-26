@@ -73,13 +73,16 @@
 <style>
 	.ChannelLinkButton {
 		padding: 0;
-		min-width: 2rem;
+		max-width: 42px;
+		@media (max-width: 768px) {
+			max-width: 30px;
+		}
 	}
 
 	header {
 		display: flex;
 		flex-flow: column nowrap;
-		gap: 0.5rem;
+		gap: 1rem;
 		padding: 0.5rem;
 		background: var(--header-bg);
 		border-right: 1px solid light-dark(var(--gray-5), var(--gray-5));
