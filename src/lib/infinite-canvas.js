@@ -263,6 +263,7 @@ export class InfiniteCanvas {
 	}
 
 	updateTooltip(e) {
+		if (!this.tooltip) return
 		if (this.isDragging) {
 			this.tooltip.style.opacity = '0'
 			return

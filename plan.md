@@ -40,7 +40,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - create standardized loading/error boundaries for async operations in ui
 - share buttons/embeds (evaluate if needed)
 - look into atproto as backend alternative to supabase. sign in with bluesky, your channel + tracks are now synced into. one way sync? probably for now unforunately. See github.com/radio4000/r4atproto
-- run `bun run check` and slowly get rid of these warnings - tidy codebase
 - batch-edit: URL-persist filter/search/sort state so filtered views survive refresh and can be bookmarked
 - /mix input UX: adding channels/tags requires type → enter → click chip. Consider debounced autocomplete with keyboard selection like /search does. Or unified input with @channel #tag syntax (already have parseMentionQuery in search.js).
 - /mix tag discovery: surface (possibly shared) tags from selected source channels as suggestions.

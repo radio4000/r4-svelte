@@ -23,7 +23,7 @@
 	)
 
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let canEdit = $derived(!!appState.user && appState.channels?.includes(channel?.id))
+	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
 
 	function openAddTrackModal() {
 		appState.modal_track_add = {}

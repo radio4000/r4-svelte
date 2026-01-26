@@ -155,12 +155,7 @@
 
 	// Section 8: Live queries
 	const liveQuery = useLiveQuery((/** @type {any} */ q) => q.from({todos: demoCollection}))
-	/** @type {import('./demo-state.svelte').DemoTodo[]} */
-	let liveQueryData = $derived(
-		(liveQuery.data ?? [])
-			.map((/** @type {{todos: import('./demo-state.svelte').DemoTodo}} */ row) => row.todos)
-			.filter(Boolean)
-	)
+	let liveQueryData = $derived((liveQuery.data ?? []).map((row) => row.todos).filter(Boolean))
 
 	// Reset everything
 	function reset() {

@@ -12,8 +12,8 @@
 
 	const {channels = [], min = 88.0, max = 108.0} = $props()
 
-	const initialFrequency = Math.random() * (max - min) + min
-	let frequency = $state(initialFrequency)
+	let frequency = $derived(Math.random() * (max - min) + min)
+	let userHasTuned = $state(false)
 	/** @type {ChannelWithFrequency[]} */
 	let channelsWithFrequency = $state([])
 	/** @type {ChannelWithFrequency | null} */
@@ -74,7 +74,7 @@
 		selectedChannel = newChannel
 
 		// Debounced autoplay when landing on a new channel
-		if (autoplay && frequency !== initialFrequency && newChannel && newChannel.id !== lastPlayedChannelId) {
+		if (autoplay && userHasTuned && newChannel && newChannel.id !== lastPlayedChannelId) {
 			if (autoplayTimeout) clearTimeout(autoplayTimeout)
 			autoplayTimeout = setTimeout(() => {
 				if (selectedChannel?.id === newChannel.id) {
@@ -129,6 +129,7 @@
 			initAudio()
 			staticNode?.start()
 			startScanning()
+			userHasTuned = true
 		} else {
 			stopScanning()
 		}
@@ -158,7 +159,7 @@
 		audioContext = null
 	}
 
-	const isStandby = $derived(autoplay && selectedChannel && frequency === initialFrequency)
+	const isStandby = $derived(autoplay && selectedChannel && !userHasTuned)
 
 	// Defer channel card render so it doesn't thrash during rapid tuning
 	$effect(() => {
@@ -204,7 +205,12 @@
 				<button onclick={toggleScanning} class:active={isScanning}>
 					{isScanning ? m.spectrum_button_stop() : m.spectrum_button_scan()}
 				</button>
-				<button onclick={() => (frequency = Math.random() * (max - min) + min)}>{m.spectrum_button_seek()}</button>
+				<button
+					onclick={() => {
+						frequency = Math.random() * (max - min) + min
+						userHasTuned = true
+					}}>{m.spectrum_button_seek()}</button
+				>
 				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay}>{m.spectrum_button_auto()}</button>
 			</menu>
 
@@ -228,7 +234,7 @@
 			{/each}
 		</figure>
 
-		<InputRange bind:value={frequency} {min} {max} step={0.1} />
+		<InputRange bind:value={frequency} {min} {max} step={0.1} oninput={() => (userHasTuned = true)} />
 
 		{#if deferredChannel}
 			<div class="station" style="opacity: {deferredChannel.reception ?? 1}">

@@ -4,7 +4,7 @@
 
 <div class="constrained">
 	<menu data-grouped>
-		<a>DEBUG</a>
+		<a href="/_debug">DEBUG</a>
 		<a href="/_debug/appstate">appstate</a>
 		<a href="/_debug/async-test">async-test</a>
 		<a href="/_debug/media-chrome">media-chrome</a>

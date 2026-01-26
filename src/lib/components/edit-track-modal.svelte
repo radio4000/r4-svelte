@@ -13,7 +13,7 @@
 	// Look up channel by slug since channel_tracks view doesn't include channel_id
 	const channel = $derived.by(() => {
 		if (!track?.slug) return null
-		return [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+		return [...channelsCollection.state.values()].find((ch) => ch.slug === track?.slug)
 	})
 
 	/** @param {{track: import('$lib/types').Track}} data */

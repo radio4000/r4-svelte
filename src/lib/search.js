@@ -94,8 +94,7 @@ export function parseMentionQuery(query) {
 async function findChannelBySlug(slug) {
 	const local = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 	if (local) return local
-	// Fallback to remote
-	const {data} = await sdk.supabase.from('channels_with_tracks').select('*').eq('slug', slug).single()
+	const {data} = await sdk.channels.readChannel(slug)
 	return data ?? undefined
 }
 

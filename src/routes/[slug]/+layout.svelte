@@ -16,7 +16,7 @@
 
 	// Read channel directly from collection state (already loaded at root)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let canEdit = $derived(!!appState.user && appState.channels?.includes(channel?.id))
+	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
 </script>
 
 {#if channel}
@@ -168,10 +168,6 @@
 			flex-direction: column-reverse;
 			align-items: center;
 			text-align: center;
-		}
-
-		.stats {
-			justify-content: center;
 		}
 
 		menu {

@@ -15,7 +15,7 @@
 
 <article class="constrained">
 	<h2>Typography</h2>
-	<p caps>Caps attribute</p>
+	<p class="caps">Caps attribute</p>
 	<p><small>Muted text using small element</small></p>
 
 	<h2>Status classes</h2>

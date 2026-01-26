@@ -299,7 +299,7 @@
 				<a href={`/${broadcastingChannel.slug}`}>
 					<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
 				</a>
-				<button onclick={leaveBroadcast} caps>Leave<br />broadcast</button>
+				<button onclick={leaveBroadcast} class="caps">Leave<br />broadcast</button>
 			</header>
 		{/if}
 

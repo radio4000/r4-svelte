@@ -15,6 +15,7 @@ describe('broadcasts', () => {
 
 		expect(error).toBeNull()
 		expect(Array.isArray(broadcasts)).toBe(true)
+		if (!broadcasts) return
 
 		if (broadcasts.length === 0) {
 			console.log('No active broadcasts - skipping field validation')

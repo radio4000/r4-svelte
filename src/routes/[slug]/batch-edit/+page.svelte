@@ -433,7 +433,7 @@
 	</header>
 
 	{#if canEdit}
-		<BatchActionBar selectedIds={selectedTracks} {channel} {allTags} {tracks} onClear={clearSelection} />
+		<BatchActionBar selectedIds={selectedTracks} {channel} {allTags} {tracks} />
 	{/if}
 
 	<main class="tracks-container">

@@ -20,11 +20,11 @@
 	const activeChannelId = $derived.by(() => {
 		if (appState.listening_to_channel_id) return appState.listening_to_channel_id
 		const trackId = appState.playlist_track
-		if (!trackId) return null
+		if (!trackId) return
 		const track = tracksCollection.state.get(trackId)
-		if (!track?.slug) return null
+		if (!track?.slug) return
 		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-		return channel?.id || null
+		return channel?.id
 	})
 
 	let limit = $state(16)
@@ -315,15 +315,6 @@
 				color: inherit;
 			}
 		}
-	}
-
-	.sort-row {
-		display: flex;
-		gap: 0.25rem;
-	}
-
-	.sort-row select {
-		flex: 1;
 	}
 
 	footer p {

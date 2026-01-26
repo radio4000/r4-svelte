@@ -30,7 +30,7 @@
 	// Once we have the ID, read directly from collection (bypasses stale query)
 	const channel = $derived(channelId ? channelsCollection.get(channelId) : channelQuery.data?.[0])
 	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && appState.channels?.includes(channel?.id))
+	const canEdit = $derived(isSignedIn && !!channel?.id && appState.channels?.includes(channel.id))
 
 	let error = $state('')
 	let success = $state(false)
