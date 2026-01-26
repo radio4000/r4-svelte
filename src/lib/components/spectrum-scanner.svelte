@@ -12,7 +12,8 @@
 
 	const {channels = [], min = 88.0, max = 108.0} = $props()
 
-	let frequency = $derived(Math.random() * (max - min) + min)
+	const initialFrequency = Math.random() * (max - min) + min
+	let frequency = $state(initialFrequency)
 	/** @type {ChannelWithFrequency[]} */
 	let channelsWithFrequency = $state([])
 	/** @type {ChannelWithFrequency | null} */
@@ -69,7 +70,7 @@
 		selectedChannel = newChannel
 
 		// Debounced autoplay when landing on a new channel
-		if (autoplay && newChannel && newChannel.id !== lastPlayedChannelId) {
+		if (autoplay && frequency !== initialFrequency && newChannel && newChannel.id !== lastPlayedChannelId) {
 			if (autoplayTimeout) clearTimeout(autoplayTimeout)
 			autoplayTimeout = setTimeout(() => {
 				if (selectedChannel?.id === newChannel.id) {
@@ -153,6 +154,8 @@
 		audioContext = null
 	}
 
+	const isStandby = $derived(autoplay && selectedChannel && frequency === initialFrequency)
+
 	// Signal strength visualization
 	const signalBars = $derived.by(() => {
 		if (!selectedChannel) return []
@@ -166,54 +169,61 @@
 </script>
 
 <div class="scanner">
-	<header>
-		<h2>
-			<span class="freq">{frequency.toFixed(1)}</span>
-			<span class="unit">{m.spectrum_unit_label()}</span>
-		</h2>
+	<div class="device">
+		<header>
+			<h2>
+				{#if isStandby}<span class="led standby" title="Tune to play"></span>{/if}
+				<span class="freq">{frequency.toFixed(1)}</span>
+				<span class="freq-meta">
+					<span class="unit">{m.spectrum_unit_label()}</span>
+					{#if selectedChannel}
+						<span class="reception"
+							>{m.spectrum_signal_strength({percent: Math.round((selectedChannel.reception ?? 0) * 100)})}</span
+						>
+					{/if}
+				</span>
+			</h2>
 
-		<menu>
-			<button onclick={toggleScanning} class:active={isScanning}>
-				{isScanning ? m.spectrum_button_stop() : m.spectrum_button_scan()}
-			</button>
-			<button onclick={() => (frequency = Math.random() * (max - min) + min)}>{m.spectrum_button_seek()}</button>
-			<button onclick={() => (autoplay = !autoplay)} class:active={autoplay}>{m.spectrum_button_auto()}</button>
-		</menu>
+			<menu>
+				<button onclick={toggleScanning} class:active={isScanning}>
+					{isScanning ? m.spectrum_button_stop() : m.spectrum_button_scan()}
+				</button>
+				<button onclick={() => (frequency = Math.random() * (max - min) + min)}>{m.spectrum_button_seek()}</button>
+				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay}>{m.spectrum_button_auto()}</button>
+			</menu>
 
-		<div class="signal-meter">
-			{#each signalBars as bar, i (i)}
-				<div class="bar" class:active={bar.active} style="height: {bar.height}px"></div>
+			<div class="signal-meter">
+				{#each signalBars as bar, i (i)}
+					<div class="bar" class:active={bar.active} style="height: {bar.height}px"></div>
+				{/each}
+			</div>
+		</header>
+
+		<figure class="spectrum">
+			{#each channelsWithFrequency as channel (channel.id)}
+				<div
+					class="marker"
+					class:tuned={selectedChannel?.slug === channel.slug}
+					style="left: {((channel.frequency - min) / (max - min)) * 100}%"
+					title="{channel.name} - {channel.frequency.toFixed(1)}"
+				>
+					<div class="marker-signal" style="height: {0.5 + channel.signalStrength * 3.5}rem"></div>
+				</div>
 			{/each}
-		</div>
-	</header>
+		</figure>
 
-	<figure class="spectrum">
-		{#each channelsWithFrequency as channel (channel.id)}
-			<div
-				class="marker"
-				class:tuned={selectedChannel?.slug === channel.slug}
-				style="left: {((channel.frequency - min) / (max - min)) * 100}%"
-				title="{channel.name} - {channel.frequency.toFixed(1)}"
-			>
-				<div class="marker-signal" style="height: {0.5 + channel.signalStrength * 3.5}rem"></div>
+		<InputRange bind:value={frequency} {min} {max} step={0.1} />
+
+		{#if selectedChannel}
+			<div class="station" style="opacity: {selectedChannel.reception ?? 1}">
+				<ChannelCard channel={selectedChannel} />
 			</div>
-		{/each}
-	</figure>
-
-	<InputRange bind:value={frequency} {min} {max} step={0.1} />
-
-	{#if selectedChannel}
-		<div class="station" style="opacity: {selectedChannel.reception ?? 1}">
-			<div class="reception">
-				{m.spectrum_signal_strength({percent: Math.round((selectedChannel.reception ?? 0) * 100)})}
+		{:else}
+			<div class="static-display">
+				<div class="static-text">{m.spectrum_static_text()}</div>
 			</div>
-			<ChannelCard channel={selectedChannel} />
-		</div>
-	{:else}
-		<div class="static-display">
-			<div class="static-text">{m.spectrum_static_text()}</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -227,32 +237,73 @@
 		margin: 0 auto;
 	}
 
-	.scanner > header {
+	.device {
+		--border-radius: 2px;
+		width: 100%;
+		max-width: 420px;
+		background: var(--gray-3);
+		border: 1px solid var(--gray-12);
+		border-radius: var(--border-radius);
+		box-shadow:
+			0 0 0 1px rgba(255, 255, 255, 0.1),
+			0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	.device > header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		width: 100%;
-		padding: 0 0.8rem;
-		/*
-		background: var(--green-1);
-		*/
+		padding: 0.5rem 0.8rem;
+		background: #d4d9a8;
 		line-height: 1;
-		border: 1px solid var(--gray-12);
-		border-bottom: 0;
+		border: 1px solid var(--gray-1);
+		border-bottom: 1px solid var(--gray-12);
+		border-radius: var(--border-radius);
+		box-shadow:
+			inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+			inset 0 2px 4px rgba(0, 0, 0, 0.15);
 
 		h2 {
 			display: flex;
-			align-items: baseline;
-			gap: 0.3rem;
+			gap: 0.5rem;
 		}
 
 		.freq {
+			position: relative;
+			top: 0.1em;
 			font-size: var(--font-9);
 			font-weight: bold;
+			align-self: flex-end;
+		}
+
+		.freq-meta {
+			display: flex;
+			flex-direction: column;
+			align-self: flex-end;
+		}
+
+		.led {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			flex-shrink: 0;
+			align-self: flex-start;
+			border: 1px solid #000;
+		}
+
+		.led.standby {
+			background: var(--color-orange, #f59e0b);
+			box-shadow: 0 0 6px var(--color-orange, #f59e0b);
+			animation: pulse-led 2s ease-in-out infinite;
 		}
 
 		.unit {
 			font-size: var(--font-2);
+			color: var(--gray-9);
+		}
+
+		.reception {
+			font-size: var(--font-1);
 			color: var(--gray-9);
 		}
 
@@ -283,12 +334,12 @@
 
 	.spectrum {
 		position: relative;
-		width: 100%;
 		height: 4rem;
+		margin: 0;
 		pointer-events: none;
-		border-left: 1px solid var(--gray-12);
-		border-right: 1px solid var(--gray-12);
+		border: 1px solid var(--gray-10);
 		background: var(--gray-5);
+		box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
 
 	.marker {
@@ -313,27 +364,22 @@
 		}
 	}
 
-	:global(.input-range) {
-		width: 100%;
-		border: 1px solid var(--gray-12);
+	:global(.device > .input-range) {
+		margin: 0;
+		border: 1px solid var(--gray-10);
 	}
 
 	.station {
-		margin-top: 5vh;
-		width: 400px;
-		aspect-ratio: 1 / 2;
+		padding: 1rem;
 		transition: opacity 0.3s;
 	}
 
-	.reception {
-		text-align: right;
-		font-size: var(--font-1);
-		color: var(--color-gray);
-		margin-top: 0.5rem;
+	.station :global(.desc) {
+		min-height: calc(1.2em * 6);
 	}
 
 	.static-display {
-		height: 100px;
+		padding: 2rem 1rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -351,6 +397,18 @@
 		}
 		100% {
 			opacity: 0.7;
+		}
+	}
+
+	@keyframes pulse-led {
+		0%,
+		100% {
+			opacity: 0.4;
+			box-shadow: 0 0 4px var(--color-orange, #f59e0b);
+		}
+		50% {
+			opacity: 1;
+			box-shadow: 0 0 8px var(--color-orange, #f59e0b);
 		}
 	}
 </style>

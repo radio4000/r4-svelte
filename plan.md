@@ -25,7 +25,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
 - Sometimes on /search when you double-click to play a track, it won't play but log "track not loaded" (which obv isn't true since it was there to click)
 - Our appState is serialized into localstorage on every edit to persist it. But since appState.playlist_tracks (and the shuffled) versions potentially include 3k items, it might get slow. More than this, it's just unecessary to serialize all on every change. It is however easy to reason about in the app. One appState, done. How could we improve the perf here? First thought is to split it into appState + playerState for example, if we can that way split the tracklist arrays that are only updated on channel/queue changes anyway.
-- Going to homepage / and choosing "tuner" viewmode seems to start playback on a random channel byitself. It should not do that byitself..
 - On-demand predicate push-down: we set `syncMode: 'on-demand'` but don't use `parseLoadSubsetOptions` in queryFn. Currently we manually check for slug and call different SDK methods. With proper on-demand, live query `where()` clauses flow through to backend:
   ```ts
   const {where} = parseLoadSubsetOptions(ctx.meta.loadSubsetOptions)

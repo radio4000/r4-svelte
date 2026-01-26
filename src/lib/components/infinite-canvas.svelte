@@ -1,6 +1,5 @@
 <script>
 	import {InfiniteCanvas} from '$lib/infinite-canvas.js'
-	import {appState} from '$lib/app-state.svelte'
 	import {untrack} from 'svelte'
 
 	/**
