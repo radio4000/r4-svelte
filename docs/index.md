@@ -1,25 +1,11 @@
-# DOCS
+# R5
 
-This is a local-first music player prototype.
+Web frontend for Radio4000. SvelteKit + Svelte 5, @radio4000/sdk, TanStack DB.
 
-- pulls data from Radio4000 v1 (firebase) and v2 (r4 postgres)
-- queries and caches it in your browser storage
-- is built as a SvelteKit client-only web app
+Channels (`/@slug`) are collections of tracks. Tracks (`/@slug/tracks/:id`) are links to music (YouTube, SoundCloud, embeddable URLs).
 
-We query from the local collections. Tanstack fires requests as needed to read and write data. We have optimistic updates, offline transactions and caching.
+Data flows from the remote database ([radio4000-sdk](radio4000-sdk.md)) through the local sync layer ([tanstack](tanstack.md)). Some channels come from a [legacy Firebase import](v1-data.md).
 
-## Overview
+[player](player.md) handles playback, [queue](queue.md) manages upcoming tracks and history, [search](search-feature.md) finds channels and tracks, [broadcast](broadcast-feature.md) syncs listening in real-time, [followers](followers.md) lets you follow channels, [play-history](play-history.md) tracks what you've listened to, [metadata](metadata.md) enriches tracks via MusicBrainz and YouTube, [keyboard](keyboard.md) shortcuts, [localization](localization.md), [styles](styles.md) for theming.
 
-- [API overview](overview.md) - all exported functions (lib, sdk, utils)
-- [tanstack](tanstack.md) - unified api for local/remote data access
-- [v1 data](v1-data.md) - how we deal with firebase v1 data
-- [metadata](metadata.md) - track enrichment via youtube, musicbrainz, discogs etc
-- [player](player.md) - audio playback engine and controls
-- [play-history](play-history.md) - track play history and statistics
-- [search feature](search-feature.md) - full-text fuzzy search across channels and tracks
-- [broadcast feature](broadcast-feature.md) - live streaming and auto-update behavior
-- [followers](followers.md) - logic around following channels
-- [keyboard](keyboard.md) - keyboard shortcuts
-- [localization](localization.md) - internationalization and multi-language support
-- [styles](styles.md) - css architecture and design system
-- [learnings](learnings.md) - patterns and preferences discovered through building
+[overview](overview.json) lists exported functions, [browser-testing](browser-testing.md) for testing. [/mix](/mix) combines sources into playlists, [/settings](/settings) for appearance and account. Data caches locally for offline use. Auth via email or OAuth.
