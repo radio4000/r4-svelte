@@ -44,7 +44,7 @@
 			<EditTrackModal />
 			{#if userChannel}
 				<a href="/{userChannel.slug}" class="btn ChannelLinkButton" {@attach tooltip({content: 'Go to your channel'})}>
-					<ChannelAvatar id={userChannel.image} size={32} alt={userChannel.name} />
+					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 				</a>
 			{/if}
 			<a
