@@ -1,7 +1,6 @@
 /** All localStorage keys used by R5. Add new keys here to ensure resetLocalData clears them. */
 export const LOCAL_STORAGE_KEYS = {
 	appState: 'r5-app-state',
-	follows: 'r5-follows',
 	trackMeta: 'r5-track-meta',
 	playHistory: 'r5-play-history',
 	spamDecisions: 'r5-spam-decisions'

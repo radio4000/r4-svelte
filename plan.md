@@ -6,7 +6,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
-- Follow button bug: 409 "duplicate key value violates unique constraint followers_pkey" when clicking follow. Either the button doesn't read existing follower state correctly (shows "Follow" when already following), or `followChannel` in `follows.ts` doesn't check/upsert properly.
 - improved broadcast icons on active channels → when a channel is broadcasting, show a "live" icon on the channel card and on the channel's homepage. We have this "live dot" to reuse maybe
 - improved channel filters/search for tags, mention, search etc. maybe inside the channel view → when clicking on a channel's tags, it should filter the tracks of this channel, by the selected tag(s)/mention(s), directly on the channel (not a global search). Can it work with useLiveQuery where on track.tags for instance?
 - second/third player to have mix between tracks and a few decks to make transitions; possibility to show not just one player, but several (with tracklist queue, and controls) so a user can play with multiple tracks like a dj deck (old mix.radio4000.com, and libli.org also had this feature) → for example "cue track in deck B" or "play track in deck C". Also see /mix route for inspiration

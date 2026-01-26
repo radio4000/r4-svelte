@@ -131,6 +131,8 @@ tracksCollection.utils.writeBatch(() => {
 | `@tanstack/svelte-query`         | `QueryClient`                                                     |
 | `@tanstack/offline-transactions` | `startOfflineExecutor()`, `IndexedDBAdapter`, `NonRetriableError` |
 
+Use `queryCollectionOptions` for all collections - it integrates with query cache and provides `utils.write*` methods. `localStorageCollectionOptions` lacks these; only use for purely local data (play history).
+
 ## Mutations
 
 ### Online-only (simple)
@@ -146,7 +148,7 @@ todoCollection.insert({id, text}) // fires onInsert
 todoCollection.insert({id, text}, {optimistic: false}) // wait for server
 ```
 
-### Offline-first (what we use)
+### Offline-first (tracks, channels)
 
 ```ts
 const tx = executor.createOfflineTransaction({mutationFnName: 'syncTracks'})
@@ -160,6 +162,20 @@ await tx.commit()
 4. Remove from outbox on success
 
 Transaction states: `pending` → `persisting` → `completed` (or `failed`). Use `await tx.isPersisted.promise` to wait.
+
+### Direct writes with manual sync (follows, spam decisions)
+
+For simple toggles without offline support, use `utils.write*` directly:
+
+```ts
+export async function followChannel(channelId: string) {
+	followsCollection.utils.writeInsert({id: channelId}) // optimistic
+	const {error} = await sdk.channels.followChannel(userChannelId, channelId)
+	if (error) followsCollection.utils.writeDelete(channelId) // rollback
+}
+```
+
+Direct `collection.insert()`/`delete()` require handlers. `utils.write*` bypasses this.
 
 ### Our wrapper functions
 
@@ -185,9 +201,9 @@ export function addTrack(channel: {id: string; slug: string}, input: {url: strin
 await addTrack(userChannel, {url, title})
 ```
 
-## Direct Writes (bypass sync)
+## Direct Writes
 
-Write directly to collection + query cache. No optimistic layer, no remote sync.
+Write directly to collection + query cache. Bypasses handlers and offline transactions.
 
 ```ts
 collection.utils.writeInsert(item)
@@ -200,7 +216,7 @@ collection.utils.writeBatch(() => {
 collection.utils.refetch() // manually trigger query refresh
 ```
 
-Use for: seeding on login, WebSocket updates, pagination.
+Use for: seeding data on login, simple optimistic updates with manual sync (see follows pattern above), WebSocket updates, pagination.
 
 ### Mutation merging
 
@@ -292,4 +308,4 @@ For debouncing/throttling mutations, see `usePacedMutations` with `debounceStrat
 
 ## Tips
 
-LIMIT and OFFSET queries require an ORDER BY clause for deterministic results
+`.limit()` or `.offset()` require `.orderBy()` - throws error without it.

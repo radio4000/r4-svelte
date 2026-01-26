@@ -1,38 +1,65 @@
 # followers
 
-follow/save channels as favorites. stored in `followers` table with `follower_id` and `channel_id`.
+Follow/save channels as favorites. Stored in `followers` table with `follower_id` and `channel_id`.
 
 ## behavior
 
-**unauthenticated**: saves to local db with `follower_id = 'local-user'`
+**unauthenticated**: follow button hidden
 
-**authenticated**:
+**authenticated**: on login, invalidates the follows query to trigger a fresh fetch. Button updates optimistically.
 
-- saves to local db with user's channel id
-- syncs bidirectionally with r4 (except v1 channels which stay local-only)
-- on signin: migrates local-user follows to authenticated user
+## collection
 
-## sync
+Uses `queryCollectionOptions` like other collections. Data flows through query cache (persisted to IDB).
 
-`pull()` - fetches remote follows, marks as synced
-`sync()` - full bidirectional sync on signin:
-
-1. pull remote follows
-2. migrate local-user follows to authenticated user
-3. push unsynced r4 channels to remote
-4. clean up local-user entries
-
-v1 channels (from firebase import) can't sync to r4, marked as `source: 'v1'` and stay local.
+```ts
+export const followsCollection = createCollection<{id: string}, string>(
+	queryCollectionOptions({
+		queryKey: () => ['follows', userChannelId],
+		queryClient,
+		getKey: (item) => item.id,
+		queryFn: async () => {
+			const {data} = await sdk.channels.readFollowings(userChannelId)
+			return (data || []).map((ch) => ({id: ch.id}))
+		}
+	})
+)
+```
 
 ## api
 
-`followChannel(followerId, channelId)` - follow with immediate r4 push
-`unfollowChannel(followerId, channelId)` - unfollow with immediate r4 push  
-`getFollowers(followerId)` - auto-pulls from remote if empty
-`isFollowing(followerId, channelId)` - check follow status
+```ts
+followChannel(channelId) // optimistic insert + sync to remote
+unfollowChannel(channelId) // optimistic delete + sync to remote
+loadUserFollows() // invalidates query to trigger refetch
+```
+
+Follow/unfollow use `utils.writeInsert`/`utils.writeDelete` for optimistic updates with rollback on error.
+
+## button
+
+Each button has its own `useLiveQuery`:
+
+```ts
+const followQuery = useLiveQuery((q) =>
+	q.from({follows: followsCollection}).where(({follows}) => eq(follows.id, channel.id))
+)
+let following = $derived(followQuery.data?.length > 0)
+```
+
+## pages
+
+Followers/following pages fetch directly via SDK (not from collection):
+
+```ts
+sdk.channels.readFollowers(channelId) // who follows this channel
+sdk.channels.readFollowings(channelId) // who this channel follows
+```
 
 ## files
 
-- src/lib/tanstack/collections/follows.ts - sync logic and follow/unfollow functions
-- src/lib/components/button-follow.svelte - follow button component
-- src/routes/following/ - ui
+- `src/lib/tanstack/collections/follows.ts` - collection + functions
+- `src/lib/components/button-follow.svelte` - follow button
+- `src/lib/components/auth-listener.svelte` - calls loadUserFollows on auth
+- `src/routes/[slug]/followers/+page.svelte` - who follows this channel
+- `src/routes/[slug]/following/+page.svelte` - who this channel follows

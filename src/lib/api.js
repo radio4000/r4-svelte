@@ -12,13 +12,7 @@ import {
 	queueShuffleKeepCurrent,
 	queueRotate
 } from '$lib/player/queue'
-import {
-	tracksCollection,
-	addPlayHistoryEntry,
-	endPlayHistoryEntry,
-	pullFollows,
-	ensureTracksLoaded
-} from '$lib/tanstack/collections'
+import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
 
 const log = logger.ns('api').seal()
 
@@ -42,16 +36,10 @@ export async function checkUser() {
 
 		const {data: channels, error: channelsError} = await sdk.channels.readUserChannels()
 		if (channelsError) throw channelsError
-		const wasSignedOut = !appState.channels?.length
 
 		// Store IDs - collection handles fetching when needed
 		appState.channels = channels.map((c) => c.id)
 		appState.channel = /** @type {import('$lib/types').Channel | undefined} */ (channels[0])
-
-		// Pull follows when user signs in (not on every check)
-		if (wasSignedOut && appState.channels.length) {
-			pullFollows(appState.channels[0]).catch((err) => log.error('pull_follows_on_signin_error', err))
-		}
 
 		return user
 	} catch (err) {

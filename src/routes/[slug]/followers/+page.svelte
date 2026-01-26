@@ -1,9 +1,8 @@
 <script>
 	import {page} from '$app/state'
-	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {channelsCollection} from '$lib/tanstack/collections'
-	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
+	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -22,13 +21,12 @@
 	let loading = $state(true)
 
 	$effect(() => {
-		if (channel?.id) {
-			loading = true
-			sdk.channels.readFollowers(channel.id).then(({data}) => {
-				if (data) followers = data
-				loading = false
-			})
-		}
+		if (!channel?.id) return
+		loading = true
+		sdk.channels.readFollowers(channel.id).then(({data}) => {
+			followers = data || []
+			loading = false
+		})
 	})
 </script>
 
