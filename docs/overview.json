@@ -32,7 +32,10 @@
 		{"name": "appState.language", "desc": "Locale."},
 		{"name": "appState.shortcuts", "desc": "Custom keybindings."},
 		{"name": "appState.custom_css_variables", "desc": "Theme overrides."},
-		{"name": "appState.hide_track_artwork", "desc": "Hide album art."}
+		{"name": "appState.hide_track_artwork", "desc": "Hide album art."},
+
+		{"name": "appState.modal_track_add", "desc": "Add track modal state."},
+		{"name": "appState.modal_track_edit", "desc": "Edit track modal state."}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -40,8 +43,11 @@
 		{"name": "getOfflineExecutor()", "desc": "Get offline transaction executor."},
 
 		{"name": "tracksCollection", "desc": "Tracks data."},
+		{"name": "tracksAPI", "desc": "Tracks collection API helpers."},
 		{"name": "channelsCollection", "desc": "Channels data."},
+		{"name": "channelsAPI", "desc": "Channels collection API helpers."},
 		{"name": "followsCollection", "desc": "Followed channels (synced)."},
+		{"name": "broadcastsCollection", "desc": "Active broadcasts."},
 		{"name": "trackMetaCollection", "desc": "YouTube/MusicBrainz metadata (localStorage)."},
 		{"name": "playHistoryCollection", "desc": "Listening history (localStorage)."},
 		{"name": "spamDecisionsCollection", "desc": "Spam decisions (localStorage)."},
@@ -55,14 +61,18 @@
 		{"name": "getTrackWithMeta(id)", "desc": "Track with YouTube/MusicBrainz meta."},
 		{"name": "ensureTracksLoaded(slug)", "desc": "Fetch if not cached."},
 		{"name": "checkTracksFreshness(slug)", "desc": "Check if tracks need refresh."},
+		{"name": "insertDurationFromMeta(trackId, meta)", "desc": "Update track duration from metadata."},
 
 		{"name": "createChannel({name, slug, ...})", "desc": "Create a channel."},
 		{"name": "updateChannel(id, changes)", "desc": "Update a channel."},
 		{"name": "deleteChannel(id)", "desc": "Delete a channel."},
 
-		{"name": "followChannel(followerId, channelId)", "desc": "Follow a channel."},
-		{"name": "unfollowChannel(followerId, channelId)", "desc": "Unfollow a channel."},
-		{"name": "pullFollows(channelId)", "desc": "Sync follows from remote."},
+		{"name": "followChannel(channelId)", "desc": "Follow a channel."},
+		{"name": "unfollowChannel(channelId)", "desc": "Unfollow a channel."},
+		{"name": "loadUserFollows()", "desc": "Fetch user's follows from remote."},
+
+		{"name": "readBroadcasts()", "desc": "Fetch all active broadcasts."},
+		{"name": "readBroadcast(channelId)", "desc": "Fetch single broadcast."},
 
 		{"name": "deleteTrackMeta(id)", "desc": "Delete cached track metadata."},
 
@@ -89,31 +99,30 @@
 		{"name": "rotateQueue()", "desc": "Move played to end."},
 		{"name": "toggleShuffle()", "desc": "Toggle shuffle mode (switch between original/shuffled order)."},
 
-		{"name": "toggleTheme()", "desc": "Light/dark mode."},
-		{"name": "toggleQueuePanel()", "desc": "Show/hide queue sidebar."},
-		{"name": "togglePlayerExpanded()", "desc": "Expand/collapse player + video."},
-		{"name": "openSearch()", "desc": "Focus search input."}
-	],
-
-	"src/lib/api/player.js": [
 		{"name": "play(player?)", "desc": "Resume playback."},
 		{"name": "pause(player)", "desc": "Pause playback."},
 		{"name": "togglePlay(player)", "desc": "Toggle playback."},
+		{"name": "seekTo(seconds)", "desc": "Seek to position in current track."},
 		{"name": "next(track, activeQueue, endReason)", "desc": "Advance to next track."},
 		{"name": "previous(track, activeQueue, endReason)", "desc": "Return to previous track."},
 		{"name": "toggleVideo()", "desc": "Toggle video player visibility."},
-		{"name": "eject()", "desc": "Clear player state."}
+		{"name": "eject()", "desc": "Clear player state."},
+
+		{"name": "toggleTheme()", "desc": "Light/dark mode."},
+		{"name": "toggleQueuePanel()", "desc": "Show/hide queue sidebar."},
+		{"name": "togglePlayerExpanded()", "desc": "Expand/collapse player + video."},
+		{"name": "openSearch()", "desc": "Focus search input."},
+
+		{"name": "resetLocalData()", "desc": "Clear localStorage and IndexedDB."}
 	],
 
 	"src/lib/player/queue.ts": [
 		{"name": "queueNext(queue, currentId)", "desc": "Return next ID or null."},
 		{"name": "queuePrev(queue, currentId)", "desc": "Return previous ID or null."},
-		{"name": "queuePosition(queue, currentId)", "desc": "Position of current ID."},
 
 		{"name": "queueInsertManyAfter(queue, currentId, insertIds)", "desc": "Insert many after current ID."},
 		{"name": "queueRemove(queue, id)", "desc": "Remove ID."},
 
-		{"name": "queueShuffle(queue)", "desc": "Shuffle queue."},
 		{"name": "queueShuffleKeepCurrent(queue, currentId)", "desc": "Shuffle but keep current first."},
 		{"name": "queueRotate(queue, currentId)", "desc": "Rotate queue from current."},
 		{"name": "queueUnique(queue)", "desc": "Remove duplicates."},
@@ -193,9 +202,7 @@
 		{"name": "stopBroadcast(channelId)", "desc": "Stop broadcasting."},
 		{"name": "joinBroadcast(channelId)", "desc": "Listen to broadcast."},
 		{"name": "leaveBroadcast()", "desc": "Stop listening."},
-		{"name": "watchBroadcasts(onChange)", "desc": "Subscribe to broadcasts."},
-		{"name": "stopBroadcastSync()", "desc": "Cleanup subscription."},
-		{"name": "playBroadcastTrack(broadcast)", "desc": "Play broadcaster's current track."},
+		{"name": "upsertRemoteBroadcast(channelId, trackId)", "desc": "Upsert broadcast record."},
 		{"name": "validateListeningState()", "desc": "Verify listening state."}
 	],
 
@@ -206,8 +213,7 @@
 		{"name": "relativeDate(dateString)", "desc": "Returns 'X days ago'."},
 		{"name": "relativeDateDetailed(dateString)", "desc": "Days/months/years ago."},
 		{"name": "relativeDateSolar(dateString)", "desc": "Cosmic time: sun orbits + earth rotations."},
-		{"name": "relativeTime(dateInput)", "desc": "Recent: relative. Older: date+time."},
-		{"name": "timeAgo(dateString)", "desc": "Relative time string."}
+		{"name": "relativeTime(dateInput)", "desc": "Recent: relative. Older: date+time."}
 	],
 
 	"src/lib/utils.ts": [
@@ -219,11 +225,13 @@
 
 		{"name": "extractYouTubeId(url)", "desc": "Extract YouTube video ID."},
 		{"name": "detectMediaProvider(url)", "desc": "Detect media provider."},
+		{"name": "fetchOEmbedTitle(mediaUrl)", "desc": "Fetch title via oEmbed API."},
 
 		{"name": "parseSearchTokens(query)", "desc": "Tokenize search query."},
 		{"name": "parseEntities(text)", "desc": "Extract #tags and @mentions."},
 		{"name": "extractHashtags(text)", "desc": "Extract hashtags only."},
 		{"name": "extractMentions(text)", "desc": "Extract mentions only."},
+		{"name": "ENTITY_REGEX", "desc": "Regex for hashtags and mentions."},
 
 		{"name": "trimWithEllipsis(text, maxLength?)", "desc": "Truncate with ellipsis."},
 		{"name": "shuffleArray(arr)", "desc": "Fisher-Yates shuffle."},
