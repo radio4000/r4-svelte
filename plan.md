@@ -11,7 +11,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - second/third player to have mix between tracks and a few decks to make transitions; possibility to show not just one player, but several (with tracklist queue, and controls) so a user can play with multiple tracks like a dj deck (old mix.radio4000.com, and libli.org also had this feature) → for example "cue track in deck B" or "play track in deck C". Also see /mix route for inspiration
 - improved fullscreen? if player does not have a track, fullscreen layout looks weirdly empty; if player has a track, maybe fullscreen should be a real full screen (questions of the display mode for the play: docker, mini, full etc.).
 - move broadcast view to a channels list filter → instead of having /broadcast, we could have "broadcast" as a filter on the channels list (like "with artworks" or "v1/v2" or "1000+ tracks
-- Fix active Fullscreen btn not active like sidebar open
 - Share track modal?
 - How do I reset password? Magic link? Reset PW?
 - Change user email flow

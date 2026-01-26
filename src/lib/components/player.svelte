@@ -285,6 +285,7 @@
 	<button
 		onclick={() => togglePlayerExpanded()}
 		class="expand"
+		class:active={appState.player_expanded}
 		{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
 	>
 		<Icon icon="fullscreen" />
