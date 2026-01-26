@@ -38,7 +38,9 @@
 				</p>
 				<menu>
 					<ButtonPlay {channel} label={m.button_play_label()} />
-					<ButtonFollow {channel} />
+					{#if channel.source !== 'v1'}
+						<ButtonFollow {channel} />
+					{/if}
 				</menu>
 			</div>
 			<ChannelHero {channel} size={120} />

@@ -9,7 +9,9 @@
 
 <figure>
 	<ButtonPlay {channel} class="play" />
-	<ButtonFollow {channel} class="follow" />
+	{#if channel.source !== 'v1'}
+		<ButtonFollow {channel} class="follow" />
+	{/if}
 	<ChannelAvatar id={channel.image} alt={channel.name} {size} />
 </figure>
 
