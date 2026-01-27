@@ -50,6 +50,7 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 - Share track modal?
   - ? Same as "share buttons/embeds" below, or different?
+  - check https://github.com/radio4000/components/pull/193
 
 - repost current track: shift+c shortcut (c opens modal) or subtle button after track title/desc in player. Keep it discoverable but not too prominent.
   - ? How common is reposting? Worth the UI real estate?
