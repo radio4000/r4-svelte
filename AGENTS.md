@@ -14,7 +14,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 8. Update @docs if needed
 
 ```
-/src/routes           -- contains our pages 
+/src/routes           -- contains our pages
 /src/lib/types.ts     -- type definitions for the most important interfaces
 /src/lib/api.js       -- reusable data operations
 /src/lib/utils.ts     -- reusable utility functions
@@ -38,7 +38,7 @@ Use @docs/browser-testing.md for testing in browser
 
 We use `window.r5` to expose sdk, appState, queryClient, tracksCollection, channelsCollection. Example: `[...window.r5.channelsCollection.state.values()].map(...` for testing.
 
-Use the @src/routes/_debug folder to create test routes and playgrounds.
+Use the @src/routes/\_debug folder to create test routes and playgrounds.
 
 ## Writing style (guides, docs, explanations)
 

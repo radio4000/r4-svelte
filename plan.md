@@ -101,12 +101,14 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
   - ? Have you measured serialization time? How large does playlist_tracks get?
 
 - On-demand predicate push-down: we set `syncMode: 'on-demand'` but don't use `parseLoadSubsetOptions` in queryFn. Currently we manually check for slug and call different SDK methods. With proper on-demand, live query `where()` clauses flow through to backend:
+
   ```ts
   const {where} = parseLoadSubsetOptions(ctx.meta.loadSubsetOptions)
   const filters = extractSimpleComparisons(where)
   const slugFilter = filters.find((f) => f.field[0] === 'slug')
   if (slugFilter) return fetchTracksBySlug(slugFilter.value)
   ```
+
   Benefit: add date range or search filters in UI, they flow to SDK without touching queryFn dispatch.
   - ? Is this blocking features, or just a cleaner architecture?
 
@@ -177,4 +179,5 @@ Items here need a decision: promote to backlog, park, or remove.
 ## Meta questions
 
 Answer these to help prioritize:
+
 - ? Top 3 user complaints right now?

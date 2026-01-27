@@ -1,8 +1,9 @@
 # Browser testing
 
-Use `agent-browser` for web automation. 
+Use `agent-browser` for web automation.
 
 The core workflow is:
+
 1. `agent-browser open <url>` - Navigate to page
 2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
 3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
