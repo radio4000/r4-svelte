@@ -291,43 +291,6 @@
 	{/each}
 </div>
 
-<br />
-<br />
-
-<section class="constrained">
-	<h2>{m.theme_typography_heading()}</h2>
-	<div class="variable-grid">
-		{#each fontSizes as sizeVar (sizeVar)}
-			<article style="--size: var({sizeVar})">
-				<h3>{sizeVar}</h3>
-				<p>{m.theme_sample_text()}</p>
-			</article>
-		{/each}
-	</div>
-</section>
-
-<section class="constrained">
-	<h2>{m.theme_form_heading()}</h2>
-	<form>
-		<div>
-			<label
-				>{m.theme_form_name_label()}
-				<input type="text" />
-			</label>
-		</div>
-		<div>
-			<label
-				>{m.theme_form_age_label()}
-				<input type="number" />
-			</label>
-		</div>
-		<div>
-			<button type="button">{m.common_cancel()}</button>
-			<button type="submit">{m.common_submit()}</button>
-		</div>
-	</form>
-</section>
-
 <style>
 	section {
 		margin-bottom: 2rem;
@@ -365,21 +328,5 @@
 
 	.inactive {
 		display: none;
-	}
-
-	.variable-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(60ch, 1fr));
-
-		h3 {
-			border-left: calc(var(--size) * 2) solid;
-			padding-left: 0.5rem;
-		}
-
-		p {
-			font-size: var(--size);
-			padding: 0.5rem;
-			border-left: 1px solid;
-		}
 	}
 </style>
