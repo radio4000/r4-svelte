@@ -1,8 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import AddTrackModal from '$lib/components/add-track-modal.svelte'
-	import EditTrackModal from '$lib/components/edit-track-modal.svelte'
+	import AddTrackModal from '$lib/components/track-add-modal.svelte'
+	import EditTrackModal from '$lib/components/track-edit-modal.svelte'
 	import ShareModal from '$lib/components/share-modal.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
