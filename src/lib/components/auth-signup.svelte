@@ -3,7 +3,7 @@
 	import AuthProviders from './auth-providers.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {onSuccess, redirect = '/settings'} = $props()
+	let {onSuccess = () => {}, redirect = '/settings'} = $props()
 	const id = $props.id()
 
 	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'

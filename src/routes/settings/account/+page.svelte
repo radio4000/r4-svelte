@@ -75,7 +75,7 @@
 				</p>
 				<menu>
 					<a class="btn" href="/settings/account/password">{m.account_change_password()}</a>
-					<a class="btn" href="/settings/account/email">Change email</a>
+					<a class="btn" href="/settings/account/email">{m.account_change_email()}</a>
 				</menu>
 			</div>
 			{#each providers as provider (provider)}
@@ -97,7 +97,7 @@
 						</button>
 					{:else}
 						<button onclick={() => connectProvider(provider)} disabled={providerLoading === provider}>
-							{providerLoading === provider ? '...' : 'Connect'}
+							{providerLoading === provider ? '...' : m.account_connect_provider({provider})}
 						</button>
 					{/if}
 				</div>
@@ -106,7 +106,7 @@
 
 		<p><button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button></p>
 		<br />
-		<p><a href="/settings/account/delete">I want to delete my account</a></p>
+		<p><a href="/settings/account/delete">{m.account_delete_link()}</a></p>
 	{/if}
 </article>
 
