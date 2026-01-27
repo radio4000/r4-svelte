@@ -291,6 +291,17 @@ class YouTube2Element extends HTMLElement {
 		})
 	}
 
+	get playbackRate() {
+		return this.api?.getPlaybackRate?.() ?? 1
+	}
+
+	set playbackRate(val) {
+		this.#loadComplete.then(() => {
+			log.debug('setting playbackRate to:', val)
+			this.api?.setPlaybackRate?.(val)
+		})
+	}
+
 	get src() {
 		return this.getAttribute('src')
 	}
