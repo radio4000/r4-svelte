@@ -106,11 +106,11 @@
 	<!-- Source Device (Crate) -->
 	<section class="device source-device">
 		<header class="caps">Crate</header>
-		<MixSource {sources} onadd={handleAddSource} onremove={handleRemoveSource} />
+		<MixSource {sources} {loading} onadd={handleAddSource} onremove={handleRemoveSource} />
 	</section>
 
 	<!-- Pipe from crate to processor -->
-	<div class="pipe-center"><div class="pipe"></div></div>
+	<div class="pipe-center"><div class="pipe" data-loading={loading || undefined}></div></div>
 
 	<!-- Processor Device -->
 	<section class="device processor-device">
@@ -132,8 +132,8 @@
 
 	<!-- Pipes from processor -->
 	<div class="pipes pipes-from-source">
-		<div class="pipe"></div>
-		<div class="pipe"></div>
+		<div class="pipe" data-loading={loading || undefined}></div>
+		<div class="pipe" data-loading={loading || undefined}></div>
 	</div>
 
 	<!-- Load buttons -->
@@ -263,6 +263,19 @@
 		background: var(--c-gray5);
 	}
 
+	.pipe-center .pipe[data-loading] {
+		background: none;
+		background-image: repeating-linear-gradient(
+			180deg,
+			transparent 0,
+			transparent 0.2rem,
+			var(--c-yellow5) 0.2rem,
+			var(--c-yellow5) 0.5rem
+		);
+		background-size: 2px 1rem;
+		animation: signal-flow 0.5s linear infinite;
+	}
+
 	/* Pipes */
 	.pipes {
 		display: grid;
@@ -283,6 +296,19 @@
 
 	.pipes .pipe:last-child {
 		background: hsl(221 25% 40%);
+	}
+
+	.pipes-from-source .pipe[data-loading] {
+		background: none;
+		background-image: repeating-linear-gradient(
+			180deg,
+			transparent 0,
+			transparent 0.2rem,
+			var(--c-yellow5) 0.2rem,
+			var(--c-yellow5) 0.5rem
+		);
+		background-size: 2px 1rem;
+		animation: signal-flow 0.5s linear infinite;
 	}
 
 	/* Pipes from decks to mixer - inset from inner edges */

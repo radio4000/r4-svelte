@@ -174,6 +174,7 @@
 		min-height: 1.25em;
 		gap: 8px;
 		padding: 0 12px;
+		overflow: hidden;
 	}
 
 	.led {

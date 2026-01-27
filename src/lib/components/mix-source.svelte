@@ -21,11 +21,12 @@
 	/**
 	 * @type {{
 	 *   sources: Source[],
+	 *   loading?: boolean,
 	 *   onadd?: (source: Source) => void,
 	 *   onremove?: (source: Source) => void
 	 * }}
 	 */
-	let {sources, onadd, onremove} = $props()
+	let {sources, loading = false, onadd, onremove} = $props()
 
 	let searchQuery = $state('')
 	/** @type {Source[]} */
@@ -73,15 +74,19 @@
 
 	function refreshSuggestions() {
 		const all = getAllSources()
-		const available = all.filter((s) => !sources.some((sel) => sel.type === s.type && sel.value === s.value))
-		suggestions = pickRandomN(10)(available)
+		suggestions = pickRandomN(10)(all)
 	}
 
+	// Initial load + manual refresh only
 	$effect(() => {
 		void suggestionSeed
-		void sources.length // react to sources changes
 		untrack(() => refreshSuggestions())
 	})
+
+	// Filter out selected sources without re-randomizing
+	let filteredSuggestions = $derived(
+		suggestions.filter((s) => !sources.some((sel) => sel.type === s.type && sel.value === s.value))
+	)
 
 	async function handleSearch() {
 		if (!searchQuery.trim()) {
@@ -147,7 +152,7 @@
 		}
 	}
 
-	let displayItems = $derived(searchResults.length ? searchResults : suggestions)
+	let displayItems = $derived(searchResults.length ? searchResults : filteredSuggestions)
 </script>
 
 <section>
@@ -157,6 +162,7 @@
 		bind:value={searchQuery}
 		oninput={debouncedSearch}
 		onkeydown={handleInputKeydown}
+		data-loading={loading || undefined}
 	/>
 
 	{#if displayItems.length}
@@ -211,6 +217,15 @@
 		font-size: var(--font-3);
 	}
 
+	@keyframes pulse-border {
+		0%, 100% { border-color: hsl(41 79% 55%); }
+		50% { border-color: hsl(41 79% 35%); }
+	}
+
+	section > input[data-loading] {
+		animation: pulse-border 1s ease-in-out infinite;
+	}
+
 	.suggestions,
 	.sources {
 		display: flex;
@@ -233,6 +248,11 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+
+		> :global(.placeholder),
+		> :global(img)  {
+			margin-left: -0.3rem;
+		}
 	}
 
 	.suggestions button :global(img),
