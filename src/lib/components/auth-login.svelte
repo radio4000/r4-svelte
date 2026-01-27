@@ -4,6 +4,7 @@
 	import * as m from '$lib/paraglide/messages'
 
 	let {onSuccess, redirect = '/settings'} = $props()
+	const id = $props.id()
 
 	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'
 	let email = $state('')
@@ -54,29 +55,39 @@
 				{loading ? m.common_sending() : m.auth_resend()}
 			</button>
 			<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
+			<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
 		</menu>
 	</section>
 {:else if step === 'password'}
 	<form
+		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
 			signInWithPassword()
 		}}
 	>
-		<label>
-			{m.auth_email()}
-			<input type="email" bind:value={email} required autocomplete="email" placeholder="Enter your email address…" />
-		</label>
-		<label>
-			{m.auth_password()}
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
 			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
+		<fieldset>
+			<label for="{id}-password">{m.auth_password()}</label>
+			<input
+				id="{id}-password"
 				type="password"
 				bind:value={password}
 				required
 				autocomplete="current-password"
 				placeholder="Enter your password…"
 			/>
-		</label>
+		</fieldset>
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -86,18 +97,27 @@
 	</form>
 	<menu>
 		<button type="button" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button>
+		<a href="/auth/reset-password">{m.auth_forgot_password()}</a>
 	</menu>
 {:else if step === 'email'}
 	<form
+		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
 			sendMagicLink()
 		}}
 	>
-		<label>
-			{m.auth_email()}
-			<input type="email" bind:value={email} required autocomplete="email" placeholder="Enter your email address…" />
-		</label>
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
+			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -114,17 +134,6 @@
 {/if}
 
 <style>
-	form,
-	label {
-		display: flex;
-		flex-direction: column;
-	}
-	form {
-		gap: 0.5rem;
-	}
-	label {
-		gap: 0.2rem;
-	}
 	menu {
 		display: flex;
 		flex-direction: column;

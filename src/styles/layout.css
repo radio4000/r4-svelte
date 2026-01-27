@@ -123,7 +123,7 @@ menu[data-vertical] {
 		}
 	}
 
-	a:not(:last-child) {
+	& > :not(:last-child) {
 		border-bottom: 1px solid var(--gray-4);
 	}
 }

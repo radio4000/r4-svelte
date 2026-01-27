@@ -1,15 +1,10 @@
 <script>
-	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 
 	const sha = $derived(__GIT_INFO__.sha)
-
-	async function logout() {
-		await sdk.auth.signOut()
-	}
 </script>
 
 <svelte:head>
@@ -17,17 +12,19 @@
 </svelte:head>
 
 <article class="constrained">
-	{#if appState.user}
-		<p class="row row--vcenter">
-			{m.auth_signed_in_as({email: appState.user.email})} <button onclick={() => logout()}>{m.auth_log_out()}</button>
-		</p>
-	{/if}
+	<h1>{m.settings_title()}</h1>
 
 	<menu data-vertical>
 		{#if !appState.user}
 			<a href="/auth">
 				<Icon icon="user" />
 				{m.auth_create_or_signin()}
+			</a>
+		{:else}
+			<a href="/settings/account">
+				<Icon icon="user" />
+				{m.settings_account()}
+				<small>{appState.user.email}</small>
 			</a>
 		{/if}
 		<a href="/settings/appearance">
@@ -61,10 +58,13 @@
 </article>
 
 <style>
-	article > p {
-		margin-bottom: 1rem;
+	h1 {
+		margin-block-end: 1rem;
 	}
 	menu {
 		margin: 0 0 1rem;
+	}
+	menu a small {
+		display: block;
 	}
 </style>
