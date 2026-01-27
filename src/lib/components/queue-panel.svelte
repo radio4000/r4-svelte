@@ -158,7 +158,7 @@
 		{#if view === 'queue'}
 			{#if filteredQueueTracks.length > 0}
 				<Tracklist tracks={filteredQueueTracks} virtual={true} />
-			{:else if trackIds.length === 0}
+			{:else if queueTracks.length === 0}
 				<div class="empty-state">
 					<p>{m.queue_no_tracks()}</p>
 					<p><small>{m.queue_select_channel()}</small></p>
