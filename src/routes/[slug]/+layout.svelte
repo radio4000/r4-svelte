@@ -41,6 +41,10 @@
 					{#if channel.source !== 'v1'}
 						<ButtonFollow {channel} />
 					{/if}
+					<button type="button" onclick={() => (appState.modal_share = {channel})}>
+						<Icon icon="external" size={16} />
+						Share
+					</button>
 				</menu>
 			</div>
 			<ChannelHero {channel} />
