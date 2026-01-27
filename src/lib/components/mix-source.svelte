@@ -6,7 +6,7 @@
 <script>
 	import {flip} from 'svelte/animate'
 	import {crossfade} from 'svelte/transition'
-	import {untrack} from 'svelte'
+	import {untrack, onDestroy} from 'svelte'
 
 	const [send, receive] = crossfade({
 		duration: 250,
@@ -32,6 +32,7 @@
 	let searchResults = $state([])
 	/** @type {ReturnType<typeof setTimeout> | undefined} */
 	let debounceTimer
+	onDestroy(() => clearTimeout(debounceTimer))
 
 	/** @type {Source[]} */
 	let suggestions = $state([])
@@ -218,7 +219,7 @@
 	}
 
 	.suggestions {
-		min-height: 7rem;
+		min-height: 7.2rem;
 		align-content: start;
 	}
 

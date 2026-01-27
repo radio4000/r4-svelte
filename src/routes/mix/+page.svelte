@@ -22,7 +22,8 @@
 		})
 	})
 
-	function buildMix() {
+	let baseMix = $derived.by(() => {
+		if (!sources.length) return null
 		const channelSources = sources.filter((s) => s.type === 'channel')
 		const tagSources = sources.filter((s) => s.type === 'tag')
 
@@ -41,16 +42,13 @@
 		if (options.withoutErrors) m = m.withoutErrors()
 
 		return m
-	}
-
-	let trackCount = $derived.by(() => {
-		if (sources.length === 0) return 0
-		return Math.min(buildMix().count(), options.limit)
 	})
 
+	let trackCount = $derived(baseMix ? Math.min(baseMix.count(), options.limit) : 0)
+
 	function getTrackIds() {
-		if (sources.length === 0) return /** @type {string[]} */ ([])
-		let m = buildMix()
+		if (!baseMix) return /** @type {string[]} */ ([])
+		let m = baseMix.clone()
 		if (options.shuffle) m = m.shuffle()
 		return m.take(options.limit).ids()
 	}
@@ -140,8 +138,8 @@
 
 	<!-- Load buttons -->
 	<div class="outputs">
-		<button class="output" onclick={() => loadToDeck('A')} disabled={!sources.length}>A</button>
-		<button class="output" onclick={() => loadToDeck('B')} disabled={!sources.length}>B</button>
+		<button class="output" onclick={() => loadToDeck('A')} disabled={!sources.length}>Load A</button>
+		<button class="output" onclick={() => loadToDeck('B')} disabled={!sources.length}>Load B</button>
 	</div>
 
 	<!-- Pipes to decks -->

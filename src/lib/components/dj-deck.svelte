@@ -21,12 +21,12 @@
 	let {deck = $bindable(), effectiveVolume = 1, queue = []} = $props()
 
 	let queueIndex = $state(0)
-	/** @type {string[] | null} */
-	let prevQueue = null
+	let prevQueueKey = ''
 
 	$effect(() => {
-		if (queue.length > 0 && queue !== prevQueue) {
-			prevQueue = queue
+		const key = queue.join(',')
+		if (queue.length > 0 && key !== prevQueueKey) {
+			prevQueueKey = key
 			queueIndex = 0
 			loadFromQueue(0)
 		}
@@ -113,6 +113,7 @@
 		<label>
 			<abbr title="Volume">V</abbr>
 			<input type="range" bind:value={deck.volume} min={0} max={1} step={0.05} />
+			<output>{Math.round(deck.volume * 100)}</output>
 		</label>
 		<label>
 			<abbr title="Speed">S</abbr>
