@@ -1,8 +1,4 @@
-<script>
-	import '$lib/youtube-video-custom-element.js'
-	import {searchTracks} from '$lib/search'
-	import InputRange from './input-range.svelte'
-
+<script module>
 	/**
 	 * @typedef {{
 	 *   id: 'A' | 'B',
@@ -14,238 +10,233 @@
 	 *   playing: boolean
 	 * }} DeckState
 	 */
+</script>
 
-	/** @type {{deck: DeckState, effectiveVolume?: number}} */
-	let {deck = $bindable(), effectiveVolume = 1} = $props()
+<script>
+	import '$lib/youtube-video-custom-element.js'
+	import {tracksCollection} from '$lib/tanstack/collections'
+	import Icon from './icon.svelte'
+
+	/** @type {{deck: DeckState, effectiveVolume?: number, queue?: string[]}} */
+	let {deck = $bindable(), effectiveVolume = 1, queue = []} = $props()
+
+	let queueIndex = $state(0)
+
+	$effect(() => {
+		if (queue.length > 0) {
+			queueIndex = 0
+			loadFromQueue(0)
+		}
+	})
+
+	function loadFromQueue(index) {
+		if (!queue.length || index < 0 || index >= queue.length) return
+		const track = tracksCollection.get(queue[index])
+		if (track) {
+			deck.trackId = track.id
+			deck.trackUrl = track.url || null
+			deck.trackTitle = track.title || track.url || track.id
+			deck.playing = false
+		}
+	}
+
+	function prevTrack() {
+		if (queueIndex > 0) loadFromQueue(--queueIndex)
+	}
+
+	function nextTrack() {
+		if (queueIndex < queue.length - 1) loadFromQueue(++queueIndex)
+	}
 
 	/** @type {HTMLElement & {play: () => void, pause: () => void, volume: number, playbackRate: number} | null} */
 	let player = $state(null)
 
-	let searchQuery = $state('')
-	/** @type {Array<{id: string, title: string, url: string}>} */
-	let searchResults = $state([])
-	let showResults = $state(false)
-
 	$effect(() => {
-		if (!player) return
-		player.volume = deck.volume * effectiveVolume
+		if (player) player.volume = deck.volume * effectiveVolume
 	})
 
 	$effect(() => {
-		if (!player) return
-		player.playbackRate = deck.speed
+		if (player) player.playbackRate = deck.speed
 	})
-
-	async function handleSearch() {
-		if (!searchQuery.trim()) {
-			searchResults = []
-			return
-		}
-		const results = await searchTracks(searchQuery, {limit: 8})
-		searchResults = results
-			.filter((t) => t.url?.includes('youtube'))
-			.map((t) => ({id: t.id, title: t.title || t.url || t.id, url: t.url || ''}))
-		showResults = true
-	}
-
-	/** @param {{id: string, title: string, url: string}} track */
-	function loadTrack(track) {
-		deck.trackId = track.id
-		deck.trackUrl = track.url
-		deck.trackTitle = track.title
-		deck.playing = false
-		searchQuery = ''
-		searchResults = []
-		showResults = false
-	}
 
 	function togglePlay() {
 		if (!player || !deck.trackUrl) return
-		if (deck.playing) {
-			player.pause()
-		} else {
-			player.play()
-		}
-	}
-
-	/** @param {KeyboardEvent} e */
-	function handleKeydown(e) {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			handleSearch()
-		}
-	}
-
-	function closeResults() {
-		showResults = false
+		if (deck.playing) player.pause()
+		else player.play()
 	}
 </script>
 
 <article data-deck={deck.id}>
-	<header>Deck {deck.id}</header>
+	<header class="caps">{deck.id}</header>
 
-	<div class="search">
-		<input
-			type="search"
-			placeholder="Search tracks..."
-			bind:value={searchQuery}
-			onkeydown={handleKeydown}
-			onfocus={() => searchResults.length && (showResults = true)}
-			onblur={closeResults}
-		/>
-		{#if showResults && searchResults.length > 0}
-			<menu onmousedown={(e) => e.preventDefault()}>
-				{#each searchResults as track (track.id)}
-					<li>
-						<button type="button" onclick={() => loadTrack(track)}>
-							{track.title}
-						</button>
-					</li>
-				{/each}
-			</menu>
-		{/if}
-	</div>
-
-	<div class="player-wrap">
+	<div class="screen">
 		{#if deck.trackUrl}
 			<youtube-video
 				bind:this={player}
 				src={deck.trackUrl}
 				onplay={() => (deck.playing = true)}
 				onpause={() => (deck.playing = false)}
-				onended={() => (deck.playing = false)}
+				onended={() => {
+					deck.playing = false
+					nextTrack()
+				}}
 			></youtube-video>
 		{:else}
-			<div class="empty">No track loaded</div>
+			<span class="empty">—</span>
 		{/if}
 	</div>
 
-	<p class="track-title">{deck.trackTitle || '—'}</p>
+	<div class="display">
+		{#if deck.trackTitle}
+			<span class="title">{deck.trackTitle}</span>
+		{/if}
+		{#if queue.length}
+			<span class="counter">{queueIndex + 1}/{queue.length}</span>
+		{/if}
+	</div>
+
+	<menu class="transport">
+		<button type="button" onclick={prevTrack} disabled={!queue.length || queueIndex === 0}>
+			<Icon icon="previous-fill" />
+		</button>
+		<button type="button" class="play" onclick={togglePlay} disabled={!deck.trackUrl}>
+			<Icon icon={deck.playing ? 'pause' : 'play-fill'} />
+		</button>
+		<button type="button" onclick={nextTrack} disabled={!queue.length || queueIndex >= queue.length - 1}>
+			<Icon icon="next-fill" />
+		</button>
+	</menu>
 
 	<div class="controls">
-		<button type="button" onclick={togglePlay} disabled={!deck.trackUrl} class="play-btn">
-			{deck.playing ? '⏸' : '▶'}
-		</button>
-
-		<label class="control-row">
-			<span>Vol</span>
-			<InputRange bind:value={deck.volume} min={0} max={1} step={0.05} />
+		<label>
+			<abbr title="Volume">V</abbr>
+			<input type="range" bind:value={deck.volume} min={0} max={1} step={0.05} />
 		</label>
-
-		<label class="control-row">
-			<span>Speed</span>
-			<InputRange bind:value={deck.speed} min={0.25} max={2} step={0.25} />
-			<output>{deck.speed}x</output>
+		<label>
+			<abbr title="Speed">S</abbr>
+			<input type="range" bind:value={deck.speed} min={0.5} max={1.5} step={0.1} />
+			<output>{deck.speed.toFixed(1)}</output>
 		</label>
 	</div>
 </article>
 
 <style>
 	article {
-		border: 1px solid var(--gray-6);
-		padding: 0.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		display: grid;
+		grid-template-rows: auto auto auto auto auto;
+		background: var(--gray-1);
+		padding: 12px;
+		gap: 8px;
 	}
 
 	header {
-		font-weight: 600;
-		text-transform: uppercase;
-		font-size: 0.75rem;
-		color: var(--gray-10);
+		color: var(--gray-9);
 	}
 
-	.search {
-		position: relative;
-	}
-
-	.search input {
-		width: 100%;
-	}
-
-	.search menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background: var(--gray-1);
-		border: 1px solid var(--gray-6);
-		z-index: 10;
-		max-height: 200px;
-		overflow-y: auto;
-	}
-
-	.search menu button {
-		width: 100%;
-		text-align: left;
-		border: none;
-		background: none;
-		box-shadow: none;
-		font-size: 0.875rem;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.search menu button:hover {
-		background: var(--gray-3);
-	}
-
-	.player-wrap {
+	.screen {
 		aspect-ratio: 16/9;
-		background: var(--gray-2);
+		background: var(--gray-3);
+		border-radius: 4px;
+		overflow: hidden;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
-	.player-wrap :global(youtube-video) {
+	.screen :global(youtube-video) {
 		width: 100%;
 		height: 100%;
 	}
 
 	.empty {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		color: var(--gray-8);
-		font-size: 0.875rem;
+		color: var(--gray-6);
+		font-size: 24px;
 	}
 
-	.track-title {
-		font-size: 0.875rem;
-		margin: 0;
+	.display {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		min-height: 1.25em;
+		gap: 8px;
+	}
+
+	.title {
+		font-size: 12px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		flex: 1;
+	}
+
+	.counter {
+		font-size: 10px;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-9);
+	}
+
+	.transport {
+		display: flex;
+		gap: 4px;
+		justify-content: center;
+	}
+
+	.transport button {
+		width: 40px;
+		height: 40px;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--gray-3);
+		border: 1px solid var(--gray-5);
+	}
+
+	.transport button:not(:disabled):hover {
+		background: var(--gray-4);
+	}
+
+	.transport button:not(:disabled):active {
+		background: var(--gray-5);
+	}
+
+	.transport button.play {
+		width: 56px;
+	}
+
+	.transport button:disabled {
+		opacity: 0.3;
 	}
 
 	.controls {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 4px;
 	}
 
-	.play-btn {
-		font-size: 1.5rem;
-		padding: 0.25rem 1rem;
-	}
-
-	.control-row {
-		display: flex;
+	.controls label {
+		display: grid;
+		grid-template-columns: 16px 1fr 28px;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 6px;
+		font-size: 10px;
 	}
 
-	.control-row span {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		color: var(--gray-10);
-		min-width: 3rem;
+	.controls abbr {
+		font-weight: 600;
+		color: var(--gray-9);
+		text-decoration: none;
 	}
 
-	.control-row output {
-		font-size: 0.75rem;
+	.controls input[type='range'] {
+		width: 100%;
+		margin: 0;
+		accent-color: var(--gray-9);
+	}
+
+	.controls output {
 		font-variant-numeric: tabular-nums;
-		min-width: 2.5rem;
+		color: var(--gray-9);
+		text-align: right;
 	}
 </style>

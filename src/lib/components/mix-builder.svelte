@@ -112,9 +112,6 @@
 		return Math.min(buildMix().count(), options.limit)
 	})
 
-	let hasOnlyTags = $derived(sources.length > 0 && !sources.some((s) => s.type === 'channel'))
-	let needsChannelHint = $derived(!loading && trackCount === 0 && hasOnlyTags)
-
 	async function handleSearch() {
 		if (!searchQuery.trim()) {
 			searchResults = []
@@ -168,16 +165,6 @@
 		sources = sources.filter((s) => !(s.type === source.type && s.value === source.value))
 	}
 
-	async function playMix() {
-		if (sources.length === 0) return
-
-		let m = buildMix()
-		if (options.shuffle) m = m.shuffle()
-		if (options.limit) m = m.take(options.limit)
-
-		await m.play()
-	}
-
 	/** @param {KeyboardEvent} e */
 	function handleInputKeydown(e) {
 		if (e.key === 'Enter') {
@@ -194,128 +181,155 @@
 </script>
 
 <section>
-	<fieldset>
-		<legend>Sources</legend>
-		<div>
-			<input
-				type="search"
-				placeholder="Search channels or #tags..."
-				bind:value={searchQuery}
-				onkeydown={handleInputKeydown}
-				onfocus={() => searchQuery && handleSearch()}
-				onblur={handleInputBlur}
-			/>
-			{#if showResults && searchResults.length > 0}
-				<menu>
-					{#each searchResults as result (result.value)}
-						<li>
-							<button type="button" onclick={() => addSource(result)}>
-								<small>{result.type === 'tag' ? 'tag' : 'channel'}</small>
-								{result.label}
-							</button>
-						</li>
-					{/each}
-				</menu>
-			{/if}
-		</div>
-
-		{#if suggestions.length > 0}
-			<p class="suggestions">
-				<button type="button" onclick={() => suggestionSeed++} title="More suggestions">↻</button>
-				{#each suggestions as suggestion (suggestion.type + suggestion.value)}
-					<button type="button" onclick={() => addSource(suggestion)}>
-						{suggestion.label}
-					</button>
+	<search>
+		<input
+			type="search"
+			placeholder="Search channels or #tags..."
+			bind:value={searchQuery}
+			onkeydown={handleInputKeydown}
+			onfocus={() => searchQuery && handleSearch()}
+			onblur={handleInputBlur}
+		/>
+		{#if showResults && searchResults.length}
+			<menu>
+				{#each searchResults as result (result.value)}
+					<li>
+						<button type="button" onclick={() => addSource(result)}>
+							<small>{result.type === 'tag' ? 'tag' : 'channel'}</small>
+							{result.label}
+						</button>
+					</li>
 				{/each}
-			</p>
-		{:else if sources.length === 0}
-			<p><small>Search for channels to get started</small></p>
+			</menu>
 		{/if}
+	</search>
 
-		{#if sources.length > 0}
-			<p>
-				{#each sources as source (source.type + source.value)}
-					<button type="button" class="chip" onclick={() => removeSource(source)}>
-						{source.label} ×
-					</button>
-				{/each}
-			</p>
-		{/if}
-	</fieldset>
+	{#if suggestions.length}
+		<menu class="suggestions">
+			<button type="button" onclick={() => suggestionSeed++} title="More">↻</button>
+			{#each suggestions as suggestion (suggestion.type + suggestion.value)}
+				<button type="button" onclick={() => addSource(suggestion)}>{suggestion.label}</button>
+			{/each}
+		</menu>
+	{/if}
 
-	<fieldset>
-		<legend>Options</legend>
-		<p>
-			<button type="button" class:active={options.shuffle} onclick={() => (options.shuffle = !options.shuffle)}>
-				Shuffle
-			</button>
-			<button
-				type="button"
-				class:active={options.withoutErrors}
-				onclick={() => (options.withoutErrors = !options.withoutErrors)}
-			>
-				No errors
-			</button>
-		</p>
+	{#if sources.length}
+		<menu class="sources">
+			{#each sources as source (source.type + source.value)}
+				<button type="button" class="chip" onclick={() => removeSource(source)}>{source.label} ×</button>
+			{/each}
+		</menu>
+	{/if}
 
+	<menu class="options">
+		<button type="button" class:active={options.shuffle} onclick={() => (options.shuffle = !options.shuffle)}>
+			Shuffle
+		</button>
+		<button
+			type="button"
+			class:active={options.withoutErrors}
+			onclick={() => (options.withoutErrors = !options.withoutErrors)}
+		>
+			No errors
+		</button>
 		<label>
-			<span>Limit: {options.limit}</span>
-			<InputRange bind:value={options.limit} min={10} max={500} step={10} />
+			<InputRange bind:value={options.limit} min={10} max={200} step={10} visualStep={20} />
+			<output>{loading ? '...' : trackCount} tracks</output>
 		</label>
-	</fieldset>
-
-	<footer>
-		<output>
-			{loading ? 'Loading...' : `${trackCount} tracks`}
-			{#if needsChannelHint}
-				<small>— add a channel to get tracks to filter</small>
-			{/if}
-		</output>
-		<button type="button" class="primary" onclick={playMix} disabled={sources.length === 0 || loading}>Play</button>
-	</footer>
+	</menu>
 </section>
 
 <style>
-	/* Dropdown positioning */
-	section > fieldset:first-of-type > div:first-child {
+	section {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	search {
+		display: block;
 		position: relative;
 	}
 
-	section > fieldset:first-of-type > div:first-child > menu {
+	search input {
+		width: 100%;
+		font-size: 13px;
+	}
+
+	search menu {
 		position: absolute;
 		top: 100%;
 		left: 0;
 		right: 0;
 		background: var(--gray-1);
-		border: 1px solid var(--gray-6);
+		border: 1px solid var(--gray-5);
+		border-radius: 4px;
 		z-index: 10;
+		margin-top: 2px;
 	}
 
-	section > fieldset:first-of-type > div:first-child > menu button {
+	search menu button {
 		width: 100%;
 		text-align: left;
 		border: none;
 		background: none;
 		box-shadow: none;
+		font-size: 12px;
+		padding: 6px 8px;
 	}
 
-	section > fieldset:first-of-type > div:first-child > menu button:hover {
+	search menu button:hover {
 		background: var(--gray-3);
 	}
 
-	section > fieldset:first-of-type > div:first-child > menu small {
-		color: var(--gray-9);
+	search menu small {
+		color: var(--gray-8);
+		font-size: 10px;
 		text-transform: uppercase;
-		font-size: 0.625rem;
+		margin-right: 6px;
 	}
 
-	output {
-		font-variant-numeric: tabular-nums;
-	}
-
-	.suggestions {
+	.suggestions,
+	.sources {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.25rem;
+		gap: 6px;
+	}
+
+	.suggestions button,
+	.sources button {
+		font-size: 12px;
+		padding: 4px 8px;
+	}
+
+	.options {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.options button {
+		font-size: 12px;
+		padding: 4px 10px;
+	}
+
+	.options label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex: 1;
+		min-width: 120px;
+	}
+
+	.options label :global(.input-range) {
+		flex: 1;
+	}
+
+	.options output {
+		font-size: 11px;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-9);
+		white-space: nowrap;
 	}
 </style>
