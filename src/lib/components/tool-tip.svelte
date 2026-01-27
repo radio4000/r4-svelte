@@ -74,10 +74,18 @@
 
 	/* Modern anchor positioning with auto-flip fallbacks */
 	@supports (position-area: bottom) {
-		@position-try --top { position-area: top; }
-		@position-try --bottom { position-area: bottom; }
-		@position-try --left { position-area: left; }
-		@position-try --right { position-area: right; }
+		@position-try --top {
+			position-area: top;
+		}
+		@position-try --bottom {
+			position-area: bottom;
+		}
+		@position-try --left {
+			position-area: left;
+		}
+		@position-try --right {
+			position-area: right;
+		}
 
 		.tooltip {
 			inset: unset;
@@ -85,9 +93,17 @@
 			position-try-fallbacks: --top, --bottom, --left, --right;
 			position-visibility: anchors-visible;
 		}
-		.tooltip-top { position-area: top; }
-		.tooltip-bottom { position-area: bottom; }
-		.tooltip-left { position-area: left; }
-		.tooltip-right { position-area: right; }
+		.tooltip-top {
+			position-area: top;
+		}
+		.tooltip-bottom {
+			position-area: bottom;
+		}
+		.tooltip-left {
+			position-area: left;
+		}
+		.tooltip-right {
+			position-area: right;
+		}
 	}
 </style>

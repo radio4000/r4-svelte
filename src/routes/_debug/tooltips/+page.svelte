@@ -52,7 +52,6 @@
 			<abbr title="HyperText Markup Language">HTML</abbr>
 		</menu>
 	</section>
-
 </div>
 
 <style>
