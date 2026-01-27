@@ -1,16 +1,13 @@
-If the system has `agent-browser` installed as well as Chromium,
-you can use it to get a text view of websites.
+# Browser testing
+
+Use `agent-browser` for web automation. 
+
+The core workflow is:
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
+Run `agent-browser --help` for all commands.
 
 Our app usually runs on http://localhost:5173 (dev) or http://pg.radio4000.com (prod).
-
-Usage: https://raw.githubusercontent.com/vercel-labs/agent-browser/refs/heads/main/README.md
-
-```bash
-agent-browser open example.com
-agent-browser snapshot                    # Get accessibility tree with refs
-agent-browser click @e2                   # Click by ref from snapshot
-agent-browser fill @e3 "test@example.com" # Fill by ref
-agent-browser get text @e1                # Get text by ref
-agent-browser screenshot page.png
-agent-browser close
-```
