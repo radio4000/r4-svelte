@@ -48,7 +48,7 @@
 		<p>Browser-rendered tooltips. Delayed appearance, no styling control, but zero JS.</p>
 		<menu>
 			<button title="Native browser tooltip">Hover for title</button>
-			<a href="#" title="Link tooltip text">Link with title</a>
+			<a href="/_debug/tooltips" title="Link tooltip text">Link with title</a>
 			<abbr title="HyperText Markup Language">HTML</abbr>
 		</menu>
 	</section>
