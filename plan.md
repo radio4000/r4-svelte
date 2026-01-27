@@ -6,6 +6,17 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ## BACKLOG
 
+- Option for users to backup/export their radio (TBD) -- use the r4 api backup endpoint, or r4 cli download, or or?
+- Use /settings/appearance for user theme related things, not to showcase the entire form kitchensink. That can go into a /\_debug/style route or so
+
+### Forms
+
+- Unify form markup: `form>fieldset>label+input`, use `$props.id()` for unique IDs. Remaining files:
+  - [slug]/edit, [slug]/delete, create-channel
+  - track-form, [slug]/tracks/[tid]/delete
+  - search/+page, search-controls, header-search
+  - theme-editor, keyboard-editor, live-chat, batch-action-bar
+
 ### Broadcast & Live
 
 - improved broadcast icons on active channels → when a channel is broadcasting, show a "live" icon on the channel card and on the channel's homepage. We have this "live dot" to reuse maybe
@@ -54,13 +65,17 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 ### Authentication & Account
 
 **Current work (auth-improvements branch):**
-- Sign up only offers magic link, login has password option. Add password signup?
-- Hardcoded English strings need i18n: "Connect", "Change email", "Delete account", "Save password", "Never mind, go back"
-- Unify form markup across auth pages (some use `<fieldset>`, some plain `<label>`)
-- Welcome message for new accounts (first login? onboarding flow?)
+
+- Hardcoded English strings need i18n: "Connect", "Delete account"
 - Optimize /settings/account UI — cleaner provider management, better visual hierarchy
 
+**Done:**
+
+- Sign up now offers password option (matches login)
+- Form markup unified: `form.form > fieldset > label + input`, primary buttons
+
 **Existing functionality (working):**
+
 - Reset password: `/auth/reset-password` → email → `/auth/reset-password/confirm`
 - Change email: `/settings/account/email`
 - Change password: `/settings/account/password`

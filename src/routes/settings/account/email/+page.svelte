@@ -60,13 +60,13 @@
 		{:else}
 			<form class="form" onsubmit={updateEmail}>
 				<fieldset>
-					<legend><label for="new-email">{m.account_new_email()}</label></legend>
+					<label for="new-email">{m.account_new_email()}</label>
 					<input id="new-email" type="email" bind:value={newEmail} autocomplete="email" required />
 				</fieldset>
 				{#if error}
 					<p class="error" role="alert">{error}</p>
 				{/if}
-				<button type="submit" disabled={loading}>
+				<button type="submit" class="primary" disabled={loading}>
 					{loading ? m.loading() : m.account_change_email()}
 				</button>
 			</form>

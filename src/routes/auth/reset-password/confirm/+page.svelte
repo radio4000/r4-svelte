@@ -53,15 +53,29 @@
 			</menu>
 		</section>
 	{:else}
-		<form onsubmit={handleSubmit}>
-			<label>
-				{m.auth_new_password()}
-				<input type="password" bind:value={password} required autocomplete="new-password" minlength="6" />
-			</label>
-			<label>
-				{m.auth_confirm_password()}
-				<input type="password" bind:value={confirmPassword} required autocomplete="new-password" minlength="6" />
-			</label>
+		<form class="form" onsubmit={handleSubmit}>
+			<fieldset>
+				<label for="new-password">{m.auth_new_password()}</label>
+				<input
+					id="new-password"
+					type="password"
+					bind:value={password}
+					required
+					autocomplete="new-password"
+					minlength="6"
+				/>
+			</fieldset>
+			<fieldset>
+				<label for="confirm-password">{m.auth_confirm_password()}</label>
+				<input
+					id="confirm-password"
+					type="password"
+					bind:value={confirmPassword}
+					required
+					autocomplete="new-password"
+					minlength="6"
+				/>
+			</fieldset>
 			{#if error}
 				<p class="error" role="alert">{error}</p>
 			{/if}
@@ -77,17 +91,6 @@
 		margin: 3vh auto;
 		font-size: var(--font-7);
 		text-align: center;
-	}
-	form,
-	label {
-		display: flex;
-		flex-direction: column;
-	}
-	form {
-		gap: 0.5rem;
-	}
-	label {
-		gap: 0.2rem;
 	}
 	section {
 		text-align: center;

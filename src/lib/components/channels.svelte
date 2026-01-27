@@ -321,6 +321,6 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin: 2rem 0 10rem 0.5rem;
+		margin: 2rem 0.5rem 1rem;
 	}
 </style>

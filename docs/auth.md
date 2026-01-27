@@ -3,6 +3,7 @@
 Supabase Auth via `sdk.supabase.auth`. See `@radio4000/sdk` in docs/overview.json for methods.
 
 ## Sign up/in
+
 OAuth (Google, Facebook) or email (magic link or password).
 
 ## Password reset

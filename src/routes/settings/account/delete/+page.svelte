@@ -44,11 +44,11 @@
 		{/if}
 
 		{#if !confirmDelete}
-			<button onclick={() => (confirmDelete = true)} data-variant="danger">Delete my account</button>
+			<button onclick={() => (confirmDelete = true)} class="danger">Delete my account</button>
 		{:else}
 			<p><strong>Are you sure? This cannot be undone.</strong></p>
 			<menu>
-				<button onclick={handleDeleteAccount} disabled={deleting} data-variant="danger">
+				<button onclick={handleDeleteAccount} disabled={deleting} class="danger">
 					{deleting ? 'Deleting...' : 'Yes, delete everything'}
 				</button>
 				<button onclick={() => (confirmDelete = false)}>Cancel</button>

@@ -52,7 +52,7 @@
 	{:else}
 		<form class="form" onsubmit={updatePassword}>
 			<fieldset>
-				<legend><label for="new-password">{m.auth_new_password()}</label></legend>
+				<label for="new-password">{m.auth_new_password()}</label>
 				<input
 					id="new-password"
 					type="password"
@@ -63,7 +63,7 @@
 				/>
 			</fieldset>
 			<fieldset>
-				<legend><label for="confirm-password">{m.auth_confirm_password()}</label></legend>
+				<label for="confirm-password">{m.auth_confirm_password()}</label>
 				<input
 					id="confirm-password"
 					type="password"
@@ -79,11 +79,13 @@
 			{#if success}
 				<p class="success">{m.account_password_updated()}</p>
 			{/if}
-			<button type="submit" disabled={loading}>
-				{loading ? m.loading() : 'Save password'}
+			<button type="submit" class="primary" disabled={loading}>
+				{loading ? m.loading() : m.common_save()}
 			</button>
 		</form>
-		<p><a href="/settings/account">Never mind, go back</a></p>
+		<menu>
+			<a href="/settings/account">← {m.common_back()}</a>
+		</menu>
 	{/if}
 </article>
 

@@ -3,10 +3,12 @@
 	import AuthProviders from './auth-providers.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {redirect = '/settings'} = $props()
+	let {onSuccess, redirect = '/settings'} = $props()
+	const id = $props.id()
 
-	let step = $state('providers') // 'providers' | 'email' | 'linkSent'
+	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'
 	let email = $state('')
+	let password = $state('')
 	let error = $state(/** @type {string | null} */ (null))
 	let loading = $state(false)
 
@@ -27,6 +29,18 @@
 		}
 	}
 
+	async function signUpWithPassword() {
+		loading = true
+		error = null
+		const {data, error: authError} = await sdk.auth.signUp({email, password})
+		loading = false
+		if (authError) {
+			error = authError.message
+		} else if (data?.user) {
+			onSuccess?.(data.user)
+		}
+	}
+
 	function handleEmailContinue() {
 		step = 'email'
 	}
@@ -41,19 +55,69 @@
 				{loading ? m.common_sending() : m.auth_resend()}
 			</button>
 			<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
+			<button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button>
 		</menu>
 	</section>
+{:else if step === 'password'}
+	<form
+		class="form"
+		onsubmit={(e) => {
+			e.preventDefault()
+			signUpWithPassword()
+		}}
+	>
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
+			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
+		<fieldset>
+			<label for="{id}-password">{m.auth_password()}</label>
+			<input
+				id="{id}-password"
+				type="password"
+				bind:value={password}
+				required
+				autocomplete="new-password"
+				minlength="6"
+				placeholder="Choose a password…"
+			/>
+		</fieldset>
+		{#if error}
+			<p class="error" role="alert">{error}</p>
+		{/if}
+		<button type="submit" class="primary" disabled={loading}>
+			{loading ? m.auth_creating_account() : m.auth_create_account()}
+		</button>
+	</form>
+	<menu>
+		<button type="button" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button>
+	</menu>
 {:else if step === 'email'}
 	<form
+		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
 			sendMagicLink()
 		}}
 	>
-		<label>
-			{m.auth_email()}
-			<input type="email" bind:value={email} required autocomplete="email" placeholder="Enter your email address…" />
-		</label>
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
+			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -62,6 +126,7 @@
 		</button>
 	</form>
 	<menu>
+		<button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button>
 		<button type="button" onclick={() => (step = 'providers')}>← {m.common_back()}</button>
 	</menu>
 {:else}
@@ -76,17 +141,6 @@
 {/if}
 
 <style>
-	form,
-	label {
-		display: flex;
-		flex-direction: column;
-	}
-	form {
-		gap: 0.5rem;
-	}
-	label {
-		gap: 0.2rem;
-	}
 	menu {
 		display: flex;
 		flex-direction: column;

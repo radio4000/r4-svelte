@@ -4,6 +4,7 @@
 	import * as m from '$lib/paraglide/messages'
 
 	let {onSuccess, redirect = '/settings'} = $props()
+	const id = $props.id()
 
 	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'
 	let email = $state('')
@@ -59,25 +60,34 @@
 	</section>
 {:else if step === 'password'}
 	<form
+		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
 			signInWithPassword()
 		}}
 	>
-		<label>
-			{m.auth_email()}
-			<input type="email" bind:value={email} required autocomplete="email" placeholder="Enter your email address…" />
-		</label>
-		<label>
-			{m.auth_password()}
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
 			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
+		<fieldset>
+			<label for="{id}-password">{m.auth_password()}</label>
+			<input
+				id="{id}-password"
 				type="password"
 				bind:value={password}
 				required
 				autocomplete="current-password"
 				placeholder="Enter your password…"
 			/>
-		</label>
+		</fieldset>
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -91,15 +101,23 @@
 	</menu>
 {:else if step === 'email'}
 	<form
+		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
 			sendMagicLink()
 		}}
 	>
-		<label>
-			{m.auth_email()}
-			<input type="email" bind:value={email} required autocomplete="email" placeholder="Enter your email address…" />
-		</label>
+		<fieldset>
+			<label for="{id}-email">{m.auth_email()}</label>
+			<input
+				id="{id}-email"
+				type="email"
+				bind:value={email}
+				required
+				autocomplete="email"
+				placeholder="Enter your email address…"
+			/>
+		</fieldset>
 		{#if error}
 			<p class="error" role="alert">{error}</p>
 		{/if}
@@ -116,17 +134,6 @@
 {/if}
 
 <style>
-	form,
-	label {
-		display: flex;
-		flex-direction: column;
-	}
-	form {
-		gap: 0.5rem;
-	}
-	label {
-		gap: 0.2rem;
-	}
 	menu {
 		display: flex;
 		flex-direction: column;

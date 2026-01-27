@@ -104,10 +104,9 @@
 			{/each}
 		</menu>
 
-		<menu data-vertical>
-			<div><button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button></div>
-			<a href="/settings/account/delete">Delete account</a>
-		</menu>
+		<p><button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button></p>
+		<br />
+		<p><a href="/settings/account/delete">I want to delete my account</a></p>
 	{/if}
 </article>
 

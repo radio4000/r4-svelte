@@ -15,7 +15,7 @@
 </script>
 
 <menu>
-	<button type="button" class="primary" onclick={onEmailClick}>{m.auth_continue_with_email()}</button>
+	<button type="button" onclick={onEmailClick}>{m.auth_continue_with_email()}</button>
 	<button type="button" onclick={() => signInWithProvider('google')}>{m.auth_continue_with_google()}</button>
 	<button type="button" onclick={() => signInWithProvider('facebook')}>{m.auth_continue_with_facebook()}</button>
 </menu>

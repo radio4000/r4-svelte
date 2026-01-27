@@ -13,12 +13,15 @@
 
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
-	const canAddTrack = $derived(isSignedIn && channel)
 
 	/** @param {{track?: import('$lib/types').Track, url?: string}} [data] */
 	function open(data = {}) {
-		if (!canAddTrack) {
+		if (!isSignedIn) {
 			goto('/auth')
+			return
+		}
+		if (!channel) {
+			goto('/create-channel')
 			return
 		}
 		const track = data.track

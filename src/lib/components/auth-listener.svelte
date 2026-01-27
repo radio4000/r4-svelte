@@ -17,9 +17,10 @@
 		const error = params.get('error_description') || params.get('error')
 
 		if (message || error) {
-			const query = new URLSearchParams()
-			if (message) query.set('message', message)
-			if (error) query.set('error', error)
+			const query = new URLSearchParams({
+				...(message && {message}),
+				...(error && {error})
+			}).toString()
 			goto(`/settings/account/email?${query}`)
 		}
 	})
