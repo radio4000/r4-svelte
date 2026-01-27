@@ -53,14 +53,18 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 ### Authentication & Account
 
-- How do I reset password? Magic link? Reset PW?
-  - ? Is this currently broken, or just undocumented?
+**Current work (auth-improvements branch):**
+- Sign up only offers magic link, login has password option. Add password signup?
+- Hardcoded English strings need i18n: "Connect", "Change email", "Delete account", "Save password", "Never mind, go back"
+- Unify form markup across auth pages (some use `<fieldset>`, some plain `<label>`)
+- Welcome message for new accounts (first login? onboarding flow?)
+- Optimize /settings/account UI — cleaner provider management, better visual hierarchy
 
-- Change user email flow
-  - ? Same question — broken or missing?
-
-- How do I manage our different authentication providers for a single account? E.g. add google oauth to my email login, or vice versa
-  - ? What providers do you support? How often do users ask about this?
+**Existing functionality (working):**
+- Reset password: `/auth/reset-password` → email → `/auth/reset-password/confirm`
+- Change email: `/settings/account/email`
+- Change password: `/settings/account/password`
+- OAuth provider management: `/settings/account` (connect/disconnect Google, Facebook)
 
 ### Settings & Appearance
 

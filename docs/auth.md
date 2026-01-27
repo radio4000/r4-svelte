@@ -1,31 +1,33 @@
 # Authentication
 
-Supabase Auth via `sdk.supabase.auth`.
+Supabase Auth via `sdk.supabase.auth`. See `@radio4000/sdk` in docs/overview.json for methods.
+
+## Sign up/in
+OAuth (Google, Facebook) or email (magic link or password).
 
 ## Password reset
 
-1. `/auth/reset-password` → user requests email
-2. Click link → `PASSWORD_RECOVERY` event → redirect to `/auth/reset-password/confirm`
-3. `updateUser({password})`
-
-If "Secure password change" is enabled, call `reauthenticate()` first, then `updateUser({password, nonce})`.
+`/auth/reset-password` → email → `PASSWORD_RECOVERY` event → `/auth/reset-password/confirm` → `updateUser({password})`.
 
 ## Identity linking
 
-Requires "Enable Manual Linking" in Supabase dashboard → Auth → Settings.
+Users add/remove OAuth providers from `/settings/account`. Requires "Enable Manual Linking" in Supabase dashboard. Need 2+ identities to unlink one.
 
-Users can add/remove OAuth providers from `/settings/account`. Adding a password via `updateUser({password})` works regardless (lets OAuth-only users add password as backup).
+## Routes
 
-```js
-const {data} = await sdk.supabase.auth.getUserIdentities()
-await sdk.supabase.auth.linkIdentity({provider: 'google', options: {redirectTo}})
-await sdk.supabase.auth.unlinkIdentity(identity) // needs 2+ identities
-```
+- `/auth` - user entry point
+- `/auth/login` — magic link, password, OAuth
+- `/auth/create-account` — magic link, OAuth
+- `/auth/reset-password` — request reset email
+- `/auth/reset-password/confirm` — set new password
+- `/settings/account` — email, providers, logout, delete link
+- `/settings/account/password` — change password
+- `/settings/account/email` — change email
+- `/settings/account/delete` — delete account
 
-## Files
+## Components
 
-- `auth-listener.svelte` - handles `INITIAL_SESSION`, `SIGNED_IN`, `PASSWORD_RECOVERY`
-- `auth-login.svelte` - login form
-- `/auth/reset-password/` - request reset
-- `/auth/reset-password/confirm/` - set new password
-- `/settings/account/` - update password, email, linked providers
+- `auth-listener.svelte` — is part of layout.svelte, handles session events, redirects
+- `auth-login.svelte` — login form
+- `auth-signup.svelte` — signup form
+- `auth-providers.svelte` — OAuth buttons
