@@ -4,6 +4,14 @@
 </script>
 
 <script>
+	import {flip} from 'svelte/animate'
+	import {crossfade} from 'svelte/transition'
+	import {untrack} from 'svelte'
+
+	const [send, receive] = crossfade({
+		duration: 250,
+		fallback: () => ({duration: 150, css: (t) => `opacity: ${t}; transform: scale(${0.8 + 0.2 * t})`})
+	})
 	import {pickRandomN} from '$lib/lab/selectors'
 	import {searchChannels} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
@@ -22,7 +30,6 @@
 	let searchQuery = $state('')
 	/** @type {Source[]} */
 	let searchResults = $state([])
-	let showResults = $state(false)
 	/** @type {ReturnType<typeof setTimeout> | undefined} */
 	let debounceTimer
 
@@ -71,7 +78,8 @@
 
 	$effect(() => {
 		void suggestionSeed
-		refreshSuggestions()
+		void sources.length // react to sources changes
+		untrack(() => refreshSuggestions())
 	})
 
 	async function handleSearch() {
@@ -85,7 +93,6 @@
 			if (tag) {
 				searchResults = [{type: 'tag', value: tag, label: `#${tag}`}]
 			}
-			showResults = true
 			return
 		}
 
@@ -109,8 +116,6 @@
 				searchResults.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug, image: ch.image})
 			}
 		}
-
-		showResults = true
 	}
 
 	/** @param {Source} source */
@@ -120,7 +125,6 @@
 		}
 		searchQuery = ''
 		searchResults = []
-		showResults = false
 	}
 
 	/** @param {Source} source */
@@ -142,51 +146,35 @@
 		}
 	}
 
-	/** @type {HTMLElement | null} */
-	let dropdown = $state(null)
-
-	/** @param {FocusEvent} e */
-	function handleInputBlur(e) {
-		const related = /** @type {HTMLElement | null} */ (e.relatedTarget)
-		if (dropdown?.contains(related)) return
-		showResults = false
-	}
+	let displayItems = $derived(searchResults.length ? searchResults : suggestions)
 </script>
 
 <section>
-	<search>
-		<input
-			type="search"
-			placeholder="Search channels or #tags..."
-			bind:value={searchQuery}
-			oninput={debouncedSearch}
-			onkeydown={handleInputKeydown}
-			onfocus={() => searchQuery && handleSearch()}
-			onblur={handleInputBlur}
-		/>
-		{#if showResults && searchResults.length}
-			<menu bind:this={dropdown}>
-				{#each searchResults as result (result.value)}
-					<li>
-						<button type="button" onclick={() => addSource(result)}>
-							<small>{result.type === 'tag' ? 'tag' : 'channel'}</small>
-							{result.label}
-						</button>
-					</li>
-				{/each}
-			</menu>
-		{/if}
-	</search>
+	<input
+		type="search"
+		placeholder="Search channels or #tags..."
+		bind:value={searchQuery}
+		oninput={debouncedSearch}
+		onkeydown={handleInputKeydown}
+	/>
 
-	{#if suggestions.length}
+	{#if displayItems.length}
 		<menu class="suggestions">
-			<button type="button" onclick={() => suggestionSeed++} title="More">↻</button>
-			{#each suggestions as suggestion (suggestion.type + suggestion.value)}
-				<button type="button" onclick={() => addSource(suggestion)}>
-					{#if suggestion.type === 'channel'}
-						<ChannelAvatar id={suggestion.image} alt="" size={24} />
+			{#if !searchResults.length}
+				<button type="button" onclick={() => suggestionSeed++} title="More">↻</button>
+			{/if}
+			{#each displayItems as item (item.type + item.value)}
+				<button
+					type="button"
+					onclick={() => addSource(item)}
+					in:receive={{key: item.type + item.value}}
+					out:send={{key: item.type + item.value}}
+					animate:flip={{duration: 200}}
+				>
+					{#if item.type === 'channel'}
+						<ChannelAvatar id={item.image} alt="" size={24} />
 					{/if}
-					{suggestion.label}
+					{item.label}
 				</button>
 			{/each}
 		</menu>
@@ -195,7 +183,16 @@
 	{#if sources.length}
 		<menu class="sources">
 			{#each sources as source (source.type + source.value)}
-				<button type="button" class="chip" onclick={() => removeSource(source)}>{source.label} ×</button>
+				<button
+					type="button"
+					class="chip"
+					onclick={() => removeSource(source)}
+					in:receive={{key: source.type + source.value}}
+					out:send={{key: source.type + source.value}}
+					animate:flip={{duration: 200}}
+				>
+					{source.label} ×
+				</button>
 			{/each}
 		</menu>
 	{/if}
@@ -208,48 +205,9 @@
 		gap: 0.5rem;
 	}
 
-	search {
-		display: block;
-		position: relative;
-	}
-
-	search input {
+	section > input {
 		width: 100%;
 		font-size: var(--font-3);
-	}
-
-	search menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background: var(--c-gray8, var(--gray-1));
-		border: 1px solid var(--c-gray5, var(--gray-5));
-		border-radius: var(--border-radius);
-		z-index: 10;
-		margin-top: 0.2rem;
-	}
-
-	search menu button {
-		width: 100%;
-		text-align: left;
-		border: none;
-		background: none;
-		box-shadow: none;
-		font-size: var(--font-2);
-		padding: 0.5rem;
-		color: var(--c-gray2, var(--gray-11));
-	}
-
-	search menu button:hover {
-		background: var(--c-gray6, var(--gray-3));
-	}
-
-	search menu small {
-		color: var(--c-gray4, var(--gray-8));
-		font-size: var(--font-1);
-		text-transform: uppercase;
-		margin-right: 0.5rem;
 	}
 
 	.suggestions,

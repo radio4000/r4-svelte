@@ -173,18 +173,6 @@
 </div>
 
 <style>
-	/* Technics 1210 style fast blinking - only affects the glow */
-	@keyframes blink-led {
-		0%,
-		49% {
-			box-shadow: 0 0 0.75rem color-mix(in srgb, var(--deck-accent) 50%, transparent);
-		}
-		50%,
-		100% {
-			box-shadow: 0 0 0.2rem color-mix(in srgb, var(--deck-accent) 20%, transparent);
-		}
-	}
-
 	@keyframes signal-flow {
 		0% {
 			background-position: 0 0;
@@ -221,16 +209,19 @@
 		border-radius: var(--border-radius);
 	}
 
-	/* Source device */
+	/* Source device (crate) */
 	.source-device {
 		display: flex;
 		flex-direction: column;
 		padding: 0.75rem;
 		gap: 0.5rem;
+		background: linear-gradient(180deg, hsl(40 15% 18%) 0%, var(--c-gray7) 100%);
+		border-color: hsl(40 20% 30%);
 	}
 
 	.source-device > header {
-		color: var(--c-gray3);
+		color: var(--c-yellow5);
+		letter-spacing: 0.05em;
 	}
 
 	/* Processor device */
@@ -374,9 +365,19 @@
 		border-color: hsl(17 50% 45%);
 	}
 
+	.output:first-child:not(:disabled):hover {
+		background: hsl(17 55% 45%);
+		border-color: hsl(17 55% 55%);
+	}
+
 	.output:last-child {
 		background: hsl(221 40% 35%);
 		border-color: hsl(221 40% 45%);
+	}
+
+	.output:last-child:not(:disabled):hover {
+		background: hsl(221 45% 45%);
+		border-color: hsl(221 45% 55%);
 	}
 
 	.output:first-child:not(:disabled):hover {
@@ -411,10 +412,8 @@
 		--deck-accent: var(--c-blue5);
 	}
 
-	/* Fast blinking LED glow when playing - Technics 1210 style */
 	.deck-device[data-playing] {
 		border-color: var(--deck-accent);
-		animation: blink-led 0.25s step-end infinite;
 	}
 
 	/* Mixer/crossfader */
