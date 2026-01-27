@@ -29,6 +29,11 @@
 				<Icon icon="user" />
 				{m.auth_create_or_signin()}
 			</a>
+		{:else}
+			<a href="/settings/account">
+				<Icon icon="user" />
+				{m.settings_account()}
+			</a>
 		{/if}
 		<a href="/settings/appearance">
 			<Icon icon="palette" />

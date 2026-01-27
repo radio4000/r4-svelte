@@ -53,9 +53,16 @@ export interface AppState {
 	modal_track_edit?: {track: Track} | null
 }
 
+export interface UserIdentity {
+	id: string
+	provider: string
+	identity_data?: {email?: string; [key: string]: unknown}
+}
+
 interface User {
 	id: string
 	email: string
+	identities?: UserIdentity[]
 }
 
 export type KeyBindingsConfig = Record<string, string>
