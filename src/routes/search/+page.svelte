@@ -91,6 +91,8 @@
 		const results = await searchAll(searchQuery)
 		channels = results.channels
 		tracks = results.tracks
+		// Write tracks to collection so playTrack(id) can find them
+		if (tracks.length) writeTracksToCollection()
 		isLoading = false
 	}
 

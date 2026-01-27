@@ -62,30 +62,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - Seek/position support: add `seekTo(seconds)`, `getPosition()` via media-chrome player. Support `?t=` URL param like YouTube for deep-linking into tracks.
   - ? Just for incoming links, or also generate shareable timestamped links?
 
-### Authentication & Account
-
-**Current work (auth-improvements branch):**
-
-- Hardcoded English strings need i18n: "Connect", "Delete account"
-- Optimize /settings/account UI — cleaner provider management, better visual hierarchy
-
-**Done:**
-
-- Sign up now offers password option (matches login)
-- Form markup unified: `form.form > fieldset > label + input`, primary buttons
-
-**Existing functionality (working):**
-
-- Reset password: `/auth/reset-password` → email → `/auth/reset-password/confirm`
-- Change email: `/settings/account/email`
-- Change password: `/settings/account/password`
-- OAuth provider management: `/settings/account` (connect/disconnect Google, Facebook)
-
-### Settings & Appearance
-
-- Simplify design and UI on /settings/appearance to what's relevant to the end user
-  - ? What's currently in there that shouldn't be?
-
 - Alternate map view as a 3D globe view
   - ? What problem does this solve that the current map doesn't?
   - ? Keep, park, or remove?
@@ -112,9 +88,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 
 - Freshness check shows `local: null` on every page load, causing unnecessary re-fetches. Likely related to disabled `collection-persistence.ts`. When re-enabling IDB persistence, ensure local timestamps are stored/retrieved.
   - ? Is this causing visible slowness or just extra network?
-
-- Sometimes on /search when you double-click to play a track, it won't play but log "track not loaded" (which obv isn't true since it was there to click)
-  - ? Reproducible? This sounds like a bug to fix, not a backlog item.
 
 - Our appState is serialized into localstorage on every edit to persist it. But since appState.playlist_tracks (and the shuffled) versions potentially include 3k items, it might get slow. More than this, it's just unecessary to serialize all on every change. It is however easy to reason about in the app. One appState, done. How could we improve the perf here? First thought is to split it into appState + playerState for example, if we can that way split the tracklist arrays that are only updated on channel/queue changes anyway.
   - ? Have you measured serialization time? How large does playlist_tracks get?
