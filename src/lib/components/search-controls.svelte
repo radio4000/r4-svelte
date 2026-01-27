@@ -4,6 +4,8 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
+	const uid = $props.id()
+
 	let {search = '', order = 'created', dir = 'desc', onSearchChange} = $props()
 
 	let searchValue = $derived(search)
@@ -37,39 +39,26 @@
 	}
 </script>
 
-<form onsubmit={handleSubmit}>
-	<Icon icon="search" />
-	<input type="search" placeholder={m.search_tracks_placeholder()} bind:value={searchValue} onblur={handleSearchBlur} />
-	<!--<button type="button" onclick={clearSearch}>Search</button>-->
-
-	<!--<label>
-		<Icon icon="sort" />
-		<select bind:value={sortField}>
-			<option value="created">Created</option>
-			<option value="updated">Updated</option>
-			<option value="title">Title</option>
-		</select>
-	</label>
-	<button type="button" onclick={toggleSortDirection}>
-		{#if sortDirection === 'asc'}
-			<Icon icon="funnel-ascending" />
-		{:else}
-			<Icon icon="funnel-descending" />
-		{/if}
-	</button>-->
+<form class="form" onsubmit={handleSubmit}>
+	<fieldset>
+		<label for="{uid}-search"><Icon icon="search" /></label>
+		<input
+			id="{uid}-search"
+			type="search"
+			placeholder={m.search_tracks_placeholder()}
+			bind:value={searchValue}
+			onblur={handleSearchBlur}
+		/>
+	</fieldset>
 </form>
 
 <style>
-	form {
-		display: flex;
-		gap: 1rem;
-		margin-bottom: 1rem;
-		align-items: center;
-		flex-wrap: wrap;
+	fieldset {
+		flex: 1;
+		flex-flow: row;
 	}
 
 	input[type='search'] {
-		margin-left: -0.5rem;
 		flex: 1;
 	}
 </style>

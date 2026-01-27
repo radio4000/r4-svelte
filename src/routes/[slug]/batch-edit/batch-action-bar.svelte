@@ -4,6 +4,8 @@
 	import {extractYouTubeId} from '$lib/utils'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 
+	const uid = $props.id()
+
 	/** @type {{selectedIds?: string[], channel: import('$lib/types').Channel | null, allTags?: {value: string, count: number}[], tracks?: import('$lib/types').TrackWithMeta[] }} */
 	let {selectedIds = [], channel, allTags = [], tracks = []} = $props()
 
@@ -166,12 +168,16 @@
 	<dialog open>
 		<h3>Append to {selectedIds.length} tracks</h3>
 		<form
+			class="form"
 			onsubmit={(e) => {
 				e.preventDefault()
 				append(appendText)
 			}}
 		>
-			<input type="text" bind:value={appendText} placeholder="text to append" autofocus />
+			<fieldset>
+				<label for="{uid}-append" class="visually-hidden">Text to append</label>
+				<input id="{uid}-append" type="text" bind:value={appendText} placeholder="text to append" autofocus />
+			</fieldset>
 			{#if allTags.length > 0}
 				<menu>
 					{#each allTags.slice(0, 10) as { value } (value)}
@@ -235,7 +241,6 @@
 
 	dialog input {
 		width: 100%;
-		margin-bottom: 0.5rem;
 	}
 
 	dialog menu {

@@ -15,6 +15,8 @@
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
+	const uid = $props.id()
+
 	// Trigger channels to load into collection state (needed for search on direct page load)
 	const channelsQuery = useLiveQuery((q) => q.from({channels: channelsCollection}))
 
@@ -120,13 +122,17 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<form onsubmit={handleSubmit} class="search-form">
-		<SearchInput
-			bind:value={inputValue}
-			placeholder={m.header_search_placeholder()}
-			oninput={(e) => debouncedSearch(e.target.value)}
-			autofocus
-		/>
+	<form onsubmit={handleSubmit} class="form search-form">
+		<fieldset>
+			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
+			<SearchInput
+				id="{uid}-search"
+				bind:value={inputValue}
+				placeholder={m.header_search_placeholder()}
+				oninput={(e) => debouncedSearch(e.target.value)}
+				autofocus
+			/>
+		</fieldset>
 	</form>
 
 	<menu>

@@ -62,12 +62,12 @@
 
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>
-				<legend><label for="name">Name</label></legend>
+				<label for="name">Name</label>
 				<input id="name" name="name" type="text" required oninput={handleNameInput} />
 			</fieldset>
 
 			<fieldset>
-				<legend><label for="slug">Slug</label></legend>
+				<label for="slug">Slug</label>
 				<input
 					bind:value={slug}
 					id="slug"

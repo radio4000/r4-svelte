@@ -5,6 +5,7 @@
 	import {logger} from '$lib/logger'
 
 	const log = logger.ns('chat').seal()
+	const uid = $props.id()
 
 	let message = $state('')
 	/** @type {{text: string, username: string, timestamp: string}[]} */
@@ -79,8 +80,17 @@
 		{/if}
 	</div>
 
-	<form onsubmit={sendMessage}>
-		<input bind:value={message} onkeydown={handleKeydown} placeholder={m.chat_input_placeholder()} maxlength="280" />
+	<form class="form" onsubmit={sendMessage}>
+		<fieldset>
+			<label for="{uid}-message" class="visually-hidden">{m.chat_input_placeholder()}</label>
+			<input
+				id="{uid}-message"
+				bind:value={message}
+				onkeydown={handleKeydown}
+				placeholder={m.chat_input_placeholder()}
+				maxlength="280"
+			/>
+		</fieldset>
 		<button type="submit" disabled={!message.trim()}>{m.chat_send_button()}</button>
 	</form>
 </section>
@@ -122,8 +132,12 @@
 
 	form {
 		padding: 0.5rem;
-		display: flex;
-		gap: 0.5rem;
+		flex-flow: row;
+	}
+
+	fieldset {
+		flex: 1;
+		flex-flow: row;
 	}
 
 	input {

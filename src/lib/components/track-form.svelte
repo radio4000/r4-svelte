@@ -118,7 +118,7 @@
 
 <form class="form" onsubmit={handleSubmit}>
 	<fieldset>
-		<legend><label for="{uid}-url">URL</label></legend>
+		<label for="{uid}-url">URL</label>
 		<input
 			id="{uid}-url"
 			name="url"
@@ -131,7 +131,7 @@
 	</fieldset>
 
 	<fieldset>
-		<legend><label for="{uid}-title">Title {fetchingTitle ? '...' : ''}</label></legend>
+		<label for="{uid}-title">Title {fetchingTitle ? '...' : ''}</label>
 		<input
 			bind:this={titleInput}
 			id="{uid}-title"
@@ -144,7 +144,7 @@
 	</fieldset>
 
 	<fieldset>
-		<legend><label for="{uid}-description">Description</label></legend>
+		<label for="{uid}-description">Description</label>
 		<textarea
 			bind:this={descriptionInput}
 			id="{uid}-description"
@@ -155,7 +155,7 @@
 	</fieldset>
 
 	<fieldset>
-		<legend><label for="{uid}-discogs_url">Discogs URL</label></legend>
+		<label for="{uid}-discogs_url">Discogs URL</label>
 		<input
 			id="{uid}-discogs_url"
 			name="discogs_url"

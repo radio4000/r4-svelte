@@ -94,22 +94,22 @@
 			{/each}
 		</dl>
 	{:else}
-		<form onsubmit={handleDone}>
-			{#each Object.entries(keyBindings) as [key, action] (key)}
-				<div>
-					<label for={`${uid}-key`}>{m.shortcuts_key_label()}</label>
+		<form class="form" onsubmit={handleDone}>
+			{#each Object.entries(keyBindings) as [key, action], i (key)}
+				<fieldset class="binding-row">
+					<label for={`${uid}-key-${i}`} class="visually-hidden">{m.shortcuts_key_label()}</label>
 					<input
 						type="text"
 						value={key}
 						placeholder={m.shortcuts_key_placeholder()}
 						onchange={(e) => updateKeyBindingKey(key, /** @type {HTMLInputElement} */ (e.target).value)}
-						id={`${uid}-key`}
+						id={`${uid}-key-${i}`}
 					/>
-					<label for={`${uid}-action`}>&rarr;</label>
+					<span>&rarr;</span>
 					<select
 						value={action}
 						onchange={(e) => updateKeyBindingAction(key, /** @type {HTMLSelectElement} */ (e.target).value)}
-						id={`${uid}-action`}
+						id={`${uid}-action-${i}`}
 					>
 						{#each shortcutActions as name (name)}
 							<option value={name}>{getActionLabel(name)}</option>
@@ -118,7 +118,7 @@
 					<button type="button" onclick={() => removeKeyBinding(key)}>
 						<Icon icon="delete" size={16} />
 					</button>
-				</div>
+				</fieldset>
 			{/each}
 
 			<button type="button" onclick={addKeyBinding}>{m.shortcuts_add()}</button>
@@ -203,9 +203,15 @@
 	}
 
 	form {
-		display: flex;
-		flex-flow: column;
-		gap: 0.2rem;
 		align-items: flex-start;
+	}
+
+	.binding-row {
+		flex-flow: row;
+		align-items: center;
+	}
+
+	.binding-row input[type='text'] {
+		width: 7rem;
 	}
 </style>

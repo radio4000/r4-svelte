@@ -8,6 +8,8 @@
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
+	const uid = $props.id()
+
 	let debounceTimer = $state()
 
 	// Local input state - not derived, so typing doesn't get overwritten
@@ -83,14 +85,18 @@
 	}
 </script>
 
-<form onsubmit={handleSubmit}>
-	<SearchInput
-		bind:value={inputValue}
-		placeholder={m.header_search_placeholder()}
-		oninput={(e) => debouncedSearch(e.target.value)}
-		onkeydown={handleKeydown}
-		DISABLEDlist="command-suggestions"
-	/>
+<form class="form" onsubmit={handleSubmit}>
+	<fieldset>
+		<label for="{uid}-search" class="visually-hidden">{m.header_search_placeholder()}</label>
+		<SearchInput
+			id="{uid}-search"
+			bind:value={inputValue}
+			placeholder={m.header_search_placeholder()}
+			oninput={(e) => debouncedSearch(e.target.value)}
+			onkeydown={handleKeydown}
+			DISABLEDlist="command-suggestions"
+		/>
+	</fieldset>
 	<datalist id="command-suggestions">
 		{#each commands as command (command.id)}
 			<option value="/{command.id}">/{getCommandTitle(command.id)}</option>
@@ -102,6 +108,10 @@
 </form>
 
 <style>
+	fieldset {
+		flex-flow: row;
+	}
+
 	@media (max-width: 500px) {
 		:global(input[type='search']) {
 			width: 10ch;

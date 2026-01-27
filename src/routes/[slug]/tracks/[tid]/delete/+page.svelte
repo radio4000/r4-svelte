@@ -76,7 +76,7 @@
 
 		<form class="form" onsubmit={handleDelete}>
 			<fieldset>
-				<legend><label for="confirm">Type <code>{track.title}</code> to confirm</label></legend>
+				<label for="confirm">Type <code>{track.title}</code> to confirm</label>
 				<input id="confirm" type="text" bind:value={confirmTitle} autocomplete="off" />
 			</fieldset>
 

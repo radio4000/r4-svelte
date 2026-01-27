@@ -7,15 +7,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 ## BACKLOG
 
 - Option for users to backup/export their radio (TBD) -- use the r4 api backup endpoint, or r4 cli download, or or?
-- Use /settings/appearance for user theme related things, not to showcase the entire form kitchensink. That can go into a /\_debug/style route or so
-
-### Forms
-
-- Unify form markup: `form>fieldset>label+input`, use `$props.id()` for unique IDs. Remaining files:
-  - [slug]/edit, [slug]/delete, create-channel
-  - track-form, [slug]/tracks/[tid]/delete
-  - search/+page, search-controls, header-search
-  - theme-editor, keyboard-editor, live-chat, batch-action-bar
 
 ### Broadcast & Live
 

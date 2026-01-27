@@ -165,8 +165,8 @@
 
 	<section>
 		<h2>{m.theme_layout_heading()}</h2>
-		<form>
-			<div>
+		<form class="form">
+			<fieldset>
 				<label for={`${uid}--scaling`}>{m.theme_scale_label()}</label>
 				<InputRange
 					value={Number(customVariables['--scaling']) || 1}
@@ -180,9 +180,9 @@
 				/>
 				<span>{customVariables['--scaling'] || '1'}</span>
 				<small>{m.theme_scale_hint()}</small>
-			</div>
+			</fieldset>
 
-			<div>
+			<fieldset>
 				<label for={`${uid}--border-radius`}>{m.theme_corners_label()}</label>
 				<input
 					type="checkbox"
@@ -190,11 +190,10 @@
 					onchange={(e) => updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--border-radius`}
 				/>
-				<span></span>
 				<small>{m.theme_corners_hint()}</small>
-			</div>
+			</fieldset>
 
-			<div>
+			<fieldset>
 				<label for={`${uid}--media-radius`}>{m.theme_artwork_label()}</label>
 				<input
 					type="checkbox"
@@ -202,74 +201,62 @@
 					onchange={(e) => updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--media-radius`}
 				/>
-				<span></span>
 				<small>{m.theme_artwork_hint()}</small>
-			</div>
+			</fieldset>
 
-			<div>
+			<fieldset>
 				<label for={`${uid}-hide-artwork`}>{m.theme_hide_artwork_label()}</label>
 				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
-				<span></span>
 				<small>{m.theme_hide_artwork_hint()}</small>
-			</div>
+			</fieldset>
 		</form>
 	</section>
 
 	<section>
 		<h2>{m.theme_create_heading()}</h2>
-		{#each baseColors as variable, i (variable.name + i)}
-			<div class:inactive={!isActiveVariable(variable)}>
-				<label hidden for={`${uid}-${variable.name}`}>{variable.label()}</label>
-				<InputColor
-					label={variable.label()}
-					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
-					disabled={!getCurrentValue(variable)}
-				/>
-				<input
-					hidden
-					type="text"
-					value={getCurrentValue(variable)}
-					placeholder={m.theme_input_placeholder_hex()}
-					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
-				/>
-				<small>{variable.description()}</small>
-			</div>
-		{/each}
+		<form class="form color-form">
+			{#each baseColors as variable, i (variable.name + i)}
+				<fieldset class:inactive={!isActiveVariable(variable)}>
+					<InputColor
+						label={variable.label()}
+						value={getCurrentValue(variable)}
+						onchange={(e) => updateVariable(variable.name, e.target.value)}
+						disabled={!getCurrentValue(variable)}
+					/>
+					<small>{variable.description()}</small>
+				</fieldset>
+			{/each}
 
-		{#each overrides as variable (variable.name)}
-			<div class:inactive={!isActiveVariable(variable)}>
-				<label hidden for={`${uid}-${variable.name}`}>{variable.label()}</label>
-				<InputColor
-					label={variable.label()}
-					value={getCurrentValue(variable)}
-					onchange={(e) => updateVariable(variable.name, e.target.value)}
-					disabled={!getCurrentValue(variable)}
-				/>
-				<input
-					hidden
-					type="text"
-					value={getCurrentValue(variable)}
-					placeholder={m.theme_input_placeholder_inherit()}
-					onchange={(e) => updateVariable(variable.name, e.currentTarget.value)}
-				/>
-				<small>{variable.description()}</small>
-			</div>
-		{/each}
+			{#each overrides as variable (variable.name)}
+				<fieldset class:inactive={!isActiveVariable(variable)}>
+					<InputColor
+						label={variable.label()}
+						value={getCurrentValue(variable)}
+						onchange={(e) => updateVariable(variable.name, e.target.value)}
+						disabled={!getCurrentValue(variable)}
+					/>
+					<small>{variable.description()}</small>
+				</fieldset>
+			{/each}
 
-		<button style="margin-top: 0.5rem" onclick={resetToDefaults}>{m.theme_reset_button()}</button>
+			<button type="button" onclick={resetToDefaults}>{m.theme_reset_button()}</button>
+		</form>
 	</section>
 
 	<section>
 		<h2>{m.theme_share_heading()}</h2>
-		<div class="row">
-			<input type="text" readonly value={exportString} class="export-input" />
-			<button onclick={copyTheme}>{m.theme_copy_button()}</button>
-		</div>
-		<div class="row">
-			<input type="text" bind:value={importText} placeholder={m.theme_import_placeholder()} class="import-input" />
-			<button onclick={importTheme} type="button" disabled={!importText.trim()}>{m.theme_apply_button()}</button>
-		</div>
+		<form class="form share-form">
+			<fieldset>
+				<label for="{uid}-export" class="visually-hidden">{m.theme_copy_button()}</label>
+				<input id="{uid}-export" type="text" readonly value={exportString} />
+				<button type="button" onclick={copyTheme}>{m.theme_copy_button()}</button>
+			</fieldset>
+			<fieldset>
+				<label for="{uid}-import" class="visually-hidden">{m.theme_apply_button()}</label>
+				<input id="{uid}-import" type="text" bind:value={importText} placeholder={m.theme_import_placeholder()} />
+				<button type="button" onclick={importTheme} disabled={!importText.trim()}>{m.theme_apply_button()}</button>
+			</fieldset>
+		</form>
 	</section>
 </div>
 
@@ -300,30 +287,32 @@
 		margin-bottom: 0.5rem;
 	}
 
-	input[type='text'] {
-		width: 10rem;
+	form {
+		align-items: flex-start;
 	}
 
-	form {
-		display: flex;
-		flex-flow: column;
-		gap: 0.5rem;
-		align-items: flex-start;
+	form fieldset {
+		display: grid;
+		grid-template-columns: auto auto 1fr;
+		gap: 0 0.5rem;
+		align-items: center;
+		flex-flow: row wrap;
+	}
 
-		label {
-			user-select: none;
-		}
+	form fieldset label {
+		grid-column: 1;
+	}
 
-		> div {
-			display: grid;
-			grid-template-columns: auto auto 1fr;
-			gap: 0 0.5rem;
-			align-items: center;
-		}
+	form fieldset small {
+		grid-column: 1 / -1;
+	}
 
-		small {
-			grid-column: 1 / -1;
-		}
+	.share-form fieldset {
+		flex-flow: row;
+	}
+
+	.share-form input {
+		flex: 1;
 	}
 
 	.inactive {

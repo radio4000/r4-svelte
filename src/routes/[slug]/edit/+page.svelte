@@ -115,22 +115,22 @@
 
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>
-				<legend><label for="name">Name</label></legend>
+				<label for="name">Name</label>
 				<input id="name" name="name" type="text" value={channel.name ?? ''} required />
 			</fieldset>
 
 			<fieldset>
-				<legend><label for="slug">Slug</label></legend>
+				<label for="slug">Slug</label>
 				<input id="slug" name="slug" type="text" value={channel.slug ?? ''} required />
 			</fieldset>
 
 			<fieldset>
-				<legend><label for="description">Description</label></legend>
+				<label for="description">Description</label>
 				<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
 			</fieldset>
 
 			<fieldset>
-				<legend><label for="url">URL</label></legend>
+				<label for="url">URL</label>
 				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder="https://..." />
 			</fieldset>
 
