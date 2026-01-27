@@ -11,8 +11,6 @@
 
 	const uid = $props.id()
 
-	const fontSizes = ['--font-1', '--font-2', '--font-3', '--font-4', '--font-5', '--font-6', '--font-7', '--font-8']
-
 	const baseColors = [
 		{
 			name: '--accent-light',

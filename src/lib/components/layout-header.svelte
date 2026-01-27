@@ -3,6 +3,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackModal from '$lib/components/add-track-modal.svelte'
 	import EditTrackModal from '$lib/components/edit-track-modal.svelte'
+	import ShareModal from '$lib/components/share-modal.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import TestCounter from '$lib/components/test-counter.svelte'
@@ -42,6 +43,7 @@
 		{#await preloading then}
 			<AddTrackModal />
 			<EditTrackModal />
+			<ShareModal />
 			{#if userChannel}
 				<a href="/{userChannel.slug}" class="btn ChannelLinkButton" {@attach tooltip({content: 'Go to your channel'})}>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />

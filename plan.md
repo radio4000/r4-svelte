@@ -48,10 +48,12 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 **Flow:** Track context menu → "Share" → modal opens with sharing options
 
 **Share modal supports two modes:**
+
 1. **Track sharing** — triggered from track-card menu, player
 2. **Channel sharing** — triggered from channel page header
 
 **Modal UI:**
+
 - Title: "Share track" or "Share channel"
 - All options visible (no tabs):
   - Readonly input showing URL (click to select)
@@ -60,26 +62,31 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
   - **Channel only:** embed code input below URL
 
 **Native share content:**
+
 - Track: title = track title, text = @channel-name, url = track link
 - Channel: title = channel name, text = description snippet, url = channel link
 
 **Data:**
+
 - Track URL: `https://radio4000.com/${channel.slug}/tracks/${track.id}`
 - Channel URL: `https://radio4000.com/${channel.slug}`
 - Channel embed: `<iframe src="https://player.radio4000.com/?slug=${channel.slug}" width="320" height="500"></iframe>`
 
 **Utilities in `src/lib/share.ts`:**
+
 ```ts
-copyToClipboard(text)           // navigator.clipboard.writeText()
-canNativeShare()                // check navigator.share exists
+copyToClipboard(text) // navigator.clipboard.writeText()
+canNativeShare() // check navigator.share exists
 nativeShare({title, text, url}) // call navigator.share()
 ```
 
 **Component: `src/lib/components/share-modal.svelte`**
+
 - AppState trigger: `modal_share?: {track?: Track, channel: Channel} | null`
 - If track provided → share track mode, else → share channel mode
 
 **Integration:**
+
 - track-card.svelte: add "Share" to popover menu
 - channel page header: add "Share" button
 - types.ts + app-state.svelte.ts: add modal_share

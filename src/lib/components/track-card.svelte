@@ -3,7 +3,7 @@
 	import {playTrack, playNext} from '$lib/api'
 	import {deleteTrack, channelsCollection} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
-	import type {Track} from '$lib/types'
+	import type {Track, Channel} from '$lib/types'
 	import {extractYouTubeId} from '$lib/utils.ts'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -50,6 +50,11 @@
 		appState.modal_track_edit = {track}
 	}
 
+	const shareTrack = () => {
+		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug) as Channel | undefined
+		if (channel) appState.modal_share = {track, channel}
+	}
+
 	let showDeleteConfirm = $state(false)
 	let menu = $state<{close: () => void}>()
 
@@ -80,7 +85,6 @@
 					<small>
 						<LinkEntities slug={track.slug} text={track.description} />
 					</small>
-					{#if track.duration}<small>{m.track_duration_seconds({seconds: track.duration})}</small>{/if}
 				</p>
 			{/if}
 		</div>
@@ -111,6 +115,7 @@
 				}}>{m.track_play_next()}</button
 			>
 			<button type="button" role="menuitem" onclick={addToRadio}>{m.common_add()}</button>
+			<button type="button" role="menuitem" onclick={shareTrack}>Share</button>
 			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>{m.common_edit()}</button>{/if}
 			{#if canEdit}<button
 					type="button"

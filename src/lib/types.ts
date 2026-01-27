@@ -51,6 +51,7 @@ export interface AppState {
 	language?: string
 	modal_track_add?: {track?: Track; url?: string} | null
 	modal_track_edit?: {track: Track} | null
+	modal_share?: {track?: Track; channel: Channel} | null
 }
 
 export interface UserIdentity {

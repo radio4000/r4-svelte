@@ -68,6 +68,7 @@ Dry wit welcome. Channel the sensibility of someone who finds elegance in plain 
 - Pure functions for composability in api/utils/data operations
 - Optimistic execution - trust in methods, let errors throw
 - Avoid type casts to silence errors. Casts like `/** @type {any} */` or `as Type` are bloat that hide real issues.
+- Don't worry about i18n until we've finalized a feature
 
 ### HTML/CSS
 
