@@ -39,9 +39,17 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
 - improved fullscreen? if player does not have a track, fullscreen layout looks weirdly empty; if player has a track, maybe fullscreen should be a real full screen (questions of the display mode for the play: docker, mini, full etc.).
   - ? Is this causing user complaints, or just a polish item?
 
-- Share track modal?
-  - ? Same as "share buttons/embeds" below, or different?
+- Share track/channel modal with menu:
+  - Copy link to track (r5 URL)
+  - Copy link to media (original YouTube/SoundCloud URL)
+  - Embed this track (iframe code) — note: r4-player iframe doesn't support single-track embed yet
+  - Show provider embed option (YouTube/SoundCloud native iframe)?
+  - Build as reusable primitives in `src/lib/share.ts`: `getTrackUrl()`, `getMediaUrl()`, `getEmbedCode()`
   - check https://github.com/radio4000/components/pull/193
+
+- Track context menu consolidation — current actions scattered, consider unified popover:
+  - details, play, play next (cue), play from here, add (re-post), share
+  - ? Which of these already exist? What's missing?
 
 - repost current track: shift+c shortcut (c opens modal) or subtle button after track title/desc in player. Keep it discoverable but not too prominent.
   - ? How common is reposting? Worth the UI real estate?
@@ -130,10 +138,6 @@ Verify and evaluate todos before taking them on. They might be outdated or just 
   - ? Is the current error handling inconsistent? What's broken?
 
 ### Sharing & Social
-
-- share buttons/embeds (evaluate if needed)
-  - ? Is this the same as "Share track modal" above?
-  - ? What's the actual use case — embed on external sites?
 
 - batch-edit: URL-persist filter/search/sort state so filtered views survive refresh and can be bookmarked
   - ? Is batch-edit actively used? Typical workflow?
