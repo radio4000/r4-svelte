@@ -1,34 +1,30 @@
 <script module>
 	/** @typedef {'channel' | 'tag'} SourceType */
-	/** @typedef {{type: SourceType, value: string, label: string}} Source */
+	/** @typedef {{type: SourceType, value: string, label: string, image?: string | null}} Source */
 </script>
 
 <script>
-	import {mix, mixAll} from '$lib/lab/mix'
 	import {pickRandomN} from '$lib/lab/selectors'
 	import {searchChannels} from '$lib/search'
-	import {channelsCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
-	import InputRange from './input-range.svelte'
+	import {channelsCollection} from '$lib/tanstack/collections'
+	import {mixAll} from '$lib/lab/mix'
+	import ChannelAvatar from './channel-avatar.svelte'
 
-	/** @type {{sources: Source[], options: {shuffle: boolean, withoutErrors: boolean, limit: number}}} */
-	let {sources = $bindable([]), options = $bindable({shuffle: false, withoutErrors: false, limit: 50})} = $props()
-
-	let loading = $state(false)
-
-	// Load tracks for selected channels reactively
-	$effect(() => {
-		const slugs = sources.filter((s) => s.type === 'channel').map((s) => s.value)
-		if (!slugs.length) return
-		loading = true
-		Promise.all(slugs.map(ensureTracksLoaded)).finally(() => {
-			loading = false
-		})
-	})
+	/**
+	 * @type {{
+	 *   sources: Source[],
+	 *   onadd?: (source: Source) => void,
+	 *   onremove?: (source: Source) => void
+	 * }}
+	 */
+	let {sources, onadd, onremove} = $props()
 
 	let searchQuery = $state('')
 	/** @type {Source[]} */
 	let searchResults = $state([])
 	let showResults = $state(false)
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let debounceTimer
 
 	/** @type {Source[]} */
 	let suggestions = $state([])
@@ -42,7 +38,7 @@
 		// Add channels from local collection (with at least 1 track)
 		for (const ch of channelsCollection.state.values()) {
 			if (ch.slug && (ch.track_count ?? 0) >= 1) {
-				all.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug})
+				all.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug, image: ch.image})
 			}
 		}
 
@@ -78,40 +74,6 @@
 		refreshSuggestions()
 	})
 
-	/**
-	 * Build a mix from current sources.
-	 * - Channels only: union of tracks from those channels
-	 * - Tags only: filter all loaded tracks by tags (must have ALL selected tags)
-	 * - Channels + tags: filter channel tracks by tags (intersection)
-	 */
-	function buildMix() {
-		const channelSources = sources.filter((s) => s.type === 'channel')
-		const tagSources = sources.filter((s) => s.type === 'tag')
-
-		// Base: selected channels, or all loaded tracks if no channels
-		let m = channelSources.length > 0 ? mix() : mixAll()
-
-		for (const source of channelSources) {
-			m = m.from(source.value)
-		}
-
-		// Tags filter the base (must have ALL selected tags)
-		for (const source of tagSources) {
-			m = m.withTag(source.value)
-		}
-
-		m = m.unique()
-
-		if (options.withoutErrors) m = m.withoutErrors()
-
-		return m
-	}
-
-	let trackCount = $derived.by(() => {
-		if (sources.length === 0) return 0
-		return Math.min(buildMix().count(), options.limit)
-	})
-
 	async function handleSearch() {
 		if (!searchQuery.trim()) {
 			searchResults = []
@@ -133,7 +95,8 @@
 			.map((ch) => ({
 				type: 'channel',
 				value: ch.slug,
-				label: ch.name || ch.slug
+				label: ch.name || ch.slug,
+				image: ch.image
 			}))
 
 		const localChannels = [...channelsCollection.state.values()]
@@ -143,7 +106,7 @@
 		const existingSlugs = new Set(searchResults.map((r) => r.value))
 		for (const ch of localChannels) {
 			if (!existingSlugs.has(ch.slug)) {
-				searchResults.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug})
+				searchResults.push({type: 'channel', value: ch.slug, label: ch.name || ch.slug, image: ch.image})
 			}
 		}
 
@@ -153,7 +116,7 @@
 	/** @param {Source} source */
 	function addSource(source) {
 		if (!sources.some((s) => s.type === source.type && s.value === source.value)) {
-			sources = [...sources, source]
+			onadd?.(source)
 		}
 		searchQuery = ''
 		searchResults = []
@@ -162,21 +125,31 @@
 
 	/** @param {Source} source */
 	function removeSource(source) {
-		sources = sources.filter((s) => !(s.type === source.type && s.value === source.value))
+		onremove?.(source)
+	}
+
+	function debouncedSearch() {
+		clearTimeout(debounceTimer)
+		debounceTimer = setTimeout(handleSearch, 300)
 	}
 
 	/** @param {KeyboardEvent} e */
 	function handleInputKeydown(e) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
+			clearTimeout(debounceTimer)
 			handleSearch()
 		}
 	}
 
-	function handleInputBlur() {
-		setTimeout(() => {
-			showResults = false
-		}, 200)
+	/** @type {HTMLElement | null} */
+	let dropdown = $state(null)
+
+	/** @param {FocusEvent} e */
+	function handleInputBlur(e) {
+		const related = /** @type {HTMLElement | null} */ (e.relatedTarget)
+		if (dropdown?.contains(related)) return
+		showResults = false
 	}
 </script>
 
@@ -186,12 +159,13 @@
 			type="search"
 			placeholder="Search channels or #tags..."
 			bind:value={searchQuery}
+			oninput={debouncedSearch}
 			onkeydown={handleInputKeydown}
 			onfocus={() => searchQuery && handleSearch()}
 			onblur={handleInputBlur}
 		/>
 		{#if showResults && searchResults.length}
-			<menu>
+			<menu bind:this={dropdown}>
 				{#each searchResults as result (result.value)}
 					<li>
 						<button type="button" onclick={() => addSource(result)}>
@@ -208,7 +182,12 @@
 		<menu class="suggestions">
 			<button type="button" onclick={() => suggestionSeed++} title="More">↻</button>
 			{#each suggestions as suggestion (suggestion.type + suggestion.value)}
-				<button type="button" onclick={() => addSource(suggestion)}>{suggestion.label}</button>
+				<button type="button" onclick={() => addSource(suggestion)}>
+					{#if suggestion.type === 'channel'}
+						<ChannelAvatar id={suggestion.image} alt="" size={24} />
+					{/if}
+					{suggestion.label}
+				</button>
 			{/each}
 		</menu>
 	{/if}
@@ -220,30 +199,13 @@
 			{/each}
 		</menu>
 	{/if}
-
-	<menu class="options">
-		<button type="button" class:active={options.shuffle} onclick={() => (options.shuffle = !options.shuffle)}>
-			Shuffle
-		</button>
-		<button
-			type="button"
-			class:active={options.withoutErrors}
-			onclick={() => (options.withoutErrors = !options.withoutErrors)}
-		>
-			No errors
-		</button>
-		<label>
-			<InputRange bind:value={options.limit} min={10} max={200} step={10} visualStep={20} />
-			<output>{loading ? '...' : trackCount} tracks</output>
-		</label>
-	</menu>
 </section>
 
 <style>
 	section {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 0.5rem;
 	}
 
 	search {
@@ -253,7 +215,7 @@
 
 	search input {
 		width: 100%;
-		font-size: 13px;
+		font-size: var(--font-3);
 	}
 
 	search menu {
@@ -261,11 +223,11 @@
 		top: 100%;
 		left: 0;
 		right: 0;
-		background: var(--gray-1);
-		border: 1px solid var(--gray-5);
-		border-radius: 4px;
+		background: var(--c-gray8, var(--gray-1));
+		border: 1px solid var(--c-gray5, var(--gray-5));
+		border-radius: var(--border-radius);
 		z-index: 10;
-		margin-top: 2px;
+		margin-top: 0.2rem;
 	}
 
 	search menu button {
@@ -274,62 +236,50 @@
 		border: none;
 		background: none;
 		box-shadow: none;
-		font-size: 12px;
-		padding: 6px 8px;
+		font-size: var(--font-2);
+		padding: 0.5rem;
+		color: var(--c-gray2, var(--gray-11));
 	}
 
 	search menu button:hover {
-		background: var(--gray-3);
+		background: var(--c-gray6, var(--gray-3));
 	}
 
 	search menu small {
-		color: var(--gray-8);
-		font-size: 10px;
+		color: var(--c-gray4, var(--gray-8));
+		font-size: var(--font-1);
 		text-transform: uppercase;
-		margin-right: 6px;
+		margin-right: 0.5rem;
 	}
 
 	.suggestions,
 	.sources {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px;
+		gap: 0.5rem;
+	}
+
+	.suggestions {
+		min-height: 7rem;
+		align-content: start;
 	}
 
 	.suggestions button,
 	.sources button {
-		font-size: 12px;
-		padding: 4px 8px;
+		font-size: var(--font-2);
+		padding: 0.2rem 0.5rem;
 	}
 
-	.options {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.options button {
-		font-size: 12px;
-		padding: 4px 10px;
-	}
-
-	.options label {
+	.suggestions button {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		flex: 1;
-		min-width: 120px;
+		gap: 0.5rem;
 	}
 
-	.options label :global(.input-range) {
-		flex: 1;
-	}
-
-	.options output {
-		font-size: 11px;
-		font-variant-numeric: tabular-nums;
-		color: var(--gray-9);
-		white-space: nowrap;
+	.suggestions button :global(img),
+	.suggestions button :global(.placeholder) {
+		width: 1.5rem;
+		height: 1.5rem;
+		flex: none;
 	}
 </style>

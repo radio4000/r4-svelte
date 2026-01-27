@@ -21,9 +21,12 @@
 	let {deck = $bindable(), effectiveVolume = 1, queue = []} = $props()
 
 	let queueIndex = $state(0)
+	/** @type {string[] | null} */
+	let prevQueue = null
 
 	$effect(() => {
-		if (queue.length > 0) {
+		if (queue.length > 0 && queue !== prevQueue) {
+			prevQueue = queue
 			queueIndex = 0
 			loadFromQueue(0)
 		}
@@ -67,8 +70,6 @@
 </script>
 
 <article data-deck={deck.id}>
-	<header class="caps">{deck.id}</header>
-
 	<div class="screen">
 		{#if deck.trackUrl}
 			<youtube-video
@@ -87,6 +88,7 @@
 	</div>
 
 	<div class="display">
+		<span class="led" data-active={deck.playing || undefined}></span>
 		{#if deck.trackTitle}
 			<span class="title">{deck.trackTitle}</span>
 		{/if}
@@ -121,58 +123,85 @@
 </article>
 
 <style>
-	article {
-		display: grid;
-		grid-template-rows: auto auto auto auto auto;
-		background: var(--gray-1);
-		padding: 12px;
-		gap: 8px;
+	/* Technics 1210 style fast blinking */
+	@keyframes blink-led {
+		0%,
+		49% {
+			opacity: 1;
+		}
+		50%,
+		100% {
+			opacity: 0.15;
+		}
 	}
 
-	header {
-		color: var(--gray-9);
+	article {
+		display: grid;
+		grid-template-rows: auto auto auto auto;
+		background: inherit;
+		gap: 8px;
+		color: var(--c-gray2, var(--gray-11));
 	}
 
 	.screen {
 		aspect-ratio: 16/9;
-		background: var(--gray-3);
-		border-radius: 4px;
+		background: var(--c-gray9, var(--gray-1));
 		overflow: hidden;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-bottom: 4px solid var(--deck-accent, var(--c-gray5, var(--gray-6)));
+		box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 	}
 
 	.screen :global(youtube-video) {
+		display: block;
 		width: 100%;
 		height: 100%;
+		pointer-events: auto;
 	}
 
 	.empty {
-		color: var(--gray-6);
+		color: var(--c-gray5, var(--gray-6));
 		font-size: 24px;
 	}
 
 	.display {
 		display: flex;
 		justify-content: space-between;
-		align-items: baseline;
+		align-items: center;
 		min-height: 1.25em;
 		gap: 8px;
+		padding: 0 12px;
+	}
+
+	.led {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--c-gray5, var(--gray-5));
+		flex-shrink: 0;
+	}
+
+	.led[data-active] {
+		background: var(--deck-accent, var(--c-green5, lime));
+		box-shadow: 0 0 6px var(--deck-accent, var(--c-green5, lime));
+		animation: blink-led 0.2s step-end infinite;
 	}
 
 	.title {
-		font-size: 12px;
+		font-size: var(--font-2);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		flex: 1;
+		min-width: 0;
 	}
 
 	.counter {
-		font-size: 10px;
+		font-size: var(--font-1);
 		font-variant-numeric: tabular-nums;
-		color: var(--gray-9);
+		color: var(--c-gray3, var(--gray-9));
 	}
 
 	.transport {
@@ -184,34 +213,44 @@
 	.transport button {
 		width: 40px;
 		height: 40px;
-		border-radius: 4px;
+		border-radius: var(--border-radius);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--gray-3);
-		border: 1px solid var(--gray-5);
+		background: var(--c-gray5, var(--gray-4));
+		border: 1px solid var(--c-gray4, var(--gray-5));
+		color: var(--c-gray2, var(--gray-11));
+	}
+
+	.transport button:disabled {
+		background: var(--c-gray6, var(--gray-3));
+		border-color: var(--c-gray5, var(--gray-4));
+		opacity: 0.5;
 	}
 
 	.transport button:not(:disabled):hover {
-		background: var(--gray-4);
+		background: var(--c-gray4, var(--gray-5));
+		border-color: var(--deck-accent, var(--c-gray4, var(--gray-5)));
 	}
 
 	.transport button:not(:disabled):active {
-		background: var(--gray-5);
+		background: var(--c-gray4, var(--gray-6));
 	}
 
 	.transport button.play {
 		width: 56px;
+		border-color: var(--deck-accent, var(--c-gray4, var(--gray-5)));
 	}
 
-	.transport button:disabled {
-		opacity: 0.3;
+	.transport button.play:not(:disabled) {
+		box-shadow: 0 0 8px color-mix(in srgb, var(--deck-accent, transparent) 30%, transparent);
 	}
 
 	.controls {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
+		padding: 0 12px 12px;
 	}
 
 	.controls label {
@@ -219,24 +258,24 @@
 		grid-template-columns: 16px 1fr 28px;
 		align-items: center;
 		gap: 6px;
-		font-size: 10px;
+		font-size: var(--font-1);
 	}
 
 	.controls abbr {
 		font-weight: 600;
-		color: var(--gray-9);
+		color: var(--c-gray3, var(--gray-9));
 		text-decoration: none;
 	}
 
 	.controls input[type='range'] {
 		width: 100%;
 		margin: 0;
-		accent-color: var(--gray-9);
+		accent-color: var(--deck-accent, var(--c-gray3, var(--gray-9)));
 	}
 
 	.controls output {
 		font-variant-numeric: tabular-nums;
-		color: var(--gray-9);
+		color: var(--c-gray3, var(--gray-9));
 		text-align: right;
 	}
 </style>

@@ -19,13 +19,13 @@
 	.label {
 		font-weight: 600;
 		font-size: var(--font-2);
-		color: var(--gray-10);
+		color: var(--c-gray2, var(--gray-10));
 		min-width: 1ch;
 	}
 
 	input[type='range'] {
 		flex: 1;
 		margin: 0;
-		accent-color: var(--gray-9);
+		accent-color: var(--c-gray3, var(--gray-9));
 	}
 </style>
