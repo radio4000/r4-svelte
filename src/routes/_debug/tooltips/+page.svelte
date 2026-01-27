@@ -42,6 +42,17 @@
 			<button {@attach tooltip({content: 'Positioned right', position: 'right'})}> Right </button>
 		</menu>
 	</section>
+
+	<section>
+		<h2>Native title attribute</h2>
+		<p>Browser-rendered tooltips. Delayed appearance, no styling control, but zero JS.</p>
+		<menu>
+			<button title="Native browser tooltip">Hover for title</button>
+			<a href="#" title="Link tooltip text">Link with title</a>
+			<abbr title="HyperText Markup Language">HTML</abbr>
+		</menu>
+	</section>
+
 </div>
 
 <style>

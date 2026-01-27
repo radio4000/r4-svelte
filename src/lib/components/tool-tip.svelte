@@ -61,7 +61,7 @@
 
 <style>
 	.tooltip {
-		position: absolute;
+		position: fixed;
 		margin: 0;
 		padding: 0.2rem 0.5rem;
 		font-size: var(--font-3);
@@ -72,30 +72,22 @@
 		pointer-events: none;
 	}
 
-	/* Modern anchor positioning */
-	@supports (top: anchor(bottom)) {
-		.tooltip.tooltip-top {
-			inset: unset;
-			bottom: calc(anchor(top) - var(--space-1));
-			justify-self: anchor-center;
-		}
+	/* Modern anchor positioning with auto-flip fallbacks */
+	@supports (position-area: bottom) {
+		@position-try --top { position-area: top; }
+		@position-try --bottom { position-area: bottom; }
+		@position-try --left { position-area: left; }
+		@position-try --right { position-area: right; }
 
-		.tooltip.tooltip-bottom {
+		.tooltip {
 			inset: unset;
-			top: calc(anchor(bottom) + var(--space-1));
-			justify-self: anchor-center;
+			margin: var(--space-1);
+			position-try-fallbacks: --top, --bottom, --left, --right;
+			position-visibility: anchors-visible;
 		}
-
-		.tooltip.tooltip-left {
-			inset: unset;
-			right: calc(anchor(left) - var(--space-1));
-			align-self: anchor-center;
-		}
-
-		.tooltip.tooltip-right {
-			inset: unset;
-			left: calc(anchor(right) + var(--space-1));
-			align-self: anchor-center;
-		}
+		.tooltip-top { position-area: top; }
+		.tooltip-bottom { position-area: bottom; }
+		.tooltip-left { position-area: left; }
+		.tooltip-right { position-area: right; }
 	}
 </style>
