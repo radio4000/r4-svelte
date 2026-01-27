@@ -43,7 +43,7 @@
 					{/if}
 				</menu>
 			</div>
-			<ChannelHero {channel} size={120} />
+			<ChannelHero {channel} />
 		</header>
 
 		<nav>

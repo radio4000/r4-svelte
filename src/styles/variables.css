@@ -32,9 +32,6 @@
 	--breakpoint-md: 1024px;
 	--breakpoint-lg: 1280px;
 	--breakpoint-xl: 1640px;
-
-	/* For layout think in boxes, flex (rows), grid, section (vertical spacing) and containers (max width) */
-	--player-compact-size: 8rem;
 }
 
 :root.light {
