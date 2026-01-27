@@ -54,6 +54,7 @@
 				{loading ? m.common_sending() : m.auth_resend()}
 			</button>
 			<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
+			<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
 		</menu>
 	</section>
 {:else if step === 'password'}
@@ -86,6 +87,7 @@
 	</form>
 	<menu>
 		<button type="button" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button>
+		<a href="/auth/reset-password">{m.auth_forgot_password()}</a>
 	</menu>
 {:else if step === 'email'}
 	<form
