@@ -218,8 +218,13 @@
 	}
 
 	@keyframes pulse-border {
-		0%, 100% { border-color: hsl(41 79% 55%); }
-		50% { border-color: hsl(41 79% 35%); }
+		0%,
+		100% {
+			border-color: hsl(41 79% 55%);
+		}
+		50% {
+			border-color: hsl(41 79% 35%);
+		}
 	}
 
 	section > input[data-loading] {
@@ -250,7 +255,7 @@
 		gap: 0.5rem;
 
 		> :global(.placeholder),
-		> :global(img)  {
+		> :global(img) {
 			margin-left: -0.3rem;
 		}
 	}

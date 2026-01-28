@@ -1,12 +1,12 @@
 <script>
-	import MixSource from '$lib/components/mix-source.svelte'
-	import DjDeck from '$lib/components/dj-deck.svelte'
-	import DjCrossfader from '$lib/components/dj-crossfader.svelte'
+	import MixCrate from '$lib/components/mix-crate.svelte'
+	import MixDeck from '$lib/components/mix-deck.svelte'
+	import MixCrossfader from '$lib/components/mix-crossfader.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import {mix, mixAll} from '$lib/lab/mix'
 	import {ensureTracksLoaded} from '$lib/tanstack/collections'
 
-	/** @type {import('$lib/components/mix-source.svelte').Source[]} */
+	/** @type {import('$lib/components/mix-crate.svelte').Source[]} */
 	let sources = $state([])
 	let options = $state({shuffle: false, withoutErrors: false, limit: 50})
 	let loading = $state(false)
@@ -58,9 +58,9 @@
 	/** @type {string[]} */
 	let queueB = $state([])
 
-	/** @type {import('$lib/components/dj-deck.svelte').DeckState} */
+	/** @type {import('$lib/components/mix-deck.svelte').DeckState} */
 	let deckA = $state({id: 'A', trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false})
-	/** @type {import('$lib/components/dj-deck.svelte').DeckState} */
+	/** @type {import('$lib/components/mix-deck.svelte').DeckState} */
 	let deckB = $state({id: 'B', trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false})
 
 	// Equal-power crossfade: convert -1..1 to 0..1, then apply quarter-sine curve
@@ -80,12 +80,12 @@
 		}
 	}
 
-	/** @param {import('$lib/components/mix-source.svelte').Source} source */
+	/** @param {import('$lib/components/mix-crate.svelte').Source} source */
 	function handleAddSource(source) {
 		sources = [...sources, source]
 	}
 
-	/** @param {import('$lib/components/mix-source.svelte').Source} source */
+	/** @param {import('$lib/components/mix-crate.svelte').Source} source */
 	function handleRemoveSource(source) {
 		sources = sources.filter((s) => !(s.type === source.type && s.value === source.value))
 	}
@@ -103,17 +103,17 @@
 </svelte:head>
 
 <div class="constrained mixer-layout">
-	<!-- Source Device (Crate) -->
-	<section class="device source-device">
+	<!-- Crate -->
+	<section class="device crate">
 		<header class="caps">Crate</header>
-		<MixSource {sources} {loading} onadd={handleAddSource} onremove={handleRemoveSource} />
+		<MixCrate {sources} {loading} onadd={handleAddSource} onremove={handleRemoveSource} />
 	</section>
 
-	<!-- Pipe from crate to processor -->
+	<!-- Pipe: crate → processor -->
 	<div class="pipe-center"><div class="pipe" data-loading={loading || undefined}></div></div>
 
-	<!-- Processor Device -->
-	<section class="device processor-device">
+	<!-- Processor -->
+	<section class="device processor">
 		<button type="button" class:active={options.shuffle} onclick={() => (options.shuffle = !options.shuffle)}>
 			Shuffle
 		</button>
@@ -130,19 +130,19 @@
 		<output>{loading ? '...' : trackCount} tracks</output>
 	</section>
 
-	<!-- Pipes from processor -->
-	<div class="pipes pipes-from-source">
+	<!-- Pipe: processor → loaders -->
+	<div class="pipes pipes-to-loaders">
 		<div class="pipe" data-loading={loading || undefined}></div>
 		<div class="pipe" data-loading={loading || undefined}></div>
 	</div>
 
-	<!-- Load buttons -->
-	<div class="outputs">
-		<button class="output" onclick={() => loadToDeck('A')} disabled={!sources.length}>Load A</button>
-		<button class="output" onclick={() => loadToDeck('B')} disabled={!sources.length}>Load B</button>
+	<!-- Loaders -->
+	<div class="loaders">
+		<button class="loader" onclick={() => loadToDeck('A')} disabled={!sources.length}>Load A</button>
+		<button class="loader" onclick={() => loadToDeck('B')} disabled={!sources.length}>Load B</button>
 	</div>
 
-	<!-- Pipes to decks -->
+	<!-- Pipe: loaders → decks -->
 	<div class="pipes pipes-to-decks">
 		<div class="pipe" data-active={deckA.playing || undefined}></div>
 		<div class="pipe" data-active={deckB.playing || undefined}></div>
@@ -150,23 +150,23 @@
 
 	<!-- Decks -->
 	<div class="decks">
-		<section class="device deck-device" data-playing={deckA.playing || undefined}>
-			<DjDeck bind:deck={deckA} effectiveVolume={volumeA} queue={queueA} />
+		<section class="device deck" data-playing={deckA.playing || undefined}>
+			<MixDeck bind:deck={deckA} effectiveVolume={volumeA} queue={queueA} />
 		</section>
-		<section class="device deck-device" data-playing={deckB.playing || undefined}>
-			<DjDeck bind:deck={deckB} effectiveVolume={volumeB} queue={queueB} />
+		<section class="device deck" data-playing={deckB.playing || undefined}>
+			<MixDeck bind:deck={deckB} effectiveVolume={volumeB} queue={queueB} />
 		</section>
 	</div>
 
-	<!-- Pipes to mixer -->
-	<div class="pipes pipes-to-mixer">
+	<!-- Pipe: decks → crossfader -->
+	<div class="pipes pipes-to-crossfader">
 		<div class="pipe"></div>
 		<div class="pipe"></div>
 	</div>
 
-	<!-- Mixer Device -->
-	<section class="device mixer-device">
-		<DjCrossfader bind:value={crossfader} />
+	<!-- Crossfader -->
+	<section class="device crossfader">
+		<MixCrossfader bind:value={crossfader} />
 	</section>
 </div>
 
@@ -207,8 +207,8 @@
 		border-radius: var(--border-radius);
 	}
 
-	/* Source device (crate) */
-	.source-device {
+	/* Crate */
+	.crate {
 		display: flex;
 		flex-direction: column;
 		padding: 0.75rem;
@@ -217,13 +217,13 @@
 		border-color: hsl(40 20% 30%);
 	}
 
-	.source-device > header {
+	.crate > header {
 		color: var(--c-yellow5);
 		letter-spacing: 0.05em;
 	}
 
-	/* Processor device */
-	.processor-device {
+	/* Processor */
+	.processor {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -233,17 +233,17 @@
 		align-self: center;
 	}
 
-	.processor-device button {
+	.processor button {
 		font-size: var(--font-2);
 		padding: 0.2rem 0.5rem;
 	}
 
-	.processor-device .limit {
+	.processor .limit {
 		flex: 1;
 		min-width: 6rem;
 	}
 
-	.processor-device output {
+	.processor output {
 		font-size: var(--font-1);
 		font-variant-numeric: tabular-nums;
 		color: var(--c-gray3);
@@ -298,7 +298,7 @@
 		background: hsl(221 25% 40%);
 	}
 
-	.pipes-from-source .pipe[data-loading] {
+	.pipes-to-loaders .pipe[data-loading] {
 		background: none;
 		background-image: repeating-linear-gradient(
 			180deg,
@@ -311,13 +311,13 @@
 		animation: signal-flow 0.5s linear infinite;
 	}
 
-	/* Pipes from decks to mixer - inset from inner edges */
-	.pipes-to-mixer .pipe:first-child {
+	/* Pipes: decks → crossfader - inset from inner edges */
+	.pipes-to-crossfader .pipe:first-child {
 		justify-self: end;
 		margin-right: 1rem;
 	}
 
-	.pipes-to-mixer .pipe:last-child {
+	.pipes-to-crossfader .pipe:last-child {
 		justify-self: start;
 		margin-left: 1rem;
 	}
@@ -344,14 +344,14 @@
 		color: hsl(221 55% 60%);
 	}
 
-	/* Load buttons (cartridge style) */
-	.outputs {
+	/* Loaders */
+	.loaders {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
 	}
 
-	.output {
+	.loader {
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -367,48 +367,48 @@
 		box-shadow: 0 2px 0 var(--c-gray8);
 	}
 
-	.output:not(:disabled):hover {
+	.loader:not(:disabled):hover {
 		background: var(--c-gray5);
 		border-color: var(--c-gray4);
 	}
 
-	.output:not(:disabled):active {
+	.loader:not(:disabled):active {
 		background: var(--c-gray4);
 		box-shadow: none;
 		transform: translateY(2px);
 	}
 
-	.output:disabled {
+	.loader:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
 		box-shadow: none;
 	}
 
-	.output:first-child {
+	.loader:first-child {
 		background: hsl(17 50% 35%);
 		border-color: hsl(17 50% 45%);
 	}
 
-	.output:first-child:not(:disabled):hover {
+	.loader:first-child:not(:disabled):hover {
 		background: hsl(17 55% 45%);
 		border-color: hsl(17 55% 55%);
 	}
 
-	.output:last-child {
+	.loader:last-child {
 		background: hsl(221 40% 35%);
 		border-color: hsl(221 40% 45%);
 	}
 
-	.output:last-child:not(:disabled):hover {
+	.loader:last-child:not(:disabled):hover {
 		background: hsl(221 45% 45%);
 		border-color: hsl(221 45% 55%);
 	}
 
-	.output:first-child:not(:disabled):hover {
+	.loader:first-child:not(:disabled):hover {
 		border-color: var(--c-red5);
 	}
 
-	.output:last-child:not(:disabled):hover {
+	.loader:last-child:not(:disabled):hover {
 		border-color: var(--c-blue5);
 	}
 
@@ -419,29 +419,29 @@
 		gap: 1rem;
 	}
 
-	.deck-device {
+	.deck {
 		padding: 0;
 		overflow: hidden;
 	}
 
-	.deck-device:first-child {
+	.deck:first-child {
 		background: hsl(17 25% 22%);
 		border-color: hsl(17 30% 35%);
 		--deck-accent: var(--c-red5);
 	}
 
-	.deck-device:last-child {
+	.deck:last-child {
 		background: hsl(221 20% 22%);
 		border-color: hsl(221 25% 35%);
 		--deck-accent: var(--c-blue5);
 	}
 
-	.deck-device[data-playing] {
+	.deck[data-playing] {
 		border-color: var(--deck-accent);
 	}
 
-	/* Mixer/crossfader */
-	.mixer-device {
+	/* Crossfader */
+	.crossfader {
 		padding: 0.75rem 1rem;
 		max-width: 20rem;
 		align-self: center;
@@ -450,7 +450,7 @@
 	}
 
 	@media (max-width: 600px) {
-		.outputs {
+		.loaders {
 			gap: 0.5rem;
 		}
 
@@ -459,7 +459,7 @@
 			gap: 0.75rem;
 		}
 
-		.mixer-device {
+		.crossfader {
 			max-width: none;
 		}
 	}
