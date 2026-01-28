@@ -2,6 +2,11 @@
 
 ## January 2026
 
+- Share buttons for channels and tracks (via Web Share API or clipboard fallback)
+- /mix now has dual decks
+- Account management: change email, password, and manage login providers at /settings/account
+- Fixed tracks not playing from /search results
+- Unified form styling across the app
 - Vertical header layout (moved to left side, flex + sticky positioning)
 - Channel pages now have following/followers subroutes with nav and display modes
 - Broadcast sync: listeners rejoin at the broadcaster's current position via seek-to-position
