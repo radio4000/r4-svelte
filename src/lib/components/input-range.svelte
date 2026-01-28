@@ -67,6 +67,8 @@
 	.input-range {
 		position: relative;
 		display: flex;
+		height: 20px;
+		align-items: center;
 	}
 
 	input[type='range'] {
@@ -76,41 +78,25 @@
 		cursor: pointer;
 		position: relative;
 		z-index: 2;
-		accent-color: var(--accent-9);
+		accent-color: var(--gray-9);
 	}
 
 	.marks {
 		position: absolute;
 		top: 0;
 		bottom: 0;
-		left: 0;
-		right: 0;
+		left: 8px;
+		right: 8px;
 		pointer-events: none;
-		background: var(--gray-1);
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
 	}
 
 	.mark {
-		position: relative;
-		height: 100%;
 		width: 1px;
-	}
-
-	.mark::before,
-	.mark::after {
-		content: '';
-		position: absolute;
-		left: 0;
-		width: 2px;
-		height: 6px;
-		border-radius: 2px;
-		background: var(--color-red);
-	}
-	.mark::before {
-		top: 0;
-	}
-	.mark::after {
-		bottom: 0;
+		height: 4px;
+		background: var(--gray-6);
+		border-radius: 1px;
 	}
 </style>
