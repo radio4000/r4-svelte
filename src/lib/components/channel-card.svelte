@@ -3,12 +3,16 @@
 	import {relativeDateDetailed} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
 	import {trimWithEllipsis} from '$lib/utils.ts'
+	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import ChannelHero from './channel-hero.svelte'
 
 	/** @type {{channel: import('$lib/types').Channel, children?: import('svelte').Snippet}}*/
 	let {channel, children} = $props()
 
-	const broadcasting = $derived(channel.broadcasting || appState.listening_to_channel_id === channel.id)
+	const broadcasting = $derived(
+		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)) ||
+			appState.listening_to_channel_id === channel.id
+	)
 
 	/** @param {MouseEvent} event */
 	async function doubleclick({currentTarget}) {
