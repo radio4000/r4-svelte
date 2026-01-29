@@ -4,7 +4,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## High priority
 
-- Improved broadcast icons on active channels — show a "live" icon on channel cards and homepage when broadcasting. Reuse the existing live dot. Goal: drive adoption by making broadcast more visible.
+- ~~Improved broadcast icons on active channels — show a "live" icon on channel cards and homepage when broadcasting. Reuse the existing live dot. Goal: drive adoption by making broadcast more visible.~~ ✓ Done: channel-card now checks broadcastsCollection
 
 - In-channel tag/mention filtering — clicking a tag on a channel filters that channel's tracks by tag, staying on the channel page instead of redirecting to global search. Better UX, keeps context.
 
