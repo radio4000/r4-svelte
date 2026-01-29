@@ -28,8 +28,6 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Low priority / needs thinking
 
-- Multi-deck / Mix — YouTube DJ mixer for "youtube dj 2 decks" search intent. Low priority personally. Includes /mix input UX and tag discovery improvements. https://github.com/radio4000/r4-sync-tests/pull/76
-
 - 3D globe map view — unclear what problem this solves.
 
 - batch-edit URL persistence — persist filter/search/sort state so views survive refresh. use svelte snapshot, we do this already somehwere
