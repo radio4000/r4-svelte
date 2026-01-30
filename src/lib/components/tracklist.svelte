@@ -122,9 +122,9 @@
 						<section class="month">
 							<h3 class="caps">{month}</h3>
 							<ul class="list tracks">
-								{#each monthTracks as track, index (track.id)}
+								{#each monthTracks as track (track.id)}
 									<li>
-										<TrackCard {track} {index} {canEdit} />
+										<TrackCard {track} index={tracks.indexOf(track)} {canEdit} />
 										{@render footer?.({track})}
 									</li>
 								{/each}
