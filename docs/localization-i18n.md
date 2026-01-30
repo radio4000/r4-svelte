@@ -31,3 +31,7 @@ Restart `bun run dev` and you should see "es" in the language switcher immediate
 RTL locales (e.g. `ar`) are automatically rendered right-to-left. Set the locale via the language switcher or `appState.language` and the `<html>` element will toggle `dir="rtl"` for those tags. When the app boots with no saved preference it tries to match `navigator.languages` and falls back to the Paraglide default.
 
 Also see [Fink](https://fink.inlang.com) from [inlang](https://inlang.com) for interface to edit the language strings.
+
+## Notes
+
+- Routes under `/src/routes/_debug` are developer-only playgrounds and do not need translation.
