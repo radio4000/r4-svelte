@@ -97,11 +97,13 @@
 	<title>{m.channel_edit_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
-<article class="constrained focused">
+<article class="constrained">
 	{#if canEdit && channel}
+		<!--
 		<header>
 			<h1>{m.channel_edit_title()} <a href={`/${channel.slug}`}>{channel.name}</a></h1>
 		</header>
+		-->
 
 		{#if error}
 			<p class="error" role="alert">{m.common_error()}: {error}</p>
@@ -110,8 +112,6 @@
 		{#if success}
 			<p class="success">{m.channel_updated_success()}</p>
 		{/if}
-
-		{#if !error && !success}<p>&nbsp;</p>{/if}
 
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>

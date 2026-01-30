@@ -2,7 +2,6 @@
 .constrained {
 	width: 100%;
 	max-width: 80ch;
-	margin-inline: auto;
 	margin-block: 0.5rem;
 	padding-inline: 0.5rem;
 }
@@ -19,6 +18,7 @@
 	justify-content: center;
 	align-content: baseline;
 	padding-top: 10vh;
+	margin-inline: auto;
 }
 
 .focused.constrained {

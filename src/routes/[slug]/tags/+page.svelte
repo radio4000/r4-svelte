@@ -147,7 +147,6 @@
 {:else}
 	<main>
 		<header class="row">
-			<h1>{m.tags_heading({name: channel.name})}</h1>
 			<menu>
 				<label title={m.tags_filter_label()}>
 					<select bind:value={filter}>
@@ -165,6 +164,9 @@
 					</select>
 				</label>
 			</menu>
+			<!--
+			<h1>{m.tags_heading({name: channel.name})}</h1>
+			-->
 		</header>
 
 		{#if periods.length > 0}

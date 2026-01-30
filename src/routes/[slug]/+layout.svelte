@@ -33,7 +33,9 @@
 				{/if}
 				<p class="dates">
 					<small>
-						Since {relativeDateSolar(channel.created_at)} · Updated {relativeDate(channel.updated_at)}
+						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
+							date: relativeDate(channel.updated_at)
+						})}
 					</small>
 				</p>
 				<menu>
@@ -43,7 +45,7 @@
 					{/if}
 					<button type="button" onclick={() => (appState.modal_share = {channel})}>
 						<Icon icon="share" size={16} />
-						Share
+						{m.share_native()}
 					</button>
 				</menu>
 			</div>
@@ -73,7 +75,7 @@
 					href={`/?display=map&slug=${channel.slug}&longitude=${channel.longitude}&latitude=${channel.latitude}&zoom=15`}
 				>
 					<Icon icon="map" size={16} />
-					Map
+					{m.nav_map()}
 				</a>
 			{/if}
 			{#if canEdit}
@@ -83,7 +85,7 @@
 				</a>
 				<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
 					<Icon icon="unordered-list" size={16} />
-					Batch
+					{m.batch_edit_nav_label()}
 				</a>
 			{/if}
 		</nav>
@@ -93,7 +95,7 @@
 		</main>
 	</div>
 {:else}
-	<p style="padding: 1rem;">Channel not found</p>
+	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {/if}
 
 <style>
@@ -104,11 +106,11 @@
 
 	header {
 		display: flex;
-		gap: 1rem;
-		padding: 1rem;
+		padding: 0.5rem;
 	}
 
 	header :global(figure) {
+		min-width: 6rem;
 		flex-shrink: 0;
 	}
 
@@ -154,9 +156,9 @@
 	nav a {
 		display: flex;
 		align-items: center;
-		padding: 0.5rem 0.75rem;
 		text-decoration: none;
 		white-space: nowrap;
+		padding: 0.5rem 0.5rem 0.4rem;
 
 		&:hover {
 			background: var(--gray-3);

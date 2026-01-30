@@ -23,17 +23,19 @@
 	$effect(() => {
 		if (!channel?.id) return
 		loading = true
-		queryClient.fetchQuery({
-			queryKey: ['channel-following', channel.id],
-			queryFn: async () => {
-				const {data} = await sdk.channels.readFollowings(channel.id)
-				return data || []
-			},
-			staleTime: 5 * 60 * 1000
-		}).then((data) => {
-			following = data
-			loading = false
-		})
+		queryClient
+			.fetchQuery({
+				queryKey: ['channel-following', channel.id],
+				queryFn: async () => {
+					const {data} = await sdk.channels.readFollowings(channel.id)
+					return data || []
+				},
+				staleTime: 5 * 60 * 1000
+			})
+			.then((data) => {
+				following = data
+				loading = false
+			})
 	})
 </script>
 

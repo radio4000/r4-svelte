@@ -23,17 +23,19 @@
 	$effect(() => {
 		if (!channel?.id) return
 		loading = true
-		queryClient.fetchQuery({
-			queryKey: ['channel-followers', channel.id],
-			queryFn: async () => {
-				const {data} = await sdk.channels.readFollowers(channel.id)
-				return data || []
-			},
-			staleTime: 5 * 60 * 1000
-		}).then((data) => {
-			followers = data
-			loading = false
-		})
+		queryClient
+			.fetchQuery({
+				queryKey: ['channel-followers', channel.id],
+				queryFn: async () => {
+					const {data} = await sdk.channels.readFollowers(channel.id)
+					return data || []
+				},
+				staleTime: 5 * 60 * 1000
+			})
+			.then((data) => {
+				followers = data
+				loading = false
+			})
 	})
 </script>
 
@@ -43,11 +45,14 @@
 
 <article>
 	{#if loading}
-		<h1>{m.nav_followers()}</h1>
-		<p>{m.common_loading()}</p>
+		<header>
+			<h1>{m.nav_followers()}</h1>
+			<p>{m.common_loading()}</p>
+		</header>
 	{:else if followers.length === 0}
-		<h1>{m.nav_followers()}</h1>
-		<p>{m.empty_placeholder()}</p>
+		<header>
+			<h1>{m.nav_followers()} <small>({followers.length})</small></h1>
+		</header>
 	{:else}
 		<ChannelsView channels={followers}>
 			{#snippet header()}<h1>{m.nav_followers()} <small>({followers.length})</small></h1>{/snippet}
@@ -58,5 +63,10 @@
 <style>
 	article {
 		padding: 0.5rem;
+	}
+	header {
+		min-height: 30px;
+		display: flex;
+		align-items: center;
 	}
 </style>

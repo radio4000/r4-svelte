@@ -5,7 +5,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 ## Workflow
 
 1. Choose something from @plan.md to work on
-2. Read @docs/index.md, there might be a document related to the task
+2. Instead of exploring the codebase, start by looking inside the @./docs folder, it is very likely to have what you need
 3. Write a plan
 4. Implement
 5. bun run check && bun run types
