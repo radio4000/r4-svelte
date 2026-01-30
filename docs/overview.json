@@ -133,59 +133,19 @@
 
 	"src/lib/lab/mix.ts": [
 		{"name": "mix()", "desc": "Empty mix."},
-		{"name": "mixFrom(slug)", "desc": "Mix from channel."},
-		{"name": "mixIds(...ids)", "desc": "Mix from track IDs."},
-		{"name": "mixCurrent()", "desc": "Mix from current queue."},
 		{"name": "mixAll()", "desc": "Mix from all loaded tracks."},
-		{"name": "mixRemaining()", "desc": "Mix from remaining queue."},
-		{"name": "mixSearch(query, options?)", "desc": "Create mix from search."},
 
 		{"name": "mix.from(slug)", "desc": "Add channel tracks."},
-		{"name": "mix.add(...trackIds)", "desc": "Add specific tracks."},
-		{"name": "mix.concat(otherMix)", "desc": "Concat another mix."},
-		{"name": "mix.interleave(otherMix)", "desc": "Interleave with another mix."},
-
 		{"name": "mix.shuffle()", "desc": "Shuffle tracks."},
-		{"name": "mix.reverse()", "desc": "Reverse order."},
-		{"name": "mix.sortNewest()", "desc": "Sort by newest."},
-		{"name": "mix.sortOldest()", "desc": "Sort by oldest."},
-
 		{"name": "mix.take(n)", "desc": "Take first n."},
-		{"name": "mix.skip(n)", "desc": "Skip first n."},
 		{"name": "mix.unique()", "desc": "Remove duplicates."},
-		{"name": "mix.repeat(times)", "desc": "Repeat mix."},
-
-		{"name": "mix.where(predicate)", "desc": "Custom filter."},
 		{"name": "mix.withoutErrors()", "desc": "Filter out errors."},
-		{"name": "mix.youtube()", "desc": "Filter YouTube tracks."},
-		{"name": "mix.soundcloud()", "desc": "Filter SoundCloud tracks."},
-		{"name": "mix.recent(days)", "desc": "Filter by recent days."},
 		{"name": "mix.withTag(tag)", "desc": "Filter by tag."},
-		{"name": "mix.withMention(mention)", "desc": "Filter by mention."},
-
-		{"name": "mix.when(condition, action)", "desc": "Conditional action."},
-		{"name": "mix.unless(condition, action)", "desc": "Conditional action unless."},
-		{"name": "mix.tap(fn)", "desc": "Side effect."},
-		{"name": "mix.log(label?)", "desc": "Debug log."},
 		{"name": "mix.clone()", "desc": "Fork mix for variations."},
 
 		{"name": "mix.ids()", "desc": "Return track IDs."},
 		{"name": "mix.tracks()", "desc": "Return track objects."},
-		{"name": "mix.count()", "desc": "Count tracks."},
-		{"name": "mix.play()", "desc": "Start playback."},
-		{"name": "mix.queue()", "desc": "Set as playlist."},
-		{"name": "mix.queueNext()", "desc": "Insert after current track."}
-	],
-
-	"src/lib/lab/selectors.ts": [
-		{"name": "identity(x)", "desc": "Return input."},
-		{"name": "constant(x)", "desc": "Return function that yields x."},
-		{"name": "pipe(value, ...fns)", "desc": "Left-to-right composition."},
-		{"name": "compose(...fns)", "desc": "Right-to-left composition."},
-		{"name": "tap(fn)", "desc": "Side effect helper."},
-		{"name": "when(predicate, transform)", "desc": "Conditional transform."},
-		{"name": "pickRandom(arr)", "desc": "Pick one random item."},
-		{"name": "pickRandomN(n)", "desc": "Pick n random items."}
+		{"name": "mix.count()", "desc": "Count tracks."}
 	],
 
 	"src/lib/search.js": [
@@ -237,7 +197,8 @@
 		{"name": "shuffleArray(arr)", "desc": "Fisher-Yates shuffle."},
 		{"name": "generateFrequency(name, slug, min, max)", "desc": "Deterministic frequency from string."},
 		{"name": "timeAgo(dateString)", "desc": "Relative time: 'Xm ago', 'Xh Ym ago'."},
-		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."}
+		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
+		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."}
 	],
 
 	"src/lib/components": [
@@ -432,16 +393,9 @@
 		{"name": "r5.sdk", "desc": "SDK instance."},
 
 		{"name": "r5.mix", "desc": "Mix builder."},
-		{"name": "r5.mixFrom", "desc": "Mix from channel."},
-		{"name": "r5.mixSearch", "desc": "Mix from search."},
-
+		{"name": "r5.mixAll", "desc": "Mix from all loaded tracks."},
 		{"name": "r5.queue.*", "desc": "Queue helpers."},
-		{"name": "r5.pipe", "desc": "Pipe helper."},
-		{"name": "r5.tap", "desc": "Tap helper."},
-		{"name": "r5.when", "desc": "When helper."},
 
-		{"name": "example: r5.mixFrom('starttv').shuffle().play()", "desc": "Example mix play."},
-		{"name": "example: r5.mixFrom('ch1').from('ch2').unique().take(50).play()", "desc": "Example mix play."},
 		{
 			"name": "example: [...r5.tracksCollection.state.values()].filter(t => t.slug === 'x')",
 			"desc": "Example collection query."

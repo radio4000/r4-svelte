@@ -1,3 +1,4 @@
+import {tick} from 'svelte'
 import {appState} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, upsertRemoteBroadcast} from '$lib/broadcast'
@@ -107,6 +108,8 @@ export async function playTrack(id, endReason, startReason) {
 		}
 	}
 
+	// Wait for Svelte to update the DOM (render the player element) before calling play
+	await tick()
 	log.debug('playTrack calling play()')
 	play()
 }

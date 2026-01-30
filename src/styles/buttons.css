@@ -88,6 +88,19 @@ button.active:active,
 	padding: 0;
 }
 
+button.ghost,
+.btn.ghost {
+	background-color: transparent;
+	border-color: transparent;
+	box-shadow: none;
+	&:hover,
+	&:focus,
+	&:active,
+	&[aria-expanded='true'] {
+		border-color: var(--gray-6);
+	}
+}
+
 button[data-loading='true'] {
 	cursor: wait;
 }

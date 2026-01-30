@@ -1,10 +1,9 @@
 <script>
-	import * as m from '$lib/paraglide/messages'
+	let {size = 24, ...rest} = $props()
 </script>
 
-<svg width="300" height="260" viewBox="0 0 300 260" xmlns="http://www.w3.org/2000/svg">
-	<title>{m.icon_r4_title()}</title>
-	<g fill="currentColor" fill-rule="evenodd">
+<svg width={size} height={size * 0.86667} viewBox="0 0 300 260" aria-hidden="true" {...rest}>
+	<g fill="currentColor">
 		<path
 			d="M125 217.53h108.86V260h40.19l-.005-42.47H300v-39.887h-25.955V38.147h-64.868L125 177.597v39.934zm34.215-40.066l87.847-70.16v70.16h-87.847z"
 		/>

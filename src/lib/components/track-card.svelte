@@ -94,7 +94,7 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</a>
-	<PopoverMenu id={menuId} bind:this={menu} onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu id={menuId} bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
@@ -110,11 +110,19 @@
 				type="button"
 				role="menuitem"
 				onclick={() => {
+					playTrack(track.id, null, 'user_click_track')
+					menu?.close()
+				}}>Play</button
+			>
+			<button
+				type="button"
+				role="menuitem"
+				onclick={() => {
 					playNext(track.id)
 					menu?.close()
 				}}>{m.track_play_next()}</button
 			>
-			<button type="button" role="menuitem" onclick={addToRadio}>{m.common_add()}</button>
+			<button type="button" role="menuitem" onclick={addToRadio}>{m.track_add_to_radio()}</button>
 			<button type="button" role="menuitem" onclick={shareTrack}>Share</button>
 			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>{m.common_edit()}</button>{/if}
 			{#if canEdit}<button
@@ -135,8 +143,9 @@
 		display: flex;
 		flex-flow: row nowrap;
 		gap: 0 0.5rem;
-		padding: 0.5rem;
+		padding: 0.5rem 0 0.5rem 0.5rem;
 		line-height: 1.2;
+		min-height: 3.5rem; /* around 2 lines */
 		text-decoration: none;
 		cursor: default;
 
@@ -148,11 +157,13 @@
 
 	a > span:first-child {
 		width: 1.5rem;
-		margin: auto 0;
+		/*margin: auto 0;*/
 		flex-shrink: 0;
 		color: var(--gray-8);
 		font-size: var(--font-1);
 		text-align: right;
+		position: relative;
+		top: 0.2em;
 	}
 
 	.artwork {
@@ -217,11 +228,11 @@
 
 	article {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		/* container-type: inline-size; */
 
 		:global(.popover-menu) {
-			padding: 0.5rem;
+			padding: 0.2em;
 		}
 	}
 </style>

@@ -87,7 +87,7 @@
 
 		{#if canNativeShare()}
 			<button type="button" onclick={share}>
-				<Icon icon="external" size={16} />
+				<Icon icon="share" size={16} />
 				Share
 			</button>
 		{/if}

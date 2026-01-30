@@ -10,7 +10,6 @@ const STORAGE_KEY = LOCAL_STORAGE_KEYS.appState
 
 export const defaultAppState: AppState = {
 	id: 1,
-	counter: 0,
 
 	channels: [],
 	channel: undefined,

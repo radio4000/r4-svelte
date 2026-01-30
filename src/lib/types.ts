@@ -28,7 +28,6 @@ export interface AppState {
 	theme?: string
 	volume: number
 	custom_css_variables: Record<string, string>
-	counter: number
 	channels_display: string
 	channels_filter: string
 	channels_order: 'updated' | 'created' | 'name' | 'tracks'

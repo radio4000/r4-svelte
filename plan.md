@@ -2,39 +2,25 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
-## High priority
-
-- Improved broadcast icons on active channels — show a "live" icon on channel cards and homepage when broadcasting. Reuse the existing live dot. Goal: drive adoption by making broadcast more visible.
+## Backlog
 
 - In-channel tag/mention filtering — clicking a tag on a channel filters that channel's tracks by tag, staying on the channel page instead of redirecting to global search. Better UX, keeps context.
-
-- Add "broadcasting" filter to /channels list — complements the /broadcast route. Both approaches: /broadcast for rich "what's playing" view, filter for quick discovery in any view mode.
-
-- Rename "Add" to "Add to my radio" in track context menu — clearer labeling.
-
-- Add "play" action to track context menu — immediate play (share is done).
-
-## Medium priority
 
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 
 - /channels infinite mode — update limit reactively when entering infinite mode. Currently only 16 channels loaded; set limit high when in infinite view.
 
-- Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be.
+- Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be. The sidebar queue is below the footer now, but this also puts it below the fullscreen footer. We want it on top of the footer, when it's fullscreen
 
 - Option for users to backup/export their radio — use the r4 api backup endpoint, or r4 cli download?
 
 - Seek/position support — add `seekTo(seconds)`, `getPosition()` via media-chrome player. Support `?t=` URL param for deep-linking.
 
-## Low priority / needs thinking
-
-- Multi-deck / Mix — YouTube DJ mixer for "youtube dj 2 decks" search intent. Low priority personally. Includes /mix input UX and tag discovery improvements. https://github.com/radio4000/r4-sync-tests/pull/76
-
-- 3D globe map view — unclear what problem this solves.
+- 3D globe map view in addition to map view
 
 - batch-edit URL persistence — persist filter/search/sort state so views survive refresh. use svelte snapshot, we do this already somehwere
 
-## Data & Migration
+## Data & migration
 
 - Migrate v1 data to v2 — https://github.com/radio4000/migration-2026
   - How many v1 channels exist? Is migration-2026 repo active?
@@ -61,13 +47,11 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - track-card bottlenecks (3k+ tracks): extractYouTubeId per card, LinkEntities per description, PopoverMenu instances, active state checks.
 
-## Research / Speculative
+## Needs research
 
 - atproto as backend alternative — sign in with bluesky, sync channels/tracks. Major architectural shift. See github.com/radio4000/r4atproto
 
 - direct IDB collection persistence — disabled due to performance problems. See collection-persistence.ts and docs/plan-tanstack-collection-idb-idea.md.
-
-## Undecided
 
 - Mark musicbrainz/discogs metadata as wrong — auto-matching has high error rate. Alternative: show "unverified" badge.
 

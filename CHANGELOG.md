@@ -2,6 +2,10 @@
 
 ## January 2026
 
+- Add "Play" action in track context menu
+- Live broadcast indicator on channel cards
+- Add real R4 logo in header (goodbye test counter)
+- Fixed tracklist index when tracks are grouped
 - Share buttons for channels and tracks (via Web Share API or clipboard fallback)
 - /mix now has dual decks
 - Account management: change email, password, and manage login providers at /settings/account

@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import * as m from '$lib/paraglide/messages'
 	import AuthSignup from '$lib/components/auth-signup.svelte'
-	import IconR4 from '$lib/icon-r4.svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 
 	const redirect = $derived(page.url.searchParams.get('redirect') || '/settings')
 </script>
