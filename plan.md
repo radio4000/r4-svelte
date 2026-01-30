@@ -8,17 +8,17 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 
-- /channels infinite mode — update limit reactively when entering infinite mode. Currently only 16 channels loaded; set limit high when in infinite view.
+- Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be. The sidebar queue is below the footer now, but this also puts it below the fullscreen footer. We want it on top of the footer, when it's fullscreen.
+  - Q: What are the actual design options? What should fullscreen show when nothing is playing?
 
-- Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be. The sidebar queue is below the footer now, but this also puts it below the fullscreen footer. We want it on top of the footer, when it's fullscreen
+- Option for users to backup/export their radio — use `api.radio4000.com/api/v2/backup?slug={slug}`. Add UI button on channel settings or similar.
 
-- Option for users to backup/export their radio — use the r4 api backup endpoint, or r4 cli download?
-
-- Seek/position support — add `seekTo(seconds)`, `getPosition()` via media-chrome player. Support `?t=` URL param for deep-linking.
+- Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 
 - 3D globe map view in addition to map view
+  - Q: What library?
 
-- batch-edit URL persistence — persist filter/search/sort state so views survive refresh. use svelte snapshot, we do this already somehwere
+- batch-edit URL persistence — persist filter/search/sort state so views survive refresh. Use svelte snapshot like `/src/routes/mix/+page.svelte` does.
 
 ## Data & migration
 
@@ -29,23 +29,28 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Performance
 
+- Slow channel page navigation (2k+ tracks) — multiple factors compound:
+  - `checkTracksFreshness(slug)` runs immediately on mount, blocks render path. Defer with `requestIdleCallback` or delay until after paint.
+  - Grouped tracklist overhead — date parsing per track, section header creation. No virtualization (disabled due to rendering issues with grouping).
+  - track-card bottlenecks:
+    - extractYouTubeId per card — could use stored ytid from track_meta
+    - LinkEntities per description — could pre-parse and store
+    - PopoverMenu instances — lazy instantiation on hover/focus?
+    - active state checks — optimize derivation?
+
 - track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win.
 
 - Description link parsing is heavy — consider DB trigger for description_parsed.
 
-- /@slug subroutes keep fetching remotely — could be cached.
-
-- Freshness check shows `local: null` — causing unnecessary re-fetches. Related to disabled collection-persistence.ts.
-
 - appState serialization — playlist_tracks can be 3k items, serializing on every change may be slow. Consider splitting appState + playerState.
 
 - On-demand predicate push-down — cleaner architecture, not blocking features.
+  - Q: What does this mean in practice? Example of what changes?
 
 - Validation layer at sync boundaries — preventive, using zod or similar.
 
 - Standardized loading/error boundaries — current handling may be inconsistent.
-
-- track-card bottlenecks (3k+ tracks): extractYouTubeId per card, LinkEntities per description, PopoverMenu instances, active state checks.
+  - Q: What's inconsistent? What should the standard pattern be?
 
 ## Needs research
 
@@ -57,6 +62,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - Local file player for mp3/m4a — changes product direction significantly.
 
-- Share track_meta between users — collaborative metadata curation.
+- Share track_meta between users — collaborative metadata curation. See https://github.com/radio4000/r4-sync-tests/issues/6
 
 - Bandsintown integration — rich event data connections.
+  - Q: What's the integration? Show upcoming concerts for artists in tracks?
