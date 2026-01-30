@@ -79,7 +79,7 @@
 	[popover] {
 		position: fixed;
 		margin: 0;
-		padding: 0.25rem;
+		padding: 0.2rem;
 		min-width: 10rem;
 		background: var(--gray-2);
 		border: 1px solid var(--gray-6);

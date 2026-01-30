@@ -101,6 +101,7 @@ media-time-range {
 	}
 
 	.channel img,
+	.channel .placeholder,
 	.artwork {
 		max-width: none;
 		width: var(--size);

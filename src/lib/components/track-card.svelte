@@ -138,7 +138,7 @@
 </article>
 
 <style>
-	a {
+	article > a {
 		flex: 1;
 		display: flex;
 		flex-flow: row nowrap;
@@ -155,9 +155,8 @@
 		}
 	}
 
-	a > span:first-child {
+	article > a > span:first-child {
 		width: 1.5rem;
-		/*margin: auto 0;*/
 		flex-shrink: 0;
 		color: var(--gray-8);
 		font-size: var(--font-1);

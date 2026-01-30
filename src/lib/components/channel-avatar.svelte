@@ -27,7 +27,4 @@
 		font-size: var(--font-7);
 		text-transform: uppercase;
 	}
-	.placeholder {
-		width: 250px;
-	}
 </style>
