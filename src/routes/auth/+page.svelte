@@ -3,7 +3,7 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import IconR4 from '$lib/icon-r4.svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
 	import {channelsCollection} from '$lib/tanstack/collections'

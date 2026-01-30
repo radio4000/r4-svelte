@@ -6,7 +6,7 @@
 	import ShareModal from '$lib/components/share-modal.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import TestCounter from '$lib/components/test-counter.svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
@@ -22,12 +22,8 @@
 
 <header>
 	<nav>
-		<a href="/" class="home-link" class:active={page.route.id === '/'}>
-			{#await preloading}
-				{m.app_name()}
-			{:then}
-				<TestCounter />
-			{/await}
+		<a href="/" class="home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
+			<IconR4 size={20} />
 		</a>
 		<a
 			href="/search"
@@ -45,7 +41,7 @@
 			<EditTrackModal />
 			<ShareModal />
 			{#if userChannel}
-				<a href="/{userChannel.slug}" class="btn ChannelLinkButton" {@attach tooltip({content: 'Go to your channel'})}>
+				<a href="/{userChannel.slug}" class="btn channel-link" {@attach tooltip({content: 'Go to your channel'})}>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 				</a>
 			{/if}
@@ -73,37 +69,41 @@
 </header>
 
 <style>
-	.ChannelLinkButton {
-		padding: 0;
-		max-width: 42px;
-		@media (max-width: 768px) {
-			max-width: 30px;
-		}
-	}
-
 	header {
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
 		padding: 0.5rem;
 		background: var(--header-bg);
-		border-right: 1px solid light-dark(var(--gray-5), var(--gray-5));
-		transition: background 150ms;
+		border-right: 1px solid var(--gray-5);
 		z-index: 50;
-
-		a {
-			text-decoration: none;
-		}
 	}
 
 	nav {
-		display: flex;
 		flex-direction: column;
-		gap: 0.2rem;
 	}
 
 	nav:has(.settings-link) {
 		flex: 1;
+	}
+
+	.home-link {
+		min-height: 2rem; /* like buttons */
+		padding: 0.2rem;
+		border: 1px solid;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.channel-link {
+		padding: 0;
+		height: 30px;
+		overflow: hidden;
+		max-width: 42px;
+		@media (max-width: 768px) {
+			/*max-width: 30px;*/
+		}
 	}
 
 	.settings-link {

@@ -3,7 +3,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {createChannel} from '$lib/tanstack/collections'
 	import {slugify} from '$lib/utils'
-	import IconR4 from '$lib/icon-r4.svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 
 	let error = $state('')
 	let submitting = $state(false)
