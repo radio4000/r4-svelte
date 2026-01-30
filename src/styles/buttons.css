@@ -90,6 +90,7 @@ button.active:active,
 
 button.ghost,
 .btn.ghost {
+	background-color: transparent;
 	border-color: transparent;
 	box-shadow: none;
 	&:hover,

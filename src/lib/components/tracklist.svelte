@@ -116,7 +116,7 @@
 	{:else if grouped}
 		<div class="timeline">
 			{#each groupedTracks as [year, months] (year)}
-				<section>
+				<section class="year">
 					<h2 class="caps">{year}</h2>
 					{#each months as [month, monthTracks] (month)}
 						<section class="month">
@@ -149,13 +149,13 @@
 <style>
 	h2,
 	h3 {
+		line-height: 1.2;
 		margin-right: 0.5rem;
 		text-align: right;
 	}
 
-	.timeline > section {
-		margin-top: 0.5rem;
-		margin-bottom: 1rem;
+	.timeline .list > li:first-child {
+		border-top: 1px solid var(--gray-4);
 	}
 
 	/* sticky year - only for non-virtual timeline */
@@ -166,6 +166,18 @@
 		top: 0;
 		z-index: 1;
 		background: var(--gray-1);
+	}
+
+	.timeline > section {
+		margin-top: 0.5rem;
+	}
+
+	.month:not(:first-of-type) {
+		margin-top: 0.5rem;
+	}
+
+	.month > h3 {
+		margin-bottom: 0.5rem;
 	}
 
 	.virtual-tracklist {
@@ -193,13 +205,5 @@
 
 	.virtual-item {
 		box-sizing: border-box;
-	}
-
-	.year-item {
-		padding: 0.5rem 0;
-	}
-
-	.month-item {
-		padding: 0.25rem 0;
 	}
 </style>

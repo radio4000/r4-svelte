@@ -143,8 +143,9 @@
 		display: flex;
 		flex-flow: row nowrap;
 		gap: 0 0.5rem;
-		padding: 0.5rem;
+		padding: 0.5rem 0 0.5rem 0.5rem;
 		line-height: 1.2;
+		min-height: 3.5rem; /* around 2 lines */
 		text-decoration: none;
 		cursor: default;
 
@@ -156,11 +157,13 @@
 
 	a > span:first-child {
 		width: 1.5rem;
-		margin: auto 0;
+		/*margin: auto 0;*/
 		flex-shrink: 0;
 		color: var(--gray-8);
 		font-size: var(--font-1);
 		text-align: right;
+		position: relative;
+		top: 0.2em;
 	}
 
 	.artwork {
@@ -225,11 +228,11 @@
 
 	article {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		/* container-type: inline-size; */
 
 		:global(.popover-menu) {
-			padding: 0.5rem;
+			padding: 0.2em;
 		}
 	}
 </style>
