@@ -88,6 +88,7 @@
 	}
 
 	.home-link {
+		min-width: 2rem;
 		min-height: 2rem; /* like buttons */
 		padding: 0.2rem;
 		border: 1px solid;

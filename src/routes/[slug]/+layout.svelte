@@ -42,7 +42,7 @@
 						<ButtonFollow {channel} />
 					{/if}
 					<button type="button" onclick={() => (appState.modal_share = {channel})}>
-						<Icon icon="external" size={16} />
+						<Icon icon="share" size={16} />
 						Share
 					</button>
 				</menu>
@@ -119,7 +119,6 @@
 
 	h1 {
 		font-size: var(--font-9);
-		margin: 0;
 	}
 
 	.description {
@@ -128,6 +127,7 @@
 
 	.dates {
 		margin-top: 0.5rem;
+		line-height: 1.2;
 	}
 
 	menu {
