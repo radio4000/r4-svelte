@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection, queryClient} from '$lib/tanstack/collections'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -23,8 +23,15 @@
 	$effect(() => {
 		if (!channel?.id) return
 		loading = true
-		sdk.channels.readFollowers(channel.id).then(({data}) => {
-			followers = data || []
+		queryClient.fetchQuery({
+			queryKey: ['channel-followers', channel.id],
+			queryFn: async () => {
+				const {data} = await sdk.channels.readFollowers(channel.id)
+				return data || []
+			},
+			staleTime: 5 * 60 * 1000
+		}).then((data) => {
+			followers = data
 			loading = false
 		})
 	})
