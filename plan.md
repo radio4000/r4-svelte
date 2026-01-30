@@ -8,11 +8,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - In-channel tag/mention filtering — clicking a tag on a channel filters that channel's tracks by tag, staying on the channel page instead of redirecting to global search. Better UX, keeps context.
 
-- Add "broadcasting" filter to /channels list — complements the /broadcast route. Both approaches: /broadcast for rich "what's playing" view, filter for quick discovery in any view mode.
-
-- Rename "Add" to "Add to my radio" in track context menu — clearer labeling.
-
-- Add "play" action to track context menu — immediate play (share is done).
+- ~~Rename "Add" to "Add to my radio" in track context menu — clearer labeling.~~ ✓ Done
 
 ## Medium priority
 

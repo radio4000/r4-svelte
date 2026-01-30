@@ -570,6 +570,7 @@
 	"tooltips_tip_via_attachment": "via attachment",
 	"track_add_destination": "to {channel}",
 	"track_add_title": "Add track",
+	"track_add_to_radio": "Add to my radio",
 	"track_delete_confirm": "Delete {title}? This removes it from your radio.",
 	"track_detail_nav_discogs": "discogs",
 	"track_detail_nav_musicbrainz": "musicbrainz",

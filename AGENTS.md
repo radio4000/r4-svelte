@@ -10,7 +10,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 4. Implement
 5. bun run check && bun run types
 6. Review your work
-7. Update @plan.md
+7. Update @plan.md (remove completed items)
 8. Update @docs if needed
 
 ```
