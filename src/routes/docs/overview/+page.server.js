@@ -4,7 +4,7 @@ import {error} from '@sveltejs/kit'
 export const prerender = true
 
 // Temporarily hidden sections
-const HIDDEN = ['src/lib/lab/mix.ts', 'src/lib/lab/selectors.ts']
+const HIDDEN = []
 
 async function getDocSlugs() {
 	const files = await readdir('docs')

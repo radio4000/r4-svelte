@@ -203,3 +203,17 @@ export function channelAvatarUrl(id: string, size = 250, format = 'webp') {
 	const baseUrl = 'https://res.cloudinary.com/radio4000/image/upload'
 	return `${baseUrl}/w_${size},h_${size},c_thumb,q_60,fl_awebp/${id}.${format}`
 }
+
+/** Pick N random elements from array (no duplicates) */
+export function pickRandomN<T>(n: number) {
+	return (arr: T[]): T[] => {
+		if (n >= arr.length) return [...arr]
+		const copy = [...arr]
+		const result: T[] = []
+		for (let i = 0; i < n && copy.length > 0; i++) {
+			const idx = Math.floor(Math.random() * copy.length)
+			result.push(copy.splice(idx, 1)[0])
+		}
+		return result
+	}
+}
