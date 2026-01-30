@@ -2,19 +2,13 @@
 	import {untrack} from 'svelte'
 	import {createAttachmentKey} from 'svelte/attachments'
 
-	/** @type {{id: string, children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, class?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, [key: string]: any}} */
-	let {
-		id,
-		children,
-		trigger,
-		class: className = '',
-		closeOnClick = true,
-		onclose,
-		triggerAttachment,
-		...rest
-	} = $props()
+	/** @type {{id: string, children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, [key: string]: any}} */
+	let {id, children, trigger, btnClass, closeOnClick = true, onclose, triggerAttachment, ...rest} = $props()
 
-	const triggerProps = $derived(triggerAttachment ? {[createAttachmentKey()]: triggerAttachment} : {})
+	const triggerProps = $derived({
+		...(triggerAttachment ? {[createAttachmentKey()]: triggerAttachment} : {}),
+		...(btnClass ? {class: btnClass} : {})
+	})
 
 	let buttonEl = $state()
 	let popoverEl = $state()
@@ -68,7 +62,7 @@
 	})
 </script>
 
-<div class="popover-menu {className}" {...rest}>
+<div class="popover-menu" {...rest}>
 	<button type="button" popovertarget={id} bind:this={buttonEl} {...triggerProps}>
 		{@render trigger?.()}
 	</button>

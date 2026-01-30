@@ -94,7 +94,7 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</a>
-	<PopoverMenu id={menuId} bind:this={menu} onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu id={menuId} bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
