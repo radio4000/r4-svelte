@@ -2,6 +2,8 @@
 
 ## January 2026
 
+- #Channels Followers and following pages now cached for faster navigation
+- #i18n Translated more UI strings
 - Add "Play" action in track context menu
 - Live broadcast indicator on channel cards
 - Add real R4 logo in header (goodbye test counter)
