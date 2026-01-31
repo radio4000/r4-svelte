@@ -22,7 +22,7 @@
 
 <header>
 	<nav>
-		<a href="/" class="home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
+		<a href="/" class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
 			<IconR4 size={20} />
 		</a>
 		<a
@@ -88,13 +88,6 @@
 	}
 
 	.home-link {
-		min-width: 2rem;
-		min-height: 2rem; /* like buttons */
-		padding: 0.2rem;
-		border: 1px solid;
-		display: flex;
-		justify-content: center;
-		align-items: center;
 	}
 
 	.channel-link {
