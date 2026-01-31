@@ -6,8 +6,6 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - In-channel tag/mention filtering — clicking a tag on a channel filters that channel's tracks by tag, staying on the channel page instead of redirecting to global search. Better UX, keeps context.
 
-- Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
-
 - Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be. The sidebar queue is below the footer now, but this also puts it below the fullscreen footer. We want it on top of the footer, when it's fullscreen.
   - Q: What are the actual design options? What should fullscreen show when nothing is playing?
 
@@ -19,6 +17,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
   - Q: What library?
 
 - batch-edit URL persistence — persist filter/search/sort state so views survive refresh. Use svelte snapshot like `/src/routes/mix/+page.svelte` does.
+
+- Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 
 ## Data & migration
 
@@ -38,7 +38,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
     - PopoverMenu instances — lazy instantiation on hover/focus?
     - active state checks — optimize derivation?
 
-- track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win.
+- track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win. What about soundcloud? ignore those? where is the regex? must go into github.com/radio4000/supabase
 
 - Description link parsing is heavy — consider DB trigger for description_parsed.
 

@@ -18,7 +18,7 @@ Lead with motivation when it matters—a paragraph on why this release exists. N
 
 Group items into two buckets: **improvements** (makes the product better) and **fixes** (repairs something broken). Tag by domain with `#Domain` prefixes that map to how you think about the software.
 
-Past tense, active voice. "Added dark mode" not "Dark mode has been added." 
+Past tense, active voice. "Added dark mode" not "Dark mode has been added."
 
 ## What belongs
 

@@ -157,7 +157,7 @@ media-time-range {
 	height: 100%;
 	display: flex;
 	flex-flow: column;
-	place-items: center;
+	/* place-items: center; */
 	padding: 1rem;
 
 	.channel {
@@ -195,6 +195,7 @@ media-time-range {
 	media-controller:has(youtube-video),
 	media-controller:has(soundcloud-player) {
 		width: 100%;
+		margin: auto;
 		background: black;
 	}
 
@@ -204,19 +205,31 @@ media-time-range {
 	}
 
 	> menu {
-		margin-top: auto;
+		justify-content: center;
 		order: 5;
 
 		@media (min-width: 768px) {
 			/* bigger menu */
 			media-mute-button,
 			button {
-				padding: 0.2rem 1rem;
+				min-height: 3rem;
+				min-width: 3rem;
 			}
-			svg {
-				width: 2rem;
-				height: 2rem;
-			}
+		}
+	}
+}
+
+/* space for sidebar */
+.layout.asideVisible {
+	@media (max-width: 768px) {
+		max-height: calc(100% - 4rem);
+	}
+
+	footer.expanded {
+		right: var(--queue-panel-width, 400px);
+
+		@media (max-width: 768px) {
+			right: 0;
 		}
 	}
 }
