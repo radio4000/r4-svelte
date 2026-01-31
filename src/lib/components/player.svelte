@@ -12,7 +12,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {logger} from '$lib/logger'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
-	import {extractYouTubeId, detectMediaProvider} from '$lib/utils.ts'
+	import {detectMediaProvider} from '$lib/utils.ts'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -62,11 +62,7 @@
 	})
 
 	/** @type {string} */
-	let trackImage = $derived.by(() => {
-		if (!track?.url) return ''
-		const ytid = extractYouTubeId(track.url)
-		return ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : '' // default, mqdefault, hqdefault, sddefault, maxresdefault
-	})
+	let trackImage = $derived(track?.ytid ? `https://i.ytimg.com/vi/${track.ytid}/mqdefault.jpg` : '')
 
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))

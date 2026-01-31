@@ -1,17 +1,14 @@
 <script>
 	import {tracksCollection} from '$lib/tanstack/collections'
-	import {extractYouTubeId} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	let {track} = $props()
 
 	// Find other tracks with same YouTube video ID
 	const relatedTracks = $derived.by(() => {
-		if (!track?.url) return []
-		const ytid = extractYouTubeId(track.url)
-		if (!ytid) return []
+		if (!track?.ytid) return []
 		return [...tracksCollection.state.values()]
-			.filter((t) => t.id !== track.id && extractYouTubeId(t.url) === ytid)
+			.filter((t) => t.id !== track.id && t.ytid === track.ytid)
 			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 	})
 </script>

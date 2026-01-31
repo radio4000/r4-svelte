@@ -42,7 +42,9 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
   - Report to TanStack DB — `createLiveQueryCollection` could cache derived collections by query key
   - Component complexity is NOT the bottleneck (tested with bare `<li>{title}</li>`)
 
-- track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win. What about soundcloud? ignore those? where is the regex? must go into github.com/radio4000/supabase
+  **Secondary factors (lower priority):**
+  - Grouped tracklist overhead — date parsing per track, section header creation. Virtualization disabled due to rendering issues with grouping.
+  - track-card bottlenecks: LinkEntities parsing, PopoverMenu instances, active state checks
 
 - Description link parsing is heavy — consider DB trigger for description_parsed.
 

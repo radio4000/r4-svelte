@@ -1,7 +1,6 @@
 <script>
 	import {batchUpdateTracksUniform, deleteTrackMeta, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
-	import {extractYouTubeId} from '$lib/utils'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 
 	const uid = $props.id()
@@ -85,7 +84,7 @@
 	}
 
 	function removeMeta() {
-		const ytids = tracksWithMeta.map((t) => extractYouTubeId(t.url)).filter((id) => id !== null)
+		const ytids = /** @type {string[]} */ (tracksWithMeta.map((t) => t.ytid).filter(Boolean))
 		if (ytids.length === 0) return
 		deleteTrackMeta(ytids)
 	}
@@ -95,7 +94,7 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const ytids = selectedMissingMeta.map((t) => extractYouTubeId(t.url)).filter((id) => id !== null)
+			const ytids = /** @type {string[]} */ (selectedMissingMeta.map((t) => t.ytid).filter(Boolean))
 			await pullYouTubeMeta(ytids, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
