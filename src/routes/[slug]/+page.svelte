@@ -6,8 +6,8 @@
 
 <script>
 	import {page} from '$app/state'
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
-	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
+	import {getContext} from 'svelte'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -15,25 +15,15 @@
 	let slug = $derived(page.params.slug)
 	let renderLimit = $derived(channelLimits.get(slug) ?? 40)
 
-	// Check freshness in background (cached for 60s)
-	$effect(() => {
-		if (slug) checkTracksFreshness(slug)
-	})
+	// Get tracks from layout (query stays alive during navigation)
+	const tracksQuery = getContext('tracksQuery')
+	const getCanEdit = getContext('canEdit')
 
-	// Load ALL tracks (no limit) - data available for search/filter
-	const tracksQuery = useLiveQuery((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	)
-
-	// Render limited for performance
 	let allTracks = $derived(tracksQuery.data || [])
 	let tracks = $derived(renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
+	let canEdit = $derived(getCanEdit())
 
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
 	let hasMore = $derived(renderLimit && allTracks.length > renderLimit)
 
 	function showAll() {

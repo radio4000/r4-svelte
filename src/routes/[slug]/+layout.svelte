@@ -1,7 +1,9 @@
 <script>
 	import {page} from '$app/state'
+	import {setContext} from 'svelte'
+	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import {appState} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import ChannelHero from '$lib/components/channel-hero.svelte'
@@ -17,6 +19,23 @@
 	// Read channel directly from collection state (already loaded at root)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
+
+	// Check freshness in background (cached for 60s)
+	$effect(() => {
+		if (slug) checkTracksFreshness(slug)
+	})
+
+	// Tracks query lives in layout - stays alive during [slug]/* navigation
+	const tracksQuery = useLiveQuery((q) =>
+		q
+			.from({tracks: tracksCollection})
+			.where(({tracks}) => eq(tracks.slug, slug))
+			.orderBy(({tracks}) => tracks.created_at, 'desc')
+	)
+
+	// Provide to child routes
+	setContext('tracksQuery', tracksQuery)
+	setContext('canEdit', () => canEdit)
 </script>
 
 {#if channel}
