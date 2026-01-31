@@ -3,7 +3,6 @@
 	import {hunt as huntDiscogsUrl, pull as insertDiscogsMeta} from '$lib/metadata/discogs'
 	import {pull as insertMusicBrainzMeta} from '$lib/metadata/musicbrainz'
 	import {pullSingle as insertYouTubeMeta} from '$lib/metadata/youtube'
-	import {extractYouTubeId} from '$lib/utils.ts'
 	import {trackMetaCollection, updateTrack} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -20,7 +19,7 @@
 	let loading = $state(false)
 	let error = $state()
 
-	const ytid = $derived(track?.youtube_data?.id || extractYouTubeId(track?.url) || null)
+	const ytid = $derived(track?.youtube_data?.id || track?.ytid || null)
 
 	let result = $state()
 
