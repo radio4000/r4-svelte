@@ -4,7 +4,6 @@
 	import {deleteTrack, channelsCollection} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track, Channel} from '$lib/types'
-	import {extractYouTubeId} from '$lib/utils.ts'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import LinkEntities from './link-entities.svelte'
@@ -25,11 +24,7 @@
 	const menuId = $props.id()
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
-	// Only extract YouTube ID when we need it for images
-	const ytid = $derived.by(() => {
-		if (!showImage || appState.hide_track_artwork) return null
-		return extractYouTubeId(track.url)
-	})
+	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.ytid)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 

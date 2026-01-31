@@ -133,10 +133,9 @@ export const tracksAPI = {
 	}
 }
 
-export function getTrackWithMeta<T extends {url?: string}>(track: T): T & Partial<TrackMeta> {
-	const ytid = extractYouTubeId(track.url)
-	if (!ytid) return track
-	const meta = trackMetaCollection.get(ytid)
+export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'ytid'>> {
+	if (!track.ytid) return track
+	const meta = trackMetaCollection.get(track.ytid)
 	if (!meta) return track
 	return {...track, ...meta}
 }
@@ -329,9 +328,8 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	const updates: Array<{id: string; changes: {duration: number}}> = []
 	for (const track of tracks) {
 		if (track.duration) continue
-		const ytid = extractYouTubeId(track.url)
-		if (!ytid) continue
-		const meta = trackMetaCollection.get(ytid)
+		if (!track.ytid) continue
+		const meta = trackMetaCollection.get(track.ytid)
 		if (!meta?.youtube_data?.duration) continue
 		updates.push({id: track.id, changes: {duration: meta.youtube_data.duration}})
 	}

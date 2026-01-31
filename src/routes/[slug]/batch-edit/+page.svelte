@@ -12,7 +12,6 @@
 		insertDurationFromMeta
 	} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
-	import {extractYouTubeId} from '$lib/utils'
 	import {appState} from '$lib/app-state.svelte'
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
@@ -45,9 +44,8 @@
 	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
-			const ytid = extractYouTubeId(track.url)
-			if (!ytid) return track
-			const meta = metaMap.get(ytid)
+			if (!track.ytid) return track
+			const meta = metaMap.get(track.ytid)
 			return meta ? {...track, ...meta} : track
 		})
 	)
@@ -71,7 +69,7 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const ytids = allTracksMissingMeta.map((t) => extractYouTubeId(t.url)).filter((id) => id !== null)
+			const ytids = /** @type {string[]} */ (allTracksMissingMeta.map((t) => t.ytid).filter(Boolean))
 			await pullYouTubeMeta(ytids, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
