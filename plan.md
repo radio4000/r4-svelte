@@ -29,23 +29,24 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Performance
 
-- Slow channel page navigation (2k+ tracks) — multiple factors compound:
-  - `checkTracksFreshness(slug)` runs immediately on mount, blocks render path. Defer with `requestIdleCallback` or delay until after paint.
-  - Grouped tracklist overhead — date parsing per track, section header creation. No virtualization (disabled due to rendering issues with grouping).
-  - track-card bottlenecks:
-    - extractYouTubeId per card — could use stored ytid from track_meta
-    - LinkEntities per description — could pre-parse and store
-    - PopoverMenu instances — lazy instantiation on hover/focus?
-    - active state checks — optimize derivation?
+- Slow channel page navigation (2k+ tracks) — **ROOT CAUSE: `useLiveQuery` O(n) overhead**. See `plan-perf-test.md` for full investigation.
+
+  **Fixes applied:**
+  - `tracksQuery.isReady` check prevents double-paint (major win)
+  - Render limit with `.slice(0, 40)` + "Show all" button
+  - `checkTracksFreshness` cached with 60s staleTime
+
+  **Still slow.** Remaining options:
+  - Layout-level query — create useLiveQuery in `[slug]/+layout.svelte` so it persists during navigation within channel pages
+  - Custom lightweight `useTracks` hook — bypass `createLiveQueryCollection` overhead
+  - Report to TanStack DB — `createLiveQueryCollection` could cache derived collections by query key
+  - Component complexity is NOT the bottleneck (tested with bare `<li>{title}</li>`)
 
 - track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win. What about soundcloud? ignore those? where is the regex? must go into github.com/radio4000/supabase
 
 - Description link parsing is heavy — consider DB trigger for description_parsed.
 
 - appState serialization — playlist_tracks can be 3k items, serializing on every change may be slow. Consider splitting appState + playerState.
-
-- On-demand predicate push-down — cleaner architecture, not blocking features.
-  - Q: What does this mean in practice? Example of what changes?
 
 - Validation layer at sync boundaries — preventive, using zod or similar.
 
