@@ -11,6 +11,11 @@ import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
+/** Enrich track with computed ytid (until backend adds it) */
+function withYtid(track: Track): Track {
+	return {...track, ytid: extractYouTubeId(track.url) || null}
+}
+
 export const tracksCollection = createCollection<Track, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
@@ -40,7 +45,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		log.info('tracks fetch v1', {slug})
 		const {data, error} = await sdk.firebase.readTracks({slug})
 		if (error) throw error
-		return (data || []).map((t) => sdk.firebase.parseTrack(t, channel.id, slug))
+		return (data || []).map((t) => withYtid(sdk.firebase.parseTrack(t, channel.id, slug)))
 	}
 
 	log.info('tracks fetch v2', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
@@ -58,11 +63,11 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		if (v1Data?.length) {
 			const ch = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 			const channelId = ch?.id || slug
-			return v1Data.map((t) => sdk.firebase.parseTrack(t, channelId, slug))
+			return v1Data.map((t) => withYtid(sdk.firebase.parseTrack(t, channelId, slug)))
 		}
 	}
 
-	return (data || []) as Track[]
+	return ((data || []) as Track[]).map(withYtid)
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
@@ -159,7 +164,8 @@ export function addTrack(
 			fts: null,
 			mentions: null,
 			playback_error: null,
-			tags: null
+			tags: null,
+			ytid: extractYouTubeId(input.url) || null
 		})
 	})
 	return tx.commit()

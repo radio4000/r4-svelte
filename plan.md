@@ -33,12 +33,9 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
   - `checkTracksFreshness(slug)` runs immediately on mount, blocks render path. Defer with `requestIdleCallback` or delay until after paint.
   - Grouped tracklist overhead — date parsing per track, section header creation. No virtualization (disabled due to rendering issues with grouping).
   - track-card bottlenecks:
-    - extractYouTubeId per card — could use stored ytid from track_meta
     - LinkEntities per description — could pre-parse and store
     - PopoverMenu instances — lazy instantiation on hover/focus?
     - active state checks — optimize derivation?
-
-- track.ytid via DB trigger — compute and store ytid when track.url is updated, instead of regex parsing per render. Quick win. What about soundcloud? ignore those? where is the regex? must go into github.com/radio4000/supabase
 
 - Description link parsing is heavy — consider DB trigger for description_parsed.
 

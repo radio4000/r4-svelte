@@ -8,12 +8,13 @@ export interface Channel extends SDKChannel {
 	spam?: boolean
 }
 
-// SDK Track now has id: string, just re-export with alias
-export type Track = SDKTrack
+// Extends SDK Track with computed ytid (until backend adds it)
+export interface Track extends SDKTrack {
+	ytid?: string | null
+}
 
 // Track joined with metadata from TrackMeta collection
 export interface TrackWithMeta extends Track {
-	ytid?: string
 	youtube_data?: {id?: string; duration?: number; [key: string]: unknown}
 	musicbrainz_data?: object
 	discogs_data?: object
