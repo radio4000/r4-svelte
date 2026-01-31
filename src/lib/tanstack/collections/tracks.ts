@@ -270,34 +270,39 @@ export function batchDeleteTracks(channel: Channel, ids: string[]) {
 }
 
 export async function checkTracksFreshness(slug: string): Promise<boolean> {
-	// Check queryClient cache (not collection state which may be empty)
-	const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
-	const localLatest = cachedTracks.reduce(
-		(max: string | null, t: Track) => (!max || t.created_at > max ? t.created_at : max),
-		null as string | null
-	)
+	return queryClient.fetchQuery({
+		queryKey: ['tracks-freshness', slug],
+		staleTime: 60_000,
+		queryFn: async () => {
+			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
+			const localLatest = cachedTracks.reduce(
+				(max: string | null, t: Track) => (!max || t.created_at > max ? t.created_at : max),
+				null as string | null
+			)
 
-	const {data, error} = await sdk.supabase
-		.from('channel_tracks')
-		.select('created_at')
-		.eq('slug', slug)
-		.order('created_at', {ascending: false})
-		.limit(1)
+			const {data, error} = await sdk.supabase
+				.from('channel_tracks')
+				.select('created_at')
+				.eq('slug', slug)
+				.order('created_at', {ascending: false})
+				.limit(1)
 
-	if (error) {
-		log.warn('freshness', {slug, error})
-		return false
-	}
+			if (error) {
+				log.warn('freshness', {slug, error})
+				return false
+			}
 
-	const remoteLatest = data?.[0]?.created_at
-	const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
+			const remoteLatest = data?.[0]?.created_at
+			const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
 
-	if (outdated) {
-		log.info('freshness outdated', {slug, local: localLatest, remote: remoteLatest})
-		await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-	}
+			if (outdated) {
+				log.info('freshness outdated', {slug, local: localLatest, remote: remoteLatest})
+				await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+			}
 
-	return !!outdated
+			return !!outdated
+		}
+	})
 }
 
 export async function ensureTracksLoaded(slug: string): Promise<void> {
