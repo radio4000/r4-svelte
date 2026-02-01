@@ -140,7 +140,7 @@
 		gap: 0 0.5rem;
 		padding: 0.5rem 0 0.5rem 0.5rem;
 		line-height: 1.2;
-		min-height: 3.5rem; /* around 2 lines */
+		min-height: 53px; /* = same height with/without description */
 		text-decoration: none;
 		cursor: default;
 
@@ -150,6 +150,7 @@
 		}
 	}
 
+	/* the "index" numbering
 	article > a > span:first-child {
 		width: 1.5rem;
 		flex-shrink: 0;
@@ -159,6 +160,7 @@
 		position: relative;
 		top: 0.2em;
 	}
+	*/
 
 	.artwork {
 		margin-bottom: auto;
@@ -178,6 +180,7 @@
 	}
 
 	.title {
+		font-size: var(--font-4);
 		.active & {
 			background: var(--accent-9);
 			color: var(--gray-1);
