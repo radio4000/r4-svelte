@@ -73,7 +73,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 	})
 
 	let internalData = $state([])
-	let status = $state(collection ? collection.status : `disabled`)
+	let status = $state('disabled')
 
 	const syncDataFromCollection = (currentCollection) => {
 		const t1 = performance.now()
