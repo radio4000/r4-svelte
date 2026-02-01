@@ -37,7 +37,6 @@
 			<li>{m.about_query_sql()}</li>
 			<li>{m.about_export()}</li>
 			<li>{m.about_api()}</li>
-			<li>{m.about_reuse_components()}</li>
 		</ul>
 	</section>
 

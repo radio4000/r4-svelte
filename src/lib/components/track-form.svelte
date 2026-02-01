@@ -1,6 +1,7 @@
 <script>
 	import {addTrack, updateTrack} from '$lib/tanstack/collections/tracks'
 	import {fetchOEmbedTitle} from '$lib/utils'
+	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
@@ -43,10 +44,9 @@
 		}
 	}
 
-	/** @param {Event} event */
+	/** @param {{detail: string[]}} event */
 	function handleDiscogsSuggestion(event) {
-		const tags = /** @type {CustomEvent<string[]>} */ (event).detail
-		const hashtags = tags.map((t) => `#${t}`).join(' ')
+		const hashtags = event.detail.map((t) => `#${t}`).join(' ')
 		if (descriptionInput) {
 			descriptionInput.value = descriptionInput.value ? `${descriptionInput.value} ${hashtags}` : hashtags
 		}
@@ -166,8 +166,7 @@
 	</fieldset>
 
 	{#if isValidDiscogsUrl}
-		<r4-discogs-resource url={discogsUrl} suggestions="true" onsuggestion={handleDiscogsSuggestion}
-		></r4-discogs-resource>
+		<R4DiscogsResource url={discogsUrl} suggestions={true} onsuggestion={handleDiscogsSuggestion} />
 	{/if}
 
 	<button type="submit" disabled={submitting}>
@@ -175,20 +174,3 @@
 	</button>
 </form>
 
-<style>
-	r4-discogs-resource {
-		display: block;
-		padding-left: 0.5rem;
-		min-height: 6rem;
-		font-size: var(--font-4);
-		font-style: italic;
-
-		:global(fieldset) {
-			flex-flow: row wrap;
-			font-style: normal;
-		}
-		:global(legend) {
-			float: left;
-		}
-	}
-</style>

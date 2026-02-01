@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "Pensa a R5 come a un avanzato creatore di playlist per ascolti lunghi e approfonditi.",
 	"about_query_sql": "Interroga direttamente con SQL il database PostgreSQL integrato.",
 	"about_repl_link": "Repl",
-	"about_reuse_components": "Riutilizza la libreria @radio4000/components nei tuoi progetti Svelte.",
 	"about_search_filter": "Filtra, etichetta e cerca nel tuo archivio all’istante.",
 	"about_source_code": "Vedi il sorgente su GitHub",
 	"about_start_exploring": "Inizia a esplorare le radio",

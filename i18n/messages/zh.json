@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "将 R5 视为为长篇、深度聆听打造的高级播放列表构建器。",
 	"about_query_sql": "直接使用 SQL 查询嵌入的 PostgreSQL 数据库。",
 	"about_repl_link": "REPL",
-	"about_reuse_components": "在您自己的 Svelte 项目中复用 @radio4000/components 库。",
 	"about_search_filter": "即时过滤、标记和搜索您的档案。",
 	"about_source_code": "在 GitHub 上查看源代码",
 	"about_start_exploring": "开始探索电台",
