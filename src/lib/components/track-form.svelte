@@ -174,20 +174,3 @@
 	</button>
 </form>
 
-<style>
-	:global(.r4-discogs-resource) {
-		display: block;
-		padding-left: 0.5rem;
-		min-height: 6rem;
-		font-size: var(--font-4);
-		font-style: italic;
-
-		fieldset {
-			flex-flow: row wrap;
-			font-style: normal;
-		}
-		legend {
-			float: left;
-		}
-	}
-</style>
