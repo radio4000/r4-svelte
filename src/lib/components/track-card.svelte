@@ -216,7 +216,7 @@
 	}
 
 	@container (width < 80ch) {
-		.index,
+		/* .index, */
 		time small {
 			display: none;
 		}

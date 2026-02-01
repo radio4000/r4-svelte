@@ -70,14 +70,14 @@
 			<p>{m.following_empty()}</p>
 		</header>
 	{:else}
-		<ChannelsView channels={following}>
+		<ChannelsView channels={following} bind:display bind:order bind:direction>
 			{#snippet header()}<h1>{m.nav_following()} <small>({following.length})</small></h1>{/snippet}
 		</ChannelsView>
 	{/if}
 </article>
 
 <style>
-	article {
+	header {
 		padding: 0.5rem;
 	}
 </style>

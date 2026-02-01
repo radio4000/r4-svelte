@@ -85,7 +85,7 @@
 </script>
 
 <div class={`layout layout--${display}`}>
-	<header class="toolbar">
+	<header class="row toolbar">
 		{#if header}{@render header()}{/if}
 		<PopoverMenu
 			id="channels-view"
@@ -170,19 +170,12 @@
 	}
 
 	.toolbar {
-		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.5rem;
-		margin: 0 0 1rem;
+		margin: 0.5rem 0.5rem 1rem;
 
 		:global(h1, h2, h3) {
 			margin: 0;
-		}
-
-		:global(h1 small) {
-			font-size: 0.6em;
-			opacity: 0.7;
 		}
 	}
 

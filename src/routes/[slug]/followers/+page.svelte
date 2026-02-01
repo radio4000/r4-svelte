@@ -69,17 +69,15 @@
 			<h1>{m.nav_followers()} <small>({followers.length})</small></h1>
 		</header>
 	{:else}
-		<ChannelsView channels={followers}>
+		<ChannelsView channels={followers} bind:display bind:order bind:direction>
 			{#snippet header()}<h1>{m.nav_followers()} <small>({followers.length})</small></h1>{/snippet}
 		</ChannelsView>
 	{/if}
 </article>
 
 <style>
-	article {
-		padding: 0.5rem;
-	}
 	header {
+		padding: 0.5rem;
 		min-height: 30px;
 		display: flex;
 		align-items: center;

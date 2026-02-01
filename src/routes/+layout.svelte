@@ -191,6 +191,9 @@
 		min-width: 0;
 		min-height: 0;
 		overflow-y: auto;
+		scrollbar-width: thin;
+		overscroll-behavior: contain;
+		scrollbar-gutter: stable;
 		display: flex;
 		flex-direction: column;
 	}

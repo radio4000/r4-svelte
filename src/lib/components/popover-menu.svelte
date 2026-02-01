@@ -89,7 +89,7 @@
 		&:popover-open {
 			display: flex;
 			flex-direction: column;
-			gap: 0.2rem;
+			gap: 0;
 		}
 
 		:global(button),

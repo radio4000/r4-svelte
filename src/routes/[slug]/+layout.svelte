@@ -80,7 +80,7 @@
 			<ChannelHero {channel} />
 		</header>
 
-		<nav>
+		<nav class="horizontalOverflow">
 			<a href="/{slug}" class:active={routeId === '/[slug]'}>
 				<Icon icon="unordered-list" size={16} />
 				{channel.track_count ?? 0}
@@ -182,24 +182,6 @@
 		background: var(--gray-1);
 		z-index: 20;
 		border-bottom: 1px solid var(--gray-5);
-		/*responsive*/
-		overflow-x: auto;
-	}
-
-	nav a {
-		display: flex;
-		align-items: center;
-		text-decoration: none;
-		white-space: nowrap;
-		padding: 0.5rem 0.5rem 0.45rem;
-
-		&:hover {
-			background: var(--gray-3);
-		}
-
-		&.active {
-			box-shadow: inset 0 -2px 0 var(--accent-9);
-		}
 	}
 
 	@media (max-width: 500px) {

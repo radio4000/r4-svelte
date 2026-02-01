@@ -141,48 +141,50 @@
 	<menu class="filtermenu">
 		<PopoverMenu id="channels-filter" triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabelMap[filter]()}{/snippet}
-			<button
-				class:active={filter === 'all'}
-				onclick={() => setFilter('all')}
-				{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
-				>{m.channels_filter_option_all()}</button
-			>
-			<button
-				class:active={filter === '10+'}
-				onclick={() => setFilter('10+')}
-				{@attach tooltip({content: m.channels_filter_tooltip_10(), position: 'right'})}
-				>{m.channels_filter_option_10()}</button
-			>
-			<button
-				class:active={filter === '100+'}
-				onclick={() => setFilter('100+')}
-				{@attach tooltip({content: m.channels_filter_tooltip_100(), position: 'right'})}
-				>{m.channels_filter_option_100()}</button
-			>
-			<button
-				class:active={filter === '1000+'}
-				onclick={() => setFilter('1000+')}
-				{@attach tooltip({content: m.channels_filter_tooltip_1000(), position: 'right'})}
-				>{m.channels_filter_option_1000()}</button
-			>
-			<button
-				class:active={filter === 'artwork'}
-				onclick={() => setFilter('artwork')}
-				{@attach tooltip({content: m.channels_filter_tooltip_artwork(), position: 'right'})}
-				>{m.channels_filter_option_artwork()}</button
-			>
-			<button
-				class:active={filter === 'v1'}
-				onclick={() => setFilter('v1')}
-				{@attach tooltip({content: m.channels_filter_tooltip_v1(), position: 'right'})}
-				>{m.channels_filter_option_v1()}</button
-			>
-			<button
-				class:active={filter === 'v2'}
-				onclick={() => setFilter('v2')}
-				{@attach tooltip({content: m.channels_filter_tooltip_v2(), position: 'right'})}
-				>{m.channels_filter_option_v2()}</button
-			>
+			<menu data-vertical>
+				<button
+					class:active={filter === 'all'}
+					onclick={() => setFilter('all')}
+					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
+					>{m.channels_filter_option_all()}</button
+				>
+				<button
+					class:active={filter === '10+'}
+					onclick={() => setFilter('10+')}
+					{@attach tooltip({content: m.channels_filter_tooltip_10(), position: 'right'})}
+					>{m.channels_filter_option_10()}</button
+				>
+				<button
+					class:active={filter === '100+'}
+					onclick={() => setFilter('100+')}
+					{@attach tooltip({content: m.channels_filter_tooltip_100(), position: 'right'})}
+					>{m.channels_filter_option_100()}</button
+				>
+				<button
+					class:active={filter === '1000+'}
+					onclick={() => setFilter('1000+')}
+					{@attach tooltip({content: m.channels_filter_tooltip_1000(), position: 'right'})}
+					>{m.channels_filter_option_1000()}</button
+				>
+				<button
+					class:active={filter === 'artwork'}
+					onclick={() => setFilter('artwork')}
+					{@attach tooltip({content: m.channels_filter_tooltip_artwork(), position: 'right'})}
+					>{m.channels_filter_option_artwork()}</button
+				>
+				<button
+					class:active={filter === 'v1'}
+					onclick={() => setFilter('v1')}
+					{@attach tooltip({content: m.channels_filter_tooltip_v1(), position: 'right'})}
+					>{m.channels_filter_option_v1()}</button
+				>
+				<button
+					class:active={filter === 'v2'}
+					onclick={() => setFilter('v2')}
+					{@attach tooltip({content: m.channels_filter_tooltip_v2(), position: 'right'})}
+					>{m.channels_filter_option_v2()}</button
+				>
+			</menu>
 		</PopoverMenu>
 
 		<PopoverMenu
