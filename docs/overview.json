@@ -152,6 +152,7 @@
 		{"name": "searchChannels(query, {limit?})", "desc": "Search channels remotely."},
 		{"name": "searchTracks(query, {limit?, channelSlug?})", "desc": "Search tracks remotely."},
 		{"name": "searchAll(query, {limit?})", "desc": "Search channels and tracks."},
+		{"name": "fuzzySearch(query, items, keys, {limit?, threshold?})", "desc": "Generic local fuzzy search."},
 		{"name": "searchTracksLocal(query, tracks, {limit?})", "desc": "Local tracks search."},
 		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."},
 		{"name": "parseMentionQuery(query)", "desc": "Parse @mention query."}

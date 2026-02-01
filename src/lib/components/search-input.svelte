@@ -3,7 +3,33 @@
 	import {afterNavigate} from '$app/navigation'
 
 	/* A normal input, but with a search icon "inside" (on top) */
-	let {value = $bindable(''), placeholder = 'Search...', ...restProps} = $props()
+	let {value = $bindable(''), placeholder = 'Search...', debounce = 0, ...restProps} = $props()
+
+	let inputValue = $state(value)
+	let timer
+	let lastExternalValue = value
+
+	// Only sync when value changes externally (e.g. programmatic clear)
+	$effect(() => {
+		if (value !== lastExternalValue) {
+			lastExternalValue = value
+			inputValue = value
+		}
+	})
+
+	function handleInput(e) {
+		inputValue = e.target.value
+		if (debounce > 0) {
+			clearTimeout(timer)
+			timer = setTimeout(() => {
+				value = inputValue
+				lastExternalValue = inputValue
+			}, debounce)
+		} else {
+			value = inputValue
+			lastExternalValue = inputValue
+		}
+	}
 
 	afterNavigate(() => {
 		// workaround for autofocus attr not always being enough
@@ -17,7 +43,7 @@
 
 <div>
 	<Icon icon="search" size={16} />
-	<input type="search" {placeholder} bind:value {...restProps} />
+	<input type="search" {placeholder} bind:value={inputValue} oninput={handleInput} {...restProps} />
 </div>
 
 <style>
