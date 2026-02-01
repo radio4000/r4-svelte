@@ -1,8 +1,12 @@
 <script>
+	import {getContext} from 'svelte'
 	import {ENTITY_REGEX} from '$lib/utils.ts'
 
 	/** @type {{text: string | null | undefined, slug?: string | null}} */
 	const {text, slug} = $props()
+
+	/** @type {((tag: string) => void) | undefined} */
+	const tagClickHandler = getContext('tagClickHandler')
 
 	const parts = $derived.by(() => {
 		if (typeof text !== 'string') return [{type: 'text', content: ''}]
@@ -23,12 +27,14 @@
 			}
 
 			// Add the entity as a link
+			const isTag = entity.startsWith('#')
 			const searchQuery = entity.startsWith('@') ? entity : slug ? `@${slug} ${entity}` : entity
 
 			parts.push({
 				type: 'link',
 				content: entity,
-				href: `/search?search=${encodeURIComponent(searchQuery)}`
+				href: `/search?search=${encodeURIComponent(searchQuery)}`,
+				isTag
 			})
 
 			lastIndex = offset + match.length
@@ -46,8 +52,22 @@
 
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
-		<a href={part.href}>{part.content}</a>
+		{#if part.isTag && tagClickHandler}
+			<button class="ghost tag-link" onclick={() => tagClickHandler(part.content)}>{part.content}</button>
+		{:else}
+			<a href={part.href}>{part.content}</a>
+		{/if}
 	{:else}
 		{part.content}
 	{/if}
 {/each}
+
+<style>
+	.tag-link {
+		min-height: 0;
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		text-decoration: underline;
+	}
+</style>

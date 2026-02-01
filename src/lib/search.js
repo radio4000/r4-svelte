@@ -123,13 +123,27 @@ export async function searchAll(query, {limit = 100} = {}) {
 // Local fuzzy search utils (pure functions for potential reuse)
 
 /**
+ * Generic fuzzy search
+ * @template T
+ * @param {string} query
+ * @param {T[]} items
+ * @param {string[]} keys
+ * @param {{limit?: number, threshold?: number}} options
+ * @returns {T[]}
+ */
+export function fuzzySearch(query, items, keys, {limit = 100, threshold = -10000} = {}) {
+	if (!query?.trim()) return items
+	return fuzzysort.go(query, items, {keys, limit, threshold}).map((r) => r.obj)
+}
+
+/**
  * Fuzzy search tracks locally
  * @param {string} query
  * @param {Array} tracks
  * @param {{limit?: number}} options
  */
 export function searchTracksLocal(query, tracks, {limit = 100} = {}) {
-	return fuzzysort.go(query, tracks, {keys: ['title', 'description'], limit}).map((r) => r.obj)
+	return fuzzySearch(query, tracks, ['title', 'description'], {limit})
 }
 
 /**
@@ -139,7 +153,7 @@ export function searchTracksLocal(query, tracks, {limit = 100} = {}) {
  * @param {{limit?: number}} options
  */
 export function searchChannelsLocal(query, channels, {limit = 100} = {}) {
-	return fuzzysort.go(query, channels, {keys: ['name', 'slug', 'description'], limit}).map((r) => r.obj)
+	return fuzzySearch(query, channels, ['name', 'slug', 'description'], {limit})
 }
 
 export default {
@@ -147,5 +161,6 @@ export default {
 	channels: searchChannels,
 	tracks: searchTracks,
 	tracksLocal: searchTracksLocal,
-	channelsLocal: searchChannelsLocal
+	channelsLocal: searchChannelsLocal,
+	fuzzy: fuzzySearch
 }

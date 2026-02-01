@@ -36,7 +36,7 @@
 	]
 
 	const randomSentence = sentences[Math.floor(Math.random() * sentences.length)]
-	const displayText = text || randomSentence
+	const displayText = $derived(text || randomSentence)
 </script>
 
 <div class="r4-loading">

@@ -5,6 +5,10 @@ select {
 	font: inherit;
 }
 
+select {
+	color: var(--gray-12);
+}
+
 select,
 textarea,
 input[type='email'],

@@ -1,6 +1,6 @@
 <script>
-	import fuzzysort from 'fuzzysort'
 	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {fuzzySearch} from '$lib/search'
 	import {inArray} from '@tanstack/db'
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -41,27 +41,9 @@
 	)
 	let playHistory = $derived(historyQuery.data || [])
 
-	let filteredQueueTracks = $derived(
-		searchQuery
-			? fuzzysort
-					.go(searchQuery, queueTracks, {
-						keys: ['title', 'tags', 'channel_name'],
-						threshold: 0.5
-					})
-					.map((result) => result.obj)
-			: queueTracks
-	)
+	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags']))
 
-	let filteredPlayHistory = $derived(
-		searchQuery
-			? fuzzysort
-					.go(searchQuery, playHistory, {
-						keys: ['title', 'slug'],
-						threshold: 0.5
-					})
-					.map((result) => result.obj)
-			: playHistory
-	)
+	let filteredPlayHistory = $derived(fuzzySearch(searchQuery, playHistory, ['title', 'slug']))
 
 	/** @param {PointerEvent} e */
 	function startDrag(e) {
@@ -137,7 +119,7 @@
 	</header>
 
 	<div class="search-container">
-		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} />
+		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 		{#if view === 'queue' && trackIds.length > 1}
 			<menu class="queue-actions">
 				<button

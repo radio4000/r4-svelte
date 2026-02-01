@@ -3,8 +3,8 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
-	import fuzzysort from 'fuzzysort'
 	import {page} from '$app/state'
+	import {fuzzySearch} from '$lib/search'
 	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
 	import {appState} from '$lib/app-state.svelte'
@@ -246,11 +246,7 @@
 
 		// Then apply search filter
 		if (search.trim().length >= 2) {
-			const results = fuzzysort.go(search, result, {
-				keys: ['title', 'description', 'url'],
-				threshold: 0.5
-			})
-			result = results.map((r) => r.obj)
+			result = fuzzySearch(search, result, ['title', 'description', 'url'])
 		}
 
 		// Apply sorting
@@ -554,13 +550,6 @@
 {/if}
 
 <style>
-	header nav {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem;
-	}
-
 	header menu {
 		padding: 0 0.5rem;
 		margin-bottom: 0.5rem;

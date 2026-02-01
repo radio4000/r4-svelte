@@ -142,6 +142,7 @@
 	}
 
 	header :global(figure) {
+		max-width: 180px;
 		min-width: 6rem;
 		flex-shrink: 0;
 	}
