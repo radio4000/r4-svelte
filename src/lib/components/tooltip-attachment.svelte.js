@@ -33,9 +33,12 @@ export function tooltip({content, position = 'bottom'}) {
 		}
 
 		const hide = () => {
-			if (tooltipState.targetId === element.id) {
-				tooltipState.visible = false
-			}
+			// Defer to avoid state mutation during render cycle
+			queueMicrotask(() => {
+				if (tooltipState.targetId === element.id) {
+					tooltipState.visible = false
+				}
+			})
 		}
 
 		element.addEventListener('mouseenter', show)
@@ -48,9 +51,12 @@ export function tooltip({content, position = 'bottom'}) {
 			element.removeEventListener('mouseleave', hide)
 			element.removeEventListener('focus', show)
 			element.removeEventListener('blur', hide)
-			if (tooltipState.targetId === element.id) {
-				tooltipState.visible = false
-			}
+			// Defer to avoid state mutation during render cycle
+			queueMicrotask(() => {
+				if (tooltipState.targetId === element.id) {
+					tooltipState.visible = false
+				}
+			})
 		}
 	}
 }
