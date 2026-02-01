@@ -10,7 +10,7 @@
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const {channels = [], display: initialDisplay} = $props()

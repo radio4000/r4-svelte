@@ -4,7 +4,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
-	import {tooltip} from './tooltip-attachment'
+	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let showModal = $state(false)

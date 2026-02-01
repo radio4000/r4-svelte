@@ -3,7 +3,7 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
 	import {appState} from '$lib/app-state.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {relativeTime} from '$lib/dates'
 	import {playHistoryCollection, clearPlayHistory, tracksCollection} from '$lib/tanstack/collections'
 	import {shuffleRemaining} from '$lib/api'

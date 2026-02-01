@@ -10,7 +10,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
 	import {detectMediaProvider} from '$lib/utils.ts'

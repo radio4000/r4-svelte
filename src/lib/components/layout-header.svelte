@@ -7,7 +7,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'

@@ -7,7 +7,7 @@
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let {channels = [], order = $bindable('updated'), direction = $bindable('desc'), header} = $props()

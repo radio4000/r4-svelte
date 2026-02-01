@@ -10,6 +10,7 @@
 	import LiveChat from '$lib/components/live-chat.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 	import R4Loading from '$lib/components/r4-loading.svelte'
+	import ToolTip from '$lib/components/tool-tip.svelte'
 	import {onMount, setContext} from 'svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -116,6 +117,7 @@
 		{:then}
 			<AuthListener />
 			<KeyboardShortcuts />
+			<ToolTip />
 
 			{#key uiLocale}
 				<div

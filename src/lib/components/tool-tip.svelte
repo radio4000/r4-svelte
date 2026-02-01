@@ -1,63 +1,56 @@
 <script>
 	/* eslint svelte/no-at-html-tags: "off" */
-	import {logger} from '$lib/logger'
+	import {tooltipState} from './tooltip-attachment.svelte.js'
+	import {uuid} from '$lib/utils'
 
-	const log = logger.ns('tooltip').seal()
-
-	/** @type {{targetId: string, content: string, position?: string}} */
-	const {targetId, content = '', position = 'bottom'} = $props()
-
-	const id = $props.id()
-	const anchorName = $derived(`--anchor-${id}`)
-	/** @type {HTMLElement | null} */ let tooltipElement = $state(null)
-	/** @type {HTMLElement | null} */ let targetElement = $state(null)
+	const id = `tooltip-singleton-${uuid()}`
 	const supportsAnchorCss = 'anchorName' in document.documentElement.style
 
+	/** @type {HTMLElement | null} */
+	let tooltipElement = $state(null)
+
+	/** @type {HTMLElement | null} */
+	let currentTarget = $state(null)
+
 	$effect(() => {
-		targetElement = document.getElementById(targetId)
+		if (!supportsAnchorCss || !tooltipElement) return
 
-		if (!targetElement) {
-			log.warn('target element not found', {targetId})
+		// Clean up previous target
+		if (currentTarget && currentTarget.id !== tooltipState.targetId) {
+			currentTarget.removeAttribute('aria-describedby')
+			// @ts-expect-error - CSS Anchor Positioning API
+			currentTarget.style.anchorName = ''
+		}
+
+		if (!tooltipState.visible || !tooltipState.targetId) {
+			tooltipElement.hidePopover()
 			return
 		}
 
-		// Fallback
-		if (!supportsAnchorCss) {
-			if (!targetElement.hasAttribute('title')) targetElement.title = content
+		const target = document.getElementById(tooltipState.targetId)
+		if (!target) {
+			tooltipElement.hidePopover()
 			return
 		}
 
-		if (!tooltipElement) {
-			log.warn('tooltip element not found', {id})
-			return
-		}
+		currentTarget = target
+		const anchorName = `--anchor-${tooltipState.targetId}`
 
-		targetElement.setAttribute('aria-describedby', id)
+		target.setAttribute('aria-describedby', id)
 		// @ts-expect-error - CSS Anchor Positioning API
-		targetElement.style.anchorName = anchorName
+		target.style.anchorName = anchorName
 		// @ts-expect-error - CSS Anchor Positioning API
 		tooltipElement.style.positionAnchor = anchorName
 
-		const showTooltip = () => tooltipElement?.showPopover()
-		const hideTooltip = () => tooltipElement?.hidePopover()
-
-		targetElement.addEventListener('mouseenter', showTooltip)
-		targetElement.addEventListener('mouseleave', hideTooltip)
-		targetElement.addEventListener('focus', showTooltip)
-		targetElement.addEventListener('blur', hideTooltip)
-
-		return () => {
-			targetElement?.removeEventListener('mouseenter', showTooltip)
-			targetElement?.removeEventListener('mouseleave', hideTooltip)
-			targetElement?.removeEventListener('focus', showTooltip)
-			targetElement?.removeEventListener('blur', hideTooltip)
-		}
+		tooltipElement.showPopover()
 	})
 </script>
 
-<div bind:this={tooltipElement} {id} popover="hint" role="tooltip" class="tooltip tooltip-{position}">
-	{@html content}
-</div>
+{#if supportsAnchorCss}
+	<div bind:this={tooltipElement} {id} popover="hint" role="tooltip" class="tooltip tooltip-{tooltipState.position}">
+		{@html tooltipState.content}
+	</div>
+{/if}
 
 <style>
 	.tooltip {
