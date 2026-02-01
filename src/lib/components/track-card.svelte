@@ -107,7 +107,7 @@
 				onclick={() => {
 					playTrack(track.id, null, 'user_click_track')
 					menu?.close()
-				}}>Play</button
+				}}>{m.common_play()}</button
 			>
 			<button
 				type="button"
@@ -118,7 +118,7 @@
 				}}>{m.track_play_next()}</button
 			>
 			<button type="button" role="menuitem" onclick={addToRadio}>{m.track_add_to_radio()}</button>
-			<button type="button" role="menuitem" onclick={shareTrack}>Share</button>
+			<button type="button" role="menuitem" onclick={shareTrack}>{m.share_native()}</button>
 			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>{m.common_edit()}</button>{/if}
 			{#if canEdit}<button
 					type="button"
