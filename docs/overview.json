@@ -166,6 +166,18 @@
 		{"name": "validateListeningState()", "desc": "Verify listening state."}
 	],
 
+	"src/lib/metadata/discogs": [
+		{"name": "fetchDiscogs(url)", "desc": "Fetch Discogs release/master data from URL."},
+		{"name": "parseDiscogsUrl(url)", "desc": "Parse Discogs URL to {type, id}."},
+		{
+			"name": "extractSuggestions({year, genres, styles, labels})",
+			"desc": "Extract tag suggestions from Discogs data."
+		},
+		{"name": "searchUrl(title)", "desc": "Generate Discogs search URL for title."},
+		{"name": "pull(ytid, discogsUrl)", "desc": "Fetch and save Discogs data to trackMetaCollection."},
+		{"name": "hunt(trackId, ytid, title)", "desc": "Auto-discover Discogs URL via MusicBrainz chain."}
+	],
+
 	"src/lib/dates.js": [
 		{"name": "formatDate(date)", "desc": "Format date using Intl.DateTimeFormat."},
 		{"name": "dateYear(dateString)", "desc": "Just the year."},

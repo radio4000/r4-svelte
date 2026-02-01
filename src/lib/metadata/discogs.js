@@ -4,13 +4,14 @@ import {
 	parseDiscogsUrl,
 	fetchDiscogs,
 	searchUrl,
+	extractSuggestions,
 	searchMusicBrainzRecording,
 	getMusicBrainzReleases,
 	getDiscogsUrlFromRelease
 } from './discogs-core.js'
 
 // Re-export pure functions
-export {parseDiscogsUrl, fetchDiscogs, searchUrl}
+export {parseDiscogsUrl, fetchDiscogs, searchUrl, extractSuggestions}
 
 const log = logger.ns('metadata/discogs').seal()
 

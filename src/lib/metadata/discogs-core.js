@@ -176,3 +176,15 @@ export async function getDiscogsUrlFromRelease(releaseId) {
 		return null
 	}
 }
+
+/**
+ * Extract tag suggestions from Discogs resource data
+ * @param {{year?: number, genres?: string[], styles?: string[], labels?: {name: string}[]}} resource
+ * @returns {string[]}
+ */
+export function extractSuggestions({year = 0, genres = [], styles = [], labels = []}) {
+	const labelNames = labels?.map(({name}) => name) || []
+	return [...genres, ...styles, year, ...labelNames]
+		.filter((s) => !!s)
+		.map((s) => s.toString().replace(' ', '-').toLowerCase())
+}

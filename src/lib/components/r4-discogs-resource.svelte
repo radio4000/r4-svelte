@@ -1,5 +1,5 @@
 <script>
-	import {parseUrl, fetchDiscogs, extractSuggestions} from '$lib/discogs.js'
+	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
 
 	/**
 	 * @typedef {Object} DiscogsResource
@@ -28,15 +28,10 @@
 	})
 
 	async function loadResource(discogsUrl) {
-		const info = parseUrl(discogsUrl)
-		if (info?.id && info?.type) {
-			try {
-				resource = await fetchDiscogs(info)
-			} catch (e) {
-				console.error('Error fetching discogs', e)
-				resource = null
-			}
-		} else {
+		try {
+			resource = await fetchDiscogs(discogsUrl)
+		} catch (e) {
+			console.error('Error fetching discogs', e)
 			resource = null
 		}
 	}
