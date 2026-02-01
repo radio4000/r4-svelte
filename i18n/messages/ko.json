@@ -316,6 +316,7 @@
 	"player_empty_prompt": "좋은 음악을 찾아보세요",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "플레이어 확장 <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "다음 트랙",
 	"player_tooltip_pause": "일시정지 <kbd>K</kbd>",
 	"player_tooltip_play": "재생 <kbd>K</kbd>",

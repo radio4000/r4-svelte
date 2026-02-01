@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Trovu iom da bona muziko",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Etendi ludilon <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Sekva trako",
 	"player_tooltip_pause": "Paŭzi <kbd>K</kbd>",
 	"player_tooltip_play": "Ludi <kbd>K</kbd>",

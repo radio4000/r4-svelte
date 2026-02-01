@@ -316,6 +316,7 @@
 	"player_empty_prompt": "कुछ बढ़िया संगीत ढूँढें",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "प्लेयर विस्तारित करें <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "अगला ट्रैक",
 	"player_tooltip_pause": "पॉज़ <kbd>K</kbd>",
 	"player_tooltip_play": "प्ले <kbd>K</kbd>",

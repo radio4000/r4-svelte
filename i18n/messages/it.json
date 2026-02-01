@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Trova un po’ di buona musica",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Espandi player <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Traccia successiva",
 	"player_tooltip_pause": "Pausa <kbd>K</kbd>",
 	"player_tooltip_play": "Riproduci <kbd>K</kbd>",

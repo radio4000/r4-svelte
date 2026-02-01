@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Найдите годную музыку",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Развернуть плеер <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Следующий трек",
 	"player_tooltip_pause": "Пауза <kbd>K</kbd>",
 	"player_tooltip_play": "Воспроизвести <kbd>K</kbd>",

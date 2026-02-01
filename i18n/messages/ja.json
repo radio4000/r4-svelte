@@ -316,6 +316,7 @@
 	"player_empty_prompt": "素敵な音楽を見つけてください",
 	"player_live_indicator": "🔴 ライブ",
 	"player_tooltip_expand": "プレイヤーを拡大 <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "次のトラック",
 	"player_tooltip_pause": "一時停止 <kbd>K</kbd>",
 	"player_tooltip_play": "再生 <kbd>K</kbd>",

@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Finde schöne Musik",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Player vergrößern <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Nächster Track",
 	"player_tooltip_pause": "Pause <kbd>K</kbd>",
 	"player_tooltip_play": "Abspielen <kbd>K</kbd>",

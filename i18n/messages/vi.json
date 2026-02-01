@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Tìm chút nhạc hay đi nào",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Mở rộng trình phát <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Bản nhạc tiếp theo",
 	"player_tooltip_pause": "Tạm dừng <kbd>K</kbd>",
 	"player_tooltip_play": "Phát <kbd>K</kbd>",

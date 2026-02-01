@@ -316,6 +316,7 @@
 	"player_empty_prompt": "ابحث عن موسيقى رائعة",
 	"player_live_indicator": "🔴 مباشر",
 	"player_tooltip_expand": "توسيع المشغّل <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "المسار التالي",
 	"player_tooltip_pause": "إيقاف مؤقت <kbd>K</kbd>",
 	"player_tooltip_play": "تشغيل <kbd>K</kbd>",

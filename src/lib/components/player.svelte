@@ -200,7 +200,8 @@
 				<media-time-range></media-time-range>
 				<media-time-display showduration></media-time-display>
 			{/if}
-			<media-mute-button class="btn"></media-mute-button>
+			<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+			></media-mute-button>
 			<media-volume-range></media-volume-range>
 			{@render btnToggleQueuePanel()}
 			{@render btnToggleExpanded()}

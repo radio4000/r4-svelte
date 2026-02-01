@@ -316,6 +316,7 @@
 	"player_empty_prompt": "Trouve de bonnes musiques",
 	"player_live_indicator": "🔴 EN DIRECT",
 	"player_tooltip_expand": "Agrandir le lecteur <kbd>F</kbd>",
+	"player_tooltip_mute": "Mute <kbd>M</kbd>",
 	"player_tooltip_next": "Morceau suivant",
 	"player_tooltip_pause": "Pause <kbd>K</kbd>",
 	"player_tooltip_play": "Lecture <kbd>K</kbd>",
