@@ -124,7 +124,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		})
 
 		const subscription = currentCollection.subscribeChanges(
-			(_changes) => {
+			() => {
 				// Only sync on actual changes, not initial state
 				syncDataFromCollection(currentCollection)
 				status = currentCollection.status

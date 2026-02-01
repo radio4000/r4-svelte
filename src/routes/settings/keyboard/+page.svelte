@@ -8,6 +8,14 @@
 </svelte:head>
 
 <article class="constrained">
-	<a href="/settings">&larr; {m.nav_settings()}</a>
+	<header>
+		<a href="/settings">&larr; {m.nav_settings()}</a>
+	</header>
 	<KeyboardEditor />
 </article>
+
+<style>
+	header {
+		margin-block-end: 1rem;
+	}
+</style>

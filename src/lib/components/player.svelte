@@ -1,5 +1,6 @@
 <script>
 	import {untrack} from 'svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import 'media-chrome'
 	import '$lib/youtube-video-custom-element.js'
 	import '$lib/soundcloud-player-custom-element.js'
@@ -159,6 +160,12 @@
 
 	{#if channel}
 		{@render trackContent()}
+	{/if}
+
+	{#if !track}
+		<p class="empty-state">
+			<IconR4 />
+		</p>
 	{/if}
 
 	<media-controller id="r5" data-clickable="true">
@@ -329,6 +336,19 @@
 {/snippet}
 
 <style>
+	.empty-state {
+		margin: auto;
+		opacity: 0.5;
+		animation: rotate 60s linear infinite;
+	}
+	@keyframes rotate {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
 	.broadcast {
 		display: flex;
 		gap: 0.2rem;
