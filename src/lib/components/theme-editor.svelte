@@ -158,12 +158,11 @@
 <div class="constrained">
 	<section>
 		<h1>{m.theme_heading()}</h1>
-		<ThemeToggle />
-	</section>
-
-	<section>
-		<h2>{m.theme_layout_heading()}</h2>
 		<form class="form">
+			<fieldset>
+				<p>Theme</p>
+				<ThemeToggle />
+			</fieldset>
 			<fieldset>
 				<label for={`${uid}--scaling`}>{m.theme_scale_label()}</label>
 				<InputRange
@@ -286,6 +285,7 @@
 	}
 
 	form {
+		margin-left: 1rem;
 		align-items: flex-start;
 	}
 
@@ -294,7 +294,6 @@
 		grid-template-columns: auto auto 1fr;
 		gap: 0 0.5rem;
 		align-items: center;
-		flex-flow: row wrap;
 	}
 
 	form fieldset label {
@@ -303,6 +302,7 @@
 
 	form fieldset small {
 		grid-column: 1 / -1;
+		text-indent: 1em;
 	}
 
 	.share-form fieldset {

@@ -25,3 +25,8 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 
 `app_state` table stores all application state including player state.
 `play_history` table tracks played tracks with start/end reasons.
+
+## Layout
+
+The player is (as of this writing) inside the main +layout.svelte,
+and is either considered to be in "compact" or "expanded" mode.

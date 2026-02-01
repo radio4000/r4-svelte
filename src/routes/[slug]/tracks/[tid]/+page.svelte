@@ -3,7 +3,6 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {tracksCollection, channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
-	import {extractYouTubeId} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
 	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
@@ -33,7 +32,7 @@
 
 	// Filter by ID client-side
 	const rawTrack = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const ytid = $derived(rawTrack ? extractYouTubeId(rawTrack.url) : null)
+	const ytid = $derived(rawTrack?.ytid ?? null)
 
 	// Reactive query on trackMetaCollection - re-renders when metadata updates
 	const metaQuery = useLiveQuery((q) =>

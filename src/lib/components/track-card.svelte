@@ -4,7 +4,6 @@
 	import {deleteTrack, channelsCollection} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track, Channel} from '$lib/types'
-	import {extractYouTubeId} from '$lib/utils.ts'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import LinkEntities from './link-entities.svelte'
@@ -25,11 +24,7 @@
 	const menuId = $props.id()
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
-	// Only extract YouTube ID when we need it for images
-	const ytid = $derived.by(() => {
-		if (!showImage || appState.hide_track_artwork) return null
-		return extractYouTubeId(track.url)
-	})
+	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.ytid)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
@@ -69,7 +64,7 @@
 
 <article class:active>
 	<a href={permalink} onclick={click} ondblclick={doubleClick} data-sveltekit-preload-data="tap">
-		<span class="index"> {(index ?? 0) + 1}. </span>
+		<!-- <span class="index"> {(index ?? 0) + 1}. </span> -->
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -112,7 +107,7 @@
 				onclick={() => {
 					playTrack(track.id, null, 'user_click_track')
 					menu?.close()
-				}}>Play</button
+				}}>{m.common_play()}</button
 			>
 			<button
 				type="button"
@@ -123,7 +118,7 @@
 				}}>{m.track_play_next()}</button
 			>
 			<button type="button" role="menuitem" onclick={addToRadio}>{m.track_add_to_radio()}</button>
-			<button type="button" role="menuitem" onclick={shareTrack}>Share</button>
+			<button type="button" role="menuitem" onclick={shareTrack}>{m.share_native()}</button>
 			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>{m.common_edit()}</button>{/if}
 			{#if canEdit}<button
 					type="button"
@@ -166,8 +161,10 @@
 	}
 
 	.artwork {
-		width: 2.3rem;
-		height: 2.3rem;
+		margin-bottom: auto;
+		aspect-ratio: 1/1;
+		width: 37px;
+		/*height: 2.3rem;*/
 		object-fit: cover;
 		object-position: center;
 		align-self: center;

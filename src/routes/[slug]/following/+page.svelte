@@ -45,11 +45,15 @@
 
 <article>
 	{#if loading}
-		<h1>{m.nav_following()}</h1>
-		<p>{m.common_loading()}</p>
+		<header>
+			<h1>{m.nav_following()}</h1>
+			<p>{m.common_loading()}</p>
+		</header>
 	{:else if following.length === 0}
-		<h1>{m.nav_following()}</h1>
-		<p>{m.following_empty()}</p>
+		<header>
+			<h1>{m.nav_following()}</h1>
+			<p>{m.following_empty()}</p>
+		</header>
 	{:else}
 		<ChannelsView channels={following}>
 			{#snippet header()}<h1>{m.nav_following()} <small>({following.length})</small></h1>{/snippet}

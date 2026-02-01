@@ -66,7 +66,7 @@
 		padding: 0.2rem 0.5rem;
 		font-size: var(--font-3);
 		border: 1px solid var(--gray-7);
-		background: var(--gray-1);
+		background: var(--accent-1);
 		border-radius: var(--border-radius);
 		max-width: 200px;
 		pointer-events: none;

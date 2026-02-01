@@ -5,7 +5,6 @@
 	import {playTrack} from '$lib/api'
 	import CoverFlip from '$lib/components/cover-flip.svelte'
 	import {tracksCollection} from '$lib/tanstack/collections'
-	import {extractYouTubeId} from '$lib/utils.ts'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = useLiveQuery((q) =>
@@ -25,10 +24,9 @@
 	{:else}
 		<CoverFlip items={tracksQuery.data} scrollItemsPerNotch={1}>
 			{#snippet item({item, active})}
-				{@const ytid = extractYouTubeId(item.url)}
 				<button class="item" class:active onclick={() => playTrack(item.id, null, 'user_click_track')}>
-					{#if ytid}
-						<img src={`https://i.ytimg.com/vi/${ytid}/mqdefault.jpg`} alt={item.title} />
+					{#if item.ytid}
+						<img src={`https://i.ytimg.com/vi/${item.ytid}/mqdefault.jpg`} alt={item.title} />
 					{:else}
 						{m.tracks_no_ytid({url: item.url})}
 					{/if}

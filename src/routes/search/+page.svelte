@@ -3,7 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {untrack} from 'svelte'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -190,16 +190,9 @@
 			</section>
 		{/if}
 	{:else if !searchQuery}
+		<p>Search channels and tracks on Radio4000.</p>
 		<p>
-			{m.search_tip_intro()}
-			<br />
-			{m.search_tip_header()}
-			<br /> <code>{m.search_tip_code_channel()}</code>
-			{m.search_tip_channel()}
-			<br /> <code>{m.search_tip_code_channel_query()}</code>
-			{m.search_tip_channel_query()}
-			<br /> <code>/</code>
-			{m.search_tip_commands()}
+			TIP: find tracks from a channel with <em>@slug [your track query]</em>
 		</p>
 	{/if}
 </article>

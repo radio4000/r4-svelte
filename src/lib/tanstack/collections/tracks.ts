@@ -11,6 +11,11 @@ import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
+/** Enrich track with computed ytid (until backend adds it) */
+function withYtid(track: Track): Track {
+	return {...track, ytid: extractYouTubeId(track.url) || null}
+}
+
 export const tracksCollection = createCollection<Track, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
@@ -40,7 +45,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		log.info('tracks fetch v1', {slug})
 		const {data, error} = await sdk.firebase.readTracks({slug})
 		if (error) throw error
-		return (data || []).map((t) => sdk.firebase.parseTrack(t, channel.id, slug))
+		return (data || []).map((t) => withYtid(sdk.firebase.parseTrack(t, channel.id, slug)))
 	}
 
 	log.info('tracks fetch v2', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
@@ -58,11 +63,11 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		if (v1Data?.length) {
 			const ch = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 			const channelId = ch?.id || slug
-			return v1Data.map((t) => sdk.firebase.parseTrack(t, channelId, slug))
+			return v1Data.map((t) => withYtid(sdk.firebase.parseTrack(t, channelId, slug)))
 		}
 	}
 
-	return (data || []) as Track[]
+	return ((data || []) as Track[]).map(withYtid)
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
@@ -128,10 +133,9 @@ export const tracksAPI = {
 	}
 }
 
-export function getTrackWithMeta<T extends {url?: string}>(track: T): T & Partial<TrackMeta> {
-	const ytid = extractYouTubeId(track.url)
-	if (!ytid) return track
-	const meta = trackMetaCollection.get(ytid)
+export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'ytid'>> {
+	if (!track.ytid) return track
+	const meta = trackMetaCollection.get(track.ytid)
 	if (!meta) return track
 	return {...track, ...meta}
 }
@@ -159,7 +163,8 @@ export function addTrack(
 			fts: null,
 			mentions: null,
 			playback_error: null,
-			tags: null
+			tags: null,
+			ytid: extractYouTubeId(input.url) || null
 		})
 	})
 	return tx.commit()
@@ -270,34 +275,39 @@ export function batchDeleteTracks(channel: Channel, ids: string[]) {
 }
 
 export async function checkTracksFreshness(slug: string): Promise<boolean> {
-	// Check queryClient cache (not collection state which may be empty)
-	const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
-	const localLatest = cachedTracks.reduce(
-		(max: string | null, t: Track) => (!max || t.created_at > max ? t.created_at : max),
-		null as string | null
-	)
+	return queryClient.fetchQuery({
+		queryKey: ['tracks-freshness', slug],
+		staleTime: 60_000,
+		queryFn: async () => {
+			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
+			const localLatest = cachedTracks.reduce(
+				(max: string | null, t: Track) => (!max || t.created_at > max ? t.created_at : max),
+				null as string | null
+			)
 
-	const {data, error} = await sdk.supabase
-		.from('channel_tracks')
-		.select('created_at')
-		.eq('slug', slug)
-		.order('created_at', {ascending: false})
-		.limit(1)
+			const {data, error} = await sdk.supabase
+				.from('channel_tracks')
+				.select('created_at')
+				.eq('slug', slug)
+				.order('created_at', {ascending: false})
+				.limit(1)
 
-	if (error) {
-		log.warn('freshness', {slug, error})
-		return false
-	}
+			if (error) {
+				log.warn('freshness', {slug, error})
+				return false
+			}
 
-	const remoteLatest = data?.[0]?.created_at
-	const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
+			const remoteLatest = data?.[0]?.created_at
+			const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
 
-	if (outdated) {
-		log.info('freshness outdated', {slug, local: localLatest, remote: remoteLatest})
-		await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-	}
+			if (outdated) {
+				log.info('freshness outdated', {slug, local: localLatest, remote: remoteLatest})
+				await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+			}
 
-	return !!outdated
+			return !!outdated
+		}
+	})
 }
 
 export async function ensureTracksLoaded(slug: string): Promise<void> {
@@ -323,9 +333,8 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	const updates: Array<{id: string; changes: {duration: number}}> = []
 	for (const track of tracks) {
 		if (track.duration) continue
-		const ytid = extractYouTubeId(track.url)
-		if (!ytid) continue
-		const meta = trackMetaCollection.get(ytid)
+		if (!track.ytid) continue
+		const meta = trackMetaCollection.get(track.ytid)
 		if (!meta?.youtube_data?.duration) continue
 		updates.push({id: track.id, changes: {duration: meta.youtube_data.duration}})
 	}

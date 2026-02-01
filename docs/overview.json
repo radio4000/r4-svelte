@@ -266,13 +266,6 @@
 		{"name": "sdk.search.searchTracks(query, {limit?})", "desc": "Search tracks."},
 		{"name": "sdk.search.searchAll(query, {limit?})", "desc": "Search all."},
 
-		{
-			"name": "sdk.browse.query({page?, limit?, table?, select?, orderBy?, orderConfig?, filters?})",
-			"desc": "Generic browse query."
-		},
-		{"name": "sdk.browse.supabaseOperators", "desc": "Supported operators."},
-		{"name": "sdk.browse.supabaseOperatorsTable", "desc": "Operators metadata."},
-
 		{"name": "sdk.firebase.readChannel(slug)", "desc": "Read v1 channel."},
 		{"name": "sdk.firebase.readChannels({limit?})", "desc": "Read v1 channels."},
 		{"name": "sdk.firebase.readTracks({channelId?, slug?})", "desc": "Read v1 tracks."},
@@ -282,107 +275,11 @@
 		{"name": "sdk.utils.extractTokens(str)", "desc": "Extract mentions and tags."}
 	],
 
-	"@radio4000/components": [
-		{"name": "r4-sign-in", "desc": "Auth component."},
-		{"name": "r4-sign-up", "desc": "Auth component."},
-		{"name": "r4-sign-out", "desc": "Auth component."},
-		{"name": "r4-password-reset", "desc": "Auth component."},
-		{"name": "r4-password-update", "desc": "Auth component."},
-		{"name": "r4-email-update", "desc": "Auth component."},
-		{"name": "r4-auth-status", "desc": "Auth component."},
-
-		{"name": "r4-user", "desc": "User component."},
-		{"name": "r4-user-account", "desc": "User component."},
-		{"name": "r4-user-delete", "desc": "User component."},
-		{"name": "r4-user-channels-select", "desc": "User component."},
-
-		{"name": "r4-channel", "desc": "Channel component."},
-		{"name": "r4-channel-card", "desc": "Channel component."},
-		{"name": "r4-channel-create", "desc": "Channel component."},
-		{"name": "r4-channel-update", "desc": "Channel component."},
-		{"name": "r4-channel-delete", "desc": "Channel component."},
-		{"name": "r4-button-follow", "desc": "Channel component."},
-		{"name": "r4-share-channel", "desc": "Channel component."},
-
-		{"name": "r4-track", "desc": "Track component."},
-		{"name": "r4-track-create", "desc": "Track component."},
-		{"name": "r4-track-update", "desc": "Track component."},
-		{"name": "r4-track-delete", "desc": "Track component."},
-		{"name": "r4-share-track", "desc": "Track component."},
-
-		{"name": "r4-player", "desc": "Player component."},
-		{"name": "r4-button-play", "desc": "Player component."},
-		{"name": "r4-tuner", "desc": "Player component."},
-
-		{"name": "r4-avatar", "desc": "Avatar component."},
-		{"name": "r4-avatar-update", "desc": "Avatar component."},
-		{"name": "r4-avatar-upload", "desc": "Avatar component."},
-
-		{"name": "r4-query", "desc": "Data/query component."},
-		{"name": "r4-supabase-query", "desc": "Data/query component."},
-		{"name": "r4-supabase-filters", "desc": "Data/query component."},
-		{"name": "r4-supabase-filter-search", "desc": "Data/query component."},
-		{"name": "r4-pagination", "desc": "Data/query component."},
-
-		{"name": "r4-app", "desc": "UI component."},
-		{"name": "r4-layout", "desc": "UI component."},
-		{"name": "r4-page", "desc": "UI component."},
-		{"name": "r4-app-menu", "desc": "UI component."},
-		{"name": "r4-app-user-menu", "desc": "UI component."},
-		{"name": "r4-command-menu", "desc": "UI component."},
-		{"name": "r4-dialog", "desc": "UI component."},
-		{"name": "r4-form", "desc": "UI component."},
-		{"name": "r4-icon", "desc": "UI component."},
-		{"name": "r4-loading", "desc": "UI component."},
-		{"name": "r4-favicon", "desc": "UI component."},
-		{"name": "r4-title", "desc": "UI component."},
-		{"name": "r4-router", "desc": "UI component."},
-		{"name": "r4-search", "desc": "UI component."},
-		{"name": "r4-actions", "desc": "UI component."},
-		{"name": "r4-map", "desc": "UI component."},
-		{"name": "r4-map-position", "desc": "UI component."},
-		{"name": "r4-discogs-resource", "desc": "UI component."},
-		{"name": "r4-admin", "desc": "UI component."}
-	],
-
 	"@radio4000/cli": [
-		{"name": "r4 help", "desc": "Show help."},
-		{"name": "r4 version", "desc": "Print version."},
-		{"name": "r4 schema", "desc": "Output SQL CREATE TABLE."},
-
-		{"name": "r4 auth login", "desc": "Authenticate via email OTP."},
-		{"name": "r4 auth logout", "desc": "Clear session."},
-		{"name": "r4 auth whoami", "desc": "Show current session."},
-
-		{"name": "r4 channel list [--limit n]", "desc": "List channels."},
-		{"name": "r4 channel view <slug> [slug...]", "desc": "View channel details."},
-		{"name": "r4 channel create <slug> --name \"...\"", "desc": "Create channel."},
-		{"name": "r4 channel update <slug> [--name]", "desc": "Update channel."},
-		{"name": "r4 channel delete <slug> [slug...]", "desc": "Delete channels."},
-
-		{"name": "r4 track list [--channel slug]", "desc": "List tracks."},
-		{"name": "r4 track view <id> [id...]", "desc": "View track details."},
-		{"name": "r4 track create --url \"...\" --title \"...\" --channel slug", "desc": "Create track."},
-		{"name": "r4 track update <id> [--title] [--url]", "desc": "Update track."},
-		{"name": "r4 track delete <id> [id...]", "desc": "Delete tracks."},
-
-		{"name": "r4 search <query> [--channels] [--tracks] [--limit n]", "desc": "Search channels and tracks."},
-
-		{"name": "r4 tags list --channel <slug>", "desc": "List tags from channel."},
-		{"name": "r4 tags generate", "desc": "Generate tag folders with symlinks."},
-
-		{"name": "r4 download <slug> [options]", "desc": "Download channel tracks."},
-
-		{"name": "--limit <n>", "desc": "Limit results."},
-		{"name": "--format <type>", "desc": "text, json, sql."},
-		{"name": "--channel <slug>", "desc": "Filter by channel."},
-
-		{"name": "example: r4 channel list --limit 100", "desc": "List channels."},
-		{"name": "example: r4 track list --channel ko002 | jq '.[] | .title'", "desc": "List track titles."},
-		{"name": "example: r4 search \"jazz fusion\"", "desc": "Search."},
-		{"name": "example: r4 tags list --channel starttv", "desc": "List tags."},
-		{"name": "example: r4 schema | sqlite3 channels.db", "desc": "Create schema."},
-		{"name": "example: r4 channel list --format sql | sqlite3 channels.db", "desc": "Seed SQLite from SQL output."}
+		{"name": "r4 --help", "desc": "Show help."},
+		{"name": "r4 channel --help", "desc": "List channels."},
+		{"name": "r4 track --help", "desc": "List tracks."},
+		{"name": "r4 search <query> [--channels] [--tracks] [--limit n]", "desc": "Search channels and tracks."}
 	],
 
 	"window.r5": [

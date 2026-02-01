@@ -1,5 +1,6 @@
 <script>
 	import {untrack} from 'svelte'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import 'media-chrome'
 	import '$lib/youtube-video-custom-element.js'
 	import '$lib/soundcloud-player-custom-element.js'
@@ -12,7 +13,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
 	import {logger} from '$lib/logger'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
-	import {extractYouTubeId, detectMediaProvider} from '$lib/utils.ts'
+	import {detectMediaProvider} from '$lib/utils.ts'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -62,11 +63,7 @@
 	})
 
 	/** @type {string} */
-	let trackImage = $derived.by(() => {
-		if (!track?.url) return ''
-		const ytid = extractYouTubeId(track.url)
-		return ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : '' // default, mqdefault, hqdefault, sddefault, maxresdefault
-	})
+	let trackImage = $derived(track?.ytid ? `https://i.ytimg.com/vi/${track.ytid}/mqdefault.jpg` : '')
 
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))
@@ -165,6 +162,12 @@
 		{@render trackContent()}
 	{/if}
 
+	{#if !track}
+		<p class="empty-state">
+			<IconR4 />
+		</p>
+	{/if}
+
 	<media-controller id="r5" data-clickable="true">
 		{#if trackType === 'youtube'}
 			<youtube-video
@@ -204,7 +207,8 @@
 				<media-time-range></media-time-range>
 				<media-time-display showduration></media-time-display>
 			{/if}
-			<media-mute-button class="btn"></media-mute-button>
+			<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+			></media-mute-button>
 			<media-volume-range></media-volume-range>
 			{@render btnToggleQueuePanel()}
 			{@render btnToggleExpanded()}
@@ -332,6 +336,19 @@
 {/snippet}
 
 <style>
+	.empty-state {
+		margin: auto;
+		opacity: 0.5;
+		animation: rotate 60s linear infinite;
+	}
+	@keyframes rotate {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
 	.broadcast {
 		display: flex;
 		gap: 0.2rem;
