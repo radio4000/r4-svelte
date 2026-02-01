@@ -115,6 +115,10 @@
 					<Icon icon="unordered-list" size={16} />
 					{m.batch_edit_nav_label()}
 				</a>
+				<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
+					<Icon icon="document-download" size={16} />
+					Backup
+				</a>
 			{/if}
 		</nav>
 
