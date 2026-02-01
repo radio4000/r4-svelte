@@ -41,12 +41,8 @@ html {
 	color: var(--gray-12);
 }
 
-html {
-	font-size: calc(15px * var(--scaling));
-}
-
 body {
-	/* font-size: var(--font-4); */
+	font-size: calc(16px * var(--scaling));
 	margin: 0;
 	cursor: default;
 	overflow: hidden;
@@ -54,7 +50,6 @@ body {
 }
 
 * {
-	/* scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg); */
 	scrollbar-color: var(--gray-7) var(--gray-1);
 }
 
@@ -92,6 +87,7 @@ h3 {
 }
 
 p {
+	font-size: var(--font-4);
 	margin: 0;
 }
 

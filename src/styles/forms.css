@@ -80,6 +80,13 @@ form.form,
 			flex-flow: row wrap;
 		}
 	}
+
+	label,
+	legend {
+		font-size: var(--font-3);
+		font-weight: 600;
+	}
+
 	legend {
 		padding: 0;
 	}

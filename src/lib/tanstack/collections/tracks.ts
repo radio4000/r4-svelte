@@ -281,15 +281,15 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 		queryFn: async () => {
 			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
 			const localLatest = cachedTracks.reduce(
-				(max: string | null, t: Track) => (!max || t.created_at > max ? t.created_at : max),
+				(max: string | null, t: Track) => (!max || (t.updated_at && t.updated_at > max) ? t.updated_at : max),
 				null as string | null
 			)
 
 			const {data, error} = await sdk.supabase
 				.from('channel_tracks')
-				.select('created_at')
+				.select('updated_at')
 				.eq('slug', slug)
-				.order('created_at', {ascending: false})
+				.order('updated_at', {ascending: false})
 				.limit(1)
 
 			if (error) {
@@ -297,7 +297,7 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 				return false
 			}
 
-			const remoteLatest = data?.[0]?.created_at
+			const remoteLatest = data?.[0]?.updated_at
 			const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
 
 			if (outdated) {

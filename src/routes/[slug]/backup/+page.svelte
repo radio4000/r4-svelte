@@ -58,10 +58,9 @@
 			<button type="button" onclick={downloadBackup} disabled={downloading}>
 				<Icon icon="document-download" size={16} />
 				{downloading ? 'Downloading...' : 'Download backup'}
-		</button>
+			</button>
 		</p>
 	{:else}
 		<p><a href="/auth">Sign in to access backup</a></p>
 	{/if}
 </article>
-

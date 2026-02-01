@@ -423,11 +423,6 @@
 			</PopoverMenu>
 		</menu>
 
-		<nav>
-			<a href="/{slug}">@{channel.name}</a>
-			{m.batch_edit_nav_suffix()}
-		</nav>
-
 		{#if readonly}
 			<p class="hint warn">READ ONLY, this is a v1 channel</p>
 		{:else if !canEdit}
@@ -629,8 +624,11 @@
 	}
 
 	.sortable {
+		font-size: var(--font-2);
+		word-wrap: anywhere;
+		white-space: normal;
 		&.sorted {
-			background: var(--gray-2);
+			background: var(--accent-2);
 		}
 	}
 
