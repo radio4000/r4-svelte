@@ -239,8 +239,9 @@
 	{:else if display === 'tuner'}
 		<SpectrumScanner channels={realChannels.filtered} />
 	{:else if display === 'infinite'}
-		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}
-		<InfiniteCanvas media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
+		{#await import('./infinite-canvas.svelte') then InfiniteCanvas}
+			<InfiniteCanvas.default media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
+		{/await}
 	{:else}
 		<ol class={display}>
 			{#each realChannels.displayed as channel (channel.id)}
