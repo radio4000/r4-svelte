@@ -47,7 +47,12 @@
 				})
 			}
 		} else if (timePeriod === 'solstice') {
-			const solsticeNames = ['March Equinox', 'June Solstice', 'September Equinox', 'December Solstice']
+			const solsticeNames = [
+				m.tags_solstice_march(),
+				m.tags_solstice_june(),
+				m.tags_solstice_september(),
+				m.tags_solstice_december()
+			]
 			for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
 				for (let q = 0; q < 4; q++) {
 					const quarterStart = new Date(year, q * 3, 1)
@@ -137,7 +142,7 @@
 </script>
 
 {#if !channel}
-	<p style="padding: 1rem;">Channel not found</p>
+	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {:else}
 	<main>
 		<header class="row">
@@ -194,7 +199,7 @@
 		{/if}
 
 		{#if tracksQuery.isLoading}
-			<p style="margin: 1rem;">Loading tracks...</p>
+			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if filteredTags.length > 0}
 			<ol class="list">
 				{#each filteredTags as { tag, count } (tag)}
