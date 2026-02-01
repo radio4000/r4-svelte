@@ -3,6 +3,7 @@ import {sveltekit} from '@sveltejs/kit/vite'
 import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
+import {visualizer} from 'rollup-plugin-visualizer'
 
 // Get git info at build time
 function getGitInfo() {
@@ -25,7 +26,12 @@ export default defineConfig({
 			project: './i18n/project.inlang',
 			outdir: './src/lib/paraglide'
 		}),
-		devtoolsJson()
+		devtoolsJson(),
+		visualizer({
+			filename: 'rollup-visualizer.html',
+			gzipSize: true,
+			brotliSize: true
+		})
 	],
 	worker: {
 		format: 'es'

@@ -7,7 +7,6 @@
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
-	import MapChannels from './map-channels.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
@@ -235,7 +234,9 @@
 	</menu>
 
 	{#if display === 'map'}
-		<MapChannels {channels} />
+		{#await import('./map-channels.svelte') then MapChannels}
+			<MapChannels.default {channels} />
+		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner channels={realChannels.filtered} />
 	{:else if display === 'infinite'}

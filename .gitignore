@@ -3,6 +3,7 @@ node_modules
 /.svelte-kit
 /build
 .sprite
+rollup-visualizer.html
 
 # inlang generated artifacts
 ./i18n/project.inlang/cache/
