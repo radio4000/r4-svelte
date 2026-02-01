@@ -10,10 +10,15 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	let {channels = [], order = $bindable('updated'), direction = $bindable('desc'), header} = $props()
-
-	/** @type {'grid' | 'list' | 'map' | 'infinite'} */
-	let display = $state('grid')
+	let {
+		channels = [],
+		order = $bindable('updated'),
+		direction = $bindable('desc'),
+		/** @type {'grid' | 'list' | 'map' | 'infinite'} */
+		display = $bindable('grid'),
+		header,
+		syncToUrl = false
+	} = $props()
 
 	const sortKey = {
 		updated: (c) => c.latest_track_at || c.updated_at || '',
@@ -52,14 +57,16 @@
 	/** @param {'grid' | 'list' | 'map' | 'infinite'} value */
 	function setDisplay(value) {
 		display = value
-		const query = new URL(page.url).searchParams
-		query.set('display', display)
-		if (value !== 'map') {
-			query.delete('latitude')
-			query.delete('longitude')
-			query.delete('zoom')
+		if (syncToUrl) {
+			const query = new URL(page.url).searchParams
+			query.set('display', display)
+			if (value !== 'map') {
+				query.delete('latitude')
+				query.delete('longitude')
+				query.delete('zoom')
+			}
+			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 		}
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 	}
 
 	const viewIconMap = {

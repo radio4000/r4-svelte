@@ -34,6 +34,12 @@ export interface AppState {
 	channels_order: 'updated' | 'created' | 'name' | 'tracks'
 	channels_order_direction: 'asc' | 'desc'
 	channels_shuffled: boolean
+	followers_display?: 'grid' | 'list' | 'map' | 'infinite'
+	followers_order?: 'updated' | 'created' | 'name' | 'tracks'
+	followers_direction?: 'asc' | 'desc'
+	following_display?: 'grid' | 'list' | 'map' | 'infinite'
+	following_order?: 'updated' | 'created' | 'name' | 'tracks'
+	following_direction?: 'asc' | 'desc'
 	/** the user's channels (IDs) */
 	channels?: string[]
 	/** the user's primary channel (full object) */

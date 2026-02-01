@@ -3,10 +3,25 @@
 	import {sdk} from '@radio4000/sdk'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import {channelsCollection, queryClient} from '$lib/tanstack/collections'
+	import {appState} from '$lib/app-state.svelte'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
+
+	/** @type {'grid' | 'list' | 'map' | 'infinite'} */
+	let display = $state(appState.following_display || 'grid')
+	/** @type {'updated' | 'created' | 'name' | 'tracks'} */
+	let order = $state(appState.following_order || 'updated')
+	/** @type {'asc' | 'desc'} */
+	let direction = $state(appState.following_direction || 'desc')
+
+	// Sync to appState when settings change
+	$effect(() => {
+		appState.following_display = display
+		appState.following_order = order
+		appState.following_direction = direction
+	})
 
 	const channelQuery = useLiveQuery((q) =>
 		q
