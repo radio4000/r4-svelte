@@ -1,16 +1,11 @@
 <script>
+	import {getContext} from 'svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import fuzzysort from 'fuzzysort'
 	import {page} from '$app/state'
-	import {
-		channelsCollection,
-		tracksCollection,
-		trackMetaCollection,
-		updateTrack,
-		insertDurationFromMeta
-	} from '$lib/tanstack/collections'
+	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
 	import {appState} from '$lib/app-state.svelte'
 	import TrackRow from './track-row.svelte'
@@ -29,12 +24,8 @@
 			.limit(1)
 	)
 
-	const tracksQuery = useLiveQuery((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	)
+	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
+	const tracksQuery = getContext('tracksQuery')
 
 	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.ytid))
 

@@ -20,6 +20,8 @@
 	// Read channel directly from collection state (already loaded at root)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
+	let hasChannel = $derived(appState.channels?.length > 0)
+	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
@@ -61,7 +63,13 @@
 				<menu>
 					<ButtonPlay {channel} label={m.button_play_label()} />
 					{#if channel.source !== 'v1'}
-						<ButtonFollow {channel} />
+						{#if hasChannel}
+							<ButtonFollow {channel} />
+						{:else}
+							<a href={authUrl} class="btn" title={m.button_follow()}>
+								<Icon icon="favorite" size={20} />
+							</a>
+						{/if}
 					{/if}
 					<button type="button" onclick={() => (appState.modal_share = {channel})}>
 						<Icon icon="share" size={16} />

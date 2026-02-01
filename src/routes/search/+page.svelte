@@ -3,7 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {untrack} from 'svelte'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'

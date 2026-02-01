@@ -1,30 +1,17 @@
 <script>
-	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {eq} from '@tanstack/db'
+	import {getContext} from 'svelte'
 	import {page} from '$app/state'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import {extractHashtags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
 
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, slug))
-			.orderBy(({channels}) => channels.created_at, 'desc')
-			.limit(1)
-	)
+	// Get tracks from layout (query stays alive during navigation)
+	const tracksQuery = getContext('tracksQuery')
 
-	const tracksQuery = useLiveQuery((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	)
-
-	let channel = $derived(channelQuery.data?.[0])
+	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])
 
 	let filter = $state('all')
@@ -140,9 +127,7 @@
 	)
 </script>
 
-{#if channelQuery.isLoading}
-	<p style="padding: 1rem;">Loading...</p>
-{:else if !channel}
+{#if !channel}
 	<p style="padding: 1rem;">Channel not found</p>
 {:else}
 	<main>
