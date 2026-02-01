@@ -18,24 +18,20 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
-
-	let slug = $derived(page.params.slug)
-	let renderLimit = $derived(channelLimits.get(slug) ?? 40)
-
-	// Get tracks from layout (query stays alive during navigation)
 	const tracksQuery = getContext('tracksQuery')
 	const getCanEdit = getContext('canEdit')
 
-	let allTracks = $derived(tracksQuery.data || [])
-	let canEdit = $derived(getCanEdit())
-
+	let slug = $derived(page.params.slug)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 
-	// Filter state
-	let searchQuery = $state('')
-	let selectedTag = $state('')
+	let allTracks = $derived(tracksQuery.data || [])
+	let canEdit = $derived(getCanEdit())
+	let renderLimit = $derived(channelLimits.get(slug) ?? 40)
 
-	// Aggregate tags from all tracks (same pattern as tags page)
+	let searchQuery = $state('')
+	/** @type {string[]} */
+	let selectedTags = $state([])
+
 	let aggregatedTags = $derived.by(() => {
 		const counts = {}
 		for (const track of allTracks) {
@@ -48,37 +44,19 @@
 			.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
 	})
 
-	// Filter pipeline: tag filter -> fuzzysort text search
-	let filteredTracks = $derived.by(() => {
-		let result = allTracks
+	let isFiltering = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
 
-		// Step 1: Filter by tag if selected
-		if (selectedTag) {
-			result = result.filter((track) => {
-				const tags = extractHashtags(track.description || '')
-				return tags.includes(selectedTag.toLowerCase())
-			})
-		}
+	function matchesTags(track) {
+		const trackTags = extractHashtags(track.description || '')
+		return selectedTags.every((t) => trackTags.includes(t.toLowerCase()))
+	}
 
-		// Step 2: Fuzzy text search if query exists
-		if (searchQuery.trim()) {
-			result = fuzzySearch(searchQuery, result, ['title', 'description'])
-		}
+	let tagFilteredTracks = $derived(selectedTags.length ? allTracks.filter(matchesTags) : allTracks)
+	let filteredTracks = $derived(
+		searchQuery.trim() ? fuzzySearch(searchQuery, tagFilteredTracks, ['title', 'description']) : tagFilteredTracks
+	)
 
-		return result
-	})
-
-	// Check if any filter is active
-	let isFiltering = $derived(searchQuery.trim() !== '' || selectedTag !== '')
-
-	// Apply render limit only when not filtering
-	let tracks = $derived.by(() => {
-		if (isFiltering) {
-			return filteredTracks
-		}
-		return renderLimit ? allTracks.slice(0, renderLimit) : allTracks
-	})
-
+	let visibleTracks = $derived(isFiltering ? filteredTracks : renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
 	let hasMore = $derived(!isFiltering && renderLimit && allTracks.length > renderLimit)
 
 	function showAll() {
@@ -89,19 +67,14 @@
 		appState.modal_track_add = {}
 	}
 
-	function clearFilters() {
-		searchQuery = ''
-		selectedTag = ''
+	function toggleTag(tag) {
+		if (selectedTags.includes(tag)) {
+			selectedTags = selectedTags.filter((t) => t !== tag)
+		} else {
+			selectedTags = [...selectedTags, tag]
+		}
 	}
 
-	function selectTag(tag) {
-		selectedTag = tag
-	}
-
-	// Provide tag click handler context for link-entities
-	setContext('tagClickHandler', selectTag)
-
-	// Play/queue filtered tracks
 	function playFilteredTracks() {
 		if (!filteredTracks.length) return
 		const ids = filteredTracks.map((t) => t.id)
@@ -113,6 +86,8 @@
 		if (!filteredTracks.length) return
 		addToPlaylist(filteredTracks.map((t) => t.id))
 	}
+
+	setContext('tagClickHandler', toggleTag)
 </script>
 
 <svelte:head>
@@ -128,14 +103,11 @@
 				{#if aggregatedTags.length > 0}
 					<PopoverMenu id="{uid}-tags">
 						{#snippet trigger()}
-							{selectedTag || 'Tags'}
+							Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
 						{/snippet}
 						<menu class="tags-menu">
-							{#if selectedTag}
-								<button type="button" onclick={() => selectTag('')}> Clear tag </button>
-							{/if}
 							{#each aggregatedTags as { tag, count } (tag)}
-								<button type="button" class:active={selectedTag === tag} onclick={() => selectTag(tag)}>
+								<button type="button" class:active={selectedTags.includes(tag)} onclick={() => toggleTag(tag)}>
 									{tag} <span class="tag-count">({count})</span>
 								</button>
 							{/each}
@@ -143,20 +115,28 @@
 					</PopoverMenu>
 				{/if}
 			</div>
+			{#if selectedTags.length > 0}
+				<menu>
+					{#each selectedTags as tag (tag)}
+						<button type="button" class="chip" onclick={() => toggleTag(tag)}>
+							{tag} ×
+						</button>
+					{/each}
+				</menu>
+			{/if}
 			{#if isFiltering}
 				<div class="filter-status">
-					<span>Showing {filteredTracks.length} of {allTracks.length} tracks</span>
+					<small>Selected {filteredTracks.length}</small>
 					{#if filteredTracks.length > 0}
 						<button type="button" onclick={playFilteredTracks}>{m.search_play_all()}</button>
 						<button type="button" onclick={queueFilteredTracks}>{m.search_queue_all()}</button>
 					{/if}
-					<button type="button" onclick={clearFilters}>Clear</button>
 				</div>
 			{/if}
 		</header>
 
-		{#if tracksQuery.isReady && tracks.length > 0}
-			<Tracklist {tracks} {canEdit} grouped={false} virtual={false} />
+		{#if tracksQuery.isReady && visibleTracks.length > 0}
+			<Tracklist tracks={visibleTracks} {canEdit} grouped={isFiltering ? false : true} virtual={false} />
 			{#if hasMore}
 				<footer>
 					<button onclick={showAll}>Show all {allTracks.length} tracks</button>

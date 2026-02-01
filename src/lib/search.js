@@ -131,7 +131,7 @@ export async function searchAll(query, {limit = 100} = {}) {
  * @param {{limit?: number, threshold?: number}} options
  * @returns {T[]}
  */
-export function fuzzySearch(query, items, keys, {limit = 100, threshold = -10000} = {}) {
+export function fuzzySearch(query, items, keys, {limit = 100, threshold = 0.5} = {}) {
 	if (!query?.trim()) return items
 	return fuzzysort.go(query, items, {keys, limit, threshold}).map((r) => r.obj)
 }
