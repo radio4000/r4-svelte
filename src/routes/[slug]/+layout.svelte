@@ -1,7 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {setContext} from 'svelte'
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {eq} from '@tanstack/db'
+	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'

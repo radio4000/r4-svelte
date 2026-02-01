@@ -29,7 +29,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Performance
 
-- Slow channel page navigation (2k+ tracks) — **ROOT CAUSE: `useLiveQuery` O(n) overhead**. See `plan-perf-test.md` for full investigation.
+- Slow channel page navigation (1k+ tracks) — **ROOT CAUSE: `useLiveQuery` O(n) overhead**. See `plan-perf-test.md` for full investigation.
 
   **Fixes applied:**
   - `tracksQuery.isReady` check prevents double-paint (major win)

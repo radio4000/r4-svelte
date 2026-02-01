@@ -1,137 +1,52 @@
-# Performance Investigation: Channel Tracks Page
+# Performance: useLiveQuery Mount Overhead
 
 ## Problem
 
-Navigating to a channel page with 2546 tracks had ~900ms delay. Even smaller channels (313 tracks) showed noticeable lag.
+Navigating to channel pages with 1k+ tracks has noticeable lag (~400ms for 4k tracks). Root cause: `useLiveQuery` from `@tanstack/svelte-db` does O(n) work on every mount.
 
-## Root Cause
+## Key Finding: SvelteMap is Wasted Work
 
-`useLiveQuery` from `@tanstack/svelte-db` has O(n) overhead on every mount because it:
+The Svelte version of `useLiveQuery` eagerly builds TWO data structures on mount:
 
-1. Creates a derived collection via `createLiveQueryCollection()`
-2. Iterates the entire source collection
-3. Applies filters and sorting
-4. Returns new array references
+1. `state` - SvelteMap for key-based lookups
+2. `data` - Array for iteration
 
-With 2546 tracks, this adds ~400-900ms per navigation.
+**But this codebase only uses `.data`, never `.state` on query results.**
 
-## Solutions Applied
+React version uses lazy getters (only builds when accessed). Svelte version builds both eagerly.
 
-### 1. `isReady` Check (Major Win)
+## Test Results
 
-**Problem:** Browser was painting tracks twice - once with unsorted data, then again sorted.
+Tested with instrumented hook at `src/lib/tanstack-debug/useLiveQuery.svelte.js`.
+Debug page: `/_debug/livequery-perf`
 
-**Fix:** Wait for `tracksQuery.isReady` before rendering:
+### Before (with SvelteMap)
 
-```svelte
-{#if tracksQuery.isReady && tracks.length > 0}
-	<Tracklist {tracks} />
-{/if}
-```
+| Items | createCollection | initState | syncData | **Total**  |
+| ----- | ---------------- | --------- | -------- | ---------- |
+| 2546  | ~14ms            | ~56ms     | ~63ms    | **~135ms** |
+| 4000  | ~16ms            | ~182ms    | ~200ms   | **~400ms** |
 
-**Result:** Single paint, no flash of wrong order, significant perf improvement.
+### After (SvelteMap removed)
 
-### 2. Render Limit with Slice
+| Items | createCollection | initState | syncData | **Total**  | **Saved** |
+| ----- | ---------------- | --------- | -------- | ---------- | --------- |
+| 2546  | ~15ms            | REMOVED   | ~80ms    | **~98ms**  | 27%       |
+| 4000  | ~15ms            | REMOVED   | ~192ms   | **~208ms** | **48%**   |
 
-**Problem:** Rendering 2500+ DOM elements is slow regardless of data source.
+## Solutions Applied (in production)
 
-**Fix:** Load all data but render limited:
+1. **`isReady` check** - wait for `tracksQuery.isReady` before rendering (prevents double-paint)
+2. **Render limit** - `.slice(0, 40)` with "Show all" button
+3. **Freshness caching** - `checkTracksFreshness` wrapped with 60s staleTime
 
-```js
-const tracksQuery = useLiveQuery(
-	(q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	// No .limit() - load all for search/filter
-)
+## Next Steps
 
-let allTracks = $derived(tracksQuery.data || [])
-let tracks = $derived(renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
-```
+1. **Open TanStack issue** - Svelte should use lazy getters like React
+2. **Layout-level query** - keep query alive in `[slug]/+layout.svelte` to avoid remount
+3. **Consider local fork** - use modified `useLiveQuery` without SvelteMap until upstream fixes
 
-**Result:** Fast initial render of 40 tracks, full data available for search.
+## Files
 
-### 3. "Show All" Button
-
-Users can opt into rendering full list when needed.
-
-### 4. Session-Persistent Render Limit
-
-```js
-// Module-level SvelteMap persists during session
-const channelLimits = new SvelteMap()
-let renderLimit = $derived(channelLimits.get(slug) ?? 40)
-```
-
-### 5. Freshness Check Caching
-
-**Problem:** `checkTracksFreshness(slug)` queried Supabase on every navigation.
-
-**Fix:** Wrapped in `queryClient.fetchQuery` with 60s `staleTime`:
-
-```ts
-queryClient.fetchQuery({
-	queryKey: ['tracks-freshness', slug],
-	staleTime: 60_000,
-	queryFn: async () => {
-		/* check logic */
-	}
-})
-```
-
-## What Didn't Help
-
-### Component Complexity
-
-Tested `track-card-lite.svelte` (bare minimum `<li>{title}</li>`) - still slow with 2500 items.
-**Conclusion:** Component complexity is secondary to useLiveQuery overhead.
-
-### Virtualization Alone
-
-With `virtual={true}`: Still ~700-900ms delay.
-**Conclusion:** Virtualization helps render performance but doesn't help if delay is before render.
-
-### Direct Collection Read
-
-Bypassing useLiveQuery with direct read was instant:
-
-```js
-let tracks = $derived(
-	[...tracksCollection.state.values()]
-		.filter((t) => t.slug === slug)
-		.sort((a, b) => b.created_at.localeCompare(a.created_at))
-)
-```
-
-But `tracksCollection.state` is not Svelte-reactive (plain Map), so this loses reactivity to mutations.
-
-## Final Architecture
-
-```
-useLiveQuery (no limit)
-    ↓
-allTracks (full dataset, sorted)
-    ↓
-.slice(0, renderLimit)
-    ↓
-Render 40 tracks + "Show all" button
-```
-
-- **Data:** Fully loaded, available for search/filter
-- **Render:** Limited by default, expandable on demand
-- **Reactivity:** Maintained via useLiveQuery
-- **Performance:** Fast initial render, acceptable load time
-
-## Files Modified
-
-- `src/routes/[slug]/+page.svelte` - render limit, isReady check, show all button
-- `src/lib/tanstack/collections/tracks.ts` - freshness check caching
-- `src/lib/components/tracklist.svelte` - restored to use TrackCard
-
-## Potential Future Improvements
-
-- Report to TanStack DB team - `createLiveQueryCollection` could cache by query key
-- Layout-level query - keep query alive during [slug]/\* navigation to avoid re-mount overhead
-- Indexed queries - if TanStack DB adds index support for faster filtering
+- `src/lib/tanstack-debug/useLiveQuery.svelte.js` - instrumented hook (SvelteMap removed)
+- `src/routes/_debug/livequery-perf/` - test page

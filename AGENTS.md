@@ -35,6 +35,6 @@ Format and lint: `bun run check`
 
 `window.r5` exposes sdk, appState, queryClient, tracksCollection, channelsCollection for console testing.
 
-`/src/routes/_debug` for test routes and playgrounds.
+Use `/src/routes/_debug` for (temporary) test routes and playgrounds.
 
 the `r4 --help` CLI can help inspect data from remote PostgreSQL
