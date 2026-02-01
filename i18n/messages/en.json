@@ -513,7 +513,7 @@
 	"tags_period_context": "for {label}",
 	"tags_period_label": "Time period",
 	"tags_period_months": "Months",
-	"tags_period_quarters": "Quarters",
+	"tags_period_solstices": "Solstices",
 	"tags_period_years": "Years",
 	"tags_scrub_title": "Scrub through time periods",
 	"tags_showing": "Showing {count} tags",

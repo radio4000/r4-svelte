@@ -513,7 +513,7 @@
 	"tags_period_context": "per {label}",
 	"tags_period_label": "Periodo di tempo",
 	"tags_period_months": "Mesi",
-	"tags_period_quarters": "Trimestri",
+	"tags_period_solstices": "Trimestri",
 	"tags_period_years": "Anni",
 	"tags_scrub_title": "Scorri tra i periodi di tempo",
 	"tags_showing": "Mostrando {count} tag",

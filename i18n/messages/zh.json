@@ -513,7 +513,7 @@
 	"tags_period_context": "用于 {label}",
 	"tags_period_label": "时间段",
 	"tags_period_months": "月",
-	"tags_period_quarters": "季度",
+	"tags_period_solstices": "季度",
 	"tags_period_years": "年",
 	"tags_scrub_title": "滑动浏览时间段",
 	"tags_showing": "显示 {count} 个标签",

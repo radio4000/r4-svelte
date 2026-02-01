@@ -1,5 +1,7 @@
 <script>
 	import {getContext} from 'svelte'
+	import {Tween} from 'svelte/motion'
+	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {extractHashtags} from '$lib/utils'
@@ -44,14 +46,15 @@
 					endDate: new Date(year + 1, 0, 1)
 				})
 			}
-		} else if (timePeriod === 'quarter') {
+		} else if (timePeriod === 'solstice') {
+			const solsticeNames = ['March Equinox', 'June Solstice', 'September Equinox', 'December Solstice']
 			for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
 				for (let q = 0; q < 4; q++) {
 					const quarterStart = new Date(year, q * 3, 1)
 					const quarterEnd = new Date(year, (q + 1) * 3, 1)
 					if (quarterStart <= end && quarterEnd >= start) {
 						newPeriods.push({
-							label: `${year} Q${q + 1}`,
+							label: `${year} ${solsticeNames[q]}`,
 							startDate: quarterStart,
 							endDate: quarterEnd
 						})
@@ -68,7 +71,7 @@
 				const monthStart = new Date(currentYear, currentMonth, 1)
 				const monthEnd = new Date(currentYear, currentMonth + 1, 1)
 				newPeriods.push({
-					label: monthStart.toLocaleDateString('en', {year: 'numeric', month: 'short'}),
+					label: `${currentYear} ${monthStart.toLocaleDateString('en', {month: 'short'})}`,
 					startDate: monthStart,
 					endDate: monthEnd
 				})
@@ -125,6 +128,12 @@
 	let currentPeriodLabel = $derived(
 		currentPeriod === 0 ? m.tags_all_time() : periods[currentPeriod - 1]?.label || m.tags_all_time()
 	)
+
+	// Animated tag count
+	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
+	$effect(() => {
+		tagCount.set(filteredTags.length)
+	})
 </script>
 
 {#if !channel}
@@ -144,7 +153,7 @@
 				<label title={m.tags_period_label()}>
 					<select bind:value={timePeriod} onchange={onTimePeriodChange}>
 						<option value="year">{m.tags_period_years()}</option>
-						<option value="quarter">{m.tags_period_quarters()}</option>
+						<option value="solstice">{m.tags_period_solstices()}</option>
 						<option value="month">{m.tags_period_months()}</option>
 					</select>
 				</label>
@@ -156,14 +165,14 @@
 
 		{#if periods.length > 0}
 			<div class="scrubber">
-				<h3>{currentPeriodLabel}</h3>
+				<h3><span>{currentPeriodLabel}</span><span class="count">({Math.round(tagCount.current)})</span></h3>
 				<InputRange
 					min={0}
 					max={periods.length}
 					step={1}
 					visualStep={timePeriod === 'year'
 						? 1
-						: timePeriod === 'quarter'
+						: timePeriod === 'solstice'
 							? Math.max(1, Math.ceil(periods.length / 15))
 							: Math.max(1, Math.ceil(periods.length / 25))}
 					bind:value={currentPeriod}
@@ -199,14 +208,6 @@
 					</li>
 				{/each}
 			</ol>
-			<footer>
-				<p>
-					{m.tags_showing({count: filteredTags.length})}
-					{#if currentPeriodLabel !== m.tags_all_time()}
-						<span class="period-context">{m.tags_period_context({label: currentPeriodLabel})}</span>
-					{/if}
-				</p>
-			</footer>
 		{:else}
 			<p>{m.tags_empty()}</p>
 		{/if}
@@ -228,9 +229,14 @@
 	}
 
 	.scrubber h3 {
-		text-align: center;
+		display: flex;
+		justify-content: space-between;
 		font-weight: bold;
 		margin-bottom: 0.5rem;
+	}
+
+	.scrubber h3 .count {
+		font-variant-numeric: tabular-nums;
 	}
 
 	.scrubber-labels {

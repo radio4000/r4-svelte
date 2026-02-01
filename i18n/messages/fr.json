@@ -513,7 +513,7 @@
 	"tags_period_context": "pour {label}",
 	"tags_period_label": "Période",
 	"tags_period_months": "Mois",
-	"tags_period_quarters": "Trimestres",
+	"tags_period_solstices": "Trimestres",
 	"tags_period_years": "Années",
 	"tags_scrub_title": "Parcourir les périodes",
 	"tags_showing": "{count} tags",

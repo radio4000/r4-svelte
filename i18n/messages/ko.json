@@ -513,7 +513,7 @@
 	"tags_period_context": "{label}용",
 	"tags_period_label": "기간",
 	"tags_period_months": "월",
-	"tags_period_quarters": "분기",
+	"tags_period_solstices": "분기",
 	"tags_period_years": "연도",
 	"tags_scrub_title": "기간을 쓸어 넘겨보기",
 	"tags_showing": "태그 {count}개 표시",

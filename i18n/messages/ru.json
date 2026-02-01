@@ -513,7 +513,7 @@
 	"tags_period_context": "для {label}",
 	"tags_period_label": "Период",
 	"tags_period_months": "Месяцы",
-	"tags_period_quarters": "Кварталы",
+	"tags_period_solstices": "Кварталы",
 	"tags_period_years": "Годы",
 	"tags_scrub_title": "Прокрутка по периодам",
 	"tags_showing": "Показано тегов: {count}",
