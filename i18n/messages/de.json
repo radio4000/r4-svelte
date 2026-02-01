@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "R5 ist ein glorifiziertes Playlist-Werkzeug für lange, sorgfältig kuratierte Sessions.",
 	"about_query_sql": "Frage die eingebettete PostgreSQL-Datenbank direkt mit SQL ab.",
 	"about_repl_link": "Repl",
-	"about_reuse_components": "Nutze die Bibliothek @radio4000/components in deinen eigenen Svelte-Projekten.",
 	"about_search_filter": "Filtere, tagge und durchsuche dein Archiv sofort.",
 	"about_source_code": "Quellcode auf GitHub ansehen",
 	"about_start_exploring": "Radios entdecken",

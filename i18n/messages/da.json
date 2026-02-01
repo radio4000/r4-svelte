@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "Tænk på R5 som en glorificeret playlist-bygger til langform og dybe cuts.",
 	"about_query_sql": "Forespørg den indbyggede PostgreSQL-database direkte med SQL.",
 	"about_repl_link": "Repl",
-	"about_reuse_components": "Genbrug biblioteket @radio4000/components i dine egne Svelte-projekter.",
 	"about_search_filter": "Filtrér, tag og søg i dit arkiv med det samme.",
 	"about_source_code": "Se kilden på GitHub",
 	"about_start_exploring": "Begynd at udforske radioer",

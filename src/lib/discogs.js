@@ -32,6 +32,9 @@ export const parseUrl = (url) => {
 	return null
 }
 
+/**
+ * @param {{year?: number, genres?: string[], styles?: string[], labels?: {name: string}[]}} resource
+ */
 export const extractSuggestions = ({year = 0, genres = [], styles = [], labels = []}) => {
 	const labelNames = labels?.map(({name}) => name) || []
 	return [...genres, ...styles, year, ...labelNames]

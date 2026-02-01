@@ -44,10 +44,9 @@
 		}
 	}
 
-	/** @param {Event} event */
+	/** @param {{detail: string[]}} event */
 	function handleDiscogsSuggestion(event) {
-		const tags = /** @type {CustomEvent<string[]>} */ (event).detail
-		const hashtags = tags.map((t) => `#${t}`).join(' ')
+		const hashtags = event.detail.map((t) => `#${t}`).join(' ')
 		if (descriptionInput) {
 			descriptionInput.value = descriptionInput.value ? `${descriptionInput.value} ${hashtags}` : hashtags
 		}

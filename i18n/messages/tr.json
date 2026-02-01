@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "R5’i uzun, derin dinlemeler için ‘yüceltilmiş’ bir çalma listesi oluşturucu olarak düşünün.",
 	"about_query_sql": "Gömülü PostgreSQL veritabanını doğrudan SQL ile sorgulayın.",
 	"about_repl_link": "Repl",
-	"about_reuse_components": "@radio4000/components kütüphanesini kendi Svelte projelerinizde yeniden kullanın.",
 	"about_search_filter": "Arşivinizi anında filtreleyin, etiketleyin ve arayın.",
 	"about_source_code": "Kaynağı GitHub’da görüntüleyin",
 	"about_start_exploring": "Radyoları keşfetmeye başlayın",

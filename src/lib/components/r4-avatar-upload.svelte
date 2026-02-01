@@ -1,6 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 
+	/** @type {{slug: string, onupload?: (data: unknown) => void}} */
 	let {slug, onupload} = $props()
 	let loading = $state(false)
 

@@ -1,8 +1,21 @@
 <script>
 	import {parseUrl, fetchDiscogs, extractSuggestions} from '$lib/discogs.js'
 
+	/**
+	 * @typedef {Object} DiscogsResource
+	 * @property {string} [artists_sort]
+	 * @property {{name: string}[]} [artists]
+	 * @property {string} title
+	 * @property {number} [year]
+	 * @property {string[]} [genres]
+	 * @property {string[]} [styles]
+	 * @property {{name: string}[]} [labels]
+	 */
+
+	/** @type {{url: string, suggestions?: boolean, onsuggestion?: (e: {detail: string[]}) => void}} */
 	let {url, suggestions = false, onsuggestion} = $props()
 
+	/** @type {DiscogsResource | null} */
 	let resource = $state(null)
 	let selectedTags = $state([])
 
@@ -37,8 +50,12 @@
 		onsuggestion?.({detail: selectedTags})
 	}
 
-	const suggestionsList = $derived(resource ? extractSuggestions(resource) : [])
-	const artistsDisplay = $derived(resource?.artists_sort || resource?.artists?.map((a) => a.name).join(', ') || '')
+	const suggestionsList = $derived(resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : [])
+	const artistsDisplay = $derived(
+		/** @type {DiscogsResource | null} */ (resource)?.artists_sort ||
+			/** @type {DiscogsResource | null} */ (resource)?.artists?.map((a) => a.name).join(', ') ||
+			''
+	)
 </script>
 
 {#if resource}
@@ -55,7 +72,7 @@
 							name="tags"
 							value={tag}
 							checked={selectedTags.includes(tag)}
-							onchange={(e) => handleTagChange(tag, e.target.checked)}
+							onchange={(e) => handleTagChange(tag, /** @type {HTMLInputElement} */ (e.target).checked)}
 						/>
 						{tag}
 					</label>

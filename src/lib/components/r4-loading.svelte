@@ -1,5 +1,5 @@
 <script>
-	/** @type {string | undefined} */
+	/** @type {{text?: string, value?: number, max?: number}} */
 	let {text, value, max} = $props()
 
 	const sentences = [

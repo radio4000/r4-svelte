@@ -12,7 +12,6 @@
 	"about_glorified_playlist": "Gândește-te la R5 ca la un constructor avansat de playlisturi pentru ascultare de durată și adâncime.",
 	"about_query_sql": "Interoghează direct cu SQL baza de date PostgreSQL încorporată.",
 	"about_repl_link": "Repl",
-	"about_reuse_components": "Reutilizează biblioteca @radio4000/components în propriile proiecte Svelte.",
 	"about_search_filter": "Filtrează, etichetează și caută în arhiva ta instantaneu.",
 	"about_source_code": "Vezi sursa pe GitHub",
 	"about_start_exploring": "Începe să explorezi posturile",
