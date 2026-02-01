@@ -5,7 +5,6 @@
 	import {channelAvatarUrl} from '$lib/utils.ts'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
-	import MapChannels from './map-channels.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.js'
@@ -123,7 +122,9 @@
 	</header>
 
 	{#if display === 'map'}
-		<MapChannels channels={sortedChannels} />
+		{#await import('./map-channels.svelte') then MapChannels}
+			<MapChannels.default channels={sortedChannels} />
+		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}
 		<InfiniteCanvas media={canvasMedia} onclick={handleCanvasClick} />
