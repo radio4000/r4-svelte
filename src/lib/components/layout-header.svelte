@@ -101,10 +101,6 @@
 		}
 	}
 
-	.settings-link {
-		/*margin-top: auto;*/
-	}
-
 	.count {
 		position: absolute;
 		top: -7px;
