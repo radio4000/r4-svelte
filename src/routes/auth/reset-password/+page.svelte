@@ -1,4 +1,5 @@
 <script>
+	import R4PasswordReset from '$lib/components/r4-password-reset.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let emailSent = $state(false)
@@ -29,7 +30,7 @@
 	{#if emailSent}
 		<p><strong>{m.auth_reset_email_sent()}</strong></p>
 	{:else}
-		<r4-password-reset onsubmit={handleResetPassword}></r4-password-reset>
+		<R4PasswordReset onsubmit={handleResetPassword} />
 	{/if}
 
 	<footer>

@@ -9,7 +9,7 @@
 	import LayoutHeader from '$lib/components/layout-header.svelte'
 	import LiveChat from '$lib/components/live-chat.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
-	import '@radio4000/components'
+	import R4Loading from '$lib/components/r4-loading.svelte'
 	import {onMount, setContext} from 'svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -111,7 +111,7 @@
 		{#await data.preloading}
 			<div class="loader">
 				<p>{m.app_loading()}</p>
-				<r4-loading></r4-loading>
+				<R4Loading />
 			</div>
 		{:then}
 			<AuthListener />
@@ -247,7 +247,7 @@
 		margin: 0 auto;
 	}
 
-	r4-loading {
+	:global(.r4-loading) {
 		display: flex;
 		flex-flow: column;
 		text-align: center;

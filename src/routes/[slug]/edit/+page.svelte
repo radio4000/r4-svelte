@@ -6,6 +6,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, updateChannel} from '$lib/tanstack/collections'
 	import MapPicker from '$lib/components/map-picker.svelte'
+	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	// Derive slug from URL for reactivity with shallow routing
@@ -170,7 +171,7 @@
 
 			<fieldset>
 				<legend>Image</legend>
-				<r4-avatar-upload slug={channel.slug}></r4-avatar-upload>
+				<R4AvatarUpload slug={channel.slug} />
 			</fieldset>
 
 			<button class="primary" type="submit" disabled={submitting}>

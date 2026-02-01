@@ -1,6 +1,7 @@
 <script>
 	import {addTrack, updateTrack} from '$lib/tanstack/collections/tracks'
 	import {fetchOEmbedTitle} from '$lib/utils'
+	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
@@ -166,8 +167,7 @@
 	</fieldset>
 
 	{#if isValidDiscogsUrl}
-		<r4-discogs-resource url={discogsUrl} suggestions="true" onsuggestion={handleDiscogsSuggestion}
-		></r4-discogs-resource>
+		<R4DiscogsResource url={discogsUrl} suggestions={true} onsuggestion={handleDiscogsSuggestion} />
 	{/if}
 
 	<button type="submit" disabled={submitting}>
@@ -176,18 +176,18 @@
 </form>
 
 <style>
-	r4-discogs-resource {
+	:global(.r4-discogs-resource) {
 		display: block;
 		padding-left: 0.5rem;
 		min-height: 6rem;
 		font-size: var(--font-4);
 		font-style: italic;
 
-		:global(fieldset) {
+		fieldset {
 			flex-flow: row wrap;
 			font-style: normal;
 		}
-		:global(legend) {
+		legend {
 			float: left;
 		}
 	}
