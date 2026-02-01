@@ -220,13 +220,13 @@
 		{"name": "Tracklist", "desc": "Track list with optional date grouping, virtual scroll."},
 		{"name": "TrackCard", "desc": "Single track with artwork, play/edit/delete menu."},
 		{"name": "TrackForm", "desc": "URL/title/description form fields."},
-		{"name": "AddTrackModal", "desc": "Create track modal, 'c' keyboard shortcut."},
-		{"name": "EditTrackModal", "desc": "Edit existing track."},
+		{"name": "track-add-dialog.svelte", "desc": "Create track dialog, 'c' keyboard shortcut."},
+		{"name": "track-edit-dialog.svelte", "desc": "Edit existing track."},
 
 		{"name": "Channels", "desc": "Grid/list/map/tuner views with filter, sort, shuffle."},
 		{"name": "ChannelCard", "desc": "Channel preview with avatar, description, live dot."},
 
-		{"name": "Modal", "desc": "Generic dialog wrapper with header/children snippets."},
+		{"name": "dialog.svelte", "desc": "Generic dialog wrapper with header/children snippets."},
 		{"name": "Icon", "desc": "Iconify icon wrapper."},
 		{"name": "LinkEntities", "desc": "Parses #tags @mentions into search links."},
 

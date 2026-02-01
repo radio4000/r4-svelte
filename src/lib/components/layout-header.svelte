@@ -1,9 +1,9 @@
 <script>
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import AddTrackModal from '$lib/components/track-add-modal.svelte'
-	import EditTrackModal from '$lib/components/track-edit-modal.svelte'
-	import ShareModal from '$lib/components/share-modal.svelte'
+	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
+	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
+	import ShareDialog from '$lib/components/share-dialog.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
@@ -48,9 +48,9 @@
 
 	<nav>
 		{#await preloading then}
-			<AddTrackModal />
-			<EditTrackModal />
-			<ShareModal />
+			<AddTrackDialog />
+			<EditTrackDialog />
+			<ShareDialog />
 			{#if userChannel}
 				<a href="/{userChannel.slug}" class="btn channel-link" {@attach tooltip({content: 'Go to your channel'})}>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />

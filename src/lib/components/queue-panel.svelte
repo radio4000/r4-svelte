@@ -7,7 +7,7 @@
 	import {relativeTime} from '$lib/dates'
 	import {playHistoryCollection, clearPlayHistory, tracksCollection} from '$lib/tanstack/collections'
 	import {shuffleRemaining} from '$lib/api'
-	import Modal from './modal.svelte'
+	import Dialog from './dialog.svelte'
 	import SearchInput from './search-input.svelte'
 	import TrackCard from './track-card.svelte'
 	import Tracklist from './tracklist.svelte'
@@ -204,7 +204,7 @@
 	</main>
 </aside>
 
-<Modal bind:showModal={showClearHistoryModal}>
+<Dialog bind:showModal={showClearHistoryModal}>
 	{#snippet header()}
 		<h2>{m.queue_clear_history_title()}</h2>
 	{/snippet}
@@ -213,7 +213,7 @@
 		<button type="button" onclick={() => (showClearHistoryModal = false)}>{m.common_cancel()}</button>
 		<button type="button" onclick={clearHistory} class="danger">{m.queue_clear_history_button()}</button>
 	</menu>
-</Modal>
+</Dialog>
 
 <style>
 	aside {

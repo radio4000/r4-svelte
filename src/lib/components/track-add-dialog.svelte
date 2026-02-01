@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import Modal from '$lib/components/modal.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
 	import {tooltip} from './tooltip-attachment'
 	import * as m from '$lib/paraglide/messages'
@@ -85,7 +85,7 @@
 	<Icon icon="add" size={20}></Icon>
 </button>
 
-<Modal bind:showModal>
+<Dialog bind:showModal>
 	{#snippet header()}
 		<h2>{m.track_add_title()}</h2>
 	{/snippet}
@@ -109,4 +109,4 @@
 			{/each}
 		</div>
 	{/if}
-</Modal>
+</Dialog>

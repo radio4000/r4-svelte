@@ -1,7 +1,7 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
-	import Modal from '$lib/components/modal.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -40,7 +40,7 @@
 	}
 </script>
 
-<Modal bind:showModal>
+<Dialog bind:showModal>
 	{#snippet header()}
 		<h2>{m.track_edit_title()}</h2>
 	{/snippet}
@@ -57,4 +57,4 @@
 			onsubmit={handleSubmit}
 		/>
 	{/if}
-</Modal>
+</Dialog>

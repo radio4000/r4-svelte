@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {appState} from '$lib/app-state.svelte'
-	import Modal from '$lib/components/modal.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {channelUrl, trackUrl, channelEmbed, copyToClipboard, canNativeShare, nativeShare} from '$lib/share'
 	import type {Track, Channel} from '$lib/types'
@@ -45,7 +45,7 @@
 	}
 </script>
 
-<Modal bind:showModal>
+<Dialog bind:showModal>
 	{#snippet header()}
 		<h2>{title}</h2>
 	{/snippet}
@@ -92,7 +92,7 @@
 			</button>
 		{/if}
 	</form>
-</Modal>
+</Dialog>
 
 <style>
 	input {
