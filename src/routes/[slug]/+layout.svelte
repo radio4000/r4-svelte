@@ -178,7 +178,7 @@
 		align-items: center;
 		text-decoration: none;
 		white-space: nowrap;
-		padding: 0.5rem 0.5rem 0.4rem;
+		padding: 0.5rem 0.5rem 0.45rem;
 
 		&:hover {
 			background: var(--gray-3);

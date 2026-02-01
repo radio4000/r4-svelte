@@ -190,16 +190,9 @@
 			</section>
 		{/if}
 	{:else if !searchQuery}
+		<p>Search channels and tracks on Radio4000.</p>
 		<p>
-			{m.search_tip_intro()}
-			<br />
-			{m.search_tip_header()}
-			<br /> <code>{m.search_tip_code_channel()}</code>
-			{m.search_tip_channel()}
-			<br /> <code>{m.search_tip_code_channel_query()}</code>
-			{m.search_tip_channel_query()}
-			<br /> <code>/</code>
-			{m.search_tip_commands()}
+			TIP: find tracks from a channel with <em>@slug [your track query]</em>
 		</p>
 	{/if}
 </article>

@@ -33,6 +33,17 @@
 		>
 			<Icon icon="search" size={20} />
 		</a>
+		<a
+			href="/broadcasts"
+			class="btn"
+			class:active={page.route.id === '/broadcasts'}
+			{@attach tooltip({content: m.nav_broadcasts()})}
+		>
+			<Icon icon="signal" size={20} />
+			{#if broadcastCount > 0}
+				<span class="count">{broadcastCount}</span>
+			{/if}
+		</a>
 	</nav>
 
 	<nav>
@@ -45,17 +56,6 @@
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 				</a>
 			{/if}
-			<a
-				href="/broadcasts"
-				class="btn"
-				class:active={page.route.id === '/broadcasts'}
-				{@attach tooltip({content: m.nav_broadcasts()})}
-			>
-				<Icon icon="signal" size={20} />
-				{#if broadcastCount > 0}
-					<span class="count">{broadcastCount}</span>
-				{/if}
-			</a>
 		{/await}
 		<a
 			href="/settings"
@@ -87,21 +87,22 @@
 		flex: 1;
 	}
 
-	.home-link {
-	}
-
 	.channel-link {
 		padding: 0;
 		height: 30px;
 		overflow: hidden;
 		max-width: 42px;
+		padding: 1px;
+		@media (min-width: 768px) {
+			height: auto;
+		}
 		@media (max-width: 768px) {
-			/*max-width: 30px;*/
+			max-width: 37px;
 		}
 	}
 
 	.settings-link {
-		margin-top: auto;
+		/*margin-top: auto;*/
 	}
 
 	.count {
@@ -142,6 +143,13 @@
 
 		.settings-link {
 			margin-top: 0;
+		}
+	}
+
+	@media (min-width: 768px) {
+		/* Square buttons when vertical */
+		nav :global(.btn) {
+			aspect-ratio: 1/1;
 		}
 	}
 </style>

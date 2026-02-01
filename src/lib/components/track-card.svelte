@@ -64,7 +64,7 @@
 
 <article class:active>
 	<a href={permalink} onclick={click} ondblclick={doubleClick} data-sveltekit-preload-data="tap">
-		<span class="index"> {(index ?? 0) + 1}. </span>
+		<!-- <span class="index"> {(index ?? 0) + 1}. </span> -->
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -161,8 +161,10 @@
 	}
 
 	.artwork {
-		width: 2.3rem;
-		height: 2.3rem;
+		margin-bottom: auto;
+		aspect-ratio: 1/1;
+		width: 37px;
+		/*height: 2.3rem;*/
 		object-fit: cover;
 		object-position: center;
 		align-self: center;

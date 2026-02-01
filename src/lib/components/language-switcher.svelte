@@ -50,10 +50,10 @@
 	}
 
 	select {
-		border-radius: var(--radius-2);
+		border-radius: var(--border-radius);
 		border: 1px solid var(--gray-6);
 		background: var(--gray-2);
 		padding: 0.5rem;
-		font: inherit;
+		font-size: inherit;
 	}
 </style>
