@@ -1,7 +1,7 @@
 <script>
 	import {batchUpdateTracksUniform, deleteTrackMeta, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
-	import {tooltip} from '$lib/components/tooltip-attachment.js'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 
 	const uid = $props.id()
 

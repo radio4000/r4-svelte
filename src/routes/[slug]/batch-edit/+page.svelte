@@ -52,6 +52,20 @@
 	let fetchingMeta = $state(false)
 	let fetchProgress = $state({current: 0, total: 0})
 
+	/** @type {import('./$types').Snapshot<{filter: string, tagFilter: string, mentionFilter: string, search: string, sortBy: typeof sortBy, sortDir: string, hiddenColumns: string[]}>} */
+	export const snapshot = {
+		capture: () => ({filter, tagFilter, mentionFilter, search, sortBy, sortDir, hiddenColumns}),
+		restore: (v) => {
+			filter = v.filter
+			tagFilter = v.tagFilter
+			mentionFilter = v.mentionFilter
+			search = v.search
+			sortBy = v.sortBy
+			sortDir = v.sortDir
+			hiddenColumns = v.hiddenColumns
+		}
+	}
+
 	// All tracks missing YouTube metadata
 	let allTracksMissingMeta = $derived(tracks.filter((t) => !t.youtube_data && !t.playback_error))
 
