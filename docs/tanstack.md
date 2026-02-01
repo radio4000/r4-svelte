@@ -283,7 +283,7 @@ src/lib/tanstack/
 ├── collections/             - collection definitions + actions
 ├── collections.ts           - re-exports
 ├── query-cache-persistence.ts  - query cache → IndexedDB
-├── collection-persistence.ts   - collection state → IndexedDB (disabled)
+├── collection-persistence.ts   - collection state → IndexedDB (disabled to avoid complexity in app state/hydration)
 
 src/lib/components/
 └── sync-status.svelte

@@ -14,13 +14,14 @@ The executeCommand function tries different patterns in order. First it checks f
 
 ## Search Sources
 
-The search supports two sources controlled by the `remote` option. Local search (default) uses fuzzysort against the tanstack collections for instant results on loaded data. Remote search queries Supabase full-text search to find channels and tracks across all Radio4000 data.
+Remote search (`searchAll`, `searchChannels`, `searchTracks`) queries Supabase full-text search across all Radio4000 data. Local search (`searchTracksLocal`, `searchChannelsLocal`) uses fuzzysort against in-memory data for instant results on already-loaded collections.
 
 ```js
-r5.search.all('ambient') // local fuzzy search
-r5.search.all('ambient', {remote: true}) // supabase FTS
-r5.search.channels('jazz', {remote: true, limit: 20})
-r5.search.tracks('house', {channelSlug: 'ko002'})
+import {searchAll, searchChannels, searchTracks} from '$lib/search.js'
+
+await searchAll('ambient') // supabase FTS
+await searchChannels('jazz', {limit: 20})
+await searchTracks('house', {channelSlug: 'ko002'})
 ```
 
 The @mention syntax scopes track searches to specific channels. Typing `@ko002 jazz` searches for "jazz" only within that channel's tracks. Multiple mentions work too: `@ko002 @oskar house` searches tracks in both channels.
@@ -31,7 +32,7 @@ Search only triggers for terms longer than 2 characters to avoid expensive queri
 
 ## Files
 
-The main search interface lives in src/routes/search/+page.svelte which handles the input, autocomplete, and smart execution logic. The global Cmd+K shortcut is registered in src/routes/+layout.svelte. Command functions like toggleTheme and toggleQueuePanel are defined in src/lib/api.js and imported into the search page to avoid code duplication. The search logic itself lives in src/lib/search.js and is exposed via r5.search in src/lib/r5/index.js.
+The main search interface lives in src/routes/search/+page.svelte which handles the input, autocomplete, and smart execution logic. The global Cmd+K shortcut is registered in src/routes/+layout.svelte. Command functions like toggleTheme and toggleQueuePanel are defined in src/lib/api.js and imported into the search page to avoid code duplication. The search logic itself lives in src/lib/search.js.
 
 ## Integration Points
 

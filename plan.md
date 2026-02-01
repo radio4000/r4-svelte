@@ -5,19 +5,10 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 ## Backlog
 
 - In-channel tag/mention filtering — clicking a tag on a channel filters that channel's tracks by tag, staying on the channel page instead of redirecting to global search. Better UX, keeps context.
-
-- Improved fullscreen — needs design thinking. Empty player looks weird, unclear what "real" fullscreen should be. The sidebar queue is below the footer now, but this also puts it below the fullscreen footer. We want it on top of the footer, when it's fullscreen.
-  - Q: What are the actual design options? What should fullscreen show when nothing is playing?
-
 - Option for users to backup/export their radio — use `api.radio4000.com/api/v2/backup?slug={slug}`. Add UI button on channel settings or similar.
-
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
-
-- 3D globe map view in addition to map view
-  - Q: What library?
-
 - batch-edit URL persistence — persist filter/search/sort state so views survive refresh. Use svelte snapshot like `/src/routes/mix/+page.svelte` does.
-
+- 3D globe map view in addition to map view. Which library?
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 
 ## Data & migration
@@ -29,43 +20,16 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Performance
 
-- Slow channel page navigation (1k+ tracks) — **ROOT CAUSE: `useLiveQuery` O(n) overhead**. See `plan-perf-test.md` for full investigation.
-
-  **Fixes applied:**
-  - `tracksQuery.isReady` check prevents double-paint (major win)
-  - Render limit with `.slice(0, 40)` + "Show all" button
-  - `checkTracksFreshness` cached with 60s staleTime
-
-  **Still slow.** Remaining options:
-  - Layout-level query — create useLiveQuery in `[slug]/+layout.svelte` so it persists during navigation within channel pages
-  - Custom lightweight `useTracks` hook — bypass `createLiveQueryCollection` overhead
-  - Report to TanStack DB — `createLiveQueryCollection` could cache derived collections by query key
-  - Component complexity is NOT the bottleneck (tested with bare `<li>{title}</li>`)
-
-  **Secondary factors (lower priority):**
-  - Grouped tracklist overhead — date parsing per track, section header creation. Virtualization disabled due to rendering issues with grouping.
-  - track-card bottlenecks: LinkEntities parsing, PopoverMenu instances, active state checks
-
+- track-card bottlenecks: LinkEntities parsing, PopoverMenu instances, active state checks
 - Description link parsing is heavy — consider DB trigger for description_parsed.
-
 - appState serialization — playlist_tracks can be 3k items, serializing on every change may be slow. Consider splitting appState + playerState.
-
 - Validation layer at sync boundaries — preventive, using zod or similar.
-
-- Standardized loading/error boundaries — current handling may be inconsistent.
-  - Q: What's inconsistent? What should the standard pattern be?
+- Grouped tracklist overhead — date parsing per track, section header creation. Virtualization disabled due to rendering issues with grouping. Check it out. It can probably be faster somewhere
 
 ## Needs research
 
 - atproto as backend alternative — sign in with bluesky, sync channels/tracks. Major architectural shift. See github.com/radio4000/r4atproto
-
 - direct IDB collection persistence — disabled due to performance problems. See collection-persistence.ts and docs/plan-tanstack-collection-idb-idea.md.
-
 - Mark musicbrainz/discogs metadata as wrong — auto-matching has high error rate. Alternative: show "unverified" badge.
-
 - Local file player for mp3/m4a — changes product direction significantly.
-
 - Share track_meta between users — collaborative metadata curation. See https://github.com/radio4000/r4-sync-tests/issues/6
-
-- Bandsintown integration — rich event data connections.
-  - Q: What's the integration? Show upcoming concerts for artists in tracks?

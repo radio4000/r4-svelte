@@ -295,15 +295,16 @@
 	],
 
 	"window.r5": [
+		{"name": "r5.sdk", "desc": "SDK instance."},
 		{"name": "r5.appState", "desc": "Global app state."},
 		{"name": "r5.queryClient", "desc": "Query client."},
 		{"name": "r5.tracksCollection", "desc": "Tracks collection."},
 		{"name": "r5.channelsCollection", "desc": "Channels collection."},
-		{"name": "r5.sdk", "desc": "SDK instance."},
-
-		{"name": "r5.mix", "desc": "Mix builder."},
-		{"name": "r5.mixAll", "desc": "Mix from all loaded tracks."},
-		{"name": "r5.queue.*", "desc": "Queue helpers."},
+		{"name": "r5.broadcastsCollection", "desc": "Broadcasts collection."},
+		{"name": "r5.followsCollection", "desc": "Follows collection."},
+		{"name": "r5.spamDecisionsCollection", "desc": "Spam decisions collection."},
+		{"name": "r5.queue", "desc": "Queue helpers."},
+		{"name": "r5.api", "desc": "API functions."},
 
 		{
 			"name": "example: [...r5.tracksCollection.state.values()].filter(t => t.slug === 'x')",

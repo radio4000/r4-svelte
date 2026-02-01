@@ -16,9 +16,9 @@ The API layer keeps concerns separate: `pull` fetches metadata to local cache, `
 
 ## Providers
 
-- **YouTube**: `@lib/metadata/youtube.js` - duration, title, description
-- **MusicBrainz**: `@lib/metadata/musicbrainz.js` - artist, release info
-- **Discogs**: `@lib/metadata/discogs.js` - detailed release metadata
+- **YouTube**: `$lib/metadata/youtube.js` - duration, title, description
+- **MusicBrainz**: `$lib/metadata/musicbrainz.js` - artist, release info
+- **Discogs**: `$lib/metadata/discogs.js` - detailed release metadata
 
 ## Methods
 

@@ -28,7 +28,7 @@ Users add/remove OAuth providers from `/settings/account`. Requires "Enable Manu
 
 ## Components
 
-- `auth-listener.svelte` — is part of layout.svelte, handles session events, redirects
+- `auth-listener.svelte` — in layout.svelte (always active), subscribes to Supabase auth changes and updates appState
 - `auth-login.svelte` — login form
 - `auth-signup.svelte` — signup form
 - `auth-providers.svelte` — OAuth buttons

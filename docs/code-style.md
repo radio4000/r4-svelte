@@ -40,7 +40,7 @@ Let browser defaults handle spacing, typography, and most layout. Focus on style
 
 ## Svelte 5
 
-Use `$derived` liberally - it can be mutated.
+Use `$derived` liberally - values can be reassigned and object properties mutated.
 
 `await` works inside `<script>`, `$derived()`, and markup.
 

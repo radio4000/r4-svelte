@@ -1,6 +1,6 @@
 # Browser testing
 
-Use `agent-browser` for web automation.
+Use `agent-browser` for web automation. It's a CLI tool that provides LLM-optimized snapshots with element refs - like a better Puppeteer for AI agents.
 
 The core workflow is:
 

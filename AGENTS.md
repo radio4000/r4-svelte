@@ -8,10 +8,10 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 2. Instead of exploring the codebase, start by looking inside the @./docs folder, it is very likely to have what you need
 3. Write a plan
 4. Implement
-5. bun run check && bun run types
-6. Review your work
-7. Update @plan.md (remove completed items)
-8. Update @docs if needed
+5. Review your work
+6. Update @plan.md (remove completed items)
+7. Update @docs if needed
+8. bun run check && bun run types
 
 ```
 /src/routes           -- pages

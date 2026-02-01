@@ -10,21 +10,7 @@ Follow/save channels as favorites. Stored in `followers` table with `follower_id
 
 ## collection
 
-Uses `queryCollectionOptions` like other collections. Data flows through query cache (persisted to IDB).
-
-```ts
-export const followsCollection = createCollection<{id: string}, string>(
-	queryCollectionOptions({
-		queryKey: () => ['follows', userChannelId],
-		queryClient,
-		getKey: (item) => item.id,
-		queryFn: async () => {
-			const {data} = await sdk.channels.readFollowings(userChannelId)
-			return (data || []).map((ch) => ({id: ch.id}))
-		}
-	})
-)
-```
+Uses `queryCollectionOptions` like other collections. Data flows through query cache (persisted to IDB). See `src/lib/tanstack/collections/follows.ts`.
 
 ## api
 

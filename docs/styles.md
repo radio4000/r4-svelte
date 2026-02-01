@@ -15,7 +15,7 @@ Generated from four base colors in `variables.css` and `color-scales.css`.
 
 Font scale via `--font-1` (smallest) through `--font-9` (largest). Font families: `--sans-serif`, `--monospace`.
 
-- `[caps]` attribute — uppercase monospace label text
+- `.caps` — uppercase monospace label text
 - `<small>` — muted secondary text
 
 ## Buttons

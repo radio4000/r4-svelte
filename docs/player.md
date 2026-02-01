@@ -23,8 +23,8 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 
 ## State
 
-`app_state` table stores all application state including player state.
-`play_history` table tracks played tracks with start/end reasons.
+`appState` stores app, user and player states.
+`playHistoryCollection` tracks played tracks with start/end reasons.
 
 ## Layout
 

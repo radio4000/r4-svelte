@@ -1,13 +1,13 @@
 # Keyboard shortcuts
 
-Keyboard shortcuts call functions from $lib/api.js and other files.
+Keyboard shortcuts call functions from $lib/api.js. Default bindings and available actions are in `$lib/keyboard.js`.
 
-Visit /settings which includes <KeyboardEditor> to customize shortcuts. Your config is stored in the local database.
+Visit /settings which includes <KeyboardEditor> to customize shortcuts. Your config is stored in appState.
 
 ```
 {
-	"j": "toggleQueuePanel",
-	"$mod+k": "openSearch",
+	"r": "toggleQueuePanel",
+	"$mod+k": "openSearch"
 }
 ```
 
