@@ -62,7 +62,7 @@ function createMix(initial: Track[] = []): Mix {
 
 		unique() {
 			const ids = queueUnique(tracks.map((t) => t.id))
-			tracks = ids.map((id) => tracks.find((t) => t.id === id)!).filter(Boolean)
+			tracks = ids.map((id) => tracks.find((t) => t.id === id)).filter((t): t is Track => Boolean(t))
 			return self
 		},
 

@@ -20,7 +20,7 @@ const toPrefix = (q) => {
 		.map((w) => w.replace(/[^\p{L}\p{N}]/gu, ''))
 		.filter(Boolean)
 	if (!words.length) return null
-	return words.map((w) => w + ':*').join(' & ')
+	return words.map((w) => `${w}:*`).join(' & ')
 }
 
 /** Sanitize query for PostgREST filter syntax (commas and parens break parsing) */

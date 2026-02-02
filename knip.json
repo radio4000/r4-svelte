@@ -1,0 +1,3 @@
+{
+	"ignore": ["src/lib/paraglide/messages/_index.js", "src/lib/paraglide/runtime.js"]
+}

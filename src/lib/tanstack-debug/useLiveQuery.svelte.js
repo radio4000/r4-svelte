@@ -45,7 +45,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 			return unwrappedParam
 		}
 
-		deps.forEach((dep) => toValue(dep))
+		for (const dep of deps) toValue(dep)
 
 		if (typeof unwrappedParam === `function`) {
 			const queryBuilder = new BaseQueryBuilder()
@@ -116,10 +116,10 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 			const total = performance.now() - t0
 			log.info(`#${id} ready`, {
 				items: count,
-				total: total.toFixed(2) + 'ms',
-				createCollection: tCreateCollection?.toFixed(2) + 'ms',
+				total: `${total.toFixed(2)}ms`,
+				createCollection: `${tCreateCollection?.toFixed(2)}ms`,
 				initState: 'REMOVED',
-				syncData: tSyncData?.toFixed(2) + 'ms'
+				syncData: `${tSyncData?.toFixed(2)}ms`
 			})
 		})
 
