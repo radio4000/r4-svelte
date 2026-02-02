@@ -3,7 +3,8 @@
 	--gray-light: oklch(0.67 0.01 0);
 	--accent-light: oklch(0.5 0.25 290);
 	--gray-dark: oklch(0.67 0.004 0);
-	--accent-dark: lch(86 48 124);
+	/* --accent-dark: lch(86 48 124); */
+	--accent-dark: oklch(0.8 0.14 222);
 
 	--color-red: hsl(11, 78%, 38%);
 	--color-error: var(--color-red, red); /* r4-components var */
