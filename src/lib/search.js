@@ -1,9 +1,28 @@
 import fuzzysort from 'fuzzysort'
 import {sdk} from '@radio4000/sdk'
+import {searchChannels, searchTracks} from '$lib/search-fts'
 import {channelsCollection} from '$lib/tanstack/collections'
 import {parseSearchQueryToView} from '$lib/views.svelte'
-import {searchChannels, searchTracks} from '$lib/search-fts'
-export {searchChannels, searchTracks}
+
+const RE_WHITESPACE = /\s+/
+
+/**
+ * Parse @mention syntax: "@ko002 jazz" or "@a @b house"
+ * @param {string} query
+ */
+export function parseMentionQuery(query) {
+	const parts = query.trim().split(RE_WHITESPACE).filter(Boolean)
+	const channelSlugs = []
+	const trackQueryParts = []
+	for (const part of parts) {
+		if (part.startsWith('@') && part.length > 1) {
+			channelSlugs.push(part.slice(1))
+		} else {
+			trackQueryParts.push(part)
+		}
+	}
+	return {channelSlugs, trackQuery: trackQueryParts.join(' ')}
+}
 
 /**
  * Find channel by slug - tries local collection first, falls back to remote
@@ -118,13 +137,4 @@ export function searchTracksLocal(query, tracks, {limit = 100} = {}) {
  */
 export function searchChannelsLocal(query, channels, {limit = 100} = {}) {
 	return fuzzySearch(query, channels, ['name', 'slug', 'description'], {limit})
-}
-
-export default {
-	all: searchAll,
-	channels: searchChannels,
-	tracks: searchTracks,
-	tracksLocal: searchTracksLocal,
-	channelsLocal: searchChannelsLocal,
-	fuzzy: fuzzySearch
 }

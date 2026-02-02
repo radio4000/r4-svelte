@@ -14,7 +14,7 @@
 		fallback: () => ({duration: 150, css: (t) => `opacity: ${t}; transform: scale(${0.8 + 0.2 * t})`})
 	})
 	import {pickRandomN, getChannelTags} from '$lib/utils'
-	import {searchChannels} from '$lib/search'
+	import {searchChannels} from '$lib/search-fts'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {mixAll} from '$lib/lab/mix'
 	import ChannelAvatar from './channel-avatar.svelte'

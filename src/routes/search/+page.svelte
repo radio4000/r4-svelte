@@ -13,7 +13,8 @@
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
-	import {searchChannels, searchChannelsLocal, findChannelBySlug} from '$lib/search'
+	import {searchChannels} from '$lib/search-fts'
+	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
