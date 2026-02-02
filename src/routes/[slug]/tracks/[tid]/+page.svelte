@@ -1,8 +1,9 @@
 <script>
 	import {page} from '$app/state'
+	import {getContext} from 'svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {tracksCollection, channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
+	import {channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
 	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
@@ -14,25 +15,15 @@
 
 	let {data} = $props()
 
-	// Query all tracks for slug to triggers the proper fetch.
-	const tracksQuery = useLiveQuery((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, data.slug))
-			//.where(({tracks}) => eq(tracks.id, data.tid))
-			.orderBy(({tracks}) => tracks.created_at)
-	)
+	// Reuse tracksQuery from layout (already loaded)
+	const tracksQuery = getContext('tracksQuery')
 
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, data.slug))
-			.orderBy(({channels}) => channels.created_at)
-	)
+	// Channel is already loaded in layout, read from collection
+	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === data.slug))
 
-	// Filter by ID client-side
-	const rawTrack = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const ytid = $derived(rawTrack?.ytid ?? null)
+	// Find track by ID from already-loaded tracks
+	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
+	const ytid = $derived(track?.ytid ?? null)
 
 	// Reactive query on trackMetaCollection - re-renders when metadata updates
 	const metaQuery = useLiveQuery((q) =>
@@ -43,11 +34,9 @@
 			.limit(1)
 	)
 
-	const track = $derived(rawTrack)
 	const meta = $derived(metaQuery.data?.[0])
-	const channel = $derived(channelQuery.data?.[0])
 	const activeTab = $derived(page.url.searchParams.get('tab') || 'r5')
-	const isLoading = $derived(tracksQuery.isLoading || channelQuery.isLoading)
+	const isLoading = $derived(tracksQuery.isLoading)
 </script>
 
 <svelte:head>
