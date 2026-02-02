@@ -7,6 +7,7 @@
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import LinkEntities from './link-entities.svelte'
+	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	interface Props {
@@ -100,33 +101,43 @@
 			>
 			<button type="button" role="menuitem" onclick={() => menu?.close()}>{m.common_cancel()}</button>
 		{:else}
-			<a class="btn" href={permalink} role="menuitem">{m.common_details()}</a>
-			<button
-				type="button"
-				role="menuitem"
-				onclick={() => {
-					playTrack(track.id, null, 'user_click_track')
-					menu?.close()
-				}}>{m.common_play()}</button
-			>
-			<button
-				type="button"
-				role="menuitem"
-				onclick={() => {
-					playNext(track.id)
-					menu?.close()
-				}}>{m.track_play_next()}</button
-			>
-			<button type="button" role="menuitem" onclick={addToRadio}>{m.track_add_to_radio()}</button>
-			<button type="button" role="menuitem" onclick={shareTrack}>{m.share_native()}</button>
-			{#if canEdit}<button type="button" role="menuitem" onclick={editTrack}>{m.common_edit()}</button>{/if}
-			{#if canEdit}<button
+			<menu data-horizontal>
+				<button
 					type="button"
-					class="danger"
 					role="menuitem"
-					data-no-close
-					onclick={() => (showDeleteConfirm = true)}>{m.common_delete()}</button
-				>{/if}
+					{@attach tooltip({content: m.common_play()})}
+					onclick={() => {
+						playTrack(track.id, null, 'user_click_track')
+						menu?.close()
+					}}><Icon icon="play-fill" size={16} /></button
+				>
+				<button
+					type="button"
+					role="menuitem"
+					{@attach tooltip({content: m.track_play_next()})}
+					onclick={() => {
+						playNext(track.id)
+						menu?.close()
+					}}><Icon icon="next-fill" size={16} /></button
+				>
+				<button type="button" role="menuitem" {@attach tooltip({content: m.track_add_to_radio()})} onclick={addToRadio}
+					><Icon icon="add" size={16} /></button
+				>
+				<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
+					><Icon icon="share" size={16} /></button
+				>
+			</menu>
+			<menu data-vertical>
+				<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
+				{#if canEdit}
+					<button type="button" role="menuitem" onclick={editTrack}
+						><Icon icon="settings" size={14} />{m.common_edit()}</button
+					>
+					<button type="button" class="danger" role="menuitem" data-no-close onclick={() => (showDeleteConfirm = true)}
+						><Icon icon="delete" size={14} />{m.common_delete()}</button
+					>
+				{/if}
+			</menu>
 		{/if}
 	</PopoverMenu>
 	{@render children?.(track)}

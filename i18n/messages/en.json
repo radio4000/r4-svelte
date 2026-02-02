@@ -638,6 +638,7 @@
 	"track_missing_label": "MISSING TRACK",
 	"track_play_from_here": "Play from here",
 	"track_play_next": "Play next",
+	"track_go_to": "Go to track",
 	"track_recently_saved": "Recently saved tracks",
 	"track_related_by": "by",
 	"track_related_empty": "No other tracks use this YouTube video.",

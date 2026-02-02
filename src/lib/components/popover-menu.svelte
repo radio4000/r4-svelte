@@ -85,16 +85,5 @@
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		box-shadow: var(--shadow-modal);
-
-		&:popover-open {
-			display: flex;
-			flex-direction: column;
-			gap: 0;
-		}
-
-		:global(button),
-		:global(a) {
-			justify-content: flex-start;
-		}
 	}
 </style>
