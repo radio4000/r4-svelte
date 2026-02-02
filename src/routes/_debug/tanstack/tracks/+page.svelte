@@ -19,7 +19,7 @@
 
 	// Debug: compact state
 	const collectionSize = $derived(tracksCollection.state.size)
-	const slugsInMemory = $derived([...new Set([...tracksCollection.state.values()].map((t) => t.slug))])
+	const slugsInMemory = $derived([...new Set(Array.from(tracksCollection.state.values(), (t) => t.slug))])
 	const cacheLines = $derived(
 		queryClient
 			.getQueryCache()

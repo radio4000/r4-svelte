@@ -28,7 +28,7 @@
 	}
 
 	let sortedChannels = $derived(
-		[...channels].sort((a, b) => {
+		channels.toSorted((a, b) => {
 			const av = sortKey[order](a)
 			const bv = sortKey[order](b)
 			const cmp = av < bv ? -1 : av > bv ? 1 : 0

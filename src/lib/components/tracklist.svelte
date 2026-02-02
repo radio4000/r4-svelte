@@ -18,7 +18,7 @@
 	const {tracks, footer, grouped = false, canEdit = false, virtual = false} = $props()
 
 	// Cache key to avoid recomputing when tracks haven't changed
-	let cacheKey = $derived(`${tracks.length}-${tracks[0]?.id}-${tracks[tracks.length - 1]?.id}`)
+	let cacheKey = $derived(`${tracks.length}-${tracks[0]?.id}-${tracks.at(-1)?.id}`)
 
 	/** @type {{key: string, items: FlatItem[], groups: SvelteMap<string, SvelteMap<string, Track[]>>}} */
 	let cache = {key: '', items: [], groups: new SvelteMap()}
@@ -53,7 +53,7 @@
 		}
 
 		// Convert to SvelteMap for reactivity in non-virtual template
-		const svelteGroups = new SvelteMap([...groups].map(([year, months]) => [year, new SvelteMap(months)]))
+		const svelteGroups = new SvelteMap(Array.from(groups, ([year, months]) => [year, new SvelteMap(months)]))
 		cache.groups = svelteGroups
 		return svelteGroups
 	})

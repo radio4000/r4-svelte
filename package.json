@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.13",
+		"@e18e/eslint-plugin": "^0.1.4",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.6",
 		"@sveltejs/kit": "^2.50.1",

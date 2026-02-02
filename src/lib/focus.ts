@@ -6,13 +6,9 @@ export function forcefocus(node: HTMLInputElement) {
 }
 
 export function focusable_children(node: HTMLElement) {
-	const nodes: HTMLElement[] = Array.from(
-		// this rather intimating selector selects elements that aren't children of closed <details> elements,
-		// except for the <summary> elements that are their direct children
-		node.querySelectorAll(
+	const nodes: HTMLElement[] = [...node.querySelectorAll(
 			':where(a[href], button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):not(details:not([open]) *), summary:not(details:not([open]) details *)'
-		)
-	)
+		)]
 
 	const index = nodes.indexOf(document.activeElement as HTMLElement)
 

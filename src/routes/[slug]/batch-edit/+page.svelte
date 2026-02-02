@@ -251,7 +251,7 @@
 
 		// Apply sorting
 		if (sortBy) {
-			result = [...result].sort((a, b) => {
+			result = result.toSorted((a, b) => {
 				const av = sortKey[sortBy](a)
 				const bv = sortKey[sortBy](b)
 				const cmp = av < bv ? -1 : av > bv ? 1 : 0
@@ -265,7 +265,7 @@
 	function selectTrack(trackId, event) {
 		if (event.shiftKey && selectedTracks.length > 0) {
 			const trackIndex = filteredTracks.findIndex((t) => t.id === trackId)
-			const lastSelected = selectedTracks[selectedTracks.length - 1]
+			const lastSelected = selectedTracks.at(-1)
 			const lastIndex = filteredTracks.findIndex((t) => t.id === lastSelected)
 
 			const start = Math.min(trackIndex, lastIndex)
