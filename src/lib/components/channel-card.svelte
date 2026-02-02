@@ -106,7 +106,7 @@
 		min-height: 2rem;
 	}
 	h3 + p {
-		color: var(--gray-10);
+		color: light-dark(var(--gray-11), var(--gray-10));
 	}
 
 	.live-dot {

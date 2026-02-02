@@ -56,6 +56,10 @@
 </script>
 
 <div class="constrained">
+	<menu data-grouped>
+		<a href="/_debug">&larr;</a>
+	</menu>
+
 	<h1>useLiveQuery Performance Test</h1>
 	<p>
 		This page tests the performance of <code>useLiveQuery</code> by mounting/unmounting a component that queries tracks for

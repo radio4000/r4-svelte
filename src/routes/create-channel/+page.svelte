@@ -50,6 +50,12 @@
 		<p>
 			<a href="/auth?redirect=/create-channel">Sign in to create your channel.</a>
 		</p>
+	{:else if appState.channels?.length}
+		<p>You already have a channel: <a href="/{appState.channel?.slug}">@{appState.channel?.slug}</a></p>
+		<p>
+			Everyone gets a single channel. Constraints can be freeing. When you like a track, add it!
+			Use #tags in your track descriptions to organize as you want: highs and lows, ebbs and flows.
+		</p>
 	{:else}
 		<header>
 			<h1>Create a channel to start saving tracks.</h1>
