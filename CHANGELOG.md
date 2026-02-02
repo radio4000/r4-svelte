@@ -2,12 +2,17 @@
 
 ## February 2026
 
-- #channels Backup page at `/[slug]/backup` to download your channel and tracks as JSON
+- #UI Keyboard shortcuts dialog now opens with `?` key
+- #Tracks Redesigned track context menu with clearer groupings
+- #Channels Inline track search with tag filtering on channel pages
+- #Channels Backup page at `/[slug]/backup` to download channel data as JSON
+- #Channels Display settings (list/grid view) now persist on followers/following pages
+- #Tags Styled and translated the /tags page
+- #performance Faster track page loading
 - #performance Lazy-loaded Leaflet and GSAP to reduce initial bundle size
 - #performance Tooltips now share a single DOM element instead of one per tooltip
-- #performance Track freshness now checks `updated_at` instead of fetching everything
+- #performance Track freshness checks `updated_at` instead of fetching everything
 - Converted remaining web components to native Svelte components
-- Renamed "modals" to "dialogs" throughout the codebase for consistency
 
 ## January 2026
 
