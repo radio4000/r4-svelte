@@ -4,6 +4,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 
+	const repo = 'https://github.com/radio4000/r4-sync-tests'
 	const sha = $derived(__GIT_INFO__.sha)
 </script>
 
@@ -46,8 +47,12 @@
 			<Icon icon="message-circle" />
 			{m.nav_chat()} &rarr;
 		</a>
+		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
+			<Icon icon="code" />
+			Changelog &rarr;
+		</a>
 		{#if sha}
-			<a href="https://github.com/radio4000/r4-sync-tests/commit/{sha}" target="_blank" rel="noreferrer">
+			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code" />
 				Source code {sha} &rarr;
 			</a>
