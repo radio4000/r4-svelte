@@ -17,8 +17,9 @@
 		'openSearch',
 		'togglePlayPause',
 		'toggleQueuePanel',
-		'toggleTheme',
-		'toggleShuffle'
+		'toggleShuffle',
+		'gotoSettings',
+		'showShortcutsHelp'
 	]
 
 	const actionLabelMap = {
@@ -26,8 +27,9 @@
 		openSearch: () => m.shortcuts_action_openSearch(),
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
 		toggleQueuePanel: () => m.shortcuts_action_toggleQueuePanel(),
-		toggleTheme: () => m.shortcuts_action_toggleTheme(),
-		toggleShuffle: () => m.shortcuts_action_toggleShuffle()
+		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
+		gotoSettings: () => m.shortcuts_action_gotoSettings(),
+		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 
 	function getActionLabel(name) {

@@ -12,17 +12,17 @@ import {appState} from '$lib/app-state.svelte'
 
 /** Maps keybinding to functions from api.js */
 export const DEFAULT_KEY_BINDINGS = {
-	f: 'togglePlayerExpanded',
-	'$mod+k': 'openSearch',
 	'/': 'openSearch',
+	f: 'togglePlayerExpanded',
 	k: 'togglePlayPause',
 	r: 'toggleQueuePanel',
 	s: 'toggleShuffle',
-	gs: 'gotoSettings'
+	gs: 'gotoSettings',
+	'Shift+Slash': 'showShortcutsHelp'
 }
 
 export function initializeKeyboardShortcuts() {
-	const keyBindings = appState.shortcuts || DEFAULT_KEY_BINDINGS
+	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
 	const bindings = {}
 
 	const actionMap = {
@@ -32,7 +32,10 @@ export function initializeKeyboardShortcuts() {
 		togglePlayPause,
 		toggleQueuePanel,
 		clearQueue,
-		gotoSettings: () => goto('/settings')
+		gotoSettings: () => goto('/settings'),
+		showShortcutsHelp: () => {
+			appState.modal_shortcuts = true
+		}
 	}
 
 	for (const [key, actionName] of Object.entries(keyBindings)) {

@@ -1,4 +1,5 @@
 import {tick} from 'svelte'
+import {goto} from '$app/navigation'
 import {appState} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, upsertRemoteBroadcast} from '$lib/broadcast'
@@ -207,11 +208,15 @@ export function togglePlayerExpanded() {
 	appState.show_video_player = !appState.show_video_player
 }
 
-export function openSearch() {
-	setTimeout(() => {
-		const searchInput = document.querySelector('header input[type="search"]')
-		if (searchInput instanceof HTMLInputElement) searchInput.focus()
-	}, 0)
+/** @param {KeyboardEvent} [event] */
+export function openSearch(event) {
+	event?.preventDefault()
+	const searchInput = document.querySelector('input[type="search"]')
+	if (searchInput instanceof HTMLInputElement) {
+		searchInput.focus()
+	} else {
+		goto('/search')
+	}
 }
 
 export function togglePlayPause() {

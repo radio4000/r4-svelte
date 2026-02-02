@@ -1,14 +1,7 @@
 # Keyboard shortcuts
 
-Keyboard shortcuts call functions from $lib/api.js. Default bindings and available actions are in `$lib/keyboard.js`.
+Press `?` to open the shortcuts help dialog showing all available shortcuts.
 
-Visit /settings which includes <KeyboardEditor> to customize shortcuts. Your config is stored in appState.
+Default bindings and available actions are defined in `$lib/keyboard.js`. Visit /settings/keyboard to customize. Config is stored in appState.
 
-```
-{
-	"r": "toggleQueuePanel",
-	"$mod+k": "openSearch"
-}
-```
-
-The actual keyboard events are attached through <KeyboardShortcuts> in layout.svelte.
+The keyboard events are attached through `<KeyboardShortcuts>` in layout.svelte. The help dialog is `<ShortcutsDialog>` in layout-header.svelte.

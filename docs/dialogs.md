@@ -64,6 +64,7 @@ $effect(() => {
 | `track-add-dialog.svelte`  | keyboard `c`, button      | `modal_track_add`  |
 | `track-edit-dialog.svelte` | edit button in track menu | `modal_track_edit` |
 | `share-dialog.svelte`      | share button              | `modal_share`      |
+| `shortcuts-dialog.svelte`  | keyboard `?`              | `modal_shortcuts`  |
 | `queue-panel.svelte`       | clear history button      | (local state)      |
 
 ## Popover menus

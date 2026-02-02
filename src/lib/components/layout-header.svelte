@@ -4,6 +4,7 @@
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
 	import ShareDialog from '$lib/components/share-dialog.svelte'
+	import ShortcutsDialog from '$lib/components/shortcuts-dialog.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
@@ -51,6 +52,7 @@
 			<AddTrackDialog />
 			<EditTrackDialog />
 			<ShareDialog />
+			<ShortcutsDialog />
 			{#if userChannel}
 				<a href="/{userChannel.slug}" class="btn channel-link" {@attach tooltip({content: 'Go to your channel'})}>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
