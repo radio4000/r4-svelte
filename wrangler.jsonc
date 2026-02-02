@@ -7,12 +7,10 @@
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare/public"
 	},
-	{
-		"observability": {
-			"logs": {
-				"enabled": true,
-				"invocation_logs": true
-			}
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
 		}
 	}
 }
