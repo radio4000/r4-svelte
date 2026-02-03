@@ -12,12 +12,6 @@ import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
-/** Enrich track with computed ytid (until backend adds it) */
-function withYtid(track: Track): Track {
-	const parsed = parseUrl(track.url)
-	return {...track, ytid: parsed?.provider === 'youtube' ? parsed.id : null}
-}
-
 export const tracksCollection = createCollection<Track, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
@@ -47,7 +41,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		log.info('tracks fetch v1', {slug})
 		const {data, error} = await sdk.firebase.readTracks({slug})
 		if (error) throw error
-		return (data || []).map((t) => withYtid(sdk.firebase.parseTrack(t, channel.id, slug)))
+		return (data || []).map((t) => sdk.firebase.parseTrack(t, channel.id, slug))
 	}
 
 	log.info('tracks fetch v2', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
@@ -65,11 +59,11 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		if (v1Data?.length) {
 			const ch = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 			const channelId = ch?.id || slug
-			return v1Data.map((t) => withYtid(sdk.firebase.parseTrack(t, channelId, slug)))
+			return v1Data.map((t) => sdk.firebase.parseTrack(t, channelId, slug))
 		}
 	}
 
-	return ((data || []) as Track[]).map(withYtid)
+	return (data || []) as Track[]
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
@@ -135,9 +129,9 @@ export const tracksAPI = {
 	}
 }
 
-export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'ytid'>> {
-	if (!track.ytid) return track
-	const meta = trackMetaCollection.get(track.ytid)
+export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
+	if (!track.media_id) return track
+	const meta = trackMetaCollection.get(track.media_id)
 	if (!meta) return track
 	return {...track, ...meta}
 }
@@ -147,7 +141,8 @@ export function addTrack(
 	input: {url: string; title: string; description?: string; discogs_url?: string}
 ) {
 	const parsed = parseUrl(input.url)
-	const ytid = parsed?.provider === 'youtube' ? parsed.id : null
+	const media_id = parsed?.provider === 'youtube' ? parsed.id : null
+	const provider = parsed?.provider || null
 	const tx = getOfflineExecutor().createOfflineTransaction({
 		mutationFnName: 'syncTracks',
 		metadata: {channelId: channel.id, slug: channel.slug},
@@ -168,7 +163,8 @@ export function addTrack(
 			mentions: null,
 			playback_error: null,
 			tags: null,
-			ytid
+			media_id,
+			provider
 		})
 	})
 	return tx.commit()
@@ -337,8 +333,8 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	const updates: Array<{id: string; changes: {duration: number}}> = []
 	for (const track of tracks) {
 		if (track.duration) continue
-		if (!track.ytid) continue
-		const meta = trackMetaCollection.get(track.ytid)
+		if (!track.media_id) continue
+		const meta = trackMetaCollection.get(track.media_id)
 		if (!meta?.youtube_data?.duration) continue
 		updates.push({id: track.id, changes: {duration: meta.youtube_data.duration}})
 	}

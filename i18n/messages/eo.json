@@ -626,5 +626,5 @@
 	"track_related_heading": "Aliaj trakoj uzantaj la saman YouTube-videon:",
 	"track_urls_page_title": "Trakaj URL-oj - {name} - R5",
 	"tracks_no_results": "Neniuj trakoj trovitaj.",
-	"tracks_no_ytid": "Neniu YouTube-ID por {url}"
+	"tracks_no_media_id": "Neniu YouTube-ID por {url}"
 }

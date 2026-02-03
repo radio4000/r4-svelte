@@ -5,29 +5,29 @@ const log = logger.ns('metadata/musicbrainz').seal()
 
 /**
  * Search MusicBrainz and save to track_meta collection
- * @param {string} ytid YouTube video ID
+ * @param {string} mediaId YouTube video ID
  * @param {string} title Track title to search
  * @returns {Promise<Object|null>} MusicBrainz data
  */
-export async function pull(ytid, title) {
-	if (!ytid || !title) return null
+export async function pull(mediaId, title) {
+	if (!mediaId || !title) return null
 
 	const musicbrainzData = await search(title)
 	if (!musicbrainzData) return null
 
 	try {
-		const existing = trackMetaCollection.get(ytid)
+		const existing = trackMetaCollection.get(mediaId)
 		if (existing) {
-			trackMetaCollection.update(ytid, (draft) => {
+			trackMetaCollection.update(mediaId, (draft) => {
 				draft.musicbrainz_data = musicbrainzData
 			})
 		} else {
-			trackMetaCollection.insert({ytid, musicbrainz_data: musicbrainzData})
+			trackMetaCollection.insert({media_id: mediaId, musicbrainz_data: musicbrainzData})
 		}
 		log.info('updated', musicbrainzData)
 		return musicbrainzData
 	} catch (error) {
-		log.error('insert failed', {ytid, error})
+		log.error('insert failed', {mediaId, error})
 		return null
 	}
 }

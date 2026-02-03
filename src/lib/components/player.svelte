@@ -63,7 +63,7 @@
 	})
 
 	/** @type {string} */
-	let trackImage = $derived(track?.ytid ? `https://i.ytimg.com/vi/${track.ytid}/mqdefault.jpg` : '')
+	let trackImage = $derived(track?.media_id ? `https://i.ytimg.com/vi/${track.media_id}/mqdefault.jpg` : '')
 
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))

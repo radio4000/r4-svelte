@@ -626,5 +626,5 @@
 	"track_related_heading": "مسارات أخرى تستخدم نفس فيديو YouTube:",
 	"track_urls_page_title": "روابط المسارات – {name} – R5",
 	"tracks_no_results": "لم يتم العثور على مسارات.",
-	"tracks_no_ytid": "لا يوجد معرف YouTube لـ {url}"
+	"tracks_no_media_id": "لا يوجد معرف YouTube لـ {url}"
 }

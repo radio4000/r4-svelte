@@ -84,9 +84,9 @@
 	}
 
 	function removeMeta() {
-		const ytids = /** @type {string[]} */ (tracksWithMeta.map((t) => t.ytid).filter(Boolean))
-		if (ytids.length === 0) return
-		deleteTrackMeta(ytids)
+		const mediaIds = /** @type {string[]} */ (tracksWithMeta.map((t) => t.media_id).filter(Boolean))
+		if (mediaIds.length === 0) return
+		deleteTrackMeta(mediaIds)
 	}
 
 	async function fetchMeta() {
@@ -94,8 +94,8 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const ytids = /** @type {string[]} */ (selectedMissingMeta.map((t) => t.ytid).filter(Boolean))
-			await pullYouTubeMeta(ytids, {
+			const mediaIds = /** @type {string[]} */ (selectedMissingMeta.map((t) => t.media_id).filter(Boolean))
+			await pullYouTubeMeta(mediaIds, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}

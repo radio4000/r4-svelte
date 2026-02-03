@@ -626,5 +626,5 @@
 	"track_related_heading": "Alte piese care folosesc același video YouTube:",
 	"track_urls_page_title": "URL-uri piese - {name} - R5",
 	"tracks_no_results": "Nu s-au găsit piese.",
-	"tracks_no_ytid": "Fără ID YouTube pentru {url}"
+	"tracks_no_media_id": "Fără ID YouTube pentru {url}"
 }

@@ -626,5 +626,5 @@
 	"track_related_heading": "Outras faixas que usam o mesmo vídeo do YouTube:",
 	"track_urls_page_title": "URLs de faixas - {name} - R5",
 	"tracks_no_results": "Nenhuma faixa encontrada.",
-	"tracks_no_ytid": "Sem ID do YouTube para {url}"
+	"tracks_no_media_id": "Sem ID do YouTube para {url}"
 }

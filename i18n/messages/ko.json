@@ -626,5 +626,5 @@
 	"track_related_heading": "같은 YouTube 영상을 사용하는 다른 트랙:",
 	"track_urls_page_title": "트랙 URL - {name} - R5",
 	"tracks_no_results": "트랙을 찾지 못했습니다.",
-	"tracks_no_ytid": "{url}의 YouTube ID가 없습니다"
+	"tracks_no_media_id": "{url}의 YouTube ID가 없습니다"
 }

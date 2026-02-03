@@ -626,5 +626,5 @@
 	"track_related_heading": "同じ YouTube 動画を使用している他のトラック：",
 	"track_urls_page_title": "トラック URL - {name} - R5",
 	"tracks_no_results": "トラックが見つかりませんでした。",
-	"tracks_no_ytid": "{url} に YouTube ID がありません"
+	"tracks_no_media_id": "{url} に YouTube ID がありません"
 }

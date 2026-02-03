@@ -10,29 +10,29 @@ const log = logger.ns('metadata/discogs').seal()
 
 /**
  * Fetch Discogs data from URL and save to track_meta collection
- * @param {string} ytid YouTube video ID
+ * @param {string} mediaId YouTube video ID
  * @param {string} discogsUrl Discogs release/master URL
  * @returns {Promise<Object|null>} Discogs data
  */
-export async function pull(ytid, discogsUrl) {
-	if (!ytid || !discogsUrl) return null
+export async function pull(mediaId, discogsUrl) {
+	if (!mediaId || !discogsUrl) return null
 
 	const discogsData = await fetchDiscogs(discogsUrl)
 	if (!discogsData) return null
 
 	try {
-		const existing = trackMetaCollection.get(ytid)
+		const existing = trackMetaCollection.get(mediaId)
 		if (existing) {
-			trackMetaCollection.update(ytid, (draft) => {
+			trackMetaCollection.update(mediaId, (draft) => {
 				draft.discogs_data = discogsData
 			})
 		} else {
-			trackMetaCollection.insert({ytid, discogs_data: discogsData})
+			trackMetaCollection.insert({media_id: mediaId, discogs_data: discogsData})
 		}
 		log.info('updated', discogsData)
 		return discogsData
 	} catch (error) {
-		log.error('insert failed', {ytid, discogsUrl, error})
+		log.error('insert failed', {mediaId, discogsUrl, error})
 		return null
 	}
 }
@@ -40,11 +40,11 @@ export async function pull(ytid, discogsUrl) {
 /**
  * Hunt for Discogs URL via MusicBrainz and save URL to tracks collection
  * @param {string} trackId Track UUID
- * @param {string} _ytid YouTube video ID (unused, kept for API compatibility)
+ * @param {string} _mediaId Media ID (unused, kept for API compatibility)
  * @param {string} title Track title for search
  * @returns {Promise<string|null>} Discovered Discogs URL
  */
-export async function hunt(trackId, _ytid, title) {
+export async function hunt(trackId, _mediaId, title) {
 	if (!title) return null
 
 	try {

@@ -626,5 +626,5 @@
 	"track_related_heading": "Інші треки, що використовують те саме відео YouTube:",
 	"track_urls_page_title": "URL треків — {name} — R5",
 	"tracks_no_results": "Треків не знайдено.",
-	"tracks_no_ytid": "Немає ID YouTube для {url}"
+	"tracks_no_media_id": "Немає ID YouTube для {url}"
 }

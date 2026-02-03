@@ -25,10 +25,10 @@
 		<CoverFlip items={tracksQuery.data} scrollItemsPerNotch={1}>
 			{#snippet item({item, active})}
 				<button class="item" class:active onclick={() => playTrack(item.id, null, 'user_click_track')}>
-					{#if item.ytid}
-						<img src={`https://i.ytimg.com/vi/${item.ytid}/mqdefault.jpg`} alt={item.title} />
+					{#if item.media_id}
+						<img src={`https://i.ytimg.com/vi/${item.media_id}/mqdefault.jpg`} alt={item.title} />
 					{:else}
-						{m.tracks_no_ytid({url: item.url})}
+						{m.tracks_no_media_id({url: item.url})}
 					{/if}
 				</button>
 			{/snippet}
