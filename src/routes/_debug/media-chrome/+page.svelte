@@ -2,7 +2,7 @@
 	import 'media-chrome'
 	import '$lib/youtube-video-custom-element.js'
 	import '$lib/soundcloud-player-custom-element.js'
-	import {detectMediaProvider} from '$lib/utils.ts'
+	import {parseUrl} from 'media-now'
 
 	const testUrls = [
 		{
@@ -30,7 +30,7 @@
 	let youtubePlayer = $state()
 	let soundcloudPlayer = $state()
 
-	let trackType = $derived(detectMediaProvider(currentUrl))
+	let trackType = $derived(parseUrl(currentUrl)?.provider ?? null)
 	let mediaElement = $derived(trackType === 'youtube' ? youtubePlayer : soundcloudPlayer)
 
 	let paused = $state(true)

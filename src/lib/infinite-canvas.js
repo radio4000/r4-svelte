@@ -196,7 +196,7 @@ export class InfiniteCanvas {
 			'touchstart',
 			(e) => {
 				e.preventDefault()
-				lastTouches = Array.from(e.touches)
+				lastTouches = [...e.touches]
 				lastTouchDist = getTouchDistance(lastTouches)
 				if (e.touches.length === 1) {
 					touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY}
@@ -210,7 +210,7 @@ export class InfiniteCanvas {
 			'touchmove',
 			(e) => {
 				e.preventDefault()
-				const touches = Array.from(e.touches)
+				const touches = [...e.touches]
 				if (touches.length === 1 && lastTouches.length >= 1) {
 					const dx = touches[0].clientX - lastTouches[0].clientX
 					const dy = touches[0].clientY - lastTouches[0].clientY
@@ -234,7 +234,7 @@ export class InfiniteCanvas {
 					this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
 				}
 				touchStartPos = null
-				lastTouches = Array.from(e.touches)
+				lastTouches = [...e.touches]
 				lastTouchDist = getTouchDistance(lastTouches)
 			},
 			{passive: false}

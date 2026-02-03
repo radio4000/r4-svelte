@@ -79,7 +79,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		const t1 = performance.now()
 		untrack(() => {
 			internalData = []
-			internalData.push(...Array.from(currentCollection.values()))
+			internalData.push(...[...currentCollection.values()])
 		})
 		tSyncData = performance.now() - t1
 	}

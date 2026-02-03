@@ -151,8 +151,8 @@
 		}
 	}
 
-	const grays = [...Array(12).keys()].map((i) => `--gray-${i + 1}`)
-	const accents = [...Array(12).keys()].map((i) => `--accent-${i + 1}`)
+	const grays = Array.from(Array(12).keys(), (i) => `--gray-${i + 1}`)
+	const accents = Array.from(Array(12).keys(), (i) => `--accent-${i + 1}`)
 </script>
 
 <div class="constrained">

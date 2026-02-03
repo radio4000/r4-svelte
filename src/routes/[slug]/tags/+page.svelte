@@ -192,7 +192,7 @@
 					{:else}
 						<span>{periods[0]?.label}</span>
 						<span>...</span>
-						<span>{periods[periods.length - 1]?.label}</span>
+						<span>{periods.at(-1)?.label}</span>
 					{/if}
 				</div>
 			</div>

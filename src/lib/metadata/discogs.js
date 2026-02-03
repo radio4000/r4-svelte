@@ -1,14 +1,7 @@
+import {discoverDiscogsUrl} from 'media-now'
 import {logger} from '$lib/logger'
 import {trackMetaCollection, tracksCollection, updateTrack} from '$lib/tanstack/collections'
-import {
-	parseDiscogsUrl,
-	fetchDiscogs,
-	searchUrl,
-	extractSuggestions,
-	searchMusicBrainzRecording,
-	getMusicBrainzReleases,
-	getDiscogsUrlFromRelease
-} from './discogs-core.js'
+import {parseDiscogsUrl, fetchDiscogs, searchUrl, extractSuggestions} from './discogs-core.js'
 
 // Re-export pure functions
 export {parseDiscogsUrl, fetchDiscogs, searchUrl, extractSuggestions}
@@ -45,59 +38,25 @@ export async function pull(ytid, discogsUrl) {
 }
 
 /**
- * Hunt for Discogs URL via MusicBrainz chain and save URL to tracks collection
+ * Hunt for Discogs URL via MusicBrainz and save URL to tracks collection
  * @param {string} trackId Track UUID
- * @param {string} ytid YouTube video ID
+ * @param {string} _ytid YouTube video ID (unused, kept for API compatibility)
  * @param {string} title Track title for search
  * @returns {Promise<string|null>} Discovered Discogs URL
  */
-export async function hunt(trackId, ytid, title) {
-	if (!ytid || !title) return null
+export async function hunt(trackId, _ytid, title) {
+	if (!title) return null
 
 	try {
-		// Check if we already have MusicBrainz data locally
-		const meta = trackMetaCollection.get(ytid)
-		/** @type {{recording?: {releases?: {id?: string}[]}} | undefined} */
-		const musicbrainzData = /** @type {any} */ (meta?.musicbrainz_data)
-
-		// If we have cached MusicBrainz data with releases, use it
-		if (musicbrainzData?.recording?.releases?.length) {
-			log.info('using cached musicbrainz data', {title})
-			// Check each release for Discogs URL
-			for (const release of musicbrainzData.recording.releases) {
-				if (release.id) {
-					const discogsUrl = await getDiscogsUrlFromRelease(release.id)
-					if (discogsUrl) {
-						await saveDiscogsUrl(trackId, discogsUrl)
-						return discogsUrl
-					}
-				}
-			}
+		log.info('discovering discogs url', {title})
+		const discogsUrl = await discoverDiscogsUrl(title)
+		if (discogsUrl) {
+			await saveDiscogsUrl(trackId, discogsUrl)
+			return discogsUrl
 		}
-
-		// Otherwise, do fresh search
-		log.info('searching musicbrainz', {title})
-
-		// Step 1: Search for recording by title
-		const recording = await searchMusicBrainzRecording(title)
-		if (!recording) return null
-
-		// Step 2: Get releases for this recording
-		const releases = await getMusicBrainzReleases(recording.id)
-		if (!releases.length) return null
-
-		// Step 3: Find discogs URL in release relationships
-		for (const release of releases) {
-			const discogsUrl = await getDiscogsUrlFromRelease(release.id)
-			if (discogsUrl) {
-				await saveDiscogsUrl(trackId, discogsUrl)
-				return discogsUrl
-			}
-		}
-
 		return null
 	} catch (error) {
-		log.error('discogs hunt failed', {ytid, title, error})
+		log.error('discogs hunt failed', {title, error})
 		return null
 	}
 }
@@ -132,9 +91,10 @@ async function saveDiscogsUrl(trackId, discogsUrl) {
  * Test the chain with a known track
  */
 export async function testAutoDiscovery() {
-	log.info('testing auto-discovery', {track: 'Daft Punk - Get Lucky'})
+	const title = 'Daft Punk - Get Lucky'
+	log.info('testing auto-discovery', {title})
 
-	const discogsUrl = await hunt('test-track-id', '09m-zZN-tOQ', 'Daft Punk - Get Lucky')
+	const discogsUrl = await discoverDiscogsUrl(title)
 	log.info('test result', {discogsUrl})
 
 	return discogsUrl

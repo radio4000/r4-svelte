@@ -30,24 +30,6 @@ export function parseSearchTokens(query) {
 	}
 }
 
-export function extractYouTubeId(url) {
-	const patterns = [
-		/(?:youtube\.com\/\S*(?:(?:\/e(?:mbed))?\/|watch\/?\?(?:\S*?&?v=))|youtu\.be\/)([a-zA-Z0-9_-]{6,11})/
-	]
-	for (const pattern of patterns) {
-		const match = url.match(pattern)
-		if (match) return match[1]
-	}
-	return null
-}
-
-export function detectMediaProvider(url: string): 'youtube' | 'soundcloud' | null {
-	if (!url) return null
-	if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube'
-	if (url.includes('soundcloud.com')) return 'soundcloud'
-	return null
-}
-
 /** Fisher-Yates shuffle http://bost.ocks.org/mike/shuffle/ */
 export function shuffleArray<T>(arr: Array<T>): Array<T> {
 	const array = arr.slice()
@@ -170,27 +152,6 @@ export function delayWithJitter(base: number, jitter: number = 0.2): Promise<voi
 	const variance = base * jitter
 	const ms = base + (Math.random() * 2 - 1) * variance
 	return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-const oembedProviders: Record<string, string> = {
-	'youtube.com': 'https://www.youtube.com/oembed',
-	'youtu.be': 'https://www.youtube.com/oembed',
-	'soundcloud.com': 'https://soundcloud.com/oembed',
-	'vimeo.com': 'https://vimeo.com/api/oembed.json'
-}
-
-export async function fetchOEmbedTitle(mediaUrl: string): Promise<string | null> {
-	try {
-		const hostname = new URL(mediaUrl).hostname.replace('www.', '')
-		const endpoint = oembedProviders[hostname]
-		if (!endpoint) return null
-		const res = await fetch(`${endpoint}?url=${encodeURIComponent(mediaUrl)}&format=json`)
-		if (!res.ok) return null
-		const data = await res.json()
-		return data.title || null
-	} catch {
-		return null
-	}
 }
 
 /**
