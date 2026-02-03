@@ -64,6 +64,7 @@
 		"luxon": "^3.7.2",
 		"marked": "^17.0.1",
 		"media-chrome": "^4.17.2",
+		"media-now": "^2.0.0",
 		"obra-icons-svelte": "^1.23.1",
 		"p-limit": "^7.2.0",
 		"svelte-awesome-color-picker": "^4.1.1",

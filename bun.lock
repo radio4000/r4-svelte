@@ -27,6 +27,7 @@
         "luxon": "^3.7.2",
         "marked": "^17.0.1",
         "media-chrome": "^4.17.2",
+        "media-now": "^2.0.0",
         "obra-icons-svelte": "^1.23.1",
         "p-limit": "^7.2.0",
         "svelte-awesome-color-picker": "^4.1.1",
@@ -742,6 +743,8 @@
     "marked": ["marked@17.0.1", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-boeBdiS0ghpWcSwoNm/jJBwdpFaMnZWRzjA6SkUMYb40SVaN1x7mmfGKp0jvexGcx+7y2La5zRZsYFZI6Qpypg=="],
 
     "media-chrome": ["media-chrome@4.17.2", "", { "dependencies": { "ce-la-react": "^0.3.2" } }, "sha512-o/IgiHx0tdSVwRxxqF5H12FK31A/A8T71sv3KdAvh7b6XeBS9dXwqvIFwlR9kdEuqg3n7xpmRIuL83rmYq8FTg=="],
+
+    "media-now": ["media-now@2.0.0", "", {}, "sha512-+9eLoCZDOAA44CoLi2a7rGgNRvTY4u1zA7PyknsWCFTmirk9exJ5HX+8o9lpCiRXNRsDrR5wb2D5lBuKKMtZCw=="],
 
     "media-url-parser": ["media-url-parser@0.2.4", "", {}, "sha512-Yn/hYVFuf8WY1+TCE2iTBKW13j/p3/1YxAXVTiZLNOuIe1yYVq/ZHCyBJQ02n/1j3HrJTx8q2a3I23TZ7gUTQg=="],
 

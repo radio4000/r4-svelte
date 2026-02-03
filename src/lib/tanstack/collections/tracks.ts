@@ -3,7 +3,8 @@ import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db
 import {NonRetriableError} from '@tanstack/offline-transactions'
 import {sdk} from '@radio4000/sdk'
 import type {PendingMutation} from '@tanstack/db'
-import {extractYouTubeId, uuid} from '$lib/utils'
+import {parseUrl} from 'media-now'
+import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
@@ -13,7 +14,8 @@ import type {Track} from '$lib/types'
 
 /** Enrich track with computed ytid (until backend adds it) */
 function withYtid(track: Track): Track {
-	return {...track, ytid: extractYouTubeId(track.url) || null}
+	const parsed = parseUrl(track.url)
+	return {...track, ytid: parsed?.provider === 'youtube' ? parsed.id : null}
 }
 
 export const tracksCollection = createCollection<Track, string>(
@@ -144,6 +146,8 @@ export function addTrack(
 	channel: {id: string; slug: string},
 	input: {url: string; title: string; description?: string; discogs_url?: string}
 ) {
+	const parsed = parseUrl(input.url)
+	const ytid = parsed?.provider === 'youtube' ? parsed.id : null
 	const tx = getOfflineExecutor().createOfflineTransaction({
 		mutationFnName: 'syncTracks',
 		metadata: {channelId: channel.id, slug: channel.slug},
@@ -164,7 +168,7 @@ export function addTrack(
 			mentions: null,
 			playback_error: null,
 			tags: null,
-			ytid: extractYouTubeId(input.url) || null
+			ytid
 		})
 	})
 	return tx.commit()

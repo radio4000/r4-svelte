@@ -1,6 +1,6 @@
 <script>
 	import {addTrack, updateTrack} from '$lib/tanstack/collections/tracks'
-	import {fetchOEmbedTitle} from '$lib/utils'
+	import {getMedia} from 'media-now'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -35,9 +35,9 @@
 		pendingUrl = url
 		fetchingTitle = true
 		try {
-			const fetched = await fetchOEmbedTitle(url)
-			if (fetched && titleInput && !titleInput.value && url === pendingUrl) {
-				titleInput.value = fetched
+			const media = await getMedia(url)
+			if (media?.title && titleInput && !titleInput.value && url === pendingUrl) {
+				titleInput.value = media.title
 			}
 		} finally {
 			if (url === pendingUrl) fetchingTitle = false
