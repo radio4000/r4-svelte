@@ -46,10 +46,7 @@
 			<figcaption>Ruins of the Augustus Bridge at Narni — Georg Abraham Hackert</figcaption>
 		</figure>
 		<figure>
-			<img
-				src="/images/illustrations/around-the-moon-bayard-neuville.jpg"
-				alt="Around the Moon"
-			/>
+			<img src="/images/illustrations/around-the-moon-bayard-neuville.jpg" alt="Around the Moon" />
 			<figcaption>Around the Moon — Bayard & Neuville</figcaption>
 		</figure>
 		<figure>
@@ -60,10 +57,7 @@
 			<figcaption>Une caverne pendant la nuit — Émile Bayard</figcaption>
 		</figure>
 		<figure>
-			<img
-				src="/images/illustrations/more-otho-flying-richard-neuhauss.jpg"
-				alt="More Otho Flying"
-			/>
+			<img src="/images/illustrations/more-otho-flying-richard-neuhauss.jpg" alt="More Otho Flying" />
 			<figcaption>More Otho Flying — Richard Neuhauss</figcaption>
 		</figure>
 	</section>

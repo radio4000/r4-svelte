@@ -13,7 +13,6 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
-	import {parseUrl} from 'media-now'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -40,8 +39,7 @@
 	})
 
 	let src = $derived(track?.url)
-	let trackType = $derived(src ? parseUrl(src)?.provider : null)
-	let mediaElement = $derived(trackType === 'youtube' ? youtubePlayer : soundcloudPlayer)
+	let mediaElement = $derived(track?.provider === 'youtube' ? youtubePlayer : soundcloudPlayer)
 
 	/** @type {string[]} */
 	let trackIds = $derived(appState.playlist_tracks || [])
@@ -169,7 +167,7 @@
 	{/if}
 
 	<media-controller id="r5" data-clickable="true">
-		{#if trackType === 'youtube'}
+		{#if track?.provider === 'youtube'}
 			<youtube-video
 				slot="media"
 				bind:this={youtubePlayer}
@@ -181,7 +179,7 @@
 				onerror={handleError}
 				onvolumechange={handleVolumeChange}
 			></youtube-video>
-		{:else if trackType === 'soundcloud'}
+		{:else if track?.provider === 'soundcloud'}
 			<soundcloud-player
 				slot="media"
 				bind:this={soundcloudPlayer}
