@@ -626,5 +626,5 @@
 	"track_related_heading": "Aynı YouTube videosunu kullanan diğer parçalar:",
 	"track_urls_page_title": "Parça URL’leri - {name} - R5",
 	"tracks_no_results": "Parça bulunamadı.",
-	"tracks_no_ytid": "{url} için YouTube kimliği yok"
+	"tracks_no_media_id": "{url} için YouTube kimliği yok"
 }

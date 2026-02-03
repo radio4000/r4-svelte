@@ -27,16 +27,16 @@
 	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
 	const tracksQuery = getContext('tracksQuery')
 
-	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.ytid))
+	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
 
 	let channel = $derived(channelQuery.data?.[0])
 	let rawTracks = $derived(tracksQuery.data || [])
-	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [m.ytid, m]) || []))
+	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [m.media_id, m]) || []))
 	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
-			if (!track.ytid) return track
-			const meta = metaMap.get(track.ytid)
+			if (!track.media_id) return track
+			const meta = metaMap.get(track.media_id)
 			return meta ? {...track, ...meta} : track
 		})
 	)
@@ -74,8 +74,8 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const ytids = /** @type {string[]} */ (allTracksMissingMeta.map((t) => t.ytid).filter(Boolean))
-			await pullYouTubeMeta(ytids, {
+			const mediaIds = /** @type {string[]} */ (allTracksMissingMeta.map((t) => t.media_id).filter(Boolean))
+			await pullYouTubeMeta(mediaIds, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}

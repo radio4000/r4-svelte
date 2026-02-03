@@ -626,5 +626,5 @@
 	"track_related_heading": "使用相同 YouTube 视频的其他曲目：",
 	"track_urls_page_title": "曲目 URL - {name} - R5",
 	"tracks_no_results": "未找到曲目。",
-	"tracks_no_ytid": "{url} 无 YouTube ID"
+	"tracks_no_media_id": "{url} 无 YouTube ID"
 }

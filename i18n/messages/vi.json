@@ -626,5 +626,5 @@
 	"track_related_heading": "Các bản nhạc khác dùng cùng video YouTube:",
 	"track_urls_page_title": "URL bản nhạc - {name} - R5",
 	"tracks_no_results": "Không tìm thấy bản nhạc.",
-	"tracks_no_ytid": "Không có YouTube ID cho {url}"
+	"tracks_no_media_id": "Không có YouTube ID cho {url}"
 }

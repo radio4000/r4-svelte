@@ -6,9 +6,9 @@
 
 	// Find other tracks with same YouTube video ID
 	const relatedTracks = $derived.by(() => {
-		if (!track?.ytid) return []
+		if (!track?.media_id) return []
 		return [...tracksCollection.state.values()]
-			.filter((t) => t.id !== track.id && t.ytid === track.ytid)
+			.filter((t) => t.id !== track.id && t.media_id === track.media_id)
 			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 	})
 </script>

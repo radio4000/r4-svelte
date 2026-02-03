@@ -626,5 +626,5 @@
 	"track_related_heading": "একই YouTube ভিডিও ব্যবহার করা অন্যান্য ট্র্যাক:",
 	"track_urls_page_title": "ট্র্যাক URL - {name} - R5",
 	"tracks_no_results": "কোনো ট্র্যাক পাওয়া যায়নি।",
-	"tracks_no_ytid": "{url}-এর জন্য কোনো YouTube ID নেই"
+	"tracks_no_media_id": "{url}-এর জন্য কোনো YouTube ID নেই"
 }

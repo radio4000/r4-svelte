@@ -25,7 +25,7 @@
 	const menuId = $props.id()
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
-	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.ytid)
+	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 

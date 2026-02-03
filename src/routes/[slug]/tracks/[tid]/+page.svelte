@@ -23,14 +23,14 @@
 
 	// Find track by ID from already-loaded tracks
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const ytid = $derived(track?.ytid ?? null)
+	const mediaId = $derived(track?.media_id ?? null)
 
 	// Reactive query on trackMetaCollection - re-renders when metadata updates
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => eq(meta.ytid, ytid || ''))
-			.orderBy(({meta}) => meta.ytid)
+			.where(({meta}) => eq(meta.media_id, mediaId || ''))
+			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
 

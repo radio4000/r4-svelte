@@ -19,7 +19,7 @@
 	let loading = $state(false)
 	let error = $state()
 
-	const ytid = $derived(track?.youtube_data?.id || track?.ytid || null)
+	const ytid = $derived(track?.youtube_data?.id || track?.media_id || null)
 
 	let result = $state()
 

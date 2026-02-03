@@ -8,10 +8,8 @@ export interface Channel extends SDKChannel {
 	spam?: boolean
 }
 
-// Extends SDK Track with computed ytid (until backend adds it)
-export interface Track extends SDKTrack {
-	ytid?: string | null
-}
+// Extends SDK Track with r5-specific fields
+export interface Track extends SDKTrack {}
 
 // Track joined with metadata from TrackMeta collection
 export interface TrackWithMeta extends Track {
