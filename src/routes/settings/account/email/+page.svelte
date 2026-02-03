@@ -53,8 +53,6 @@
 	{#if !appState.user}
 		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
 	{:else}
-		<p>{m.account_current_email({email: ''})} <em>{appState.user.email}</em></p>
-
 		{#if success}
 			<p class="success">{m.account_email_confirmation_sent()}</p>
 		{:else}
@@ -71,6 +69,8 @@
 				</button>
 			</form>
 		{/if}
+
+		<p>{m.account_current_email({email: ''})} <em>{appState.user.email}</em></p>
 	{/if}
 </article>
 

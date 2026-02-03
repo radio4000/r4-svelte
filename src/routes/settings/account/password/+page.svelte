@@ -83,9 +83,6 @@
 				{loading ? m.loading() : m.common_save()}
 			</button>
 		</form>
-		<menu>
-			<a href="/settings/account">← {m.common_back()}</a>
-		</menu>
 	{/if}
 </article>
 

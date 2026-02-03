@@ -64,7 +64,7 @@
 
 <style>
 	h1 {
-		margin-block-end: 1rem;
+		margin-block: 0.5rem 1rem;
 	}
 	menu {
 		margin: 0 0 1rem;
