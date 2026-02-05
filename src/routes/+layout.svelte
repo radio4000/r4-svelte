@@ -150,7 +150,7 @@
 				</div>
 			{/key}
 		{:catch}
-			<p>{m.loading_generic()}</p>
+			<p>{m.common_loading()}</p>
 		{/await}
 	</svelte:boundary>
 	<!-- <SvelteQueryDevtools buttonPosition="bottom-left" /> -->

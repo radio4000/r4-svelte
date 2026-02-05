@@ -80,7 +80,7 @@
 				<p class="error" role="alert">{error}</p>
 			{/if}
 			<button type="submit" class="primary" disabled={loading}>
-				{loading ? m.loading() : m.account_change_password()}
+				{loading ? m.common_loading() : m.account_change_password()}
 			</button>
 		</form>
 	{/if}

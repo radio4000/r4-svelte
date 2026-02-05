@@ -35,7 +35,7 @@
 	</header>
 
 	{#if historyQuery.isLoading}
-		<p>{m.loading_generic()}</p>
+		<p>{m.common_loading()}</p>
 	{:else if history.length === 0}
 		<p>{m.history_empty()}</p>
 	{:else}
