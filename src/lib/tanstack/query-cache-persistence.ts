@@ -45,9 +45,6 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	const key = query.queryKey?.[0]
 	if (key === 'todos-cached') return false
 
-	// Subset queries have functions in meta that break serialization
-	if ((key === 'channels' || key === 'tracks') && query.queryKey.length > 1) return false
-
 	return true
 }
 
@@ -55,7 +52,7 @@ const persistOptions = {
 	queryClient,
 	persister: idbPersister,
 	maxAge: 24 * 60 * 60 * 1000,
-	buster: '4',
+	buster: '5',
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 
