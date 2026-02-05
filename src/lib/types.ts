@@ -8,8 +8,7 @@ export interface Channel extends SDKChannel {
 	spam?: boolean
 }
 
-// Extends SDK Track with r5-specific fields
-export interface Track extends SDKTrack {}
+export type Track = SDKTrack
 
 // Track joined with metadata from TrackMeta collection
 export interface TrackWithMeta extends Track {

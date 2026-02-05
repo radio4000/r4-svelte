@@ -26,6 +26,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 
 - [data-state](docs/data-state.md) - how data flows (remote, local sync, app state)
 - [code-style](docs/code-style.md) - writing style, code conventions, HTML/CSS, Svelte
+- [styles](docs/styles.md) - rely on global styles, don't add CSS unless needed
 - [tanstack](docs/tanstack.md) - TanStack DB deep-dive
 - [browser-testing](docs/browser-testing.md) - testing with agent-browser
 
