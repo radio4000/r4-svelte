@@ -6,7 +6,7 @@
 	import '$lib/soundcloud-player-custom-element.js'
 	import {next, play, previous, togglePlay, togglePlayerExpanded, toggleQueuePanel, toggleShuffle} from '$lib/api'
 	import {leaveBroadcast} from '$lib/broadcast.js'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
@@ -95,8 +95,7 @@
 		appState.is_playing = true
 
 		// Update track duration if missing (only for owned channels)
-		const canWrite = channel && appState.channels?.includes(channel.id)
-		if (track && canWrite && !track.duration && mediaElement?.duration) {
+		if (track && channel && canEditChannel(channel.id) && !track.duration && mediaElement?.duration) {
 			const duration = Math.round(mediaElement.duration)
 			if (duration > 0) {
 				updateTrack(channel, track.id, {duration})
@@ -119,9 +118,9 @@
 		const msg = `youtube_error_${code}`
 		log.warn(msg)
 		// Only write playback_error if user owns this track's channel
-		const canWrite = channel && appState.channels?.includes(channel.id)
+		const canWrite = canEditChannel(channel?.id)
 		log.log('handleError', {trackId: track?.id, canWrite, channelId: channel?.id, msg})
-		if (track?.id && canWrite) {
+		if (track?.id && channel && canWrite) {
 			updateTrack(channel, track.id, {playback_error: msg})
 				.then(() => log.log('playback_error saved', {id: track.id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))

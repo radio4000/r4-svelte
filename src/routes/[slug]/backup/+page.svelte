@@ -1,10 +1,12 @@
 <script>
 	import {page} from '$app/state'
-	import {getCanEditCtx} from '$lib/contexts'
+	import {canEditChannel} from '$lib/app-state.svelte'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import Icon from '$lib/components/icon.svelte'
 
 	const slug = $derived(page.params.slug)
-	const canEdit = getCanEditCtx()
+	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	const canEdit = $derived(canEditChannel(channel?.id))
 
 	let downloading = $state(false)
 	let error = $state('')
@@ -39,7 +41,7 @@
 </svelte:head>
 
 <article class="constrained">
-	{#if canEdit()}
+	{#if canEdit}
 		<header>
 			<h1>Backup</h1>
 		</header>

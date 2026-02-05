@@ -7,7 +7,8 @@
 
 <script lang="ts">
 	import {page} from '$app/state'
-	import {getTracksQueryCtx, getCanEditCtx} from '$lib/contexts'
+	import {getTracksQueryCtx} from '$lib/contexts'
+	import {canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -19,7 +20,6 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
-	const getCanEdit = getCanEditCtx()
 
 	let searchQuery = $state('')
 	let selectedTags: string[] = $state([])
@@ -27,7 +27,7 @@
 	let slug = $derived(page.params.slug)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let allTracks = $derived(tracksQuery.data || [])
-	let canEdit = $derived(getCanEdit())
+	let canEdit = $derived(canEditChannel(channel?.id))
 	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
 	let aggregatedTags = $derived(countStrings(allTracks.flatMap((t) => t.tags ?? [])))
 	let isFiltering = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)

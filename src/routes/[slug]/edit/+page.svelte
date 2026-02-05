@@ -3,7 +3,7 @@
 	import {page} from '$app/state'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, updateChannel} from '$lib/tanstack/collections'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
@@ -31,7 +31,7 @@
 	// Once we have the ID, read directly from collection (bypasses stale query)
 	const channel = $derived(channelId ? channelsCollection.get(channelId) : channelQuery.data?.[0])
 	const isSignedIn = $derived(!!appState.user)
-	const canEdit = $derived(isSignedIn && !!channel?.id && appState.channels?.includes(channel.id))
+	const canEdit = $derived(canEditChannel(channel?.id))
 
 	let error = $state('')
 	let success = $state(false)

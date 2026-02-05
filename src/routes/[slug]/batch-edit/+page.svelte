@@ -7,7 +7,7 @@
 	import {fuzzySearch} from '$lib/search'
 	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
-	import {appState} from '$lib/app-state.svelte'
+	import {canEditChannel} from '$lib/app-state.svelte'
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -41,7 +41,7 @@
 		})
 	)
 	const readonly = $derived(channel?.source === 'v1')
-	const canEdit = $derived(!readonly && appState.channels?.includes(channel?.id))
+	const canEdit = $derived(!readonly && canEditChannel(channel?.id))
 
 	/** @type {string[]} */
 	let selectedTracks = $state([])

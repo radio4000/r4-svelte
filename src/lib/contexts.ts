@@ -12,6 +12,3 @@ export const [getTracksQueryCtx, setTracksQueryCtx] = createContext<{
 	isReady: boolean
 	isLoading: boolean
 }>()
-
-/** Can-edit getter from [slug] layout */
-export const [getCanEditCtx, setCanEditCtx] = createContext<() => boolean>()

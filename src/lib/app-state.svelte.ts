@@ -77,6 +77,11 @@ function loadState(): AppState {
 
 export const appState: AppState = $state(loadState())
 
+/** Can the current user edit this channel? */
+export function canEditChannel(channelId: string | undefined): boolean {
+	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)
+}
+
 // Persist queue (large arrays) - only runs when these specific properties change
 $effect.root(() => {
 	$effect(() => {
