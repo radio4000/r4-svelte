@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import {page} from '$app/state'
-	import {getTracksQueryCtx, getCanEditCtx, setTagClickHandlerCtx} from '$lib/contexts'
+	import {getTracksQueryCtx, getCanEditCtx} from '$lib/contexts'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -67,8 +67,6 @@
 		if (!filteredTracks.length) return
 		addToPlaylist(filteredTracks.map((t) => t.id))
 	}
-
-	setTagClickHandlerCtx(toggleTag)
 </script>
 
 <svelte:head>
@@ -114,7 +112,7 @@
 		</header>
 
 		{#if tracksQuery.isReady && visibleTracks.length > 0}
-			<Tracklist tracks={visibleTracks} {canEdit} grouped={!isFiltering} virtual={false} />
+			<Tracklist tracks={visibleTracks} {canEdit} grouped={!isFiltering} virtual={false} onTagClick={toggleTag} />
 		{/if}
 
 		<footer>

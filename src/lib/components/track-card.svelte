@@ -16,11 +16,21 @@
 		showImage?: boolean
 		showSlug?: boolean
 		canEdit?: boolean
+		onTagClick?: (tag: string) => void
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
 
-	let {track, index, showImage = true, showSlug = false, canEdit = false, children, description}: Props = $props()
+	let {
+		track,
+		index,
+		showImage = true,
+		showSlug = false,
+		canEdit = false,
+		onTagClick,
+		children,
+		description
+	}: Props = $props()
 
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
@@ -78,7 +88,7 @@
 			{:else if track.description}
 				<p class="description">
 					<small>
-						<LinkEntities slug={track.slug} text={track.description} />
+						<LinkEntities slug={track.slug} text={track.description} {onTagClick} />
 					</small>
 				</p>
 			{/if}

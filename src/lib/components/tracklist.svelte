@@ -16,10 +16,11 @@
 		footer?: (props: {track: Track}) => any,
 		grouped?: boolean,
 		canEdit?: boolean,
-		virtual?: boolean
+		virtual?: boolean,
+		onTagClick?: (tag: string) => void
 		}}
 	*/
-	const {tracks, footer, grouped = false, canEdit = false, virtual = false} = $props()
+	const {tracks, footer, grouped = false, canEdit = false, virtual = false, onTagClick} = $props()
 
 	/**
 	 * Build localized month names array (0-11) for current locale
@@ -128,7 +129,7 @@
 						</div>
 					{:else if item.track}
 						<div class="virtual-item track-item">
-							<TrackCard track={item.track} index={item.index} {canEdit} />
+							<TrackCard track={item.track} index={item.index} {canEdit} {onTagClick} />
 							{@render footer?.({track: item.track})}
 						</div>
 					{/if}
@@ -157,7 +158,7 @@
 									{@const track = item.track}
 									{@const index = item.index}
 									<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
-										<TrackCard {track} {index} {canEdit} />
+										<TrackCard {track} {index} {canEdit} {onTagClick} />
 										{@render footer?.({track})}
 									</li>
 								{/each}
@@ -180,7 +181,7 @@
 		>
 			{#each tracks as track, index (track.id)}
 				<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
-					<TrackCard {track} {index} {canEdit} />
+					<TrackCard {track} {index} {canEdit} {onTagClick} />
 					{@render footer?.({track})}
 				</li>
 			{/each}

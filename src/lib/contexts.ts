@@ -15,6 +15,3 @@ export const [getTracksQueryCtx, setTracksQueryCtx] = createContext<{
 
 /** Can-edit getter from [slug] layout */
 export const [getCanEditCtx, setCanEditCtx] = createContext<() => boolean>()
-
-/** Tag click handler from [slug] page (undefined when outside page context) */
-export const [getTagClickHandlerCtx, setTagClickHandlerCtx] = createContext<((tag: string) => void) | undefined>()

@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {setTracksQueryCtx, setCanEditCtx, setTagClickHandlerCtx} from '$lib/contexts'
+	import {setTracksQueryCtx, setCanEditCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
@@ -39,7 +39,6 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 	setCanEditCtx(() => canEdit)
-	setTagClickHandlerCtx(undefined)
 </script>
 
 {#if channel}

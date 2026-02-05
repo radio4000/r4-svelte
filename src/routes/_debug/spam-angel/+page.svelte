@@ -158,11 +158,11 @@
 								</div>
 							</div>
 
-							{#if isExpanded || channel.description?.length > 100}
-								<div class="expanded" class:collapsed={!isExpanded && channel.description?.length > 100}>
+							{#if isExpanded || (channel.description?.length ?? 0) > 100}
+								<div class="expanded" class:collapsed={!isExpanded && (channel.description?.length ?? 0) > 100}>
 									<p class="desc" onclick={() => toggleExpand(channel.id)}>
 										{isExpanded ? channel.description : channel.description?.slice(0, 150)}
-										{#if !isExpanded && channel.description?.length > 150}…{/if}
+										{#if !isExpanded && (channel.description?.length ?? 0) > 150}…{/if}
 									</p>
 								</div>
 							{/if}
