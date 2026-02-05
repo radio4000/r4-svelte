@@ -16,14 +16,15 @@
 	const view = $derived(parseView(page.url.searchParams))
 	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length)
 
-	// Form inputs: derived from view, mutated by bind:value
-	let channelsInput = $derived(view.channels?.join(', ') || '')
-	let tagsInput = $derived(view.tags?.join(', ') || '')
-	let tagsModeValue = $derived(view.tagsMode || 'any')
-	let orderValue = $derived(view.order || 'created')
-	let directionValue = $derived(view.direction || 'desc')
-	let limitValue = $derived(view.limit ? String(view.limit) : '')
-	let searchInput = $derived(view.search || '')
+	// Form inputs: $state initialized once from URL, not $derived (avoids URL→form feedback loop)
+	const init = parseView(new URLSearchParams(page.url.search))
+	let channelsInput = $state(init.channels?.join(', ') || '')
+	let tagsInput = $state(init.tags?.join(', ') || '')
+	let tagsModeValue: 'any' | 'all' = $state(init.tagsMode || 'any')
+	let orderValue: View['order'] = $state(init.order || 'created')
+	let directionValue: 'asc' | 'desc' = $state(init.direction || 'desc')
+	let limitValue = $state(init.limit ? String(init.limit) : '')
+	let searchInput = $state(init.search || '')
 
 	// Build view from current form state (reads raw inputs)
 	function buildView(): View {
@@ -62,6 +63,13 @@
 	})
 
 	function clearView() {
+		channelsInput = ''
+		tagsInput = ''
+		tagsModeValue = 'any'
+		orderValue = 'created'
+		directionValue = 'desc'
+		limitValue = ''
+		searchInput = ''
 		goto('/_debug/views', {replaceState: true})
 	}
 

@@ -9,7 +9,6 @@ import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
-import {buildFtsFilter} from '$lib/search'
 import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
