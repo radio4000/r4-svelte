@@ -25,28 +25,17 @@
 	function getThemeColor(variable) {
 		if (typeof document === 'undefined') return '#ff0000'
 
-		// 1. Get the raw CSS value (likely containing oklch/light-dark)
+		// Resolve CSS variable (and light-dark) via a temp element
+		// getComputedStyle().color returns rgb() format which Three.js accepts directly
 		const div = document.createElement('div')
 		div.style.color = `var(${variable})`
 		div.style.visibility = 'hidden'
 		div.style.position = 'absolute'
 		document.body.appendChild(div)
-		const cssColor = getComputedStyle(div).color
+		const color = getComputedStyle(div).color
 		document.body.removeChild(div)
 
-		// 2. Resolve to RGB using Canvas
-		// This handles converting modern CSS colors (oklch, etc) to a format Three.js guarantees support for
-		const canvas = document.createElement('canvas')
-		canvas.width = 1
-		canvas.height = 1
-		const ctx = canvas.getContext('2d')
-		if (!ctx) return cssColor // Fallback
-		ctx.fillStyle = cssColor
-		ctx.fillRect(0, 0, 1, 1)
-
-		// Get hex or rgb
-		const col = ctx.fillStyle // This often returns hex
-		return col
+		return color
 	}
 
 	$effect(() => {
