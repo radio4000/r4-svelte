@@ -22,7 +22,6 @@
 
 	let {track, index, showImage = true, showSlug = false, canEdit = false, children, description}: Props = $props()
 
-	const menuId = $props.id()
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
 	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
@@ -90,7 +89,7 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</a>
-	<PopoverMenu id={menuId} bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}

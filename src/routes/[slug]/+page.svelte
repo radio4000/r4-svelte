@@ -18,7 +18,6 @@
 	import {fuzzySearch} from '$lib/search'
 	import * as m from '$lib/paraglide/messages'
 
-	const uid = $props.id()
 	const tracksQuery = getContext('tracksQuery')
 	const getCanEdit = getContext('canEdit')
 

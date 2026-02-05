@@ -139,7 +139,7 @@
 
 <div class={`layout layout--${display}`}>
 	<menu class="filtermenu">
-		<PopoverMenu id="channels-filter" triggerAttachment={tooltip({content: m.channels_filter_label()})}>
+		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabelMap[filter]()}{/snippet}
 			<menu data-vertical>
 				<button

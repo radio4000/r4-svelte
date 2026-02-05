@@ -318,7 +318,7 @@
 			Hold <kbd>Shift</kbd> or <kbd>ctrl</kbd> to select multiple cells.
 		</p> -->
 		<menu class="controls">
-			<PopoverMenu id="batch-filter">
+			<PopoverMenu>
 				{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabels[filter]}{/snippet}
 				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>All tracks</button>
 				<button class:active={filter === 'missing-description'} onclick={() => (filter = 'missing-description')}
@@ -338,7 +338,7 @@
 			</PopoverMenu>
 
 			{#if allTags.length > 0}
-				<PopoverMenu id="batch-tags">
+				<PopoverMenu>
 					{#snippet trigger()}<Icon icon="tag" size="20" /> {tagFilter || 'Tags'}{/snippet}
 					<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>All tags</button>
 					{#each allTags as { value, count } (value)}
@@ -348,7 +348,7 @@
 			{/if}
 
 			{#if allMentions.length > 0}
-				<PopoverMenu id="batch-mentions">
+				<PopoverMenu>
 					{#snippet trigger()}<Icon icon="user" size="20" /> {mentionFilter || 'Mentions'}{/snippet}
 					<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}>All mentions</button>
 					{#each allMentions as { value, count } (value)}
@@ -373,7 +373,7 @@
 				</button>
 			{/if}
 
-			<PopoverMenu id="batch-display" closeOnClick={false} style="margin-left: auto;">
+			<PopoverMenu closeOnClick={false} style="margin-left: auto;">
 				{#snippet trigger()}<Icon icon="grid" size="20" strokeWidth={1.7} /> Display{/snippet}
 				<div class="sort-row">
 					<select bind:value={sortBy}>

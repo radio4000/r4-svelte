@@ -72,7 +72,7 @@ $effect(() => {
 `src/lib/components/popover-menu.svelte` — dropdown menus using native popover API.
 
 ```svelte
-<PopoverMenu id="my-menu">
+<PopoverMenu>
 	{#snippet trigger()}
 		<Icon icon="more" />
 	{/snippet}
@@ -83,7 +83,6 @@ $effect(() => {
 
 **Props:**
 
-- `id` (required) — unique ID for popover targeting
 - `trigger` (snippet) — button content
 - `closeOnClick` — auto-close when clicking buttons/links (default: true)
 - `onclose` — callback when popover closes
