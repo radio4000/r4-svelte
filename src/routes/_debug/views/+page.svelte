@@ -3,7 +3,8 @@
 	import {goto} from '$app/navigation'
 	import {parseView, serializeView, type View} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
-	import {tracksCollection, fetchTracksGlobal} from '$lib/tanstack/collections'
+	import {tracksCollection, queryClient} from '$lib/tanstack/collections'
+	import type {Track} from '$lib/types'
 	import {fuzzySearch} from '$lib/search'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
@@ -13,8 +14,7 @@
 
 	// The view — single derived from URL, the source of truth
 	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search || !!view.limit)
-	const globalQuery = $derived(!view.channels?.length)
+	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length)
 
 	// Form inputs: derived from view, mutated by bind:value
 	let channelsInput = $derived(view.channels?.join(', ') || '')
@@ -24,36 +24,6 @@
 	let directionValue = $derived(view.direction || 'desc')
 	let limitValue = $derived(view.limit ? String(view.limit) : '')
 	let searchInput = $derived(view.search || '')
-
-	// Global fetch: load into collection, track IDs for scoping
-	let globalTrackIds: string[] = $state([])
-	let globalLoading = $state(false)
-
-	async function fetchGlobal(v: View) {
-		globalLoading = true
-		try {
-			const data = await fetchTracksGlobal({
-				tags: v.tags,
-				tagsMode: v.tagsMode,
-				search: v.search,
-				order: v.order,
-				direction: v.direction,
-				limit: v.limit
-			})
-			// Pour into the lake — deduped by track.id
-			tracksCollection.utils.writeBatch(() => {
-				for (const track of data) {
-					tracksCollection.utils.writeUpsert(track)
-				}
-			})
-			globalTrackIds = data.map((t) => t.id)
-		} catch (e) {
-			console.error('fetchGlobal', e)
-			globalTrackIds = []
-		} finally {
-			globalLoading = false
-		}
-	}
 
 	// Build view from current form state (reads raw inputs)
 	function buildView(): View {
@@ -74,7 +44,6 @@
 		v.direction = directionValue
 		const n = Number(limitValue)
 		if (n > 0) v.limit = n
-		// Enforce limit when querying without channels
 		if (!ch.length && !v.limit) {
 			v.limit = 5
 			limitValue = '5'
@@ -92,29 +61,22 @@
 		goto(`/_debug/views?${serializeView(v)}`, {replaceState: true})
 	})
 
-	// Global queries: fetch from supabase whenever view changes
-	$effect(() => {
-		if (globalQuery && hasFilter) fetchGlobal(view)
-	})
-
-	function reshuffle() {
-		if (globalQuery) fetchGlobal(view)
-	}
-
 	function clearView() {
-		globalTrackIds = []
 		goto('/_debug/views', {replaceState: true})
 	}
 
-	// One live query — channels scope by slug, global scopes by fetched IDs
+	// One live query — collection queryFn handles both slug and tag fetches
 	const tracksQuery = useLiveQuery((q) => {
 		let query = q.from({tracks: tracksCollection})
 		if (view.channels?.length) {
 			query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
-		} else if (globalTrackIds.length) {
-			query = query.where(({tracks}) => inArray(tracks.id, globalTrackIds))
-		} else {
-			// No data loaded yet — empty result
+		}
+		if (view.tags?.length && !view.channels?.length) {
+			// Tags .where() drives the queryFn for global tag queries.
+			// When channels are present, tags are post-filtered (inArray can't filter array columns in-memory).
+			query = query.where(({tracks}) => inArray(tracks.tags, view.tags))
+		}
+		if (!view.channels?.length && !view.tags?.length) {
 			return query.where(({tracks}) => inArray(tracks.id, []))
 		}
 		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
@@ -123,26 +85,40 @@
 		return query
 	})
 
-	const loading = $derived(globalQuery ? globalLoading : !tracksQuery.isReady)
-	const totalCount = $derived(tracksQuery.data?.length ?? 0)
+	const loading = $derived(!tracksQuery.isReady)
 
-	// Post-filter: tags (channel queries), search (channel queries), shuffle, limit
+	// Raw data: for channel queries useLiveQuery works; for tag-only, read query cache
+	const rawData = $derived.by(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		tracksQuery.status // reactivity: re-derive when query completes
+		if (view.channels?.length) return (tracksQuery.data ?? []) as Track[]
+		if (view.tags?.length) {
+			const key = ['tracks', 'tags', ...view.tags.toSorted()]
+			return (queryClient.getQueryData(key) as Track[]) ?? []
+		}
+		return [] as Track[]
+	})
+
+	const totalCount = $derived(rawData.length)
+
+	// Post-filter: tags (for channel queries), search, shuffle, limit
 	const tracks = $derived.by(() => {
-		let data = tracksQuery.data ?? []
-		// Tag filter for channel queries (global already filtered by supabase)
-		if (!globalQuery && view.tags?.length) {
+		let data = rawData
+		if (view.channels?.length && view.tags?.length) {
+			// Channel queries: tags are post-filtered (inArray can't match array columns)
 			if (view.tagsMode === 'all') {
 				data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
 			} else {
-				data = data.filter((t) => t.tags?.some((tag) => view.tags?.includes(tag)))
+				data = data.filter((t) => t.tags?.some((tag) => view.tags!.includes(tag)))
 			}
+		} else if (view.tagsMode === 'all' && view.tags?.length) {
+			// Tag-only queries: supabase used overlaps (any), so post-filter for "all" mode
+			data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
 		}
-		// Search: channel queries use local fuzzy (global already filtered by FTS)
-		if (!globalQuery && view.search) {
+		if (view.search) {
 			data = fuzzySearch(view.search, data, ['title', 'description'])
 		}
-		// Channel queries: shuffle locally. Global queries: already randomized by fetchTracksGlobal.
-		if (view.order === 'shuffle' && !globalQuery) data = shuffleArray(data)
+		if (view.order === 'shuffle') data = shuffleArray(data)
 		if (view.limit) data = data.slice(0, view.limit)
 		return data
 	})
@@ -187,7 +163,7 @@
 		</fieldset>
 		<fieldset class="row">
 			<legend>Sort</legend>
-			<SortControls bind:order={orderValue} bind:direction={directionValue} onreshuffle={reshuffle} />
+			<SortControls bind:order={orderValue} bind:direction={directionValue} />
 			<label for="limit">Limit</label>
 			<input id="limit" type="number" bind:value={limitValue} placeholder="10" min="1" max="500" />
 		</fieldset>
@@ -200,7 +176,7 @@
 
 <div class="container">
 	{#if !hasFilter}
-		<p>Add channels, tags, or a limit to start.</p>
+		<p>Add channels or tags to start.</p>
 	{:else if loading}
 		<p>Loading tracks…</p>
 	{:else if tracks.length}

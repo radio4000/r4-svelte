@@ -38,7 +38,6 @@ export {
 	batchDeleteTracks,
 	checkTracksFreshness,
 	ensureTracksLoaded,
-	fetchTracksGlobal,
 	insertDurationFromMeta
 } from './collections/tracks'
 
