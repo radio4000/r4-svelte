@@ -1,5 +1,5 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getTracksQueryCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
@@ -25,7 +25,7 @@
 	)
 
 	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
-	const tracksQuery = getContext('tracksQuery')
+	const tracksQuery = getTracksQueryCtx()
 
 	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
 

@@ -1,5 +1,6 @@
 <script>
-	import {onMount, getContext} from 'svelte'
+	import {onMount} from 'svelte'
+	import {getChannelsCtx} from '$lib/contexts'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import Channels from '$lib/components/channels.svelte'
@@ -7,7 +8,7 @@
 
 	const display = $derived(page?.url?.searchParams?.get('display'))
 
-	const getChannels = getContext('channels')
+	const getChannels = getChannelsCtx()
 	const channels = $derived(getChannels())
 
 	onMount(() => {

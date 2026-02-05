@@ -1,12 +1,11 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getTagClickHandlerCtx} from '$lib/contexts'
 	import {ENTITY_REGEX} from '$lib/utils.ts'
 
 	/** @type {{text: string | null | undefined, slug?: string | null}} */
 	const {text, slug} = $props()
 
-	/** @type {((tag: string) => void) | undefined} */
-	const tagClickHandler = getContext('tagClickHandler')
+	const tagClickHandler = getTagClickHandlerCtx()
 
 	const parts = $derived.by(() => {
 		if (typeof text !== 'string') return [{type: 'text', content: ''}]

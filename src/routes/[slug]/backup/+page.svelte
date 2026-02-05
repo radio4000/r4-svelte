@@ -1,10 +1,10 @@
 <script>
 	import {page} from '$app/state'
-	import {getContext} from 'svelte'
+	import {getCanEditCtx} from '$lib/contexts'
 	import Icon from '$lib/components/icon.svelte'
 
 	const slug = $derived(page.params.slug)
-	const canEdit = getContext('canEdit')
+	const canEdit = getCanEditCtx()
 
 	let downloading = $state(false)
 	let error = $state('')

@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {setContext} from 'svelte'
+	import {setTracksQueryCtx, setCanEditCtx, setTagClickHandlerCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
@@ -19,7 +19,7 @@
 
 	// Read channel directly from collection state (already loaded at root)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
+	let canEdit = $derived(!!appState.user && !!channel?.id && !!appState.channels?.includes(channel.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 
@@ -37,8 +37,9 @@
 	)
 
 	// Provide to child routes
-	setContext('tracksQuery', tracksQuery)
-	setContext('canEdit', () => canEdit)
+	setTracksQueryCtx(tracksQuery)
+	setCanEditCtx(() => canEdit)
+	setTagClickHandlerCtx(undefined)
 </script>
 
 {#if channel}

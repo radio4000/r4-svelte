@@ -1,5 +1,5 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getTracksQueryCtx} from '$lib/contexts'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
@@ -11,7 +11,7 @@
 	let slug = $derived(page.params.slug)
 
 	// Get tracks from layout (query stays alive during navigation)
-	const tracksQuery = getContext('tracksQuery')
+	const tracksQuery = getTracksQueryCtx()
 
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])

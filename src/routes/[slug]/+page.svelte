@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import {page} from '$app/state'
-	import {getContext, setContext} from 'svelte'
+	import {getTracksQueryCtx, getCanEditCtx, setTagClickHandlerCtx} from '$lib/contexts'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -18,8 +18,8 @@
 	import type {Track} from '$lib/types'
 	import * as m from '$lib/paraglide/messages'
 
-	const tracksQuery = getContext<{data: Track[]; isReady: boolean}>('tracksQuery')
-	const getCanEdit = getContext<() => boolean>('canEdit')
+	const tracksQuery = getTracksQueryCtx()
+	const getCanEdit = getCanEditCtx()
 
 	let searchQuery = $state('')
 	let selectedTags: string[] = $state([])
@@ -68,7 +68,7 @@
 		addToPlaylist(filteredTracks.map((t) => t.id))
 	}
 
-	setContext('tagClickHandler', toggleTag)
+	setTagClickHandlerCtx(toggleTag)
 </script>
 
 <svelte:head>
