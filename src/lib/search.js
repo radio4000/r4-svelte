@@ -27,7 +27,7 @@ const toPrefix = (q) => {
 const sanitizeForFilter = (q) => q.replace(/[,()]/g, ' ').replace(/\s+/g, ' ').trim()
 
 /** Build FTS filter combining websearch + prefix */
-const buildFtsFilter = (query) => {
+export const buildFtsFilter = (query) => {
 	const safe = sanitizeForFilter(query)
 	if (!safe) return null
 	const prefix = toPrefix(safe)

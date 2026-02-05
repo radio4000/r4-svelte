@@ -9,6 +9,7 @@ import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
+import {buildFtsFilter} from '$lib/search'
 import {getOfflineExecutor} from './offline-executor'
 import type {Track} from '$lib/types'
 
@@ -317,10 +318,11 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 	})
 }
 
-/** Fetch tracks globally (no channel filter). Supports tags, order, limit. */
+/** Fetch tracks globally (no channel filter). Supports tags, search, order, limit. */
 export async function fetchTracksGlobal(opts: {
 	tags?: string[]
 	tagsMode?: 'any' | 'all'
+	search?: string
 	order?: string
 	direction?: 'asc' | 'desc'
 	limit?: number
@@ -330,8 +332,9 @@ export async function fetchTracksGlobal(opts: {
 	const column = opts.order === 'name' ? 'title' : opts.order === 'updated' ? 'updated_at' : 'created_at'
 	const cacheKey = [
 		'tracks-global',
-		opts.tags?.sort().join(',') || '',
+		opts.tags?.toSorted().join(',') || '',
 		opts.tagsMode || 'any',
+		opts.search || '',
 		column,
 		direction,
 		limit
@@ -344,6 +347,10 @@ export async function fetchTracksGlobal(opts: {
 			let query = sdk.supabase.from('channel_tracks').select('*')
 			if (opts.tags?.length) {
 				query = opts.tagsMode === 'all' ? query.contains('tags', opts.tags) : query.overlaps('tags', opts.tags)
+			}
+			if (opts.search?.trim()) {
+				const ftsFilter = buildFtsFilter(opts.search)
+				if (ftsFilter) query = query.or(ftsFilter)
 			}
 			query = query.order(column, {ascending: direction === 'asc'}).limit(limit)
 			const {data, error} = await query

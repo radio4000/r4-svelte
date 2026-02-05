@@ -9,13 +9,14 @@ type View = {
 	channels?: string[] // channel slugs
 	tags?: string[] // match tracks with these tags
 	tagsMode?: 'any' | 'all' // default 'any'
+	search?: string // FTS globally, fuzzy locally
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
 	limit?: number
 }
 ```
 
-URL-encoded: `?channels=ko002,oskar&tags=jazz&tagsMode=all&order=created&direction=desc&limit=50`
+URL-encoded: `?search=miles+davis&tags=jazz&order=created&direction=desc&limit=50`
 
 ### Two data paths
 
@@ -35,10 +36,6 @@ Global queries bypass the collection. This means duplicate track data across que
 ### Saved views (localStorage)
 
 Users save a view with a name. Stored in a localStorage collection (same pattern as play-history). No `?view=` URL param — the full recipe is always in the URL. Saved views are just bookmarks with names.
-
-### Search
-
-Reuse the inline track search pattern from the `[slug]` page.
 
 ### Views as inputs
 

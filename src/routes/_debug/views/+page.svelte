@@ -4,6 +4,7 @@
 	import {parseView, serializeView} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {tracksCollection, fetchTracksGlobal} from '$lib/tanstack/collections'
+	import {fuzzySearch} from '$lib/search'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {inArray} from '@tanstack/db'
@@ -13,7 +14,7 @@
 
 	// The view — single derived from URL, the source of truth
 	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.limit)
+	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search || !!view.limit)
 	const globalQuery = $derived(!view.channels?.length)
 
 	// Form inputs (mutable, synced from URL on load)
@@ -23,6 +24,7 @@
 	let orderValue = $state(page.url.searchParams.get('order') || 'created')
 	let directionValue = $state(page.url.searchParams.get('direction') || 'desc')
 	let limitValue = $state(page.url.searchParams.get('limit') || '')
+	let searchInput = $state(page.url.searchParams.get('search') || '')
 
 	// Global fetch state (no channels — queries supabase directly)
 	let globalData: Track[] = $state([])
@@ -34,6 +36,7 @@
 			globalData = await fetchTracksGlobal({
 				tags: v.tags,
 				tagsMode: v.tagsMode,
+				search: v.search,
 				order: v.order,
 				direction: v.direction,
 				limit: v.limit
@@ -60,6 +63,7 @@
 			.filter(Boolean)
 		if (tg.length) v.tags = tg
 		if (tagsModeValue === 'all') v.tagsMode = 'all'
+		if (searchInput.trim()) v.search = searchInput.trim()
 		v.order = orderValue
 		v.direction = directionValue
 		const n = Number(limitValue)
@@ -78,6 +82,7 @@
 	const dChannels = new Debounced(() => channelsInput, 200)
 	const dTags = new Debounced(() => tagsInput, 200)
 	const dLimit = new Debounced(() => limitValue, 200)
+	const dSearch = new Debounced(() => searchInput, 300)
 
 	$effect(() => {
 		// Instant: selects/sort. Debounced: text/number inputs.
@@ -87,6 +92,7 @@
 		dChannels.current
 		dTags.current
 		dLimit.current
+		dSearch.current
 		applyView()
 	})
 
@@ -97,6 +103,7 @@
 		orderValue = 'created'
 		directionValue = 'desc'
 		limitValue = ''
+		searchInput = ''
 		globalData = []
 		goto('/_debug/views', {replaceState: true})
 	}
@@ -114,13 +121,17 @@
 	const loading = $derived(globalQuery ? globalLoading : !tracksQuery.isReady)
 	const totalCount = $derived(globalQuery ? globalData.length : (tracksQuery.data?.length ?? 0))
 
-	// Post-filter by tags (when channels set), shuffle, limit
+	// Post-filter by tags/search (when channels set), shuffle, limit
 	const tracks = $derived.by(() => {
 		let data = globalQuery ? globalData : (tracksQuery.data ?? [])
 		// Tag filter needed for channel queries (global already filtered by supabase)
 		if (!globalQuery && view.tags?.length) {
 			const match = view.tagsMode === 'all' ? 'every' : 'some'
 			data = data.filter((t) => t.tags?.[match]((tag) => view.tags?.includes(tag)))
+		}
+		// Search: channel queries use local fuzzy (global already filtered by FTS)
+		if (!globalQuery && view.search) {
+			data = fuzzySearch(view.search, data, ['title', 'description'])
 		}
 		if (view.order === 'shuffle') data = shuffleArray(data)
 		if (view.limit) data = data.slice(0, view.limit)
@@ -134,7 +145,7 @@
 
 <article class="container">
 	<h1>Views</h1>
-	<p>A view is a recipe: channels + tags + order + limit. URL-driven, reactive.</p>
+	<p>A view is a recipe: search + channels + tags + order + limit. URL-driven, reactive.</p>
 
 	<form
 		class="form"
@@ -143,6 +154,10 @@
 			applyView()
 		}}
 	>
+		<fieldset>
+			<label for="search">Search</label>
+			<input id="search" type="text" bind:value={searchInput} placeholder="miles davis" />
+		</fieldset>
 		<fieldset>
 			<label for="channels">Channels (comma-separated slugs)</label>
 			<input id="channels" type="text" bind:value={channelsInput} placeholder="tropicalia, oskar, ko002" />

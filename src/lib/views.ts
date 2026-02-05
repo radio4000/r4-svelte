@@ -5,6 +5,7 @@ export type View = {
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
 	limit?: number
+	search?: string
 }
 
 const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle'] as const
@@ -27,6 +28,8 @@ export function parseView(params: URLSearchParams): View {
 		const n = Number(limit)
 		if (n > 0) view.limit = n
 	}
+	const search = params.get('search')
+	if (search) view.search = search
 	return view
 }
 
@@ -38,5 +41,6 @@ export function serializeView(view: View): URLSearchParams {
 	if (view.order) params.set('order', view.order)
 	if (view.direction) params.set('direction', view.direction)
 	if (view.limit) params.set('limit', String(view.limit))
+	if (view.search) params.set('search', view.search)
 	return params
 }
