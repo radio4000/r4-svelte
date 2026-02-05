@@ -25,6 +25,7 @@
 		return channel?.id
 	})
 
+	let shuffleSeed = $state(0)
 	let limit = $state(16)
 	let perPage = $state(100)
 	let filter = $derived(appState.channels_filter || '10+')
@@ -67,7 +68,13 @@
 					})
 	)
 
-	const orderedChannels = $derived(order === 'shuffle' ? shuffleArray([...sortedChannels]) : sortedChannels)
+	const orderedChannels = $derived.by(() => {
+		if (order === 'shuffle') {
+			void shuffleSeed
+			return shuffleArray([...sortedChannels])
+		}
+		return sortedChannels
+	})
 
 	const realChannels = $derived({
 		filtered: filteredChannels,
@@ -228,7 +235,11 @@
 					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</div>
-			<SortControls bind:order={appState.channels_order} bind:direction={appState.channels_order_direction} />
+			<SortControls
+				bind:order={appState.channels_order}
+				bind:direction={appState.channels_order_direction}
+				onreshuffle={() => shuffleSeed++}
+			/>
 		</PopoverMenu>
 	</menu>
 

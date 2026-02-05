@@ -18,12 +18,14 @@ type View = {
 
 URL-encoded: `?search=miles+davis&tags=jazz&order=created&direction=desc&limit=50`
 
-### Two data paths
+### Data path
 
-- **With channels** → `useLiveQuery` on `tracksCollection` (reactive, collection-backed)
-- **Without channels** → `fetchTracksGlobal()` queries supabase directly (cached 60s via queryClient)
+All views render through `useLiveQuery` on `tracksCollection`. Loading and querying are separate:
 
-Global queries bypass the collection. This means duplicate track data across query cache entries (e.g. limit=5 and limit=6 share 5 tracks stored twice). Acceptable for now — short TTL, small payloads.
+- **With channels** → collection's built-in `queryFn` fetches by slug
+- **Without channels** → `fetchTracksGlobal()` fetches from supabase, results `writeUpsert`'d into collection
+
+Global fetch results are scoped by tracking returned IDs (`globalTrackIds`). The collection deduplicates by `track.id` — same track from two views = one entry. Tags/search post-filtered in JS (postgres array ops don't exist in TanStack DB query syntax).
 
 ### Files
 
@@ -40,10 +42,6 @@ Users save a view with a name. Stored in a localStorage collection (same pattern
 ### Views as inputs
 
 A saved view can feed a /mix crate source, seed a new channel, etc.
-
-### Unify data paths
-
-Feed global query results into the collection via `writeUpsert`, so both paths deduplicate in memory. Would allow `useLiveQuery` for everything. Bigger refactor.
 
 ## Non-goals (for now)
 

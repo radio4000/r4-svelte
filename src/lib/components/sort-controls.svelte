@@ -3,7 +3,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	let {order = $bindable(), direction = $bindable()} = $props()
+	let {order = $bindable(), direction = $bindable(), onreshuffle = undefined} = $props()
 
 	function toggleDirection() {
 		direction = direction === 'asc' ? 'desc' : 'asc'
@@ -22,7 +22,11 @@
 		<option value="name">{m.channels_order_name()}</option>
 		<option value="tracks">{m.channels_order_tracks()}</option>
 	</select>
-	{#if order !== 'shuffle'}
+	{#if order === 'shuffle'}
+		<button onclick={() => onreshuffle?.()} {@attach tooltip({content: m.channels_tooltip_shuffle()})}>
+			<Icon icon="shuffle" size="20" />
+		</button>
+	{:else}
 		<button
 			onclick={toggleDirection}
 			{@attach tooltip({

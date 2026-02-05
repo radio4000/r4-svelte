@@ -20,9 +20,10 @@ export function parseView(params: URLSearchParams): View {
 	const tagsMode = params.get('tagsMode')
 	if (tagsMode === 'all') view.tagsMode = 'all'
 	const order = params.get('order')
-	if (order && validOrders.includes(order as any)) view.order = order as View['order']
+	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
 	const direction = params.get('direction')
-	if (direction && validDirections.includes(direction as any)) view.direction = direction as View['direction']
+	if (direction && (validDirections as readonly string[]).includes(direction))
+		view.direction = direction as View['direction']
 	const limit = params.get('limit')
 	if (limit) {
 		const n = Number(limit)

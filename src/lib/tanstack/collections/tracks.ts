@@ -4,7 +4,7 @@ import {NonRetriableError} from '@tanstack/offline-transactions'
 import {sdk} from '@radio4000/sdk'
 import type {PendingMutation} from '@tanstack/db'
 import {parseUrl} from 'media-now'
-import {uuid} from '$lib/utils'
+import {uuid, pickRandomN} from '$lib/utils'
 import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
@@ -329,20 +329,23 @@ export async function fetchTracksGlobal(opts: {
 }): Promise<Track[]> {
 	const limit = opts.limit || 50
 	const direction = opts.direction || 'desc'
+	const isShuffle = opts.order === 'shuffle'
 	const column = opts.order === 'name' ? 'title' : opts.order === 'updated' ? 'updated_at' : 'created_at'
 	const cacheKey = [
 		'tracks-global',
 		opts.tags?.toSorted().join(',') || '',
 		opts.tagsMode || 'any',
 		opts.search || '',
-		column,
+		isShuffle ? 'shuffle' : column,
 		direction,
-		limit
+		limit,
+		// Bust cache for shuffle so each call gets different tracks
+		...(isShuffle ? [Date.now()] : [])
 	]
 
 	return queryClient.fetchQuery({
 		queryKey: cacheKey,
-		staleTime: 60_000,
+		staleTime: isShuffle ? 0 : 60_000,
 		queryFn: async () => {
 			let query = sdk.supabase.from('channel_tracks').select('*')
 			if (opts.tags?.length) {
@@ -352,10 +355,17 @@ export async function fetchTracksGlobal(opts: {
 				const ftsFilter = buildFtsFilter(opts.search)
 				if (ftsFilter) query = query.or(ftsFilter)
 			}
-			query = query.order(column, {ascending: direction === 'asc'}).limit(limit)
+			if (isShuffle) {
+				// Fetch a larger pool, then sample randomly
+				const pool = limit * 5
+				query = query.order('created_at', {ascending: Math.random() > 0.5}).limit(pool)
+			} else {
+				query = query.order(column, {ascending: direction === 'asc'}).limit(limit)
+			}
 			const {data, error} = await query
 			if (error) throw error
-			return (data || []) as Track[]
+			const tracks = (data || []) as Track[]
+			return isShuffle ? pickRandomN<Track>(limit)(tracks) : tracks
 		}
 	})
 }

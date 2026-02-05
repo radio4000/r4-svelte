@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {parseView, serializeView} from '$lib/views'
+	import {parseView, serializeView, type View} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {tracksCollection, fetchTracksGlobal} from '$lib/tanstack/collections'
 	import {fuzzySearch} from '$lib/search'
@@ -10,7 +10,6 @@
 	import {inArray} from '@tanstack/db'
 	import {shuffleArray} from '$lib/utils'
 	import {Debounced} from 'runed'
-	import type {Track} from '$lib/types'
 
 	// The view — single derived from URL, the source of truth
 	const view = $derived(parseView(page.url.searchParams))
@@ -21,19 +20,23 @@
 	let channelsInput = $state(page.url.searchParams.get('channels') || '')
 	let tagsInput = $state(page.url.searchParams.get('tags') || '')
 	let tagsModeValue = $state(page.url.searchParams.get('tagsMode') || 'any')
-	let orderValue = $state(page.url.searchParams.get('order') || 'created')
-	let directionValue = $state(page.url.searchParams.get('direction') || 'desc')
+	let orderValue: NonNullable<View['order']> = $state(
+		(page.url.searchParams.get('order') as View['order']) || 'created'
+	)
+	let directionValue: NonNullable<View['direction']> = $state(
+		(page.url.searchParams.get('direction') as View['direction']) || 'desc'
+	)
 	let limitValue = $state(page.url.searchParams.get('limit') || '')
 	let searchInput = $state(page.url.searchParams.get('search') || '')
 
-	// Global fetch state (no channels — queries supabase directly)
-	let globalData: Track[] = $state([])
+	// Global fetch: load into collection, track IDs for scoping
+	let globalTrackIds: string[] = $state([])
 	let globalLoading = $state(false)
 
-	async function fetchGlobal(v: import('$lib/views').View) {
+	async function fetchGlobal(v: View) {
 		globalLoading = true
 		try {
-			globalData = await fetchTracksGlobal({
+			const data = await fetchTracksGlobal({
 				tags: v.tags,
 				tagsMode: v.tagsMode,
 				search: v.search,
@@ -41,17 +44,23 @@
 				direction: v.direction,
 				limit: v.limit
 			})
+			// Pour into the lake — deduped by track.id
+			tracksCollection.utils.writeBatch(() => {
+				for (const track of data) {
+					tracksCollection.utils.writeUpsert(track)
+				}
+			})
+			globalTrackIds = data.map((t) => t.id)
 		} catch (e) {
 			console.error('fetchGlobal', e)
-			globalData = []
+			globalTrackIds = []
 		} finally {
 			globalLoading = false
 		}
 	}
 
 	function applyView() {
-		/** @type {import('$lib/views').View} */
-		const v = {}
+		const v: View = {}
 		const ch = channelsInput
 			.split(',')
 			.map((s) => s.trim())
@@ -96,6 +105,10 @@
 		applyView()
 	})
 
+	function reshuffle() {
+		if (globalQuery) fetchGlobal(view)
+	}
+
 	function clearView() {
 		channelsInput = ''
 		tagsInput = ''
@@ -104,36 +117,47 @@
 		directionValue = 'desc'
 		limitValue = ''
 		searchInput = ''
-		globalData = []
+		globalTrackIds = []
 		goto('/_debug/views', {replaceState: true})
 	}
 
-	// Live query: channels → collection
+	// One live query — channels scope by slug, global scopes by fetched IDs
 	const tracksQuery = useLiveQuery((q) => {
-		if (!view.channels?.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, []))
+		let query = q.from({tracks: tracksCollection})
+		if (view.channels?.length) {
+			query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
+		} else if (globalTrackIds.length) {
+			query = query.where(({tracks}) => inArray(tracks.id, globalTrackIds))
+		} else {
+			// No data loaded yet — empty result
+			return query.where(({tracks}) => inArray(tracks.id, []))
+		}
 		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
-		const sortDir = view.direction === 'asc' ? 'asc' : 'desc'
-		let query = q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, view.channels))
-		if (view.order !== 'shuffle') query = query.orderBy(({tracks}) => tracks[sortField], sortDir)
+		if (view.order !== 'shuffle')
+			query = query.orderBy(({tracks}) => tracks[sortField], view.direction === 'asc' ? 'asc' : 'desc')
 		return query
 	})
 
 	const loading = $derived(globalQuery ? globalLoading : !tracksQuery.isReady)
-	const totalCount = $derived(globalQuery ? globalData.length : (tracksQuery.data?.length ?? 0))
+	const totalCount = $derived(tracksQuery.data?.length ?? 0)
 
-	// Post-filter by tags/search (when channels set), shuffle, limit
+	// Post-filter: tags (channel queries), search (channel queries), shuffle, limit
 	const tracks = $derived.by(() => {
-		let data = globalQuery ? globalData : (tracksQuery.data ?? [])
-		// Tag filter needed for channel queries (global already filtered by supabase)
+		let data = tracksQuery.data ?? []
+		// Tag filter for channel queries (global already filtered by supabase)
 		if (!globalQuery && view.tags?.length) {
-			const match = view.tagsMode === 'all' ? 'every' : 'some'
-			data = data.filter((t) => t.tags?.[match]((tag) => view.tags?.includes(tag)))
+			if (view.tagsMode === 'all') {
+				data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
+			} else {
+				data = data.filter((t) => t.tags?.some((tag) => view.tags?.includes(tag)))
+			}
 		}
 		// Search: channel queries use local fuzzy (global already filtered by FTS)
 		if (!globalQuery && view.search) {
 			data = fuzzySearch(view.search, data, ['title', 'description'])
 		}
-		if (view.order === 'shuffle') data = shuffleArray(data)
+		// Channel queries: shuffle locally. Global queries: already randomized by fetchTracksGlobal.
+		if (view.order === 'shuffle' && !globalQuery) data = shuffleArray(data)
 		if (view.limit) data = data.slice(0, view.limit)
 		return data
 	})
@@ -144,8 +168,10 @@
 </svelte:head>
 
 <article class="container">
-	<h1>Views</h1>
-	<p>A view is a recipe: search + channels + tags + order + limit. URL-driven, reactive.</p>
+	<header>
+		<h1>Views</h1>
+		<p>URL -> view -> query -> collection -> reactive</p>
+	</header>
 
 	<form
 		class="form"
@@ -154,10 +180,6 @@
 			applyView()
 		}}
 	>
-		<fieldset>
-			<label for="search">Search</label>
-			<input id="search" type="text" bind:value={searchInput} placeholder="miles davis" />
-		</fieldset>
 		<fieldset>
 			<label for="channels">Channels (comma-separated slugs)</label>
 			<input id="channels" type="text" bind:value={channelsInput} placeholder="tropicalia, oskar, ko002" />
@@ -174,13 +196,18 @@
 				</select>
 			</fieldset>
 		</fieldset>
+		<fieldset>
+			<label for="search">Search</label>
+			<input id="search" type="text" bind:value={searchInput} placeholder="miles davis" />
+		</fieldset>
 		<fieldset class="row">
-			<SortControls bind:order={orderValue} bind:direction={directionValue} />
+			<legend>Sort</legend>
+			<SortControls bind:order={orderValue} bind:direction={directionValue} onreshuffle={reshuffle} />
 			<label for="limit">Limit</label>
 			<input id="limit" type="number" bind:value={limitValue} placeholder="10" min="1" max="500" />
 		</fieldset>
 		<menu>
-			<button type="submit">Apply</button>
+			<!--<button type="submit">Apply</button>-->
 			<button type="button" onclick={clearView}>Clear</button>
 		</menu>
 	</form>
@@ -199,3 +226,9 @@
 {#if tracks.length}
 	<Tracklist {tracks} />
 {/if}
+
+<style>
+	header {
+		margin-block: 0.5rem 1rem;
+	}
+</style>
