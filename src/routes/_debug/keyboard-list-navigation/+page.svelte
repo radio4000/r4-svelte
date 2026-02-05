@@ -36,7 +36,6 @@
 			class="list demo-list"
 			role="listbox"
 			tabindex="0"
-			aria-label="Fruit selection"
 			{@attach listboxNav({onSelect: handleSelect, onChange: handleChange, wrap: true})}
 		>
 			{#each fruits as fruit, i (fruit)}
@@ -59,8 +58,6 @@
 		<dl class="meta">
 			<dt><kbd>↑</kbd> <kbd>↓</kbd></dt>
 			<dd>Navigate</dd>
-			<dt><kbd>j</kbd> <kbd>k</kbd></dt>
-			<dd>Navigate (vim)</dd>
 			<dt><kbd>Home</kbd> <kbd>End</kbd></dt>
 			<dd>Jump to start/end</dd>
 			<dt><kbd>Enter</kbd> <kbd>Space</kbd></dt>
@@ -106,8 +103,9 @@
 <style>
 	.demo-list {
 		max-width: 16rem;
-		max-height: 12rem;
+		max-height: 10rem;
 		overflow-y: auto;
+		border: 2px dashed red;
 	}
 
 	.demo-list:focus {
@@ -118,23 +116,6 @@
 	/* aria-selected is managed by listboxNav attachment */
 	.demo-list :global([aria-selected='true']) {
 		background: var(--accent-4);
-	}
-
-	kbd {
-		font-family: var(--monospace);
-		font-size: var(--font-1);
-		background: var(--gray-3);
-		border: 1px solid var(--gray-6);
-		border-radius: 3px;
-		padding: 0.1em 0.4em;
-	}
-
-	pre {
-		background: var(--gray-2);
-		padding: 1rem;
-		border-radius: 4px;
-		overflow-x: auto;
-		font-size: var(--font-2);
 	}
 
 	section {

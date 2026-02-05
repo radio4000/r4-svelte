@@ -1,6 +1,8 @@
 <script>
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import {listboxNav} from '$lib/components/listbox-nav.svelte'
+	import {playTrack} from '$lib/api'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {getLocale} from '$lib/paraglide/runtime'
 
@@ -134,7 +136,16 @@
 			</SvelteVirtualList>
 		</div>
 	{:else if grouped}
-		<div class="timeline">
+		<div
+			class="timeline"
+			role="listbox"
+			tabindex="0"
+			aria-label="Tracks"
+			{@attach listboxNav({
+				onSelect: (_, el) => playTrack(el.dataset.trackId, null, 'user_click_track'),
+				wrap: true
+			})}
+		>
 			{#each groupedTracks as [year, months] (year)}
 				<section class="year">
 					<h2 class="caps">{year}</h2>
@@ -145,7 +156,7 @@
 								{#each monthTracks as item (item.track.id)}
 									{@const track = item.track}
 									{@const index = item.index}
-									<li>
+									<li role="option" id="track-{track.id}" data-track-id={track.id}>
 										<TrackCard {track} {index} {canEdit} />
 										{@render footer?.({track})}
 									</li>
@@ -157,9 +168,18 @@
 			{/each}
 		</div>
 	{:else}
-		<ul class="list tracks">
+		<ul
+			class="list tracks"
+			role="listbox"
+			tabindex="0"
+			aria-label="Tracks"
+			{@attach listboxNav({
+				onSelect: (_, el) => playTrack(el.dataset.trackId, null, 'user_click_track'),
+				wrap: true
+			})}
+		>
 			{#each tracks as track, index (track.id)}
-				<li>
+				<li role="option" id="track-{track.id}" data-track-id={track.id}>
 					<TrackCard {track} {index} {canEdit} />
 					{@render footer?.({track})}
 				</li>

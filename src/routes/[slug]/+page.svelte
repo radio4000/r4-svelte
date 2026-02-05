@@ -1,5 +1,6 @@
 <script module>
 	import {SvelteMap} from 'svelte/reactivity'
+
 	// Track render limit per channel (persists during session)
 	const channelLimits = new SvelteMap()
 </script>

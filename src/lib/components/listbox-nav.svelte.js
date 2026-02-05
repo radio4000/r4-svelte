@@ -51,11 +51,11 @@ export function listboxNav({onSelect, onChange, wrap = false} = {}) {
 
 			switch (e.key) {
 				case 'ArrowDown':
-				case 'j':
+					// case 'j':
 					setActive(activeIndex + 1, items)
 					break
 				case 'ArrowUp':
-				case 'k':
+					// case 'k':
 					setActive(activeIndex - 1, items)
 					break
 				case 'Home':
