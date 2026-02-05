@@ -2,6 +2,7 @@
 	import {batchUpdateTracksUniform, deleteTrackMeta, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import {countStrings} from '$lib/utils'
 
 	const uid = $props.id()
 
@@ -30,17 +31,7 @@
 	let tracksWithMeta = $derived(selectedTracks.filter((t) => t.youtube_data || t.musicbrainz_data || t.discogs_data))
 
 	// Tags present in selected tracks
-	let selectedTracksTags = $derived.by(() => {
-		const counts = {}
-		for (const track of selectedTracks) {
-			for (const tag of track.tags || []) {
-				counts[tag] = (counts[tag] || 0) + 1
-			}
-		}
-		return Object.entries(counts)
-			.map(([tag, count]) => ({tag, count}))
-			.sort((a, b) => b.count - a.count)
-	})
+	let selectedTracksTags = $derived(countStrings(selectedTracks.flatMap((t) => t.tags ?? [])))
 
 	function closeDialogs() {
 		showAppend = false
