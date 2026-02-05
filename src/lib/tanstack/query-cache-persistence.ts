@@ -35,15 +35,20 @@ const idbPersister = {
 	}
 }
 
+/* Decides which "query keys" to persist locally */
 function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {status: string; data: unknown}}): boolean {
+	// Skip failed results
 	if (query.state.status !== 'success') return false
 
-	const data = query.state.data
-	if (!Array.isArray(data) || data.length === 0) return false
-	if (data.some((item) => item == null)) return false
+	// Skip invalid data (do we need this check?)
+	// const data = query.state.data
+	// if (!Array.isArray(data) || data.length === 0) return false
+	// if (data.some((item) => item == null)) return false
 
 	const key = query.queryKey?.[0]
 	if (key === 'todos-cached') return false
+	if (key === 'channels') return false
+	if (key === 'tracks') return false
 
 	return true
 }
