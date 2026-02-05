@@ -4,10 +4,15 @@ import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
 
 const log = logger.ns('appstate').seal()
 
-/** The "app state" is a global, single reactive object shared across the app. Can be freely mutated anywhere directly. It persists to local storage automatically. */
+// Internally, for performance reasons, we split a couple of keys
+// into their own localstorage group to avoid serializing them on every change.
+const STATE_KEY = LOCAL_STORAGE_KEYS.appState
+const QUEUE_KEY = LOCAL_STORAGE_KEYS.appStateQueue
 
-const STORAGE_KEY = LOCAL_STORAGE_KEYS.appState
-
+/**
+ * The "app state" is a global, single reactive object shared across the app.
+ * It can be mutated from anywhere, and persists to local storage.
+ */
 export const defaultAppState: AppState = {
 	id: 1,
 
@@ -50,29 +55,46 @@ export const defaultAppState: AppState = {
 
 // Load from local storage on module init
 function loadState(): AppState {
+	let state = {...defaultAppState}
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY)
-		if (stored) {
-			const parsed = JSON.parse(stored)
-			parsed.is_playing = false
-			parsed.listening_to_channel_id = undefined
-			return {...defaultAppState, ...parsed}
+		const storedState = localStorage.getItem(STATE_KEY)
+		if (storedState) {
+			const parsed = JSON.parse(storedState)
+			state = {...state, ...parsed}
+		}
+		const storedQueue = localStorage.getItem(QUEUE_KEY)
+		if (storedQueue) {
+			const parsed = JSON.parse(storedQueue)
+			state.playlist_tracks = parsed.playlist_tracks ?? []
+			state.playlist_tracks_shuffled = parsed.playlist_tracks_shuffled ?? []
 		}
 	} catch (err) {
 		log.warn('Failed to load app state:', err)
 	}
-	return {...defaultAppState}
+	state.is_playing = false
+	state.listening_to_channel_id = undefined
+	return state
 }
 
 export const appState: AppState = $state(loadState())
 
-// Auto-persist on changes. Dunno why we have this effect.root and nested?
+// Persist queue (large arrays) - only runs when these specific properties change
 $effect.root(() => {
 	$effect(() => {
-		const serialized = JSON.stringify(appState)
-		const timeout = setTimeout(() => {
-			localStorage.setItem(STORAGE_KEY, serialized)
-		}, 200)
-		return () => clearTimeout(timeout)
+		const queue = {
+			playlist_tracks: appState.playlist_tracks,
+			playlist_tracks_shuffled: appState.playlist_tracks_shuffled
+		}
+		localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
+	})
+})
+
+// Persist state (everything except queue arrays)
+$effect.root(() => {
+	$effect(() => {
+		const state = {...appState} as Partial<AppState>
+		delete state.playlist_tracks
+		delete state.playlist_tracks_shuffled
+		localStorage.setItem(STATE_KEY, JSON.stringify(state))
 	})
 })

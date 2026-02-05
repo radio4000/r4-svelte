@@ -94,8 +94,6 @@
 			<dd>Callback when active item changes</dd>
 			<dt>wrap</dt>
 			<dd>Wrap at list boundaries</dd>
-			<dt>typeahead</dt>
-			<dd>Enable type-to-search</dd>
 		</dl>
 	</section>
 </div>
@@ -115,10 +113,6 @@
 
 	/* aria-selected is managed by listboxNav attachment */
 	.demo-list :global([aria-selected='true']) {
-		background: var(--accent-4);
-	}
-
-	section {
-		margin-block: 2rem;
+		background: red;
 	}
 </style>

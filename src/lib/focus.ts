@@ -7,7 +7,7 @@ export function forcefocus(node: HTMLInputElement) {
 
 export function focusable_children(node: HTMLElement) {
 	const nodes: HTMLElement[] = [
-		...node.querySelectorAll(
+		...node.querySelectorAll<HTMLElement>(
 			':where(a[href], button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):not(details:not([open]) *), summary:not(details:not([open]) details *)'
 		)
 	]

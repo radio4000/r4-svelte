@@ -8,19 +8,13 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - 3D globe map view in addition to map view. Which library?
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 - Test RTL-support
+- We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 
 ## Data & migration
 
 - Migrate v1 data to v2 — https://github.com/radio4000/migration-2026
   - How many v1 channels exist? Is migration-2026 repo active?
 - v1 compatibility — v1 channels can't be followed/broadcasted due to FK constraints. Resolved by migration above. if we do migration, lots of code here regarding v1 can be deleted
-
-## Performance
-
-- track-card bottlenecks: parsing links inside track.description with LinkEntities
-- Description link parsing is heavy — consider DB trigger for description_parsed.
-- appState serialization — playlist_tracks can be 3k items, serializing on every change may be slow. Consider splitting appState + playerState.
-- Validation layer at sync boundaries — preventive, using zod or similar.
 
 ## Needs research
 
