@@ -1,11 +1,11 @@
-<script module>
+<script module lang="ts">
 	import {SvelteMap} from 'svelte/reactivity'
 
 	// Track render limit per channel (persists during session)
-	const channelLimits = new SvelteMap()
+	const channelLimits = new SvelteMap<string, number>()
 </script>
 
-<script>
+<script lang="ts">
 	import {page} from '$app/state'
 	import {getContext, setContext} from 'svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
@@ -15,38 +15,40 @@
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import {countStrings} from '$lib/utils'
 	import {fuzzySearch} from '$lib/search'
+	import type {Track} from '$lib/types'
 	import * as m from '$lib/paraglide/messages'
 
-	const tracksQuery = getContext('tracksQuery')
-	const getCanEdit = getContext('canEdit')
+	const tracksQuery = getContext<{data: Track[]; isReady: boolean}>('tracksQuery')
+	const getCanEdit = getContext<() => boolean>('canEdit')
+
+	let searchQuery = $state('')
+	let selectedTags: string[] = $state([])
 
 	let slug = $derived(page.params.slug)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(getCanEdit())
-	let renderLimit = $derived(channelLimits.get(slug) ?? 40)
-	let searchQuery = $state('')
-	/** @type {string[]} */
-	let selectedTags = $state([])
+	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
 	let aggregatedTags = $derived(countStrings(allTracks.flatMap((t) => t.tags ?? [])))
 	let isFiltering = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
 	let tagFilteredTracks = $derived(selectedTags.length ? allTracks.filter(matchesTags) : allTracks)
 	let filteredTracks = $derived(
 		searchQuery.trim() ? fuzzySearch(searchQuery, tagFilteredTracks, ['title', 'description']) : tagFilteredTracks
 	)
-	let visibleTracks = $derived(isFiltering ? filteredTracks : renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
+	let limitedTracks = $derived(renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
+	let visibleTracks = $derived(isFiltering ? filteredTracks : limitedTracks)
 	let hasMore = $derived(!isFiltering && renderLimit && allTracks.length > renderLimit)
 
-	function matchesTags(track) {
+	function matchesTags(track: Track) {
 		const trackTags = (track.tags ?? []).map((t) => t.toLowerCase())
 		return selectedTags.every((t) => trackTags.includes(t.toLowerCase()))
 	}
 
 	function showAll() {
-		channelLimits.set(slug, 0)
+		if (slug) channelLimits.set(slug, 0)
 	}
 
-	function toggleTag(tag) {
+	function toggleTag(tag: string) {
 		if (selectedTags.includes(tag)) {
 			selectedTags = selectedTags.filter((t) => t !== tag)
 		} else {
@@ -112,7 +114,7 @@
 		</header>
 
 		{#if tracksQuery.isReady && visibleTracks.length > 0}
-			<Tracklist tracks={visibleTracks} {canEdit} grouped={isFiltering ? false : true} virtual={false} />
+			<Tracklist tracks={visibleTracks} {canEdit} grouped={!isFiltering} virtual={false} />
 		{/if}
 
 		<footer>
