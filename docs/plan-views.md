@@ -80,11 +80,9 @@ const tracks = useLiveQuery((q) => {
 
 	let query = q.from({tracks: tracksCollection})
 
-	if (view.channels?.length)
-		query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
+	if (view.channels?.length) query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
 
-	if (view.tags?.length)
-		query = query.fn.where((row) => view.tags.some((tag) => row.tracks.tags?.includes(tag)))
+	if (view.tags?.length) query = query.fn.where((row) => view.tags.some((tag) => row.tracks.tags?.includes(tag)))
 
 	if (view.sort === 'newest' || view.sort === 'oldest')
 		query = query.orderBy(({tracks}) => tracks.created_at, view.sort === 'newest' ? 'desc' : 'asc')

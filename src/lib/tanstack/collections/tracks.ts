@@ -16,9 +16,11 @@ export const tracksCollection = createCollection<Track, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-			const key = slug ? ['tracks', slug] : ['tracks']
-			return key
+			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
+			if (slugIn) return ['tracks', ...slugIn.sort()]
+			if (slugEq) return ['tracks', slugEq]
+			return ['tracks']
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -26,10 +28,15 @@ export const tracksCollection = createCollection<Track, string>(
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
+			const slugs = slugIn ?? (slugEq ? [slugEq] : [])
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
-			if (!slug) return []
-			return fetchTracksBySlug(slug, {limit: options.limit, createdAfter})
+			if (!slugs.length) return []
+			const results = await Promise.all(
+				slugs.map((s: string) => fetchTracksBySlug(s, {limit: options.limit, createdAfter}))
+			)
+			return results.flat()
 		}
 	})
 )
