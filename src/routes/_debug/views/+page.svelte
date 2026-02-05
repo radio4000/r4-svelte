@@ -16,18 +16,14 @@
 	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search || !!view.limit)
 	const globalQuery = $derived(!view.channels?.length)
 
-	// Form inputs (mutable, synced from URL on load)
-	let channelsInput = $state(page.url.searchParams.get('channels') || '')
-	let tagsInput = $state(page.url.searchParams.get('tags') || '')
-	let tagsModeValue = $state(page.url.searchParams.get('tagsMode') || 'any')
-	let orderValue: NonNullable<View['order']> = $state(
-		(page.url.searchParams.get('order') as View['order']) || 'created'
-	)
-	let directionValue: NonNullable<View['direction']> = $state(
-		(page.url.searchParams.get('direction') as View['direction']) || 'desc'
-	)
-	let limitValue = $state(page.url.searchParams.get('limit') || '')
-	let searchInput = $state(page.url.searchParams.get('search') || '')
+	// Form inputs: derived from view, mutated by bind:value
+	let channelsInput = $derived(view.channels?.join(', ') || '')
+	let tagsInput = $derived(view.tags?.join(', ') || '')
+	let tagsModeValue = $derived(view.tagsMode || 'any')
+	let orderValue = $derived(view.order || 'created')
+	let directionValue = $derived(view.direction || 'desc')
+	let limitValue = $derived(view.limit ? String(view.limit) : '')
+	let searchInput = $derived(view.search || '')
 
 	// Global fetch: load into collection, track IDs for scoping
 	let globalTrackIds: string[] = $state([])
@@ -59,7 +55,8 @@
 		}
 	}
 
-	function applyView() {
+	// Build view from current form state (reads raw inputs)
+	function buildView(): View {
 		const v: View = {}
 		const ch = channelsInput
 			.split(',')
@@ -82,27 +79,22 @@
 			v.limit = 5
 			limitValue = '5'
 		}
-		goto(`/_debug/views?${serializeView(v)}`, {replaceState: true})
-		// No channels: fetch globally from supabase
-		if (!ch.length) fetchGlobal(v)
+		return v
 	}
 
-	// Debounce text inputs, then auto-apply everything reactively
-	const dChannels = new Debounced(() => channelsInput, 200)
-	const dTags = new Debounced(() => tagsInput, 200)
-	const dLimit = new Debounced(() => limitValue, 200)
-	const dSearch = new Debounced(() => searchInput, 300)
+	// Debounce form → URL sync
+	const debouncedView = new Debounced(() => JSON.stringify(buildView()), 200)
 
 	$effect(() => {
-		// Instant: selects/sort. Debounced: text/number inputs.
-		tagsModeValue
-		orderValue
-		directionValue
-		dChannels.current
-		dTags.current
-		dLimit.current
-		dSearch.current
-		applyView()
+		const serialized = debouncedView.current
+		if (!serialized) return
+		const v: View = JSON.parse(serialized)
+		goto(`/_debug/views?${serializeView(v)}`, {replaceState: true})
+	})
+
+	// Global queries: fetch from supabase whenever view changes
+	$effect(() => {
+		if (globalQuery && hasFilter) fetchGlobal(view)
 	})
 
 	function reshuffle() {
@@ -110,13 +102,6 @@
 	}
 
 	function clearView() {
-		channelsInput = ''
-		tagsInput = ''
-		tagsModeValue = 'any'
-		orderValue = 'created'
-		directionValue = 'desc'
-		limitValue = ''
-		searchInput = ''
 		globalTrackIds = []
 		goto('/_debug/views', {replaceState: true})
 	}
@@ -177,7 +162,7 @@
 		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
-			applyView()
+			goto(`/_debug/views?${serializeView(buildView())}`, {replaceState: true})
 		}}
 	>
 		<fieldset>
