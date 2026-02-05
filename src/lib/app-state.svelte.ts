@@ -23,9 +23,8 @@ export const defaultAppState: AppState = {
 
 	channels_display: 'grid',
 	channels_filter: '10+',
-	channels_order: 'updated',
+	channels_order: 'shuffle',
 	channels_order_direction: 'desc',
-	channels_shuffled: true,
 	queue_panel_visible: false,
 	queue_panel_width: undefined,
 	show_video_player: true,

@@ -362,7 +362,9 @@
 	"share_native": "साझा करें",
 	"share_track_title": "ट्रैक साझा करें",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "सर्च खोलें",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "प्लेयर विस्तार टॉगल करें",
 	"shortcuts_action_togglePlayPause": "प्ले/पॉज़ टॉगल",
 	"shortcuts_action_toggleQueuePanel": "क्यू पैनल टॉगल",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{channel} द्वारा {track} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "ट्रैक संपादित करें",
+	"track_go_to": "ट्रैक पर जाएँ",
 	"track_meta_added": "जोड़ा गया",
 	"track_meta_appears_on": "इस पर आता है",
 	"track_meta_artist": "आर्टिस्ट",
@@ -588,12 +591,11 @@
 	"track_missing_label": "मिसिंग ट्रैक",
 	"track_play_from_here": "यहाँ से चलाएँ",
 	"track_play_next": "अगला चलाएँ",
-	"track_go_to": "ट्रैक पर जाएँ",
 	"track_recently_saved": "हाल में सहेजे गए ट्रैक्स",
 	"track_related_by": "द्वारा",
 	"track_related_empty": "इस YouTube वीडियो वाले अन्य ट्रैक्स नहीं मिले।",
 	"track_related_heading": "उसी YouTube वीडियो का उपयोग करने वाले अन्य ट्रैक्स:",
 	"track_urls_page_title": "ट्रैक URLs - {name} - R5",
-	"tracks_no_results": "कोई ट्रैक्स नहीं मिले।",
-	"tracks_no_media_id": "{url} के लिए YouTube ID नहीं"
+	"tracks_no_media_id": "{url} के लिए YouTube ID नहीं",
+	"tracks_no_results": "कोई ट्रैक्स नहीं मिले।"
 }

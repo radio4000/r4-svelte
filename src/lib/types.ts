@@ -28,9 +28,8 @@ export interface AppState {
 	custom_css_variables: Record<string, string>
 	channels_display: string
 	channels_filter: string
-	channels_order: 'updated' | 'created' | 'name' | 'tracks'
+	channels_order: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	channels_order_direction: 'asc' | 'desc'
-	channels_shuffled: boolean
 	followers_display?: 'grid' | 'list' | 'map' | 'infinite'
 	followers_order?: 'updated' | 'created' | 'name' | 'tracks'
 	followers_direction?: 'asc' | 'desc'

@@ -362,7 +362,9 @@
 	"share_native": "Udostępnij",
 	"share_track_title": "Udostępnij utwór",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Otwórz wyszukiwanie",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Przełącz rozwinięcie odtwarzacza",
 	"shortcuts_action_togglePlayPause": "Odtwórz/Wstrzymaj",
 	"shortcuts_action_toggleQueuePanel": "Przełącz panel kolejki",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} — {channel} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "Edytuj utwór",
+	"track_go_to": "Przejdź do utworu",
 	"track_meta_added": "dodano",
 	"track_meta_appears_on": "występuje na",
 	"track_meta_artist": "artysta",
@@ -588,12 +591,11 @@
 	"track_missing_label": "BRAK UTWORU",
 	"track_play_from_here": "Odtwórz od tego miejsca",
 	"track_play_next": "Odtwórz następny",
-	"track_go_to": "Przejdź do utworu",
 	"track_recently_saved": "Ostatnio zapisane utwory",
 	"track_related_by": "przez",
 	"track_related_empty": "Brak innych utworów używających tego wideo YouTube.",
 	"track_related_heading": "Inne utwory używające tego samego wideo YouTube:",
 	"track_urls_page_title": "URL-e utworów - {name} - R5",
-	"tracks_no_results": "Nie znaleziono utworów.",
-	"tracks_no_media_id": "Brak identyfikatora YouTube dla {url}"
+	"tracks_no_media_id": "Brak identyfikatora YouTube dla {url}",
+	"tracks_no_results": "Nie znaleziono utworów."
 }

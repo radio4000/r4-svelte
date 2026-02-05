@@ -188,7 +188,7 @@
 	"channels_tooltip_infinite": "Auto-loading scroll",
 	"channels_tooltip_list": "Compact list view",
 	"channels_tooltip_map": "Browse by location",
-	"channels_tooltip_shuffle": "Randomize order <kbd>S</kbd>",
+	"channels_tooltip_shuffle": "Randomize order",
 	"channels_tooltip_sort_asc": "Sort ascending",
 	"channels_tooltip_sort_desc": "Sort descending",
 	"channels_tooltip_tuner": "Scan like a radio dial",
@@ -541,6 +541,7 @@
 	"track_detail_page_title": "{track} by {channel} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "Edit track",
+	"track_go_to": "Go to track",
 	"track_meta_added": "added",
 	"track_meta_appears_on": "appears on",
 	"track_meta_artist": "artist",
@@ -590,12 +591,11 @@
 	"track_missing_label": "MISSING TRACK",
 	"track_play_from_here": "Play from here",
 	"track_play_next": "Play next",
-	"track_go_to": "Go to track",
 	"track_recently_saved": "Recently saved tracks",
 	"track_related_by": "by",
 	"track_related_empty": "No other tracks use this YouTube video.",
 	"track_related_heading": "Other tracks using the same YouTube video:",
 	"track_urls_page_title": "Track URLs - {name} - R5",
-	"tracks_no_results": "No tracks found.",
-	"tracks_no_media_id": "No YouTube ID for {url}"
+	"tracks_no_media_id": "No YouTube ID for {url}",
+	"tracks_no_results": "No tracks found."
 }

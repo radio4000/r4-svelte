@@ -362,7 +362,9 @@
 	"share_native": "Поділитися",
 	"share_track_title": "Поділитися треком",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Відкрити пошук",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Розгорнути/згорнути плеєр",
 	"shortcuts_action_togglePlayPause": "Перемкнути відтворення/паузу",
 	"shortcuts_action_toggleQueuePanel": "Перемкнути панель черги",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} від {channel} — R5",
 	"track_duration_seconds": "{seconds}с",
 	"track_edit_title": "Редагувати трек",
+	"track_go_to": "Перейти до треку",
 	"track_meta_added": "додано",
 	"track_meta_appears_on": "входить до",
 	"track_meta_artist": "артист",
@@ -588,12 +591,11 @@
 	"track_missing_label": "ТРЕК ВІДСУТНІЙ",
 	"track_play_from_here": "Відтворити звідси",
 	"track_play_next": "Відтворити наступний",
-	"track_go_to": "Перейти до треку",
 	"track_recently_saved": "Нещодавно збережені треки",
 	"track_related_by": "від",
 	"track_related_empty": "Інших треків із цим відео YouTube немає.",
 	"track_related_heading": "Інші треки, що використовують те саме відео YouTube:",
 	"track_urls_page_title": "URL треків — {name} — R5",
-	"tracks_no_results": "Треків не знайдено.",
-	"tracks_no_media_id": "Немає ID YouTube для {url}"
+	"tracks_no_media_id": "Немає ID YouTube для {url}",
+	"tracks_no_results": "Треків не знайдено."
 }

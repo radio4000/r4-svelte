@@ -28,8 +28,7 @@
 	let limit = $state(16)
 	let perPage = $state(100)
 	let filter = $derived(appState.channels_filter || '10+')
-	let shuffled = $derived(appState.channels_shuffled ?? true)
-	let order = $derived(appState.channels_order)
+	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
@@ -56,17 +55,19 @@
 	}
 
 	const sortedChannels = $derived(
-		[...filteredChannels]
-			.filter((c) => order !== 'updated' || c.latest_track_at)
-			.sort((a, b) => {
-				const av = sortKey[order](a)
-				const bv = sortKey[order](b)
-				const cmp = av < bv ? -1 : av > bv ? 1 : 0
-				return orderDirection === 'asc' ? cmp : -cmp
-			})
+		order === 'shuffle'
+			? filteredChannels
+			: [...filteredChannels]
+					.filter((c) => order !== 'updated' || c.latest_track_at)
+					.sort((a, b) => {
+						const av = sortKey[order](a)
+						const bv = sortKey[order](b)
+						const cmp = av < bv ? -1 : av > bv ? 1 : 0
+						return orderDirection === 'asc' ? cmp : -cmp
+					})
 	)
 
-	const orderedChannels = $derived(shuffled ? shuffleArray([...sortedChannels]) : sortedChannels)
+	const orderedChannels = $derived(order === 'shuffle' ? shuffleArray([...sortedChannels]) : sortedChannels)
 
 	const realChannels = $derived({
 		filtered: filteredChannels,
@@ -227,11 +228,7 @@
 					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</div>
-			<SortControls
-				bind:order={appState.channels_order}
-				bind:direction={appState.channels_order_direction}
-				bind:shuffled={appState.channels_shuffled}
-			/>
+			<SortControls bind:order={appState.channels_order} bind:direction={appState.channels_order_direction} />
 		</PopoverMenu>
 	</menu>
 

@@ -362,7 +362,9 @@
 	"share_native": "Kunhavigi",
 	"share_track_title": "Kunhavigi trakon",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Malfermi serĉon",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Baskuligi etenditan ludilon",
 	"shortcuts_action_togglePlayPause": "Baskuligi ludi/paŭzi",
 	"shortcuts_action_toggleQueuePanel": "Baskuligi vicpanelon",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} de {channel} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "Redakti trakon",
+	"track_go_to": "Iru al trako",
 	"track_meta_added": "aldonita",
 	"track_meta_appears_on": "aperas en",
 	"track_meta_artist": "artisto",
@@ -588,12 +591,11 @@
 	"track_missing_label": "MANKAS TRAKO",
 	"track_play_from_here": "Ludu de ĉi tie",
 	"track_play_next": "Ludu sekvan",
-	"track_go_to": "Iru al trako",
 	"track_recently_saved": "Lastatempe konservitaj trakoj",
 	"track_related_by": "de",
 	"track_related_empty": "Neniuj aliaj trakoj uzas ĉi tiun YouTube-videon.",
 	"track_related_heading": "Aliaj trakoj uzantaj la saman YouTube-videon:",
 	"track_urls_page_title": "Trakaj URL-oj - {name} - R5",
-	"tracks_no_results": "Neniuj trakoj trovitaj.",
-	"tracks_no_media_id": "Neniu YouTube-ID por {url}"
+	"tracks_no_media_id": "Neniu YouTube-ID por {url}",
+	"tracks_no_results": "Neniuj trakoj trovitaj."
 }

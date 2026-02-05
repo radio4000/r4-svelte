@@ -362,7 +362,9 @@
 	"share_native": "Condividi",
 	"share_track_title": "Condividi traccia",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Apri ricerca",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Espandi/riduci player",
 	"shortcuts_action_togglePlayPause": "Play/Pausa",
 	"shortcuts_action_toggleQueuePanel": "Mostra/nascondi pannello coda",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} di {channel} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "Modifica traccia",
+	"track_go_to": "Vai al brano",
 	"track_meta_added": "aggiunta",
 	"track_meta_appears_on": "presente su",
 	"track_meta_artist": "artista",
@@ -588,12 +591,11 @@
 	"track_missing_label": "TRACCIA MANCANTE",
 	"track_play_from_here": "Riproduci da qui",
 	"track_play_next": "Riproduci dopo",
-	"track_go_to": "Vai al brano",
 	"track_recently_saved": "Tracce salvate di recente",
 	"track_related_by": "di",
 	"track_related_empty": "Nessun’altra traccia usa questo video YouTube.",
 	"track_related_heading": "Altre tracce che usano lo stesso video YouTube:",
 	"track_urls_page_title": "URL tracce - {name} - R5",
-	"tracks_no_results": "Nessuna traccia trovata.",
-	"tracks_no_media_id": "Nessun ID YouTube per {url}"
+	"tracks_no_media_id": "Nessun ID YouTube per {url}",
+	"tracks_no_results": "Nessuna traccia trovata."
 }

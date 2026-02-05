@@ -362,7 +362,9 @@
 	"share_native": "শেয়ার",
 	"share_track_title": "ট্র্যাক শেয়ার করুন",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "সার্চ খুলুন",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "প্লেয়ার এক্সপ্যানশন টগল",
 	"shortcuts_action_togglePlayPause": "প্লে/পজ টগল",
 	"shortcuts_action_toggleQueuePanel": "কিউ প্যানেল টগল",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{channel} এর {track} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "ট্র্যাক এডিট",
+	"track_go_to": "ট্র্যাকে যান",
 	"track_meta_added": "যোগ হয়েছে",
 	"track_meta_appears_on": "প্রকাশিত হয়েছে",
 	"track_meta_artist": "আর্টিস্ট",
@@ -588,12 +591,11 @@
 	"track_missing_label": "ট্র্যাক অনুপস্থিত",
 	"track_play_from_here": "এখান থেকে চালান",
 	"track_play_next": "পরবর্তীটি চালান",
-	"track_go_to": "ট্র্যাকে যান",
 	"track_recently_saved": "সাম্প্রতিক সংরক্ষিত ট্র্যাক",
 	"track_related_by": "দ্বারা",
 	"track_related_empty": "এই YouTube ভিডিওটি ব্যবহার করে এমন আর কোনো ট্র্যাক নেই।",
 	"track_related_heading": "একই YouTube ভিডিও ব্যবহার করা অন্যান্য ট্র্যাক:",
 	"track_urls_page_title": "ট্র্যাক URL - {name} - R5",
-	"tracks_no_results": "কোনো ট্র্যাক পাওয়া যায়নি।",
-	"tracks_no_media_id": "{url}-এর জন্য কোনো YouTube ID নেই"
+	"tracks_no_media_id": "{url}-এর জন্য কোনো YouTube ID নেই",
+	"tracks_no_results": "কোনো ট্র্যাক পাওয়া যায়নি।"
 }

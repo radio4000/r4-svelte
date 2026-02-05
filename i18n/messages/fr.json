@@ -362,7 +362,9 @@
 	"share_native": "Partager",
 	"share_track_title": "Partager le morceau",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Ouvrir la recherche",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Afficher/masquer le lecteur étendu",
 	"shortcuts_action_togglePlayPause": "Lecture/Pause",
 	"shortcuts_action_toggleQueuePanel": "Afficher/masquer la file",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} par {channel} - R5",
 	"track_duration_seconds": "{seconds} s",
 	"track_edit_title": "Modifier le titre",
+	"track_go_to": "Aller au morceau",
 	"track_meta_added": "ajouté",
 	"track_meta_appears_on": "figure sur",
 	"track_meta_artist": "artiste",
@@ -588,12 +591,11 @@
 	"track_missing_label": "PISTE MANQUANTE",
 	"track_play_from_here": "Lire à partir d'ici",
 	"track_play_next": "Lire ensuite",
-	"track_go_to": "Aller au morceau",
 	"track_recently_saved": "Titres récemment enregistrés",
 	"track_related_by": "par",
 	"track_related_empty": "Aucun autre morceau n’utilise cette vidéo YouTube.",
 	"track_related_heading": "Autres morceaux utilisant la même vidéo YouTube :",
 	"track_urls_page_title": "URLs des morceaux - {name} - R5",
-	"tracks_no_results": "Aucun morceau trouvé.",
-	"tracks_no_media_id": "Pas d’ID YouTube pour {url}"
+	"tracks_no_media_id": "Pas d’ID YouTube pour {url}",
+	"tracks_no_results": "Aucun morceau trouvé."
 }

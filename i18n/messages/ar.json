@@ -362,7 +362,9 @@
 	"share_native": "مشاركة",
 	"share_track_title": "مشاركة المسار",
 	"share_url_label": "الرابط",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "افتح البحث",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "تبديل توسيع المشغّل",
 	"shortcuts_action_togglePlayPause": "تبديل تشغيل/إيقاف",
 	"shortcuts_action_toggleQueuePanel": "تبديل لوحة القائمة",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} من {channel} – R5",
 	"track_duration_seconds": "{seconds}ث",
 	"track_edit_title": "تحرير المسار",
+	"track_go_to": "انتقل إلى المسار",
 	"track_meta_added": "أُضيف",
 	"track_meta_appears_on": "يظهر على",
 	"track_meta_artist": "فنّان",
@@ -588,12 +591,11 @@
 	"track_missing_label": "مسار مفقود",
 	"track_play_from_here": "تشغيل من هنا",
 	"track_play_next": "تشغيل التالي",
-	"track_go_to": "انتقل إلى المسار",
 	"track_recently_saved": "المسارات المحفوظة حديثاً",
 	"track_related_by": "بواسطة",
 	"track_related_empty": "لا توجد مسارات أخرى تستخدم هذا الفيديو YouTube.",
 	"track_related_heading": "مسارات أخرى تستخدم نفس فيديو YouTube:",
 	"track_urls_page_title": "روابط المسارات – {name} – R5",
-	"tracks_no_results": "لم يتم العثور على مسارات.",
-	"tracks_no_media_id": "لا يوجد معرف YouTube لـ {url}"
+	"tracks_no_media_id": "لا يوجد معرف YouTube لـ {url}",
+	"tracks_no_results": "لم يتم العثور على مسارات."
 }

@@ -362,7 +362,9 @@
 	"share_native": "Del",
 	"share_track_title": "Del track",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Åbn søgning",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "Skift spillerudvidelse",
 	"shortcuts_action_togglePlayPause": "Skift play/pause",
 	"shortcuts_action_toggleQueuePanel": "Skift køpanel",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{track} af {channel} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "Redigér track",
+	"track_go_to": "Gå til track",
 	"track_meta_added": "tilføjet",
 	"track_meta_appears_on": "optræder på",
 	"track_meta_artist": "kunstner",
@@ -588,12 +591,11 @@
 	"track_missing_label": "MANGLENDE TRACK",
 	"track_play_from_here": "Afspil herfra",
 	"track_play_next": "Afspil næste",
-	"track_go_to": "Gå til track",
 	"track_recently_saved": "Nyligt gemte tracks",
 	"track_related_by": "af",
 	"track_related_empty": "Ingen andre tracks bruger denne YouTube-video.",
 	"track_related_heading": "Andre tracks der bruger den samme YouTube-video:",
 	"track_urls_page_title": "Track-URL'er - {name} - R5",
-	"tracks_no_results": "Ingen tracks fundet.",
-	"tracks_no_media_id": "Ingen YouTube-ID for {url}"
+	"tracks_no_media_id": "Ingen YouTube-ID for {url}",
+	"tracks_no_results": "Ingen tracks fundet."
 }

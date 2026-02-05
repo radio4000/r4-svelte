@@ -362,7 +362,9 @@
 	"share_native": "공유",
 	"share_track_title": "트랙 공유",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "검색 열기",
+	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
 	"shortcuts_action_togglePlayerExpanded": "플레이어 확장 전환",
 	"shortcuts_action_togglePlayPause": "재생/일시정지 전환",
 	"shortcuts_action_toggleQueuePanel": "대기열 패널 전환",
@@ -539,6 +541,7 @@
 	"track_detail_page_title": "{channel}의 {track} - R5",
 	"track_duration_seconds": "{seconds}s",
 	"track_edit_title": "트랙 편집",
+	"track_go_to": "트랙으로 이동",
 	"track_meta_added": "추가됨",
 	"track_meta_appears_on": "수록",
 	"track_meta_artist": "아티스트",
@@ -588,12 +591,11 @@
 	"track_missing_label": "트랙 없음",
 	"track_play_from_here": "여기서 재생",
 	"track_play_next": "다음에 재생",
-	"track_go_to": "트랙으로 이동",
 	"track_recently_saved": "최근 저장된 트랙",
 	"track_related_by": "제작",
 	"track_related_empty": "이 YouTube 영상을 사용하는 다른 트랙이 없습니다.",
 	"track_related_heading": "같은 YouTube 영상을 사용하는 다른 트랙:",
 	"track_urls_page_title": "트랙 URL - {name} - R5",
-	"tracks_no_results": "트랙을 찾지 못했습니다.",
-	"tracks_no_media_id": "{url}의 YouTube ID가 없습니다"
+	"tracks_no_media_id": "{url}의 YouTube ID가 없습니다",
+	"tracks_no_results": "트랙을 찾지 못했습니다."
 }
