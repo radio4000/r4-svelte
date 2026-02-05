@@ -2,6 +2,9 @@
 
 ## February 2026
 
+- #Player Keyboard navigation for tracklists—use arrow keys to move and enter/space to play
+- #performance Optimized app state persistence by avoiding repeated JSON serialization of playlist tracks
+- #performance Improved grouped tracklist date rendering (up to 900ms faster in some cases)
 - #UI Keyboard shortcuts dialog now opens with `?` key
 - #Tracks Redesigned track context menu with clearer groupings
 - #Channels Inline track search with tag filtering on channel pages
