@@ -2,10 +2,12 @@
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {SvelteMap} from 'svelte/reactivity'
+	import {getLocale} from '$lib/paraglide/runtime'
 
 	/** @typedef {import('$lib/types').Track} Track */
+	/** @typedef {{track: Track, index: number}} IndexedTrack */
 
-	/** @typedef {{type: 'year' | 'month' | 'track', value?: string, data?: Track, index?: number, id: string}} FlatItem */
+	/** @typedef {{type: 'year' | 'month' | 'track', value?: string, track?: Track, index?: number, id: string}} FlatItem */
 
 	/** @type {{
 		tracks: Track[],
@@ -17,25 +19,39 @@
 	*/
 	const {tracks, footer, grouped = false, canEdit = false, virtual = false} = $props()
 
+	/**
+	 * Build localized month names array (0-11) for current locale
+	 * @param {string} locale
+	 */
+	function getLocalizedMonths(locale) {
+		const formatter = new Intl.DateTimeFormat(locale, {month: 'long'})
+		return Array.from({length: 12}, (_, i) => formatter.format(new Date(2024, i, 1)))
+	}
+
+	// Rebuild month names when locale changes
+	const months = $derived(getLocalizedMonths(getLocale()))
+
 	// Cache key to avoid recomputing when tracks haven't changed
 	let cacheKey = $derived(`${tracks.length}-${tracks[0]?.id}-${tracks.at(-1)?.id}`)
 
-	/** @type {{key: string, items: FlatItem[], groups: SvelteMap<string, SvelteMap<string, Track[]>>}} */
+	/** @type {{key: string, items: FlatItem[], groups: SvelteMap<string, SvelteMap<string, IndexedTrack[]>>}} */
 	let cache = {key: '', items: [], groups: new SvelteMap()}
 
-	/** @type {SvelteMap<string, SvelteMap<string, Track[]>>} */
+	/** @type {SvelteMap<string, SvelteMap<string, IndexedTrack[]>>} */
 	let groupedTracks = $derived.by(() => {
 		if (!grouped || !tracks.length) return new SvelteMap()
 		if (cache.key === cacheKey) return cache.groups
 
 		// Build groups with plain Map first (faster), convert to SvelteMap at end
-		/** @type {Map<string, Map<string, Track[]>>} */
+		/** @type {Map<string, Map<string, IndexedTrack[]>>} */
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const groups = new Map()
+		let index = 0
 		for (const track of tracks) {
-			const date = new Date(track.created_at)
-			const year = date.getFullYear().toString()
-			const month = date.toLocaleString('en', {month: 'long'})
+			// Extract year/month from ISO string (fast, avoids Date object creation)
+			const year = track.created_at.slice(0, 4)
+			const monthIndex = parseInt(track.created_at.slice(5, 7), 10) - 1
+			const month = months[monthIndex]
 
 			let yearGroup = groups.get(year)
 			if (!yearGroup) {
@@ -49,10 +65,10 @@
 				monthTracks = []
 				yearGroup.set(month, monthTracks)
 			}
-			monthTracks.push(track)
+			monthTracks.push({track, index: index++})
 		}
 
-		// Convert to SvelteMap for reactivity in non-virtual template
+		// Convert to SvelteMap for reactivity in template
 		const svelteGroups = new SvelteMap(Array.from(groups, ([year, months]) => [year, new SvelteMap(months)]))
 		cache.groups = svelteGroups
 		return svelteGroups
@@ -64,20 +80,24 @@
 		if (cache.key === cacheKey && cache.items.length) return cache.items
 
 		if (!grouped) {
-			const items = tracks.map((t, i) => ({type: /** @type {const} */ ('track'), data: t, index: i, id: t.id}))
+			const items = tracks.map((track, index) => ({
+				type: /** @type {const} */ ('track'),
+				track,
+				index,
+				id: track.id
+			}))
 			cache = {key: cacheKey, items, groups: cache.groups}
 			return items
 		}
 
 		/** @type {FlatItem[]} */
 		const items = []
-		let trackIndex = 0
-		for (const [year, months] of groupedTracks) {
+		for (const [year, monthsMap] of groupedTracks) {
 			items.push({type: 'year', value: year, id: `year-${year}`})
-			for (const [month, monthTracks] of months) {
+			for (const [month, monthTracks] of monthsMap) {
 				items.push({type: 'month', value: month, id: `month-${year}-${month}`})
-				for (const track of monthTracks) {
-					items.push({type: 'track', data: track, index: trackIndex++, id: track.id})
+				for (const {track, index} of monthTracks) {
+					items.push({type: 'track', track, index, id: track.id})
 				}
 			}
 		}
@@ -104,10 +124,10 @@
 						<div class="virtual-item month-item">
 							<h3 class="caps">{item.value}</h3>
 						</div>
-					{:else if item.data}
+					{:else if item.track}
 						<div class="virtual-item track-item">
-							<TrackCard track={item.data} index={item.index} {canEdit} />
-							{@render footer?.({track: item.data})}
+							<TrackCard track={item.track} index={item.index} {canEdit} />
+							{@render footer?.({track: item.track})}
 						</div>
 					{/if}
 				{/snippet}
@@ -122,9 +142,11 @@
 						<section class="month">
 							<h3 class="caps">{month}</h3>
 							<ul class="list tracks">
-								{#each monthTracks as track (track.id)}
+								{#each monthTracks as item (item.track.id)}
+									{@const track = item.track}
+									{@const index = item.index}
 									<li>
-										<TrackCard {track} index={tracks.indexOf(track)} {canEdit} />
+										<TrackCard {track} {index} {canEdit} />
 										{@render footer?.({track})}
 									</li>
 								{/each}
