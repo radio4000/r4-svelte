@@ -142,7 +142,7 @@
 			tabindex="0"
 			aria-label="Tracks"
 			{@attach listboxNav({
-				onSelect: (_, el) => playTrack(el.dataset.trackId, null, 'user_click_track'),
+				onSelect: (_, el) => el.dataset.trackId && playTrack(el.dataset.trackId, null, 'user_click_track'),
 				wrap: true
 			})}
 		>
@@ -156,7 +156,7 @@
 								{#each monthTracks as item (item.track.id)}
 									{@const track = item.track}
 									{@const index = item.index}
-									<li role="option" id="track-{track.id}" data-track-id={track.id}>
+									<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
 										<TrackCard {track} {index} {canEdit} />
 										{@render footer?.({track})}
 									</li>
@@ -174,12 +174,12 @@
 			tabindex="0"
 			aria-label="Tracks"
 			{@attach listboxNav({
-				onSelect: (_, el) => playTrack(el.dataset.trackId, null, 'user_click_track'),
+				onSelect: (_, el) => el.dataset.trackId && playTrack(el.dataset.trackId, null, 'user_click_track'),
 				wrap: true
 			})}
 		>
 			{#each tracks as track, index (track.id)}
-				<li role="option" id="track-{track.id}" data-track-id={track.id}>
+				<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
 					<TrackCard {track} {index} {canEdit} />
 					{@render footer?.({track})}
 				</li>

@@ -5,8 +5,8 @@
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/listbox/
  *
  * @param {Object} options
- * @param {(index: number, element: Element) => void} [options.onSelect] - Called on Enter/Space
- * @param {(index: number, element: Element) => void} [options.onChange] - Called when active item changes
+ * @param {(index: number, element: HTMLElement) => void} [options.onSelect] - Called on Enter/Space
+ * @param {(index: number, element: HTMLElement) => void} [options.onChange] - Called when active item changes
  * @param {boolean} [options.wrap=false] - Wrap navigation at list boundaries
  * @returns {(element: HTMLElement) => () => void}
  */

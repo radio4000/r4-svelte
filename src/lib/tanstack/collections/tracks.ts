@@ -34,17 +34,6 @@ export const tracksCollection = createCollection<Track, string>(
 	})
 )
 
-/** Hotfix: SDK's parseTrack doesn't set provider/media_id for v1 tracks */
-function addProviderToTrack(track: Track): Track {
-	if (track.provider) return track
-	const parsed = parseUrl(track.url)
-	return {
-		...track,
-		provider: parsed?.provider || null,
-		media_id: parsed?.id || null
-	}
-}
-
 async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAfter?: string}): Promise<Track[]> {
 	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === slug)
 
@@ -52,7 +41,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		log.info('tracks fetch v1', {slug})
 		const {data, error} = await sdk.firebase.readTracks({slug})
 		if (error) throw error
-		return (data || []).map((t) => addProviderToTrack(sdk.firebase.parseTrack(t, channel.id, slug)))
+		return (data || []).map((t) => sdk.firebase.parseTrack(t, channel.id, slug))
 	}
 
 	log.info('tracks fetch v2', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
@@ -70,7 +59,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		if (v1Data?.length) {
 			const ch = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 			const channelId = ch?.id || slug
-			return v1Data.map((t) => addProviderToTrack(sdk.firebase.parseTrack(t, channelId, slug)))
+			return v1Data.map((t) => sdk.firebase.parseTrack(t, channelId, slug))
 		}
 	}
 

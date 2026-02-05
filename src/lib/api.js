@@ -110,8 +110,22 @@ export async function playTrack(id, endReason, startReason) {
 	}
 
 	// Wait for Svelte to update the DOM (render the player element) before calling play
+	// One tick isn't enough when the player element is conditionally rendered (e.g. first play)
+	// Wait for the element to appear in the DOM with a few retries
 	await tick()
-	log.debug('playTrack calling play()')
+	let retries = 10
+	while (retries > 0) {
+		const player = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+		log.debug('playTrack waiting for player element', {
+			retries,
+			found: !!player,
+			hasPaused: player && 'paused' in player
+		})
+		if (player && 'paused' in player) break
+		await new Promise((r) => requestAnimationFrame(r))
+		retries--
+	}
+	log.debug('playTrack calling play()', {retriesLeft: retries})
 	play()
 }
 
