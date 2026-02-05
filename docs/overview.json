@@ -21,9 +21,8 @@
 
 		{"name": "appState.channels_display", "desc": "'grid' | 'list'."},
 		{"name": "appState.channels_filter", "desc": "Track count filter."},
-		{"name": "appState.channels_order", "desc": "Sort field."},
+		{"name": "appState.channels_order", "desc": "Sort field or 'shuffle'."},
 		{"name": "appState.channels_order_direction", "desc": "'asc' | 'desc'."},
-		{"name": "appState.channels_shuffled", "desc": "Randomize order."},
 
 		{"name": "appState.broadcasting_channel_id", "desc": "Channel we're broadcasting."},
 		{"name": "appState.listening_to_channel_id", "desc": "Channel we're listening to."},

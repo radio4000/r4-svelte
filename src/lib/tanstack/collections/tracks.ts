@@ -317,6 +317,42 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 	})
 }
 
+/** Fetch tracks globally (no channel filter). Supports tags, order, limit. */
+export async function fetchTracksGlobal(opts: {
+	tags?: string[]
+	tagsMode?: 'any' | 'all'
+	order?: string
+	direction?: 'asc' | 'desc'
+	limit?: number
+}): Promise<Track[]> {
+	const limit = opts.limit || 50
+	const direction = opts.direction || 'desc'
+	const column = opts.order === 'name' ? 'title' : opts.order === 'updated' ? 'updated_at' : 'created_at'
+	const cacheKey = [
+		'tracks-global',
+		opts.tags?.sort().join(',') || '',
+		opts.tagsMode || 'any',
+		column,
+		direction,
+		limit
+	]
+
+	return queryClient.fetchQuery({
+		queryKey: cacheKey,
+		staleTime: 60_000,
+		queryFn: async () => {
+			let query = sdk.supabase.from('channel_tracks').select('*')
+			if (opts.tags?.length) {
+				query = opts.tagsMode === 'all' ? query.contains('tags', opts.tags) : query.overlaps('tags', opts.tags)
+			}
+			query = query.order(column, {ascending: direction === 'asc'}).limit(limit)
+			const {data, error} = await query
+			if (error) throw error
+			return (data || []) as Track[]
+		}
+	})
+}
+
 export async function ensureTracksLoaded(slug: string): Promise<void> {
 	const existing = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
 	if (existing.length) return

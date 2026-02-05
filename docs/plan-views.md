@@ -2,138 +2,57 @@
 
 Every list of tracks in the app is already a query. The idea: make that query a first-class thing you can name, save, share, and pipe into anything.
 
-## The shape
-
-A view is a recipe, not a snapshot.
+## Current state
 
 ```ts
 type View = {
 	channels?: string[] // channel slugs
 	tags?: string[] // match tracks with these tags
-	sort?: 'newest' | 'oldest'
+	tagsMode?: 'any' | 'all' // default 'any'
+	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
+	direction?: 'asc' | 'desc'
 	limit?: number
 }
 ```
 
-Empty view (`{}`) fetches nothing. At least one filter (channels or tags) required.
+URL-encoded: `?channels=ko002,oskar&tags=jazz&tagsMode=all&order=created&direction=desc&limit=50`
 
-```
-{channels: ['tropicalia']}                           → all tracks from one channel
-{tags: ['ambient', 'dub']}                           → ambient dub across all loaded tracks
-{channels: ['ko002', 'oskar'], tags: ['jazz']}       → jazz from two friends
-{}                                                    → nothing
-```
+### Two data paths
 
-## URL encoding
+- **With channels** → `useLiveQuery` on `tracksCollection` (reactive, collection-backed)
+- **Without channels** → `fetchTracksGlobal()` queries supabase directly (cached 60s via queryClient)
 
-Maps 1:1 to URL params:
+Global queries bypass the collection. This means duplicate track data across query cache entries (e.g. limit=5 and limit=6 share 5 tracks stored twice). Acceptable for now — short TTL, small payloads.
 
-```
-?channels=tropicalia,ko002&tags=ambient,dub&sort=newest&limit=50
-```
+### Files
 
-Copy the URL, send it to someone, they see the same thing. No auth needed.
+- `src/lib/views.ts` — `View` type, `parseView`, `serializeView`
+- `src/lib/tanstack/collections/tracks.ts` — `fetchTracksGlobal()`
+- `src/routes/_debug/views/+page.svelte` — debug playground
 
-## What this changes
+## What's left
 
-Right now each surface builds its own track list independently. With views, they all speak the same language: one query shape flowing through the whole app.
+### Saved views (localStorage)
 
-## Layers
+Users save a view with a name. Stored in a localStorage collection (same pattern as play-history). No `?view=` URL param — the full recipe is always in the URL. Saved views are just bookmarks with names.
 
-### 1. URL params (ephemeral)
+### Search
 
-The URL reflects the current view. Copy it, bookmark it, share it.
+Reuse the inline track search pattern from the `[slug]` page.
 
-### 2. Saved views (persistent)
-
-Logged-in users save a view with a name. Stored as name + JSON recipe. Gets a short ID: `?view=abc123`.
-
-### 3. Views as inputs
+### Views as inputs
 
 A saved view can feed a /mix crate source, seed a new channel, etc.
 
-## Composability
+### Unify data paths
 
-Merging two views = unioning their channels and tags. The URL stays flat. No nesting, no query language. Just arrays that grow.
+Feed global query results into the collection via `writeUpsert`, so both paths deduplicate in memory. Would allow `useLiveQuery` for everything. Bigger refactor.
 
 ## Non-goals (for now)
 
 - Nested views (view-of-views)
 - Exclude filters (NOT tag)
-- Cross-user permissions — saved views are public by default
-- Versioning — a view is mutable
 - Snapshot export — views are alive
-
-## Implementation — proof-of-concept
-
-Core idea: URL params → `View` → `useLiveQuery` on `tracksCollection`. The live query handles fetching and reactivity. No imperative resolve step.
-
-### How it works
-
-1. `parseView(params: URLSearchParams): View` — reads URL params into a View
-2. `serializeView(view: View): URLSearchParams` — inverse
-3. The View drives a `useLiveQuery`:
-
-```ts
-const tracks = useLiveQuery((q) => {
-	if (!view.channels?.length && !view.tags?.length) return undefined // nothing to query
-
-	let query = q.from({tracks: tracksCollection})
-
-	if (view.channels?.length) query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
-
-	if (view.tags?.length) query = query.fn.where((row) => view.tags.some((tag) => row.tracks.tags?.includes(tag)))
-
-	if (view.sort === 'newest' || view.sort === 'oldest')
-		query = query.orderBy(({tracks}) => tracks.created_at, view.sort === 'newest' ? 'desc' : 'asc')
-
-	if (view.limit) query = query.limit(view.limit)
-
-	return query
-})
-```
-
-Search: skipped for POC. When added later, reuse the inline track search pattern from the `[slug]` page.
-
-### `inArray` + `parseLoadSubsetOptions` (resolved)
-
-`inArray` maps to the `in` operator in the expression AST. `parseLoadSubsetOptions` → `extractSimpleComparisons` handles it — produces `{ field: ['slug'], operator: 'in', value: ['oskar', 'maria'] }`.
-
-But the current `tracksCollection` queryFn only matches `operator === 'eq'`, so it ignores `in` and returns `[]`.
-
-**Fix:** update the queryFn to also handle `in`:
-
-```ts
-const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
-const slugs = slugIn ?? (slugEq ? [slugEq] : [])
-if (!slugs.length) return []
-// fetch each slug, merge results
-```
-
-No automatic decomposition — the queryFn fetches each slug and merges.
-
-### New files
-
-**`src/lib/views.ts`** — `parseView`, `serializeView`, View type
-
-**`src/routes/_debug/views/+page.svelte`** — debug page: parsed View as JSON, controls to edit params via `goto()`, reactive track list from `useLiveQuery`
-
-### Modified files
-
-- `src/lib/types.ts` — add `View` type
-- `src/routes/_debug/+page.svelte` — nav link to views page
-
-### Key reuse
-
-- `tracksCollection` + `useLiveQuery` + `inArray` from `@tanstack/svelte-db`
-- URL param read/write pattern from `src/routes/search/+page.svelte`
-
-### Later
-
-- Saved views (localStorage collection, same pattern as play-history)
-- Search (reuse `[slug]` page inline search)
-- Shuffle (presentation layer, not query)
 
 ## Prior art
 

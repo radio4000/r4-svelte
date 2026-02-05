@@ -1,22 +1,50 @@
-<script>
+<script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
 	import {parseView, serializeView} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection, fetchTracksGlobal} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
+	import SortControls from '$lib/components/sort-controls.svelte'
 	import {inArray} from '@tanstack/db'
+	import {shuffleArray} from '$lib/utils'
+	import {Debounced} from 'runed'
+	import type {Track} from '$lib/types'
 
 	// The view — single derived from URL, the source of truth
 	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length)
+	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.limit)
+	const globalQuery = $derived(!view.channels?.length)
 
 	// Form inputs (mutable, synced from URL on load)
 	let channelsInput = $state(page.url.searchParams.get('channels') || '')
 	let tagsInput = $state(page.url.searchParams.get('tags') || '')
 	let tagsModeValue = $state(page.url.searchParams.get('tagsMode') || 'any')
-	let sortValue = $state(page.url.searchParams.get('sort') || '')
+	let orderValue = $state(page.url.searchParams.get('order') || 'created')
+	let directionValue = $state(page.url.searchParams.get('direction') || 'desc')
 	let limitValue = $state(page.url.searchParams.get('limit') || '')
+
+	// Global fetch state (no channels — queries supabase directly)
+	let globalData: Track[] = $state([])
+	let globalLoading = $state(false)
+
+	async function fetchGlobal(v: import('$lib/views').View) {
+		globalLoading = true
+		try {
+			globalData = await fetchTracksGlobal({
+				tags: v.tags,
+				tagsMode: v.tagsMode,
+				order: v.order,
+				direction: v.direction,
+				limit: v.limit
+			})
+		} catch (e) {
+			console.error('fetchGlobal', e)
+			globalData = []
+		} finally {
+			globalLoading = false
+		}
+	}
 
 	function applyView() {
 		/** @type {import('$lib/views').View} */
@@ -32,37 +60,69 @@
 			.filter(Boolean)
 		if (tg.length) v.tags = tg
 		if (tagsModeValue === 'all') v.tagsMode = 'all'
-		if (sortValue === 'newest' || sortValue === 'oldest') v.sort = sortValue
+		v.order = orderValue
+		v.direction = directionValue
 		const n = Number(limitValue)
 		if (n > 0) v.limit = n
+		// Enforce limit when querying without channels
+		if (!ch.length && !v.limit) {
+			v.limit = 5
+			limitValue = '5'
+		}
 		goto(`/_debug/views?${serializeView(v)}`, {replaceState: true})
+		// No channels: fetch globally from supabase
+		if (!ch.length) fetchGlobal(v)
 	}
+
+	// Debounce text inputs, then auto-apply everything reactively
+	const dChannels = new Debounced(() => channelsInput, 200)
+	const dTags = new Debounced(() => tagsInput, 200)
+	const dLimit = new Debounced(() => limitValue, 200)
+
+	$effect(() => {
+		// Instant: selects/sort. Debounced: text/number inputs.
+		tagsModeValue
+		orderValue
+		directionValue
+		dChannels.current
+		dTags.current
+		dLimit.current
+		applyView()
+	})
 
 	function clearView() {
 		channelsInput = ''
 		tagsInput = ''
 		tagsModeValue = 'any'
-		sortValue = ''
+		orderValue = 'created'
+		directionValue = 'desc'
 		limitValue = ''
+		globalData = []
 		goto('/_debug/views', {replaceState: true})
 	}
 
-	// Live query: fetch by channels, sort (no limit — applied after tag filter)
+	// Live query: channels → collection
 	const tracksQuery = useLiveQuery((q) => {
 		if (!view.channels?.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, []))
-		return q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => inArray(tracks.slug, view.channels))
-			.orderBy(({tracks}) => tracks.created_at, view.sort === 'oldest' ? 'asc' : 'desc')
+		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
+		const sortDir = view.direction === 'asc' ? 'asc' : 'desc'
+		let query = q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, view.channels))
+		if (view.order !== 'shuffle') query = query.orderBy(({tracks}) => tracks[sortField], sortDir)
+		return query
 	})
 
-	// Post-filter by tags, then limit
+	const loading = $derived(globalQuery ? globalLoading : !tracksQuery.isReady)
+	const totalCount = $derived(globalQuery ? globalData.length : (tracksQuery.data?.length ?? 0))
+
+	// Post-filter by tags (when channels set), shuffle, limit
 	const tracks = $derived.by(() => {
-		let data = tracksQuery.data ?? []
-		if (view.tags?.length) {
+		let data = globalQuery ? globalData : (tracksQuery.data ?? [])
+		// Tag filter needed for channel queries (global already filtered by supabase)
+		if (!globalQuery && view.tags?.length) {
 			const match = view.tagsMode === 'all' ? 'every' : 'some'
 			data = data.filter((t) => t.tags?.[match]((tag) => view.tags?.includes(tag)))
 		}
+		if (view.order === 'shuffle') data = shuffleArray(data)
 		if (view.limit) data = data.slice(0, view.limit)
 		return data
 	})
@@ -74,7 +134,7 @@
 
 <article class="container">
 	<h1>Views</h1>
-	<p>A view is a recipe: channels + tags + sort + limit. URL-driven, reactive.</p>
+	<p>A view is a recipe: channels + tags + order + limit. URL-driven, reactive.</p>
 
 	<form
 		class="form"
@@ -84,57 +144,43 @@
 		}}
 	>
 		<fieldset>
-			<label>
-				Channels (comma-separated slugs)
-				<input type="text" bind:value={channelsInput} placeholder="tropicalia, oskar, ko002" />
-			</label>
+			<label for="channels">Channels (comma-separated slugs)</label>
+			<input id="channels" type="text" bind:value={channelsInput} placeholder="tropicalia, oskar, ko002" />
 		</fieldset>
 		<fieldset>
-			<label>
-				Tags (comma-separated)
-				<input type="text" bind:value={tagsInput} placeholder="ambient, dub, jazz" />
-			</label>
-			<label>
-				Match
-				<select bind:value={tagsModeValue}>
+			<legend>Tags (comma-separated)</legend>
+			<fieldset class="row">
+				<label class="visually-hidden" for="tags">Tags (comma-separated)</label>
+				<input id="tags" type="text" bind:value={tagsInput} placeholder="ambient, dub, jazz" />
+				<label class="visually-hidden" for="tagsMode">Match</label>
+				<select id="tagsMode" bind:value={tagsModeValue}>
 					<option value="any">any tag</option>
 					<option value="all">all tags</option>
 				</select>
-			</label>
+			</fieldset>
 		</fieldset>
 		<fieldset class="row">
-			<label>
-				Sort
-				<select bind:value={sortValue}>
-					<option value="">default</option>
-					<option value="newest">newest</option>
-					<option value="oldest">oldest</option>
-				</select>
-			</label>
-			<label>
-				Limit
-				<input type="number" bind:value={limitValue} placeholder="50" min="1" max="500" />
-			</label>
+			<SortControls bind:order={orderValue} bind:direction={directionValue} />
+			<label for="limit">Limit</label>
+			<input id="limit" type="number" bind:value={limitValue} placeholder="10" min="1" max="500" />
 		</fieldset>
 		<menu>
 			<button type="submit">Apply</button>
 			<button type="button" onclick={clearView}>Clear</button>
 		</menu>
 	</form>
+</article>
 
-	<details open>
-		<summary>Parsed view</summary>
-		<pre><code>{JSON.stringify(view, null, 2)}</code></pre>
-	</details>
-
+<div class="container">
 	{#if !hasFilter}
-		<p>Add at least one channel or tag to start.</p>
-	{:else if !tracksQuery.isReady}
+		<p>Add channels, tags, or a limit to start.</p>
+	{:else if loading}
 		<p>Loading tracks…</p>
 	{:else if tracks.length}
-		<p>{tracks.length} tracks</p>
-		<Tracklist {tracks} />
-	{:else}
-		<p>No tracks match this view</p>
+		<p>{tracks.length}{tracks.length < totalCount ? ` of ${totalCount}` : ''} tracks</p>
 	{/if}
-</article>
+</div>
+
+{#if tracks.length}
+	<Tracklist {tracks} />
+{/if}
