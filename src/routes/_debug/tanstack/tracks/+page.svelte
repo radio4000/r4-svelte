@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {SvelteSet} from 'svelte/reactivity'
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
@@ -35,11 +36,11 @@
 
 	// Reactive stats from the cross-collection query
 	const slugsLoaded = $derived.by(() => {
-		const slugs = new Set<string>()
+		const slugs = new SvelteSet<string>()
 		for (const track of recentTracks.data ?? []) {
 			if (track.slug) slugs.add(track.slug)
 		}
-		return [...slugs].sort()
+		return [...slugs].toSorted()
 	})
 
 	// ─── CRUD handlers ───
