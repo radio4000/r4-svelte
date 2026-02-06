@@ -17,8 +17,14 @@
 	let slug = $derived(page.params.slug)
 	let routeId = $derived(page.route.id)
 
-	// Read channel directly from collection state (already loaded at root)
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	// Reactive via useLiveQuery — updates when channel is edited. findOne() avoids scanning all rows.
+	const channelQuery = useLiveQuery((q) =>
+		q
+			.from({ch: channelsCollection})
+			.where(({ch}) => eq(ch.slug, slug))
+			.findOne()
+	)
+	let channel = $derived(channelQuery.data)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
@@ -55,7 +61,7 @@
 				<p class="dates">
 					<small>
 						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
-							date: relativeDate(channel.updated_at)
+							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
 						})}
 					</small>
 				</p>
