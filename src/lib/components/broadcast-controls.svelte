@@ -56,7 +56,7 @@
 			<button onclick={() => stopBroadcasting()}>{m.broadcast_stop_button()}</button>
 		{:else}
 			<button onclick={start}>
-				<Icon icon="signal" size={20} strokeWidth={1.7}></Icon>
+				<Icon icon="signal" strokeWidth={1.7}></Icon>
 				{m.broadcast_start_button()}
 			</button>
 		{/if}
@@ -68,7 +68,7 @@
 	</div>
 {:else}
 	<a class="btn" href="/auth">
-		<Icon icon="signal" size={20} strokeWidth={1.7}></Icon>
+		<Icon icon="signal" strokeWidth={1.7}></Icon>
 		{m.broadcast_login_prompt()}
 	</a>
 {/if}

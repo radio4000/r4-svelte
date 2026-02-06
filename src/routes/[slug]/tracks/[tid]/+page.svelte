@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {getContext} from 'svelte'
+	import {getTracksQueryCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
@@ -16,7 +16,7 @@
 	let {data} = $props()
 
 	// Reuse tracksQuery from layout (already loaded)
-	const tracksQuery = getContext('tracksQuery')
+	const tracksQuery = getTracksQueryCtx()
 
 	// Channel is already loaded in layout, read from collection
 	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === data.slug))

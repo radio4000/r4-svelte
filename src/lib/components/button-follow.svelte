@@ -31,7 +31,7 @@
 		aria-label={following ? m.button_unfollow() : m.button_follow()}
 		{...rest}
 	>
-		<Icon icon={following ? 'favorite-fill' : 'favorite'} size={20} />
+		<Icon icon={following ? 'favorite-fill' : 'favorite'} />
 		{label}
 	</button>
 {/if}

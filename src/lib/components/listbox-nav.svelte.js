@@ -84,7 +84,10 @@ export function listboxNav({onSelect, onChange, wrap = false} = {}) {
 			const index = items.indexOf(/** @type {HTMLElement} */ (option))
 			if (index >= 0) {
 				setActive(index, items)
-				onSelect?.(index, items[index])
+				// Don't trigger onSelect if clicking an interactive element inside the option
+				if (!target.closest('button, a, input, [role="button"]')) {
+					onSelect?.(index, items[index])
+				}
 			}
 		}
 

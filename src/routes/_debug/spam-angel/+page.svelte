@@ -1,11 +1,11 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getChannelsCtx} from '$lib/contexts'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {analyzeChannel} from './spam-detector.js'
 	import {spamDecisionsCollection} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 
-	const getChannels = getContext('channels')
+	const getChannels = getChannelsCtx()
 	const allChannels = $derived(getChannels())
 
 	const decisionsQuery = useLiveQuery((q) => q.from({d: spamDecisionsCollection}))
@@ -158,11 +158,11 @@
 								</div>
 							</div>
 
-							{#if isExpanded || channel.description?.length > 100}
-								<div class="expanded" class:collapsed={!isExpanded && channel.description?.length > 100}>
+							{#if isExpanded || (channel.description?.length ?? 0) > 100}
+								<div class="expanded" class:collapsed={!isExpanded && (channel.description?.length ?? 0) > 100}>
 									<p class="desc" onclick={() => toggleExpand(channel.id)}>
 										{isExpanded ? channel.description : channel.description?.slice(0, 150)}
-										{#if !isExpanded && channel.description?.length > 150}…{/if}
+										{#if !isExpanded && (channel.description?.length ?? 0) > 150}…{/if}
 									</p>
 								</div>
 							{/if}

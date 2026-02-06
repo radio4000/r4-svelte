@@ -1,5 +1,5 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getTracksQueryCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
@@ -7,7 +7,7 @@
 	import {fuzzySearch} from '$lib/search'
 	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
-	import {appState} from '$lib/app-state.svelte'
+	import {canEditChannel} from '$lib/app-state.svelte'
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -25,7 +25,7 @@
 	)
 
 	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
-	const tracksQuery = getContext('tracksQuery')
+	const tracksQuery = getTracksQueryCtx()
 
 	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
 
@@ -41,7 +41,7 @@
 		})
 	)
 	const readonly = $derived(channel?.source === 'v1')
-	const canEdit = $derived(!readonly && appState.channels?.includes(channel?.id))
+	const canEdit = $derived(!readonly && canEditChannel(channel?.id))
 
 	/** @type {string[]} */
 	let selectedTracks = $state([])
@@ -318,8 +318,8 @@
 			Hold <kbd>Shift</kbd> or <kbd>ctrl</kbd> to select multiple cells.
 		</p> -->
 		<menu class="controls">
-			<PopoverMenu id="batch-filter">
-				{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabels[filter]}{/snippet}
+			<PopoverMenu>
+				{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabels[filter]}{/snippet}
 				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>All tracks</button>
 				<button class:active={filter === 'missing-description'} onclick={() => (filter = 'missing-description')}
 					>Missing description</button
@@ -338,8 +338,8 @@
 			</PopoverMenu>
 
 			{#if allTags.length > 0}
-				<PopoverMenu id="batch-tags">
-					{#snippet trigger()}<Icon icon="tag" size="20" /> {tagFilter || 'Tags'}{/snippet}
+				<PopoverMenu>
+					{#snippet trigger()}<Icon icon="tag" /> {tagFilter || 'Tags'}{/snippet}
 					<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>All tags</button>
 					{#each allTags as { value, count } (value)}
 						<button class:active={tagFilter === value} onclick={() => (tagFilter = value)}>{value} ({count})</button>
@@ -348,8 +348,8 @@
 			{/if}
 
 			{#if allMentions.length > 0}
-				<PopoverMenu id="batch-mentions">
-					{#snippet trigger()}<Icon icon="user" size="20" /> {mentionFilter || 'Mentions'}{/snippet}
+				<PopoverMenu>
+					{#snippet trigger()}<Icon icon="user" /> {mentionFilter || 'Mentions'}{/snippet}
 					<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}>All mentions</button>
 					{#each allMentions as { value, count } (value)}
 						<button class:active={mentionFilter === value} onclick={() => (mentionFilter = value)}
@@ -373,8 +373,8 @@
 				</button>
 			{/if}
 
-			<PopoverMenu id="batch-display" closeOnClick={false} style="margin-left: auto;">
-				{#snippet trigger()}<Icon icon="grid" size="20" strokeWidth={1.7} /> Display{/snippet}
+			<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+				{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} /> Display{/snippet}
 				<div class="sort-row">
 					<select bind:value={sortBy}>
 						<option value={null}>Sort by...</option>
@@ -384,7 +384,7 @@
 						<option value="duration">Duration</option>
 					</select>
 					<button onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}>
-						<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size="20" />
+						<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} />
 					</button>
 				</div>
 				<!-- <div class="sort-options">
@@ -394,7 +394,7 @@
 					<button class:active={sortBy === 'duration'} onclick={() => toggleSort('duration')}>Duration</button>
 				</div>
 				<button onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}>
-					<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size="20" />
+					<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} />
 					{sortDir === 'asc' ? 'Ascending' : 'Descending'}
 				</button> -->
 				<hr />

@@ -24,7 +24,7 @@
 <header>
 	<nav>
 		<a href="/" class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
-			<IconR4 size={20} />
+			<IconR4 />
 		</a>
 		<a
 			href="/search"
@@ -32,7 +32,7 @@
 			class:active={page.route.id === '/search'}
 			{@attach tooltip({content: m.nav_search()})}
 		>
-			<Icon icon="search" size={20} />
+			<Icon icon="search" />
 		</a>
 		<a
 			href="/broadcasts"
@@ -40,7 +40,7 @@
 			class:active={page.route.id === '/broadcasts'}
 			{@attach tooltip({content: m.nav_broadcasts()})}
 		>
-			<Icon icon="signal" size={20} />
+			<Icon icon="signal" />
 			{#if broadcastCount > 0}
 				<span class="count">{broadcastCount}</span>
 			{/if}
@@ -65,7 +65,7 @@
 			class:active={page.route.id?.startsWith('/settings')}
 			{@attach tooltip({content: m.nav_settings()})}
 		>
-			<Icon icon="settings" size={20} />
+			<Icon icon="settings" />
 		</a>
 	</nav>
 </header>
@@ -99,7 +99,8 @@
 			height: auto;
 		}
 		@media (max-width: 768px) {
-			max-width: 37px;
+			min-width: 38px;
+			height: 32px;
 		}
 	}
 

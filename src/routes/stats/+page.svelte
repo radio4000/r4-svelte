@@ -10,13 +10,19 @@
 		followsCollection,
 		queryClient
 	} from '$lib/tanstack/collections'
+	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import SyncStatus from '$lib/components/sync-status.svelte'
 
-	// Derive data reactively from collections
-	const plays = $derived([...playHistoryCollection.state.values()])
-	const channels = $derived([...channelsCollection.state.values()])
-	const trackMeta = $derived([...trackMetaCollection.state.values()])
-	const follows = $derived([...followsCollection.state.values()])
+	// Reactive reads — updates live as you play tracks, follow channels, etc.
+	const playsQuery = useLiveQuery((q) => q.from({p: playHistoryCollection}))
+	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
+	const trackMetaQuery = useLiveQuery((q) => q.from({tm: trackMetaCollection}))
+	const followsQuery = useLiveQuery((q) => q.from({f: followsCollection}))
+
+	const plays = $derived(playsQuery.data ?? [])
+	const channels = $derived(channelsQuery.data ?? [])
+	const trackMeta = $derived(trackMetaQuery.data ?? [])
+	const follows = $derived(followsQuery.data ?? [])
 
 	// Query cache stats (tracks are loaded on-demand per slug, so state may be empty)
 	const tracksCached = $derived(
@@ -196,11 +202,11 @@
 <article class="constrained">
 	<menu>
 		<a class="btn" href="/stats" class:active={page.route.id === '/stats'}>
-			<Icon icon="chart-scatter" size={20} />
+			<Icon icon="chart-scatter" />
 			{m.nav_stats()}
 		</a>
 		<a class="btn" href="/history" class:active={page.route.id === '/history'}>
-			<Icon icon="history" size={20} />
+			<Icon icon="history" />
 			{m.nav_history()}
 		</a>
 	</menu>

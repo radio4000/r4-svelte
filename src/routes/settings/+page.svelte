@@ -48,12 +48,12 @@
 			{m.nav_chat()} &rarr;
 		</a>
 		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
-			<Icon icon="code" />
+			<Icon icon="html" />
 			Changelog &rarr;
 		</a>
 		{#if sha}
 			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
-				<Icon icon="code" />
+				<Icon icon="code-branch" />
 				Source code {sha} &rarr;
 			</a>
 		{/if}

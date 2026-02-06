@@ -3,6 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {untrack} from 'svelte'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
+	import {Debounced} from 'runed'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -21,7 +22,7 @@
 	const channelsQuery = useLiveQuery((q) => q.from({channels: channelsCollection}))
 
 	let inputValue = $state('')
-	let debounceTimer = $state()
+	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// Sync input with URL param when URL changes externally
 	$effect(() => {
@@ -32,26 +33,24 @@
 		}
 	})
 
-	function debouncedSearch(value) {
-		clearTimeout(debounceTimer)
-		debounceTimer = setTimeout(() => {
-			const params = new SvelteURLSearchParams(page.url.searchParams)
-			if (value.trim()) {
-				params.set('search', value.trim())
-			} else {
-				params.delete('search')
-			}
-			goto(`/search?${params}`, {replaceState: true})
-		}, 300)
-	}
+	// Navigate when debounced input changes
+	$effect(() => {
+		const search = debouncedInput.current.trim()
+		const urlSearch = untrack(() => page.url.searchParams.get('search') || '')
+		if (search === urlSearch) return
+		const params = new SvelteURLSearchParams(untrack(() => page.url.searchParams))
+		if (search) {
+			params.set('search', search)
+		} else {
+			params.delete('search')
+		}
+		goto(`/search?${params}`, {replaceState: true})
+	})
 
 	function handleSubmit(event) {
 		event.preventDefault()
-		clearTimeout(debounceTimer)
-		const params = new SvelteURLSearchParams(page.url.searchParams)
 		if (inputValue.trim()) {
-			params.set('search', inputValue.trim())
-			goto(`/search?${params}`, {replaceState: true})
+			debouncedInput.setImmediately(inputValue)
 		}
 	}
 
@@ -127,13 +126,7 @@
 	<form onsubmit={handleSubmit} class="form search-form">
 		<fieldset>
 			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-			<SearchInput
-				id="{uid}-search"
-				bind:value={inputValue}
-				placeholder={m.header_search_placeholder()}
-				oninput={(e) => debouncedSearch(e.target.value)}
-				autofocus
-			/>
+			<SearchInput id="{uid}-search" bind:value={inputValue} placeholder={m.header_search_placeholder()} autofocus />
 		</fieldset>
 	</form>
 

@@ -4,6 +4,7 @@ import svelte from 'eslint-plugin-svelte'
 import globals from 'globals'
 import ts from 'typescript-eslint'
 import e18e from '@e18e/eslint-plugin'
+import pluginQuery from '@tanstack/eslint-plugin-query'
 
 export default ts.config(
 	js.configs.recommended,
@@ -12,6 +13,8 @@ export default ts.config(
 	e18e.configs.recommended,
 	prettier,
 	...svelte.configs['flat/prettier'],
+	...pluginQuery.configs['flat/recommended'],
+
 	{
 		languageOptions: {
 			globals: {

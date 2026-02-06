@@ -14,6 +14,7 @@
 		<a href="/_debug/spam-angel">Spam</a>
 		<a href="/_debug/tanstack">Tanstack</a>
 		<a href="/_debug/tooltips">Tooltips</a>
+		<a href="/_debug/views">Views</a>
 	</nav>
 
 	<p>Different pages meant to test the application.</p>

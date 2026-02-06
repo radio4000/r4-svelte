@@ -9,6 +9,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
+- Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
+- Views: as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
 
 ## Data & migration
 

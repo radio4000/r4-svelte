@@ -82,7 +82,7 @@
 <svelte:window onkeydown={handleKeyDown} />
 
 <button class="btn" onclick={() => open()} {@attach tooltip({content: m.track_add_title()})}>
-	<Icon icon="add" size={20}></Icon>
+	<Icon icon="add"></Icon>
 </button>
 
 <Dialog bind:showModal>

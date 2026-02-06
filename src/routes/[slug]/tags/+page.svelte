@@ -1,17 +1,17 @@
 <script>
-	import {getContext} from 'svelte'
+	import {getTracksQueryCtx} from '$lib/contexts'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
 	import {channelsCollection} from '$lib/tanstack/collections'
-	import {extractHashtags} from '$lib/utils'
+	import {countStrings} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
 
 	// Get tracks from layout (query stays alive during navigation)
-	const tracksQuery = getContext('tracksQuery')
+	const tracksQuery = getTracksQueryCtx()
 
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])
@@ -91,20 +91,15 @@
 		return newPeriods
 	})
 
-	// Tag aggregation from track descriptions
+	// Tag aggregation from track.tags
 	function aggregateTags(trackList, startDate, endDate) {
-		const counts = {}
-		for (const track of trackList) {
+		const filtered = trackList.filter((track) => {
 			const trackDate = new Date(track.created_at)
-			if (startDate && trackDate < startDate) continue
-			if (endDate && trackDate >= endDate) continue
-			for (const tag of extractHashtags(track.description || '')) {
-				counts[tag] = (counts[tag] || 0) + 1
-			}
-		}
-		return Object.entries(counts)
-			.map(([tag, count]) => ({tag, count}))
-			.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+			if (startDate && trackDate < startDate) return false
+			if (endDate && trackDate >= endDate) return false
+			return true
+		})
+		return countStrings(filtered.flatMap((t) => t.tags ?? []))
 	}
 
 	// Tags for current period

@@ -39,3 +39,7 @@ Format and lint: `bun run check`
 Use `/src/routes/_debug` for (temporary) test routes and playgrounds.
 
 the `r4 --help` CLI can help inspect data from remote PostgreSQL
+
+## Style notes
+
+- Be concise. Short answers, no walls of text.

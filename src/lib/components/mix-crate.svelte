@@ -6,13 +6,14 @@
 <script>
 	import {flip} from 'svelte/animate'
 	import {crossfade} from 'svelte/transition'
-	import {untrack, onDestroy} from 'svelte'
+	import {untrack} from 'svelte'
+	import {Debounced} from 'runed'
 
 	const [send, receive] = crossfade({
 		duration: 250,
 		fallback: () => ({duration: 150, css: (t) => `opacity: ${t}; transform: scale(${0.8 + 0.2 * t})`})
 	})
-	import {pickRandomN} from '$lib/utils'
+	import {pickRandomN, countStrings} from '$lib/utils'
 	import {searchChannels} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {mixAll} from '$lib/lab/mix'
@@ -31,9 +32,7 @@
 	let searchQuery = $state('')
 	/** @type {Source[]} */
 	let searchResults = $state([])
-	/** @type {ReturnType<typeof setTimeout> | undefined} */
-	let debounceTimer
-	onDestroy(() => clearTimeout(debounceTimer))
+	const debouncedQuery = new Debounced(() => searchQuery, 300)
 
 	/** @type {Source[]} */
 	let suggestions = $state([])
@@ -51,19 +50,9 @@
 			}
 		}
 
-		// Extract tags from all loaded tracks via mix
-		/** @type {Record<string, number>} */
-		const tagCounts = {}
-		for (const track of mixAll().tracks()) {
-			if (track.tags) {
-				for (const tag of track.tags) {
-					const key = tag.toLowerCase()
-					tagCounts[key] = (tagCounts[key] || 0) + 1
-				}
-			}
-		}
-		// Add tags that appear on at least 2 tracks
-		for (const [tag, count] of Object.entries(tagCounts)) {
+		// Extract tags from all loaded tracks via mix, filter to those appearing 2+ times
+		const allTags = [...mixAll().tracks()].flatMap((t) => t.tags ?? [])
+		for (const {tag, count} of countStrings(allTags)) {
 			if (count >= 2) {
 				all.push({type: 'tag', value: tag, label: `#${tag}`})
 			}
@@ -138,17 +127,17 @@
 		onremove?.(source)
 	}
 
-	function debouncedSearch() {
-		clearTimeout(debounceTimer)
-		debounceTimer = setTimeout(handleSearch, 300)
-	}
+	// React to debounced search query changes
+	$effect(() => {
+		void debouncedQuery.current
+		untrack(handleSearch)
+	})
 
 	/** @param {KeyboardEvent} e */
 	function handleInputKeydown(e) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
-			clearTimeout(debounceTimer)
-			handleSearch()
+			debouncedQuery.setImmediately(searchQuery)
 		}
 	}
 
@@ -160,7 +149,6 @@
 		type="search"
 		placeholder="Search channels or #tags..."
 		bind:value={searchQuery}
-		oninput={debouncedSearch}
 		onkeydown={handleInputKeydown}
 		data-loading={loading || undefined}
 	/>

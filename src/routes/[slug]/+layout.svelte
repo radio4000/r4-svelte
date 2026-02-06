@@ -1,9 +1,9 @@
 <script>
 	import {page} from '$app/state'
-	import {setContext} from 'svelte'
+	import {setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
@@ -17,9 +17,15 @@
 	let slug = $derived(page.params.slug)
 	let routeId = $derived(page.route.id)
 
-	// Read channel directly from collection state (already loaded at root)
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	let canEdit = $derived(!!appState.user && !!channel?.id && appState.channels?.includes(channel.id))
+	// Reactive via useLiveQuery — updates when channel is edited. findOne() avoids scanning all rows.
+	const channelQuery = useLiveQuery((q) =>
+		q
+			.from({ch: channelsCollection})
+			.where(({ch}) => eq(ch.slug, slug))
+			.findOne()
+	)
+	let channel = $derived(channelQuery.data)
+	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 
@@ -37,8 +43,7 @@
 	)
 
 	// Provide to child routes
-	setContext('tracksQuery', tracksQuery)
-	setContext('canEdit', () => canEdit)
+	setTracksQueryCtx(tracksQuery)
 </script>
 
 {#if channel}
@@ -56,7 +61,7 @@
 				<p class="dates">
 					<small>
 						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
-							date: relativeDate(channel.updated_at)
+							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
 						})}
 					</small>
 				</p>
@@ -67,7 +72,7 @@
 							<ButtonFollow {channel} />
 						{:else}
 							<a href={authUrl} class="btn" title={m.button_follow()}>
-								<Icon icon="favorite" size={20} />
+								<Icon icon="favorite" />
 							</a>
 						{/if}
 					{/if}

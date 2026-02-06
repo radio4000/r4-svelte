@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {tracksCollection, channelsCollection, deleteTrack} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -26,7 +26,7 @@
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
 	const channel = $derived(channelQuery.data?.[0])
 	const isSignedIn = $derived(!!appState.user)
-	const canDelete = $derived(isSignedIn && appState.channels?.includes(channel?.id))
+	const canDelete = $derived(canEditChannel(channel?.id))
 	const isLoading = $derived(tracksQuery.isLoading || channelQuery.isLoading)
 
 	let error = $state('')

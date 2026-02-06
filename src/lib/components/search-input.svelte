@@ -1,4 +1,5 @@
 <script>
+	import {Debounced} from 'runed'
 	import Icon from '$lib/components/icon.svelte'
 	import {afterNavigate} from '$app/navigation'
 
@@ -6,7 +7,6 @@
 	let {value = $bindable(''), placeholder = 'Search...', debounce = 0, ...restProps} = $props()
 
 	let inputValue = $state(value)
-	let timer
 	let lastExternalValue = value
 
 	// Only sync when value changes externally (e.g. programmatic clear)
@@ -17,19 +17,17 @@
 		}
 	})
 
-	function handleInput(e) {
-		inputValue = e.target.value
-		if (debounce > 0) {
-			clearTimeout(timer)
-			timer = setTimeout(() => {
-				value = inputValue
-				lastExternalValue = inputValue
-			}, debounce)
-		} else {
-			value = inputValue
-			lastExternalValue = inputValue
+	// svelte-ignore state_referenced_locally
+	const debounced = new Debounced(() => inputValue, debounce)
+
+	// Emit debounced value to parent
+	$effect(() => {
+		const v = debounced.current
+		if (v !== value) {
+			value = v
+			lastExternalValue = v
 		}
-	}
+	})
 
 	afterNavigate(() => {
 		// workaround for autofocus attr not always being enough
@@ -43,7 +41,7 @@
 
 <div>
 	<Icon icon="search" size={16} />
-	<input type="search" {placeholder} bind:value={inputValue} oninput={handleInput} {...restProps} />
+	<input type="search" {placeholder} bind:value={inputValue} {...restProps} />
 </div>
 
 <style>

@@ -58,6 +58,11 @@ textarea {
 	line-height: inherit;
 }
 
+fieldset {
+	border: 0;
+	padding: 0;
+}
+
 form.form,
 .r4-discogs-resource {
 	&,
@@ -72,8 +77,6 @@ form.form,
 	}
 	fieldset {
 		margin: 0;
-		border: 0;
-		padding: 0;
 		gap: 0.2rem;
 
 		&[hidden] {

@@ -2,8 +2,10 @@
 	import {untrack} from 'svelte'
 	import {createAttachmentKey} from 'svelte/attachments'
 
-	/** @type {{id: string, children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, [key: string]: any}} */
-	let {id, children, trigger, btnClass, closeOnClick = true, onclose, triggerAttachment, ...rest} = $props()
+	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, [key: string]: any}} */
+	let {children, trigger, btnClass, closeOnClick = true, onclose, triggerAttachment, ...rest} = $props()
+
+	const id = $props.id()
 
 	const triggerProps = $derived({
 		...(triggerAttachment ? {[createAttachmentKey()]: triggerAttachment} : {}),

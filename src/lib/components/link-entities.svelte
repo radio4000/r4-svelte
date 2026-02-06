@@ -1,12 +1,8 @@
 <script>
-	import {getContext} from 'svelte'
 	import {ENTITY_REGEX} from '$lib/utils.ts'
 
-	/** @type {{text: string | null | undefined, slug?: string | null}} */
-	const {text, slug} = $props()
-
-	/** @type {((tag: string) => void) | undefined} */
-	const tagClickHandler = getContext('tagClickHandler')
+	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void}} */
+	const {text, slug, onTagClick} = $props()
 
 	const parts = $derived.by(() => {
 		if (typeof text !== 'string') return [{type: 'text', content: ''}]
@@ -52,8 +48,8 @@
 
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
-		{#if part.isTag && tagClickHandler}
-			<button class="ghost tag-link" onclick={() => tagClickHandler(part.content)}>{part.content}</button>
+		{#if part.isTag && onTagClick}
+			<button class="ghost tag-link" onclick={() => onTagClick(part.content)}>{part.content}</button>
 		{:else}
 			<a href={part.href}>{part.content}</a>
 		{/if}

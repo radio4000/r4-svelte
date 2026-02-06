@@ -30,7 +30,7 @@ Base styles apply to `<button>` and `<select>`. Use `.btn` on links.
 
 ## Forms
 
-- `form.form` — vertical flex layout with gap
+- `form.form` — vertical flex layout with gap. Structure: `form > fieldset > label + input`. Group with `fieldset > legend + fieldset`. Use `fieldset.row` for horizontal layout.
 
 ## Layout
 

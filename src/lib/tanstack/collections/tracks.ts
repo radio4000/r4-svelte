@@ -10,15 +10,22 @@ import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
+import {searchTracks} from '$lib/search-fts'
 import type {Track} from '$lib/types'
 
 export const tracksCollection = createCollection<Track, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-			const key = slug ? ['tracks', slug] : ['tracks']
-			return key
+			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
+			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
+			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
+			if (slugIn) return ['tracks', ...slugIn.sort()]
+			if (slugEq) return ['tracks', slugEq]
+			if (tagsIn) return ['tracks', 'tags', ...tagsIn.toSorted()]
+			if (ftsEq) return ['tracks', 'search', ftsEq]
+			return ['tracks']
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -26,10 +33,49 @@ export const tracksCollection = createCollection<Track, string>(
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
+			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
+			const slugs = slugIn ?? (slugEq ? [slugEq] : [])
+			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
+			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
-			if (!slug) return []
-			return fetchTracksBySlug(slug, {limit: options.limit, createdAfter})
+
+			// Slug-based: fetch per channel, reusing per-slug cache when available
+			if (slugs.length) {
+				const results = await Promise.all(
+					slugs.map(async (s: string) => {
+						const cached = queryClient.getQueryData<Track[]>(['tracks', s])
+						if (cached) return cached
+						return fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+					})
+				)
+				return results.flat()
+			}
+
+			// Global: fetch by tags
+			if (tagsIn?.length) {
+				let query = sdk.supabase.from('channel_tracks').select('*')
+				query = query.overlaps('tags', tagsIn)
+				query = query.order('created_at', {ascending: false}).limit(4000)
+				const {data, error} = await query
+				if (error) throw error
+				const tracks = (data || []) as Track[]
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			}
+
+			// Global: full-text search
+			if (ftsEq) {
+				const tracks = await searchTracks(ftsEq, {limit: 4000})
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			}
+
+			return []
 		}
 	})
 )
@@ -112,7 +158,8 @@ export const tracksAPI = {
 				needsInvalidation = true
 			} else if (mutation.type === 'update') {
 				await handleTrackUpdate(mutation)
-				// Updates don't need invalidation - optimistic data is authoritative
+				// Persist optimistic data so it survives transaction cleanup
+				tracksCollection.utils.writeUpsert(mutation.modified as Track)
 			} else if (mutation.type === 'delete') {
 				await handleTrackDelete(mutation)
 				needsInvalidation = true

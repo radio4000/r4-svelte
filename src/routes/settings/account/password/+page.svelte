@@ -80,7 +80,7 @@
 				<p class="success">{m.account_password_updated()}</p>
 			{/if}
 			<button type="submit" class="primary" disabled={loading}>
-				{loading ? m.loading() : m.common_save()}
+				{loading ? m.common_loading() : m.common_save()}
 			</button>
 		</form>
 	{/if}

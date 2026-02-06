@@ -80,7 +80,7 @@
 		{/if}
 	</div>
 
-	<form class="form" onsubmit={sendMessage}>
+	<form class="form container" onsubmit={sendMessage}>
 		<fieldset>
 			<label for="{uid}-message" class="visually-hidden">{m.chat_input_placeholder()}</label>
 			<input
@@ -101,6 +101,9 @@
 		height: 500px;
 		display: flex;
 		flex-direction: column;
+		border: 1px solid;
+		border-radius: var(--border-radius);
+		padding-bottom: 0.5rem;
 	}
 
 	.messages {
@@ -128,24 +131,5 @@
 		opacity: 0.5;
 		font-style: italic;
 		margin: auto;
-	}
-
-	form {
-		padding: 0.5rem;
-		flex-flow: row;
-	}
-
-	fieldset {
-		flex: 1;
-		flex-flow: row;
-	}
-
-	input {
-		flex: 1;
-	}
-
-	button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 </style>

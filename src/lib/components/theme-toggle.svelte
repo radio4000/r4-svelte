@@ -11,6 +11,6 @@
 </script>
 
 <button onclick={toggleThemeApi} {...rest}>
-	<Icon {icon} size={20} />
+	<Icon {icon} />
 	<span hidden={!showLabel}>{theme}</span>
 </button>

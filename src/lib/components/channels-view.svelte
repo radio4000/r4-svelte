@@ -92,7 +92,7 @@
 			closeOnClick={false}
 			triggerAttachment={tooltip({content: m.channels_view_mode({mode: viewLabelMap[display]()})})}
 		>
-			{#snippet trigger()}<Icon icon={viewIconMap[display]} size="20" strokeWidth={1.7} />
+			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
 				{viewLabelMap[display]()}{/snippet}
 			<div class="view-modes">
 				<button
@@ -100,28 +100,28 @@
 					onclick={() => setDisplay('grid')}
 					{@attach tooltip({content: m.channels_tooltip_grid()})}
 				>
-					<Icon icon="grid" size="20" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small>
+					<Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small>
 				</button>
 				<button
 					class:active={display === 'list'}
 					onclick={() => setDisplay('list')}
 					{@attach tooltip({content: m.channels_tooltip_list()})}
 				>
-					<Icon icon="unordered-list" size="20" /><small>{m.channels_view_label_list()}</small>
+					<Icon icon="unordered-list" /><small>{m.channels_view_label_list()}</small>
 				</button>
 				<button
 					class:active={display === 'map'}
 					onclick={() => setDisplay('map')}
 					{@attach tooltip({content: m.channels_tooltip_map()})}
 				>
-					<Icon icon="map" size="20" strokeWidth={1.7} /><small>{m.channels_view_label_map()}</small>
+					<Icon icon="map" strokeWidth={1.7} /><small>{m.channels_view_label_map()}</small>
 				</button>
 				<button
 					class:active={display === 'infinite'}
 					onclick={() => setDisplay('infinite')}
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
 				>
-					<Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small>
+					<Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small>
 				</button>
 			</div>
 			<SortControls bind:order bind:direction />

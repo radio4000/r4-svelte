@@ -16,13 +16,22 @@
 		showImage?: boolean
 		showSlug?: boolean
 		canEdit?: boolean
+		onTagClick?: (tag: string) => void
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
 
-	let {track, index, showImage = true, showSlug = false, canEdit = false, children, description}: Props = $props()
+	let {
+		track,
+		index,
+		showImage = true,
+		showSlug = false,
+		canEdit = false,
+		onTagClick,
+		children,
+		description
+	}: Props = $props()
 
-	const menuId = $props.id()
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
 	const active = $derived(track?.id === appState.playlist_track)
 	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
@@ -79,7 +88,7 @@
 			{:else if track.description}
 				<p class="description">
 					<small>
-						<LinkEntities slug={track.slug} text={track.description} />
+						<LinkEntities slug={track.slug} text={track.description} {onTagClick} />
 					</small>
 				</p>
 			{/if}
@@ -90,7 +99,7 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</a>
-	<PopoverMenu id={menuId} bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
@@ -176,7 +185,7 @@
 	.artwork {
 		margin-bottom: auto;
 		aspect-ratio: 1/1;
-		width: 37px;
+		width: 38px;
 		/*height: 2.3rem;*/
 		object-fit: cover;
 		object-position: center;

@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, deleteChannel} from '$lib/tanstack/collections'
 
 	let {data} = $props()
@@ -17,7 +17,7 @@
 
 	const channel = $derived(channelQuery.data?.[0])
 	const isSignedIn = $derived(!!appState.user)
-	const canDelete = $derived(isSignedIn && appState.channels?.includes(channel?.id))
+	const canDelete = $derived(canEditChannel(channel?.id))
 
 	let error = $state('')
 	let deleting = $state(false)

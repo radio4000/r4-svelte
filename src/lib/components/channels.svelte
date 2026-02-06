@@ -25,11 +25,11 @@
 		return channel?.id
 	})
 
+	let shuffleSeed = $state(0)
 	let limit = $state(16)
 	let perPage = $state(100)
 	let filter = $derived(appState.channels_filter || '10+')
-	let shuffled = $derived(appState.channels_shuffled ?? true)
-	let order = $derived(appState.channels_order)
+	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
@@ -56,17 +56,25 @@
 	}
 
 	const sortedChannels = $derived(
-		[...filteredChannels]
-			.filter((c) => order !== 'updated' || c.latest_track_at)
-			.sort((a, b) => {
-				const av = sortKey[order](a)
-				const bv = sortKey[order](b)
-				const cmp = av < bv ? -1 : av > bv ? 1 : 0
-				return orderDirection === 'asc' ? cmp : -cmp
-			})
+		order === 'shuffle'
+			? filteredChannels
+			: [...filteredChannels]
+					.filter((c) => order !== 'updated' || c.latest_track_at)
+					.sort((a, b) => {
+						const av = sortKey[order](a)
+						const bv = sortKey[order](b)
+						const cmp = av < bv ? -1 : av > bv ? 1 : 0
+						return orderDirection === 'asc' ? cmp : -cmp
+					})
 	)
 
-	const orderedChannels = $derived(shuffled ? shuffleArray([...sortedChannels]) : sortedChannels)
+	const orderedChannels = $derived.by(() => {
+		if (order === 'shuffle') {
+			void shuffleSeed
+			return shuffleArray([...sortedChannels])
+		}
+		return sortedChannels
+	})
 
 	const realChannels = $derived({
 		filtered: filteredChannels,
@@ -139,8 +147,8 @@
 
 <div class={`layout layout--${display}`}>
 	<menu class="filtermenu">
-		<PopoverMenu id="channels-filter" triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabelMap[filter]()}{/snippet}
+		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
+			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
 			<menu data-vertical>
 				<button
 					class:active={filter === 'all'}
@@ -193,44 +201,44 @@
 			style="margin-left: auto;"
 			triggerAttachment={tooltip({content: m.channels_view_mode({mode: viewLabelMap[display]()})})}
 		>
-			{#snippet trigger()}<Icon icon={viewIconMap[display]} size="20" strokeWidth={1.7} />
+			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
 				{viewLabelMap[display]()}{/snippet}
 			<div class="view-modes">
 				<button
 					class:active={display === 'grid'}
 					onclick={() => setDisplay('grid')}
 					{@attach tooltip({content: m.channels_tooltip_grid()})}
-					><Icon icon="grid" size="20" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small></button
+					><Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small></button
 				>
 				<button
 					class:active={display === 'list'}
 					onclick={() => setDisplay('list')}
 					{@attach tooltip({content: m.channels_tooltip_list()})}
-					><Icon icon="unordered-list" size="20" /><small>{m.channels_view_label_list()}</small></button
+					><Icon icon="unordered-list" /><small>{m.channels_view_label_list()}</small></button
 				>
 				<button
 					class:active={display === 'map'}
 					onclick={() => setDisplay('map')}
 					{@attach tooltip({content: m.channels_tooltip_map()})}
-					><Icon icon="map" size="20" strokeWidth={1.7} /><small>{m.channels_view_label_map()}</small></button
+					><Icon icon="map" strokeWidth={1.7} /><small>{m.channels_view_label_map()}</small></button
 				>
 				<button
 					class:active={display === 'tuner'}
 					onclick={() => setDisplay('tuner')}
 					{@attach tooltip({content: m.channels_tooltip_tuner()})}
-					><Icon icon="radio" size="20" /><small>{m.channels_view_label_tuner()}</small></button
+					><Icon icon="radio" /><small>{m.channels_view_label_tuner()}</small></button
 				>
 				<button
 					class:active={display === 'infinite'}
 					onclick={() => setDisplay('infinite')}
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
-					><Icon icon="infinite" size="20" /><small>{m.channels_view_label_infinite()}</small></button
+					><Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</div>
 			<SortControls
 				bind:order={appState.channels_order}
 				bind:direction={appState.channels_order_direction}
-				bind:shuffled={appState.channels_shuffled}
+				onreshuffle={() => shuffleSeed++}
 			/>
 		</PopoverMenu>
 	</menu>
