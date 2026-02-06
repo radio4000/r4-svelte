@@ -29,7 +29,7 @@
 				<dt>{m.track_meta_artist()}</dt>
 				<dd>
 					<a
-						href="/search?search={encodeURIComponent(
+						href="/search?q={encodeURIComponent(
 							(track?.slug ? '@' + track.slug + ' ' : '') + artistCredit.artist.name
 						)}"
 					>

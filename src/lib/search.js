@@ -10,7 +10,7 @@ import {searchChannels, searchTracks} from '$lib/search-fts'
  * @param {string} slug
  * @returns {Promise<import('$lib/types').Channel | undefined>}
  */
-async function findChannelBySlug(slug) {
+export async function findChannelBySlug(slug) {
 	const local = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 	if (local) return local
 	const {data} = await sdk.channels.readChannel(slug)

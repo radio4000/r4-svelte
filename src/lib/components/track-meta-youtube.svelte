@@ -35,7 +35,7 @@
 			{#if data.channelTitle}
 				<dt>{m.track_meta_channel()}</dt>
 				<dd>
-					<a href="/search?search={encodeURIComponent(data.channelTitle)}">{data.channelTitle}</a>
+					<a href="/search?q={encodeURIComponent(data.channelTitle)}">{data.channelTitle}</a>
 				</dd>
 			{/if}
 
@@ -55,7 +55,7 @@
 				<dt>{m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
-						<a href="/search?search={encodeURIComponent('#' + tag)}">{tag}</a>
+						<a href="/search?q={encodeURIComponent('#' + tag)}">{tag}</a>
 					{/each}
 				</dd>
 			{/if}

@@ -200,7 +200,7 @@
 				{#each filteredTags as { tag, count } (tag)}
 					<li>
 						<span class="tag">
-							<a href={`/search?search=@${channel.slug} ${tag}`}>
+							<a href={`/search?q=@${channel.slug} ${tag}`}>
 								{tag}
 							</a>
 						</span>

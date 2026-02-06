@@ -4,7 +4,7 @@ The /search page doubles as a command palette, accessible globally via Cmd+K. Ty
 
 ## How It Works
 
-Pressing Cmd+K anywhere in the app navigates to /search and focuses the input. The search executes different actions based on what you type. Channel navigation uses @ prefixes like @good-time-radio, while commands use / prefixes like /settings or /toggle-theme. You can also type bare words like "settings" which works as a shortcut to common pages.
+Pressing Cmd+K anywhere in the app navigates to /search and focuses the input. The URL param is `?q=` (the raw human query string). The search executes different actions based on what you type. Channel navigation uses @ prefixes like @good-time-radio, while commands use / prefixes like /settings or /toggle-theme. You can also type bare words like "settings" which works as a shortcut to common pages.
 
 The autocomplete suggestions come from a datalist element that loads all channel slugs from the tanstack collection plus the available commands. As you type, the browser's native autocomplete shows matching options. When you press Enter, the smart execution logic determines whether to navigate to a page, execute a command, or perform a regular search.
 
@@ -14,14 +14,17 @@ The executeCommand function tries different patterns in order. First it checks f
 
 ## Search Sources
 
-Remote search (`searchAll`, `searchChannels`, `searchTracks`) queries Supabase full-text search across all Radio4000 data. Local search (`searchTracksLocal`, `searchChannelsLocal`) uses fuzzysort against in-memory data for instant results on already-loaded collections.
+The `/search` page uses the reactive View pipeline (`parseSearchQueryToView` + `queryViewTracks`) for track results — same as the views debug page. Channel results (channel cards from `@slug` resolution and FTS) run as separate queries alongside.
+
+Remote search (`searchChannels`, `searchTracks`) queries Supabase full-text search across all Radio4000 data. Local search (`searchTracksLocal`, `searchChannelsLocal`) uses fuzzysort against in-memory data for instant results on already-loaded collections.
 
 ```js
-import {searchAll, searchChannels, searchTracks} from '$lib/search.js'
+import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
+import {searchChannels, findChannelBySlug} from '$lib/search.js'
 
-await searchAll('ambient') // supabase FTS
-await searchChannels('jazz', {limit: 20})
-await searchTracks('house', {channelSlug: 'ko002'})
+// /search parses ?q= into a View, then uses queryViewTracks for reactive cached tracks
+const view = parseSearchQueryToView('@oskar #jazz miles')
+// → {channels: ['oskar'], tags: ['jazz'], search: 'miles'}
 ```
 
 The @mention syntax scopes track searches to specific channels. Typing `@ko002 jazz` searches for "jazz" only within that channel's tracks. Multiple mentions work too: `@ko002 @oskar house` searches tracks in both channels.
@@ -36,4 +39,4 @@ The main search interface lives in src/routes/search/+page.svelte which handles 
 
 ## Integration Points
 
-The search page uses tanstack collections for reactive local data. Channel data loads into the channelsCollection on mount to enable immediate fuzzy search. Remote search bypasses collections entirely and queries Supabase directly via the @radio4000/sdk. The autocomplete populates from loaded channel slugs without requiring additional queries during typing.
+The search page uses the same reactive View pipeline as the views debug page. Track results flow through TanStack queries (`useLiveQuery` / `createQuery`) which write into `tracksCollection` — so data is cached and shared across pages. Channel results use `findChannelBySlug` (collection-first, SDK fallback) and `searchChannels` (FTS). The autocomplete populates from loaded channel slugs without requiring additional queries during typing.

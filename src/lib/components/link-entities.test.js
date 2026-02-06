@@ -28,7 +28,7 @@ function createLinkedParts(text, track = null) {
 			parts.push({
 				type: 'link',
 				content: entity,
-				href: `/search?search=${encodeURIComponent(searchQuery)}`
+				href: `/search?q=${encodeURIComponent(searchQuery)}`
 			})
 
 			lastIndex = offset + match.length
@@ -56,19 +56,19 @@ describe('link-entities', () => {
 		const track = {slug: 'oskar'}
 		const parts = createLinkedParts('Check out this #techno track', track)
 		const result = partsToHtml(parts)
-		expect(result).toBe('Check out this <a href="/search?search=%40oskar%20%23techno">#techno</a> track')
+		expect(result).toBe('Check out this <a href="/search?q=%40oskar%20%23techno">#techno</a> track')
 	})
 
 	test('converts hashtags without track context', () => {
 		const parts = createLinkedParts('Check out this #techno track')
 		const result = partsToHtml(parts)
-		expect(result).toBe('Check out this <a href="/search?search=%23techno">#techno</a> track')
+		expect(result).toBe('Check out this <a href="/search?q=%23techno">#techno</a> track')
 	})
 
 	test('converts mentions to search links', () => {
 		const parts = createLinkedParts('From @oskar channel')
 		const result = partsToHtml(parts)
-		expect(result).toBe('From <a href="/search?search=%40oskar">@oskar</a> channel')
+		expect(result).toBe('From <a href="/search?q=%40oskar">@oskar</a> channel')
 	})
 
 	test('handles multiple entities in one text', () => {
@@ -76,21 +76,21 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Great #house track from @radio4000 with #electronic vibes', track)
 		const result = partsToHtml(parts)
 		expect(result).toBe(
-			'Great <a href="/search?search=%40oskar%20%23house">#house</a> track from <a href="/search?search=%40radio4000">@radio4000</a> with <a href="/search?search=%40oskar%20%23electronic">#electronic</a> vibes'
+			'Great <a href="/search?q=%40oskar%20%23house">#house</a> track from <a href="/search?q=%40radio4000">@radio4000</a> with <a href="/search?q=%40oskar%20%23electronic">#electronic</a> vibes'
 		)
 	})
 
 	test('handles entities at start of text', () => {
 		const parts = createLinkedParts('#techno beats')
 		const result = partsToHtml(parts)
-		expect(result).toBe('<a href="/search?search=%23techno">#techno</a> beats')
+		expect(result).toBe('<a href="/search?q=%23techno">#techno</a> beats')
 	})
 
 	test('handles hyphenated entities', () => {
 		const track = {slug: 'dj-mix'}
 		const parts = createLinkedParts('Love this #deep-house track', track)
 		const result = partsToHtml(parts)
-		expect(result).toBe('Love this <a href="/search?search=%40dj-mix%20%23deep-house">#deep-house</a> track')
+		expect(result).toBe('Love this <a href="/search?q=%40dj-mix%20%23deep-house">#deep-house</a> track')
 	})
 
 	test('handles empty or null text', () => {
@@ -116,7 +116,7 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Love #TECHNO and @OSKAR', track)
 		const result = partsToHtml(parts)
 		expect(result).toBe(
-			'Love <a href="/search?search=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/search?search=%40OSKAR">@OSKAR</a>'
+			'Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/search?q=%40OSKAR">@OSKAR</a>'
 		)
 	})
 
@@ -125,9 +125,7 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Track with <script>alert("xss")</script> #techno', track)
 		const result = partsToHtml(parts)
 		// The <script> tag should be preserved as plain text, not executed
-		expect(result).toBe(
-			'Track with <script>alert("xss")</script> <a href="/search?search=%40test%20%23techno">#techno</a>'
-		)
+		expect(result).toBe('Track with <script>alert("xss")</script> <a href="/search?q=%40test%20%23techno">#techno</a>')
 		// Test that the parts are correctly separated
 		expect(parts.some((p) => p.type === 'text' && p.content.includes('<script>'))).toBe(true)
 	})
@@ -139,7 +137,7 @@ describe('link-entities', () => {
 		const result = partsToHtml(parts)
 
 		expect(result).toBe(
-			'<a href="/search?search=%40seance-centre%20%23am">#am</a> <a href="/search?search=%40seance-centre%20%23pm">#pm</a> blend <a href="/search?search=%40seance-centre%20%23new-wave">#new-wave</a> <a href="/search?search=%40seance-centre%20%23dub">#dub</a> <a href="/search?search=%40seance-centre%20%23disco">#disco</a> <a href="/search?search=%40seance-centre%20%23jazz">#jazz</a> on <a href="/search?search=%40seance-centre%20%23s%C3%A9ance-centre">#séance-centre</a>'
+			'<a href="/search?q=%40seance-centre%20%23am">#am</a> <a href="/search?q=%40seance-centre%20%23pm">#pm</a> blend <a href="/search?q=%40seance-centre%20%23new-wave">#new-wave</a> <a href="/search?q=%40seance-centre%20%23dub">#dub</a> <a href="/search?q=%40seance-centre%20%23disco">#disco</a> <a href="/search?q=%40seance-centre%20%23jazz">#jazz</a> on <a href="/search?q=%40seance-centre%20%23s%C3%A9ance-centre">#séance-centre</a>'
 		)
 
 		// Verify we have the correct number of links and text parts

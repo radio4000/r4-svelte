@@ -34,10 +34,10 @@ Tags always refer to track tags, not channel tags. When channels and tags combin
 
 Two routes expose Views with different URL shapes:
 
-- **`/search?search=@oskar #jazz miles`** — stores the raw human query string. `searchAll` calls `parseSearchQueryToView` internally to decode it into a View, then runs a one-shot imperative fetch. Returns `{channels, tracks}` — resolves `@slug` into channel objects and finds matching tracks.
+- **`/search?q=@oskar #jazz miles`** — stores the raw human query string. `parseSearchQueryToView` decodes it into a View, then `queryViewTracks` provides reactive cached track results. Channel resolution (`@slug` → channel cards) and FTS channel search run as separate `$effect`s alongside the view tracks query.
 - **`/_debug/views?channels=oskar&tags=jazz&search=miles`** — stores the already-parsed View as structured params. `parseView` reads it directly. Uses reactive TanStack queries (useLiveQuery / createQuery). Returns tracks only — channels are used as filters, not as results.
 
-Both represent the same View — the `/search` param is just the human-encoded form. The key difference: `/search` returns channels + tracks, views return only tracks.
+Both represent the same View — the `?q=` param is just the human-encoded form. The key difference: `/search` also shows channel cards alongside tracks, while the debug views page shows only tracks.
 
 ## Data flow
 

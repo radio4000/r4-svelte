@@ -4,6 +4,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
+- Channel tags helper — `countStrings(tracks.flatMap(t => t.tags ?? []))` is repeated in `[slug]/+page`, `[slug]/tags/+page`, `batch-edit/`. Extract a reusable `getChannelTags(tracks)` (or similar). Once available, can be used in channel cards, list view, etc.
+- Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; could be the list view itself when there's enough space (responsive), or a toggle within list view. Depends on channel tags helper above.
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 - 3D globe map view in addition to map view. Which library?
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
@@ -12,7 +14,6 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
 - Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). `processViewTracks` handles shared post-processing; query orchestration can be inlined or extracted into a `useViewTracks` composable if both pages need the same 3-query pattern. Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
 - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
-- Views: align /search with views — once view query patterns are finalized on the debug page, migrate /search to use the same reactive TanStack queries instead of the imperative `searchAll` one-shot fetch. See [plan-view-search-unification-idea](docs/plan-view-search-unification-idea.md).
 
 ## Data & migration
 

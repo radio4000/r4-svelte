@@ -15,7 +15,7 @@
 
 	// Sync input with URL param when URL changes externally (e.g. back/forward navigation)
 	$effect(() => {
-		const urlSearch = page.url.searchParams.get('search') || ''
+		const urlSearch = page.url.searchParams.get('q') || ''
 		const currentInput = untrack(() => inputValue)
 		// Only sync if content differs (URL stores trimmed value, so compare trimmed)
 		if (urlSearch !== currentInput.trim()) {
@@ -26,14 +26,14 @@
 	// Navigate when debounced input changes
 	$effect(() => {
 		const search = debouncedInput.current.trim()
-		const urlSearch = untrack(() => page.url.searchParams.get('search') || '')
+		const urlSearch = untrack(() => page.url.searchParams.get('q') || '')
 		if (search === urlSearch) return
 		const params = new SvelteURLSearchParams(untrack(() => page.url.searchParams))
 		if (search) {
-			params.set('search', search)
+			params.set('q', search)
 			goto(`/search?${params}`)
 		} else {
-			params.delete('search')
+			params.delete('q')
 			goto('/')
 		}
 	})

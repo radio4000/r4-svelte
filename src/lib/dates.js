@@ -16,6 +16,7 @@ function differenceInDays(dateString) {
 export function relativeDate(dateString) {
 	if (!dateString) return 'unknown'
 	const days = differenceInDays(dateString)
+	if (days === 0) return 'today'
 	return `${days} day${days > 1 ? 's' : ''} ago`
 }
 
@@ -28,7 +29,7 @@ export function relativeDateSolar(dateString) {
 	const remainingDays = days % 365
 	const yearsString = years ? `${years} sun orbit${years > 1 ? 's' : ''}` : ''
 	const andString = years && remainingDays ? ', ' : ''
-	const daysString = `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
+	const daysString = remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
 	return `${yearsString}${andString}${daysString}`
 }
 
@@ -41,6 +42,7 @@ export function relativeDateDetailed(dateString) {
 	const diffMs = now.getTime() - date.getTime()
 	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
+	if (diffDays === 0) return 'today'
 	if (diffDays < 30) return `${diffDays} days ago`
 	if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
 	return `${Math.floor(diffDays / 365)} years ago`

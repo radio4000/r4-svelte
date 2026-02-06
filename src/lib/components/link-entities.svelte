@@ -29,7 +29,7 @@
 			parts.push({
 				type: 'link',
 				content: entity,
-				href: `/search?search=${encodeURIComponent(searchQuery)}`,
+				href: `/search?q=${encodeURIComponent(searchQuery)}`,
 				isTag
 			})
 

@@ -9,26 +9,26 @@
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
-	import {searchAll} from '$lib/search'
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
+	import {searchChannels, findChannelBySlug} from '$lib/search'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
 
 	// Form input: initialized from URL, synced on navigation (not $effect — avoids URL→form feedback loop)
-	let inputValue = $state(page.url.searchParams.get('search') || '')
+	let inputValue = $state(page.url.searchParams.get('q') || '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// Sync URL → input on external navigation (back/forward, links) — skip our own goto
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
-		inputValue = page.url.searchParams.get('search') || ''
+		inputValue = page.url.searchParams.get('q') || ''
 	})
 
 	// Push debounced input → URL
 	$effect(() => {
-		const search = debouncedInput.current.trim()
-		const url = search ? `/search?search=${encodeURIComponent(search)}` : '/search'
+		const q = debouncedInput.current.trim()
+		const url = q ? `/search?q=${encodeURIComponent(q)}` : '/search'
 		goto(url, {replaceState: true})
 	})
 
@@ -39,52 +39,66 @@
 		}
 	}
 
+	// Derive search query from URL (single source of truth)
+	const searchQuery = $derived(page.url.searchParams.get('q') || '')
+
+	// Parse the human query into a View
+	const view = $derived(searchQuery ? parseSearchQueryToView(searchQuery) : {})
+
+	// Reactive track results via View pipeline
+	const viewQuery = queryViewTracks(() => view)
+
+	// Channel results (separate from view tracks)
 	/** @type {import('$lib/types.ts').Channel[]} */
 	let channels = $state([])
+	let channelsLoading = $state(false)
 
-	/** @type {import('$lib/types.ts').Track[]} */
-	let tracks = $state([])
-
-	// Derive search query from URL (single source of truth)
-	const searchQuery = $derived(page.url.searchParams.get('search') || '')
-	let isLoading = $state(false)
-	let lastSearched = '' // plain (untracked) — prevents re-searching same query
-
-	// Trigger search when URL search param changes
 	$effect(() => {
+		const v = view
 		const q = searchQuery
 		if (!q || q.trim().length < 2) {
 			channels = []
-			tracks = []
-			lastSearched = ''
 			return
 		}
-		if (q === lastSearched) return
-		lastSearched = q
-		doSearch(q)
+
+		/** @type {Promise<import('$lib/types.ts').Channel[]>[]} */
+		const promises = []
+		if (v.channels?.length) {
+			promises.push(...v.channels.map((slug) => findChannelBySlug(slug).then((c) => (c ? [c] : []))))
+		}
+		if (v.search) {
+			promises.push(searchChannels(v.search))
+		}
+		if (!promises.length) {
+			channels = []
+			return
+		}
+
+		channelsLoading = true
+		let stale = false
+
+		Promise.all(promises).then((results) => {
+			if (stale) return
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const seen = new Set()
+			channels = results.flat().filter((c) => {
+				if (seen.has(c.id)) return false
+				seen.add(c.id)
+				return true
+			})
+			channelsLoading = false
+		})
+
+		return () => {
+			stale = true
+		}
 	})
 
-	async function doSearch(/** @type {string} */ query) {
-		isLoading = true
-		const results = await searchAll(query)
-		channels = results.channels
-		tracks = results.tracks
-		// Write tracks to collection so playTrack(id) can find them
-		if (tracks.length) writeTracksToCollection()
-		isLoading = false
-	}
-
-	function writeTracksToCollection() {
-		tracksCollection.utils.writeBatch(() => {
-			for (const track of tracks) {
-				tracksCollection.utils.writeUpsert(track)
-			}
-		})
-	}
+	const isLoading = $derived(viewQuery.loading || channelsLoading)
+	const tracks = $derived(viewQuery.tracks)
 
 	async function playSearchResults() {
 		if (!tracks.length) return
-		writeTracksToCollection()
 		const ids = tracks.map((t) => t.id)
 		setPlaylist(ids)
 		playTrack(ids[0], null, 'play_search')
@@ -92,7 +106,6 @@
 
 	function queueSearchResults() {
 		if (!tracks.length) return
-		writeTracksToCollection()
 		addToPlaylist(tracks.map((t) => t.id))
 	}
 </script>
