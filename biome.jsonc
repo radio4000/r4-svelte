@@ -25,6 +25,11 @@
 		// 	"indentScriptAndStyle": true
 		// }
 	},
+	"json": {
+		"formatter": {
+			"bracketSpacing": false
+		}
+	},
 	"css": {
 		"formatter": {
 			"quoteStyle": "single"
