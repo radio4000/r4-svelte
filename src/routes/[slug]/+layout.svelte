@@ -49,6 +49,7 @@
 {#if channel}
 	<div class="channel-layout">
 		<header>
+			<ChannelHero {channel} />
 			<div class="info">
 				<p class="slug"><small>@{slug}</small></p>
 				<h1>{channel.name}</h1>
@@ -66,7 +67,7 @@
 					</small>
 				</p>
 				<menu>
-					<ButtonPlay {channel} label={m.button_play_label()} />
+					<ButtonPlay class="primary" {channel} label={m.button_play_label()} />
 					{#if channel.source !== 'v1'}
 						{#if hasChannel}
 							<ButtonFollow {channel} />
@@ -82,7 +83,6 @@
 					</button>
 				</menu>
 			</div>
-			<ChannelHero {channel} />
 		</header>
 
 		<nav class="horizontalOverflow">
@@ -143,11 +143,13 @@
 
 	header {
 		display: flex;
+		flex-flow: row;
+		gap: 0.75rem;
 		padding: 0.5rem;
 	}
 
 	header :global(figure) {
-		max-width: 180px;
+		width: 12.5rem;
 		min-width: 6rem;
 		flex-shrink: 0;
 	}
@@ -158,16 +160,12 @@
 	}
 
 	h1 {
+		margin-top: var(--space-3);
 		font-size: var(--font-9);
 	}
 
 	.description {
 		white-space: pre-wrap;
-	}
-
-	.dates {
-		margin-top: 0.5rem;
-		line-height: 1.2;
 	}
 
 	menu {
@@ -191,7 +189,7 @@
 
 	@media (max-width: 500px) {
 		header {
-			flex-direction: column-reverse;
+			flex-direction: column;
 			align-items: center;
 			text-align: center;
 		}
