@@ -115,16 +115,6 @@
 		return 1
 	}
 
-	/** @param {import('$lib/components/mix-crate.svelte').Source} source */
-	function handleAddSource(source) {
-		sources = [...sources, source]
-	}
-
-	/** @param {import('$lib/components/mix-crate.svelte').Source} source */
-	function handleRemoveSource(source) {
-		sources = sources.filter((s) => !(s.type === source.type && s.value === source.value))
-	}
-
 	/** @param {number} deckId */
 	function loadToDeck(deckId) {
 		const ids = getTrackIds()
@@ -140,7 +130,12 @@
 	<!-- Crate -->
 	<section class="device crate">
 		<header class="caps">Crate</header>
-		<MixCrate {sources} {loading} onadd={handleAddSource} onremove={handleRemoveSource} />
+		<MixCrate
+			{sources}
+			{loading}
+			onadd={(s) => (sources = [...sources, s])}
+			onremove={(s) => (sources = sources.filter((x) => !(x.type === s.type && x.value === s.value)))}
+		/>
 	</section>
 
 	<!-- Pipe: crate → processor -->
@@ -463,12 +458,6 @@
 		color: var(--c-gray3);
 		font-size: 16px;
 		line-height: 1;
-		cursor: pointer;
-	}
-
-	.deck-remove:hover {
-		background: rgba(0, 0, 0, 0.8);
-		color: var(--c-gray1);
 	}
 
 	/* Crossfader */
