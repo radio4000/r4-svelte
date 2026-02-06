@@ -12,7 +12,7 @@ type View = {
 	search?: string
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
-	limit?: number
+	limit?: number // max 4000 (backend cap)
 }
 ```
 

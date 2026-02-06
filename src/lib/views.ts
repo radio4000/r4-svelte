@@ -27,7 +27,7 @@ export function parseView(params: URLSearchParams): View {
 	const limit = params.get('limit')
 	if (limit) {
 		const n = Number(limit)
-		if (n > 0) view.limit = n
+		if (n > 0) view.limit = Math.min(n, 4000)
 	}
 	const search = params.get('search')
 	if (search) view.search = search

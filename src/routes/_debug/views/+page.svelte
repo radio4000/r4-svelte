@@ -201,7 +201,7 @@
 			<legend>Sort</legend>
 			<SortControls bind:order={orderValue} bind:direction={directionValue} />
 			<label for="limit">Limit</label>
-			<input id="limit" type="number" bind:value={limitValue} placeholder="10" min="1" max="500" />
+			<input id="limit" type="number" bind:value={limitValue} placeholder="10" min="1" max="4000" />
 		</fieldset>
 		<menu>
 			<!--<button type="submit">Apply</button>-->
