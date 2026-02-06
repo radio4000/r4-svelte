@@ -6,11 +6,9 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
 - Views as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
-- Search-only views — currently views require channels or tags (`hasFilter` guard). A search-only view would need a global fetch path (Supabase FTS) without requiring channels/tags first. Review what `fetchTracksGlobal` can already do and what's missing.
 
 ## Backlog
 
-- ~~Audit `$derived(collection.state)` calls~~ — Done. Fixed `[slug]/+layout.svelte` (useLiveQuery + findOne), `stats/+page.svelte` (useLiveQuery x4), `syncChannels`/`syncTracks` (writeUpsert after update). Rest OK as-is.
 - use new Debounced() from runed all over the app instead of settimeout
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 - 3D globe map view in addition to map view. Which library?
