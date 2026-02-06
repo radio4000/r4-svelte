@@ -42,8 +42,9 @@
 	}
 
 	let lastValue = value
+	let soundEnabled = false
 	function handleInput() {
-		if (Math.abs(value - lastValue) >= step) {
+		if (soundEnabled && Math.abs(value - lastValue) >= step) {
 			playRandomClick()
 			lastValue = value
 		}
