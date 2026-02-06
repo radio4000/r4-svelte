@@ -10,6 +10,7 @@ import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
+import {searchTracks} from '$lib/search-fts'
 import type {Track} from '$lib/types'
 
 export const tracksCollection = createCollection<Track, string>(
@@ -19,9 +20,11 @@ export const tracksCollection = createCollection<Track, string>(
 			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
 			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
 			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
+			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
 			if (slugIn) return ['tracks', ...slugIn.sort()]
 			if (slugEq) return ['tracks', slugEq]
 			if (tagsIn) return ['tracks', 'tags', ...tagsIn.toSorted()]
+			if (ftsEq) return ['tracks', 'search', ftsEq]
 			return ['tracks']
 		},
 		syncMode: 'on-demand',
@@ -34,6 +37,7 @@ export const tracksCollection = createCollection<Track, string>(
 			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
 			const slugs = slugIn ?? (slugEq ? [slugEq] : [])
 			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
+			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
 
 			// Slug-based: fetch per channel
@@ -52,6 +56,11 @@ export const tracksCollection = createCollection<Track, string>(
 				const {data, error} = await query
 				if (error) throw error
 				return (data || []) as Track[]
+			}
+
+			// Global: full-text search
+			if (ftsEq) {
+				return searchTracks(ftsEq, {limit: 200})
 			}
 
 			return []
