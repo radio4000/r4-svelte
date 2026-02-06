@@ -15,4 +15,3 @@ Crate -> Processor -> LOAD 1,2,3... -> Decks 1,2,3... --> Crossfader (when max 2
 **Crossfader** (2 decks only) blends deck volumes via equal-power curve. Hidden when >2 decks — each deck's own volume fader serves as its channel fader.
 
 **Multi-deck** dynamic colors, grid layout
-

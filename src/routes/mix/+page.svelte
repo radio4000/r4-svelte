@@ -115,21 +115,6 @@
 		return 1
 	}
 
-	/** @type {import('./$types').Snapshot<{sources: typeof sources, options: typeof options, queues: Record<number, string[]>, deckCount: number}>} */
-	export const snapshot = {
-		capture: () => ({sources, options, queues, deckCount: decks.length}),
-		restore: (v) => {
-			sources = v.sources
-			options = v.options
-			if (v.queues) queues = v.queues
-			// Restore deck count
-			if (v.deckCount && v.deckCount !== decks.length) {
-				while (decks.length < v.deckCount) decks = [...decks, createDeck()]
-				while (decks.length > v.deckCount) decks = decks.slice(0, -1)
-			}
-		}
-	}
-
 	/** @param {import('$lib/components/mix-crate.svelte').Source} source */
 	function handleAddSource(source) {
 		sources = [...sources, source]
@@ -151,7 +136,7 @@
 	<title>Mix</title>
 </svelte:head>
 
-<div class="constrained mixer-layout">
+<div class="mixer-layout">
 	<!-- Crate -->
 	<section class="device crate">
 		<header class="caps">Crate</header>
@@ -187,7 +172,10 @@
 	</div>
 
 	<!-- Loaders -->
-	<div class="loaders" style:grid-template-columns="repeat({decks.length}, 1fr)">
+	<div
+		class="loaders"
+		style:grid-template-columns="repeat({decks.length}, 1fr){decks.length < MAX_DECKS ? ' auto' : ''}"
+	>
 		{#each decks as deck, i (deck.id)}
 			<button
 				class="loader"
@@ -197,6 +185,9 @@
 				style:border-color={deckColor(i).border}>Load {deckLabel(i)}</button
 			>
 		{/each}
+		{#if decks.length < MAX_DECKS}
+			<button class="loader loader-add" type="button" onclick={addDeck}>+ Deck</button>
+		{/if}
 	</div>
 
 	<!-- Pipe: loaders → decks -->
@@ -204,11 +195,6 @@
 		{#each decks as deck, i (deck.id)}
 			<div class="pipe" data-active={deck.playing || undefined} style:color={deckColor(i).accent}></div>
 		{/each}
-	</div>
-
-	<!-- Deck controls -->
-	<div class="deck-controls">
-		<button type="button" onclick={addDeck} disabled={decks.length >= MAX_DECKS}>+ Deck</button>
 	</div>
 
 	<!-- Decks -->
@@ -271,6 +257,8 @@
 
 		display: flex;
 		flex-direction: column;
+		padding-inline: 0.5rem;
+		margin-block: 0.5rem;
 	}
 
 	.device {
@@ -440,29 +428,10 @@
 		box-shadow: none;
 	}
 
-	/* Deck controls */
-	.deck-controls {
-		display: flex;
-		justify-content: center;
-		gap: 0.5rem;
-	}
-
-	.deck-controls button {
-		font-size: var(--font-2);
-		padding: 0.2rem 0.75rem;
+	.loader-add {
 		background: var(--c-gray6);
-		border: 1px solid var(--c-gray5);
-		border-radius: var(--border-radius);
-		color: var(--c-gray3);
-	}
-
-	.deck-controls button:not(:disabled):hover {
-		background: var(--c-gray5);
-		color: var(--c-gray2);
-	}
-
-	.deck-controls button:disabled {
-		opacity: 0.4;
+		border-color: var(--c-gray5);
+		border-style: dashed;
 	}
 
 	/* Decks */

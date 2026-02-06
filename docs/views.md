@@ -35,6 +35,10 @@ Sort, direction, limit, tagsMode, and fuzzy search are all post-processing on th
 
 Stable primitive strings from `page.url.searchParams.get(...)` drive the queries instead of the full `view` object. Since `parseView` returns a new object on every URL change, reading `view` directly would re-create the query on sort/direction/limit changes. Primitive strings use value equality so queries only re-create when channels, tags, or search actually change.
 
+## Goal
+
+Views power any page that shows a track list — `/search`, `/mix`, and potentially more. Same query primitive, different UI.
+
 ## Files
 
 - `src/lib/views.ts` — type, `parseView`, `serializeView`
