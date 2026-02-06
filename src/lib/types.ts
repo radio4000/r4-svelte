@@ -49,6 +49,7 @@ export interface AppState {
 	player_expanded?: boolean
 	shortcuts?: Record<string, string>
 	hide_track_artwork: boolean
+	font_family?: string
 	user?: User
 	language?: string
 	modal_track_add?: {track?: Track; url?: string} | null

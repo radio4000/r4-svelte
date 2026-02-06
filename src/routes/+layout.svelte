@@ -97,6 +97,17 @@
 		applyCustomCssVariables(appState.custom_css_variables)
 	})
 
+	// Apply font family
+	$effect(() => {
+		const ff = appState.font_family
+		if (ff) {
+			const value = ff.startsWith('var(') ? `${ff}, sans-serif` : `'${ff}', sans-serif`
+			document.documentElement.style.setProperty('--font-family', value)
+		} else {
+			document.documentElement.style.removeProperty('--font-family')
+		}
+	})
+
 	// "Close" the database on page unload. I have not noticed any difference, but seems like a good thing to do.
 	$effect(() => {
 		const handler = async () => {

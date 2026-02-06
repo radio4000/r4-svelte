@@ -10,6 +10,7 @@
 
 	/* typography */
 	--sans-serif: firava, system-ui, sans-serif;
+	--font-system: system-ui, sans-serif;
 	--monospace: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
 	--font-1: 0.6875rem;
 	--font-2: 0.75rem;

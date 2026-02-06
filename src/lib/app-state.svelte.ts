@@ -43,6 +43,7 @@ export const defaultAppState: AppState = {
 
 	theme: undefined,
 	hide_track_artwork: false,
+	font_family: undefined,
 
 	user: undefined,
 

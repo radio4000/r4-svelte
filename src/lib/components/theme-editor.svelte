@@ -11,6 +11,14 @@
 
 	const uid = $props.id()
 
+	const fontFamilies = [
+		{value: '', label: 'Rosario (default)'},
+		{value: 'Radio Canada', label: 'Radio Canada'},
+		{value: 'Recursive', label: 'Recursive'},
+		{value: 'firava', label: 'Firava'},
+		{value: 'var(--font-system)', label: 'System'}
+	]
+
 	const baseColors = [
 		{
 			name: '--accent-light',
@@ -205,6 +213,21 @@
 				<label for={`${uid}-hide-artwork`}>{m.theme_hide_artwork_label()}</label>
 				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
 				<small>{m.theme_hide_artwork_hint()}</small>
+			</fieldset>
+
+			<fieldset>
+				<label for={`${uid}-font-family`}>Font</label>
+				<select
+					id={`${uid}-font-family`}
+					value={appState.font_family || ''}
+					onchange={(e) => {
+						appState.font_family = e.currentTarget.value || undefined
+					}}
+				>
+					{#each fontFamilies as font (font.value)}
+						<option value={font.value} style:font-family={font.value || null}>{font.label}</option>
+					{/each}
+				</select>
 			</fieldset>
 		</form>
 	</section>
