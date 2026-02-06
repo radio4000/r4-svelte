@@ -2,14 +2,16 @@
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
 	import {parseView, serializeView, type View} from '$lib/views'
+	import {createQuery} from '@tanstack/svelte-query'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	// import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte' // custom version (more performant, includeInitialState: false)
 	import {tracksCollection} from '$lib/tanstack/collections'
 	import type {Track} from '$lib/types'
 	import {fuzzySearch} from '$lib/search'
+	import {searchTracks} from '$lib/search-fts'
+	import {sdk} from '@radio4000/sdk'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
-	import {inArray, eq} from '@tanstack/db'
+	import {inArray} from '@tanstack/db'
 	import {shuffleArray} from '$lib/utils'
 	import {Debounced} from 'runed'
 
@@ -98,44 +100,76 @@
 		goto('/_debug/views', {replaceState: true})
 	}
 
-	// One live query — reads stable primitive strings so sort/direction/limit changes don't re-create the collection
-	const tracksQuery = useLiveQuery((q) => {
+	// Channel queries — useLiveQuery (inArray on string column works in-memory)
+	const channelQuery = useLiveQuery((q) => {
 		const channels = qChannels ? qChannels.split(',').filter(Boolean) : []
-		const tags = qTags ? qTags.split(',').filter(Boolean) : []
-		const search = qSearch.trim()
-
-		let query = q.from({tracks: tracksCollection})
-		if (channels.length) {
-			query = query.where(({tracks}) => inArray(tracks.slug, channels))
-		}
-		if (tags.length && !channels.length) {
-			// Tags .where() drives the queryFn for global tag queries.
-			// When channels are present, tags are post-filtered (inArray can't filter array columns in-memory).
-			query = query.where(({tracks}) => inArray(tracks.tags, tags))
-		}
-		if (search && !channels.length && !tags.length) {
-			query = query.where(({tracks}) => eq(tracks.fts, search))
-		}
-		if (!channels.length && !tags.length && !search) {
-			return query.where(({tracks}) => inArray(tracks.id, []))
-		}
-		return query
+		if (!channels.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, []))
+		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, channels))
 	})
 
-	const loading = $derived(!tracksQuery.isReady)
+	// Tags-only — createQuery (query cache, no in-memory filter needed)
+	const sortedTags = $derived(qTags ? qTags.split(',').filter(Boolean).toSorted() : [])
+	const tagsQuery = createQuery(() => ({
+		queryKey: ['tracks', 'tags', ...sortedTags],
+		queryFn: async () => {
+			const {data, error} = await sdk.supabase
+				.from('channel_tracks')
+				.select('*')
+				.overlaps('tags', sortedTags)
+				.order('created_at', {ascending: false})
+				.limit(4000)
+			if (error) throw error
+			const tracks = (data || []) as Track[]
+			tracksCollection.utils.writeBatch(() => {
+				for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+			})
+			return tracks
+		},
+		enabled: !!sortedTags.length && !qChannels,
+		staleTime: 24 * 60 * 60 * 1000
+	}))
 
-	// Post-filter: tags (for channel queries), search, shuffle, limit
+	// Search-only — createQuery
+	const searchQuery = createQuery(() => {
+		const search = qSearch.trim()
+		return {
+			queryKey: ['tracks', 'search', search],
+			queryFn: async () => {
+				const tracks = (await searchTracks(search, {limit: 4000})) as Track[]
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			},
+			enabled: !!search && !qChannels && !qTags,
+			staleTime: 24 * 60 * 60 * 1000
+		}
+	})
+
+	const loading = $derived(
+		(!!qChannels && !channelQuery.isReady) ||
+			(!!qTags && !qChannels && tagsQuery.isPending) ||
+			(!!qSearch && !qChannels && !qTags && searchQuery.isPending)
+	)
+
+	// Pick the right source, then post-filter
 	const tracks = $derived.by(() => {
-		let data = (tracksQuery.data ?? []) as Track[]
+		let data: Track[] = qChannels
+			? ((channelQuery.data ?? []) as Track[])
+			: qTags
+				? ((tagsQuery.data ?? []) as Track[])
+				: qSearch
+					? ((searchQuery.data ?? []) as Track[])
+					: []
+		// Channel+tags: post-filter tags (inArray can't match array columns in-memory)
 		if (view.channels?.length && view.tags?.length) {
-			// Channel queries: tags are post-filtered (inArray can't match array columns)
 			if (view.tagsMode === 'all') {
 				data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
 			} else {
 				data = data.filter((t) => t.tags?.some((tag) => view.tags!.includes(tag)))
 			}
 		} else if (view.tagsMode === 'all' && view.tags?.length) {
-			// Tag-only queries: supabase used overlaps (any), so post-filter for "all" mode
+			// Tags-only with "all" mode: supabase used overlaps (any), so post-filter
 			data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
 		}
 		if (view.search) {

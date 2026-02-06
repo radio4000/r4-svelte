@@ -20,15 +20,20 @@ URL-encoded: `?channels=oskar&tags=jazz&order=created&direction=desc&limit=50`
 
 ## Data flow
 
-All views render through `useLiveQuery` on `tracksCollection`. The `.where()` clause drives the collection's `queryFn` to fetch the right data from Supabase.
+Three query strategies, chosen by filter type:
 
-Channel queries work end-to-end because `inArray` on a string column filters correctly in-memory. Tag and search queries hit a TanStack DB limitation: `inArray` on array columns checks equality, not containment, and `eq` on tsvector columns doesn't work in-memory either. So the `.where()` successfully drives the fetch, but the in-memory filter rejects the results. For these cases the views page reads the query cache directly via `queryClient.getQueryData()`.
+- **Channels** — `useLiveQuery` with `.where(inArray(tracks.slug, channels))`. Works end-to-end because `inArray` on a string column filters correctly in-memory (Pattern 1 from tanstack.md).
+- **Tags only** — `createQuery` reading from query cache. `useLiveQuery` can't be used because `inArray` on array columns checks equality, not containment — the fetch succeeds but the in-memory filter rejects the results. `createQuery` bypasses the collection's in-memory filter entirely.
+- **Search only** — `createQuery` for the same reason: `eq` on tsvector columns doesn't work in-memory.
+- **Channels + tags** — `useLiveQuery` fetches by slug, tags are post-filtered in `$derived` (Pattern 2 from tanstack.md).
+
+All `createQuery` queryFns also `writeUpsert` into `tracksCollection` so the data is available for other queries.
 
 Sort, direction, limit, tagsMode, and fuzzy search are all post-processing on the `tracks` derived. Cheap in-memory operations.
 
 ## Reactivity
 
-The `useLiveQuery` callback reads stable primitive strings from `page.url.searchParams.get(...)` instead of the full `view` object. Since `parseView` returns a new object on every URL change, reading `view` directly would re-create the collection on sort/direction/limit changes. Primitive strings use value equality so the collection only re-creates when channels, tags, or search actually change. Same pattern as `[slug]/+layout` where `slug` is a primitive derived.
+Stable primitive strings from `page.url.searchParams.get(...)` drive the queries instead of the full `view` object. Since `parseView` returns a new object on every URL change, reading `view` directly would re-create the query on sort/direction/limit changes. Primitive strings use value equality so queries only re-create when channels, tags, or search actually change.
 
 ## Files
 
