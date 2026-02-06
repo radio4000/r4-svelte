@@ -10,7 +10,8 @@
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
-	import {searchChannels, findChannelBySlug} from '$lib/search'
+	import {searchChannels, searchChannelsLocal, findChannelBySlug} from '$lib/search'
+	import {channelsCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
@@ -68,6 +69,9 @@
 		}
 		if (v.search) {
 			promises.push(searchChannels(v.search))
+			// Also search locally (includes v1 channels not in Supabase)
+			const local = searchChannelsLocal(v.search, [...channelsCollection.state.values()])
+			if (local.length) promises.push(Promise.resolve(local))
 		}
 		if (!promises.length) {
 			channels = []
