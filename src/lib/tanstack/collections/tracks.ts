@@ -40,10 +40,14 @@ export const tracksCollection = createCollection<Track, string>(
 			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
 
-			// Slug-based: fetch per channel
+			// Slug-based: fetch per channel, reusing per-slug cache when available
 			if (slugs.length) {
 				const results = await Promise.all(
-					slugs.map((s: string) => fetchTracksBySlug(s, {limit: options.limit, createdAfter}))
+					slugs.map(async (s: string) => {
+						const cached = queryClient.getQueryData<Track[]>(['tracks', s])
+						if (cached) return cached
+						return fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+					})
 				)
 				return results.flat()
 			}

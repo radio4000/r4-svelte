@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {page} from '$app/state'
-	import {goto} from '$app/navigation'
+	import {goto, afterNavigate} from '$app/navigation'
 	import {parseView, serializeView, type View} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {tracksCollection, queryClient} from '$lib/tanstack/collections'
@@ -8,58 +8,76 @@
 	import {fuzzySearch} from '$lib/search'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
-	import {inArray} from '@tanstack/db'
+	import {inArray, eq} from '@tanstack/db'
 	import {shuffleArray} from '$lib/utils'
 	import {Debounced} from 'runed'
 
 	// The view — single derived from URL, the source of truth
 	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length)
+	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
 
-	// Form inputs: $state initialized once from URL, not $derived (avoids URL→form feedback loop)
-	const init = parseView(new URLSearchParams(page.url.search))
-	let channelsInput = $state(init.channels?.join(', ') || '')
-	let tagsInput = $state(init.tags?.join(', ') || '')
-	let tagsModeValue: 'any' | 'all' = $state(init.tagsMode || 'any')
-	let orderValue: View['order'] = $state(init.order || 'created')
-	let directionValue: 'asc' | 'desc' = $state(init.direction || 'desc')
-	let limitValue = $state(init.limit ? String(init.limit) : '')
-	let searchInput = $state(init.search || '')
+	// Form inputs: initialized from URL, synced on navigation (not $derived — avoids URL→form feedback loop)
+	const initialView = parseView(page.url.searchParams)
+	let channelsInput = $state(initialView.channels?.join(', ') || '')
+	let tagsInput = $state(initialView.tags?.join(', ') || '')
+	let tagsModeValue: 'any' | 'all' = $state(initialView.tagsMode || 'any')
+	let orderValue: View['order'] = $state(initialView.order || 'created')
+	let directionValue: 'asc' | 'desc' = $state(initialView.direction || 'desc')
+	let limitValue = $state(initialView.limit ? String(initialView.limit) : '')
+	let searchInput = $state(initialView.search || '')
 
-	// Build view from current form state (reads raw inputs)
-	function buildView(): View {
+	// Sync URL → form on navigation (initial load, back/forward, links) — skips our own goto
+	afterNavigate(({type}) => {
+		if (type === 'goto') return
+		const v = parseView(page.url.searchParams)
+		channelsInput = v.channels?.join(', ') || ''
+		tagsInput = v.tags?.join(', ') || ''
+		tagsModeValue = v.tagsMode || 'any'
+		orderValue = v.order || 'created'
+		directionValue = v.direction || 'desc'
+		limitValue = v.limit ? String(v.limit) : ''
+		searchInput = v.search || ''
+	})
+
+	// Per-input debounce: expensive inputs (trigger fetches) get 250ms, cheap ones are instant
+	const dChannels = new Debounced(() => channelsInput, 250)
+	const dTags = new Debounced(() => tagsInput, 250)
+	const dSearch = new Debounced(() => searchInput, 250)
+
+	// Derive view from debounced (expensive) + direct (cheap) inputs
+	const formView = $derived.by((): View => {
 		const v: View = {}
-		const ch = channelsInput
-			.split(',')
-			.map((s) => s.trim())
-			.filter(Boolean)
+		const ch = [
+			...new Set(
+				(dChannels.current ?? '')
+					.split(',')
+					.map((s) => s.trim())
+					.filter(Boolean)
+			)
+		]
 		if (ch.length) v.channels = ch
-		const tg = tagsInput
-			.split(',')
-			.map((s) => s.trim().replace(/^#/, ''))
-			.filter(Boolean)
+		const tg = [
+			...new Set(
+				(dTags.current ?? '')
+					.split(',')
+					.map((s) => s.trim().replace(/^#/, ''))
+					.filter(Boolean)
+			)
+		]
 		if (tg.length) v.tags = tg
 		if (tagsModeValue === 'all') v.tagsMode = 'all'
-		if (searchInput.trim()) v.search = searchInput.trim()
+		const search = (dSearch.current ?? '').trim()
+		if (search) v.search = search
 		v.order = orderValue
 		v.direction = directionValue
 		const n = Number(limitValue)
 		if (n > 0) v.limit = n
-		if (!ch.length && !v.limit) {
-			v.limit = 5
-			limitValue = '5'
-		}
+		if (!ch.length && !tg.length && !search && !v.limit) v.limit = 5
 		return v
-	}
-
-	// Debounce form → URL sync
-	const debouncedView = new Debounced(() => JSON.stringify(buildView()), 200)
+	})
 
 	$effect(() => {
-		const serialized = debouncedView.current
-		if (!serialized) return
-		const v: View = JSON.parse(serialized)
-		goto(`/_debug/views?${serializeView(v)}`, {replaceState: true})
+		goto(`/_debug/views?${serializeView(formView)}`, {replaceState: true})
 	})
 
 	function clearView() {
@@ -84,12 +102,12 @@
 			// When channels are present, tags are post-filtered (inArray can't filter array columns in-memory).
 			query = query.where(({tracks}) => inArray(tracks.tags, view.tags))
 		}
-		if (!view.channels?.length && !view.tags?.length) {
+		if (view.search && !view.channels?.length && !view.tags?.length) {
+			query = query.where(({tracks}) => eq(tracks.fts, view.search))
+		}
+		if (!view.channels?.length && !view.tags?.length && !view.search) {
 			return query.where(({tracks}) => inArray(tracks.id, []))
 		}
-		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
-		if (view.order !== 'shuffle')
-			query = query.orderBy(({tracks}) => tracks[sortField], view.direction === 'asc' ? 'asc' : 'desc')
 		return query
 	})
 
@@ -102,6 +120,10 @@
 		if (view.channels?.length) return (tracksQuery.data ?? []) as Track[]
 		if (view.tags?.length) {
 			const key = ['tracks', 'tags', ...view.tags.toSorted()]
+			return (queryClient.getQueryData(key) as Track[]) ?? []
+		}
+		if (view.search) {
+			const key = ['tracks', 'search', view.search]
 			return (queryClient.getQueryData(key) as Track[]) ?? []
 		}
 		return [] as Track[]
@@ -126,7 +148,17 @@
 		if (view.search) {
 			data = fuzzySearch(view.search, data, ['title', 'description'])
 		}
-		if (view.order === 'shuffle') data = shuffleArray(data)
+		if (view.order === 'shuffle') {
+			data = shuffleArray(data)
+		} else {
+			const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
+			const dir = view.direction === 'asc' ? 1 : -1
+			data = data.toSorted((a, b) => {
+				const va = a[sortField] ?? ''
+				const vb = b[sortField] ?? ''
+				return va < vb ? -dir : va > vb ? dir : 0
+			})
+		}
 		if (view.limit) data = data.slice(0, view.limit)
 		return data
 	})
@@ -146,7 +178,7 @@
 		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
-			goto(`/_debug/views?${serializeView(buildView())}`, {replaceState: true})
+			goto(`/_debug/views?${serializeView(formView)}`, {replaceState: true})
 		}}
 	>
 		<fieldset>
@@ -184,7 +216,7 @@
 
 <div class="container">
 	{#if !hasFilter}
-		<p>Add channels or tags to start.</p>
+		<p>Add channels, tags, or a search to start.</p>
 	{:else if loading}
 		<p>Loading tracks…</p>
 	{:else if tracks.length}
