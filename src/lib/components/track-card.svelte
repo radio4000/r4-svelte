@@ -42,7 +42,12 @@
 		const target = event.target as HTMLElement
 		// Let time element and hashtag/mention links navigate normally
 		if (target.closest('time')) return
-		if (target instanceof HTMLAnchorElement && target.href.includes('search=')) return
+		if (
+			target instanceof HTMLAnchorElement ||
+			target.closest('a[href*="/search"]') ||
+			target.closest('button.tag-link')
+		)
+			return
 		event.preventDefault()
 	}
 	const doubleClick = () => playTrack(track.id, null, 'user_click_track')
