@@ -158,7 +158,8 @@ export const tracksAPI = {
 				needsInvalidation = true
 			} else if (mutation.type === 'update') {
 				await handleTrackUpdate(mutation)
-				// Updates don't need invalidation - optimistic data is authoritative
+				// Persist optimistic data so it survives transaction cleanup
+				tracksCollection.utils.writeUpsert(mutation.modified as Track)
 			} else if (mutation.type === 'delete') {
 				await handleTrackDelete(mutation)
 				needsInvalidation = true
