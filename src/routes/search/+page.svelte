@@ -1,10 +1,7 @@
 <script>
 	import {page} from '$app/state'
-	import {goto} from '$app/navigation'
-	import {untrack} from 'svelte'
-	import {SvelteURLSearchParams} from 'svelte/reactivity'
+	import {goto, afterNavigate} from '$app/navigation'
 	import {Debounced} from 'runed'
-	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -13,38 +10,26 @@
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {searchAll} from '$lib/search'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
 
-	// Trigger channels to load into collection state (needed for search on direct page load)
-	const channelsQuery = useLiveQuery((q) => q.from({channels: channelsCollection}))
-
-	let inputValue = $state('')
+	// Form input: initialized from URL, synced on navigation (not $effect — avoids URL→form feedback loop)
+	let inputValue = $state(page.url.searchParams.get('search') || '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
-	// Sync input with URL param when URL changes externally
-	$effect(() => {
-		const urlSearch = page.url.searchParams.get('search') || ''
-		const currentInput = untrack(() => inputValue)
-		if (urlSearch !== currentInput.trim()) {
-			inputValue = urlSearch
-		}
+	// Sync URL → input on external navigation (back/forward, links) — skip our own goto
+	afterNavigate(({type}) => {
+		if (type === 'goto') return
+		inputValue = page.url.searchParams.get('search') || ''
 	})
 
-	// Navigate when debounced input changes
+	// Push debounced input → URL
 	$effect(() => {
 		const search = debouncedInput.current.trim()
-		const urlSearch = untrack(() => page.url.searchParams.get('search') || '')
-		if (search === urlSearch) return
-		const params = new SvelteURLSearchParams(untrack(() => page.url.searchParams))
-		if (search) {
-			params.set('search', search)
-		} else {
-			params.delete('search')
-		}
-		goto(`/search?${params}`, {replaceState: true})
+		const url = search ? `/search?search=${encodeURIComponent(search)}` : '/search'
+		goto(url, {replaceState: true})
 	})
 
 	function handleSubmit(event) {
@@ -60,34 +45,28 @@
 	/** @type {import('$lib/types.ts').Track[]} */
 	let tracks = $state([])
 
-	let searchQuery = $state('')
+	// Derive search query from URL (single source of truth)
+	const searchQuery = $derived(page.url.searchParams.get('search') || '')
 	let isLoading = $state(false)
+	let lastSearched = '' // plain (untracked) — prevents re-searching same query
 
-	// Watch for URL changes and update search (wait for channels to load into collection)
+	// Trigger search when URL search param changes
 	$effect(() => {
-		const urlSearch = page.url.searchParams.get('search')
-		if (channelsQuery.isLoading) return
-		// Wait for channels to actually populate in collection (not just query status)
-		if (channelsCollection.state.size === 0) return
-		if (urlSearch && urlSearch !== searchQuery) {
-			searchQuery = urlSearch
-			search()
-		} else if (!urlSearch && searchQuery) {
-			searchQuery = ''
-			clear()
+		const q = searchQuery
+		if (!q || q.trim().length < 2) {
+			channels = []
+			tracks = []
+			lastSearched = ''
+			return
 		}
+		if (q === lastSearched) return
+		lastSearched = q
+		doSearch(q)
 	})
 
-	function clear() {
-		channels = []
-		tracks = []
-	}
-
-	async function search() {
-		if (searchQuery.trim().length < 2) return clear()
-
+	async function doSearch(/** @type {string} */ query) {
 		isLoading = true
-		const results = await searchAll(searchQuery)
+		const results = await searchAll(query)
 		channels = results.channels
 		tracks = results.tracks
 		// Write tracks to collection so playTrack(id) can find them
