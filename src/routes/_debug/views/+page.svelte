@@ -16,6 +16,12 @@
 	const view = $derived(parseView(page.url.searchParams))
 	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
 
+	// Stable primitive strings for live query — only change when the actual query params change.
+	// Avoids re-creating the collection on sort/direction/limit changes (same pattern as [slug]/+layout).
+	const qChannels = $derived(page.url.searchParams.get('channels') || '')
+	const qTags = $derived(page.url.searchParams.get('tags') || '')
+	const qSearch = $derived(page.url.searchParams.get('search') || '')
+
 	// Form inputs: initialized from URL, synced on navigation (not $derived — avoids URL→form feedback loop)
 	const initialView = parseView(page.url.searchParams)
 	let channelsInput = $state(initialView.channels?.join(', ') || '')
@@ -91,21 +97,25 @@
 		goto('/_debug/views', {replaceState: true})
 	}
 
-	// One live query — collection queryFn handles both slug and tag fetches
+	// One live query — reads stable primitive strings so sort/direction/limit changes don't re-create the collection
 	const tracksQuery = useLiveQuery((q) => {
+		const channels = qChannels ? qChannels.split(',').filter(Boolean) : []
+		const tags = qTags ? qTags.split(',').filter(Boolean) : []
+		const search = qSearch.trim()
+
 		let query = q.from({tracks: tracksCollection})
-		if (view.channels?.length) {
-			query = query.where(({tracks}) => inArray(tracks.slug, view.channels))
+		if (channels.length) {
+			query = query.where(({tracks}) => inArray(tracks.slug, channels))
 		}
-		if (view.tags?.length && !view.channels?.length) {
+		if (tags.length && !channels.length) {
 			// Tags .where() drives the queryFn for global tag queries.
 			// When channels are present, tags are post-filtered (inArray can't filter array columns in-memory).
-			query = query.where(({tracks}) => inArray(tracks.tags, view.tags))
+			query = query.where(({tracks}) => inArray(tracks.tags, tags))
 		}
-		if (view.search && !view.channels?.length && !view.tags?.length) {
-			query = query.where(({tracks}) => eq(tracks.fts, view.search))
+		if (search && !channels.length && !tags.length) {
+			query = query.where(({tracks}) => eq(tracks.fts, search))
 		}
-		if (!view.channels?.length && !view.tags?.length && !view.search) {
+		if (!channels.length && !tags.length && !search) {
 			return query.where(({tracks}) => inArray(tracks.id, []))
 		}
 		return query
