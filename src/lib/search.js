@@ -1,26 +1,9 @@
 import fuzzysort from 'fuzzysort'
 import {sdk} from '@radio4000/sdk'
 import {channelsCollection} from '$lib/tanstack/collections'
+import {parseSearchQueryToView} from '$lib/views'
 export {buildFtsFilter, searchChannels, searchTracks} from '$lib/search-fts'
 import {searchChannels, searchTracks} from '$lib/search-fts'
-
-/**
- * Parse @mention syntax: "@ko002 jazz" or "@a @b house"
- * @param {string} query
- */
-export function parseMentionQuery(query) {
-	const parts = query.trim().split(/\s+/).filter(Boolean)
-	const channelSlugs = []
-	const trackQueryParts = []
-	for (const part of parts) {
-		if (part.startsWith('@') && part.length > 1) {
-			channelSlugs.push(part.slice(1))
-		} else {
-			trackQueryParts.push(part)
-		}
-	}
-	return {channelSlugs, trackQuery: trackQueryParts.join(' ')}
-}
 
 /**
  * Find channel by slug - tries local collection first, falls back to remote
@@ -35,7 +18,7 @@ async function findChannelBySlug(slug) {
 }
 
 /**
- * Main search - remote only
+ * Main search - remote only. Supports `@channel`, `#tag`, and free-text (FTS).
  * @param {string} query
  * @param {{limit?: number}} options
  * @returns {Promise<{channels: import('$lib/types').Channel[], tracks: import('$lib/types').Track[]}>}
@@ -43,16 +26,61 @@ async function findChannelBySlug(slug) {
 export async function searchAll(query, {limit = 100} = {}) {
 	if (query.trim().length < 2) return {channels: [], tracks: []}
 
-	if (query.includes('@')) {
-		const {channelSlugs, trackQuery} = parseMentionQuery(query)
-		const channelResults = await Promise.all(channelSlugs.map(findChannelBySlug))
-		const channels = /** @type {import('$lib/types').Channel[]} */ (channelResults.filter((c) => c !== undefined))
-		if (!trackQuery) return {channels, tracks: []}
-		const results = await Promise.all(channelSlugs.map((slug) => searchTracks(trackQuery, {limit, channelSlug: slug})))
-		return {channels, tracks: results.flat()}
+	const {channels: slugs = [], tags = [], search = ''} = parseSearchQueryToView(query)
+	const hasChannels = !!slugs.length
+	const hasTags = !!tags.length
+	const hasSearch = !!search
+
+	if (!hasChannels && !hasTags && !hasSearch) return {channels: [], tracks: []}
+
+	let channels = []
+	let tracks = []
+
+	if (hasChannels) {
+		const results = await Promise.all(slugs.map(findChannelBySlug))
+		channels = results.filter((c) => c !== undefined)
+
+		if (hasSearch) {
+			// FTS scoped to each channel
+			const r = await Promise.all(slugs.map((slug) => searchTracks(search, {limit, channelSlug: slug})))
+			tracks = r.flat()
+		} else if (hasTags) {
+			// Fetch tracks from channels filtered by tags
+			const r = await Promise.all(
+				slugs.map(async (slug) => {
+					const {data} = await sdk.supabase
+						.from('channel_tracks')
+						.select('*')
+						.eq('slug', slug)
+						.overlaps('tags', tags)
+						.order('created_at', {ascending: false})
+						.limit(limit)
+					return data ?? []
+				})
+			)
+			tracks = r.flat()
+		}
+	} else if (hasTags && !hasSearch) {
+		// Tags only: query by tag overlap
+		const {data} = await sdk.supabase
+			.from('channel_tracks')
+			.select('*')
+			.overlaps('tags', tags)
+			.order('created_at', {ascending: false})
+			.limit(limit)
+		tracks = data ?? []
+	} else if (hasSearch) {
+		// Plain FTS (no channel/tag filter)
+		const fts = await Promise.all([searchChannels(search, {limit}), searchTracks(search, {limit})])
+		channels = fts[0]
+		tracks = fts[1]
 	}
 
-	const [channels, tracks] = await Promise.all([searchChannels(query, {limit}), searchTracks(query, {limit})])
+	// Post-filter by tags when we fetched via FTS (tags weren't part of the DB query)
+	if (hasTags && hasSearch && tracks.length) {
+		tracks = tracks.filter((t) => t.tags?.some((tag) => tags.includes(tag)))
+	}
+
 	return {channels, tracks}
 }
 

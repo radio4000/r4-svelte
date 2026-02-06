@@ -16,6 +16,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
   - Mix crate: replace `mixAll()` tag extraction (line 54) with direct `tracksCollection.state.values()` read.
   - Bonus: tags-only in mix will actually query Supabase instead of only filtering locally loaded tracks.
   - Research: the `_debug/views` form UI and `mix-crate` overlap — both select channels/tags. Could the crate become the shared view input component, or vice versa? Needs investigation into how much the UIs actually share vs. diverge (crate has suggestions/avatars/crossfade, views page has raw text inputs + sort controls).
+- Views: align /search with views — once view query patterns are finalized on the debug page, migrate /search to use the same reactive TanStack queries instead of the imperative `searchAll` one-shot fetch. See [plan-view-search-unification-idea](docs/plan-view-search-unification-idea.md).
 
 ## Data & migration
 

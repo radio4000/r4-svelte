@@ -34,7 +34,10 @@
 		{"name": "appState.hide_track_artwork", "desc": "Hide album art."},
 
 		{"name": "appState.modal_track_add", "desc": "Add track modal state."},
-		{"name": "appState.modal_track_edit", "desc": "Edit track modal state."}
+		{"name": "appState.modal_track_edit", "desc": "Edit track modal state."},
+		{"name": "appState.modal_shortcuts", "desc": "Shortcuts modal open."},
+
+		{"name": "canEditChannel(channelId)", "desc": "Can current user edit this channel?"}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -148,13 +151,13 @@
 	],
 
 	"src/lib/search.js": [
+		{"name": "buildFtsFilter(query)", "desc": "Build FTS filter combining websearch + prefix."},
 		{"name": "searchChannels(query, {limit?})", "desc": "Search channels remotely."},
 		{"name": "searchTracks(query, {limit?, channelSlug?})", "desc": "Search tracks remotely."},
-		{"name": "searchAll(query, {limit?})", "desc": "Search channels and tracks."},
+		{"name": "searchAll(query, {limit?})", "desc": "Search @channel, #tag, and free-text (FTS)."},
 		{"name": "fuzzySearch(query, items, keys, {limit?, threshold?})", "desc": "Generic local fuzzy search."},
 		{"name": "searchTracksLocal(query, tracks, {limit?})", "desc": "Local tracks search."},
-		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."},
-		{"name": "parseMentionQuery(query)", "desc": "Parse @mention query."}
+		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."}
 	],
 
 	"src/lib/broadcast.js": [
@@ -195,10 +198,6 @@
 		{"name": "delayRandom(min, max)", "desc": "Random delay in range."},
 		{"name": "delayWithJitter(base, jitter?)", "desc": "Delay with jitter."},
 
-		{"name": "extractYouTubeId(url)", "desc": "Extract YouTube video ID."},
-		{"name": "detectMediaProvider(url)", "desc": "Detect media provider."},
-		{"name": "fetchOEmbedTitle(mediaUrl)", "desc": "Fetch title via oEmbed API."},
-
 		{"name": "parseSearchTokens(query)", "desc": "Tokenize search query."},
 		{"name": "parseEntities(text)", "desc": "Extract #tags and @mentions."},
 		{"name": "extractHashtags(text)", "desc": "Extract hashtags only."},
@@ -210,7 +209,8 @@
 		{"name": "generateFrequency(name, slug, min, max)", "desc": "Deterministic frequency from string."},
 		{"name": "timeAgo(dateString)", "desc": "Relative time: 'Xm ago', 'Xh Ym ago'."},
 		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
-		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."}
+		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."},
+		{"name": "countStrings(strings)", "desc": "Count occurrences, sorted by frequency."}
 	],
 
 	"src/lib/components": [
@@ -285,6 +285,11 @@
 		{"name": "sdk.firebase.parseTrack(rawTrack, channelId, channelSlug)", "desc": "Parse v1 track to v2."},
 
 		{"name": "sdk.utils.extractTokens(str)", "desc": "Extract mentions and tags."}
+	],
+
+	"media-now": [
+		{"name": "parseUrl(url)", "desc": "Parse media URL to {provider, id, url, ...}."},
+		{"name": "getMedia(url)", "desc": "Fetch media metadata (title, thumbnail, etc.)."}
 	],
 
 	"@radio4000/cli": [
