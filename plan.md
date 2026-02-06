@@ -11,6 +11,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
+- Audit `$derived(collection.state)` calls — NOT reactive to collection changes. Fine for read-only pages, needs `useLiveQuery` where mutations happen. Fixed: `[slug]/+layout.svelte` (now uses `useLiveQuery` + `findOne()`). Also fixed: `writeUpsert` after update in `syncChannels` and `syncTracks` so optimistic data survives transaction cleanup. Remaining: `[slug]/+page.svelte` (needs fix — edits), `header-search.svelte` (borderline), `stats/+page.svelte` (needs fix — play history). OK as-is: `[slug]/backup/+page.svelte`, `[slug]/tracks/[tid]/+page.svelte`, `[slug]/tags/+page.svelte`, `ensure-track.svelte`.
 - use new Debounced() from runed all over the app instead of settimeout
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 - 3D globe map view in addition to map view. Which library?

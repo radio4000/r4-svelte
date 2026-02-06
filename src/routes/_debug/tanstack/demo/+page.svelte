@@ -431,8 +431,8 @@ try &#123;
 	<aside>
 		<p>
 			<strong>Reactive vs one-off:</strong> <code>collection.state</code> and <code>.toArray</code> return plain
-			snapshots — great for event handlers and one-time lookups, but wrapping them in <code>$derived</code> won't
-			make them reactive. For reactive reads, always use <code>useLiveQuery</code>.
+			snapshots — great for event handlers and one-time lookups, but wrapping them in <code>$derived</code> won't make
+			them reactive. For reactive reads, always use <code>useLiveQuery</code>.
 		</p>
 	</aside>
 
@@ -493,8 +493,8 @@ Component (reactive, filtered)</pre>
 		padding-bottom: 10vh;
 
 		h2 {
-		font-size: var(--font-6);
-	}
+			font-size: var(--font-6);
+		}
 		pre {
 			background: var(--gray-2);
 			margin-inline: -1rem;

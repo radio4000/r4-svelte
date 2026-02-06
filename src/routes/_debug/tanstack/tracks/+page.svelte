@@ -105,7 +105,8 @@
 			.getAll()
 			.filter((q) => q.queryKey[0] === 'tracks')
 			.map(
-				(q) => `${q.queryKey.join('/')}: ${(q.state.data as unknown[])?.length ?? 0} (${q.isStale() ? 'stale' : 'fresh'})`
+				(q) =>
+					`${q.queryKey.join('/')}: ${(q.state.data as unknown[])?.length ?? 0} (${q.isStale() ? 'stale' : 'fresh'})`
 			)
 	)
 </script>
@@ -163,7 +164,9 @@
 		<p>
 			50 most recent tracks <strong>across all loaded channels</strong> — Query can't do this (each key is isolated). DB can.
 		</p>
-		<p>{recentTracks.data?.length ?? 0} tracks from {slugsLoaded.length} channels ({slugsLoaded.join(', ') || 'none'})</p>
+		<p>
+			{recentTracks.data?.length ?? 0} tracks from {slugsLoaded.length} channels ({slugsLoaded.join(', ') || 'none'})
+		</p>
 
 		{#if recentTracks.data?.length}
 			<table>

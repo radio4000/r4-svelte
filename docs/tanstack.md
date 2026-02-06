@@ -158,7 +158,9 @@ Use for: channel tracks by slug, channels by ID — anything d2ts operators can 
 
 ```js
 // query.data is reactive (re-renders on collection changes):
-const query = useLiveQuery((q) => q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.channel_id, channelId)))
+const query = useLiveQuery((q) =>
+	q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.channel_id, channelId))
+)
 // Filter client-side from the reactive query.data, not from collection.state:
 let jazzTracks = $derived((query.data ?? []).filter((t) => t.tags?.includes('jazz')))
 ```
