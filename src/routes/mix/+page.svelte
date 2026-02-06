@@ -149,40 +149,10 @@
 			<InputRange bind:value={options.limit} min={10} max={200} step={10} visualStep={20} />
 		</label>
 		<output>{loading ? '...' : trackCount} tracks</output>
-	</section>
-
-	<!-- Pipe: processor → loaders -->
-	<div class="pipes pipes-to-loaders" style:grid-template-columns="repeat({decks.length}, 1fr)">
-		{#each decks as deck, i (deck.id)}
-			<div class="pipe" data-loading={loading || undefined} style:color={deckColor(i).accent}></div>
-		{/each}
-	</div>
-
-	<!-- Loaders -->
-	<div
-		class="loaders"
-		style:grid-template-columns="repeat({decks.length}, 1fr){decks.length < MAX_DECKS ? ' auto' : ''}"
-	>
-		{#each decks as deck, i (deck.id)}
-			<button
-				class="loader"
-				onclick={() => loadToDeck(deck.id)}
-				disabled={!sources.length}
-				style:background={deckColor(i).bg}
-				style:border-color={deckColor(i).border}>Load {deckLabel(i)}</button
-			>
-		{/each}
 		{#if decks.length < MAX_DECKS}
-			<button class="loader loader-add" type="button" onclick={addDeck}>+ Deck</button>
+			<button class="loader-add" type="button" onclick={addDeck}>+ Deck</button>
 		{/if}
-	</div>
-
-	<!-- Pipe: loaders → decks -->
-	<div class="pipes pipes-to-decks" style:grid-template-columns="repeat({decks.length}, 1fr)">
-		{#each decks as deck, i (deck.id)}
-			<div class="pipe" data-active={deck.playing || undefined} style:color={deckColor(i).accent}></div>
-		{/each}
-	</div>
+	</section>
 
 	<!-- Decks -->
 	<div class="decks">
@@ -194,6 +164,12 @@
 				style:border-color={deck.playing ? deckColor(i).accent : deckColor(i).border}
 				style:--deck-accent={deckColor(i).accent}
 			>
+				<button
+					class="deck-load"
+					onclick={() => loadToDeck(deck.id)}
+					disabled={!sources.length}
+					style:background={deckColor(i).border}>Load {deckLabel(i)}</button
+				>
 				{#if decks.length > 1}
 					<button class="deck-remove" onclick={() => removeDeck(deck.id)}>&times;</button>
 				{/if}
@@ -276,6 +252,7 @@
 		padding: 0.5rem 0.75rem;
 		max-width: 32rem;
 		align-self: center;
+		margin-block-end: 1rem;
 
 		& button {
 			font-size: var(--font-2);
@@ -320,97 +297,32 @@
 		}
 	}
 
-	.pipes {
+	.pipes-to-crossfader {
 		display: grid;
-		gap: 1rem;
 		height: 1rem;
 
 		& .pipe {
 			width: 2px;
 			height: 100%;
 			justify-self: center;
-			background: currentColor;
-			color: var(--c-gray5);
 		}
-	}
 
-	.pipes-to-loaders .pipe[data-loading] {
-		background: none;
-		background-image: repeating-linear-gradient(
-			180deg,
-			transparent 0,
-			transparent 0.2rem,
-			var(--c-yellow5) 0.2rem,
-			var(--c-yellow5) 0.5rem
-		);
-		background-size: 2px 1rem;
-		animation: signal-flow 0.5s linear infinite;
-	}
-
-	.pipes-to-crossfader .pipe {
-		&:first-child {
+		& .pipe:first-child {
 			justify-self: end;
 			margin-right: 1rem;
 			background: hsl(17 30% 40%);
 		}
 
-		&:last-child {
+		& .pipe:last-child {
 			justify-self: start;
 			margin-left: 1rem;
 			background: hsl(221 25% 40%);
 		}
 	}
 
-	.pipes-to-decks .pipe[data-active] {
-		background: none;
-		background-image: repeating-linear-gradient(
-			180deg,
-			transparent 0,
-			transparent 0.2rem,
-			currentColor 0.2rem,
-			currentColor 0.5rem
-		);
-		background-size: 2px 1rem;
-		animation: signal-flow 0.3s linear infinite;
-	}
-
-	.loaders {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.loader {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		justify-self: center;
-		border: 2px solid var(--c-gray5);
-		border-radius: var(--border-radius);
-		padding: 0.5rem 1.5rem;
-		font-size: var(--font-2);
-		font-weight: 600;
-		color: var(--c-gray2);
-		cursor: pointer;
-		box-shadow: 0 2px 0 var(--c-gray8);
-
-		&:not(:disabled):hover {
-			filter: brightness(1.3);
-		}
-
-		&:not(:disabled):active {
-			filter: brightness(1.5);
-			box-shadow: none;
-			transform: translateY(2px);
-		}
-
-		&:disabled {
-			opacity: 0.4;
-			cursor: not-allowed;
-			box-shadow: none;
-		}
-	}
-
 	.loader-add {
+		font-size: var(--font-2);
+		padding: 0.2rem 0.5rem;
 		background: var(--c-gray6);
 		border-color: var(--c-gray5);
 		border-style: dashed;
@@ -418,14 +330,36 @@
 
 	.decks {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 320px));
+		justify-content: center;
 		gap: 1rem;
 	}
 
 	.deck {
 		padding: 0;
-		overflow: hidden;
 		position: relative;
+	}
+
+	.deck-load {
+		position: absolute;
+		top: -6px;
+		left: -6px;
+		z-index: 1;
+		font-size: var(--font-2);
+		color: var(--c-gray2);
+		transform: rotate(-3deg);
+
+		&:not(:disabled):hover {
+			filter: brightness(1.4);
+		}
+
+		&:not(:disabled):active {
+			filter: brightness(1.6);
+			transform: rotate(-3deg) translateY(1px);
+		}
+
+		&:disabled {
+		}
 	}
 
 	.deck-remove {
@@ -455,10 +389,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.loaders {
-			gap: 0.5rem;
-		}
-
 		.crossfader {
 			max-width: none;
 		}

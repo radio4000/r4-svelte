@@ -10,12 +10,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
-- Views: as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
-  - Core idea: mix page derives a `View` from `Source[]` and uses the same query strategy as `_debug/views` (useLiveQuery for channels, createQuery for tags/search). Processor (shuffle, withoutErrors) stays as post-processing.
-  - Open question: extract a shared `useViewTracks(view)` composable, or inline the query logic in the mix page? Composable avoids duplication but may over-abstract if the two pages diverge.
-  - Mix crate: replace `mixAll()` tag extraction (line 54) with direct `tracksCollection.state.values()` read.
-  - Bonus: tags-only in mix will actually query Supabase instead of only filtering locally loaded tracks.
-  - Research: the `_debug/views` form UI and `mix-crate` overlap — both select channels/tags. Could the crate become the shared view input component, or vice versa? Needs investigation into how much the UIs actually share vs. diverge (crate has suggestions/avatars/crossfade, views page has raw text inputs + sort controls).
+- Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). `processViewTracks` handles shared post-processing; query orchestration can be inlined or extracted into a `useViewTracks` composable if both pages need the same 3-query pattern. Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
+- Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Views: align /search with views — once view query patterns are finalized on the debug page, migrate /search to use the same reactive TanStack queries instead of the imperative `searchAll` one-shot fetch. See [plan-view-search-unification-idea](docs/plan-view-search-unification-idea.md).
 
 ## Data & migration

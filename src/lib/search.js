@@ -1,7 +1,7 @@
 import fuzzysort from 'fuzzysort'
 import {sdk} from '@radio4000/sdk'
 import {channelsCollection} from '$lib/tanstack/collections'
-import {parseSearchQueryToView} from '$lib/views'
+import {parseSearchQueryToView} from '$lib/views.svelte'
 export {buildFtsFilter, searchChannels, searchTracks} from '$lib/search-fts'
 import {searchChannels, searchTracks} from '$lib/search-fts'
 
