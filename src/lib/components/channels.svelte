@@ -40,7 +40,7 @@
 			if (filter === 'all') return true
 			if (filter === 'v1') return c.source === 'v1'
 			if (filter === 'v2') return c.source !== 'v1'
-			if (filter === 'artwork' && !c.image) return false
+			if (filter === 'artwork' && (!c.image || !c.track_count || c.track_count < 2)) return false
 			if (filter === '10+' && (!c.track_count || c.track_count < 10)) return false
 			if (filter === '100+' && (!c.track_count || c.track_count < 100)) return false
 			if (filter === '1000+' && (!c.track_count || c.track_count < 1000)) return false
