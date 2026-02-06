@@ -16,6 +16,6 @@
 </script>
 
 <button data-loading={loading} disabled={loading} onclick={play} title={`Play ${channel.name}`} {...rest}>
-	<Icon icon="play-fill" size={20} />
+	<Icon icon="play-fill" />
 	{label}
 </button>

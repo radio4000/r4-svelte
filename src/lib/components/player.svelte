@@ -278,7 +278,7 @@
 		class:active={appState.queue_panel_visible}
 		{@attach tooltip({content: m.player_tooltip_queue()})}
 	>
-		<Icon icon="sidebar-fill-right" size={20} />
+		<Icon icon="sidebar-fill-right" />
 	</button>
 {/snippet}
 

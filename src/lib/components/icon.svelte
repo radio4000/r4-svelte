@@ -3,6 +3,8 @@
 		IconAdd,
 		IconArrowDown,
 		IconArrowUp,
+		IconHtml,
+		IconCodeBranch,
 		IconChartScatter,
 		IconCircleInfo,
 		IconClose,
@@ -49,7 +51,7 @@
 	} from 'obra-icons-svelte'
 
 	/** @type {{icon: string, title?: string, className?: string, size?: string | number, children?: any, [key: string]: any}} */
-	const {children, icon = '', title, className = '', size, ...rest} = $props()
+	const {children, icon = '', title, className = '', size = 20, ...rest} = $props()
 
 	const icons = {
 		add: IconAdd,
@@ -57,6 +59,8 @@
 		'arrow-up': IconArrowUp,
 		'chart-scatter': IconChartScatter,
 		'circle-info': IconCircleInfo,
+		'code-branch': IconCodeBranch,
+		html: IconHtml,
 		close: IconClose,
 		code: IconCode,
 		delete: IconDelete,

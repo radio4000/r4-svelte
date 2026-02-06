@@ -24,7 +24,7 @@
 	</select>
 	{#if order === 'shuffle'}
 		<button onclick={() => onreshuffle?.()} {@attach tooltip({content: m.channels_tooltip_shuffle()})}>
-			<Icon icon="shuffle" size="20" />
+			<Icon icon="shuffle" />
 		</button>
 	{:else}
 		<button
@@ -33,7 +33,7 @@
 				content: direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
 			})}
 		>
-			<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} size="20" />
+			<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
 		</button>
 	{/if}
 </div>

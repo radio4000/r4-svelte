@@ -20,11 +20,11 @@
 <article class="constrained">
 	<menu>
 		<a class="btn" href="/stats" class:active={page.route.id === '/stats'}>
-			<Icon icon="chart-scatter" size={20} />
+			<Icon icon="chart-scatter" />
 			{m.nav_stats()}
 		</a>
 		<a class="btn" href="/history" class:active={page.route.id === '/history'}>
-			<Icon icon="history" size={20} />
+			<Icon icon="history" />
 			{m.nav_history()}
 		</a>
 	</menu>

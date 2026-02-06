@@ -72,7 +72,7 @@
 							<ButtonFollow {channel} />
 						{:else}
 							<a href={authUrl} class="btn" title={m.button_follow()}>
-								<Icon icon="favorite" size={20} />
+								<Icon icon="favorite" />
 							</a>
 						{/if}
 					{/if}

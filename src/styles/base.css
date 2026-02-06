@@ -90,6 +90,7 @@ p {
 	margin: 0;
 }
 
+dl.meta,
 ul {
 	font-size: var(--font-4);
 }

@@ -319,7 +319,7 @@
 		</p> -->
 		<menu class="controls">
 			<PopoverMenu>
-				{#snippet trigger()}<Icon icon="filter-alt" size="20" /> {filterLabels[filter]}{/snippet}
+				{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabels[filter]}{/snippet}
 				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>All tracks</button>
 				<button class:active={filter === 'missing-description'} onclick={() => (filter = 'missing-description')}
 					>Missing description</button
@@ -339,7 +339,7 @@
 
 			{#if allTags.length > 0}
 				<PopoverMenu>
-					{#snippet trigger()}<Icon icon="tag" size="20" /> {tagFilter || 'Tags'}{/snippet}
+					{#snippet trigger()}<Icon icon="tag" /> {tagFilter || 'Tags'}{/snippet}
 					<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>All tags</button>
 					{#each allTags as { value, count } (value)}
 						<button class:active={tagFilter === value} onclick={() => (tagFilter = value)}>{value} ({count})</button>
@@ -349,7 +349,7 @@
 
 			{#if allMentions.length > 0}
 				<PopoverMenu>
-					{#snippet trigger()}<Icon icon="user" size="20" /> {mentionFilter || 'Mentions'}{/snippet}
+					{#snippet trigger()}<Icon icon="user" /> {mentionFilter || 'Mentions'}{/snippet}
 					<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}>All mentions</button>
 					{#each allMentions as { value, count } (value)}
 						<button class:active={mentionFilter === value} onclick={() => (mentionFilter = value)}
@@ -374,7 +374,7 @@
 			{/if}
 
 			<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-				{#snippet trigger()}<Icon icon="grid" size="20" strokeWidth={1.7} /> Display{/snippet}
+				{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} /> Display{/snippet}
 				<div class="sort-row">
 					<select bind:value={sortBy}>
 						<option value={null}>Sort by...</option>
@@ -384,7 +384,7 @@
 						<option value="duration">Duration</option>
 					</select>
 					<button onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}>
-						<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size="20" />
+						<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} />
 					</button>
 				</div>
 				<!-- <div class="sort-options">
@@ -394,7 +394,7 @@
 					<button class:active={sortBy === 'duration'} onclick={() => toggleSort('duration')}>Duration</button>
 				</div>
 				<button onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}>
-					<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} size="20" />
+					<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} />
 					{sortDir === 'asc' ? 'Ascending' : 'Descending'}
 				</button> -->
 				<hr />
