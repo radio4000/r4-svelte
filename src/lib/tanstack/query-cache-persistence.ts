@@ -40,11 +40,6 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	// Skip failed results
 	if (query.state.status !== 'success') return false
 
-	// Skip invalid data (do we need this check?)
-	// const data = query.state.data
-	// if (!Array.isArray(data) || data.length === 0) return false
-	// if (data.some((item) => item == null)) return false
-
 	const key = query.queryKey?.[0]
 	if (key === 'todos-cached') return false
 	if (key === 'channels') return false

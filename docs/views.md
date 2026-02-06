@@ -35,4 +35,3 @@ The `useLiveQuery` callback reads stable primitive strings from `page.url.search
 - `src/lib/views.ts` — type, `parseView`, `serializeView`
 - `src/lib/tanstack/collections/tracks.ts` — `queryKey` + `queryFn` for slug, tags, search
 - `src/routes/_debug/views/+page.svelte` — debug playground
-

@@ -3,7 +3,7 @@
 	import {goto, afterNavigate} from '$app/navigation'
 	import {parseView, serializeView, type View} from '$lib/views'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
-	import {tracksCollection, queryClient} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/tanstack/collections'
 	import type {Track} from '$lib/types'
 	import {fuzzySearch} from '$lib/search'
 	import Tracklist from '$lib/components/tracklist.svelte'
@@ -123,27 +123,9 @@
 
 	const loading = $derived(!tracksQuery.isReady)
 
-	// Raw data: for channel queries useLiveQuery works; for tag-only, read query cache
-	const rawData = $derived.by(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		tracksQuery.status // reactivity: re-derive when query completes
-		if (view.channels?.length) return (tracksQuery.data ?? []) as Track[]
-		if (view.tags?.length) {
-			const key = ['tracks', 'tags', ...view.tags.toSorted()]
-			return (queryClient.getQueryData(key) as Track[]) ?? []
-		}
-		if (view.search) {
-			const key = ['tracks', 'search', view.search]
-			return (queryClient.getQueryData(key) as Track[]) ?? []
-		}
-		return [] as Track[]
-	})
-
-	const totalCount = $derived(rawData.length)
-
 	// Post-filter: tags (for channel queries), search, shuffle, limit
 	const tracks = $derived.by(() => {
-		let data = rawData
+		let data = (tracksQuery.data ?? []) as Track[]
 		if (view.channels?.length && view.tags?.length) {
 			// Channel queries: tags are post-filtered (inArray can't match array columns)
 			if (view.tagsMode === 'all') {
@@ -230,7 +212,7 @@
 	{:else if loading}
 		<p>Loading tracks…</p>
 	{:else if tracks.length}
-		<p>{tracks.length}{tracks.length < totalCount ? ` of ${totalCount}` : ''} tracks</p>
+		<p>{tracks.length} tracks</p>
 	{/if}
 </div>
 

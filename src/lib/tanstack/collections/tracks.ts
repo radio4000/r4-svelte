@@ -56,15 +56,23 @@ export const tracksCollection = createCollection<Track, string>(
 			if (tagsIn?.length) {
 				let query = sdk.supabase.from('channel_tracks').select('*')
 				query = query.overlaps('tags', tagsIn)
-				query = query.order('created_at', {ascending: false}).limit(200)
+				query = query.order('created_at', {ascending: false}).limit(4000)
 				const {data, error} = await query
 				if (error) throw error
-				return (data || []) as Track[]
+				const tracks = (data || []) as Track[]
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
 			}
 
 			// Global: full-text search
 			if (ftsEq) {
-				return searchTracks(ftsEq, {limit: 200})
+				const tracks = await searchTracks(ftsEq, {limit: 4000})
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
 			}
 
 			return []

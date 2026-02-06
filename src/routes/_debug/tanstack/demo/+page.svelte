@@ -129,30 +129,6 @@
 		}
 	}
 
-	// Section 7: Collections
-	let collectionItems = $derived([...demoCollection.state.values()].filter(Boolean))
-
-	async function populateCollection() {
-		let data = reactiveQuery.data
-		if (!data?.length) {
-			data = await queryClient.fetchQuery({
-				queryKey: QUERY_KEY,
-				queryFn: () => fakeAPI.fetch(),
-				staleTime: 60 * 1000
-			})
-		}
-		if (!data) return
-		for (const todo of data) {
-			if (!demoCollection.state.has(todo.id)) {
-				demoCollection.insert(todo)
-			}
-		}
-	}
-
-	function addToCollection() {
-		demoCollection.insert({id: Date.now(), todo: '→ Added directly to collection', completed: false, userId: 1})
-	}
-
 	// Section 8: Live queries
 	const liveQuery = useLiveQuery((/** @type {any} */ q) => q.from({todos: demoCollection}))
 	let liveQueryData = $derived((liveQuery.data ?? []).map((row) => row.todos).filter(Boolean))
@@ -169,9 +145,6 @@
 		showOptimisticDone = false
 		writeError = ''
 		queryClient.removeQueries({queryKey: QUERY_KEY})
-		for (const id of demoCollection.state.keys()) {
-			demoCollection.delete(id)
-		}
 		fakeAPI.reset()
 	}
 </script>
@@ -258,8 +231,8 @@
 	<section>
 		<h2>4. Reactive queries</h2>
 		<p>
-			<code>createQuery</code> returns a reactive object. Unlike <code>fetchQuery</code>, it fetches automatically and
-			watches the cache for changes.
+			<code>createQuery</code> is Svelte-specific (React has <code>useQuery</code>). It returns a reactive object
+			that stays subscribed to the cache. Unlike <code>fetchQuery</code>, it fetches automatically and watches for changes.
 		</p>
 		<p>This list uses the same query key as section 2:</p>
 		{#if reactiveQuery.isLoading}
@@ -359,51 +332,25 @@ try &#123;
 			by a specific user? Show recent activity across topics? You'd have to manually dig through multiple cache entries.
 		</p>
 		<p>
-			And refresh the page—the cache is gone. <strong>Collections</strong> solve both: a local database you can query across
-			all your data, persisted to localStorage or IndexedDB.
+			<strong>Collections</strong> solve this: a queryable in-memory store across all your data. Persistence
+			(localStorage, IndexedDB) is optional—collections are in-memory by default.
 		</p>
-
-		<div class="two-col">
-			<div>
-				<h3>Query Cache</h3>
-				<code>['todos-cached']</code>
-				<p>{reactiveQuery.data?.length ?? 0} items (blob)</p>
-				{#if reactiveQuery.data?.length}
-					{@render todoBlocks(reactiveQuery.data)}
-				{:else}
-					<p><small>Loading...</small></p>
-				{/if}
-			</div>
-			<div>
-				<h3>Collection</h3>
-				<code>demoCollection</code>
-				<p>{collectionItems.length} items (queryable)</p>
-				{#if collectionItems.length}
-					{@render todoBlocks(collectionItems)}
-				{:else}
-					<p><small>Empty.</small></p>
-				{/if}
-			</div>
-		</div>
 
 		<p>
-			<button onclick={populateCollection}>
-				{reactiveQuery.data?.length ? 'Copy to collection' : 'Fetch & copy to collection'}
-			</button>
-			{#if collectionItems.length}
-				<button onclick={addToCollection}>Add to collection</button>
-			{/if}
+			With <code>queryCollectionOptions()</code>, data flows from fetch → collection automatically.
+			No manual copying. The collection deduplicates by ID—same entity from different queries is stored once.
 		</p>
+		<pre>// queryOptions: response → QueryClient cache (blob)
+// queryCollectionOptions: response → collection (rows, deduplicated by ID)
 
-		{#if collectionItems.length}
-			<p>
-				Cache and collection are independent. Add to collection—cache doesn't change. Add to cache (section
-				5)—collection doesn't change.
-			</p>
-			<pre>demoCollection.insert(&#123;id: Date.now(), todo: 'New item'&#125;)
-[...demoCollection.state.values()]
-demoCollection.state.get(id)</pre>
-		{/if}
+const tracksCollection = createCollection(
+  queryCollectionOptions(&#123;
+    queryKey: (opts) => ['tracks', slug],
+    queryFn: () => sdk.readTracks(slug),
+    getKey: (item) => item.id,
+    syncMode: 'on-demand',
+  &#125;)
+)</pre>
 	</section>
 
 	<section>
