@@ -6,7 +6,8 @@
 <script>
 	import {flip} from 'svelte/animate'
 	import {crossfade} from 'svelte/transition'
-	import {untrack, onDestroy} from 'svelte'
+	import {untrack} from 'svelte'
+	import {Debounced} from 'runed'
 
 	const [send, receive] = crossfade({
 		duration: 250,
@@ -31,9 +32,7 @@
 	let searchQuery = $state('')
 	/** @type {Source[]} */
 	let searchResults = $state([])
-	/** @type {ReturnType<typeof setTimeout> | undefined} */
-	let debounceTimer
-	onDestroy(() => clearTimeout(debounceTimer))
+	const debouncedQuery = new Debounced(() => searchQuery, 300)
 
 	/** @type {Source[]} */
 	let suggestions = $state([])
@@ -128,17 +127,17 @@
 		onremove?.(source)
 	}
 
-	function debouncedSearch() {
-		clearTimeout(debounceTimer)
-		debounceTimer = setTimeout(handleSearch, 300)
-	}
+	// React to debounced search query changes
+	$effect(() => {
+		void debouncedQuery.current
+		untrack(handleSearch)
+	})
 
 	/** @param {KeyboardEvent} e */
 	function handleInputKeydown(e) {
 		if (e.key === 'Enter') {
 			e.preventDefault()
-			clearTimeout(debounceTimer)
-			handleSearch()
+			debouncedQuery.setImmediately(searchQuery)
 		}
 	}
 
@@ -150,7 +149,6 @@
 		type="search"
 		placeholder="Search channels or #tags..."
 		bind:value={searchQuery}
-		oninput={debouncedSearch}
 		onkeydown={handleInputKeydown}
 		data-loading={loading || undefined}
 	/>

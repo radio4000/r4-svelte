@@ -3,15 +3,15 @@
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
+	import {Debounced} from 'runed'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
 
-	let debounceTimer = $state()
-
 	// Local input state - not derived, so typing doesn't get overwritten
 	let inputValue = $state('')
+	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// Sync input with URL param when URL changes externally (e.g. back/forward navigation)
 	$effect(() => {
@@ -23,27 +23,25 @@
 		}
 	})
 
-	function debouncedSearch(value) {
-		clearTimeout(debounceTimer)
-		debounceTimer = setTimeout(() => {
-			const params = new SvelteURLSearchParams(page.url.searchParams)
-			if (value.trim()) {
-				params.set('search', value.trim())
-				goto(`/search?${params}`)
-			} else {
-				params.delete('search')
-				goto('/')
-			}
-		}, 300)
-	}
+	// Navigate when debounced input changes
+	$effect(() => {
+		const search = debouncedInput.current.trim()
+		const urlSearch = untrack(() => page.url.searchParams.get('search') || '')
+		if (search === urlSearch) return
+		const params = new SvelteURLSearchParams(untrack(() => page.url.searchParams))
+		if (search) {
+			params.set('search', search)
+			goto(`/search?${params}`)
+		} else {
+			params.delete('search')
+			goto('/')
+		}
+	})
 
 	function handleSubmit(event) {
 		event.preventDefault()
-		clearTimeout(debounceTimer)
-		const params = new SvelteURLSearchParams(page.url.searchParams)
 		if (inputValue.trim()) {
-			params.set('search', inputValue.trim())
-			goto(`/search?${params}`)
+			debouncedInput.setImmediately(inputValue)
 		}
 	}
 
@@ -61,7 +59,6 @@
 			id="{uid}-search"
 			bind:value={inputValue}
 			placeholder={m.header_search_placeholder()}
-			oninput={(e) => debouncedSearch(e.target.value)}
 			onkeydown={handleKeydown}
 		/>
 	</fieldset>
