@@ -1,5 +1,5 @@
 <script>
-	let {size = 24, ...rest} = $props()
+	let {size = 20, ...rest} = $props()
 </script>
 
 <svg width={size} height={size * 0.86667} viewBox="0 0 300 260" aria-hidden="true" {...rest}>

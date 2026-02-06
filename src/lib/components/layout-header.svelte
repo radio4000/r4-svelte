@@ -99,7 +99,8 @@
 			height: auto;
 		}
 		@media (max-width: 768px) {
-			max-width: 37px;
+			min-width: 38px;
+			height: 32px;
 		}
 	}
 

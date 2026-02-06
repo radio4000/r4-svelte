@@ -2,19 +2,15 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
-## Views
-
-- Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
-- Views as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
-
 ## Backlog
 
-- use new Debounced() from runed all over the app instead of settimeout
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 - 3D globe map view in addition to map view. Which library?
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
+- Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
+- Views: as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
 
 ## Data & migration
 

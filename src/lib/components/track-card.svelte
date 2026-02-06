@@ -185,7 +185,7 @@
 	.artwork {
 		margin-bottom: auto;
 		aspect-ratio: 1/1;
-		width: 37px;
+		width: 38px;
 		/*height: 2.3rem;*/
 		object-fit: cover;
 		object-position: center;
