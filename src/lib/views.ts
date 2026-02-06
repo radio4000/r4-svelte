@@ -34,6 +34,30 @@ export function parseView(params: URLSearchParams): View {
 	return view
 }
 
+/** Parse a human query string into a View. `@slug` → channels, `#tag` → tags, rest → search. */
+export function parseSearchQueryToView(input: string): View {
+	const view: View = {}
+	const channels: string[] = []
+	const tags: string[] = []
+	const rest: string[] = []
+	for (const token of input.trim().split(/\s+/).filter(Boolean)) {
+		if (token.startsWith('@')) {
+			const slug = token.slice(1)
+			if (slug) channels.push(slug)
+		} else if (token.startsWith('#')) {
+			const tag = token.slice(1)
+			if (tag) tags.push(tag)
+		} else {
+			rest.push(token)
+		}
+	}
+	if (channels.length) view.channels = [...new Set(channels)]
+	if (tags.length) view.tags = [...new Set(tags)]
+	const search = rest.join(' ')
+	if (search) view.search = search
+	return view
+}
+
 export function serializeView(view: View): URLSearchParams {
 	const params = new URLSearchParams()
 	if (view.channels?.length) params.set('channels', view.channels.join(','))
