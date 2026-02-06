@@ -58,6 +58,6 @@ Stable primitive strings from `page.url.searchParams.get(...)` drive the queries
 
 ## Files
 
-- `src/lib/views.ts` — type, `parseView`, `serializeView`
+- `src/lib/views.ts` — type, `parseView`, `serializeView`, `processViewTracks`
 - `src/lib/tanstack/collections/tracks.ts` — `queryKey` + `queryFn` for slug, tags, search
 - `src/routes/_debug/views/+page.svelte` — debug playground

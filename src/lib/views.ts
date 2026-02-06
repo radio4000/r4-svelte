@@ -1,3 +1,7 @@
+import {fuzzySearch} from '$lib/search'
+import {shuffleArray} from '$lib/utils'
+import type {Track} from '$lib/types'
+
 export type View = {
 	channels?: string[]
 	tags?: string[]
@@ -68,4 +72,36 @@ export function serializeView(view: View): URLSearchParams {
 	if (view.limit) params.set('limit', String(view.limit))
 	if (view.search) params.set('search', view.search)
 	return params
+}
+
+/** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */
+export function processViewTracks(tracks: Track[], view: View): Track[] {
+	let data = tracks
+	// Tag post-filtering (channels+tags combo, or tags-only with "all" mode)
+	if (view.channels?.length && view.tags?.length) {
+		if (view.tagsMode === 'all') {
+			data = data.filter((t) => view.tags?.every((tag) => t.tags?.includes(tag)))
+		} else {
+			data = data.filter((t) => t.tags?.some((tag) => view.tags?.includes(tag)))
+		}
+	} else if (view.tagsMode === 'all' && view.tags?.length) {
+		// Tags-only with "all" mode: supabase used overlaps (any), so post-filter
+		data = data.filter((t) => view.tags?.every((tag) => t.tags?.includes(tag)))
+	}
+	if (view.search) {
+		data = fuzzySearch(view.search, data, ['title', 'description'])
+	}
+	if (view.order === 'shuffle') {
+		data = shuffleArray(data)
+	} else {
+		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
+		const dir = view.direction === 'asc' ? 1 : -1
+		data = data.toSorted((a, b) => {
+			const va = a[sortField] ?? ''
+			const vb = b[sortField] ?? ''
+			return va < vb ? -dir : va > vb ? dir : 0
+		})
+	}
+	if (view.limit) data = data.slice(0, view.limit)
+	return data
 }

@@ -1,18 +1,16 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
-	import {parseView, parseSearchQueryToView, serializeView, type View} from '$lib/views'
+	import {parseView, parseSearchQueryToView, serializeView, processViewTracks, type View} from '$lib/views'
 	import {createQuery} from '@tanstack/svelte-query'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {tracksCollection} from '$lib/tanstack/collections'
 	import type {Track} from '$lib/types'
-	import {fuzzySearch} from '$lib/search'
 	import {searchTracks} from '$lib/search-fts'
 	import {sdk} from '@radio4000/sdk'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {inArray} from '@tanstack/db'
-	import {shuffleArray} from '$lib/utils'
 	import {Debounced} from 'runed'
 
 	// The view — single derived from URL, the source of truth
@@ -161,42 +159,16 @@
 			(!!qSearch && !qChannels && !qTags && searchQuery.isPending)
 	)
 
-	// Pick the right source, then post-filter
+	// Pick the right source, then post-process (tag filter, sort, limit)
 	const tracks = $derived.by(() => {
-		let data: Track[] = qChannels
+		const data: Track[] = qChannels
 			? ((channelQuery.data ?? []) as Track[])
 			: qTags
 				? ((tagsQuery.data ?? []) as Track[])
 				: qSearch
 					? ((searchQuery.data ?? []) as Track[])
 					: []
-		// Channel+tags: post-filter tags (inArray can't match array columns in-memory)
-		if (view.channels?.length && view.tags?.length) {
-			if (view.tagsMode === 'all') {
-				data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
-			} else {
-				data = data.filter((t) => t.tags?.some((tag) => view.tags!.includes(tag)))
-			}
-		} else if (view.tagsMode === 'all' && view.tags?.length) {
-			// Tags-only with "all" mode: supabase used overlaps (any), so post-filter
-			data = data.filter((t) => view.tags!.every((tag) => t.tags?.includes(tag)))
-		}
-		if (view.search) {
-			data = fuzzySearch(view.search, data, ['title', 'description'])
-		}
-		if (view.order === 'shuffle') {
-			data = shuffleArray(data)
-		} else {
-			const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
-			const dir = view.direction === 'asc' ? 1 : -1
-			data = data.toSorted((a, b) => {
-				const va = a[sortField] ?? ''
-				const vb = b[sortField] ?? ''
-				return va < vb ? -dir : va > vb ? dir : 0
-			})
-		}
-		if (view.limit) data = data.slice(0, view.limit)
-		return data
+		return processViewTracks(data, view)
 	})
 </script>
 
