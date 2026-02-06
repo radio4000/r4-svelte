@@ -122,14 +122,16 @@
 
 			{#if isFiltering && filteredTracks.length === 0}
 				<p class="empty">No tracks match your filter</p>
-			{:else if (channel.track_count ?? 0) > 0}
+			{:else if !tracksQuery.isReady && (channel.track_count ?? 0) > 0}
 				<p class="empty">{m.channel_loading_tracks()}</p>
-			{:else if canEdit}
-				<p class="empty">
-					<a href="/add">Add your first track</a>
-				</p>
-			{:else}
-				<p class="empty">No tracks yet</p>
+			{:else if tracksQuery.isReady && allTracks.length === 0}
+				{#if canEdit}
+					<p class="empty">
+						<a href="/add">Add your first track</a>
+					</p>
+				{:else}
+					<p class="empty">No tracks yet</p>
+				{/if}
 			{/if}
 		</footer>
 	</section>
