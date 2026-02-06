@@ -46,7 +46,9 @@ export const tracksCollection = createCollection<Track, string>(
 					slugs.map(async (s: string) => {
 						const cached = queryClient.getQueryData<Track[]>(['tracks', s])
 						if (cached) return cached
-						return fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+						const tracks = await fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+						queryClient.setQueryData(['tracks', s], tracks)
+						return tracks
 					})
 				)
 				return results.flat()

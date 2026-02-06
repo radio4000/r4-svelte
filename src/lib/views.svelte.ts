@@ -1,5 +1,11 @@
 import {fuzzySearch} from '$lib/search'
 import {shuffleArray} from '$lib/utils'
+import {createQuery} from '@tanstack/svelte-query'
+import {useLiveQuery} from '@tanstack/svelte-db'
+import {inArray} from '@tanstack/db'
+import {tracksCollection} from '$lib/tanstack/collections'
+import {searchTracks} from '$lib/search-fts'
+import {sdk} from '@radio4000/sdk'
 import type {Track} from '$lib/types'
 
 export type View = {
@@ -55,7 +61,9 @@ export function parseSearchQueryToView(input: string): View {
 			rest.push(token)
 		}
 	}
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	if (channels.length) view.channels = [...new Set(channels)]
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	if (tags.length) view.tags = [...new Set(tags)]
 	const search = rest.join(' ')
 	if (search) view.search = search
@@ -63,6 +71,7 @@ export function parseSearchQueryToView(input: string): View {
 }
 
 export function serializeView(view: View): URLSearchParams {
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	const params = new URLSearchParams()
 	if (view.channels?.length) params.set('channels', view.channels.join(','))
 	if (view.tags?.length) params.set('tags', view.tags.join(','))
@@ -104,4 +113,79 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 	}
 	if (view.limit) data = data.slice(0, view.limit)
 	return data
+}
+
+/** Reactive view query. Call during component init. Returns {tracks, loading} with getters. */
+export function queryViewTracks(getView: () => View) {
+	// Stable $derived primitives — only change when actual query params change.
+	// Prevents re-creating queries on sort/direction/limit changes (same pattern as [slug]/+layout).
+	const channelsKey = $derived(getView().channels?.join(',') || '')
+	const tagsKey = $derived(getView().tags?.toSorted().join(',') || '')
+	const searchKey = $derived(getView().search?.trim() || '')
+
+	const channelQuery = useLiveQuery((q) => {
+		const channels = channelsKey ? channelsKey.split(',') : []
+		if (!channels.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, []))
+		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, channels))
+	})
+
+	const tagsQuery = createQuery(() => {
+		const tags = tagsKey ? tagsKey.split(',') : []
+		return {
+			queryKey: ['tracks', 'tags', ...tags],
+			queryFn: async () => {
+				const {data, error} = await sdk.supabase
+					.from('channel_tracks')
+					.select('*')
+					.overlaps('tags', tags)
+					.order('created_at', {ascending: false})
+					.limit(4000)
+				if (error) throw error
+				const tracks = (data || []) as Track[]
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			},
+			enabled: !!tags.length && !channelsKey,
+			staleTime: 24 * 60 * 60 * 1000
+		}
+	})
+
+	const searchQuery = createQuery(() => {
+		const search = searchKey
+		return {
+			queryKey: ['tracks', 'search', search],
+			queryFn: async () => {
+				const tracks = (await searchTracks(search, {limit: 4000})) as Track[]
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			},
+			enabled: !!search && !channelsKey && !tagsKey,
+			staleTime: 24 * 60 * 60 * 1000
+		}
+	})
+
+	return {
+		get tracks() {
+			const v = getView()
+			const data: Track[] = channelsKey
+				? ((channelQuery.data ?? []) as Track[])
+				: tagsKey
+					? ((tagsQuery.data ?? []) as Track[])
+					: searchKey
+						? ((searchQuery.data ?? []) as Track[])
+						: []
+			return processViewTracks(data, v)
+		},
+		get loading() {
+			return (
+				(!!channelsKey && !channelQuery.isReady) ||
+				(!!tagsKey && !channelsKey && tagsQuery.isPending) ||
+				(!!searchKey && !channelsKey && !tagsKey && searchQuery.isPending)
+			)
+		}
+	}
 }
