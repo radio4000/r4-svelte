@@ -1,19 +1,8 @@
 # Mix
 
-YouTube DJ mixer. N decks with dynamic add/remove, crossfader for 2-deck mode.
+YouTube DJ mixer with multiple decks. Think modular gear on a table. Each section is a device you could unplug and swap. Crate = record box. Processor = effects unit. Decks = turntables. Crossfader = DJ mixer channel fader. The visual uses "pipes" connecting devices to reinforce the signal-flow mental model.
 
-## Signal flow
-
-```
-┌─────────┐    ┌───────────┐    ┌──────────────┐    ┌──────────────────┐
-│  Crate  │ →  │ Processor │ →  │ Load A/B/C…  │ →  │  Decks A/B/C…    │
-└─────────┘    └───────────┘    └──────────────┘    └────────┬─────────┘
-                                                             │
-                                                   (2 decks only)
-                                                    ┌────────┴─────────┐
-                                                    │    Crossfader    │
-                                                    └──────────────────┘
-```
+Crate -> Processor -> LOAD 1,2,3... -> Decks 1,2,3... --> Crossfader (when max 2 decks)
 
 **Crate** picks sources (channels, tags). Combines and filters tracks from those sources.
 
@@ -25,15 +14,5 @@ YouTube DJ mixer. N decks with dynamic add/remove, crossfader for 2-deck mode.
 
 **Crossfader** (2 decks only) blends deck volumes via equal-power curve. Hidden when >2 decks — each deck's own volume fader serves as its channel fader.
 
-## Multi-deck
+**Multi-deck** dynamic colors, grid layout
 
-- Add/remove decks dynamically (1–8)
-- Deck colors cycle through a 6-color palette (red, blue, green, purple, orange, teal)
-- CSS grid auto-tiles: 1 deck = full width, 2 = side-by-side, 3+ = wraps intelligently
-- Pipes and loaders adapt to deck count
-
-## Hardware metaphor
-
-Think modular gear on a table. Each section is a device you could unplug and swap. Crate = record box. Processor = effects unit. Decks = turntables. Crossfader = DJ mixer channel fader.
-
-The visual uses "pipes" connecting devices to reinforce the signal-flow mental model.
