@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
-	import {parseView, serializeView, type View} from '$lib/views'
+	import {parseView, parseSearchQueryToView, serializeView, type View} from '$lib/views'
 	import {createQuery} from '@tanstack/svelte-query'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {tracksCollection} from '$lib/tanstack/collections'
@@ -88,6 +88,15 @@
 	$effect(() => {
 		goto(`/_debug/views?${serializeView(formView)}`, {replaceState: true})
 	})
+
+	let quickQuery = $state('')
+	function applyQuickQuery() {
+		const v = parseSearchQueryToView(quickQuery)
+		channelsInput = v.channels?.join(', ') || ''
+		tagsInput = v.tags?.join(', ') || ''
+		searchInput = v.search || ''
+		// Let debounced inputs propagate naturally
+	}
 
 	function clearView() {
 		channelsInput = ''
@@ -203,6 +212,28 @@
 		<h1>Views</h1>
 		<p>URL -> view -> query -> collection -> reactive</p>
 	</header>
+
+	<form
+		class="form"
+		onsubmit={(e) => {
+			e.preventDefault()
+			applyQuickQuery()
+		}}
+	>
+		<fieldset>
+			<label for="quick">Quick query <code>@channel #tag search</code></label>
+			<input id="quick" type="text" bind:value={quickQuery} placeholder="@oskar @ko002 #jazz chill vibes" />
+			<button type="submit">Apply</button>
+		</fieldset>
+		{#if quickQuery}
+			<details>
+				<summary>Parsed</summary>
+				<pre>{JSON.stringify(parseSearchQueryToView(quickQuery), null, 2)}</pre>
+			</details>
+		{/if}
+	</form>
+
+	<hr />
 
 	<form
 		class="form"

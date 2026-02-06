@@ -18,6 +18,27 @@ type View = {
 
 URL-encoded: `?channels=oskar&tags=jazz&order=created&direction=desc&limit=50`
 
+## Query syntax
+
+`parseSearchQueryToView` converts a human query string into a View. Used by `/search` and the debug quick-query input.
+
+- `@slug` → `channels` (e.g. `@oskar @ko002`)
+- `#tag` → `tags` (e.g. `#jazz #dub`)
+- Everything else → `search` (free-text FTS)
+
+Example: `@oskar #jazz miles` → `{channels: ['oskar'], tags: ['jazz'], search: 'miles'}`
+
+Tags always refer to track tags, not channel tags. When channels and tags combine, channels are fetched first, then tracks are post-filtered by tags client-side.
+
+## URL representations
+
+Two routes expose Views with different URL shapes:
+
+- **`/search?search=@oskar #jazz miles`** — stores the raw human query string. `searchAll` calls `parseSearchQueryToView` internally to decode it into a View, then runs a one-shot imperative fetch. Returns `{channels, tracks}` — resolves `@slug` into channel objects and finds matching tracks.
+- **`/_debug/views?channels=oskar&tags=jazz&search=miles`** — stores the already-parsed View as structured params. `parseView` reads it directly. Uses reactive TanStack queries (useLiveQuery / createQuery). Returns tracks only — channels are used as filters, not as results.
+
+Both represent the same View — the `/search` param is just the human-encoded form. The key difference: `/search` returns channels + tracks, views return only tracks.
+
 ## Data flow
 
 Three query strategies, chosen by filter type:

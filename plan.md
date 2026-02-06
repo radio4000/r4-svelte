@@ -11,6 +11,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
 - Views: as /mix input — once the view query pattern is stable, use it to power data loading on /mix. A mix crate source becomes a view. Goal: minimal glue code between the two.
+- Views: align /search with views — once view query patterns are finalized on the debug page, migrate /search to use the same reactive TanStack queries instead of the imperative `searchAll` one-shot fetch. See [plan-view-search-unification-idea](docs/plan-view-search-unification-idea.md).
 
 ## Data & migration
 
