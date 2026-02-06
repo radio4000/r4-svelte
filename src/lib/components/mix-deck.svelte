@@ -1,7 +1,7 @@
 <script module>
 	/**
 	 * @typedef {{
-	 *   id: 'A' | 'B',
+	 *   id: number,
 	 *   trackId: string | null,
 	 *   trackUrl: string | null,
 	 *   trackTitle: string | null,

@@ -6,6 +6,27 @@
 	import {mix, mixAll} from '$lib/lab/mix'
 	import {ensureTracksLoaded} from '$lib/tanstack/collections'
 
+	const MAX_DECKS = 8
+
+	const DECK_COLORS = [
+		{bg: 'hsl(17 25% 22%)', border: 'hsl(17 30% 35%)', accent: 'hsl(17 70% 55%)'},
+		{bg: 'hsl(221 20% 22%)', border: 'hsl(221 25% 35%)', accent: 'hsl(221 35% 54%)'},
+		{bg: 'hsl(150 20% 20%)', border: 'hsl(150 25% 32%)', accent: 'hsl(150 50% 50%)'},
+		{bg: 'hsl(280 20% 22%)', border: 'hsl(280 25% 35%)', accent: 'hsl(280 40% 55%)'},
+		{bg: 'hsl(35 25% 22%)', border: 'hsl(35 30% 35%)', accent: 'hsl(35 70% 55%)'},
+		{bg: 'hsl(190 20% 20%)', border: 'hsl(190 25% 32%)', accent: 'hsl(190 50% 50%)'}
+	]
+
+	/** @param {number} index */
+	function deckLabel(index) {
+		return String.fromCharCode(65 + index)
+	}
+
+	/** @param {number} index */
+	function deckColor(index) {
+		return DECK_COLORS[index % DECK_COLORS.length]
+	}
+
 	/** @type {import('$lib/components/mix-crate.svelte').Source[]} */
 	let sources = $state([])
 	let options = $state({shuffle: false, withoutErrors: false, limit: 50})
@@ -53,30 +74,59 @@
 		return m.take(options.limit).ids()
 	}
 
-	/** @type {string[]} */
-	let queueA = $state([])
-	/** @type {string[]} */
-	let queueB = $state([])
+	// -- Decks state --
 
-	/** @type {import('$lib/components/mix-deck.svelte').DeckState} */
-	let deckA = $state({id: 'A', trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false})
-	/** @type {import('$lib/components/mix-deck.svelte').DeckState} */
-	let deckB = $state({id: 'B', trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false})
+	let nextDeckId = 0
 
-	// Equal-power crossfade: convert -1..1 to 0..1, then apply quarter-sine curve
+	/** @returns {import('$lib/components/mix-deck.svelte').DeckState} */
+	function createDeck() {
+		return {id: nextDeckId++, trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false}
+	}
+
+	/** @type {import('$lib/components/mix-deck.svelte').DeckState[]} */
+	let decks = $state([createDeck(), createDeck()])
+
+	/** @type {Record<number, string[]>} */
+	let queues = $state({})
+
+	function addDeck() {
+		if (decks.length >= MAX_DECKS) return
+		const deck = createDeck()
+		decks = [...decks, deck]
+	}
+
+	/** @param {number} deckId */
+	function removeDeck(deckId) {
+		if (decks.length <= 1) return
+		decks = decks.filter((d) => d.id !== deckId)
+		delete queues[deckId]
+	}
+
+	// Equal-power crossfade (only used for 2-deck mode)
 	let crossfader = $state(0)
 	let fade = $derived((crossfader + 1) / 2)
-	let volumeA = $derived(Math.cos(fade * Math.PI * 0.5))
-	let volumeB = $derived(Math.sin(fade * Math.PI * 0.5))
+	let crossfadeA = $derived(Math.cos(fade * Math.PI * 0.5))
+	let crossfadeB = $derived(Math.sin(fade * Math.PI * 0.5))
+	let showCrossfader = $derived(decks.length === 2)
 
-	/** @type {import('./$types').Snapshot<{sources: typeof sources, options: typeof options, queueA: string[], queueB: string[]}>} */
+	/** @param {number} index */
+	function effectiveVolume(index) {
+		if (decks.length === 2) return index === 0 ? crossfadeA : crossfadeB
+		return 1
+	}
+
+	/** @type {import('./$types').Snapshot<{sources: typeof sources, options: typeof options, queues: Record<number, string[]>, deckCount: number}>} */
 	export const snapshot = {
-		capture: () => ({sources, options, queueA, queueB}),
+		capture: () => ({sources, options, queues, deckCount: decks.length}),
 		restore: (v) => {
 			sources = v.sources
 			options = v.options
-			queueA = v.queueA
-			queueB = v.queueB
+			if (v.queues) queues = v.queues
+			// Restore deck count
+			if (v.deckCount && v.deckCount !== decks.length) {
+				while (decks.length < v.deckCount) decks = [...decks, createDeck()]
+				while (decks.length > v.deckCount) decks = decks.slice(0, -1)
+			}
 		}
 	}
 
@@ -90,11 +140,10 @@
 		sources = sources.filter((s) => !(s.type === source.type && s.value === source.value))
 	}
 
-	/** @param {'A' | 'B'} deck */
-	function loadToDeck(deck) {
+	/** @param {number} deckId */
+	function loadToDeck(deckId) {
 		const ids = getTrackIds()
-		if (deck === 'A') queueA = ids
-		else queueB = ids
+		queues = {...queues, [deckId]: ids}
 	}
 </script>
 
@@ -131,43 +180,66 @@
 	</section>
 
 	<!-- Pipe: processor → loaders -->
-	<div class="pipes pipes-to-loaders">
-		<div class="pipe" data-loading={loading || undefined}></div>
-		<div class="pipe" data-loading={loading || undefined}></div>
+	<div class="pipes pipes-to-loaders" style:grid-template-columns="repeat({decks.length}, 1fr)">
+		{#each decks as deck, i (deck.id)}
+			<div class="pipe" data-loading={loading || undefined} style:color={deckColor(i).accent}></div>
+		{/each}
 	</div>
 
 	<!-- Loaders -->
-	<div class="loaders">
-		<button class="loader" onclick={() => loadToDeck('A')} disabled={!sources.length}>Load A</button>
-		<button class="loader" onclick={() => loadToDeck('B')} disabled={!sources.length}>Load B</button>
+	<div class="loaders" style:grid-template-columns="repeat({decks.length}, 1fr)">
+		{#each decks as deck, i (deck.id)}
+			<button
+				class="loader"
+				onclick={() => loadToDeck(deck.id)}
+				disabled={!sources.length}
+				style:background={deckColor(i).bg}
+				style:border-color={deckColor(i).border}>Load {deckLabel(i)}</button
+			>
+		{/each}
 	</div>
 
 	<!-- Pipe: loaders → decks -->
-	<div class="pipes pipes-to-decks">
-		<div class="pipe" data-active={deckA.playing || undefined}></div>
-		<div class="pipe" data-active={deckB.playing || undefined}></div>
+	<div class="pipes pipes-to-decks" style:grid-template-columns="repeat({decks.length}, 1fr)">
+		{#each decks as deck, i (deck.id)}
+			<div class="pipe" data-active={deck.playing || undefined} style:color={deckColor(i).accent}></div>
+		{/each}
+	</div>
+
+	<!-- Deck controls -->
+	<div class="deck-controls">
+		<button type="button" onclick={addDeck} disabled={decks.length >= MAX_DECKS}>+ Deck</button>
 	</div>
 
 	<!-- Decks -->
 	<div class="decks">
-		<section class="device deck" data-playing={deckA.playing || undefined}>
-			<MixDeck bind:deck={deckA} effectiveVolume={volumeA} queue={queueA} />
-		</section>
-		<section class="device deck" data-playing={deckB.playing || undefined}>
-			<MixDeck bind:deck={deckB} effectiveVolume={volumeB} queue={queueB} />
-		</section>
+		{#each decks as deck, i (deck.id)}
+			<section
+				class="device deck"
+				data-playing={deck.playing || undefined}
+				style:background={deckColor(i).bg}
+				style:border-color={deck.playing ? deckColor(i).accent : deckColor(i).border}
+				style:--deck-accent={deckColor(i).accent}
+			>
+				{#if decks.length > 1}
+					<button class="deck-remove" onclick={() => removeDeck(deck.id)}>&times;</button>
+				{/if}
+				<MixDeck bind:deck={decks[i]} effectiveVolume={effectiveVolume(i)} queue={queues[deck.id] ?? []} />
+			</section>
+		{/each}
 	</div>
 
-	<!-- Pipe: decks → crossfader -->
-	<div class="pipes pipes-to-crossfader">
-		<div class="pipe"></div>
-		<div class="pipe"></div>
-	</div>
+	<!-- Crossfader (2-deck mode only) -->
+	{#if showCrossfader}
+		<div class="pipes pipes-to-crossfader" style:grid-template-columns="1fr 1fr">
+			<div class="pipe"></div>
+			<div class="pipe"></div>
+		</div>
 
-	<!-- Crossfader -->
-	<section class="device crossfader">
-		<MixCrossfader bind:value={crossfader} />
-	</section>
+		<section class="device crossfader">
+			<MixCrossfader bind:value={crossfader} />
+		</section>
+	{/if}
 </div>
 
 <style>
@@ -279,7 +351,6 @@
 	/* Pipes */
 	.pipes {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
 		height: 1rem;
 	}
@@ -288,14 +359,8 @@
 		width: 2px;
 		height: 100%;
 		justify-self: center;
-	}
-
-	.pipes .pipe:first-child {
-		background: hsl(17 30% 40%);
-	}
-
-	.pipes .pipe:last-child {
-		background: hsl(221 25% 40%);
+		background: currentColor;
+		color: var(--c-gray5);
 	}
 
 	.pipes-to-loaders .pipe[data-loading] {
@@ -315,11 +380,13 @@
 	.pipes-to-crossfader .pipe:first-child {
 		justify-self: end;
 		margin-right: 1rem;
+		background: hsl(17 30% 40%);
 	}
 
 	.pipes-to-crossfader .pipe:last-child {
 		justify-self: start;
 		margin-left: 1rem;
+		background: hsl(221 25% 40%);
 	}
 
 	/* Animated signal flow when decks are playing */
@@ -336,18 +403,9 @@
 		animation: signal-flow 0.3s linear infinite;
 	}
 
-	.pipes-to-decks .pipe:first-child {
-		color: hsl(17 70% 55%);
-	}
-
-	.pipes-to-decks .pipe:last-child {
-		color: hsl(221 55% 60%);
-	}
-
 	/* Loaders */
 	.loaders {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
 	}
 
@@ -356,7 +414,6 @@
 		align-items: center;
 		justify-content: center;
 		justify-self: center;
-		background: var(--c-gray6);
 		border: 2px solid var(--c-gray5);
 		border-radius: var(--border-radius);
 		padding: 0.5rem 1.5rem;
@@ -368,12 +425,11 @@
 	}
 
 	.loader:not(:disabled):hover {
-		background: var(--c-gray5);
-		border-color: var(--c-gray4);
+		filter: brightness(1.3);
 	}
 
 	.loader:not(:disabled):active {
-		background: var(--c-gray4);
+		filter: brightness(1.5);
 		box-shadow: none;
 		transform: translateY(2px);
 	}
@@ -384,60 +440,66 @@
 		box-shadow: none;
 	}
 
-	.loader:first-child {
-		background: hsl(17 50% 35%);
-		border-color: hsl(17 50% 45%);
+	/* Deck controls */
+	.deck-controls {
+		display: flex;
+		justify-content: center;
+		gap: 0.5rem;
 	}
 
-	.loader:first-child:not(:disabled):hover {
-		background: hsl(17 55% 45%);
-		border-color: hsl(17 55% 55%);
+	.deck-controls button {
+		font-size: var(--font-2);
+		padding: 0.2rem 0.75rem;
+		background: var(--c-gray6);
+		border: 1px solid var(--c-gray5);
+		border-radius: var(--border-radius);
+		color: var(--c-gray3);
 	}
 
-	.loader:last-child {
-		background: hsl(221 40% 35%);
-		border-color: hsl(221 40% 45%);
+	.deck-controls button:not(:disabled):hover {
+		background: var(--c-gray5);
+		color: var(--c-gray2);
 	}
 
-	.loader:last-child:not(:disabled):hover {
-		background: hsl(221 45% 45%);
-		border-color: hsl(221 45% 55%);
-	}
-
-	.loader:first-child:not(:disabled):hover {
-		border-color: var(--c-red5);
-	}
-
-	.loader:last-child:not(:disabled):hover {
-		border-color: var(--c-blue5);
+	.deck-controls button:disabled {
+		opacity: 0.4;
 	}
 
 	/* Decks */
 	.decks {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
 		gap: 1rem;
 	}
 
 	.deck {
 		padding: 0;
 		overflow: hidden;
+		position: relative;
 	}
 
-	.deck:first-child {
-		background: hsl(17 25% 22%);
-		border-color: hsl(17 30% 35%);
-		--deck-accent: var(--c-red5);
+	.deck-remove {
+		position: absolute;
+		top: 4px;
+		right: 4px;
+		z-index: 1;
+		width: 24px;
+		height: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.5);
+		border: 1px solid var(--c-gray5);
+		border-radius: var(--border-radius);
+		color: var(--c-gray3);
+		font-size: 16px;
+		line-height: 1;
+		cursor: pointer;
 	}
 
-	.deck:last-child {
-		background: hsl(221 20% 22%);
-		border-color: hsl(221 25% 35%);
-		--deck-accent: var(--c-blue5);
-	}
-
-	.deck[data-playing] {
-		border-color: var(--deck-accent);
+	.deck-remove:hover {
+		background: rgba(0, 0, 0, 0.8);
+		color: var(--c-gray1);
 	}
 
 	/* Crossfader */
@@ -452,11 +514,6 @@
 	@media (max-width: 600px) {
 		.loaders {
 			gap: 0.5rem;
-		}
-
-		.decks {
-			grid-template-columns: 1fr;
-			gap: 0.75rem;
 		}
 
 		.crossfader {
