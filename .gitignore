@@ -20,3 +20,4 @@ rollup-visualizer.html
 !.env.test
 .dev.vars
 tmp/
+CLAUDE.local.md

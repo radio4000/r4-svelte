@@ -1,6 +1,6 @@
 # Views
 
-Every track list is a query. Views make that query a first-class thing you can name, save, share, and pipe into anything.
+Every track list is a query. Views make that query a first-class thing you can name, save, share, and pipe into anything. They power any page that shows a track list — `/search`, `/mix`, and potentially more. Same query primitive, different UI.
 
 ## View type
 
