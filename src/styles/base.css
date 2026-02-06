@@ -77,8 +77,7 @@ h3 {
 	font-weight: 400;
 }
 
-.caps,
-[caps] {
+.caps {
 	text-transform: uppercase;
 	font-size: var(--font-2);
 	font-weight: 400;
@@ -89,6 +88,10 @@ h3 {
 p {
 	font-size: var(--font-4);
 	margin: 0;
+}
+
+ul {
+	font-size: var(--font-4);
 }
 
 img {

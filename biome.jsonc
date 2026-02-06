@@ -12,7 +12,7 @@
 		"enabled": true,
 		"lineWidth": 120
 	},
-	"assist": { "actions": { "source": { "organizeImports": "off" } } },
+	"assist": {"actions": {"source": {"organizeImports": "off"}}},
 	"linter": {
 		"enabled": true,
 		"rules": {

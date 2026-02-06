@@ -2,7 +2,8 @@
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
 	import {parseView, serializeView, type View} from '$lib/views'
-	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {useLiveQuery} from '@tanstack/svelte-db'
+	// import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte' // custom version (more performant, includeInitialState: false)
 	import {tracksCollection} from '$lib/tanstack/collections'
 	import type {Track} from '$lib/types'
 	import {fuzzySearch} from '$lib/search'
@@ -161,6 +162,9 @@
 </svelte:head>
 
 <article class="container">
+	<menu data-grouped>
+		<a href="/_debug">&larr;</a>
+	</menu>
 	<header>
 		<h1>Views</h1>
 		<p>URL -> view -> query -> collection -> reactive</p>

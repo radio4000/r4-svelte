@@ -6,10 +6,6 @@
 	<a href="/_debug">&larr;</a>
 	<a href="/_debug/tanstack" aria-current={page.url.pathname === '/_debug/tanstack' ? 'page' : undefined}>tanstack</a>
 	<a
-		href="/_debug/tanstack/recent-tracks"
-		aria-current={page.url.pathname === '/_debug/tanstack/recent-tracks' ? 'page' : undefined}>recent-tracks</a
-	>
-	<a
 		href="/_debug/tanstack/error-handling"
 		aria-current={page.url.pathname === '/_debug/tanstack/error-handling' ? 'page' : undefined}>errors</a
 	>
