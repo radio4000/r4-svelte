@@ -105,7 +105,7 @@ export const channelsAPI = {
 			} else if (mutation.type === 'update') {
 				await handleChannelUpdate(mutation)
 				// Persist the optimistic data so it survives transaction cleanup
-				channelsCollection.utils.writeUpsert(mutation.modified as Channel)
+				channelsCollection.utils.writeUpsert(mutation.modified as unknown as Channel)
 			} else if (mutation.type === 'delete') {
 				await handleChannelDelete(mutation)
 				needsFullInvalidation = true

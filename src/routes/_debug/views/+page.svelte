@@ -135,7 +135,7 @@
 		</fieldset>
 		<fieldset class="row">
 			<fieldset>
-				<label>Sort</label>
+				<legend>Sort</legend>
 				<SortControls bind:order={orderValue} bind:direction={directionValue} />
 			</fieldset>
 			<fieldset>

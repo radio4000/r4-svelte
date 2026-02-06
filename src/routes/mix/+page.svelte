@@ -357,9 +357,6 @@
 			filter: brightness(1.6);
 			transform: rotate(-3deg) translateY(1px);
 		}
-
-		&:disabled {
-		}
 	}
 
 	.deck-remove {
