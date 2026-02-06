@@ -1,4 +1,6 @@
-<script>
+<script lang="ts">
+	import type {Source} from '$lib/components/mix-crate.svelte'
+	import type {DeckState} from '$lib/components/mix-deck.svelte'
 	import MixCrate from '$lib/components/mix-crate.svelte'
 	import MixDeck from '$lib/components/mix-deck.svelte'
 	import MixCrossfader from '$lib/components/mix-crossfader.svelte'
@@ -17,18 +19,15 @@
 		{bg: 'hsl(190 20% 20%)', border: 'hsl(190 25% 32%)', accent: 'hsl(190 50% 50%)'}
 	]
 
-	/** @param {number} index */
-	function deckLabel(index) {
+	function deckLabel(index: number) {
 		return String.fromCharCode(65 + index)
 	}
 
-	/** @param {number} index */
-	function deckColor(index) {
+	function deckColor(index: number) {
 		return DECK_COLORS[index % DECK_COLORS.length]
 	}
 
-	/** @type {import('$lib/components/mix-crate.svelte').Source[]} */
-	let sources = $state([])
+	let sources: Source[] = $state([])
 	let options = $state({shuffle: false, withoutErrors: false, limit: 50})
 	let loading = $state(false)
 	let loadVersion = 0
@@ -67,8 +66,8 @@
 
 	let trackCount = $derived(baseMix ? Math.min(baseMix.count(), options.limit) : 0)
 
-	function getTrackIds() {
-		if (!baseMix) return /** @type {string[]} */ ([])
+	function getTrackIds(): string[] {
+		if (!baseMix) return []
 		let m = baseMix.clone()
 		if (options.shuffle) m = m.shuffle()
 		return m.take(options.limit).ids()
@@ -78,16 +77,12 @@
 
 	let nextDeckId = 0
 
-	/** @returns {import('$lib/components/mix-deck.svelte').DeckState} */
-	function createDeck() {
+	function createDeck(): DeckState {
 		return {id: nextDeckId++, trackId: null, trackUrl: null, trackTitle: null, volume: 1, speed: 1, playing: false}
 	}
 
-	/** @type {import('$lib/components/mix-deck.svelte').DeckState[]} */
-	let decks = $state([createDeck(), createDeck()])
-
-	/** @type {Record<number, string[]>} */
-	let queues = $state({})
+	let decks: DeckState[] = $state([createDeck(), createDeck()])
+	let queues: Record<number, string[]> = $state({})
 
 	function addDeck() {
 		if (decks.length >= MAX_DECKS) return
@@ -95,8 +90,7 @@
 		decks = [...decks, deck]
 	}
 
-	/** @param {number} deckId */
-	function removeDeck(deckId) {
+	function removeDeck(deckId: number) {
 		if (decks.length <= 1) return
 		decks = decks.filter((d) => d.id !== deckId)
 		delete queues[deckId]
@@ -109,14 +103,12 @@
 	let crossfadeB = $derived(Math.sin(fade * Math.PI * 0.5))
 	let showCrossfader = $derived(decks.length === 2)
 
-	/** @param {number} index */
-	function effectiveVolume(index) {
+	function effectiveVolume(index: number) {
 		if (decks.length === 2) return index === 0 ? crossfadeA : crossfadeB
 		return 1
 	}
 
-	/** @param {number} deckId */
-	function loadToDeck(deckId) {
+	function loadToDeck(deckId: number) {
 		const ids = getTrackIds()
 		queues = {...queues, [deckId]: ids}
 	}
@@ -262,7 +254,6 @@
 		border-radius: var(--border-radius);
 	}
 
-	/* Crate */
 	.crate {
 		display: flex;
 		flex-direction: column;
@@ -270,14 +261,13 @@
 		gap: 0.5rem;
 		background: linear-gradient(180deg, hsl(40 15% 18%) 0%, var(--c-gray7) 100%);
 		border-color: hsl(40 20% 30%);
+
+		& > header {
+			color: var(--c-yellow5);
+			letter-spacing: 0.05em;
+		}
 	}
 
-	.crate > header {
-		color: var(--c-yellow5);
-		letter-spacing: 0.05em;
-	}
-
-	/* Processor */
 	.processor {
 		display: flex;
 		flex-wrap: wrap;
@@ -286,64 +276,62 @@
 		padding: 0.5rem 0.75rem;
 		max-width: 32rem;
 		align-self: center;
+
+		& button {
+			font-size: var(--font-2);
+			padding: 0.2rem 0.5rem;
+		}
+
+		& .limit {
+			flex: 1;
+			min-width: 6rem;
+		}
+
+		& output {
+			font-size: var(--font-1);
+			font-variant-numeric: tabular-nums;
+			color: var(--c-gray3);
+			white-space: nowrap;
+		}
 	}
 
-	.processor button {
-		font-size: var(--font-2);
-		padding: 0.2rem 0.5rem;
-	}
-
-	.processor .limit {
-		flex: 1;
-		min-width: 6rem;
-	}
-
-	.processor output {
-		font-size: var(--font-1);
-		font-variant-numeric: tabular-nums;
-		color: var(--c-gray3);
-		white-space: nowrap;
-	}
-
-	/* Single centered pipe */
 	.pipe-center {
 		display: flex;
 		justify-content: center;
 		height: 1rem;
+
+		& .pipe {
+			width: 2px;
+			height: 100%;
+			background: var(--c-gray5);
+
+			&[data-loading] {
+				background: none;
+				background-image: repeating-linear-gradient(
+					180deg,
+					transparent 0,
+					transparent 0.2rem,
+					var(--c-yellow5) 0.2rem,
+					var(--c-yellow5) 0.5rem
+				);
+				background-size: 2px 1rem;
+				animation: signal-flow 0.5s linear infinite;
+			}
+		}
 	}
 
-	.pipe-center .pipe {
-		width: 2px;
-		height: 100%;
-		background: var(--c-gray5);
-	}
-
-	.pipe-center .pipe[data-loading] {
-		background: none;
-		background-image: repeating-linear-gradient(
-			180deg,
-			transparent 0,
-			transparent 0.2rem,
-			var(--c-yellow5) 0.2rem,
-			var(--c-yellow5) 0.5rem
-		);
-		background-size: 2px 1rem;
-		animation: signal-flow 0.5s linear infinite;
-	}
-
-	/* Pipes */
 	.pipes {
 		display: grid;
 		gap: 1rem;
 		height: 1rem;
-	}
 
-	.pipes .pipe {
-		width: 2px;
-		height: 100%;
-		justify-self: center;
-		background: currentColor;
-		color: var(--c-gray5);
+		& .pipe {
+			width: 2px;
+			height: 100%;
+			justify-self: center;
+			background: currentColor;
+			color: var(--c-gray5);
+		}
 	}
 
 	.pipes-to-loaders .pipe[data-loading] {
@@ -359,20 +347,20 @@
 		animation: signal-flow 0.5s linear infinite;
 	}
 
-	/* Pipes: decks → crossfader - inset from inner edges */
-	.pipes-to-crossfader .pipe:first-child {
-		justify-self: end;
-		margin-right: 1rem;
-		background: hsl(17 30% 40%);
+	.pipes-to-crossfader .pipe {
+		&:first-child {
+			justify-self: end;
+			margin-right: 1rem;
+			background: hsl(17 30% 40%);
+		}
+
+		&:last-child {
+			justify-self: start;
+			margin-left: 1rem;
+			background: hsl(221 25% 40%);
+		}
 	}
 
-	.pipes-to-crossfader .pipe:last-child {
-		justify-self: start;
-		margin-left: 1rem;
-		background: hsl(221 25% 40%);
-	}
-
-	/* Animated signal flow when decks are playing */
 	.pipes-to-decks .pipe[data-active] {
 		background: none;
 		background-image: repeating-linear-gradient(
@@ -386,7 +374,6 @@
 		animation: signal-flow 0.3s linear infinite;
 	}
 
-	/* Loaders */
 	.loaders {
 		display: grid;
 		gap: 1rem;
@@ -405,22 +392,22 @@
 		color: var(--c-gray2);
 		cursor: pointer;
 		box-shadow: 0 2px 0 var(--c-gray8);
-	}
 
-	.loader:not(:disabled):hover {
-		filter: brightness(1.3);
-	}
+		&:not(:disabled):hover {
+			filter: brightness(1.3);
+		}
 
-	.loader:not(:disabled):active {
-		filter: brightness(1.5);
-		box-shadow: none;
-		transform: translateY(2px);
-	}
+		&:not(:disabled):active {
+			filter: brightness(1.5);
+			box-shadow: none;
+			transform: translateY(2px);
+		}
 
-	.loader:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-		box-shadow: none;
+		&:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+			box-shadow: none;
+		}
 	}
 
 	.loader-add {
@@ -429,7 +416,6 @@
 		border-style: dashed;
 	}
 
-	/* Decks */
 	.decks {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
@@ -460,7 +446,6 @@
 		line-height: 1;
 	}
 
-	/* Crossfader */
 	.crossfader {
 		padding: 0.75rem 1rem;
 		max-width: 20rem;
