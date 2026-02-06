@@ -2,9 +2,9 @@
 
 ## February 2026
 
-- #Search views — a composable system (?) for filtering tracks by channel, tags, and full-text search
+- #Search views: a system (?) for filtering tracks by channel, tags, and full-text search on the client, fast, cached reactive. Should open up for some nice features.
 - #Search changed its URL param from `?search=` to `?q=`, and now support @mentions and #hashtags as well as free text search across all channels and tracks
-- #Mix On /mix you can up to 8 decks now (was 2)
+- #Mix supports upp to /8 decks on /mix now (was 2)
 - #i18n Improved Portuguese translations; removed unused translation keys across all languages
 - #UI Unified icon sizes to 20px across the app
 - #Player Keyboard navigation for tracklists—use arrow keys to move and enter/space to play
@@ -12,8 +12,8 @@
 - #Perf Improved grouped tracklist date rendering (up to 900ms faster in some cases)
 - #UI Keyboard shortcuts dialog now opens with `?` key
 - #Tracks Redesigned track context menu with clearer groupings
-- #Channels Inline track search with tag filtering on channel pages
-- #Channels Backup page at `/[slug]/backup` to download channel data as JSON
+- #Channels can now search its tracks inline with tag filtering
+- #Channels new page at `/[slug]/backup` to download channel data as JSON
 - #Channels Display settings (list/grid view) now persist on followers/following pages
 - #Tags Styled and translated the /tags page
 - #Perf Faster track page loading

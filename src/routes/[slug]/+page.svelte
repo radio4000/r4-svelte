@@ -12,17 +12,20 @@
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import SortControls from '$lib/components/sort-controls.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import {countStrings} from '$lib/utils'
-	import {fuzzySearch} from '$lib/search'
-	import type {Track} from '$lib/types'
+	import {processViewTracks, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
 
 	let searchQuery = $state('')
 	let selectedTags: string[] = $state([])
+	let order: View['order'] = $state('created')
+	let direction: View['direction'] = $state('desc')
 
 	let slug = $derived(page.params.slug)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
@@ -30,19 +33,21 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
 	let aggregatedTags = $derived(countStrings(allTracks.flatMap((t) => t.tags ?? [])))
-	let isFiltering = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
-	let tagFilteredTracks = $derived(selectedTags.length ? allTracks.filter(matchesTags) : allTracks)
+	let isSearching = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
+	let isSorting = $derived(order !== 'created' || direction !== 'desc')
+	let isFiltering = $derived(isSearching || isSorting)
 	let filteredTracks = $derived(
-		searchQuery.trim() ? fuzzySearch(searchQuery, tagFilteredTracks, ['title', 'description']) : tagFilteredTracks
+		processViewTracks(allTracks, {
+			tags: selectedTags.length ? selectedTags : undefined,
+			tagsMode: 'all',
+			search: searchQuery.trim() || undefined,
+			order: isSorting ? order : undefined,
+			direction: isSorting ? direction : undefined
+		})
 	)
-	let limitedTracks = $derived(renderLimit ? allTracks.slice(0, renderLimit) : allTracks)
-	let visibleTracks = $derived(isFiltering ? filteredTracks : limitedTracks)
-	let hasMore = $derived(!isFiltering && renderLimit && allTracks.length > renderLimit)
-
-	function matchesTags(track: Track) {
-		const trackTags = (track.tags ?? []).map((t) => t.toLowerCase())
-		return selectedTags.every((t) => trackTags.includes(t.toLowerCase()))
-	}
+	let baseTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let visibleTracks = $derived(isSearching || !renderLimit ? baseTracks : baseTracks.slice(0, renderLimit))
+	let hasMore = $derived(!isSearching && renderLimit && baseTracks.length > renderLimit)
 
 	function showAll() {
 		if (slug) channelLimits.set(slug, 0)
@@ -75,37 +80,43 @@
 
 {#if channel}
 	<section>
-		<header class="row">
-			<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
-			{#if aggregatedTags.length > 0}
-				<PopoverMenu>
-					{#snippet trigger()}
-						Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-					{/snippet}
-					<menu class="tags-menu">
-						{#each aggregatedTags as { tag, count } (tag)}
-							<button type="button" class:active={selectedTags.includes(tag)} onclick={() => toggleTag(tag)}>
-								{tag} <span class="tag-count">({count})</span>
+		<header>
+			<menu class="row">
+				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
+				{#if aggregatedTags.length > 0}
+					<PopoverMenu>
+						{#snippet trigger()}
+							Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
+						{/snippet}
+						<menu class="tags-menu">
+							{#each aggregatedTags as { tag, count } (tag)}
+								<button type="button" class:active={selectedTags.includes(tag)} onclick={() => toggleTag(tag)}>
+									{tag} <span class="tag-count">({count})</span>
+								</button>
+							{/each}
+						</menu>
+					</PopoverMenu>
+				{/if}
+				{#if isFiltering}
+					<small>{filteredTracks.length} selected</small>
+				{/if}
+				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+					{#snippet trigger()}<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />{/snippet}
+					<SortControls bind:order bind:direction />
+				</PopoverMenu>
+			</menu>
+			{#if isFiltering}
+				<menu class="row">
+					{#if filteredTracks.length > 0}
+						<button type="button" onclick={playFilteredTracks}>Play</button>
+						<button type="button" onclick={queueFilteredTracks}>Queue</button>
+					{/if}
+					{#if selectedTags.length > 0}
+						{#each selectedTags as tag (tag)}
+							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
+								{tag} ×
 							</button>
 						{/each}
-					</menu>
-				</PopoverMenu>
-			{/if}
-			{#if selectedTags.length > 0}
-				<menu>
-					{#each selectedTags as tag (tag)}
-						<button type="button" class="chip" onclick={() => toggleTag(tag)}>
-							{tag} ×
-						</button>
-					{/each}
-				</menu>
-			{/if}
-			{#if isFiltering}
-				<menu>
-					<small>Selected {filteredTracks.length}</small>
-					{#if filteredTracks.length > 0}
-						<button type="button" onclick={playFilteredTracks}>{m.search_play_all()}</button>
-						<button type="button" onclick={queueFilteredTracks}>{m.search_queue_all()}</button>
 					{/if}
 				</menu>
 			{/if}
@@ -117,7 +128,7 @@
 
 		<footer>
 			{#if tracksQuery.isReady && hasMore}
-				<button onclick={showAll}>Show all {allTracks.length} tracks</button>
+				<button onclick={showAll}>Show all {baseTracks.length} tracks</button>
 			{/if}
 
 			{#if isFiltering && filteredTracks.length === 0}
@@ -140,10 +151,17 @@
 <style>
 	header {
 		padding: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
 	}
 
 	header :global(.popover-menu > button) {
 		white-space: nowrap;
+	}
+
+	header :global(input[type='search']) {
+		max-width: 10rem;
 	}
 
 	.tags-menu {
