@@ -30,7 +30,7 @@ export function relativeDateSolar(dateString) {
 	const yearsString = years ? `${years} sun orbit${years > 1 ? 's' : ''}` : ''
 	const andString = years && remainingDays ? ', ' : ''
 	const daysString = remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
-	return `${yearsString}${andString}${daysString}`
+	return `${yearsString}${andString}${daysString}` || 'today'
 }
 
 /** More detailed relative date with months/years

@@ -2,20 +2,25 @@
 
 ## February 2026
 
+- #Search views — a composable system (?) for filtering tracks by channel, tags, and full-text search
+- #Search changed its URL param from `?search=` to `?q=`, and now support @mentions and #hashtags as well as free text search across all channels and tracks
+- #Mix On /mix you can up to 8 decks now (was 2)
+- #i18n Improved Portuguese translations; removed unused translation keys across all languages
+- #UI Unified icon sizes to 20px across the app
 - #Player Keyboard navigation for tracklists—use arrow keys to move and enter/space to play
-- #performance Optimized app state persistence by avoiding repeated JSON serialization of playlist tracks
-- #performance Improved grouped tracklist date rendering (up to 900ms faster in some cases)
+- #Perf Optimized app state persistence by avoiding repeated JSON serialization of playlist tracks
+- #Perf Improved grouped tracklist date rendering (up to 900ms faster in some cases)
 - #UI Keyboard shortcuts dialog now opens with `?` key
 - #Tracks Redesigned track context menu with clearer groupings
 - #Channels Inline track search with tag filtering on channel pages
 - #Channels Backup page at `/[slug]/backup` to download channel data as JSON
 - #Channels Display settings (list/grid view) now persist on followers/following pages
 - #Tags Styled and translated the /tags page
-- #performance Faster track page loading
-- #performance Lazy-loaded Leaflet and GSAP to reduce initial bundle size
-- #performance Tooltips now share a single DOM element instead of one per tooltip
-- #performance Track freshness checks `updated_at` instead of fetching everything
-- Converted remaining web components to native Svelte components
+- #Perf Faster track page loading
+- #Perf Lazy-loaded Leaflet and GSAP to reduce initial bundle size
+- #Perf Tooltips now share a single DOM element instead of one per tooltip
+- #Perf Track freshness checks `updated_at` instead of fetching everything
+- #Perf Converted remaining web components to native Svelte components
 
 ## January 2026
 
