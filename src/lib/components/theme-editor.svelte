@@ -1,4 +1,5 @@
 <script>
+	import {Debounced} from 'runed'
 	import {appState} from '$lib/app-state.svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import InputColor from '$lib/components/input-color.svelte'
@@ -81,8 +82,20 @@
 		}
 	]
 
-	let debounceTimer = $state()
-	let applyTimer = $state()
+	/** @type {{name: string, value: string} | null} */
+	let pendingUpdate = $state(null)
+	const debouncedUpdate = new Debounced(() => pendingUpdate, 300)
+
+	// Persist debounced updates to appState
+	$effect(() => {
+		const update = debouncedUpdate.current
+		if (!update) return
+		if (update.value) {
+			appState.custom_css_variables[update.name] = update.value
+		} else {
+			delete appState.custom_css_variables[update.name]
+		}
+	})
 
 	const prefersLight = $derived(window.matchMedia('(prefers-color-scheme: light)').matches)
 	const currentTheme = $derived(appState.theme ?? (prefersLight ? 'light' : 'dark'))
@@ -97,21 +110,11 @@
 	const getCurrentValue = (variable) => customVariables[variable.name] || variable.default
 
 	const updateVariable = (name, value) => {
-		// Debounce both CSS application and database persistence
-		clearTimeout(applyTimer)
-		clearTimeout(debounceTimer)
-
-		applyTimer = setTimeout(() => {
-			applyCustomCssVariables({...customVariables, [name]: value.trim()})
-		}, 50)
-
-		debounceTimer = setTimeout(() => {
-			if (value.trim()) {
-				appState.custom_css_variables[name] = value.trim()
-			} else {
-				delete appState.custom_css_variables[name]
-			}
-		}, 300)
+		const trimmed = value.trim()
+		// Apply CSS immediately for live preview
+		applyCustomCssVariables({...customVariables, [name]: trimmed})
+		// Debounce persistence to appState
+		pendingUpdate = {name, value: trimmed}
 	}
 	const resetToDefaults = () => {
 		appState.custom_css_variables = {}
@@ -172,19 +175,20 @@
 				<ThemeToggle />
 			</fieldset>
 			<fieldset>
-				<label for={`${uid}--scaling`}>{m.theme_scale_label()}</label>
+				<label for={`${uid}--scaling`}>{m.theme_scale_label()} <span>{customVariables['--scaling'] || '1'}</span>
+				</label>
 				<InputRange
 					value={Number(customVariables['--scaling']) || 1}
-					min={0.9}
-					max={1.1}
+					min={0.8}
+					max={1.2}
 					step={0.05}
 					id={`${uid}--scaling`}
 					oninput={(e) => {
-						updateVariable('--scaling', /** @type {HTMLInputElement} */ (e.target).value)
+						const v = /** @type {HTMLInputElement} */ (e.target).value.trim()
+						appState.custom_css_variables['--scaling'] = v
+						applyCustomCssVariables({...customVariables, '--scaling': v})
 					}}
 				/>
-				<span>{customVariables['--scaling'] || '1'}</span>
-				<small>{m.theme_scale_hint()}</small>
 			</fieldset>
 
 			<fieldset>
@@ -195,7 +199,6 @@
 					onchange={(e) => updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--border-radius`}
 				/>
-				<small>{m.theme_corners_hint()}</small>
 			</fieldset>
 
 			<fieldset>
@@ -206,13 +209,11 @@
 					onchange={(e) => updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--media-radius`}
 				/>
-				<small>{m.theme_artwork_hint()}</small>
 			</fieldset>
 
 			<fieldset>
 				<label for={`${uid}-hide-artwork`}>{m.theme_hide_artwork_label()}</label>
 				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
-				<small>{m.theme_hide_artwork_hint()}</small>
 			</fieldset>
 
 			<fieldset>
@@ -243,7 +244,7 @@
 						onchange={(e) => updateVariable(variable.name, e.target.value)}
 						disabled={!getCurrentValue(variable)}
 					/>
-					<small>{variable.description()}</small>
+					<!--<small>{variable.description()}</small>-->
 				</fieldset>
 			{/each}
 
@@ -255,7 +256,7 @@
 						onchange={(e) => updateVariable(variable.name, e.target.value)}
 						disabled={!getCurrentValue(variable)}
 					/>
-					<small>{variable.description()}</small>
+					<!--<small>{variable.description()}</small>-->
 				</fieldset>
 			{/each}
 
@@ -309,23 +310,24 @@
 
 	form {
 		margin-left: 1rem;
+	}
+
+	fieldset {
 		align-items: flex-start;
 	}
 
-	form fieldset {
-		display: grid;
-		grid-template-columns: auto auto 1fr;
-		gap: 0 0.5rem;
-		align-items: center;
+	fieldset:has(input[type="checkbox"]) {
+		flex-flow: row;
+		place-items: center;
+		label {
+			order: 2;
+		}
 	}
 
-	form fieldset label {
-		grid-column: 1;
+	fieldset {
 	}
 
-	form fieldset small {
-		grid-column: 1 / -1;
-		text-indent: 1em;
+	label {
 	}
 
 	.share-form fieldset {

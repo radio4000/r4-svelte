@@ -43,20 +43,17 @@
 
 	let lastValue = value
 	let soundEnabled = false
-	function handleInput() {
+	function handleInput(event) {
 		if (soundEnabled && Math.abs(value - lastValue) >= step) {
 			playRandomClick()
 			lastValue = value
 		}
-	}
-
-	function handleChange(event) {
 		oninput?.(event)
 	}
 </script>
 
 <div class="input-range">
-	<input type="range" {min} {max} {step} bind:value oninput={handleInput} onchange={handleChange} {...props} />
+	<input type="range" {min} {max} {step} bind:value oninput={handleInput} {...props} />
 	<div class="marks" aria-hidden="true">
 		{#each {length: marks}, i (i)}
 			<div class="mark"></div>

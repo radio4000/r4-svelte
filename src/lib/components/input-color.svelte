@@ -41,9 +41,18 @@
 		--cp-button-hover-color: var(--gray-6);
 	}
 
+
+	:global(.color-picker .alpha) {
+		transform: scale(0.95);
+	}
+
+	:global(.color-picker .color) {
+		border: 2px solid;
+	}
+
 	:global(.color-picker.vertical > label) {
 		margin-left: 0;
-		color: initial;
+		color: var(--gray-12);
 	}
 
 	:global(.color-picker .wrapper) {
