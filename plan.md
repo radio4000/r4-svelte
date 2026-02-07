@@ -4,19 +4,19 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
-- Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; could be the list view itself when there's enough space (responsive), or a toggle within list view. Can use `getChannelTags()` from utils.
+- Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
 - Channel tags helper — `countStrings(tracks.flatMap(t => t.tags ?? []))` is repeated in `[slug]/+page`, `[slug]/tags/+page`, `batch-edit/`. Extract a reusable `getChannelTags(tracks)` (or similar). Once available, can be used in channel cards, list view, etc. Consider how this can be performant since it might mean collection merging unique items from 5k items
-- Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
-- 3D globe map view in addition to map view. Which library?
-- Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. Low effort.
+- 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
+- Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. TBD: for tracks missing duration, could fetch via `media-now getMedia()` on demand. Low effort.
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
- Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
-- OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Needs server-side data (load functions already fetch channel/track).
+  Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
+- OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Currently client-side only; would need SSR for these routes (SvelteKit server load functions). No blocker, just needs prioritization.
 - Media Session API — OS-level lock screen / notification controls (play/pause/skip/artwork). Player already has all the hooks; wire up `navigator.mediaSession.metadata` and action handlers.
- - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
+- Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a track URL that already exists in the channel. Could also surface duplicates in batch-edit (group by URL or media_id).
+- Expand our broadcast schema with a custom JSON field (?) so we can push arbitrary data without updating the schema every time. We could, for example, put the player data of each deck from /mix
 
 ## Data & migration
 
@@ -25,10 +25,6 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - v1 compatibility — v1 channels can't be followed/broadcasted due to FK constraints. Resolved by migration above. if we do migration, lots of code here regarding v1 can be deleted
 
 - Play history threshold — currently a track is recorded to play history as soon as it starts playing. Instead, a play should count only after the user has listened long enough: the entire track if under 2 min, or half the duration (max 4 min), whichever is longest. Open questions: what happens when the user seeks/skips around within a track (accumulate actual play time vs. furthest position reached?), what about pausing and resuming, and should skipped tracks still appear in history with a `skipped` flag or not at all? Currently `addPlayHistoryEntry` fires in `playTrack()` (api.js); would move to player.svelte using `timeupdate` events. Needs `getPlayCountThreshold(durationSec)` helper in play-history.ts and a way to pass `reason_start` to the player (e.g. via appState).
-
-- `togglePlayPause()` in api.js only queries `youtube-video`, not `soundcloud-player` — bug or intentional? The same DOM query (`youtube-video || soundcloud-player`) is repeated 3 times in api.js; could extract a `getMediaPlayer()` helper.
-- `apply-css-variables.js` repeats a check+setProperty pattern 4 times for accent/gray light/dark variants — could loop over a config array.
-- `search.js` lines 5-6 both re-export and import `searchChannels`/`searchTracks` from `search-fts` — works but reads oddly; could consolidate.
 
 ## In progress
 
@@ -42,6 +38,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
     3. Export from provider only (not top-level) — usage: `import { youtube } from 'media-now/providers/youtube'`
     4. Tests against known video IDs (Topic, official, user upload)
     5. Use in r4-sync-tests: enrich tracks with clean artist/song/album for MusicBrainz/Discogs lookup
+  - **Status**: Implementation in progress on a branch in media-now. Can test integration in r4-sync-tests once merged.
   - **Probe scripts**: `yt-dump-50.ts`, `yt-probe-cards.ts`, `yt-probe-credits-raw.ts` — results in `yt-dump-50.json`, `yt-credits-raw.json`
 
 ## Needs research
