@@ -18,39 +18,20 @@ export function applyCustomCssVariables(customVariables = {}) {
 	}
 
 	// Set base colors directly - CSS will handle the scales
-	const accentBaseLight = customVariables['--accent-light']
-	const accentBaseDark = customVariables['--accent-dark']
-	if (accentBaseLight) {
-		root.style.setProperty('--accent-light', accentBaseLight)
-	}
-	if (accentBaseDark) {
-		root.style.setProperty('--accent-dark', accentBaseDark)
+	for (const prop of ['--accent-light', '--accent-dark', '--gray-light', '--gray-dark']) {
+		if (customVariables[prop]) root.style.setProperty(prop, customVariables[prop])
 	}
 
-	const grayBaseLight = customVariables['--gray-light']
-	const grayBaseDark = customVariables['--gray-dark']
-	if (grayBaseLight) {
-		root.style.setProperty('--gray-light', grayBaseLight)
-	}
-	if (grayBaseDark) {
-		root.style.setProperty('--gray-dark', grayBaseDark)
-	}
-
-	// Handle button overrides
-	const buttonBgLight = customVariables['--button-bg-light']
-	const buttonBgDark = customVariables['--button-bg-dark']
-	if (buttonBgLight || buttonBgDark) {
-		const light = buttonBgLight || 'var(--gray-1)'
-		const dark = buttonBgDark || 'var(--gray-1)'
-		root.style.setProperty('--button-bg', `light-dark(${light}, ${dark})`)
-	}
-
-	const buttonColorLight = customVariables['--button-color-light']
-	const buttonColorDark = customVariables['--button-color-dark']
-	if (buttonColorLight || buttonColorDark) {
-		const light = buttonColorLight || 'var(--gray-12)'
-		const dark = buttonColorDark || 'var(--gray-12)'
-		root.style.setProperty('--button-color', `light-dark(${light}, ${dark})`)
+	// Handle button overrides (merge light/dark into light-dark())
+	for (const [target, fallback] of [
+		['--button-bg', 'var(--gray-1)'],
+		['--button-color', 'var(--gray-12)']
+	]) {
+		const lightVal = customVariables[`${target}-light`]
+		const darkVal = customVariables[`${target}-dark`]
+		if (lightVal || darkVal) {
+			root.style.setProperty(target, `light-dark(${lightVal || fallback}, ${darkVal || fallback})`)
+		}
 	}
 
 	// Apply all other custom variables (non-generated ones like scaling, border-radius)
