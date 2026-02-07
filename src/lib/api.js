@@ -131,9 +131,9 @@ export async function playTrack(id, endReason, startReason) {
 
 /**
  * @param {{id: string, slug: string}} channel
- * @param {number} index
+ * @param {string} [trackId] - optional track ID to start from
  */
-export async function playChannel({id, slug}, index = 0) {
+export async function playChannel({id, slug}, trackId) {
 	log.log('play_channel', {id, slug})
 	leaveBroadcast()
 	await ensureTracksLoaded(slug)
@@ -146,7 +146,7 @@ export async function playChannel({id, slug}, index = 0) {
 	}
 	const ids = tracks.map((t) => t.id)
 	await setPlaylist(ids)
-	await playTrack(tracks[index].id, null, 'play_channel')
+	await playTrack(trackId ?? ids[0], null, 'play_channel')
 }
 
 /** Play channel starting from random track with shuffle enabled */

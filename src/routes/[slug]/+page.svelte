@@ -16,7 +16,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
-	import {countStrings} from '$lib/utils'
+	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -32,7 +32,7 @@
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
-	let aggregatedTags = $derived(countStrings(allTracks.flatMap((t) => t.tags ?? [])))
+	let aggregatedTags = $derived(getChannelTags(allTracks))
 	let isSearching = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
 	let isFiltering = $derived(isSearching || isSorting)

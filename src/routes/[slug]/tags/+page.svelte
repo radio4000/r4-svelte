@@ -4,7 +4,7 @@
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
 	import {channelsCollection} from '$lib/tanstack/collections'
-	import {countStrings} from '$lib/utils'
+	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -99,7 +99,7 @@
 			if (endDate && trackDate >= endDate) return false
 			return true
 		})
-		return countStrings(filtered.flatMap((t) => t.tags ?? []))
+		return getChannelTags(filtered)
 	}
 
 	// Tags for current period

@@ -87,7 +87,10 @@
 		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
 
 		{"name": "playTrack(id, endReason, startReason)", "desc": "Start playback of a track."},
-		{"name": "playChannel({id, slug}, index?)", "desc": "Play a channel from optional index."},
+		{
+			"name": "playChannel({id, slug}, trackId?)",
+			"desc": "Play a channel, optionally starting from a specific track ID."
+		},
 		{"name": "shufflePlayChannel({id, slug})", "desc": "Random start plus shuffle."},
 		{"name": "togglePlayPause()", "desc": "Toggle YouTube player play/pause."},
 		{"name": "playFromHere(trackId)", "desc": "Play from track to end."},
@@ -210,7 +213,8 @@
 		{"name": "timeAgo(dateString)", "desc": "Relative time: 'Xm ago', 'Xh Ym ago'."},
 		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
 		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."},
-		{"name": "countStrings(strings)", "desc": "Count occurrences, sorted by frequency."}
+		{"name": "countStrings(strings)", "desc": "Count occurrences, sorted by frequency."},
+		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks."}
 	],
 
 	"src/lib/components": [

@@ -195,3 +195,8 @@ export function countStrings(strings: string[]): Array<{tag: string; count: numb
 		.map(([tag, count]) => ({tag, count}))
 		.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
 }
+
+/** Aggregate and count tags from an array of tracks. */
+export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{tag: string; count: number}> {
+	return countStrings(tracks.flatMap((t) => t.tags ?? []))
+}

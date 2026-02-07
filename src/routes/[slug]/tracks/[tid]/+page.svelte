@@ -56,14 +56,11 @@
 			.data?.[0]?.id})
 	</p>
 {:else}
+	<ul class="list HIGHLIGHT">
+		<li><TrackCard {track} /></li>
+	</ul>
 	<article class="constrained">
 		<header>
-			<p>
-				<a href="/{channel.slug}">@{channel.slug}</a> / {track.title}
-			</p>
-
-			<TrackCard {track} />
-
 			<menu class="tree">
 				<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>{m.track_detail_nav_r5()}</a>
 				<a href="?tab=youtube" class:active={activeTab === 'youtube'}>{m.track_detail_nav_youtube()}</a>
@@ -73,26 +70,30 @@
 			</menu>
 		</header>
 
-		{#if activeTab === 'youtube'}
-			<TrackMetaYoutube data={meta?.youtube_data} />
-		{:else if activeTab === 'musicbrainz'}
-			<TrackMetaMusicbrainz data={meta?.musicbrainz_data} {track} />
-		{:else if activeTab === 'discogs'}
-			<TrackMetaDiscogs data={meta?.discogs_data} />
-		{:else if activeTab === 'related'}
-			<TrackRelated {track} />
-		{:else}
-			<TrackMetaR5 data={track} />
-		{/if}
+		<main class="meta">
+			{#if activeTab === 'youtube'}
+				<TrackMetaYoutube data={meta?.youtube_data} />
+			{:else if activeTab === 'musicbrainz'}
+				<TrackMetaMusicbrainz data={meta?.musicbrainz_data} {track} />
+			{:else if activeTab === 'discogs'}
+				<TrackMetaDiscogs data={meta?.discogs_data} />
+			{:else if activeTab === 'related'}
+				<TrackRelated {track} />
+			{:else}
+				<TrackMetaR5 data={track} />
+			{/if}
+		</main>
 
 		<hr />
+
 		<TrackMeta {track} {channel} />
 	</article>
 {/if}
 
 <style>
 	.tree {
-		margin-left: 2rem;
+		margin-left: 1rem;
+		margin-bottom: 0.2rem;
 		display: inline-flex;
 		flex-flow: column;
 		line-height: 1;
@@ -116,5 +117,25 @@
 				}
 			}
 		}
+
+		&::after {
+			font-family: var(--monospace);
+			content: '└──╮\A\00a0\00a0\00a0↓';
+			white-space: pre;
+		}
+	}
+
+	.meta :global(button:first-of-type) {
+		margin-left: 0.6rem;
+	}
+
+	.constrained {
+		margin-block-start: 0;
+	}
+
+	.HIGHLIGHT {
+		margin: 0;
+		background: var(--accent-2);
+		/*border: 2px solid var(--accent-2);*/
 	}
 </style>

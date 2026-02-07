@@ -14,7 +14,6 @@
 </script>
 
 {#if data}
-	<br />
 	<button onclick={() => (showRaw = !showRaw)}>
 		{showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
 	</button>

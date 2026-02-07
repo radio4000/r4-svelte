@@ -15,6 +15,7 @@
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
+	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
 	// Reactive via useLiveQuery — updates when channel is edited. findOne() avoids scanning all rows.
@@ -67,7 +68,7 @@
 					</small>
 				</p>
 				<menu>
-					<ButtonPlay class="primary" {channel} label={m.button_play_label()} />
+					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
 					{#if channel.source !== 'v1'}
 						{#if hasChannel}
 							<ButtonFollow {channel} />
@@ -86,7 +87,7 @@
 		</header>
 
 		<nav class="horizontalOverflow">
-			<a href="/{slug}" class:active={routeId === '/[slug]'}>
+			<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
 				<Icon icon="unordered-list" size={16} />
 				{channel.track_count ?? 0}
 				{m.nav_tracks()}

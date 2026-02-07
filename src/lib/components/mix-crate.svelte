@@ -13,7 +13,7 @@
 		duration: 250,
 		fallback: () => ({duration: 150, css: (t) => `opacity: ${t}; transform: scale(${0.8 + 0.2 * t})`})
 	})
-	import {pickRandomN, countStrings} from '$lib/utils'
+	import {pickRandomN, getChannelTags} from '$lib/utils'
 	import {searchChannels} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {mixAll} from '$lib/lab/mix'
@@ -51,8 +51,7 @@
 		}
 
 		// Extract tags from all loaded tracks via mix, filter to those appearing 2+ times
-		const allTags = [...mixAll().tracks()].flatMap((t) => t.tags ?? [])
-		for (const {tag, count} of countStrings(allTags)) {
+		for (const {tag, count} of getChannelTags([...mixAll().tracks()])) {
 			if (count >= 2) {
 				all.push({type: 'tag', value: tag, label: `#${tag}`})
 			}
