@@ -6,10 +6,7 @@ import {
 	queueRemove,
 	queueShuffleKeepCurrent,
 	queueRotate,
-	queueUnique,
-	queueRepeat,
-	queueInterleave,
-	queueConcat
+	queueUnique
 } from './queue'
 
 const queue = ['a', 'b', 'c', 'd', 'e']
@@ -59,22 +56,5 @@ describe('queue manipulation', () => {
 
 	it('queueUnique removes duplicates', () => {
 		expect(queueUnique(['a', 'b', 'a', 'c', 'b'])).toEqual(['a', 'b', 'c'])
-	})
-
-	it('queueRepeat repeats queue N times', () => {
-		expect(queueRepeat(['a', 'b'], 3)).toEqual(['a', 'b', 'a', 'b', 'a', 'b'])
-		expect(queueRepeat(queue, 0)).toEqual([])
-		expect(queueRepeat(queue, 1)).toEqual(queue)
-	})
-
-	it('queueInterleave interleaves two queues', () => {
-		expect(queueInterleave(['a', 'b', 'c'], ['1', '2', '3'])).toEqual(['a', '1', 'b', '2', 'c', '3'])
-		expect(queueInterleave(['a', 'b'], ['1', '2', '3'])).toEqual(['a', '1', 'b', '2', '3'])
-		expect(queueInterleave(['a', 'b', 'c'], ['1'])).toEqual(['a', '1', 'b', 'c'])
-	})
-
-	it('queueConcat concatenates queues', () => {
-		expect(queueConcat(['a', 'b'], ['c', 'd'])).toEqual(['a', 'b', 'c', 'd'])
-		expect(queueConcat(['a'], ['b'], ['c'])).toEqual(['a', 'b', 'c'])
 	})
 })

@@ -48,28 +48,3 @@ export function queueRotate(queue: string[], currentId: string): string[] {
 export function queueUnique(queue: string[]): string[] {
 	return [...new Set(queue)]
 }
-
-/** Repeat queue N times */
-export function queueRepeat(queue: string[], times: number): string[] {
-	const result: string[] = []
-	for (let i = 0; i < times; i++) {
-		result.push(...queue)
-	}
-	return result
-}
-
-/** Interleave two queues (A1, B1, A2, B2, ...) */
-export function queueInterleave(a: string[], b: string[]): string[] {
-	const result: string[] = []
-	const maxLen = Math.max(a.length, b.length)
-	for (let i = 0; i < maxLen; i++) {
-		if (i < a.length) result.push(a[i])
-		if (i < b.length) result.push(b[i])
-	}
-	return result
-}
-
-/** Concat multiple queues */
-export function queueConcat(...queues: string[][]): string[] {
-	return queues.flat()
-}

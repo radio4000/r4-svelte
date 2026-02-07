@@ -130,10 +130,7 @@
 
 		{"name": "queueShuffleKeepCurrent(queue, currentId)", "desc": "Shuffle but keep current first."},
 		{"name": "queueRotate(queue, currentId)", "desc": "Rotate queue from current."},
-		{"name": "queueUnique(queue)", "desc": "Remove duplicates."},
-		{"name": "queueRepeat(queue, times)", "desc": "Repeat queue n times."},
-		{"name": "queueInterleave(a, b)", "desc": "Interleave two queues."},
-		{"name": "queueConcat(...queues)", "desc": "Concatenate queues."}
+		{"name": "queueUnique(queue)", "desc": "Remove duplicates."}
 	],
 
 	"src/lib/lab/mix.ts": [
