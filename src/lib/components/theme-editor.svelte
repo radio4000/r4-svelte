@@ -175,7 +175,8 @@
 				<ThemeToggle />
 			</fieldset>
 			<fieldset>
-				<label for={`${uid}--scaling`}>{m.theme_scale_label()} <span>{customVariables['--scaling'] || '1'}</span>
+				<label for={`${uid}--scaling`}
+					>{m.theme_scale_label()} <span>{customVariables['--scaling'] || '1'}</span>
 				</label>
 				<InputRange
 					value={Number(customVariables['--scaling']) || 1}
@@ -316,7 +317,7 @@
 		align-items: flex-start;
 	}
 
-	fieldset:has(input[type="checkbox"]) {
+	fieldset:has(input[type='checkbox']) {
 		flex-flow: row;
 		place-items: center;
 		label {

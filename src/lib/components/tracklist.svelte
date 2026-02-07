@@ -226,10 +226,6 @@
 	.virtual-tracklist {
 		display: flex;
 		flex-direction: column;
-		/*
-		height: calc(100vh - 350px);
-		height: calc(100dvh - 350px);
-		 */
 		height: 100dvh;
 		min-height: 400px;
 		overflow: hidden;

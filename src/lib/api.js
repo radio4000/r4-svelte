@@ -18,6 +18,9 @@ import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracks
 
 const log = logger.ns('api').seal()
 
+/** Sort tracks by created_at descending (newest first) */
+const sortByNewest = (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+
 /**
  * @typedef {object} User
  * @prop {string} id
@@ -71,9 +74,7 @@ export async function playTrack(id, endReason, startReason) {
 	}
 
 	// Build playlist from tracks already loaded in collection (same channel/slug)
-	const channelTracks = [...tracksCollection.state.values()]
-		.filter((t) => t.slug === track.slug)
-		.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+	const channelTracks = [...tracksCollection.state.values()].filter((t) => t.slug === track.slug).sort(sortByNewest)
 	const ids = channelTracks.map((t) => t.id)
 
 	// Record play history
@@ -137,9 +138,7 @@ export async function playChannel({id, slug}, trackId) {
 	log.log('play_channel', {id, slug})
 	leaveBroadcast()
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()]
-		.filter((t) => t.slug === slug)
-		.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+	const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug).sort(sortByNewest)
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return

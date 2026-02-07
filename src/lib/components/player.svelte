@@ -50,7 +50,6 @@
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const canPlay = $derived(Boolean(channel && track))
-	// const autoplay = $derived(userHasPlayed ? 1 : 0)
 	const isListeningToBroadcast = $derived(Boolean(appState.listening_to_channel_id))
 
 	// The channel that is broadcasting (the DJ), looked up by ID
@@ -265,12 +264,6 @@
 		<Icon icon="shuffle" />
 	</button>
 {/snippet}
-
-<!-- {#snippet btnEject()}
-	<button onclick={() => eject()}>
-		<Icon icon="eject" />
-	</button>
-{/snippet} -->
 
 {#snippet btnToggleQueuePanel()}
 	<button

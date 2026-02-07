@@ -79,7 +79,6 @@
 
 <article class:active>
 	<a href={permalink} onclick={click} ondblclick={doubleClick} data-sveltekit-preload-data="tap">
-		<!-- <span class="index"> {(index ?? 0) + 1}. </span> -->
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -100,7 +99,6 @@
 		</div>
 		<time>
 			<span class="mobile">&rarr;</span>
-			<!--<small>{formatDate(new Date(track.created_at))}</small>-->
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</a>
@@ -175,23 +173,10 @@
 		}
 	}
 
-	/* the "index" numbering
-	article > a > span:first-child {
-		width: 1.5rem;
-		flex-shrink: 0;
-		color: var(--gray-8);
-		font-size: var(--font-1);
-		text-align: right;
-		position: relative;
-		top: 0.2em;
-	}
-	*/
-
 	.artwork {
 		margin-bottom: auto;
 		aspect-ratio: 1/1;
 		width: 38px;
-		/*height: 2.3rem;*/
 		object-fit: cover;
 		object-position: center;
 		align-self: center;
@@ -241,7 +226,6 @@
 	}
 
 	@container (width < 80ch) {
-		/* .index, */
 		time small {
 			display: none;
 		}
@@ -253,8 +237,6 @@
 	article {
 		display: flex;
 		align-items: flex-start;
-		/* container-type: inline-size; */
-
 		:global(.popover-menu) {
 			padding: 0.2em;
 		}

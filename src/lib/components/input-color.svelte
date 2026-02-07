@@ -41,7 +41,6 @@
 		--cp-button-hover-color: var(--gray-6);
 	}
 
-
 	:global(.color-picker .alpha) {
 		transform: scale(0.95);
 	}

@@ -78,13 +78,9 @@
 	const uiLocale = $derived(appState.language ?? getLocale())
 
 	$effect(() => {
-		if (theme === 'dark') {
-			document.documentElement.classList.remove('light')
-			document.documentElement.classList.add('dark')
-		} else {
-			document.documentElement.classList.remove('dark')
-			document.documentElement.classList.add('light')
-		}
+		const isDark = theme === 'dark'
+		document.documentElement.classList.toggle('dark', isDark)
+		document.documentElement.classList.toggle('light', !isDark)
 	})
 
 	$effect(() => {
