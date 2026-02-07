@@ -4,7 +4,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
-- Channel tags helper — `countStrings(tracks.flatMap(t => t.tags ?? []))` is repeated in `[slug]/+page`, `[slug]/tags/+page`, `batch-edit/`. Extract a reusable `getChannelTags(tracks)` (or similar). Once available, can be used in channel cards, list view, etc.
+- Channel tags helper — `countStrings(tracks.flatMap(t => t.tags ?? []))` is repeated in `[slug]/+page`, `[slug]/tags/+page`, `batch-edit/`. Extract a reusable `getChannelTags(tracks)` (or similar). Once available, can be used in channel cards, list view, etc. Consider how this can be performant since it might mean collection merging unique items from 5k items
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; could be the list view itself when there's enough space (responsive), or a toggle within list view. Depends on channel tags helper above.
 - Seek/position deep-linking — `seekTo(seconds)` exists in api.js. For deep-linking, `?t=` alone isn't useful without specifying which track to play. Options: `?play={trackId}&t=30`, `?play={slug}&t=30`, or track page routes. Needs design decision on URL shape.
 - 3D globe map view in addition to map view. Which library?
@@ -12,8 +12,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
-- Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). `processViewTracks` handles shared post-processing; query orchestration can be inlined or extracted into a `useViewTracks` composable if both pages need the same 3-query pattern. Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
-- Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
+- Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
 
 ## Data & migration
 
@@ -22,6 +21,20 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - v1 compatibility — v1 channels can't be followed/broadcasted due to FK constraints. Resolved by migration above. if we do migration, lots of code here regarding v1 can be deleted
 
 - Play history threshold — currently a track is recorded to play history as soon as it starts playing. Instead, a play should count only after the user has listened long enough: the entire track if under 2 min, or half the duration (max 4 min), whichever is longest. Open questions: what happens when the user seeks/skips around within a track (accumulate actual play time vs. furthest position reached?), what about pausing and resuming, and should skipped tracks still appear in history with a `skipped` flag or not at all? Currently `addPlayHistoryEntry` fires in `playTrack()` (api.js); would move to player.svelte using `timeupdate` events. Needs `getPlayCountThreshold(durationSec)` helper in play-history.ts and a way to pass `reason_start` to the player (e.g. via appState).
+
+## In progress
+
+- YouTube music credits in media-now — extract structured song/artist/album from YouTube watch pages.
+  - **Research done**: YouTube embeds music metadata in `ytInitialData` → `horizontalCardListRenderer` (header "Music") → `videoAttributeViewModel`. A secondary `confirmDialogEndpoint` ("Song credits" dialog) has the same data plus optional `Writers`. No API key needed, single fetch to the watch page.
+  - **Coverage**: 31/50 ko002 tracks had a music card, 14/50 had credits dialog. User uploads with no Content ID match return nothing.
+  - **Fields available**: `song`, `artist`, `album`, `albumArt`, `writers?` — no year/duration from the card itself.
+  - **Next steps**:
+    1. Add `fetchCredits(id): Promise<MusicCredits | null>` to `media-now/src/providers/youtube.ts` (alongside existing `fetch` and `search`)
+    2. Add `MusicCredits` type to `media-now/src/types.ts`
+    3. Export from provider only (not top-level) — usage: `import { youtube } from 'media-now/providers/youtube'`
+    4. Tests against known video IDs (Topic, official, user upload)
+    5. Use in r4-sync-tests: enrich tracks with clean artist/song/album for MusicBrainz/Discogs lookup
+  - **Probe scripts**: `yt-dump-50.ts`, `yt-probe-cards.ts`, `yt-probe-credits-raw.ts` — results in `yt-dump-50.json`, `yt-credits-raw.json`
 
 ## Needs research
 
