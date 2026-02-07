@@ -225,7 +225,7 @@ export function togglePlayerExpanded() {
 export function openSearch(event) {
 	event?.preventDefault()
 	const searchInput = document.querySelector('input[type="search"]')
-	if (searchInput instanceof HTMLInputElement) {
+	if (searchInput instanceof HTMLInputElement && searchInput.checkVisibility()) {
 		searchInput.focus()
 	} else {
 		goto('/search')
