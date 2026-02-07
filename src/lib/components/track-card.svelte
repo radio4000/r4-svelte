@@ -43,7 +43,7 @@
 		// Let time element and hashtag/mention links navigate normally
 		if (target.closest('time')) return
 		if (
-			target instanceof HTMLAnchorElement ||
+			(target instanceof HTMLAnchorElement && target !== event.currentTarget) ||
 			target.closest('a[href*="/search"]') ||
 			target.closest('button.tag-link')
 		)
