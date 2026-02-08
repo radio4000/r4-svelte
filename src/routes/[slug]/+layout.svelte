@@ -93,6 +93,10 @@
 					{channel.track_count ?? 0}
 					{m.nav_tracks()}
 				</a>
+				<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
+					<Icon icon="hash" size={16} />
+					{m.channel_tags_link()}
+				</a>
 				<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
 					<Icon icon="sparkles" size={16} />
 					{m.nav_following()}
@@ -100,10 +104,6 @@
 				<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
 					<Icon icon="users" size={16} />
 					{m.nav_followers()}
-				</a>
-				<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
-					<Icon icon="hash" size={16} />
-					{m.channel_tags_link()}
 				</a>
 				{#if channel.longitude && channel.latitude}
 					<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
