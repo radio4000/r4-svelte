@@ -52,21 +52,6 @@
 		<header>
 			<ChannelHero {channel} />
 			<div class="info">
-				<p class="slug"><small>@{slug}</small></p>
-				<h1>{channel.name}</h1>
-				{#if channel.description}
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-				{/if}
-				{#if channel.url}
-					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
-				{/if}
-				<p class="dates">
-					<small>
-						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
-							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
-						})}
-					</small>
-				</p>
 				<menu>
 					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
 					{#if channel.source !== 'v1'}
@@ -83,6 +68,21 @@
 						{m.share_native()}
 					</button>
 				</menu>
+				<p class="slug"><small>@{slug}</small></p>
+				<h1>{channel.name}</h1>
+				{#if channel.description}
+					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
+				{/if}
+				{#if channel.url}
+					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				{/if}
+				<p class="dates">
+					<small>
+						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
+							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
+						})}
+					</small>
+				</p>
 			</div>
 		</header>
 
@@ -170,7 +170,7 @@
 	}
 
 	menu {
-		margin-top: 0.75rem;
+		margin-bottom: 0.75rem;
 	}
 
 	main {
