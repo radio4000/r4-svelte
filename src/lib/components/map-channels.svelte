@@ -50,12 +50,15 @@
 	})
 </script>
 
-<div>
+<div class="map-root">
 	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
 </div>
 
 <style>
-	div {
+	.map-root {
+		display: flex;
 		flex: 1;
+		min-height: 0;
+		height: 100%;
 	}
 </style>

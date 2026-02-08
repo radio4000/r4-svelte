@@ -105,7 +105,7 @@
 				{m.channel_tags_link()}
 			</a>
 			{#if channel.longitude && channel.latitude}
-				<a href="/{slug}/map">
+				<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
 					<Icon icon="map" size={16} />
 					{m.nav_map()}
 				</a>
@@ -138,6 +138,9 @@
 	.channel-layout {
 		display: flex;
 		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		height: 100%;
 	}
 
 	header {
@@ -175,6 +178,9 @@
 		background: var(--gray-1);
 		position: relative;
 		z-index: 15;
+		flex: 1;
+		min-height: 0;
+		height: 100%;
 	}
 
 	nav {

@@ -58,7 +58,7 @@
 	<title>{m.nav_followers()} - {channel?.name}</title>
 </svelte:head>
 
-<article>
+<article class="channels-page">
 	{#if loading}
 		<header>
 			<h1>{m.nav_followers()}</h1>
@@ -76,6 +76,18 @@
 </article>
 
 <style>
+	.channels-page {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		height: 100%;
+	}
+
+	.channels-page :global(.layout--map) {
+		min-height: 100%;
+	}
+
 	header {
 		padding: 0.5rem;
 		min-height: 30px;

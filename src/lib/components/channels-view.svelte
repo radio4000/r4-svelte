@@ -149,12 +149,16 @@
 <style>
 	.layout {
 		position: relative;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		height: 100%;
 		&.layout--map,
 		&.layout--infinite {
-			display: flex;
-			flex-direction: column;
-			flex-grow: 1;
-			min-height: 70vh;
+			flex: 1;
+			min-height: 0;
+			height: 100%;
 		}
 		&.layout--infinite :global(.canvas-wrapper) {
 			flex: 1;
