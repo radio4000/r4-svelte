@@ -132,7 +132,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default channels={sortedChannels} openSlug={openSlug} />
+			<MapChannels.default channels={sortedChannels} {openSlug} />
 		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}

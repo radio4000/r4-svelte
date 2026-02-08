@@ -5,6 +5,7 @@ import {sdk} from '@radio4000/sdk'
 import {
 	queryClient,
 	tracksCollection,
+	trackMetaCollection,
 	channelsCollection,
 	spamDecisionsCollection,
 	broadcastsCollection,
@@ -62,6 +63,7 @@ async function preload() {
 			appState,
 			queryClient,
 			tracksCollection,
+			trackMetaCollection,
 			channelsCollection,
 			broadcastsCollection,
 			followsCollection,

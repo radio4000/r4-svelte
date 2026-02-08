@@ -1,10 +1,10 @@
 import {discoverDiscogsUrl} from 'media-now'
 import {logger} from '$lib/logger'
 import {trackMetaCollection, tracksCollection, updateTrack} from '$lib/tanstack/collections'
-import {parseDiscogsUrl, fetchDiscogs, searchUrl, extractSuggestions} from './discogs-core.js'
+import {fetchDiscogs, searchUrl, extractSuggestions} from './discogs-core.js'
 
 // Re-export pure functions
-export {parseDiscogsUrl, fetchDiscogs, searchUrl, extractSuggestions}
+export {fetchDiscogs, searchUrl, extractSuggestions}
 
 const log = logger.ns('metadata/discogs').seal()
 
