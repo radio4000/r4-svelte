@@ -126,13 +126,6 @@
 		</fieldset>
 	</form>
 
-	<menu>
-		{#if searchQuery && !isLoading && tracks.length > 0}
-			<button type="button" onclick={playSearchResults}>{m.search_play_all()}</button>
-			<button type="button" onclick={queueSearchResults}>{m.search_queue_all()}</button>
-		{/if}
-	</menu>
-
 	<p>
 		<SearchStatus {searchQuery} channelCount={channels.length} trackCount={tracks.length} />
 	</p>
@@ -161,6 +154,13 @@
 				</ul>
 			</section>
 		{/if}
+
+		<menu>
+			{#if searchQuery && !isLoading && tracks.length > 0}
+				<button type="button" onclick={playSearchResults}>{m.search_play_all()}</button>
+				<button type="button" onclick={queueSearchResults}>{m.search_queue_all()}</button>
+			{/if}
+		</menu>
 
 		{#if tracks.length > 0}
 			<section>
