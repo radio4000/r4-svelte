@@ -48,7 +48,7 @@
 </script>
 
 {#if channel}
-	<div class="channel-layout">
+	<div class="channel-layout fill-height">
 		<header>
 			<ChannelHero {channel} />
 			<div class="info">
@@ -138,9 +138,6 @@
 	.channel-layout {
 		display: flex;
 		flex-direction: column;
-		flex: 1;
-		min-height: 0;
-		height: 100%;
 	}
 
 	header {

@@ -58,7 +58,7 @@
 	<title>{m.nav_following()} - {channel?.name}</title>
 </svelte:head>
 
-<article class="channels-page">
+<article class="channels-page fill-height">
 	{#if loading}
 		<header>
 			<h1>{m.nav_following()}</h1>
@@ -78,11 +78,7 @@
 
 <style>
 	.channels-page {
-		display: flex;
 		flex-direction: column;
-		flex: 1;
-		min-height: 0;
-		height: 100%;
 	}
 
 	.channels-page :global(.layout--map) {

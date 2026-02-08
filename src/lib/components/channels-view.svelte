@@ -86,7 +86,7 @@
 	}
 </script>
 
-<div class={`layout layout--${display}`}>
+<div class={`layout layout--${display} fill-height`}>
 	<header class="row toolbar">
 		{#if header}{@render header()}{/if}
 		<PopoverMenu
@@ -153,15 +153,6 @@
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		flex: 1;
-		min-height: 0;
-		height: 100%;
-		&.layout--map,
-		&.layout--infinite {
-			flex: 1;
-			min-height: 0;
-			height: 100%;
-		}
 		&.layout--infinite :global(.canvas-wrapper) {
 			flex: 1;
 		}

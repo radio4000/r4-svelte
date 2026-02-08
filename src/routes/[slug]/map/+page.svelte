@@ -20,7 +20,7 @@
 	const hasLocation = $derived(channel?.latitude && channel?.longitude)
 </script>
 
-<article class="map-page">
+<article class="map-page fill-height">
 	{#if channelQuery.isLoading}
 		<p>{m.common_loading()}</p>
 	{:else if !channel}
@@ -37,13 +37,14 @@
 				{m.nav_map()} →
 			</a>
 		</menu>
-		<div class="map-fill">
+		<div class="map-fill fill-height">
 			<MapChannels
 				channels={[channel]}
 				latitude={channel.latitude}
 				longitude={channel.longitude}
 				zoom={15}
 				syncUrl={true}
+				openSlug={channel.slug}
 			/>
 		</div>
 	{/if}
@@ -51,10 +52,6 @@
 
 <style>
 	.map-page {
-		display: flex;
-		flex: 1;
-		min-height: 0;
-		height: 100%;
 		flex-direction: column;
 		position: relative;
 	}
@@ -67,9 +64,5 @@
 	}
 
 	.map-fill {
-		display: flex;
-		flex: 1;
-		min-height: 0;
-		height: 100%;
 	}
 </style>
