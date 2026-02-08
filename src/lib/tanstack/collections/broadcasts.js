@@ -47,7 +47,7 @@ export const broadcastsCollection = createCollection(
 		queryKey: () => ['broadcasts'],
 		queryClient,
 		getKey: (/** @type {BroadcastWithChannel} */ item) => item.channel_id,
-		staleTime: Infinity,
+		staleTime: 0,
 		queryFn: async () => {
 			const broadcasts = await readBroadcasts()
 			syncBroadcastingState(broadcasts)
