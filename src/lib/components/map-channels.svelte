@@ -4,7 +4,7 @@
 	import {shufflePlayChannel} from '$lib/api'
 	import MapComponent from './map.svelte'
 
-	const {channels = [], latitude = null, longitude = null, zoom = null, syncUrl = true} = $props()
+	const {channels = [], latitude = null, longitude = null, zoom = null, syncUrl = true, openSlug = null} = $props()
 
 	let map = null
 	let markersLayer = null
@@ -32,7 +32,7 @@
 				playBtn.onclick = () => shufflePlayChannel({id: c.id, slug: c.slug})
 				popup.appendChild(playBtn)
 
-				L.circleMarker([c.latitude, c.longitude], {
+				const marker = L.circleMarker([c.latitude, c.longitude], {
 					radius: 6,
 					color: '#fff',
 					weight: 2,
@@ -41,6 +41,10 @@
 				})
 					.bindPopup(popup)
 					.addTo(markersLayer)
+
+				if (openSlug && c.slug === openSlug) {
+					marker.openPopup()
+				}
 			}
 		}
 	}

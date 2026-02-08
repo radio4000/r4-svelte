@@ -20,6 +20,8 @@
 		syncToUrl = false
 	} = $props()
 
+	const openSlug = $derived(syncToUrl ? page.url.searchParams.get('slug') : null)
+
 	const sortKey = {
 		updated: (c) => c.latest_track_at || c.updated_at || '',
 		created: (c) => c.created_at || '',
@@ -130,7 +132,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default channels={sortedChannels} />
+			<MapChannels.default channels={sortedChannels} openSlug={openSlug} />
 		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}

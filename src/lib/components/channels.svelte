@@ -94,6 +94,8 @@
 		}))
 	)
 
+	const openSlug = $derived(page.url.searchParams.get('slug'))
+
 	function handleCanvasClick(item) {
 		if (!item.slug || !item.id) return
 		shufflePlayChannel({id: item.id, slug: item.slug})
@@ -245,7 +247,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default {channels} />
+			<MapChannels.default {channels} openSlug={openSlug} />
 		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner channels={realChannels.filtered} />
