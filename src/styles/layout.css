@@ -214,8 +214,7 @@ menu[data-grouped] {
 	}
 }
 
-menu.horizontalOverflow,
-nav.horizontalOverflow {
+.horizontalOverflow {
 	overflow-x: auto;
 	scrollbar-width: thin;
 
