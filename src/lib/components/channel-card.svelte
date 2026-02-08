@@ -36,7 +36,7 @@
 					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
 				{/if}
 			</h3>
-			<p class="desc">
+			<p>
 				{trimWithEllipsis(channel.description)}
 				{#if channel.track_count}
 					<small>({channel.track_count})</small>
@@ -64,6 +64,7 @@
 			display: grid;
 			grid-template-columns: 4rem auto;
 			align-items: center;
+			padding: 0.2rem 0.5rem;
 		}
 
 		:global(.grid) & {
@@ -73,7 +74,7 @@
 	}
 
 	h3 {
-		font-weight: normal;
+		font-weight: 600;
 	}
 	h3,
 	p {
@@ -104,6 +105,7 @@
 		/* for channels with no image */
 		min-height: 2rem;
 	}
+
 	h3 + p {
 		color: light-dark(var(--gray-11), var(--gray-10));
 	}
