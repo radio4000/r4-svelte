@@ -58,14 +58,12 @@
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 0.5rem;
-		padding: 0.5rem;
 		text-decoration: none;
 
 		:global(.list) & {
 			display: grid;
 			grid-template-columns: 4rem auto;
 			align-items: center;
-			padding: 0.5rem;
 		}
 
 		:global(.grid) & {
