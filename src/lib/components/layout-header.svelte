@@ -22,7 +22,7 @@
 </script>
 
 <header>
-	<nav>
+	<nav class="nav-secondary">
 		<a href="/" class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
 			<IconR4 />
 		</a>
@@ -85,8 +85,9 @@
 		flex-direction: column;
 	}
 
-	nav:has(.settings-link) {
+	.nav-secondary {
 		flex: 1;
+		justify-content: flex-start;
 	}
 
 	.channel-link {
