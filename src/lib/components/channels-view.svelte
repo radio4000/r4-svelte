@@ -20,6 +20,8 @@
 		syncToUrl = false
 	} = $props()
 
+	const openSlug = $derived(syncToUrl ? page.url.searchParams.get('slug') : null)
+
 	const sortKey = {
 		updated: (c) => c.latest_track_at || c.updated_at || '',
 		created: (c) => c.created_at || '',
@@ -84,7 +86,7 @@
 	}
 </script>
 
-<div class={`layout layout--${display}`}>
+<div class={`layout layout--${display} fill-height`}>
 	<header class="row toolbar">
 		{#if header}{@render header()}{/if}
 		<PopoverMenu
@@ -130,7 +132,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default channels={sortedChannels} />
+			<MapChannels.default channels={sortedChannels} openSlug={openSlug} />
 		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}
@@ -149,13 +151,8 @@
 <style>
 	.layout {
 		position: relative;
-		&.layout--map,
-		&.layout--infinite {
-			display: flex;
-			flex-direction: column;
-			flex-grow: 1;
-			min-height: 70vh;
-		}
+		display: flex;
+		flex-direction: column;
 		&.layout--infinite :global(.canvas-wrapper) {
 			flex: 1;
 		}

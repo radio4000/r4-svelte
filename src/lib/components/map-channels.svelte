@@ -4,7 +4,7 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 
-	const {channels = []} = $props()
+	const {channels = [], latitude = null, longitude = null, zoom = null, syncUrl = true, openSlug = null} = $props()
 
 	let map = null
 	let markersLayer = null
@@ -34,7 +34,7 @@
 				})
 				mountedPopups.push(card)
 
-				L.circleMarker([c.latitude, c.longitude], {
+				const marker = L.circleMarker([c.latitude, c.longitude], {
 					radius: 6,
 					color: '#fff',
 					weight: 2,
@@ -43,6 +43,10 @@
 				})
 					.bindPopup(popup)
 					.addTo(markersLayer)
+
+				if (openSlug && c.slug === openSlug) {
+					marker.openPopup()
+				}
 			}
 		}
 	}
@@ -59,13 +63,16 @@
 	})
 </script>
 
-<div>
-	<MapComponent onready={handleReady} syncUrl />
+<div class="map-root">
+	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
 </div>
 
 <style>
-	div {
+	.map-root {
+		display: flex;
 		flex: 1;
+		min-height: 0;
+		height: 100%;
 	}
 
 	:global(.map-popup) {

@@ -48,7 +48,7 @@
 </script>
 
 {#if channel}
-	<div class="channel-layout">
+	<div class="channel-layout fill-height">
 		<header>
 			<ChannelHero {channel} />
 			<div class="info">
@@ -105,9 +105,7 @@
 				{m.channel_tags_link()}
 			</a>
 			{#if channel.longitude && channel.latitude}
-				<a
-					href={`/?display=map&slug=${channel.slug}&longitude=${channel.longitude}&latitude=${channel.latitude}&zoom=15`}
-				>
+				<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
 					<Icon icon="map" size={16} />
 					{m.nav_map()}
 				</a>
@@ -177,6 +175,9 @@
 		background: var(--gray-1);
 		position: relative;
 		z-index: 15;
+		flex: 1;
+		min-height: 0;
+		height: 100%;
 	}
 
 	nav {
