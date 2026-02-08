@@ -28,18 +28,23 @@
 		loading = true
 		Promise.resolve().then(async () => {
 			try {
-				// Parallel harvest phase
-				const promises = []
+				const existing = trackMetaCollection.get(ytid)
 
-				if (!track.youtube_data) {
-					promises.push(insertYouTubeMeta(ytid))
-				}
-
-				if (!track.musicbrainz_data) {
-					promises.push(insertMusicBrainzMeta(ytid, track.title))
-				}
-
-				const [youtube_data, musicbrainz_data] = await Promise.all(promises)
+				// Parallel harvest phase — each catches independently so one failure doesn't block the rest
+				const [youtube_data, musicbrainz_data] = await Promise.all([
+					!existing?.youtube_data
+						? insertYouTubeMeta(ytid).catch((err) => {
+								log.error('youtube failed', err)
+								return null
+							})
+						: null,
+					!existing?.musicbrainz_data
+						? insertMusicBrainzMeta(ytid, track.title).catch((err) => {
+								log.error('musicbrainz failed', err)
+								return null
+							})
+						: null
+				])
 
 				const meta = trackMetaCollection.get(ytid)
 				if (meta?.youtube_data?.duration && !track.duration && channel) {
@@ -49,9 +54,11 @@
 				// Sequential follow-up for discogs
 				let discogs_data = null
 
-				if (!track.discogs_data) {
+				if (!existing?.discogs_data) {
 					if (track.discogs_url) {
+						log.info('fetching discogs', {discogs_url: track.discogs_url})
 						discogs_data = await insertDiscogsMeta(ytid, track.discogs_url)
+						log.info('discogs result', {discogs_data})
 					} else {
 						log.info('hunting discogs url', {title: track.title})
 						const discoveredUrl = await huntDiscogsUrl(track.id, ytid, track.title)
@@ -64,9 +71,9 @@
 				}
 
 				result = {
-					musicbrainz_data: musicbrainz_data || track.musicbrainz_data,
-					youtube_data: youtube_data || track.youtube_data,
-					discogs_data: discogs_data || track.discogs_data
+					youtube_data: youtube_data || meta?.youtube_data,
+					musicbrainz_data: musicbrainz_data || meta?.musicbrainz_data,
+					discogs_data: discogs_data || meta?.discogs_data
 				}
 				log.info('metadata updated', result)
 				onResult?.(result)

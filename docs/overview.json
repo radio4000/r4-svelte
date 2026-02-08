@@ -171,7 +171,6 @@
 
 	"src/lib/metadata/discogs": [
 		{"name": "fetchDiscogs(url)", "desc": "Fetch Discogs release/master data from URL."},
-		{"name": "parseDiscogsUrl(url)", "desc": "Parse Discogs URL to {type, id}."},
 		{
 			"name": "extractSuggestions({year, genres, styles, labels})",
 			"desc": "Extract tag suggestions from Discogs data."

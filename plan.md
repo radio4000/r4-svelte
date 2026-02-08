@@ -2,6 +2,8 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
+## Bugs
+
 ## Backlog
 
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
