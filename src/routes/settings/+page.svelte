@@ -4,7 +4,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 
-	const repo = 'https://github.com/radio4000/r4-sync-tests'
+	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
 </script>
 
