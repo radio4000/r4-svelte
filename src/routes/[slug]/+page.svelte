@@ -114,8 +114,8 @@
 				{/if}
 				<menu class="row filter-actions">
 					{#if filteredTracks.length > 0}
-						<button type="button" onclick={playFilteredTracks}>Play</button>
-						<button type="button" onclick={queueFilteredTracks}>Queue</button>
+						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
+						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
 						<small class="filter-count">{filteredTracks.length} selected</small>
 					{/if}
 				</menu>

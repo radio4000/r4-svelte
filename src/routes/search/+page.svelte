@@ -7,6 +7,7 @@
 	import SearchInput from '$lib/components/search-input.svelte'
 	import SearchStatus from '$lib/components/search-status.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import Icon from '$lib/components/icon.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
@@ -157,8 +158,8 @@
 
 		<menu>
 			{#if searchQuery && !isLoading && tracks.length > 0}
-				<button type="button" onclick={playSearchResults}>{m.search_play_all()}</button>
-				<button type="button" onclick={queueSearchResults}>{m.search_queue_all()}</button>
+				<button type="button" onclick={playSearchResults}><Icon icon="play-fill" size={16} />{m.search_play_all()}</button>
+				<button type="button" onclick={queueSearchResults}><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button>
 			{/if}
 		</menu>
 
