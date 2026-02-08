@@ -11,6 +11,7 @@
 	import TrackMetaR5 from '$lib/components/track-meta-r5.svelte'
 	import TrackMetaYoutube from '$lib/components/track-meta-youtube.svelte'
 	import TrackRelated from '$lib/components/track-related.svelte'
+	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
@@ -59,15 +60,30 @@
 	<ul class="list HIGHLIGHT">
 		<li><TrackCard {track} /></li>
 	</ul>
-	<article class="constrained">
+	<article>
 		<header>
-			<menu class="tree">
-				<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>{m.track_detail_nav_r5()}</a>
-				<a href="?tab=youtube" class:active={activeTab === 'youtube'}>{m.track_detail_nav_youtube()}</a>
-				<a href="?tab=musicbrainz" class:active={activeTab === 'musicbrainz'}>{m.track_detail_nav_musicbrainz()}</a>
-				<a href="?tab=discogs" class:active={activeTab === 'discogs'}>{m.track_detail_nav_discogs()}</a>
-				<a href="?tab=related" class:active={activeTab === 'related'}>{m.track_detail_nav_related()}</a>
-			</menu>
+			<nav class="horizontalOverflow track-tabs">
+				<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>
+					<Icon icon="circle-info" size={16} />
+					{m.track_detail_nav_r5()}
+				</a>
+				<a href="?tab=youtube" class:active={activeTab === 'youtube'}>
+					<Icon icon="play-fill" size={16} />
+					{m.track_detail_nav_youtube()}
+				</a>
+				<a href="?tab=musicbrainz" class:active={activeTab === 'musicbrainz'}>
+					<Icon icon="code-branch" size={16} />
+					{m.track_detail_nav_musicbrainz()}
+				</a>
+				<a href="?tab=discogs" class:active={activeTab === 'discogs'}>
+					<Icon icon="tag" size={16} />
+					{m.track_detail_nav_discogs()}
+				</a>
+				<a href="?tab=related" class:active={activeTab === 'related'}>
+					<Icon icon="sparkles" size={16} />
+					{m.track_detail_nav_related()}
+				</a>
+			</nav>
 		</header>
 
 		<main class="meta">
@@ -91,51 +107,22 @@
 {/if}
 
 <style>
-	.tree {
-		margin-left: 1rem;
-		margin-bottom: 0.2rem;
-		display: inline-flex;
-		flex-flow: column;
-		line-height: 1;
-
-		a {
-			text-decoration: none;
-
-			&::before {
-				font-family: var(--monospace);
-				content: '├──';
-				display: inline;
-			}
-
-			&.active {
-				background: var(--accent-9);
-				color: var(--gray-1);
-
-				&::before {
-					background: var(--gray-1);
-					color: var(--gray-12);
-				}
-			}
-		}
-
-		&::after {
-			font-family: var(--monospace);
-			content: '└──╮\A\00a0\00a0\00a0↓';
-			white-space: pre;
-		}
+	.track-tabs {
+		margin: 0.5rem 0;
+		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 	}
 
 	.meta :global(button:first-of-type) {
 		margin-left: 0.6rem;
 	}
 
-	.constrained {
-		margin-block-start: 0;
-	}
-
 	.HIGHLIGHT {
 		margin: 0;
 		background: var(--accent-2);
 		/*border: 2px solid var(--accent-2);*/
+	}
+
+	:global(code) {
+		white-space: pre-wrap;
 	}
 </style>
