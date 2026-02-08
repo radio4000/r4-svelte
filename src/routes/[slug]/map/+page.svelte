@@ -3,7 +3,6 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import MapChannels from '$lib/components/map-channels.svelte'
-	import Icon from '$lib/components/icon.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -28,15 +27,6 @@
 	{:else if !hasLocation}
 		<p>Channel has no location.</p>
 	{:else}
-		<menu class="toolbar">
-			<a
-				class="btn"
-				href={`/?display=map&slug=${channel.slug}&longitude=${channel.longitude}&latitude=${channel.latitude}&zoom=15`}
-			>
-				<Icon icon="map" size={16} />
-				{m.nav_map()} →
-			</a>
-		</menu>
 		<div class="map-fill fill-height">
 			<MapChannels
 				channels={[channel]}
@@ -45,6 +35,7 @@
 				zoom={15}
 				syncUrl={true}
 				openSlug={channel.slug}
+				linkToMap="global"
 			/>
 		</div>
 	{/if}
@@ -54,13 +45,6 @@
 	.map-page {
 		flex-direction: column;
 		position: relative;
-	}
-
-	.toolbar {
-		position: absolute;
-		top: 0.5rem;
-		left: 0.5rem;
-		z-index: 10;
 	}
 
 	.map-fill {

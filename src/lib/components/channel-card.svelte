@@ -6,8 +6,8 @@
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import ChannelHero from './channel-hero.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel, children?: import('svelte').Snippet}}*/
-	let {channel, children} = $props()
+	/** @type {{channel: import('$lib/types').Channel, href?: string, children?: import('svelte').Snippet}}*/
+	let {channel, href, children} = $props()
 
 	const broadcasting = $derived(
 		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)) ||
@@ -24,7 +24,7 @@
 
 <article ondblclick={doubleclick}>
 	{#if broadcasting}<div class="live-dot"></div>{/if}
-	<a href={`/${channel.slug}`} data-sveltekit-preload-data="false">
+	<a href={href ?? `/${channel.slug}`} data-sveltekit-preload-data="false">
 		<ChannelHero {channel} />
 		<div>
 			<h3>
