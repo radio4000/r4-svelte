@@ -158,8 +158,12 @@
 
 		<menu>
 			{#if searchQuery && !isLoading && tracks.length > 0}
-				<button type="button" onclick={playSearchResults}><Icon icon="play-fill" size={16} />{m.search_play_all()}</button>
-				<button type="button" onclick={queueSearchResults}><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button>
+				<button type="button" onclick={playSearchResults}
+					><Icon icon="play-fill" size={16} />{m.search_play_all()}</button
+				>
+				<button type="button" onclick={queueSearchResults}
+					><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button
+				>
 			{/if}
 		</menu>
 
