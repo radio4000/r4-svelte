@@ -194,6 +194,7 @@
 
 	.title {
 		font-size: var(--font-4);
+		font-weight: 700;
 		:global(a) {
 			text-decoration: none;
 			color: inherit;
