@@ -535,7 +535,7 @@
 	"track_delete_confirm": "{title}을(를) 삭제할까요? 라디오에서 제거됩니다.",
 	"track_detail_nav_discogs": "discogs",
 	"track_detail_nav_musicbrainz": "musicbrainz",
-	"track_detail_nav_r5": "r5",
+	"track_detail_nav_r5": "개 트랙",
 	"track_detail_nav_related": "관련",
 	"track_detail_nav_youtube": "youtube",
 	"track_detail_page_title": "{channel}의 {track} - R5",

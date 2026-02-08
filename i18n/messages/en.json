@@ -535,7 +535,7 @@
 	"track_delete_confirm": "Delete {title}? This removes it from your radio.",
 	"track_detail_nav_discogs": "discogs",
 	"track_detail_nav_musicbrainz": "musicbrainz",
-	"track_detail_nav_r5": "r5",
+	"track_detail_nav_r5": "track",
 	"track_detail_nav_related": "related",
 	"track_detail_nav_youtube": "youtube",
 	"track_detail_page_title": "{track} by {channel} - R5",
