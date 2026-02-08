@@ -4,7 +4,7 @@
 	import {shufflePlayChannel} from '$lib/api'
 	import MapComponent from './map.svelte'
 
-	const {channels = []} = $props()
+	const {channels = [], latitude = null, longitude = null, zoom = null, syncUrl = true} = $props()
 
 	let map = null
 	let markersLayer = null
@@ -51,7 +51,7 @@
 </script>
 
 <div>
-	<MapComponent onready={handleReady} syncUrl />
+	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
 </div>
 
 <style>

@@ -105,9 +105,7 @@
 				{m.channel_tags_link()}
 			</a>
 			{#if channel.longitude && channel.latitude}
-				<a
-					href={`/?display=map&slug=${channel.slug}&longitude=${channel.longitude}&latitude=${channel.latitude}&zoom=15`}
-				>
+				<a href="/{slug}/map">
 					<Icon icon="map" size={16} />
 					{m.nav_map()}
 				</a>
