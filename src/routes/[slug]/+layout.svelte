@@ -90,8 +90,7 @@
 			<nav aria-label={m.nav_tracks()}>
 				<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
 					<Icon icon="unordered-list" size={16} />
-					{channel.track_count ?? 0}
-					{m.nav_tracks()}
+					{m.nav_tracks()} ({channel.track_count ?? 0})
 				</a>
 				<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
 					<Icon icon="hash" size={16} />
@@ -190,7 +189,7 @@
 		top: 0;
 		background: var(--gray-1);
 		z-index: 20;
-		border-bottom: 1px solid var(--gray-5);
+		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 	}
 
 	.channel-nav {

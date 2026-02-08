@@ -82,7 +82,6 @@
 	<section>
 		<header>
 			<menu class="row">
-				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
 				{#if aggregatedTags.length > 0}
 					<PopoverMenu>
 						{#snippet trigger()}
@@ -97,26 +96,27 @@
 						</menu>
 					</PopoverMenu>
 				{/if}
-				{#if isFiltering}
-					<small>{filteredTracks.length} selected</small>
-				{/if}
+				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
 				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
 					{#snippet trigger()}<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />{/snippet}
 					<SortControls bind:order bind:direction />
 				</PopoverMenu>
 			</menu>
 			{#if isFiltering}
-				<menu class="row">
-					{#if filteredTracks.length > 0}
-						<button type="button" onclick={playFilteredTracks}>Play</button>
-						<button type="button" onclick={queueFilteredTracks}>Queue</button>
-					{/if}
-					{#if selectedTags.length > 0}
+				{#if selectedTags.length > 0}
+					<menu class="row filter-tags">
 						{#each selectedTags as tag (tag)}
 							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
 								{tag} ×
 							</button>
 						{/each}
+					</menu>
+				{/if}
+				<menu class="row filter-actions">
+					{#if filteredTracks.length > 0}
+						<button type="button" onclick={playFilteredTracks}>Play</button>
+						<button type="button" onclick={queueFilteredTracks}>Queue</button>
+						<small class="filter-count">{filteredTracks.length} selected</small>
 					{/if}
 				</menu>
 			{/if}
@@ -161,7 +161,16 @@
 	}
 
 	header :global(input[type='search']) {
-		max-width: 10rem;
+		flex: 1;
+	}
+
+	header :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	header :global(.search-input input[type='search']) {
+		width: 100%;
 	}
 
 	.tags-menu {
@@ -174,6 +183,18 @@
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
+	}
+
+	.filter-actions {
+		align-items: center;
+	}
+
+	.filter-count {
+		margin-left: auto;
+	}
+
+	.filter-tags {
+		flex-wrap: wrap;
 	}
 
 	.empty {
