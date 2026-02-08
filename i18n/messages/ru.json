@@ -535,7 +535,7 @@
 	"track_delete_confirm": "Удалить {title}? Это уберёт его из вашего радио.",
 	"track_detail_nav_discogs": "discogs",
 	"track_detail_nav_musicbrainz": "musicbrainz",
-	"track_detail_nav_r5": "r5",
+	"track_detail_nav_r5": "трек",
 	"track_detail_nav_related": "похожие",
 	"track_detail_nav_youtube": "youtube",
 	"track_detail_page_title": "{track} от {channel} — R5",

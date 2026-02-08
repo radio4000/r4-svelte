@@ -535,7 +535,7 @@
 	"track_delete_confirm": "حذف {title}? هذا سيزيله من راديوك.",
 	"track_detail_nav_discogs": "discogs",
 	"track_detail_nav_musicbrainz": "musicbrainz",
-	"track_detail_nav_r5": "ر5",
+	"track_detail_nav_r5": "مسار",
 	"track_detail_nav_related": "ذات صلة",
 	"track_detail_nav_youtube": "youtube",
 	"track_detail_page_title": "{track} من {channel} – R5",
