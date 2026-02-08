@@ -82,7 +82,6 @@
 	<section>
 		<header>
 			<menu class="row">
-				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
 				{#if aggregatedTags.length > 0}
 					<PopoverMenu>
 						{#snippet trigger()}
@@ -97,19 +96,13 @@
 						</menu>
 					</PopoverMenu>
 				{/if}
+				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
 				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
 					{#snippet trigger()}<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />{/snippet}
 					<SortControls bind:order bind:direction />
 				</PopoverMenu>
 			</menu>
 			{#if isFiltering}
-				<menu class="row filter-actions">
-					{#if filteredTracks.length > 0}
-						<button type="button" onclick={playFilteredTracks}>Play</button>
-						<button type="button" onclick={queueFilteredTracks}>Queue</button>
-						<small class="filter-count">{filteredTracks.length} selected</small>
-					{/if}
-				</menu>
 				{#if selectedTags.length > 0}
 					<menu class="row filter-tags">
 						{#each selectedTags as tag (tag)}
@@ -119,6 +112,13 @@
 						{/each}
 					</menu>
 				{/if}
+				<menu class="row filter-actions">
+					{#if filteredTracks.length > 0}
+						<button type="button" onclick={playFilteredTracks}>Play</button>
+						<button type="button" onclick={queueFilteredTracks}>Queue</button>
+						<small class="filter-count">{filteredTracks.length} selected</small>
+					{/if}
+				</menu>
 			{/if}
 		</header>
 
@@ -161,7 +161,16 @@
 	}
 
 	header :global(input[type='search']) {
-		max-width: 10rem;
+		flex: 1;
+	}
+
+	header :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	header :global(.search-input input[type='search']) {
+		width: 100%;
 	}
 
 	.tags-menu {
