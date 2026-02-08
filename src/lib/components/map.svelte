@@ -1,4 +1,5 @@
 <script>
+	import 'leaflet/dist/leaflet.css'
 	import L from 'leaflet'
 
 	let {latitude = null, longitude = null, zoom = null, onclick = null, onready = null, syncUrl = false} = $props()

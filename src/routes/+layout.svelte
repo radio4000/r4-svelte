@@ -1,6 +1,5 @@
 <script>
 	import '../styles/style.css'
-	import 'leaflet/dist/leaflet.css'
 	import {appState} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'

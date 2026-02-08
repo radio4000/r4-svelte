@@ -27,17 +27,22 @@ export default defineConfig({
 			outdir: './src/lib/paraglide'
 		}),
 		devtoolsJson(),
-		visualizer({
-			filename: 'rollup-visualizer.html',
-			gzipSize: true,
-			brotliSize: true
-		})
+		...(process.env.ANALYZE
+			? [
+					visualizer({
+						filename: 'rollup-visualizer.html',
+						gzipSize: true,
+						brotliSize: true
+					})
+				]
+			: [])
 	],
 	worker: {
 		format: 'es'
 	},
 	build: {
-		target: 'esnext'
+		target: 'esnext',
+		reportCompressedSize: false
 	},
 	define: {
 		__GIT_INFO__: JSON.stringify(getGitInfo())

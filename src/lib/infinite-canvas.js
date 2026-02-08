@@ -2,7 +2,26 @@
  * WebGL infinite canvas with chunk-based rendering
  * Inspired by edoardolunardi/infinite-canvas
  */
-import * as THREE from 'three'
+import {
+	Color,
+	DoubleSide,
+	Fog,
+	Group,
+	LinearFilter,
+	LinearMipmapLinearFilter,
+	Mesh,
+	MeshBasicMaterial,
+	PerspectiveCamera,
+	PlaneGeometry,
+	Raycaster,
+	SRGBColorSpace,
+	Scene,
+	TextureLoader,
+	TorusGeometry,
+	Vector2,
+	Vector3,
+	WebGLRenderer
+} from 'three'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2
@@ -90,31 +109,31 @@ export class InfiniteCanvas {
 		const width = this.container.clientWidth
 		const height = this.container.clientHeight
 
-		this.scene = new THREE.Scene()
-		this.scene.background = this.backgroundColor ? new THREE.Color(this.backgroundColor) : null
+		this.scene = new Scene()
+		this.scene.background = this.backgroundColor ? new Color(this.backgroundColor) : null
 		if (this.fogColor) {
-			this.scene.fog = new THREE.Fog(this.fogColor, this.fogNear, this.fogFar)
+			this.scene.fog = new Fog(this.fogColor, this.fogNear, this.fogFar)
 		}
 
-		this.camera = new THREE.PerspectiveCamera(60, width / height, 1, 500)
+		this.camera = new PerspectiveCamera(60, width / height, 1, 500)
 		this.camera.position.set(0, 0, INITIAL_CAMERA_Z)
 
-		this.renderer = new THREE.WebGLRenderer({antialias: false, powerPreference: 'high-performance', alpha: true})
+		this.renderer = new WebGLRenderer({antialias: false, powerPreference: 'high-performance', alpha: true})
 		this.renderer.setSize(width, height)
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
 		this.container.appendChild(this.renderer.domElement)
 
-		this.planeGeometry = new THREE.PlaneGeometry(1, 1)
+		this.planeGeometry = new PlaneGeometry(1, 1)
 		// Radius 0.75 to fit around 1x1 plane (0.5 radius), tube 0.02
-		this.torusGeometry = new THREE.TorusGeometry(0.75, 0.015, 8, 64)
-		this.textureLoader = new THREE.TextureLoader()
-		this.raycaster = new THREE.Raycaster()
+		this.torusGeometry = new TorusGeometry(0.75, 0.015, 8, 64)
+		this.textureLoader = new TextureLoader()
+		this.raycaster = new Raycaster()
 
-		this.borderMaterial = new THREE.MeshBasicMaterial({
+		this.borderMaterial = new MeshBasicMaterial({
 			color: this.accentColor,
 			transparent: true,
 			opacity: 0,
-			side: THREE.DoubleSide
+			side: DoubleSide
 		})
 
 		this.bindEvents()
@@ -270,7 +289,7 @@ export class InfiniteCanvas {
 		}
 
 		const rect = this.renderer.domElement.getBoundingClientRect()
-		const mouse = new THREE.Vector2(
+		const mouse = new Vector2(
 			((e.clientX - rect.left) / rect.width) * 2 - 1,
 			-((e.clientY - rect.top) / rect.height) * 2 + 1
 		)
@@ -304,7 +323,7 @@ export class InfiniteCanvas {
 
 	handleClick(e) {
 		const rect = this.renderer.domElement.getBoundingClientRect()
-		const mouse = new THREE.Vector2(
+		const mouse = new Vector2(
 			((e.clientX - rect.left) / rect.width) * 2 - 1,
 			-((e.clientY - rect.top) / rect.height) * 2 + 1
 		)
@@ -362,11 +381,11 @@ export class InfiniteCanvas {
 		const texture = this.textureLoader.load(
 			key,
 			(tex) => {
-				tex.minFilter = THREE.LinearMipmapLinearFilter
-				tex.magFilter = THREE.LinearFilter
+				tex.minFilter = LinearMipmapLinearFilter
+				tex.magFilter = LinearFilter
 				tex.generateMipmaps = true
 				tex.anisotropy = 4
-				tex.colorSpace = THREE.SRGBColorSpace
+				tex.colorSpace = SRGBColorSpace
 				tex.needsUpdate = true
 			},
 			undefined,
@@ -390,12 +409,12 @@ export class InfiniteCanvas {
 
 			planes.push({
 				id: `${cx}-${cy}-${cz}-${i}`,
-				position: new THREE.Vector3(
+				position: new Vector3(
 					cx * CHUNK_SIZE + r(0) * CHUNK_SIZE,
 					cy * CHUNK_SIZE + r(1) * CHUNK_SIZE,
 					cz * CHUNK_SIZE + r(2) * CHUNK_SIZE
 				),
-				scale: new THREE.Vector3(size, size, 1),
+				scale: new Vector3(size, size, 1),
 				mediaIndex: Math.floor(r(5) * 1_000_000)
 			})
 		}
@@ -434,7 +453,7 @@ export class InfiniteCanvas {
 			if (!mesh.userData.border) {
 				// Scale torus to fit the largest dimension of the mesh
 				const maxScale = Math.max(mesh.scale.x, mesh.scale.y)
-				const border = new THREE.Mesh(this.torusGeometry, this.borderMaterial.clone())
+				const border = new Mesh(this.torusGeometry, this.borderMaterial.clone())
 				border.position.copy(mesh.position)
 				// border.position.z -= 0.05 // Keep it centered or slightly behind?
 				// For a 3D rotating ring, centering usually looks best, maybe slightly behind to avoid clipping if flat
@@ -459,7 +478,7 @@ export class InfiniteCanvas {
 		const key = `${cx},${cy},${cz}`
 		if (this.chunks.has(key)) return
 
-		const group = new THREE.Group()
+		const group = new Group()
 		group.userData = {cx, cy, cz}
 
 		const planes = this.generateChunkPlanes(cx, cy, cz)
@@ -469,14 +488,14 @@ export class InfiniteCanvas {
 			const mediaItem = this.media[plane.mediaIndex % this.media.length]
 			const texture = this.getTexture(mediaItem)
 
-			const material = new THREE.MeshBasicMaterial({
+			const material = new MeshBasicMaterial({
 				map: texture,
 				transparent: true,
 				opacity: 0,
-				side: THREE.DoubleSide
+				side: DoubleSide
 			})
 
-			const mesh = new THREE.Mesh(this.planeGeometry, material)
+			const mesh = new Mesh(this.planeGeometry, material)
 			mesh.position.copy(plane.position)
 
 			// Scale based on media aspect ratio if available
