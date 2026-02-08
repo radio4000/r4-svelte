@@ -113,8 +113,8 @@
 		text-transform: capitalize;
 	}
 
-	.meta :global(button:first-of-type) {
-		margin-left: 0.6rem;
+	.meta {
+		padding: 0.5rem;
 	}
 
 	.HIGHLIGHT {
