@@ -145,7 +145,7 @@
 						? m.search_channel_one({count: channels.length})
 						: m.search_channel_other({count: channels.length})}
 				</h2>
-				<ul class="grid">
+				<ul class="grid grid--scroll">
 					{#each channels as channel (channel.id)}
 						<li>
 							<ChannelCard {channel} />

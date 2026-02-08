@@ -77,6 +77,22 @@
 	list-style: none;
 }
 
+.grid--scroll {
+	grid-auto-flow: column;
+	grid-auto-columns: clamp(150px, 20vw, 280px);
+	grid-template-columns: none;
+	grid-template-rows: 1fr;
+	justify-content: start;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding-bottom: 0.5rem;
+	scroll-snap-type: x proximity;
+}
+
+.grid--scroll > li {
+	scroll-snap-align: start;
+}
+
 .row {
 	display: flex;
 	flex-flow: row wrap;
