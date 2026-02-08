@@ -4,6 +4,7 @@ import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {visualizer} from 'rollup-plugin-visualizer'
+import pkg from './package.json'
 
 // Get git info at build time
 function getGitInfo() {
@@ -45,7 +46,8 @@ export default defineConfig({
 		reportCompressedSize: false
 	},
 	define: {
-		__GIT_INFO__: JSON.stringify(getGitInfo())
+		__GIT_INFO__: JSON.stringify(getGitInfo()),
+		__REPO_URL__: JSON.stringify(typeof pkg.repository === 'string' ? pkg.repository : pkg.repository?.url ?? '')
 	},
 	test: {
 		reporters: ['dot'],

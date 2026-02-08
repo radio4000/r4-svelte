@@ -1,6 +1,7 @@
 {
 	"name": "r5",
 	"version": "0.0.1",
+	"repository": "https://github.com/radio4000/r4-sync-tests",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

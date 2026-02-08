@@ -597,5 +597,6 @@
 	"track_related_heading": "Other tracks using the same YouTube video:",
 	"track_urls_page_title": "Track URLs - {name} - R5",
 	"tracks_no_media_id": "No YouTube ID for {url}",
-	"tracks_no_results": "No tracks found."
+	"tracks_no_results": "No tracks found.",
+	"app_version": "Version {sha}"
 }

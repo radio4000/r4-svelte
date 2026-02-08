@@ -32,6 +32,9 @@
 	let channels = $derived(channelsQuery?.data || [])
 	setChannelsCtx(() => channels)
 
+	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
+	const sha = $derived(__GIT_INFO__.sha)
+
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 
@@ -120,6 +123,11 @@
 			<div class="loader">
 				<p>{m.app_loading()}</p>
 				<R4Loading />
+				{#if sha}
+					<p class="app-version">
+						<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">{m.app_version({sha})}</a>
+					</p>
+				{/if}
 			</div>
 		{:then}
 			<AuthListener />
@@ -209,6 +217,17 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.app-version {
+		margin: 0.25rem 0.5rem 0.5rem;
+		font-size: var(--font-2);
+		text-align: right;
+	}
+
+	.app-version a {
+		text-decoration: none;
+		color: var(--gray-9);
 	}
 
 	.content > :global(aside) {
