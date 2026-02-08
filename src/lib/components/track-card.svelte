@@ -38,18 +38,6 @@
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
-	const click = (event: MouseEvent) => {
-		const target = event.target as HTMLElement
-		// Let time element and hashtag/mention links navigate normally
-		if (target.closest('time')) return
-		if (
-			(target instanceof HTMLAnchorElement && target !== event.currentTarget) ||
-			target.closest('a[href*="/search"]') ||
-			target.closest('button.tag-link')
-		)
-			return
-		event.preventDefault()
-	}
 	const doubleClick = () => playTrack(track.id, null, 'user_click_track')
 
 	const addToRadio = () => {
@@ -78,7 +66,18 @@
 </script>
 
 <article class:active>
-	<a href={permalink} onclick={click} ondblclick={doubleClick} data-sveltekit-preload-data="tap">
+	<div
+		class="card"
+		role="button"
+		tabindex="0"
+		ondblclick={doubleClick}
+		onkeydown={(event) => {
+			if (event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault()
+				doubleClick()
+			}
+		}}
+	>
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -86,7 +85,14 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title">{track.title}</h3>
+			<h3 class="title">
+				<a href={permalink} data-sveltekit-preload-data="tap">{track.title}</a>
+				{#if track.discogs_url}
+					<small>
+						· <a href={`${permalink}?tab=discogs`} data-sveltekit-preload-data="tap">{m.track_meta_discogs()}</a>
+					</small>
+				{/if}
+			</h3>
 			{#if description}
 				<p class="description"><small>{@render description()}</small></p>
 			{:else if track.description}
@@ -101,7 +107,7 @@
 			<span class="mobile">&rarr;</span>
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
-	</a>
+	</div>
 	<PopoverMenu bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
@@ -156,7 +162,7 @@
 </article>
 
 <style>
-	article > a {
+	.card {
 		flex: 1;
 		display: flex;
 		flex-flow: row nowrap;
@@ -164,7 +170,6 @@
 		padding: 0.5rem 0 0.5rem 0.5rem;
 		line-height: 1.2;
 		min-height: 53px; /* = same height with/without description */
-		text-decoration: none;
 		cursor: default;
 
 		&:focus {
@@ -191,6 +196,10 @@
 
 	.title {
 		font-size: var(--font-4);
+		:global(a) {
+			text-decoration: none;
+			color: inherit;
+		}
 		.active & {
 			background: var(--accent-9);
 			color: var(--gray-1);
