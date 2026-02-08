@@ -15,6 +15,7 @@
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
+	let rssHref = $derived(`/${slug}.rss`)
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
@@ -46,6 +47,12 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 </script>
+
+<svelte:head>
+	{#if channel}
+		<link rel="alternate" type="application/rss+xml" title={channel.name} href={rssHref} />
+	{/if}
+</svelte:head>
 
 {#if channel}
 	<div class="channel-layout fill-height">

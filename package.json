@@ -57,6 +57,7 @@
 		"@tanstack/svelte-query-devtools": "^6.0.4",
 		"@types/yargs": "^17.0.35",
 		"adze": "^2.3.0",
+		"feed": "^5.2.0",
 		"filenamify": "^7.0.1",
 		"fuzzysort": "^3.1.0",
 		"gsap": "^3.14.2",
