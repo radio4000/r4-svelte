@@ -15,6 +15,7 @@
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
+	let rssHref = $derived(`/${slug}.rss`)
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
@@ -47,10 +48,15 @@
 	setTracksQueryCtx(tracksQuery)
 </script>
 
+<svelte:head>
+	{#if channel}
+		<link rel="alternate" type="application/rss+xml" title={channel.name} href={rssHref} />
+	{/if}
+</svelte:head>
+
 {#if channel}
 	<div class="channel-layout fill-height">
 		<header>
-			<ChannelHero {channel} />
 			<div class="info">
 				<menu>
 					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
@@ -84,47 +90,51 @@
 					</small>
 				</p>
 			</div>
+			<ChannelHero {channel} />
 		</header>
 
-		<nav class="horizontalOverflow">
-			<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
-				<Icon icon="unordered-list" size={16} />
-				{channel.track_count ?? 0}
-				{m.nav_tracks()}
-			</a>
-			<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
-				<Icon icon="sparkles" size={16} />
-				{m.nav_following()}
-			</a>
-			<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
-				<Icon icon="users" size={16} />
-				{m.nav_followers()}
-			</a>
-			<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
-				<Icon icon="hash" size={16} />
-				{m.channel_tags_link()}
-			</a>
-			{#if channel.longitude && channel.latitude}
-				<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
-					<Icon icon="map" size={16} />
-					{m.nav_map()}
-				</a>
-			{/if}
-			{#if canEdit}
-				<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>
-					<Icon icon="settings" size={16} />
-					{m.common_edit()}
-				</a>
-				<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+		<div class="horizontalOverflow channel-nav">
+			<nav aria-label={m.nav_tracks()}>
+				<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
 					<Icon icon="unordered-list" size={16} />
-					{m.batch_edit_nav_label()}
+					{m.nav_tracks()} ({channel.track_count ?? 0})
 				</a>
-				<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
-					<Icon icon="document-download" size={16} />
-					Backup
+				<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
+					<Icon icon="hash" size={16} />
+					{m.channel_tags_link()}
 				</a>
+				<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
+					<Icon icon="sparkles" size={16} />
+					{m.nav_following()}
+				</a>
+				<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
+					<Icon icon="users" size={16} />
+					{m.nav_followers()}
+				</a>
+				{#if channel.longitude && channel.latitude}
+					<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
+						<Icon icon="map" size={16} />
+						{m.nav_map()}
+					</a>
+				{/if}
+			</nav>
+			{#if canEdit}
+				<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
+					<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>
+						<Icon icon="settings" size={16} />
+						{m.common_edit()}
+					</a>
+					<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+						<Icon icon="unordered-list" size={16} />
+						{m.batch_edit_nav_label()}
+					</a>
+					<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
+						<Icon icon="document-download" size={16} />
+						Backup
+					</a>
+				</nav>
 			{/if}
-		</nav>
+		</div>
 
 		<main>
 			{@render children()}
@@ -148,9 +158,10 @@
 	}
 
 	header :global(figure) {
-		width: 12.5rem;
-		min-width: 6rem;
+		max-width: 7rem;
+		min-width: 0;
 		flex-shrink: 0;
+		align-self: flex-end;
 	}
 
 	.info {
@@ -180,13 +191,28 @@
 		height: 100%;
 	}
 
-	nav {
+	.channel-nav {
 		/*stickyontop*/
 		position: sticky;
 		top: 0;
 		background: var(--gray-1);
 		z-index: 20;
-		border-bottom: 1px solid var(--gray-5);
+		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
+	}
+
+	.channel-nav {
+		display: flex;
+		align-items: stretch;
+		gap: 0;
+	}
+
+	.channel-nav nav {
+		display: flex;
+		align-items: stretch;
+	}
+
+	.channel-nav-secondary {
+		margin-left: auto;
 	}
 
 	@media (max-width: 500px) {

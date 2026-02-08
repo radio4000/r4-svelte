@@ -7,6 +7,7 @@
 
 <script lang="ts">
 	import {page} from '$app/state'
+	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
@@ -22,10 +23,24 @@
 
 	const tracksQuery = getTracksQueryCtx()
 
-	let searchQuery = $state('')
-	let selectedTags: string[] = $state([])
+	let searchInput = $state(page.url.searchParams.get('search') ?? '')
+	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
+	let searchValue = $derived(page.url.searchParams.get('search') ?? '')
 	let order: View['order'] = $state('created')
 	let direction: View['direction'] = $state('desc')
+
+	// Sync search input → URL (debounced by SearchInput)
+	$effect(() => {
+		const trimmed = searchInput.trim()
+		if (trimmed === searchValue) return
+		const url = new URL(page.url)
+		if (trimmed) {
+			url.searchParams.set('search', trimmed)
+		} else {
+			url.searchParams.delete('search')
+		}
+		goto(`${url.pathname}${url.search}`, {replaceState: true})
+	})
 
 	let slug = $derived(page.params.slug)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
@@ -33,14 +48,14 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
 	let aggregatedTags = $derived(getChannelTags(allTracks))
-	let isSearching = $derived(searchQuery.trim() !== '' || selectedTags.length > 0)
+	let isSearching = $derived(searchValue !== '' || selectedTags.length > 0)
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
 	let isFiltering = $derived(isSearching || isSorting)
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
 			tags: selectedTags.length ? selectedTags : undefined,
 			tagsMode: 'all',
-			search: searchQuery.trim() || undefined,
+			search: searchValue || undefined,
 			order: isSorting ? order : undefined,
 			direction: isSorting ? direction : undefined
 		})
@@ -54,11 +69,14 @@
 	}
 
 	function toggleTag(tag: string) {
-		if (selectedTags.includes(tag)) {
-			selectedTags = selectedTags.filter((t) => t !== tag)
+		const next = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag]
+		const url = new URL(page.url)
+		if (next.length) {
+			url.searchParams.set('tags', next.join(','))
 		} else {
-			selectedTags = [...selectedTags, tag]
+			url.searchParams.delete('tags')
 		}
+		goto(`${url.pathname}${url.search}`, {replaceState: true})
 	}
 
 	function playFilteredTracks() {
@@ -82,7 +100,6 @@
 	<section>
 		<header>
 			<menu class="row">
-				<SearchInput bind:value={searchQuery} placeholder="Filter tracks..." debounce={150} />
 				{#if aggregatedTags.length > 0}
 					<PopoverMenu>
 						{#snippet trigger()}
@@ -97,26 +114,30 @@
 						</menu>
 					</PopoverMenu>
 				{/if}
-				{#if isFiltering}
-					<small>{filteredTracks.length} selected</small>
-				{/if}
+				<SearchInput bind:value={searchInput} placeholder="Filter tracks..." debounce={150} />
 				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-					{#snippet trigger()}<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />{/snippet}
+					{#snippet trigger()}<Icon
+							icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+							strokeWidth={1.5}
+						/>{/snippet}
 					<SortControls bind:order bind:direction />
 				</PopoverMenu>
 			</menu>
 			{#if isFiltering}
-				<menu class="row">
-					{#if filteredTracks.length > 0}
-						<button type="button" onclick={playFilteredTracks}>Play</button>
-						<button type="button" onclick={queueFilteredTracks}>Queue</button>
-					{/if}
-					{#if selectedTags.length > 0}
+				{#if selectedTags.length > 0}
+					<menu class="row filter-tags">
 						{#each selectedTags as tag (tag)}
 							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
 								{tag} ×
 							</button>
 						{/each}
+					</menu>
+				{/if}
+				<menu class="row filter-actions">
+					{#if filteredTracks.length > 0}
+						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
+						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
+						<small class="filter-count">{filteredTracks.length} selected</small>
 					{/if}
 				</menu>
 			{/if}
@@ -131,7 +152,7 @@
 				<button onclick={showAll}>Show all {baseTracks.length} tracks</button>
 			{/if}
 
-			{#if isFiltering && filteredTracks.length === 0}
+			{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
 				<p class="empty">No tracks match your filter</p>
 			{:else if !tracksQuery.isReady && (channel.track_count ?? 0) > 0}
 				<p class="empty">{m.channel_loading_tracks()}</p>
@@ -161,7 +182,16 @@
 	}
 
 	header :global(input[type='search']) {
-		max-width: 10rem;
+		flex: 1;
+	}
+
+	header :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	header :global(.search-input input[type='search']) {
+		width: 100%;
 	}
 
 	.tags-menu {
@@ -174,6 +204,18 @@
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
+	}
+
+	.filter-actions {
+		align-items: center;
+	}
+
+	.filter-count {
+		margin-left: auto;
+	}
+
+	.filter-tags {
+		flex-wrap: wrap;
 	}
 
 	.empty {

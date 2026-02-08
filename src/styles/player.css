@@ -29,7 +29,7 @@ media-control-bar {
 	--media-button-icon-height: 1.5rem;
 	--media-button-padding: 0 0.5rem;
 
-	--media-range-track-background: var(--gray-12);
+	--media-range-track-background: var(--gray-2);
 	--media-loading-indicator-icon-width: 2rem;
 	--media-loading-indicator-icon-height: 2rem;
 }

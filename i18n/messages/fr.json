@@ -535,7 +535,7 @@
 	"track_delete_confirm": "Supprimer {title} ? Cela l’enlèvera de votre radio.",
 	"track_detail_nav_discogs": "Discogs",
 	"track_detail_nav_musicbrainz": "MusicBrainz",
-	"track_detail_nav_r5": "R5",
+	"track_detail_nav_r5": "titre",
 	"track_detail_nav_related": "Connexes",
 	"track_detail_nav_youtube": "YouTube",
 	"track_detail_page_title": "{track} par {channel} - R5",

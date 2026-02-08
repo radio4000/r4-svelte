@@ -9,6 +9,7 @@
 	import {shuffleRemaining} from '$lib/api'
 	import Dialog from './dialog.svelte'
 	import SearchInput from './search-input.svelte'
+	import Icon from './icon.svelte'
 	import TrackCard from './track-card.svelte'
 	import Tracklist from './tracklist.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -109,12 +110,14 @@
 	<div class="resize-handle" onpointerdown={startDrag} role="separator" aria-orientation="vertical"></div>
 	<header>
 		<menu>
-			<button onclick={() => (view = 'queue')} class:active={view === 'queue'}
-				>{m.button_queue()} ({queueTracks.length})</button
-			>
-			<button onclick={() => (view = 'history')} class:active={view === 'history'}
-				>{m.nav_history()} ({playHistory.length})</button
-			>
+			<button onclick={() => (view = 'queue')} class:active={view === 'queue'}>
+				<Icon icon="unordered-list" size={16} />
+				{m.button_queue()} ({queueTracks.length})
+			</button>
+			<button onclick={() => (view = 'history')} class:active={view === 'history'}>
+				<Icon icon="history" size={16} />
+				{m.nav_history()} ({playHistory.length})
+			</button>
 		</menu>
 	</header>
 
@@ -125,13 +128,18 @@
 				<button
 					onclick={shuffleRemaining}
 					{@attach tooltip({content: m.queue_shuffle_remaining()})}
-					title={m.queue_shuffle_remaining()}>⤮</button
+					title={m.queue_shuffle_remaining()}
 				>
-				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>✕</button>
+					<Icon icon="shuffle" size={16} />
+				</button>
+				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
+					<Icon icon="history" size={16} />
+					{m.common_clear()}
+				</button>
 			</menu>
 		{:else if view === 'history' && playHistory.length > 0}
 			<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.queue_no_history()})}
-				>{m.common_clear()}</button
+				><Icon icon="delete" size={16} />{m.common_clear()}</button
 			>
 		{/if}
 	</div>
@@ -270,8 +278,17 @@
 		display: flex;
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-5);
-		justify-content: space-between;
+		align-items: center;
 		gap: 0.25rem;
+	}
+
+	.search-container :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.search-container :global(.search-input input[type='search']) {
+		width: 100%;
 	}
 
 	.queue-actions {

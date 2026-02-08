@@ -6,8 +6,8 @@
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import ChannelHero from './channel-hero.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel, children?: import('svelte').Snippet}}*/
-	let {channel, children} = $props()
+	/** @type {{channel: import('$lib/types').Channel, href?: string, children?: import('svelte').Snippet}}*/
+	let {channel, href, children} = $props()
 
 	const broadcasting = $derived(
 		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)) ||
@@ -24,7 +24,7 @@
 
 <article ondblclick={doubleclick}>
 	{#if broadcasting}<div class="live-dot"></div>{/if}
-	<a href={`/${channel.slug}`} data-sveltekit-preload-data="false">
+	<a href={href ?? `/${channel.slug}`} data-sveltekit-preload-data="false">
 		<ChannelHero {channel} />
 		<div>
 			<h3>
@@ -36,7 +36,7 @@
 					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
 				{/if}
 			</h3>
-			<p class="desc">
+			<p>
 				{trimWithEllipsis(channel.description)}
 				{#if channel.track_count}
 					<small>({channel.track_count})</small>
@@ -74,7 +74,7 @@
 	}
 
 	h3 {
-		font-weight: normal;
+		font-weight: 600;
 	}
 	h3,
 	p {
@@ -105,6 +105,7 @@
 		/* for channels with no image */
 		min-height: 2rem;
 	}
+
 	h3 + p {
 		color: light-dark(var(--gray-11), var(--gray-10));
 	}

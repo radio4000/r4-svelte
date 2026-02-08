@@ -535,7 +535,7 @@
 	"track_delete_confirm": "{title} löschen? Das entfernt ihn aus deinem Radio.",
 	"track_detail_nav_discogs": "Discogs",
 	"track_detail_nav_musicbrainz": "MusicBrainz",
-	"track_detail_nav_r5": "R5",
+	"track_detail_nav_r5": "Track",
 	"track_detail_nav_related": "Verwandt",
 	"track_detail_nav_youtube": "YouTube",
 	"track_detail_page_title": "{track} von {channel} - R5",

@@ -4,7 +4,16 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 
-	const {channels = [], latitude = null, longitude = null, zoom = null, syncUrl = true, openSlug = null} = $props()
+	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, linkToMap?: boolean | 'global'}} */
+	const {
+		channels = [],
+		latitude = null,
+		longitude = null,
+		zoom = null,
+		syncUrl = true,
+		openSlug = null,
+		linkToMap = true
+	} = $props()
 
 	let map = null
 	let markersLayer = null
@@ -26,11 +35,17 @@
 
 		for (const c of channels) {
 			if (c.latitude && c.longitude) {
+				const mapHref =
+					linkToMap === 'global'
+						? `/?display=map&slug=${c.slug}&longitude=${c.longitude}&latitude=${c.latitude}&zoom=15`
+						: linkToMap
+							? `/${c.slug}/map`
+							: null
 				const popup = document.createElement('div')
 				popup.className = 'map-popup'
 				const card = mount(ChannelCard, {
 					target: popup,
-					props: {channel: c}
+					props: {channel: c, href: mapHref ?? undefined}
 				})
 				mountedPopups.push(card)
 

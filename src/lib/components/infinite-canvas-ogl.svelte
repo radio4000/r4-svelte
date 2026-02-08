@@ -14,8 +14,8 @@
 	 * @prop {{slug?: string}} [channel]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, backgroundColor?: string|null, fogColor?: string|null, onclick?: (item: MediaItem) => void}} */
-	let {media = [], activeId, backgroundColor = null, fogColor = null, onclick} = $props()
+	/** @type {{media?: MediaItem[], activeId?: string, backgroundColor?: string|null, onclick?: (item: MediaItem) => void}} */
+	let {media = [], activeId, backgroundColor = null, onclick} = $props()
 
 	/** @type {HTMLDivElement} */
 	let container
@@ -46,7 +46,6 @@
 			activeId: untrack(() => activeId),
 			accentColor,
 			backgroundColor,
-			fogColor,
 			onClick: onclick
 		})
 		return () => canvas?.dispose()
@@ -79,9 +78,17 @@
 	}
 
 	.canvas-container {
+		position: relative;
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
+	}
+
+	.canvas-container :global(canvas) {
+		position: absolute;
+		inset: 0;
+		width: 100% !important;
+		height: 100% !important;
 	}
 
 	.controls-hint {

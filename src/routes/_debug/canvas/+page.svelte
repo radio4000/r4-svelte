@@ -6,7 +6,7 @@
 	import {shufflePlayChannel, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 
-	let useOGL = $state(false)
+	let useOGL = $state(true)
 	let fps = $state(0)
 	let lastFrameTime = 0
 	let frameCount = 0
@@ -58,7 +58,7 @@
 	<title>Infinite Canvas</title>
 </svelte:head>
 
-<article>
+<article class="fill-height">
 	<header>
 		<menu data-grouped>
 			<a href="/_debug">&larr;</a>
@@ -68,20 +68,8 @@
 
 		<div class="comparison-controls">
 			<div class="toggle-buttons">
-				<button
-					class:active={!useOGL}
-					onclick={() => useOGL = false}
-					type="button"
-				>
-					Three.js
-				</button>
-				<button
-					class:active={useOGL}
-					onclick={() => useOGL = true}
-					type="button"
-				>
-					OGL
-				</button>
+				<button class:active={!useOGL} onclick={() => (useOGL = false)} type="button"> Three.js </button>
+				<button class:active={useOGL} onclick={() => (useOGL = true)} type="button"> OGL </button>
 			</div>
 			<div class="stats">
 				<span class="stat"><strong>Library:</strong> {useOGL ? 'OGL (29kb)' : 'Three.js (~500kb)'}</span>
@@ -104,7 +92,6 @@
 
 <style>
 	article {
-		display: flex;
 		flex-direction: column;
 	}
 	header {

@@ -1,22 +1,7 @@
-import {parseUrl} from 'media-now'
-import {discogs} from 'media-now/providers/discogs'
+import {getMedia} from 'media-now'
 import {logger} from '$lib/logger'
 
 const log = logger.ns('metadata/discogs').seal()
-
-/**
- * Parse a Discogs URL to extract resource type and ID
- * @param {string} url
- * @returns {{type: string, id: string} | null}
- */
-export function parseDiscogsUrl(url) {
-	if (!url) return null
-	const parsed = parseUrl(url)
-	if (parsed?.provider !== 'discogs') return null
-	// media-now returns id like "release/123" or "master/456"
-	const [type, id] = parsed.id.split('/')
-	return type && id ? {type, id} : null
-}
 
 /**
  * Fetch Discogs data without saving
@@ -24,19 +9,12 @@ export function parseDiscogsUrl(url) {
  * @returns {Promise<Object|null>} Discogs data
  */
 export async function fetchDiscogs(discogsUrl) {
-	const parsed = parseDiscogsUrl(discogsUrl)
-	if (!parsed) return null
-
 	try {
-		const {type, id} = parsed
-		const result = type === 'master' ? await discogs.fetchMaster(id) : await discogs.fetch(id)
+		const result = await getMedia(discogsUrl)
 		if (!result?.payload) return null
 		return {
 			...result.payload,
-			_meta: {
-				sourceUrl: discogsUrl,
-				fetchedAt: new Date().toISOString()
-			}
+			_meta: {fetchedAt: new Date().toISOString()}
 		}
 	} catch (error) {
 		log.error('fetch failed', {discogsUrl, error})

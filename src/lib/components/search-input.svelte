@@ -39,7 +39,7 @@
 	})
 </script>
 
-<div>
+<div class="search-input">
 	<Icon icon="search" size={16} />
 	<input type="search" {placeholder} bind:value={inputValue} {...restProps} />
 </div>

@@ -2,15 +2,12 @@
  * WebGL infinite canvas with chunk-based rendering using OGL
  * Parallel implementation for bundle size and performance comparison
  */
-import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3, Vec2} from 'ogl'
+import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2
 const CHUNK_FADE_MARGIN = 1
 const MAX_VELOCITY = 3.2
-const DEPTH_FADE_START = 140
-const DEPTH_FADE_END = 260
-const INVIS_THRESHOLD = 0.01
 const KEYBOARD_SPEED = 0.18
 const VELOCITY_LERP = 0.16
 const VELOCITY_DECAY = 0.9
@@ -50,55 +47,59 @@ const CHUNK_OFFSETS = (() => {
 const vec3 = (x = 0, y = 0, z = 0) => ({x, y, z})
 const vec2 = (x = 0, y = 0) => ({x, y})
 
-// Vertex shader - transforms positions and passes UV coordinates
-const vertexShader = `
+// Vertex shader for colored quads — derives color from world position
+const colorVertexShader = `
 	attribute vec3 position;
-	attribute vec2 uv;
-
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
-	uniform mat3 normalMatrix;
+	uniform mat4 modelMatrix;
+	varying vec3 vWorldPos;
+	void main() {
+		vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
+`
 
+const colorFragmentShader = `
+	precision highp float;
+	varying vec3 vWorldPos;
+	void main() {
+		// Derive color from world position for variety
+		vec3 col;
+		col.r = 0.4 + 0.4 * sin(vWorldPos.x * 0.05 + 1.0);
+		col.g = 0.4 + 0.4 * sin(vWorldPos.y * 0.05 + 2.0);
+		col.b = 0.4 + 0.4 * sin(vWorldPos.x * 0.03 + vWorldPos.y * 0.03 + 4.0);
+		gl_FragColor = vec4(col, 1.0);
+	}
+`
+
+const texturedVertexShader = `
+	attribute vec3 position;
+	attribute vec2 uv;
+	uniform mat4 modelViewMatrix;
+	uniform mat4 projectionMatrix;
 	varying vec2 vUv;
-	varying float vDepth;
-
 	void main() {
 		vUv = uv;
-		vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-		vDepth = -mvPosition.z;
-		gl_Position = projectionMatrix * mvPosition;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
 
-// Fragment shader - samples texture, applies opacity and fog
-const fragmentShader = `
+const texturedFragmentShader = `
 	precision highp float;
-
-	uniform sampler2D uTexture;
-	uniform float uOpacity;
-	uniform vec3 uFogColor;
-	uniform float uFogNear;
-	uniform float uFogFar;
-	uniform bool uUseFog;
-
+	uniform sampler2D tMap;
 	varying vec2 vUv;
-	varying float vDepth;
-
 	void main() {
-		vec4 texColor = texture2D(uTexture, vUv);
-
-		float opacity = uOpacity;
-
-		// Apply fog if enabled
-		if (uUseFog) {
-			float fogFactor = smoothstep(uFogNear, uFogFar, vDepth);
-			texColor.rgb = mix(texColor.rgb, uFogColor, fogFactor);
-			opacity *= (1.0 - fogFactor * 0.5);
-		}
-
-		gl_FragColor = vec4(texColor.rgb, texColor.a * opacity);
+		gl_FragColor = texture2D(tMap, vUv);
 	}
 `
+
+const _ENTRANCE_DURATION = 900
+const EXIT_DURATION = 500
+const ENTRANCE_STAGGER = 80
+const EXIT_STAGGER = 40
+const IMAGE_INSET = 0.88
+const MAX_CHUNKS_PER_FRAME = 4
 
 export class InfiniteCanvasOGL {
 	constructor(container, config = {}) {
@@ -106,12 +107,8 @@ export class InfiniteCanvasOGL {
 		this.media = config.media || []
 		this.activeId = config.activeId
 		this.accentColor = config.accentColor || '#ff0000'
-		this.onProgress = config.onProgress
 		this.onClick = config.onClick
 		this.backgroundColor = config.backgroundColor ?? null
-		this.fogColor = config.fogColor ?? null
-		this.fogNear = config.fogNear || 120
-		this.fogFar = config.fogFar || 320
 
 		this.velocity = vec3()
 		this.targetVel = vec3()
@@ -127,10 +124,25 @@ export class InfiniteCanvasOGL {
 
 		this.keys = {forward: false, backward: false, left: false, right: false, up: false, down: false}
 		this.chunks = new Map()
-		this.textureCache = new Map()
+		this.chunkQueue = []
+		this.animatingChunks = new Set()
+		this.exitingChunks = new Map()
 		this.planeCache = new Map()
+		this.textureCache = new Map()
 		this.disposed = false
 		this.hoveredItem = null
+
+		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
+		this._rayNear = new Vec3()
+		this._rayFar = new Vec3()
+		this._rayDir = new Vec3()
+		this._rayResult = new Vec3()
+		this._vpMatrix = new Float32Array(16)
+		this._vpInverse = new Float32Array(16)
+		this._planeNormal = new Vec3(0, 0, 1)
+		this._toPlane = new Vec3()
+		this._hitPoint = new Vec3()
+		this._localPoint = new Vec3()
 
 		this.init()
 		this.createTooltip()
@@ -149,11 +161,9 @@ export class InfiniteCanvasOGL {
 		})
 		this.gl = this.renderer.gl
 		if (!this.gl || !this.gl.canvas) throw new Error('Failed to initialize WebGL')
-		this.gl.canvas.style.width = '100%'
-		this.gl.canvas.style.height = '100%'
 		this.container.appendChild(this.gl.canvas)
 
-		// Set canvas size
+		// Set canvas size (CSS sizing handled by parent)
 		this.renderer.setSize(width, height)
 
 		// Set background color if provided
@@ -173,6 +183,24 @@ export class InfiniteCanvasOGL {
 
 		// Create shared plane geometry
 		this.planeGeometry = new Plane(this.gl, {width: 1, height: 1})
+
+		// Shared program for colored quads (no media) — compiled once
+		this.colorProgram = new Program(this.gl, {
+			vertex: colorVertexShader,
+			fragment: colorFragmentShader,
+			transparent: false,
+			depthTest: true,
+			depthWrite: true
+		})
+
+		// Shared program for textured quads — compiled once, texture swapped per-mesh
+		this.texturedProgram = new Program(this.gl, {
+			vertex: texturedVertexShader,
+			fragment: texturedFragmentShader,
+			uniforms: {tMap: {value: new Texture(this.gl)}},
+			depthTest: true,
+			depthWrite: true
+		})
 
 		this.bindEvents()
 		this.updateChunks(true)
@@ -403,72 +431,82 @@ export class InfiniteCanvasOGL {
 	}
 
 	getRay(x, y) {
-		// Convert screen coordinates to world ray
-		const near = new Vec3(x, y, -1)
-		const far = new Vec3(x, y, 1)
+		if (!this.camera) return null
+		// Compute VP inverse once per raycast (not twice)
+		const m = this._vpInverse
+		this.multiplyMatrices(this._vpMatrix, this.camera.projectionMatrix, this.camera.viewMatrix)
+		this.invertMatrix(m, this._vpMatrix)
 
-		// Unproject points
-		const nearWorld = this.unproject(near)
-		const farWorld = this.unproject(far)
+		// Unproject near (z=-1) into pre-allocated origin
+		const origin = this._rayNear
+		this.unprojectWith(m, x, y, -1, origin)
 
-		const direction = new Vec3()
-		direction.sub(farWorld, nearWorld).normalize()
+		// Unproject far (z=1) into temp, compute direction
+		const far = this._rayFar
+		this.unprojectWith(m, x, y, 1, far)
 
-		return {origin: nearWorld, direction}
+		const direction = this._rayDir
+		direction.sub(far, origin).normalize()
+
+		return {origin, direction}
 	}
 
-	unproject(vec) {
-		// Unproject screen space to world space
-		if (!this.camera?.viewMatrix || !this.camera?.projectionMatrix) {
-			throw new Error('Camera matrices not initialized')
-		}
-		const viewProjectionInverse = new Float32Array(16)
-		const viewMatrix = this.camera.viewMatrix
-		const projectionMatrix = this.camera.projectionMatrix
-
-		// Multiply projection * view
-		const viewProjection = new Float32Array(16)
-		this.multiplyMatrices(viewProjection, projectionMatrix, viewMatrix)
-
-		// Invert
-		this.invertMatrix(viewProjectionInverse, viewProjection)
-
-		// Transform vector
-		const w = 1.0 / (viewProjectionInverse[3] * vec.x + viewProjectionInverse[7] * vec.y + viewProjectionInverse[11] * vec.z + viewProjectionInverse[15])
-
-		const result = new Vec3()
-		result.x = (viewProjectionInverse[0] * vec.x + viewProjectionInverse[4] * vec.y + viewProjectionInverse[8] * vec.z + viewProjectionInverse[12]) * w
-		result.y = (viewProjectionInverse[1] * vec.x + viewProjectionInverse[5] * vec.y + viewProjectionInverse[9] * vec.z + viewProjectionInverse[13]) * w
-		result.z = (viewProjectionInverse[2] * vec.x + viewProjectionInverse[6] * vec.y + viewProjectionInverse[10] * vec.z + viewProjectionInverse[14]) * w
-
-		return result
+	unprojectWith(m, x, y, z, out) {
+		const w = 1.0 / (m[3] * x + m[7] * y + m[11] * z + m[15])
+		out.x = (m[0] * x + m[4] * y + m[8] * z + m[12]) * w
+		out.y = (m[1] * x + m[5] * y + m[9] * z + m[13]) * w
+		out.z = (m[2] * x + m[6] * y + m[10] * z + m[14]) * w
 	}
 
 	multiplyMatrices(out, a, b) {
-		const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3]
-		const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7]
-		const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11]
-		const a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15]
+		const a00 = a[0],
+			a01 = a[1],
+			a02 = a[2],
+			a03 = a[3]
+		const a10 = a[4],
+			a11 = a[5],
+			a12 = a[6],
+			a13 = a[7]
+		const a20 = a[8],
+			a21 = a[9],
+			a22 = a[10],
+			a23 = a[11]
+		const a30 = a[12],
+			a31 = a[13],
+			a32 = a[14],
+			a33 = a[15]
 
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3]
+		let b0 = b[0],
+			b1 = b[1],
+			b2 = b[2],
+			b3 = b[3]
 		out[0] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30
 		out[1] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31
 		out[2] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32
 		out[3] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33
 
-		b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7]
+		b0 = b[4]
+		b1 = b[5]
+		b2 = b[6]
+		b3 = b[7]
 		out[4] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30
 		out[5] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31
 		out[6] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32
 		out[7] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33
 
-		b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11]
+		b0 = b[8]
+		b1 = b[9]
+		b2 = b[10]
+		b3 = b[11]
 		out[8] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30
 		out[9] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31
 		out[10] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32
 		out[11] = b0 * a03 + b1 * a13 + b2 * a23 + b3 * a33
 
-		b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15]
+		b0 = b[12]
+		b1 = b[13]
+		b2 = b[14]
+		b3 = b[15]
 		out[12] = b0 * a00 + b1 * a10 + b2 * a20 + b3 * a30
 		out[13] = b0 * a01 + b1 * a11 + b2 * a21 + b3 * a31
 		out[14] = b0 * a02 + b1 * a12 + b2 * a22 + b3 * a32
@@ -476,10 +514,22 @@ export class InfiniteCanvasOGL {
 	}
 
 	invertMatrix(out, a) {
-		const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3]
-		const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7]
-		const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11]
-		const a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15]
+		const a00 = a[0],
+			a01 = a[1],
+			a02 = a[2],
+			a03 = a[3]
+		const a10 = a[4],
+			a11 = a[5],
+			a12 = a[6],
+			a13 = a[7]
+		const a20 = a[8],
+			a21 = a[9],
+			a22 = a[10],
+			a23 = a[11]
+		const a30 = a[12],
+			a31 = a[13],
+			a32 = a[14],
+			a33 = a[15]
 
 		const b00 = a00 * a11 - a01 * a10
 		const b01 = a00 * a12 - a02 * a10
@@ -519,32 +569,25 @@ export class InfiniteCanvasOGL {
 	}
 
 	rayPlaneIntersection(ray, mesh) {
-		// Plane is facing forward (normal is 0, 0, 1 in local space)
-		// Transform to world space
-		const worldPos = mesh.worldPosition
-		const planeNormal = new Vec3(0, 0, 1)
-
-		// Calculate intersection
-		const denom = ray.direction.dot(planeNormal)
+		const n = this._planeNormal
+		const denom = ray.direction.dot(n)
 		if (Math.abs(denom) < 0.0001) return null
 
-		const toPlane = new Vec3()
-		toPlane.sub(worldPos, ray.origin)
-		const t = toPlane.dot(planeNormal) / denom
+		const worldPos = mesh.position
+		this._toPlane.sub(worldPos, ray.origin)
+		const t = this._toPlane.dot(n) / denom
 		if (t < 0) return null
 
-		const point = new Vec3()
-		point.copy(ray.direction).multiply(t).add(ray.origin)
-
-		// Check if point is within plane bounds
-		const localPoint = new Vec3()
-		localPoint.sub(point, worldPos)
+		// Check if hit point is within plane bounds
+		const lp = this._localPoint
+		lp.x = ray.origin.x + ray.direction.x * t - worldPos.x
+		lp.y = ray.origin.y + ray.direction.y * t - worldPos.y
 
 		const halfWidth = mesh.scale.x * 0.5
 		const halfHeight = mesh.scale.y * 0.5
 
-		if (Math.abs(localPoint.x) <= halfWidth && Math.abs(localPoint.y) <= halfHeight) {
-			return {distance: t, point}
+		if (Math.abs(lp.x) <= halfWidth && Math.abs(lp.y) <= halfHeight) {
+			return {distance: t}
 		}
 
 		return null
@@ -580,31 +623,6 @@ export class InfiniteCanvasOGL {
 		this.renderer.setSize(width, height)
 	}
 
-	getTexture(item) {
-		const key = item.url
-		if (this.textureCache.has(key)) return this.textureCache.get(key)
-		if (!this.gl) throw new Error('WebGL not initialized')
-
-		const texture = new Texture(this.gl, {
-			generateMipmaps: true,
-			minFilter: this.gl.LINEAR_MIPMAP_LINEAR,
-			magFilter: this.gl.LINEAR,
-			wrapS: this.gl.CLAMP_TO_EDGE,
-			wrapT: this.gl.CLAMP_TO_EDGE
-		})
-
-		const img = new Image()
-		img.crossOrigin = 'anonymous'
-		img.onload = () => {
-			texture.image = img
-		}
-		img.onerror = (err) => console.error('Texture load failed:', key, err)
-		img.src = key
-
-		this.textureCache.set(key, texture)
-		return texture
-	}
-
 	generateChunkPlanes(cx, cy, cz) {
 		const key = `${cx},${cy},${cz}`
 		if (this.planeCache.has(key)) return this.planeCache.get(key)
@@ -633,92 +651,134 @@ export class InfiniteCanvasOGL {
 		return planes
 	}
 
+	getTexture(url) {
+		if (this.textureCache.has(url)) return this.textureCache.get(url)
+		if (!this.gl) return null
+
+		const texture = new Texture(this.gl, {
+			generateMipmaps: true,
+			minFilter: this.gl.LINEAR_MIPMAP_LINEAR,
+			magFilter: this.gl.LINEAR
+		})
+		const img = new Image()
+		img.crossOrigin = 'anonymous'
+		img.onload = () => {
+			texture.image = img
+		}
+		img.onerror = () => {
+			console.warn('Texture load failed:', url)
+		}
+		img.src = url
+		this.textureCache.set(url, texture)
+		return texture
+	}
+
 	setActiveId(id) {
 		if (this.activeId === id) return
 		this.activeId = id
 		// Update existing meshes - border animation not implemented in Phase 1
 	}
 
-	setAccentColor(color) {
-		this.accentColor = color
+	queueChunk(cx, cy, cz) {
+		const key = `${cx},${cy},${cz}`
+		if (this.chunks.has(key)) return
+		// Avoid duplicate queue entries
+		if (this.chunkQueue.some((c) => c.key === key)) return
+		this.chunkQueue.push({cx, cy, cz, key})
+	}
+
+	processChunkQueue() {
+		const count = Math.min(this.chunkQueue.length, MAX_CHUNKS_PER_FRAME)
+		for (let i = 0; i < count; i++) {
+			const {cx, cy, cz, key} = this.chunkQueue.shift()
+			if (this.chunks.has(key)) continue
+			this.createChunk(cx, cy, cz)
+		}
 	}
 
 	createChunk(cx, cy, cz) {
 		const key = `${cx},${cy},${cz}`
 		if (this.chunks.has(key)) return
-		if (!this.gl) return
+		if (!this.gl || !this.scene) return
 
 		const group = new Transform()
-		// Store chunk coordinates separately since Transform doesn't have userData
-		// @ts-ignore - adding custom property
+		// @ts-expect-error - adding custom property
 		group.userData = {cx, cy, cz}
 		group.setParent(this.scene)
 
 		const planes = this.generateChunkPlanes(cx, cy, cz)
-		for (const plane of planes) {
-			if (!this.media.length) continue
+		const now = performance.now()
+		for (let i = 0; i < planes.length; i++) {
+			const plane = planes[i]
+			const birthTime = now + i * ENTRANCE_STAGGER
 
-			const mediaItem = this.media[plane.mediaIndex % this.media.length]
-			const texture = this.getTexture(mediaItem)
-
-			const fogColorParsed = this.fogColor ? this.parseColor(this.fogColor) : [0, 0, 0]
-
-			const program = new Program(this.gl, {
-				vertex: vertexShader,
-				fragment: fragmentShader,
-				uniforms: {
-					uTexture: {value: texture},
-					uOpacity: {value: 0},
-					uFogColor: {value: fogColorParsed},
-					uFogNear: {value: this.fogNear},
-					uFogFar: {value: this.fogFar},
-					uUseFog: {value: !!this.fogColor}
-				},
-				transparent: true,
-				depthTest: true,
-				depthWrite: false
-			})
-
-			const mesh = new Mesh(this.gl, {geometry: this.planeGeometry, program})
+			// Color background quad
+			const mesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: this.colorProgram})
 			mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
-
-			// Scale based on media aspect ratio if available
-			if (mediaItem.width && mediaItem.height) {
-				const aspect = mediaItem.width / mediaItem.height
-				mesh.scale.set(plane.scale.y * aspect, plane.scale.y, 1)
-			} else {
-				mesh.scale.set(plane.scale.x, plane.scale.y, plane.scale.z)
+			mesh.scale.set(0.01, 0.01, 0.01)
+			// @ts-expect-error - adding custom property
+			mesh.userData = {
+				isBorder: false,
+				mediaItem: null,
+				birthTime,
+				targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z}
 			}
-
-			// @ts-ignore - adding custom property
-			mesh.userData = {targetOpacity: 1, chunkCx: cx, chunkCy: cy, chunkCz: cz, mediaItem}
-			mesh.visible = false
 			mesh.setParent(group)
-		}
 
-		this.chunks.set(key, group)
-	}
-
-	removeChunk(key) {
-		const group = this.chunks.get(key)
-		if (!group || !this.gl) return
-
-		// Clean up meshes
-		for (const child of group.children) {
-			// @ts-ignore - we know these are Mesh instances
-			if (child.program) {
-				// Dispose program
-				const gl = this.gl
-				// @ts-ignore - accessing program property
-				if (child.program.program) {
-					// @ts-ignore - accessing program property
-					gl.deleteProgram(child.program.program)
+			// Textured image quad on top
+			if (this.media.length > 0) {
+				const mediaItem = this.media[plane.mediaIndex % this.media.length]
+				if (mediaItem?.url) {
+					const texture = this.getTexture(mediaItem.url)
+					const sharedProgram = this.texturedProgram
+					const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
+					imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + 0.15)
+					imgMesh.scale.set(0.01, 0.01, 0.01)
+					// Swap texture on the shared program right before this mesh draws
+					imgMesh.onBeforeRender(() => {
+						sharedProgram.uniforms.tMap.value = texture
+					})
+					// @ts-expect-error - adding custom property
+					imgMesh.userData = {
+						isBorder: false,
+						mediaItem,
+						birthTime,
+						texture,
+						targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1}
+					}
+					imgMesh.setParent(group)
 				}
 			}
 		}
 
+		this.chunks.set(key, group)
+		this.animatingChunks.add(key)
+	}
+
+	removeChunk(key) {
+		const group = this.chunks.get(key)
+		if (!group) return
 		group.setParent(null)
 		this.chunks.delete(key)
+		this.animatingChunks.delete(key)
+	}
+
+	exitChunk(key) {
+		const group = this.chunks.get(key)
+		if (!group) return
+		this.chunks.delete(key)
+		this.animatingChunks.delete(key)
+
+		const now = performance.now()
+		let i = 0
+		for (const mesh of group.children) {
+			if (mesh.userData) {
+				mesh.userData.exitTime = now + i * EXIT_STAGGER
+				mesh.userData.birthTime = null
+			}
+			i++
+		}
+		this.exitingChunks.set(key, group)
 	}
 
 	updateChunks(force = false) {
@@ -742,57 +802,21 @@ export class InfiniteCanvasOGL {
 		for (const offset of CHUNK_OFFSETS) {
 			const chunkKey = `${cx + offset.dx},${cy + offset.dy},${cz + offset.dz}`
 			neededChunks.add(chunkKey)
-			this.createChunk(cx + offset.dx, cy + offset.dy, cz + offset.dz)
+			this.queueChunk(cx + offset.dx, cy + offset.dy, cz + offset.dz)
 		}
 
 		for (const [chunkKey] of this.chunks) {
 			if (!neededChunks.has(chunkKey)) {
-				this.removeChunk(chunkKey)
+				this.exitChunk(chunkKey)
 			}
 		}
-	}
 
-	updatePlaneOpacities() {
-		const camZ = this.camera.position.z
-		const cx = Math.floor(this.basePos.x / CHUNK_SIZE)
-		const cy = Math.floor(this.basePos.y / CHUNK_SIZE)
-		const cz = Math.floor(this.basePos.z / CHUNK_SIZE)
-		const depthRange = DEPTH_FADE_END - DEPTH_FADE_START || 0.0001
-
-		for (const [, group] of this.chunks) {
-			// @ts-ignore - custom property
-			const {cx: chunkCx, cy: chunkCy, cz: chunkCz} = group.userData
-			const dist = Math.max(Math.abs(chunkCx - cx), Math.abs(chunkCy - cy), Math.abs(chunkCz - cz))
-			const gridFade =
-				dist <= RENDER_DISTANCE ? 1 : Math.max(0, 1 - (dist - RENDER_DISTANCE) / (CHUNK_FADE_MARGIN || 0.0001))
-
-			for (const mesh of group.children) {
-				// @ts-ignore - we know these are Mesh instances with program
-				if (!mesh.program) continue
-
-				const absDepth = Math.abs(mesh.worldPosition.z - camZ)
-
-				if (absDepth > DEPTH_FADE_END + 50) {
-					mesh.program.uniforms.uOpacity.value = 0
-					mesh.visible = false
-					continue
-				}
-
-				const depthFade = absDepth <= DEPTH_FADE_START ? 1 : Math.max(0, 1 - (absDepth - DEPTH_FADE_START) / depthRange)
-				const target = Math.min(gridFade, depthFade * depthFade)
-				// @ts-ignore - we know program exists
-				const current = mesh.program.uniforms.uOpacity.value
-				const newOpacity = target < INVIS_THRESHOLD && current < INVIS_THRESHOLD ? 0 : lerp(current, target, 0.18)
-
-				// @ts-ignore - we know program exists
-				mesh.program.uniforms.uOpacity.value = newOpacity > 0.99 ? 1 : newOpacity
-				mesh.visible = newOpacity > INVIS_THRESHOLD
-			}
-		}
+		// Also remove queued chunks that are no longer needed
+		this.chunkQueue = this.chunkQueue.filter((c) => neededChunks.has(c.key))
 	}
 
 	animate() {
-		if (this.disposed) return
+		if (this.disposed || !this.camera || !this.renderer) return
 
 		if (this.keys.forward) this.targetVel.z -= KEYBOARD_SPEED
 		if (this.keys.backward) this.targetVel.z += KEYBOARD_SPEED
@@ -823,15 +847,87 @@ export class InfiniteCanvasOGL {
 		this.camera.position.set(this.basePos.x + this.drift.x, this.basePos.y + this.drift.y, this.basePos.z)
 
 		this.updateChunks()
-		this.updatePlaneOpacities()
+		this.processChunkQueue()
+		this.animateEntrance()
+		this.animateExits()
 		this.renderer.render({scene: this.scene, camera: this.camera})
 
 		this.animationId = requestAnimationFrame(() => this.animate())
 	}
 
+	animateEntrance() {
+		if (this.animatingChunks.size === 0) return
+		const now = performance.now()
+		const duration = 900
+		for (const key of this.animatingChunks) {
+			const group = this.chunks.get(key)
+			if (!group) {
+				this.animatingChunks.delete(key)
+				continue
+			}
+			let allDone = true
+			for (const mesh of group.children) {
+				const ud = mesh.userData
+				if (!ud?.birthTime) continue
+				const elapsed = now - ud.birthTime
+				if (elapsed < 0) {
+					allDone = false
+					continue
+				}
+				const t = Math.min(elapsed / duration, 1)
+				if (t >= 1) {
+					mesh.scale.set(ud.targetScale.x, ud.targetScale.y, ud.targetScale.z)
+					ud.birthTime = null
+					continue
+				}
+				allDone = false
+				const ease = 1 - (1 - t) ** 3
+				mesh.scale.set(ud.targetScale.x * ease, ud.targetScale.y * ease, ud.targetScale.z * ease)
+			}
+			if (allDone) this.animatingChunks.delete(key)
+		}
+	}
+
+	animateExits() {
+		if (this.exitingChunks.size === 0) return
+		const now = performance.now()
+		for (const [key, group] of this.exitingChunks) {
+			let allDone = true
+			for (const mesh of group.children) {
+				const ud = mesh.userData
+				if (!ud?.exitTime) continue
+				const elapsed = now - ud.exitTime
+				if (elapsed < 0) {
+					allDone = false
+					continue
+				}
+				const t = Math.min(elapsed / EXIT_DURATION, 1)
+				if (t >= 1) {
+					mesh.scale.set(0, 0, 0)
+					ud.exitTime = null
+					continue
+				}
+				allDone = false
+				const ease = 1 - t * t * t // ease-in cubic (shrink accelerates)
+				const ts = ud.targetScale
+				if (ts) {
+					mesh.scale.set(ts.x * ease, ts.y * ease, ts.z * ease)
+				}
+			}
+			if (allDone) {
+				group.setParent(null)
+				this.exitingChunks.delete(key)
+			}
+		}
+	}
+
 	setMedia(media) {
 		this.media = media
 		for (const key of this.chunks.keys()) this.removeChunk(key)
+		for (const [_key, group] of this.exitingChunks) {
+			group.setParent(null)
+		}
+		this.exitingChunks.clear()
 		this.updateChunks(true)
 	}
 
@@ -841,14 +937,18 @@ export class InfiniteCanvasOGL {
 		this.resizeObserver?.disconnect()
 
 		for (const key of this.chunks.keys()) this.removeChunk(key)
-		for (const texture of this.textureCache.values()) {
-			if (texture.texture) this.gl.deleteTexture(texture.texture)
+		for (const [_key, group] of this.exitingChunks) {
+			group.setParent(null)
 		}
-
+		this.exitingChunks.clear()
+		for (const texture of this.textureCache.values()) {
+			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
+		}
 		this.textureCache.clear()
+		this.texturedProgram = null
 		this.planeCache.clear()
 		this.planeGeometry = null
-		this.container.removeChild(this.gl.canvas)
+		if (this.gl) this.container.removeChild(this.gl.canvas)
 		this.tooltip?.remove()
 	}
 }

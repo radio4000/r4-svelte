@@ -33,7 +33,7 @@
 				content: direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
 			})}
 		>
-			<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
+			<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
 		</button>
 	{/if}
 </div>

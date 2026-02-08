@@ -247,7 +247,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default {channels} openSlug={openSlug} />
+			<MapChannels.default {channels} {openSlug} />
 		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner channels={realChannels.filtered} />

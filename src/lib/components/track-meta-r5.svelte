@@ -43,11 +43,6 @@
 				</dd>
 			{/if}
 
-			{#if data.description}
-				<dt>{m.track_meta_description()}</dt>
-				<dd>{data.description}</dd>
-			{/if}
-
 			{#if data.tags && data.tags.length > 0}
 				<dt>{m.track_meta_tags()}</dt>
 				<dd class="tags">
@@ -77,6 +72,11 @@
 				<dd>{data.playback_error}</dd>
 			{/if}
 
+			{#if data.description}
+				<dt>{m.track_meta_description()}</dt>
+				<dd class="description">{data.description}</dd>
+			{/if}
+
 			<dt>{m.track_meta_metadata()}</dt>
 			<dd>
 				{#if data.has_youtube_meta}{m.track_meta_flag_youtube()}{/if}
@@ -88,3 +88,9 @@
 {:else}
 	<p>{m.track_meta_no_data()}</p>
 {/if}
+
+<style>
+	.description {
+		white-space: pre-wrap;
+	}
+</style>
