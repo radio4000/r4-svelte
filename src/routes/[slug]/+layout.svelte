@@ -50,7 +50,6 @@
 {#if channel}
 	<div class="channel-layout fill-height">
 		<header>
-			<ChannelHero {channel} />
 			<div class="info">
 				<menu>
 					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
@@ -84,6 +83,7 @@
 					</small>
 				</p>
 			</div>
+			<ChannelHero {channel} />
 		</header>
 
 		<div class="horizontalOverflow channel-nav">
@@ -151,9 +151,10 @@
 	}
 
 	header :global(figure) {
-		width: 12.5rem;
-		min-width: 6rem;
+		max-width: 7rem;
+		min-width: 0;
 		flex-shrink: 0;
+		align-self: flex-end;
 	}
 
 	.info {
