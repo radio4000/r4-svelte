@@ -38,7 +38,8 @@
 		opacity: 0;
 	}
 
-	figure:hover :global(button) {
+	figure:hover :global(button),
+	figure:focus-within :global(button) {
 		opacity: 1;
 	}
 
