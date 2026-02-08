@@ -48,5 +48,6 @@
 	}
 
 	.map-fill {
+		display: contents;
 	}
 </style>

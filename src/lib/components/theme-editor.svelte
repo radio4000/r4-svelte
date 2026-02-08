@@ -325,12 +325,6 @@
 		}
 	}
 
-	fieldset {
-	}
-
-	label {
-	}
-
 	.share-form fieldset {
 		flex-flow: row;
 	}

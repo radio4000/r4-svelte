@@ -4,6 +4,7 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 
+	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
 		channels = [],
 		latitude = null,
