@@ -110,6 +110,7 @@
 	.track-tabs {
 		margin: 0.5rem 0;
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
+		text-transform: capitalize;
 	}
 
 	.meta :global(button:first-of-type) {
