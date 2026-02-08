@@ -94,12 +94,10 @@
 				{/if}
 			</h3>
 			{#if description}
-				<p class="description"><small>{@render description()}</small></p>
+				<p class="description">{@render description()}</p>
 			{:else if track.description}
 				<p class="description">
-					<small>
-						<LinkEntities slug={track.slug} text={track.description} {onTagClick} />
-					</small>
+					<LinkEntities slug={track.slug} text={track.description} {onTagClick} />
 				</p>
 			{/if}
 		</div>
