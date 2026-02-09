@@ -7,31 +7,63 @@ import {
 import {get, set, del, createStore} from 'idb-keyval'
 import {queryClient} from './collections'
 import {IDB_DATABASES, IDB_KEYS} from '$lib/storage-keys'
+import {logger} from '$lib/logger'
 
-const store = createStore(IDB_DATABASES.keyval, 'keyval')
+const log = logger.ns('cache').seal()
 
-function serialize(client: PersistedClient): string {
-	const seen = new WeakSet()
-	return JSON.stringify(client, (_key, value) => {
-		if (typeof value === 'function') return undefined
-		if (value && typeof value === 'object') {
-			if (seen.has(value)) return undefined
-			seen.add(value)
-		}
-		return value
+let store = createStore(IDB_DATABASES.keyval, 'keyval')
+
+/** Delete and recreate the IDB database if it's in a bad state. */
+async function resetStore(reason: string) {
+	log.warn('reset IDB store', {reason})
+	await new Promise<void>((resolve, reject) => {
+		const req = indexedDB.deleteDatabase(IDB_DATABASES.keyval)
+		req.onsuccess = () => resolve()
+		req.onerror = () => reject(req.error)
 	})
+	store = createStore(IDB_DATABASES.keyval, 'keyval')
+}
+
+/** Strip functions and circular refs so IDB's structured clone succeeds. */
+function cleanForIDB(client: PersistedClient): PersistedClient {
+	const ancestors: object[] = []
+	return JSON.parse(
+		JSON.stringify(client, function (_key, value) {
+			if (typeof value === 'function') return undefined
+			if (value && typeof value === 'object') {
+				while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) ancestors.pop()
+				if (ancestors.includes(value)) return undefined
+				ancestors.push(value)
+			}
+			return value
+		})
+	)
 }
 
 const idbPersister = {
 	persistClient: async (client: PersistedClient) => {
-		await set(IDB_KEYS.queryCache, serialize(client), store)
+		const clean = cleanForIDB(client)
+		try {
+			await set(IDB_KEYS.queryCache, clean, store)
+		} catch (err) {
+			await resetStore(`persistClient: ${err}`)
+			await set(IDB_KEYS.queryCache, clean, store)
+		}
 	},
 	restoreClient: async () => {
-		const data = await get<string>(IDB_KEYS.queryCache, store)
-		return data ? JSON.parse(data) : undefined
+		try {
+			return await get<PersistedClient>(IDB_KEYS.queryCache, store)
+		} catch (err) {
+			await resetStore(`restoreClient: ${err}`)
+			return undefined
+		}
 	},
 	removeClient: async () => {
-		await del(IDB_KEYS.queryCache, store)
+		try {
+			await del(IDB_KEYS.queryCache, store)
+		} catch (err) {
+			await resetStore(`removeClient: ${err}`)
+		}
 	}
 }
 
@@ -53,7 +85,7 @@ const persistOptions = {
 	queryClient,
 	persister: idbPersister,
 	maxAge: 24 * 60 * 60 * 1000,
-	buster: '5',
+	buster: '6',
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 
