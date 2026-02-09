@@ -27,6 +27,13 @@
 		return () => cancelAnimationFrame(frameId)
 	})
 
+	let activeId = $derived.by(() => {
+		const trackId = appState.playlist_track
+		if (!trackId) return undefined
+		const track = tracksCollection.get(trackId)
+		return track?.channel_id
+	})
+
 	let media = $derived(
 		[...channelsCollection.state.values()]
 			.filter((c) => c.image)
@@ -80,11 +87,11 @@
 	<section>
 		{#if useOGL}
 			{#key 'ogl'}
-				<InfiniteCanvasOGL {media} onclick={handleClick} />
+				<InfiniteCanvasOGL {media} {activeId} onclick={handleClick} />
 			{/key}
 		{:else}
 			{#key 'threejs'}
-				<InfiniteCanvas {media} onclick={handleClick} />
+				<InfiniteCanvas {media} {activeId} onclick={handleClick} />
 			{/key}
 		{/if}
 	</section>

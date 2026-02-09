@@ -2,7 +2,7 @@
  * WebGL infinite canvas with chunk-based rendering using OGL
  * Parallel implementation for bundle size and performance comparison
  */
-import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
+import {Renderer, Camera, Transform, Mesh, Plane, Torus, Program, Texture, Vec3} from 'ogl'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2
@@ -13,6 +13,7 @@ const VELOCITY_LERP = 0.16
 const VELOCITY_DECAY = 0.9
 const INITIAL_CAMERA_Z = 50
 const ITEMS_PER_CHUNK = 5
+const DEPTH_FADE_END = 260
 
 const lerp = (a, b, t) => a + (b - a) * t
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
@@ -53,9 +54,13 @@ const colorVertexShader = `
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
 	uniform mat4 modelMatrix;
+	uniform float uCameraZ;
 	varying vec3 vWorldPos;
+	varying float vDepthFade;
 	void main() {
 		vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+		float dist = abs(vWorldPos.z - uCameraZ);
+		vDepthFade = 1.0 - smoothstep(140.0, 260.0, dist);
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
@@ -63,13 +68,14 @@ const colorVertexShader = `
 const colorFragmentShader = `
 	precision highp float;
 	varying vec3 vWorldPos;
+	varying float vDepthFade;
 	void main() {
-		// Derive color from world position for variety
+		if (vDepthFade < 0.01) discard;
 		vec3 col;
 		col.r = 0.4 + 0.4 * sin(vWorldPos.x * 0.05 + 1.0);
 		col.g = 0.4 + 0.4 * sin(vWorldPos.y * 0.05 + 2.0);
 		col.b = 0.4 + 0.4 * sin(vWorldPos.x * 0.03 + vWorldPos.y * 0.03 + 4.0);
-		gl_FragColor = vec4(col, 1.0);
+		gl_FragColor = vec4(col, vDepthFade);
 	}
 `
 
@@ -78,9 +84,15 @@ const texturedVertexShader = `
 	attribute vec2 uv;
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
+	uniform mat4 modelMatrix;
+	uniform float uCameraZ;
 	varying vec2 vUv;
+	varying float vDepthFade;
 	void main() {
 		vUv = uv;
+		vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+		float dist = abs(worldPos.z - uCameraZ);
+		vDepthFade = 1.0 - smoothstep(140.0, 260.0, dist);
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
@@ -89,8 +101,29 @@ const texturedFragmentShader = `
 	precision highp float;
 	uniform sampler2D tMap;
 	varying vec2 vUv;
+	varying float vDepthFade;
 	void main() {
-		gl_FragColor = texture2D(tMap, vUv);
+		if (vDepthFade < 0.01) discard;
+		vec4 color = texture2D(tMap, vUv);
+		if (color.a < 0.01) discard;
+		gl_FragColor = vec4(color.rgb, color.a * vDepthFade);
+	}
+`
+
+const borderVertexShader = `
+	attribute vec3 position;
+	uniform mat4 modelViewMatrix;
+	uniform mat4 projectionMatrix;
+	void main() {
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
+`
+
+const borderFragmentShader = `
+	precision highp float;
+	uniform vec3 uColor;
+	void main() {
+		gl_FragColor = vec4(uColor, 1.0);
 	}
 `
 
@@ -98,7 +131,7 @@ const _ENTRANCE_DURATION = 900
 const EXIT_DURATION = 500
 const ENTRANCE_STAGGER = 80
 const EXIT_STAGGER = 40
-const IMAGE_INSET = 0.88
+const IMAGE_INSET = 0.94
 const MAX_CHUNKS_PER_FRAME = 4
 
 export class InfiniteCanvasOGL {
@@ -181,23 +214,46 @@ export class InfiniteCanvasOGL {
 		// Create scene root
 		this.scene = new Transform()
 
-		// Create shared plane geometry
+		// Create shared geometries
 		this.planeGeometry = new Plane(this.gl, {width: 1, height: 1})
+		this.torusGeometry = new Torus(this.gl, {radius: 0.75, tube: 0.015, radialSegments: 8, tubularSegments: 64})
+
+		// 1x1 canvas placeholder avoids "Alpha-premult and y-flip deprecated" warnings
+		// that fire when OGL uploads a typed-array default texture
+		this._placeholder = document.createElement('canvas')
+		this._placeholder.width = 1
+		this._placeholder.height = 1
 
 		// Shared program for colored quads (no media) — compiled once
 		this.colorProgram = new Program(this.gl, {
 			vertex: colorVertexShader,
 			fragment: colorFragmentShader,
-			transparent: false,
+			uniforms: {uCameraZ: {value: INITIAL_CAMERA_Z}},
+			transparent: true,
 			depthTest: true,
-			depthWrite: true
+			depthWrite: false
 		})
 
 		// Shared program for textured quads — compiled once, texture swapped per-mesh
 		this.texturedProgram = new Program(this.gl, {
 			vertex: texturedVertexShader,
 			fragment: texturedFragmentShader,
-			uniforms: {tMap: {value: new Texture(this.gl)}},
+			uniforms: {
+				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
+				uCameraZ: {value: INITIAL_CAMERA_Z}
+			},
+			transparent: true,
+			depthTest: true,
+			depthWrite: false
+		})
+
+		// Border program for rotating torus around active items
+		const accentRGB = this.parseColor(this.accentColor)
+		this.borderProgram = new Program(this.gl, {
+			vertex: borderVertexShader,
+			fragment: borderFragmentShader,
+			uniforms: {uColor: {value: accentRGB}},
+			transparent: false,
 			depthTest: true,
 			depthWrite: true
 		})
@@ -208,22 +264,14 @@ export class InfiniteCanvasOGL {
 	}
 
 	parseColor(color) {
-		// Simple color parser for hex colors
-		if (typeof color === 'string' && color.startsWith('#')) {
-			const hex = color.slice(1)
-			const r = parseInt(hex.slice(0, 2), 16) / 255
-			const g = parseInt(hex.slice(2, 4), 16) / 255
-			const b = parseInt(hex.slice(4, 6), 16) / 255
-			return [r, g, b]
-		}
-		// Parse rgb/rgba
-		if (typeof color === 'string' && color.startsWith('rgb')) {
-			const match = color.match(/[\d.]+/g)
-			if (match) {
-				return [parseFloat(match[0]) / 255, parseFloat(match[1]) / 255, parseFloat(match[2]) / 255]
-			}
-		}
-		return [0, 0, 0]
+		// Use a 2d canvas to normalize any CSS color (hex, rgb, oklch, etc.) to #rrggbb
+		const ctx = document.createElement('canvas').getContext('2d')
+		ctx.fillStyle = color
+		const hex = ctx.fillStyle // always normalizes to #rrggbb
+		const r = parseInt(hex.slice(1, 3), 16) / 255
+		const g = parseInt(hex.slice(3, 5), 16) / 255
+		const b = parseInt(hex.slice(5, 7), 16) / 255
+		return [r, g, b]
 	}
 
 	bindEvents() {
@@ -656,14 +704,17 @@ export class InfiniteCanvasOGL {
 		if (!this.gl) return null
 
 		const texture = new Texture(this.gl, {
-			generateMipmaps: true,
-			minFilter: this.gl.LINEAR_MIPMAP_LINEAR,
+			image: this._placeholder,
+			generateMipmaps: false,
+			minFilter: this.gl.LINEAR,
 			magFilter: this.gl.LINEAR
 		})
 		const img = new Image()
 		img.crossOrigin = 'anonymous'
 		img.onload = () => {
 			texture.image = img
+			texture.generateMipmaps = true
+			texture.minFilter = this.gl.LINEAR_MIPMAP_LINEAR
 		}
 		img.onerror = () => {
 			console.warn('Texture load failed:', url)
@@ -676,7 +727,35 @@ export class InfiniteCanvasOGL {
 	setActiveId(id) {
 		if (this.activeId === id) return
 		this.activeId = id
-		// Update existing meshes - border animation not implemented in Phase 1
+		for (const group of this.chunks.values()) {
+			// Snapshot children to avoid mutation during iteration
+			const children = [...group.children]
+			for (const mesh of children) {
+				const ud = mesh.userData
+				if (!ud || ud.isBorder || ud.isBackground) continue
+				if (!ud.mediaItem) continue
+				this.updateMeshBorder(mesh, ud.mediaItem.id === id, group)
+			}
+		}
+	}
+
+	updateMeshBorder(mesh, isActive, group) {
+		if (isActive) {
+			if (!mesh.userData.border) {
+				const ts = mesh.userData.targetScale
+				const maxScale = Math.max(ts.x, ts.y)
+				const border = new Mesh(this.gl, {geometry: this.torusGeometry, program: this.borderProgram})
+				border.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.1)
+				border.scale.set(maxScale, maxScale, maxScale)
+				// @ts-expect-error - adding custom property
+				border.userData = {isBorder: true, mainMesh: mesh, isRotating: true}
+				border.setParent(group)
+				mesh.userData.border = border
+			}
+		} else if (mesh.userData.border) {
+			mesh.userData.border.setParent(null)
+			delete mesh.userData.border
+		}
 	}
 
 	queueChunk(cx, cy, cz) {
@@ -711,6 +790,7 @@ export class InfiniteCanvasOGL {
 		for (let i = 0; i < planes.length; i++) {
 			const plane = planes[i]
 			const birthTime = now + i * ENTRANCE_STAGGER
+			const mediaItem = this.media.length > 0 ? this.media[plane.mediaIndex % this.media.length] : null
 
 			// Color background quad
 			const mesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: this.colorProgram})
@@ -719,34 +799,37 @@ export class InfiniteCanvasOGL {
 			// @ts-expect-error - adding custom property
 			mesh.userData = {
 				isBorder: false,
-				mediaItem: null,
+				isBackground: true,
+				mediaItem,
 				birthTime,
 				targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z}
 			}
 			mesh.setParent(group)
 
 			// Textured image quad on top
-			if (this.media.length > 0) {
-				const mediaItem = this.media[plane.mediaIndex % this.media.length]
-				if (mediaItem?.url) {
-					const texture = this.getTexture(mediaItem.url)
-					const sharedProgram = this.texturedProgram
-					const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
-					imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + 0.15)
-					imgMesh.scale.set(0.01, 0.01, 0.01)
-					// Swap texture on the shared program right before this mesh draws
-					imgMesh.onBeforeRender(() => {
-						sharedProgram.uniforms.tMap.value = texture
-					})
-					// @ts-expect-error - adding custom property
-					imgMesh.userData = {
-						isBorder: false,
-						mediaItem,
-						birthTime,
-						texture,
-						targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1}
-					}
-					imgMesh.setParent(group)
+			if (mediaItem?.url) {
+				const texture = this.getTexture(mediaItem.url)
+				const sharedProgram = this.texturedProgram
+				const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
+				imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + 0.15)
+				imgMesh.scale.set(0.01, 0.01, 0.01)
+				// Swap texture on the shared program right before this mesh draws
+				imgMesh.onBeforeRender(() => {
+					sharedProgram.uniforms.tMap.value = texture
+				})
+				// @ts-expect-error - adding custom property
+				imgMesh.userData = {
+					isBorder: false,
+					mediaItem,
+					birthTime,
+					texture,
+					targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1}
+				}
+				imgMesh.setParent(group)
+
+				// Add rotating torus if this is the active channel
+				if (mediaItem.id === this.activeId) {
+					this.updateMeshBorder(imgMesh, true, group)
 				}
 			}
 		}
@@ -846,10 +929,17 @@ export class InfiniteCanvasOGL {
 
 		this.camera.position.set(this.basePos.x + this.drift.x, this.basePos.y + this.drift.y, this.basePos.z)
 
+		// Update depth fade uniform for shaders
+		const camZ = this.basePos.z
+		this.colorProgram.uniforms.uCameraZ.value = camZ
+		this.texturedProgram.uniforms.uCameraZ.value = camZ
+
 		this.updateChunks()
 		this.processChunkQueue()
 		this.animateEntrance()
 		this.animateExits()
+		this.updateVisibility()
+		this.rotateBorders()
 		this.renderer.render({scene: this.scene, camera: this.camera})
 
 		this.animationId = requestAnimationFrame(() => this.animate())
@@ -921,6 +1011,35 @@ export class InfiniteCanvasOGL {
 		}
 	}
 
+	updateVisibility() {
+		const camZ = this.camera.position.z
+		for (const group of this.chunks.values()) {
+			for (const mesh of group.children) {
+				const ud = mesh.userData
+				if (!ud) continue
+				if (ud.isBorder) {
+					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
+					continue
+				}
+				// Don't cull meshes still animating entrance/exit
+				if (ud.birthTime || ud.exitTime) continue
+				const absDepth = Math.abs(mesh.position.z - camZ)
+				mesh.visible = absDepth <= DEPTH_FADE_END
+			}
+		}
+	}
+
+	rotateBorders() {
+		for (const group of this.chunks.values()) {
+			for (const mesh of group.children) {
+				if (mesh.userData?.isRotating) {
+					mesh.rotation.x += 0.02
+					mesh.rotation.y += 0.03
+				}
+			}
+		}
+	}
+
 	setMedia(media) {
 		this.media = media
 		for (const key of this.chunks.keys()) this.removeChunk(key)
@@ -946,8 +1065,10 @@ export class InfiniteCanvasOGL {
 		}
 		this.textureCache.clear()
 		this.texturedProgram = null
+		this.borderProgram = null
 		this.planeCache.clear()
 		this.planeGeometry = null
+		this.torusGeometry = null
 		if (this.gl) this.container.removeChild(this.gl.canvas)
 		this.tooltip?.remove()
 	}
