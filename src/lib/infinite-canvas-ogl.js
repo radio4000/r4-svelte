@@ -127,7 +127,7 @@ const borderFragmentShader = `
 	}
 `
 
-const _ENTRANCE_DURATION = 900
+const ENTRANCE_DURATION = 900
 const EXIT_DURATION = 500
 const ENTRANCE_STAGGER = 80
 const EXIT_STAGGER = 40
@@ -265,9 +265,9 @@ export class InfiniteCanvasOGL {
 
 	parseColor(color) {
 		// Use a 2d canvas to normalize any CSS color (hex, rgb, oklch, etc.) to #rrggbb
-		const ctx = document.createElement('canvas').getContext('2d')
+		const ctx = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
 		ctx.fillStyle = color
-		const hex = ctx.fillStyle // always normalizes to #rrggbb
+		const hex = /** @type {string} */ (ctx.fillStyle) // always normalizes to #rrggbb
 		const r = parseInt(hex.slice(1, 3), 16) / 255
 		const g = parseInt(hex.slice(3, 5), 16) / 255
 		const b = parseInt(hex.slice(5, 7), 16) / 255
@@ -714,7 +714,7 @@ export class InfiniteCanvasOGL {
 		img.onload = () => {
 			texture.image = img
 			texture.generateMipmaps = true
-			texture.minFilter = this.gl.LINEAR_MIPMAP_LINEAR
+			texture.minFilter = /** @type {GLenum} */ (this.gl?.LINEAR_MIPMAP_LINEAR)
 		}
 		img.onerror = () => {
 			console.warn('Texture load failed:', url)
@@ -741,10 +741,13 @@ export class InfiniteCanvasOGL {
 
 	updateMeshBorder(mesh, isActive, group) {
 		if (isActive) {
-			if (!mesh.userData.border) {
+			if (!mesh.userData.border && this.gl) {
 				const ts = mesh.userData.targetScale
 				const maxScale = Math.max(ts.x, ts.y)
-				const border = new Mesh(this.gl, {geometry: this.torusGeometry, program: this.borderProgram})
+				const border = new Mesh(this.gl, {
+					geometry: this.torusGeometry ?? undefined,
+					program: this.borderProgram ?? undefined
+				})
 				border.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.1)
 				border.scale.set(maxScale, maxScale, maxScale)
 				// @ts-expect-error - adding custom property
@@ -809,7 +812,7 @@ export class InfiniteCanvasOGL {
 			// Textured image quad on top
 			if (mediaItem?.url) {
 				const texture = this.getTexture(mediaItem.url)
-				const sharedProgram = this.texturedProgram
+				const sharedProgram = /** @type {Program} */ (this.texturedProgram)
 				const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
 				imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + 0.15)
 				imgMesh.scale.set(0.01, 0.01, 0.01)
@@ -931,8 +934,8 @@ export class InfiniteCanvasOGL {
 
 		// Update depth fade uniform for shaders
 		const camZ = this.basePos.z
-		this.colorProgram.uniforms.uCameraZ.value = camZ
-		this.texturedProgram.uniforms.uCameraZ.value = camZ
+		if (this.colorProgram) this.colorProgram.uniforms.uCameraZ.value = camZ
+		if (this.texturedProgram) this.texturedProgram.uniforms.uCameraZ.value = camZ
 
 		this.updateChunks()
 		this.processChunkQueue()
@@ -948,7 +951,7 @@ export class InfiniteCanvasOGL {
 	animateEntrance() {
 		if (this.animatingChunks.size === 0) return
 		const now = performance.now()
-		const duration = 900
+		const duration = ENTRANCE_DURATION
 		for (const key of this.animatingChunks) {
 			const group = this.chunks.get(key)
 			if (!group) {
@@ -1012,6 +1015,7 @@ export class InfiniteCanvasOGL {
 	}
 
 	updateVisibility() {
+		if (!this.camera) return
 		const camZ = this.camera.position.z
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
@@ -1043,7 +1047,7 @@ export class InfiniteCanvasOGL {
 	setMedia(media) {
 		this.media = media
 		for (const key of this.chunks.keys()) this.removeChunk(key)
-		for (const [_key, group] of this.exitingChunks) {
+		for (const [, group] of this.exitingChunks) {
 			group.setParent(null)
 		}
 		this.exitingChunks.clear()
@@ -1056,7 +1060,7 @@ export class InfiniteCanvasOGL {
 		this.resizeObserver?.disconnect()
 
 		for (const key of this.chunks.keys()) this.removeChunk(key)
-		for (const [_key, group] of this.exitingChunks) {
+		for (const [, group] of this.exitingChunks) {
 			group.setParent(null)
 		}
 		this.exitingChunks.clear()

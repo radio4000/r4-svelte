@@ -97,7 +97,6 @@
 		right: var(--space-2);
 		padding: var(--space-2) var(--space-3);
 		font-size: var(--font-2);
-		line-height: 1.6;
 		pointer-events: none;
 		text-align: right;
 	}

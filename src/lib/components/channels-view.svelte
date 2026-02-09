@@ -135,7 +135,7 @@
 			<MapChannels.default channels={sortedChannels} {openSlug} />
 		{/await}
 	{:else if display === 'infinite'}
-		{@const InfiniteCanvas = (await import('./infinite-canvas.svelte')).default}
+		{@const InfiniteCanvas = (await import('./infinite-canvas-ogl.svelte')).default}
 		<InfiniteCanvas media={canvasMedia} onclick={handleCanvasClick} />
 	{:else}
 		<ol class={display}>
