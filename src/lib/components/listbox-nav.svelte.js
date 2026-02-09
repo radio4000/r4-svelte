@@ -8,9 +8,10 @@
  * @param {(index: number, element: HTMLElement) => void} [options.onSelect] - Called on Enter/Space
  * @param {(index: number, element: HTMLElement) => void} [options.onChange] - Called when active item changes
  * @param {boolean} [options.wrap=false] - Wrap navigation at list boundaries
+ * @param {boolean} [options.selectOnClick=false] - Trigger onSelect when clicking an option
  * @returns {(element: HTMLElement) => () => void}
  */
-export function listboxNav({onSelect, onChange, wrap = false} = {}) {
+export function listboxNav({onSelect, onChange, wrap = false, selectOnClick = false} = {}) {
 	return (element) => {
 		let activeIndex = -1
 
@@ -85,7 +86,7 @@ export function listboxNav({onSelect, onChange, wrap = false} = {}) {
 			if (index >= 0) {
 				setActive(index, items)
 				// Don't trigger onSelect if clicking an interactive element inside the option
-				if (!target.closest('button, a, input, [role="button"]')) {
+				if (selectOnClick && !target.closest('button, a, input, [role="button"]')) {
 					onSelect?.(index, items[index])
 				}
 			}

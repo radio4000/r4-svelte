@@ -17,14 +17,56 @@ export interface TrackWithMeta extends Track {
 	discogs_data?: object
 }
 
-export interface AppState {
+export interface Deck {
 	id: number
+	playlist_track?: string
 	playlist_tracks: string[]
 	playlist_tracks_shuffled: string[]
-	playlist_track?: string
 	is_playing: boolean
-	theme?: string
+	shuffle: boolean
 	volume: number
+	muted?: boolean
+	show_video_player: boolean
+	compact: boolean
+	expanded: boolean
+	queue_panel_visible: boolean
+	queue_panel_width?: number
+	broadcasting_channel_id?: string
+	listening_to_channel_id?: string
+	track_played_at?: string
+	seeked_at?: string
+	seek_position?: number
+}
+
+export function createDefaultDeck(id: number): Deck {
+	return {
+		id,
+		playlist_track: undefined,
+		playlist_tracks: [],
+		playlist_tracks_shuffled: [],
+		is_playing: false,
+		shuffle: false,
+		volume: 0.7,
+		muted: false,
+		show_video_player: true,
+		compact: false,
+		expanded: false,
+		queue_panel_visible: true,
+		queue_panel_width: undefined,
+		broadcasting_channel_id: undefined,
+		listening_to_channel_id: undefined,
+		track_played_at: undefined,
+		seeked_at: undefined,
+		seek_position: undefined
+	}
+}
+
+export interface AppState {
+	id: number
+	decks: Record<number, Deck>
+	next_deck_id: number
+	active_deck_id: number
+	theme?: string
 	custom_css_variables: Record<string, string>
 	channels_display: string
 	channels_filter: string
@@ -40,13 +82,6 @@ export interface AppState {
 	channels?: string[]
 	/** the user's primary channel (full object) */
 	channel?: Channel
-	shuffle: boolean
-	broadcasting_channel_id?: string
-	listening_to_channel_id?: string
-	queue_panel_visible: boolean
-	queue_panel_width?: number
-	show_video_player: boolean
-	player_expanded?: boolean
 	shortcuts?: Record<string, string>
 	hide_track_artwork: boolean
 	font_family?: string
@@ -76,6 +111,13 @@ export interface Broadcast {
 	channel_id: string
 	track_id: string
 	track_played_at: string
+	seeked_at?: string
+	seek_position?: number
+	is_playing?: boolean
+	volume?: number
+	muted?: boolean
+	show_video_player?: boolean
+	queue_panel_visible?: boolean
 }
 
 export interface BroadcastWithChannel extends Broadcast {

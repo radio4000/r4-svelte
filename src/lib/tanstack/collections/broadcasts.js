@@ -57,13 +57,17 @@ export const broadcastsCollection = createCollection(
 )
 
 /**
- * Sync appState.broadcasting_channel_id from the broadcasts list
+ * Sync broadcasting_channel_id on all decks from the broadcasts list
  * @param {BroadcastWithChannel[]} broadcasts
  */
 function syncBroadcastingState(broadcasts) {
 	const userChannelId = appState.channels?.[0]
 	const isUserBroadcasting = userChannelId && broadcasts.some((b) => b.channel_id === userChannelId)
-	appState.broadcasting_channel_id = isUserBroadcasting ? userChannelId : undefined
+	for (const deck of Object.values(appState.decks)) {
+		if (deck.broadcasting_channel_id === userChannelId) {
+			deck.broadcasting_channel_id = isUserBroadcasting ? userChannelId : undefined
+		}
+	}
 }
 
 sdk.supabase
@@ -84,7 +88,11 @@ sdk.supabase
 			const oldData = /** @type {{channel_id: string}} */ (payload.old)
 			broadcastsCollection.utils.writeDelete(oldData.channel_id)
 			if (oldData.channel_id === appState.channels?.[0]) {
-				appState.broadcasting_channel_id = undefined
+				for (const deck of Object.values(appState.decks)) {
+					if (deck.broadcasting_channel_id === oldData.channel_id) {
+						deck.broadcasting_channel_id = undefined
+					}
+				}
 			}
 			syncBroadcastingState([...broadcastsCollection.state.values()])
 		}

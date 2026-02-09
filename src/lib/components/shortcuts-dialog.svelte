@@ -9,10 +9,8 @@
 	const keyBindings = $derived({...DEFAULT_KEY_BINDINGS, ...appState.shortcuts})
 
 	const actionLabelMap = {
-		togglePlayerExpanded: () => m.shortcuts_action_togglePlayerExpanded(),
 		openSearch: () => m.shortcuts_action_openSearch(),
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
-		toggleQueuePanel: () => m.shortcuts_action_toggleQueuePanel(),
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()

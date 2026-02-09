@@ -77,9 +77,9 @@ export function endPlayHistoryEntry(
 
 export function clearPlayHistory() {
 	try {
-		for (const id of playHistoryCollection.state.keys()) {
-			playHistoryCollection.delete(id)
-		}
+		const ids = [...playHistoryCollection.state.keys()]
+		if (!ids.length) return
+		playHistoryCollection.delete(ids)
 		log.info('Play history cleared')
 	} catch (error) {
 		log.error('Failed to clear play history', {error})

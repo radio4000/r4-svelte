@@ -6,6 +6,7 @@
 		{"name": "appState.user", "desc": "Current authenticated user."},
 		{"name": "appState.channel", "desc": "Selected channel."},
 		{"name": "appState.channels", "desc": "Loaded channels list."},
+		{"name": "appState.decks", "desc": "Per-deck player state (multiple players)."},
 
 		{"name": "appState.playlist_track", "desc": "Current playing track ID."},
 		{"name": "appState.playlist_tracks", "desc": "Queue (original order)."},
@@ -15,7 +16,8 @@
 		{"name": "appState.volume", "desc": "Volume 0-1."},
 
 		{"name": "appState.show_video_player", "desc": "Show/hide video."},
-		{"name": "appState.player_expanded", "desc": "Expanded player view."},
+		{"name": "appState.deck.compact", "desc": "Compact player UI per deck."},
+		{"name": "appState.deck.expanded", "desc": "Fullscreen player UI per deck."},
 		{"name": "appState.queue_panel_visible", "desc": "Sidebar open."},
 		{"name": "appState.queue_panel_width", "desc": "Sidebar width."},
 
@@ -114,8 +116,8 @@
 		{"name": "eject()", "desc": "Clear player state."},
 
 		{"name": "toggleTheme()", "desc": "Light/dark mode."},
-		{"name": "toggleQueuePanel()", "desc": "Show/hide queue sidebar."},
-		{"name": "togglePlayerExpanded()", "desc": "Expand/collapse player + video."},
+		{"name": "toggleDeckCompact(deckId)", "desc": "Compact/expand a deck."},
+		{"name": "togglePlayerExpanded(deckId)", "desc": "Fullscreen a deck."},
 		{"name": "openSearch()", "desc": "Focus search input."},
 
 		{"name": "resetLocalData()", "desc": "Clear localStorage and IndexedDB."}

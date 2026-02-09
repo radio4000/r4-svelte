@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
@@ -23,11 +24,11 @@
 
 <header>
 	<nav class="nav-secondary">
-		<a href="/" class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
+		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
 			<IconR4 />
 		</a>
 		<a
-			href="/search"
+			href={resolve('/search')}
 			class="btn"
 			class:active={page.route.id === '/search'}
 			{@attach tooltip({content: m.nav_search()})}
@@ -35,7 +36,7 @@
 			<Icon icon="search" />
 		</a>
 		<a
-			href="/broadcasts"
+			href={resolve('/broadcasts')}
 			class="btn"
 			class:active={page.route.id === '/broadcasts'}
 			{@attach tooltip({content: m.nav_broadcasts()})}
@@ -54,13 +55,17 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
-				<a href="/{userChannel.slug}" class="btn channel-link" {@attach tooltip({content: 'Go to your channel'})}>
+				<a
+					href={resolve(`/${userChannel.slug}`)}
+					class="btn channel-link"
+					{@attach tooltip({content: 'Go to your channel'})}
+				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 				</a>
 			{/if}
 		{/await}
 		<a
-			href="/settings"
+			href={resolve('/settings')}
 			class="btn settings-link"
 			class:active={page.route.id?.startsWith('/settings')}
 			{@attach tooltip({content: m.nav_settings()})}

@@ -2,7 +2,8 @@
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {listboxNav} from '$lib/components/listbox-nav.svelte'
-	import {playTrack} from '$lib/api'
+	import {playTrack, setPlaylist} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {getLocale} from '$lib/paraglide/runtime'
 
@@ -13,14 +14,52 @@
 
 	/** @type {{
 		tracks: Track[],
+		deckId?: number,
 		footer?: (props: {track: Track}) => any,
 		grouped?: boolean,
 		canEdit?: boolean,
 		virtual?: boolean,
+		playContext?: boolean,
+		selectedTrackId?: string | null,
+		onSelectTrack?: (trackId: string | null) => void,
 		onTagClick?: (tag: string) => void
 		}}
 	*/
-	const {tracks, footer, grouped = false, canEdit = false, virtual = false, onTagClick} = $props()
+	const {
+		tracks,
+		deckId,
+		footer,
+		grouped = false,
+		canEdit = false,
+		virtual = false,
+		playContext = false,
+		selectedTrackId: selectedTrackIdProp = null,
+		onSelectTrack,
+		onTagClick
+	} = $props()
+	let internalSelectedTrackId = $state(/** @type {string | null} */ (null))
+	const selectedTrackId = $derived(selectedTrackIdProp ?? internalSelectedTrackId)
+
+	const selectTrackFromEvent = (event, trackId) => {
+		const target = /** @type {HTMLElement} */ (event.target)
+		if (target.closest('button, a, input, [role="button"]')) return
+		if (onSelectTrack) {
+			onSelectTrack(trackId)
+		} else {
+			internalSelectedTrackId = trackId
+		}
+	}
+
+	const playFromList = (trackId) => {
+		const targetDeck = deckId ?? appState.active_deck_id
+		if (playContext && tracks.length) {
+			setPlaylist(
+				targetDeck,
+				tracks.map((track) => track.id)
+			)
+		}
+		playTrack(targetDeck, trackId, null, 'user_click_track')
+	}
 
 	/**
 	 * Build localized month names array (0-11) for current locale
@@ -128,8 +167,22 @@
 							<h3 class="caps">{item.value}</h3>
 						</div>
 					{:else if item.track}
-						<div class="virtual-item track-item">
-							<TrackCard track={item.track} index={item.index} {canEdit} {onTagClick} />
+						<div
+							class="virtual-item track-item"
+							role="option"
+							tabindex="-1"
+							aria-selected={selectedTrackId === item.track?.id}
+							onclick={(event) => selectTrackFromEvent(event, item.track?.id)}
+						>
+							<TrackCard
+								track={item.track}
+								index={item.index}
+								{deckId}
+								selected={selectedTrackId === item.track?.id}
+								onPlay={playContext ? playFromList : undefined}
+								{canEdit}
+								{onTagClick}
+							/>
 							{@render footer?.({track: item.track})}
 						</div>
 					{/if}
@@ -143,8 +196,14 @@
 			tabindex="0"
 			aria-label="Tracks"
 			{@attach listboxNav({
-				onSelect: (_, el) => el.dataset.trackId && playTrack(el.dataset.trackId, null, 'user_click_track'),
-				wrap: true
+				onSelect: (_, el) => el.dataset.trackId && playFromList(el.dataset.trackId),
+				onChange: (_, el) => {
+					const nextId = el.dataset.trackId ?? null
+					if (onSelectTrack) onSelectTrack(nextId)
+					else internalSelectedTrackId = nextId
+				},
+				wrap: true,
+				selectOnClick: false
 			})}
 		>
 			{#each groupedTracks as [year, months] (year)}
@@ -157,8 +216,22 @@
 								{#each monthTracks as item (item.track.id)}
 									{@const track = item.track}
 									{@const index = item.index}
-									<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
-										<TrackCard {track} {index} {canEdit} {onTagClick} />
+									<li
+										role="option"
+										aria-selected="false"
+										id="track-{track.id}"
+										data-track-id={track.id}
+										onclick={(event) => selectTrackFromEvent(event, track.id)}
+									>
+										<TrackCard
+											{track}
+											{index}
+											{deckId}
+											selected={selectedTrackId === track.id}
+											onPlay={playContext ? playFromList : undefined}
+											{canEdit}
+											{onTagClick}
+										/>
 										{@render footer?.({track})}
 									</li>
 								{/each}
@@ -175,13 +248,33 @@
 			tabindex="0"
 			aria-label="Tracks"
 			{@attach listboxNav({
-				onSelect: (_, el) => el.dataset.trackId && playTrack(el.dataset.trackId, null, 'user_click_track'),
-				wrap: true
+				onSelect: (_, el) => el.dataset.trackId && playFromList(el.dataset.trackId),
+				onChange: (_, el) => {
+					const nextId = el.dataset.trackId ?? null
+					if (onSelectTrack) onSelectTrack(nextId)
+					else internalSelectedTrackId = nextId
+				},
+				wrap: true,
+				selectOnClick: false
 			})}
 		>
 			{#each tracks as track, index (track.id)}
-				<li role="option" aria-selected="false" id="track-{track.id}" data-track-id={track.id}>
-					<TrackCard {track} {index} {canEdit} {onTagClick} />
+				<li
+					role="option"
+					aria-selected="false"
+					id="track-{track.id}"
+					data-track-id={track.id}
+					onclick={(event) => selectTrackFromEvent(event, track.id)}
+				>
+					<TrackCard
+						{track}
+						{index}
+						{deckId}
+						selected={selectedTrackId === track.id}
+						onPlay={playContext ? playFromList : undefined}
+						{canEdit}
+						{onTagClick}
+					/>
 					{@render footer?.({track})}
 				</li>
 			{/each}
@@ -226,8 +319,8 @@
 	.virtual-tracklist {
 		display: flex;
 		flex-direction: column;
-		height: 100dvh;
-		min-height: 400px;
+		flex: 1;
+		min-height: 0;
 		overflow: hidden;
 	}
 
@@ -244,5 +337,9 @@
 
 	.virtual-item {
 		box-sizing: border-box;
+	}
+
+	.virtual-item[aria-selected='true'] {
+		background: var(--accent-2);
 	}
 </style>

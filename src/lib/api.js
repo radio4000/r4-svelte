@@ -1,8 +1,8 @@
 import {tick} from 'svelte'
 import {goto} from '$app/navigation'
-import {appState} from '$lib/app-state.svelte'
+import {appState, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
-import {leaveBroadcast, upsertRemoteBroadcast} from '$lib/broadcast'
+import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {shuffleArray} from '$lib/utils.ts'
@@ -27,6 +27,31 @@ const sortByNewest = (a, b) => new Date(b.created_at).getTime() - new Date(a.cre
  * @prop {string} email
  */
 
+/** @type {Map<number, boolean>} */
+const userInitiatedPlayMap = new Map()
+
+/** Get the user-initiated play flag for a deck */
+export function getUserInitiatedPlay(deckId) {
+	return userInitiatedPlayMap.get(deckId) ?? false
+}
+
+/** Set the user-initiated play flag for a deck */
+export function setUserInitiatedPlay(deckId, value) {
+	userInitiatedPlayMap.set(deckId, value)
+}
+
+/**
+ * Find the media player element for a given deck.
+ * @param {number} deckId
+ * @returns {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void, currentTime: number, duration: number, volume: number, muted: boolean} | null}
+ */
+export function getMediaPlayer(deckId) {
+	return /** @type {any} */ (
+		document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
+			document.querySelector(`[data-deck="${deckId}"] soundcloud-player`)
+	)
+}
+
 export async function checkUser() {
 	try {
 		log.log('checkUser')
@@ -34,7 +59,9 @@ export async function checkUser() {
 		if (userError || !userData?.user) {
 			appState.channels = []
 			appState.channel = undefined
-			appState.broadcasting_channel_id = undefined
+			for (const deck of Object.values(appState.decks)) {
+				deck.broadcasting_channel_id = undefined
+			}
 			return null
 		}
 		const user = userData.user
@@ -53,57 +80,70 @@ export async function checkUser() {
 }
 
 /**
+ * @param {number} deckId
  * @param {string} id
  * @param {import('$lib/types').PlayEndReason | null} endReason - why was the previous (if any) track stopped?
  * @param {import('$lib/types').PlayStartReason} startReason - why was this track played?
  */
-export async function playTrack(id, endReason, startReason) {
-	log.log('play_track', {id, endReason, startReason})
+export async function playTrack(deckId, id, endReason, startReason) {
+	log.log('play_track', {deckId, id, endReason, startReason})
+	const deck = appState.decks[deckId]
+	if (!deck) {
+		log.warn('play_track_no_deck', {deckId})
+		return
+	}
 
 	const track = tracksCollection.get(id)
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
-		appState.playlist_track = undefined
+		deck.playlist_track = undefined
 		return
 	}
 
 	// Set flag for user-initiated playback
 	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
 	if (userInitiatedReasons.includes(startReason)) {
-		globalThis.__userInitiatedPlay = true
+		setUserInitiatedPlay(deckId, true)
 	}
 
 	// Build playlist from tracks already loaded in collection (same channel/slug)
-	const channelTracks = [...tracksCollection.state.values()].filter((t) => t.slug === track.slug).sort(sortByNewest)
+	const channelTracks = [...tracksCollection.state.values()].filter((t) => t?.slug === track.slug).sort(sortByNewest)
 	const ids = channelTracks.map((t) => t.id)
 
 	// Record play history
-	const previousTrackId = appState.playlist_track
+	const previousTrackId = deck.playlist_track
 	if (previousTrackId && previousTrackId !== id && endReason) {
-		const mediaController = document.querySelector('media-controller#r5')
+		const mediaController = document.querySelector(`media-controller#r5-deck-${deckId}`)
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
 	}
 	if (startReason && track.slug) {
-		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: appState.shuffle})
+		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
 	}
 
-	appState.playlist_track = id
-	if (!appState.playlist_tracks.length || !appState.playlist_tracks.includes(id)) await setPlaylist(ids)
+	deck.playlist_track = id
+	if (startReason !== 'broadcast_sync') {
+		deck.track_played_at = new Date().toISOString()
+		deck.seeked_at = deck.track_played_at
+		deck.seek_position = 0
+	}
+	if (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)) await setPlaylist(deckId, ids)
 
 	// Auto-update broadcast if currently broadcasting
-	if (appState.broadcasting_channel_id && startReason !== 'broadcast_sync') {
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
 		try {
-			await upsertRemoteBroadcast(appState.broadcasting_channel_id, id)
+			await upsertRemoteBroadcast(broadcastingChannelId, id)
+			notifyBroadcastState(broadcastingChannelId)
 			log.log('broadcast_auto_updated', {
-				channelId: appState.broadcasting_channel_id,
+				channelId: broadcastingChannelId,
 				trackId: id,
 				startReason
 			})
 		} catch (error) {
 			log.error('broadcast_auto_update_failed', {
-				channelId: appState.broadcasting_channel_id,
+				channelId: broadcastingChannelId,
 				trackId: id,
 				error: /** @type {Error} */ (error).message
 			})
@@ -111,13 +151,12 @@ export async function playTrack(id, endReason, startReason) {
 	}
 
 	// Wait for Svelte to update the DOM (render the player element) before calling play
-	// One tick isn't enough when the player element is conditionally rendered (e.g. first play)
-	// Wait for the element to appear in the DOM with a few retries
 	await tick()
 	let retries = 10
 	while (retries > 0) {
-		const player = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+		const player = getMediaPlayer(deckId)
 		log.debug('playTrack waiting for player element', {
+			deckId,
 			retries,
 			found: !!player,
 			hasPaused: player && 'paused' in player
@@ -126,83 +165,127 @@ export async function playTrack(id, endReason, startReason) {
 		await new Promise((r) => requestAnimationFrame(r))
 		retries--
 	}
-	log.debug('playTrack calling play()', {retriesLeft: retries})
-	play()
+	log.debug('playTrack calling play()', {deckId, retriesLeft: retries})
+	play(deckId)
 }
 
 /**
+ * @param {number} deckId
  * @param {{id: string, slug: string}} channel
  * @param {string} [trackId] - optional track ID to start from
  */
-export async function playChannel({id, slug}, trackId) {
-	log.log('play_channel', {id, slug})
-	leaveBroadcast()
+export async function playChannel(deckId, {id, slug}, trackId) {
+	log.log('play_channel', {deckId, id, slug})
+	leaveBroadcast(deckId)
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug).sort(sortByNewest)
+	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug).sort(sortByNewest)
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return
 	}
 	const ids = tracks.map((t) => t.id)
-	await setPlaylist(ids)
-	await playTrack(trackId ?? ids[0], null, 'play_channel')
+	await setPlaylist(deckId, ids)
+	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
 
-/** Play channel starting from random track with shuffle enabled */
-export async function shufflePlayChannel({id, slug}) {
-	log.log('shuffle_play_channel', {id, slug})
-	leaveBroadcast()
+export async function playTrackInNewDeck(trackId) {
+	const deck = addDeck()
+	appState.active_deck_id = deck.id
+	await playTrack(deck.id, trackId, null, 'user_click_track')
+}
+
+/**
+ * @param {{id: string, slug: string}} channel
+ * @param {string} [trackId]
+ */
+export async function playChannelInNewDeck(channel, trackId) {
+	const deck = addDeck()
+	appState.active_deck_id = deck.id
+	await playChannel(deck.id, channel, trackId)
+}
+
+/**
+ * Play channel starting from random track with shuffle enabled
+ * @param {number} deckId
+ * @param {{id: string, slug: string}} channel
+ */
+export async function shufflePlayChannel(deckId, {id, slug}) {
+	log.log('shuffle_play_channel', {deckId, id, slug})
+	leaveBroadcast(deckId)
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (!tracks.length) {
 		log.warn('shuffle_play_no_tracks', {slug})
 		return
 	}
 	const ids = tracks.map((t) => t.id)
 	const randomIndex = Math.floor(Math.random() * ids.length)
-	await setPlaylist(ids)
-	appState.shuffle = true
-	await playTrack(ids[randomIndex], null, 'play_channel')
+	await setPlaylist(deckId, ids)
+	const deck = appState.decks[deckId]
+	if (deck) deck.shuffle = true
+	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-/** @param {string[]} trackIds */
-export function setPlaylist(trackIds) {
-	appState.playlist_tracks = trackIds
-	appState.playlist_tracks_shuffled = shuffleArray(trackIds)
+/**
+ * @param {number} deckId
+ * @param {string[]} trackIds
+ */
+export function setPlaylist(deckId, trackIds) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.playlist_tracks = trackIds
+	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
 }
 
-/** @param {string[]} trackIds */
-export function addToPlaylist(trackIds) {
-	const currentTracks = appState.playlist_tracks || []
-	appState.playlist_tracks = [...currentTracks, ...trackIds]
+/**
+ * @param {number} deckId
+ * @param {string[]} trackIds
+ */
+export function addToPlaylist(deckId, trackIds) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	const currentTracks = deck.playlist_tracks || []
+	deck.playlist_tracks = [...currentTracks, ...trackIds]
 
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = shuffleArray(appState.playlist_tracks)
+	if (deck.shuffle) {
+		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
 }
 
-/** Queue track(s) to play after the current track */
-export function playNext(trackIds) {
+/**
+ * Queue track(s) to play after the current track
+ * @param {number} deckId
+ * @param {string | string[]} trackIds
+ */
+export function playNext(deckId, trackIds) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
 	const ids = Array.isArray(trackIds) ? trackIds : [trackIds]
-	const currentId = appState.playlist_track
+	const currentId = deck.playlist_track
 	if (!currentId) {
-		appState.playlist_tracks = ids
+		deck.playlist_tracks = ids
 		return
 	}
-	appState.playlist_tracks = queueInsertManyAfter(appState.playlist_tracks, currentId, ids)
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = queueInsertManyAfter(appState.playlist_tracks_shuffled, currentId, ids)
+	deck.playlist_tracks = queueInsertManyAfter(deck.playlist_tracks, currentId, ids)
+	if (deck.shuffle) {
+		deck.playlist_tracks_shuffled = queueInsertManyAfter(deck.playlist_tracks_shuffled, currentId, ids)
 	}
-	log.log('play_next', {ids, after: currentId})
+	log.log('play_next', {deckId, ids, after: currentId})
 }
 
-/** Remove track from queue */
-export function removeFromQueue(trackId) {
-	appState.playlist_tracks = queueRemove(appState.playlist_tracks, trackId)
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = queueRemove(appState.playlist_tracks_shuffled, trackId)
+/**
+ * Remove track from queue
+ * @param {number} deckId
+ * @param {string} trackId
+ */
+export function removeFromQueue(deckId, trackId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.playlist_tracks = queueRemove(deck.playlist_tracks, trackId)
+	if (deck.shuffle) {
+		deck.playlist_tracks_shuffled = queueRemove(deck.playlist_tracks_shuffled, trackId)
 	}
-	log.log('remove_from_queue', {trackId})
+	log.log('remove_from_queue', {deckId, trackId})
 }
 
 export function toggleTheme() {
@@ -212,13 +295,41 @@ export function toggleTheme() {
 	appState.theme = isDark ? 'light' : 'dark'
 }
 
-export function toggleQueuePanel() {
-	appState.queue_panel_visible = !appState.queue_panel_visible
+/** @param {number} deckId */
+export function toggleQueuePanel(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.queue_panel_visible = !deck.queue_panel_visible
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
-export function togglePlayerExpanded() {
-	appState.player_expanded = !appState.player_expanded
-	appState.show_video_player = !appState.show_video_player
+/** @param {number} deckId */
+export function toggleVideoPlayer(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.show_video_player = !deck.show_video_player
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+}
+
+/** @param {number} deckId */
+export function toggleDeckCompact(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.compact = !deck.compact
+	if (deck.compact && deck.expanded) deck.expanded = false
+}
+
+/** @param {number} deckId */
+export function togglePlayerExpanded(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.expanded = !deck.expanded
+	if (deck.expanded && deck.compact) deck.compact = false
+	if (deck.expanded && !deck.show_video_player) {
+		deck.show_video_player = true
+	}
 }
 
 /** @param {KeyboardEvent} [event] */
@@ -232,78 +343,107 @@ export function openSearch(event) {
 	}
 }
 
-export function togglePlayPause() {
-	/** @type {HTMLElement & {paused: boolean, play(): void, pause(): void} | null} */
-	const ytPlayer = document.querySelector('youtube-video')
-	if (ytPlayer) {
-		if (ytPlayer.paused) {
-			ytPlayer.play()
+/** @param {number} deckId */
+export function togglePlayPause(deckId) {
+	const player = getMediaPlayer(deckId)
+	if (player) {
+		if (player.paused) {
+			player.play()
 		} else {
-			ytPlayer.pause()
+			player.pause()
 		}
 	}
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
-/** Play from this track to end of list (useful for "play from here" action) */
-export function playFromHere(trackId) {
-	const idx = appState.playlist_tracks.indexOf(trackId)
+/**
+ * Play from this track to end of list
+ * @param {number} deckId
+ * @param {string} trackId
+ */
+export function playFromHere(deckId, trackId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	const idx = deck.playlist_tracks.indexOf(trackId)
 	if (idx === -1) return
-	const fromHere = appState.playlist_tracks.slice(idx)
-	appState.playlist_tracks = fromHere
-	appState.playlist_tracks_shuffled = shuffleArray(fromHere)
-	playTrack(trackId, null, 'user_click_track')
-	log.log('play_from_here', {trackId, remaining: fromHere.length})
+	const fromHere = deck.playlist_tracks.slice(idx)
+	deck.playlist_tracks = fromHere
+	deck.playlist_tracks_shuffled = shuffleArray(fromHere)
+	playTrack(deckId, trackId, null, 'user_click_track')
+	log.log('play_from_here', {deckId, trackId, remaining: fromHere.length})
 }
 
-/** Clear the queue but keep current track */
-export function clearQueue() {
-	const current = appState.playlist_track
+/**
+ * Clear the queue but keep current track
+ * @param {number} deckId
+ */
+export function clearQueue(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	const current = deck.playlist_track
 	if (current) {
-		appState.playlist_tracks = [current]
-		appState.playlist_tracks_shuffled = [current]
+		deck.playlist_tracks = [current]
+		deck.playlist_tracks_shuffled = [current]
 	} else {
-		appState.playlist_tracks = []
-		appState.playlist_tracks_shuffled = []
+		deck.playlist_tracks = []
+		deck.playlist_tracks_shuffled = []
 	}
-	log.log('clear_queue', {kept: current})
+	log.log('clear_queue', {deckId, kept: current})
 }
 
-/** Toggle shuffle mode on/off. Switches between original order and a pre-shuffled order.
- * The two orderings stay fixed - toggling just switches which one is active. */
-export function toggleShuffle() {
-	appState.shuffle = !appState.shuffle
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = shuffleArray(appState.playlist_tracks || [])
+/**
+ * Toggle shuffle mode on/off
+ * @param {number} deckId
+ */
+export function toggleShuffle(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.shuffle = !deck.shuffle
+	if (deck.shuffle) {
+		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks || [])
 	}
 }
 
-/** Shuffle remaining tracks in place. Keeps current track, randomizes what comes next.
- * Unlike toggleShuffle, this is destructive - it changes the actual queue order. */
-export function shuffleRemaining() {
-	const current = appState.playlist_track
+/**
+ * Shuffle remaining tracks in place
+ * @param {number} deckId
+ */
+export function shuffleRemaining(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	const current = deck.playlist_track
 	if (!current) return
-	appState.playlist_tracks = queueShuffleKeepCurrent(appState.playlist_tracks, current)
-	appState.playlist_tracks_shuffled = queueShuffleKeepCurrent(appState.playlist_tracks_shuffled, current)
-	log.log('shuffle_remaining', {current})
+	deck.playlist_tracks = queueShuffleKeepCurrent(deck.playlist_tracks, current)
+	deck.playlist_tracks_shuffled = queueShuffleKeepCurrent(deck.playlist_tracks_shuffled, current)
+	log.log('shuffle_remaining', {deckId, current})
 }
 
-/** Rotate queue: move played tracks to end (radio-like infinite play) */
-export function rotateQueue() {
-	const current = appState.playlist_track
+/**
+ * Rotate queue: move played tracks to end
+ * @param {number} deckId
+ */
+export function rotateQueue(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	const current = deck.playlist_track
 	if (!current) return
-	appState.playlist_tracks = queueRotate(appState.playlist_tracks, current)
-	if (appState.shuffle) {
-		appState.playlist_tracks_shuffled = queueRotate(appState.playlist_tracks_shuffled, current)
+	deck.playlist_tracks = queueRotate(deck.playlist_tracks, current)
+	if (deck.shuffle) {
+		deck.playlist_tracks_shuffled = queueRotate(deck.playlist_tracks_shuffled, current)
 	}
-	log.log('rotate_queue', {current})
+	log.log('rotate_queue', {deckId, current})
 }
 
 /** @typedef {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void}} MediaPlayer */
 
-/** @param {MediaPlayer | null} [player] */
-export function play(player) {
+/**
+ * @param {number} deckId
+ * @param {MediaPlayer | null} [player]
+ */
+export function play(deckId, player) {
 	if (!player) {
-		const el = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+		const el = getMediaPlayer(deckId)
 		if (el && 'paused' in el) player = /** @type {MediaPlayer} */ (el)
 	}
 	if (!player) {
@@ -316,12 +456,16 @@ export function play(player) {
 		return result
 			.then(() => {
 				log.log('play() succeeded')
+				const broadcastingChannelId = getBroadcastingChannelId()
+				if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 			})
 			.catch((error) => {
 				log.warn('play() was prevented:', error.message || error)
 				throw error
 			})
 	}
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	return Promise.resolve()
 }
 
@@ -332,6 +476,8 @@ export function pause(player) {
 		return
 	}
 	player.pause()
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
 /** @param {MediaPlayer} player */
@@ -341,29 +487,41 @@ export function togglePlay(player) {
 		return
 	}
 	if (player.paused) {
-		play(player)
+		// play() needs deckId but togglePlay gets a player ref directly from component
+		// The component will use its own deckId-scoped play call
+		player.play()
 	} else {
 		pause(player)
 	}
 }
 
-/** @param {number} seconds */
-export function seekTo(seconds) {
-	const mediaEl = document.querySelector('youtube-video') || document.querySelector('soundcloud-player')
+/**
+ * @param {number} deckId
+ * @param {number} seconds
+ */
+export function seekTo(deckId, seconds) {
+	const mediaEl = getMediaPlayer(deckId)
 	if (!mediaEl) {
 		log.warn('seekTo: no media element found')
 		return
 	}
-	// @ts-expect-error custom element currentTime setter
 	mediaEl.currentTime = seconds
+	const deck = appState.decks[deckId]
+	if (deck) {
+		deck.seeked_at = new Date().toISOString()
+		deck.seek_position = seconds
+	}
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
 /**
+ * @param {number} deckId
  * @param {import('$lib/types').Track | undefined} track
  * @param {string[]} activeQueue
  * @param {import('$lib/types').PlayEndReason} endReason
  */
-export function next(track, activeQueue, endReason) {
+export function next(deckId, track, activeQueue, endReason) {
 	if (!track?.id) {
 		log.warn('No current track')
 		return
@@ -376,21 +534,22 @@ export function next(track, activeQueue, endReason) {
 	if (nextId) {
 		/** @type {import('$lib/types').PlayStartReason} */
 		const startReason = endReason === 'youtube_error' ? 'track_error' : 'auto_next'
-		playTrack(nextId, endReason, startReason)
+		playTrack(deckId, nextId, endReason, startReason)
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
-		playTrack(activeQueue[0], endReason, 'auto_next')
+		playTrack(deckId, activeQueue[0], endReason, 'auto_next')
 	} else {
 		log.info('No next track available')
 	}
 }
 
 /**
+ * @param {number} deckId
  * @param {import('$lib/types').Track | undefined} track
  * @param {string[]} activeQueue
  * @param {import('$lib/types').PlayEndReason} endReason
  */
-export function previous(track, activeQueue, endReason) {
+export function previous(deckId, track, activeQueue, endReason) {
 	if (!track?.id) {
 		log.warn('No current track')
 		return
@@ -401,23 +560,28 @@ export function previous(track, activeQueue, endReason) {
 	}
 	const prevId = queuePrev(activeQueue, track.id)
 	if (prevId) {
-		playTrack(prevId, endReason, 'user_prev')
+		playTrack(deckId, prevId, endReason, 'user_prev')
 	} else {
 		log.info('No previous track available')
 	}
 }
 
-export function toggleVideo() {
-	appState.show_video_player = !appState.show_video_player
+/** @param {number} deckId */
+export function toggleVideo(deckId) {
+	const deck = appState.decks[deckId]
+	if (deck) deck.show_video_player = !deck.show_video_player
 }
 
-export function eject() {
-	appState.playlist_track = undefined
-	appState.playlist_tracks = []
-	appState.playlist_tracks_shuffled = []
-	appState.show_video_player = false
-	appState.shuffle = false
-	appState.is_playing = false
+/** @param {number} deckId */
+export function eject(deckId) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+	deck.playlist_track = undefined
+	deck.playlist_tracks = []
+	deck.playlist_tracks_shuffled = []
+	deck.show_video_player = false
+	deck.shuffle = false
+	deck.is_playing = false
 }
 
 /**

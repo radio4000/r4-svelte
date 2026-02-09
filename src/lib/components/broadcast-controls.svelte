@@ -1,9 +1,15 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import {startBroadcast, stopBroadcast} from '$lib/broadcast'
+	import {getMediaPlayer} from '$lib/api'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
+
+	/** @type {{deckId?: number}} */
+	let {deckId = 1} = $props()
+
+	let deck = $derived(appState.decks[deckId])
 
 	const userChannelId = $derived(appState?.channels?.[0])
 	// Access .state.size to create reactive dependency, then check if broadcasting
@@ -13,36 +19,37 @@
 	let error = $state(/** @type {string|null} */ (null))
 
 	$effect(() => {
-		void appState.playlist_track
+		void deck?.playlist_track
 		error = null
 	})
 
 	$effect(() => {
-		appState.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
+		if (deck) {
+			deck.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
+		}
 	})
 
 	async function stopBroadcasting() {
 		if (userChannelId) {
 			await stopBroadcast(userChannelId)
 		}
-		appState.broadcasting_channel_id = undefined
+		if (deck) deck.broadcasting_channel_id = undefined
 	}
 
 	async function start() {
 		error = null
-		if (!appState.playlist_track) {
+		if (!deck?.playlist_track) {
 			error = m.broadcast_requires_track()
 			return
 		}
 
-		/** @type {HTMLElement & {paused: boolean, play(): void} | null} */
-		const player = document.querySelector('youtube-video')
+		const player = getMediaPlayer(deckId)
 		if (player?.paused) player.play()
 
-		if (userChannelId && appState.playlist_track) {
+		if (userChannelId && deck.playlist_track) {
 			try {
-				await startBroadcast(userChannelId, appState.playlist_track)
-				appState.broadcasting_channel_id = userChannelId
+				await startBroadcast(userChannelId, deck.playlist_track)
+				deck.broadcasting_channel_id = userChannelId
 			} catch (e) {
 				error = /** @type {Error} */ (e).message
 			}

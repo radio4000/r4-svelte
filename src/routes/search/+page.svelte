@@ -3,6 +3,7 @@
 	import {goto, afterNavigate} from '$app/navigation'
 	import {Debounced} from 'runed'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import SearchStatus from '$lib/components/search-status.svelte'
@@ -105,13 +106,16 @@
 	async function playSearchResults() {
 		if (!tracks.length) return
 		const ids = tracks.map((t) => t.id)
-		setPlaylist(ids)
-		playTrack(ids[0], null, 'play_search')
+		setPlaylist(appState.active_deck_id, ids)
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueSearchResults() {
 		if (!tracks.length) return
-		addToPlaylist(tracks.map((t) => t.id))
+		addToPlaylist(
+			appState.active_deck_id,
+			tracks.map((t) => t.id)
+		)
 	}
 </script>
 

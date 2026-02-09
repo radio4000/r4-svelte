@@ -1,21 +1,12 @@
 import {createKeybindingsHandler} from 'tinykeys'
 import {goto} from '$app/navigation'
-import {
-	togglePlayerExpanded,
-	openSearch,
-	togglePlayPause,
-	toggleQueuePanel,
-	clearQueue,
-	toggleShuffle
-} from '$lib/api.js'
+import {openSearch, togglePlayPause, clearQueue, toggleShuffle} from '$lib/api.js'
 import {appState} from '$lib/app-state.svelte'
 
 /** Maps keybinding to functions from api.js */
 export const DEFAULT_KEY_BINDINGS = {
 	'/': 'openSearch',
-	f: 'togglePlayerExpanded',
 	k: 'togglePlayPause',
-	r: 'toggleQueuePanel',
 	s: 'toggleShuffle',
 	gs: 'gotoSettings',
 	'Shift+Slash': 'showShortcutsHelp'
@@ -26,12 +17,10 @@ export function initializeKeyboardShortcuts() {
 	const bindings = {}
 
 	const actionMap = {
-		toggleShuffle,
-		togglePlayerExpanded,
+		toggleShuffle: () => toggleShuffle(appState.active_deck_id),
 		openSearch,
-		togglePlayPause,
-		toggleQueuePanel,
-		clearQueue,
+		togglePlayPause: () => togglePlayPause(appState.active_deck_id),
+		clearQueue: () => clearQueue(appState.active_deck_id),
 		gotoSettings: () => goto('/settings'),
 		showShortcutsHelp: () => {
 			appState.modal_shortcuts = true

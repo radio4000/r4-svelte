@@ -29,7 +29,7 @@ export const tracksCollection = createCollection<Track, string>(
 		},
 		syncMode: 'on-demand',
 		queryClient,
-		getKey: (item) => item.id,
+		getKey: (item) => item?.id,
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
@@ -330,7 +330,11 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 		queryFn: async () => {
 			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
 			const localLatest = cachedTracks.reduce(
-				(max: string | null, t: Track) => (!max || (t.updated_at && t.updated_at > max) ? t.updated_at : max),
+				(max: string | null, t: Track | null | undefined) => {
+					const updated = t?.updated_at
+					if (!updated) return max
+					return !max || updated > max ? updated : max
+				},
 				null as string | null
 			)
 
@@ -360,13 +364,16 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 }
 
 export async function ensureTracksLoaded(slug: string): Promise<void> {
-	const existing = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (existing.length) return
 
 	const data = await queryClient.fetchQuery<Track[]>({
 		queryKey: ['tracks', slug],
 		queryFn: () => fetchTracksBySlug(slug)
 	})
+
+	// Ensure collection sync is ready before manual writes
+	await tracksCollection.preload()
 
 	tracksCollection.utils.writeBatch(() => {
 		for (const track of data) {

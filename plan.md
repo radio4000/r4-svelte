@@ -14,7 +14,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
   Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
-- OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Currently client-side only; would need SSR for these routes (SvelteKit server load functions). No blocker, just needs prioritization.
+- OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Needs server-side data (load functions already fetch channel/track).
 - Media Session API — OS-level lock screen / notification controls (play/pause/skip/artwork). Player already has all the hooks; wire up `navigator.mediaSession.metadata` and action handlers.
 - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a track URL that already exists in the channel. Could also surface duplicates in batch-edit (group by URL or media_id).

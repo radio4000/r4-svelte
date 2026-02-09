@@ -20,14 +20,16 @@
 	function handleClick(item) {
 		if (!item.slug || !item.id) return
 
-		const currentTrack = appState.playlist_track ? tracksCollection.get(appState.playlist_track) : null
+		const deckId = appState.active_deck_id
+		const deck = appState.decks[deckId]
+		const currentTrack = deck?.playlist_track ? tracksCollection.get(deck.playlist_track) : null
 		const isSameChannel = currentTrack?.slug === item.slug
 
-		if (isSameChannel && appState.playlist_tracks.length > 1) {
-			const randomId = appState.playlist_tracks[Math.floor(Math.random() * appState.playlist_tracks.length)]
-			playTrack(randomId, 'user_next', 'user_click_track')
+		if (isSameChannel && deck?.playlist_tracks.length > 1) {
+			const randomId = deck.playlist_tracks[Math.floor(Math.random() * deck.playlist_tracks.length)]
+			playTrack(deckId, randomId, 'user_next', 'user_click_track')
 		} else {
-			shufflePlayChannel({id: item.id, slug: item.slug})
+			shufflePlayChannel(deckId, {id: item.id, slug: item.slug})
 		}
 	}
 </script>

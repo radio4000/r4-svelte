@@ -1,17 +1,62 @@
 <script>
+	import {onDestroy} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {broadcastsCollection} from '$lib/tanstack/collections'
+	import {broadcastsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {timeAgo} from '$lib/utils'
+	import {SvelteMap} from 'svelte/reactivity'
+	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
 
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const activeBroadcasts = $derived(broadcasts.data ?? [])
 	const loading = $derived(broadcasts.isLoading)
 	const loadingError = $derived(broadcasts.isError ? 'Failed to load broadcasts' : null)
+
+	const deckStatesByChannel = new SvelteMap()
+	const stateChannels = new SvelteMap()
+
+	$effect(() => {
+		const channelIds = new Set(activeBroadcasts.map((b) => b.channel_id))
+
+		for (const id of channelIds) {
+			if (stateChannels.has(id)) continue
+			const channel = sdk.supabase
+				.channel(`broadcast-state:${id}`)
+				.on('broadcast', {event: 'state'}, (payload) => {
+					const decks = payload?.payload?.decks ?? payload?.decks ?? []
+					deckStatesByChannel.set(id, Array.isArray(decks) ? decks : [])
+				})
+				.subscribe((status) => {
+					if (status === 'SUBSCRIBED') {
+						channel.send({type: 'broadcast', event: 'request_state', payload: {channel_id: id}})
+					}
+				})
+			stateChannels.set(id, channel)
+		}
+
+		for (const [id, channel] of stateChannels) {
+			if (!channelIds.has(id)) {
+				channel.unsubscribe()
+				stateChannels.delete(id)
+				deckStatesByChannel.delete(id)
+			}
+		}
+	})
+
+	onDestroy(() => {
+		for (const channel of stateChannels.values()) channel.unsubscribe()
+		stateChannels.clear()
+	})
+
+	const getTrackLabel = (trackId) => {
+		if (!trackId) return null
+		const track = tracksCollection.state.get(trackId)
+		return track?.title || trackId.slice(0, 8)
+	}
 </script>
 
 <svelte:head>
@@ -28,13 +73,13 @@
 		{/if}
 
 		<menu>
-			<BroadcastControls />
+			<BroadcastControls deckId={appState.active_deck_id} />
 		</menu>
 	</header>
 
 	<section class="list">
 		{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-			{@const joined = broadcast.channel_id === appState.listening_to_channel_id}
+			{@const joined = Object.values(appState.decks).some((d) => d.listening_to_channel_id === broadcast.channel_id)}
 			{@const isOwnChannel = broadcast.channel_id === appState.channels?.[0]}
 			<div class:active={joined}>
 				<ChannelCard channel={broadcast.channels}>
@@ -51,6 +96,21 @@
 							<em>...</em>
 						{/if}
 					</p>
+					{#if deckStatesByChannel.get(broadcast.channel_id)?.length}
+						<ul class="list">
+							{#each deckStatesByChannel.get(broadcast.channel_id) as deckState, i (i)}
+								{@const label = getTrackLabel(deckState?.track_id)}
+								<li>
+									Deck {i + 1}:
+									{#if label}
+										<em>{label}</em>
+									{:else}
+										<em>...</em>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					{/if}
 
 					{#if !isOwnChannel}
 						<button
@@ -58,9 +118,9 @@
 							onclick={(e) => {
 								e.preventDefault()
 								if (joined) {
-									leaveBroadcast()
+									leaveBroadcast(appState.active_deck_id)
 								} else {
-									joinBroadcast(broadcast.channel_id)
+									joinBroadcast(appState.active_deck_id, broadcast.channel_id)
 								}
 							}}
 						>

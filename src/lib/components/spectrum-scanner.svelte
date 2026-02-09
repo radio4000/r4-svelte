@@ -1,6 +1,7 @@
 <script>
 	import {generateFrequency} from '$lib/utils.ts'
 	import {playChannel} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from './channel-card.svelte'
 	import InputRange from './input-range.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -79,7 +80,7 @@
 			autoplayTimeout = setTimeout(() => {
 				if (selectedChannel?.id === newChannel.id) {
 					lastPlayedChannelId = newChannel.id
-					playChannel(newChannel).catch((err) => log.warn('autoplay failed', {err}))
+					playChannel(appState.active_deck_id, newChannel).catch((err) => log.warn('autoplay failed', {err}))
 				}
 			}, 500)
 		} else if (!newChannel && autoplayTimeout) {

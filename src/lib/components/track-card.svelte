@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
-	import {playTrack, playNext} from '$lib/api'
+	import {playTrack, playNext, playTrackInNewDeck} from '$lib/api'
 	import {deleteTrack, channelsCollection} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track, Channel} from '$lib/types'
@@ -13,6 +13,9 @@
 	interface Props {
 		track: Track
 		index?: number
+		deckId?: number
+		selected?: boolean
+		onPlay?: (trackId: string) => void
 		showImage?: boolean
 		showSlug?: boolean
 		canEdit?: boolean
@@ -24,6 +27,9 @@
 	let {
 		track,
 		index,
+		deckId,
+		selected = false,
+		onPlay,
 		showImage = true,
 		showSlug = false,
 		canEdit = false,
@@ -33,12 +39,34 @@
 	}: Props = $props()
 
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
-	const active = $derived(track?.id === appState.playlist_track)
+	const active = $derived.by(() => {
+		if (deckId != null) {
+			const deck = appState.decks[deckId]
+			return deck?.playlist_track === track?.id
+		}
+		return Object.values(appState.decks).some((d) => d.playlist_track === track?.id)
+	})
 	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
-	const doubleClick = () => playTrack(track.id, null, 'user_click_track')
+	const dblclick = (event: MouseEvent) => {
+		const target = event.target as HTMLElement
+		// Let time element and hashtag/mention links navigate normally
+		if (target.closest('time')) return
+		if (
+			(target instanceof HTMLAnchorElement && target !== event.currentTarget) ||
+			target.closest('a[href*="/search"]') ||
+			target.closest('button.tag-link')
+		)
+			return
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+		if (onPlay) {
+			onPlay(track.id)
+			return
+		}
+		playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+	}
 
 	const addToRadio = () => {
 		appState.modal_track_add = {track}
@@ -65,19 +93,9 @@
 	}
 </script>
 
-<article class:active>
-	<div
-		class="card"
-		role="button"
-		tabindex="0"
-		ondblclick={doubleClick}
-		onkeydown={(event) => {
-			if (event.key === 'Enter' || event.key === ' ') {
-				event.preventDefault()
-				doubleClick()
-			}
-		}}
-	>
+<article class:active={active || selected}>
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="card" ondblclick={dblclick}>
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -86,11 +104,9 @@
 			/>{/if}
 		<div class="text">
 			<h3 class="title">
-				<a href={permalink} data-sveltekit-preload-data="tap">{track.title}</a>
+				{track.title}
 				{#if track.discogs_url}
-					<small>
-						· <a href={`${permalink}?tab=discogs`} data-sveltekit-preload-data="tap">{m.track_meta_discogs()}</a>
-					</small>
+					<small>· {m.track_meta_discogs()}</small>
 				{/if}
 			</h3>
 			{#if description}
@@ -123,7 +139,7 @@
 					role="menuitem"
 					{@attach tooltip({content: m.common_play()})}
 					onclick={() => {
-						playTrack(track.id, null, 'user_click_track')
+						playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
 						menu?.close()
 					}}><Icon icon="play-fill" size={16} /></button
 				>
@@ -132,9 +148,18 @@
 					role="menuitem"
 					{@attach tooltip({content: m.track_play_next()})}
 					onclick={() => {
-						playNext(track.id)
+						playNext(deckId ?? appState.active_deck_id, track.id)
 						menu?.close()
 					}}><Icon icon="next-fill" size={16} /></button
+				>
+				<button
+					type="button"
+					role="menuitem"
+					{@attach tooltip({content: 'Play in new deck'})}
+					onclick={() => {
+						playTrackInNewDeck(track.id)
+						menu?.close()
+					}}><Icon icon="sidebar-fill-right" size={16} /></button
 				>
 				<button type="button" role="menuitem" {@attach tooltip({content: m.track_add_to_radio()})} onclick={addToRadio}
 					><Icon icon="add" size={16} /></button
@@ -168,12 +193,8 @@
 		padding: 0.5rem 0 0.5rem 0.5rem;
 		line-height: 1.2;
 		min-height: 53px; /* = same height with/without description */
-		cursor: default;
-
-		&:focus {
-			outline: 2px solid var(--accent-9);
-			outline-offset: -2px;
-		}
+		min-width: 0;
+		color: inherit;
 	}
 
 	.artwork {
@@ -190,11 +211,15 @@
 		display: flex;
 		flex-flow: column;
 		justify-content: center;
+		min-width: 0;
 	}
 
 	.title {
 		font-size: var(--font-4);
 		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		:global(a) {
 			text-decoration: none;
 			color: inherit;

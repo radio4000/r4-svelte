@@ -1,15 +1,27 @@
 <script>
 	import {untrack} from 'svelte'
+	import {resolve} from '$app/paths'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import 'media-chrome'
 	import '$lib/youtube-video-custom-element.js'
 	import '$lib/soundcloud-player-custom-element.js'
-	import {next, play, previous, togglePlay, togglePlayerExpanded, toggleQueuePanel, toggleShuffle} from '$lib/api'
-	import {leaveBroadcast} from '$lib/broadcast.js'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {
+		next,
+		play,
+		previous,
+		togglePlay,
+		toggleDeckCompact,
+		togglePlayerExpanded,
+		toggleQueuePanel,
+		toggleShuffle,
+		toggleVideoPlayer,
+		getUserInitiatedPlay,
+		setUserInitiatedPlay
+	} from '$lib/api'
+	import {leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
+	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import LinkEntities from '$lib/components/link-entities.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
@@ -20,6 +32,13 @@
 
 	const log = logger.ns('player').seal()
 
+	/** @type {{deckId: number, deckNumber?: number, deckCount?: number, children?: import('svelte').Snippet}} */
+	let {deckId, deckNumber = 1, deckCount = 1, children} = $props()
+
+	let deck = $derived(appState.decks[deckId])
+	let isActiveDeck = $derived(appState.active_deck_id === deckId)
+	let showDeckNumber = $derived(deckCount > 1)
+
 	// Both media player elements
 	let youtubePlayer = $state()
 	let soundcloudPlayer = $state()
@@ -27,7 +46,7 @@
 	// Reactive track lookup - get from collection state
 	// untrack the collection access to avoid state_unsafe_mutation during hydration
 	let track = $derived.by(() => {
-		const id = appState.playlist_track
+		const id = deck?.playlist_track
 		if (!id) return undefined
 		return untrack(() => tracksCollection.state.get(id))
 	})
@@ -42,25 +61,22 @@
 	let mediaElement = $derived(track?.provider === 'youtube' ? youtubePlayer : soundcloudPlayer)
 
 	/** @type {string[]} */
-	let trackIds = $derived(appState.playlist_tracks || [])
+	let trackIds = $derived(deck?.playlist_tracks || [])
 
 	/** @type {string[]} */
-	let activeQueue = $derived(appState.shuffle ? appState.playlist_tracks_shuffled || [] : trackIds)
+	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const canPlay = $derived(Boolean(channel && track))
-	const isListeningToBroadcast = $derived(Boolean(appState.listening_to_channel_id))
+	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
 	// The channel that is broadcasting (the DJ), looked up by ID
 	let broadcastingChannel = $derived.by(() => {
-		const id = appState.listening_to_channel_id
+		const id = deck?.listening_to_channel_id
 		if (!id) return undefined
 		return untrack(() => channelsCollection.state.get(id))
 	})
-
-	/** @type {string} */
-	let trackImage = $derived(track?.media_id ? `https://i.ytimg.com/vi/${track.media_id}/mqdefault.jpg` : '')
 
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))
@@ -74,16 +90,16 @@
 		prevTrackId = track.id
 
 		// Check if a user-initiated play flag was set
-		if (globalThis.__userInitiatedPlay && !userHasPlayed) {
+		if (getUserInitiatedPlay(deckId) && !userHasPlayed) {
 			userHasPlayed = true
-			globalThis.__userInitiatedPlay = false
+			setUserInitiatedPlay(deckId, false)
 			log.log('Setting userHasPlayed=true for user-initiated track change')
 		}
 
 		// Auto-play if we were already playing when track changed
 		if (didPlay) {
 			log.log('Auto-playing next track')
-			play().catch((error) => log.warn('Playback failed:', error))
+			play(deckId).catch((error) => log.warn('Playback failed:', error))
 		}
 	})
 
@@ -91,7 +107,13 @@
 		log.log('handlePlay')
 		didPlay = true
 		userHasPlayed = true
-		appState.is_playing = true
+		if (deck) deck.is_playing = true
+		if (deck && mediaElement) {
+			deck.seeked_at = new Date().toISOString()
+			deck.seek_position = mediaElement.currentTime ?? 0
+		}
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 
 		// Update track duration if missing (only for owned channels)
 		if (track && channel && canEditChannel(channel.id) && !track.duration && mediaElement?.duration) {
@@ -104,7 +126,13 @@
 
 	function handlePause() {
 		log.log('handlePause')
-		appState.is_playing = false
+		if (deck) deck.is_playing = false
+		if (deck && mediaElement) {
+			deck.seeked_at = new Date().toISOString()
+			deck.seek_position = mediaElement.currentTime ?? 0
+		}
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
 	/** @param {any} event */
@@ -124,24 +152,37 @@
 				.then(() => log.log('playback_error saved', {id: track.id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
 		}
-		next(track, activeQueue, 'youtube_error')
+		next(deckId, track, activeQueue, 'youtube_error')
 	}
 
 	function handleEndTrack() {
-		next(track, activeQueue, 'track_completed')
+		next(deckId, track, activeQueue, 'track_completed')
 	}
 
 	function applyInitialVolume() {
-		if (!mediaElement) return
-		mediaElement.volume = appState.volume
-		mediaElement.muted = appState.volume === 0
+		if (!mediaElement || !deck) return
+		mediaElement.volume = deck.volume
+		mediaElement.muted = deck.volume === 0
 	}
 
 	function handleVolumeChange(e) {
 		const {volume} = e.target
-		if (appState.volume === volume) return
-		appState.volume = volume
-		log.log('volumeChange', volume)
+		if (!deck) return
+		const muted = Boolean(e.target.muted)
+		if (deck.volume === volume && deck.muted === muted) return
+		deck.volume = volume
+		deck.muted = muted
+		log.log('volumeChange', {volume, muted})
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
+
+	function handleSeeked() {
+		if (!deck || !mediaElement) return
+		deck.seeked_at = new Date().toISOString()
+		deck.seek_position = mediaElement.currentTime ?? 0
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
 	$effect(() => {
@@ -149,22 +190,81 @@
 			applyInitialVolume()
 		}
 	})
+
+	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 </script>
 
-<div class={['player', appState.player_expanded ? 'expanded' : 'compact']}>
-	{@render channelHeader()}
+<div class="player">
+	<!-- 1. Header: top bar + channel info row -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
+		<div class="header-top">
+			<div class="header-id" class:active={isActiveDeck}>
+				<IconR4 />
+				{#if showDeckNumber}
+					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
+				{/if}
+			</div>
+			<menu class="deck-controls">
+				<button
+					onclick={() => toggleVideoPlayer(deckId)}
+					class:active={deck?.show_video_player}
+					aria-label={m.player_visible()}
+					{@attach tooltip({content: m.player_visible(), position: 'top'})}
+				>
+					<Icon icon="video" />
+				</button>
+				{#if !isListeningToBroadcast}
+					<button
+						onclick={() => toggleQueuePanel(deckId)}
+						class:active={deck?.queue_panel_visible}
+						aria-label={m.queue_visible()}
+						{@attach tooltip({content: m.queue_visible(), position: 'top'})}
+					>
+						<Icon icon="unordered-list" />
+					</button>
+				{/if}
+				<button
+					onclick={() => togglePlayerExpanded(deckId)}
+					class:active={deck?.expanded}
+					{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
+				>
+					<Icon icon="fullscreen" />
+				</button>
+				<button
+					onclick={() => toggleDeckCompact(deckId)}
+					{@attach tooltip({content: 'Minimize deck', position: 'top'})}
+				>
+					<Icon icon="sidebar-fill-right" />
+				</button>
+				{#if deckCount > 1}
+					<button onclick={() => removeDeck(deckId)} {@attach tooltip({content: 'Close deck', position: 'top'})}>
+						<Icon icon="delete" />
+					</button>
+				{/if}
+			</menu>
+		</div>
+		{#if channel}
+			<div class="header-info">
+				<a href={resolve(`/${channel.slug}`)} class="avatar">
+					<ChannelAvatar id={channel.image} alt={channel.name} />
+				</a>
+				<div class="info">
+					<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
+					{#if track}
+						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+						<small><a href={trackHref}>{track.title}</a></small>
+					{/if}
+				</div>
+				{#if isListeningToBroadcast && broadcastingChannel}
+					<span class="caps btn-leave">Live</span>
+				{/if}
+			</div>
+		{/if}
+	</header>
 
-	{#if channel}
-		{@render trackContent()}
-	{/if}
-
-	{#if !track}
-		<p class="empty-state">
-			<IconR4 />
-		</p>
-	{/if}
-
-	<media-controller id="r5" data-clickable="true">
+	<!-- 2. Video — always in DOM; deck.hide-video CSS hides visually -->
+	<media-controller id={mediaControllerId} class="video" data-clickable="true">
 		{#if track?.provider === 'youtube'}
 			<youtube-video
 				slot="media"
@@ -173,6 +273,7 @@
 				autoplay={userHasPlayed || undefined}
 				onplay={handlePlay}
 				onpause={handlePause}
+				onseeked={handleSeeked}
 				onended={handleEndTrack}
 				onerror={handleError}
 				onvolumechange={handleVolumeChange}
@@ -185,6 +286,7 @@
 				autoplay={userHasPlayed || undefined}
 				onplay={handlePlay}
 				onpause={handlePause}
+				onseeked={handleSeeked}
 				onended={handleEndTrack}
 				onerror={handleError}
 				onvolumechange={handleVolumeChange}
@@ -193,35 +295,35 @@
 		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
 	</media-controller>
 
-	<menu>
-		<media-control-bar mediacontroller="r5">
-			{#if !isListeningToBroadcast}
+	<!-- 3. Queue/history (injected by deck) -->
+	{@render children?.()}
+
+	<!-- 4. Controls -->
+	<menu class="controls">
+		<media-control-bar mediacontroller={mediaControllerId}>
+			{#if isListeningToBroadcast}
+				<button onclick={() => leaveBroadcast(deckId)} class="btn">
+					{m.broadcasts_leave()}
+				</button>
+				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+				></media-mute-button>
+				<media-volume-range></media-volume-range>
+			{:else}
 				{@render btnShuffle()}
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
-				<media-time-range></media-time-range>
-				<media-time-display showduration></media-time-display>
+				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+				></media-mute-button>
+				<media-volume-range></media-volume-range>
 			{/if}
-			<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-			></media-mute-button>
-			<media-volume-range></media-volume-range>
-			{@render btnToggleQueuePanel()}
-			{@render btnToggleExpanded()}
 		</media-control-bar>
 	</menu>
-
-	{#if !isListeningToBroadcast}
-		<media-control-bar class="timebar" mediacontroller="r5">
-			<media-time-range></media-time-range>
-			<media-time-display showduration></media-time-display>
-		</media-control-bar>
-	{/if}
 </div>
 
 {#snippet btnPrev()}
 	<button
-		onclick={() => previous(track, activeQueue, 'user_prev')}
+		onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
 		class="prev"
 		{@attach tooltip({content: m.player_tooltip_prev()})}
 	>
@@ -231,7 +333,7 @@
 
 {#snippet btnNext()}
 	<button
-		onclick={() => next(track, activeQueue, 'user_next')}
+		onclick={() => next(deckId, track, activeQueue, 'user_next')}
 		disabled={!canPlay}
 		class="next"
 		{@attach tooltip({content: m.player_tooltip_next()})}
@@ -245,9 +347,9 @@
 		onclick={() => togglePlay(mediaElement)}
 		disabled={!canPlay}
 		class="play"
-		{@attach tooltip({content: appState.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
+		{@attach tooltip({content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
 	>
-		<Icon icon={appState.is_playing ? 'pause' : 'play-fill'} />
+		<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 	</button>
 {/snippet}
 
@@ -256,95 +358,117 @@
 		onclick={(e) => {
 			e.preventDefault()
 			e.stopPropagation()
-			toggleShuffle()
+			toggleShuffle(deckId)
 		}}
-		class={['shuffle', {active: appState.shuffle}]}
+		class={['shuffle', {active: deck?.shuffle}]}
 		{@attach tooltip({content: m.player_tooltip_shuffle()})}
 	>
 		<Icon icon="shuffle" />
 	</button>
 {/snippet}
 
-{#snippet btnToggleQueuePanel()}
-	<button
-		onclick={toggleQueuePanel}
-		class:active={appState.queue_panel_visible}
-		{@attach tooltip({content: m.player_tooltip_queue()})}
-	>
-		<Icon icon="sidebar-fill-right" />
-	</button>
-{/snippet}
-
-{#snippet btnToggleExpanded()}
-	<button
-		onclick={() => togglePlayerExpanded()}
-		class="expand"
-		class:active={appState.player_expanded}
-		{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
-	>
-		<Icon icon="fullscreen" />
-	</button>
-{/snippet}
-
-{#snippet channelHeader()}
-	{#if channel}
-		{#if isListeningToBroadcast && broadcastingChannel}
-			<header class="broadcast">
-				<a href={`/${broadcastingChannel.slug}`}>
-					<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
-				</a>
-				<button onclick={leaveBroadcast} class="caps">Leave<br />broadcast</button>
-			</header>
-		{/if}
-
-		<header class="channel">
-			<a href={`/${channel.slug}`}>
-				<ChannelAvatar id={channel.image} alt={channel.name} />
-			</a>
-			<h2><a href={`/${channel.slug}`}>{channel.name}</a></h2>
-		</header>
-	{/if}
-{/snippet}
-
-{#snippet trackContent()}
-	{#if channel && track}
-		{@const trackHref = `/${channel.slug}/tracks/${track.id}`}
-		{#if !appState.hide_track_artwork}<a href={trackHref}><img class="artwork" src={trackImage} alt={track.title} /></a
-			>{/if}
-		<div class="text">
-			<h3>
-				{#if isListeningToBroadcast}
-					<span class="broadcast-indicator">{m.player_live_indicator()}</span>
-				{/if}
-				<a href={trackHref}>{track.title}</a>
-			</h3>
-			{#if track.description}
-				<p><small><LinkEntities text={track.description} slug={track.slug} /></small></p>
-			{/if}
-		</div>
-	{/if}
-{/snippet}
-
 <style>
-	.empty-state {
-		margin: auto;
-		opacity: 0.5;
-		animation: rotate 60s linear infinite;
-	}
-	@keyframes rotate {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
-	}
-	.broadcast {
+	.player {
 		display: flex;
-		gap: 0.2rem;
-		> a {
-			width: 3rem;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+	}
+
+	.header {
+		display: flex;
+		flex-direction: column;
+		cursor: pointer;
+	}
+
+	.header-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.3rem 0.4rem;
+		gap: 0.4rem;
+	}
+
+	.header-id {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		color: var(--gray-9);
+	}
+
+	.header-id.active {
+		color: var(--accent-9);
+	}
+
+	.deck-number {
+		font-size: var(--font-2);
+		font-weight: 700;
+		color: var(--gray-9);
+	}
+
+	.deck-number.active {
+		color: var(--accent-9);
+	}
+
+	.header-info {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0 0.4rem 0.3rem;
+	}
+
+	.avatar {
+		flex-shrink: 0;
+		width: 2.5rem;
+
+		:global(img) {
+			border-radius: var(--media-radius);
 		}
-		margin-right: 0.4rem;
+	}
+
+	.info {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		line-height: 1.3;
+
+		strong,
+		small {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		a {
+			color: inherit;
+			text-decoration: none;
+		}
+	}
+
+	.btn-leave {
+		flex-shrink: 0;
+		font-size: var(--font-2);
+		margin-left: auto;
+	}
+
+	.deck-controls {
+		display: flex;
+		gap: 0.1rem;
+		flex-shrink: 0;
+	}
+
+	.video {
+		flex-shrink: 0;
+		aspect-ratio: 16 / 9;
+		width: 100%;
+		max-height: 30dvh;
+		background: black;
+	}
+
+	.controls {
+		border-top: 1px solid var(--gray-6);
+		flex-shrink: 0;
 	}
 </style>
