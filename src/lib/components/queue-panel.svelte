@@ -40,7 +40,7 @@
 	)
 	let playHistory = $derived(historyQuery.data || [])
 
-	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags']))
+	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description']))
 
 	let filteredPlayHistory = $derived(fuzzySearch(searchQuery, playHistory, ['title', 'slug']))
 
