@@ -71,6 +71,7 @@
 		class="deck"
 		class:expanded={deck?.expanded}
 		class:compact={deck?.compact}
+		class:listening={isListeningToBroadcast}
 		class:active-deck={isActiveDeck}
 		class:resizing
 		class:hide-queue={!deck?.queue_panel_visible}
@@ -170,6 +171,13 @@
 	/* When queue is hidden, let video fill all available space */
 	.deck.hide-queue :global(.video) {
 		max-height: none;
+	}
+
+	/* Broadcast listener: no queue, so use less space */
+	.deck.listening {
+		width: 280px;
+		min-width: 200px;
+		flex-shrink: 1;
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */

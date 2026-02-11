@@ -2,7 +2,13 @@ import {tick} from 'svelte'
 import {goto} from '$app/navigation'
 import {appState, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
-import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
+import {
+	leaveBroadcast,
+	notifyBroadcastState,
+	upsertRemoteBroadcast,
+	getBroadcastingChannelId,
+	isV1Track
+} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {shuffleArray} from '$lib/utils.ts'
@@ -93,7 +99,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 		return
 	}
 
-	const track = tracksCollection.get(id)
+	const track = tracksCollection.get(id) ?? tracksCollection.state.get(id)
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined
@@ -132,7 +138,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 
 	// Auto-update broadcast if currently broadcasting
 	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
+	if (broadcastingChannelId && startReason !== 'broadcast_sync' && !isV1Track(id)) {
 		try {
 			await upsertRemoteBroadcast(broadcastingChannelId, id)
 			notifyBroadcastState(broadcastingChannelId)

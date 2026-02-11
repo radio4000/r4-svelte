@@ -37,8 +37,10 @@
 				<ChannelAvatar id={channel.image} alt={channel.name} />
 			</a>
 		{/if}
-		{#if imageSrc}
-			<img class="artwork" src={imageSrc} alt={track?.title} />
+		{#if imageSrc && track && channel}
+			<a class="artwork" href={resolve(`/${channel.slug}/tracks/${track.id}`)}>
+				<img src={imageSrc} alt={track.title} />
+			</a>
 		{/if}
 		<div class="info">
 			{#if channel}
@@ -86,10 +88,16 @@
 	.artwork {
 		width: 32px;
 		height: 32px;
-		border-radius: var(--media-radius);
-		object-fit: cover;
-		object-position: center;
 		flex-shrink: 0;
+
+		img {
+			width: 100%;
+			height: 100%;
+			border-radius: var(--media-radius);
+			object-fit: cover;
+			object-position: center;
+			display: block;
+		}
 	}
 
 	.deck-compact-bar .play,

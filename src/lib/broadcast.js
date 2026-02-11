@@ -17,7 +17,7 @@ function isV1Channel(channelId) {
 }
 
 /** @param {string} trackId */
-function isV1Track(trackId) {
+export function isV1Track(trackId) {
 	const track = tracksCollection.get(trackId)
 	if (!track) return false
 	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)

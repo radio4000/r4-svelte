@@ -244,17 +244,48 @@
 				{/if}
 			</menu>
 		</div>
-		{#if channel}
+		{#if isListeningToBroadcast && broadcastingChannel}
+			<div class="header-info">
+				<a href={resolve(`/${broadcastingChannel.slug}`)} class="avatar">
+					<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
+				</a>
+				{#if channel && track}
+					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
+					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+					{#if ytid}
+						<a href={trackHref} class="track-artwork"
+							><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+						>
+					{/if}
+					<div class="info">
+						<a href={trackHref}><strong>{track.title}</strong></a>
+						<small class="description">
+							<a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a>
+							{#if channel.slug !== broadcastingChannel.slug}
+								&middot; <a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+							{/if}
+						</small>
+					</div>
+				{:else}
+					<div class="info">
+						<strong><a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a></strong>
+					</div>
+				{/if}
+				<span class="caps btn-leave">Live</span>
+			</div>
+		{:else if channel}
 			<div class="header-info">
 				<a href={resolve(`/${channel.slug}`)} class="avatar">
 					<ChannelAvatar id={channel.image} alt={channel.name} />
 				</a>
 				{#if track}
 					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
-					{#if ytid}
-						<img class="track-artwork" src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} />
-					{/if}
 					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+					{#if ytid}
+						<a href={trackHref} class="track-artwork"
+							><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+						>
+					{/if}
 					<div class="info">
 						<a href={trackHref}><strong>{track.title}</strong></a>
 						{#if track.description}
@@ -265,9 +296,6 @@
 					<div class="info">
 						<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
 					</div>
-				{/if}
-				{#if isListeningToBroadcast && broadcastingChannel}
-					<span class="caps btn-leave">Live</span>
 				{/if}
 			</div>
 		{/if}
@@ -450,12 +478,18 @@
 	}
 
 	.track-artwork {
+		flex-shrink: 0;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: var(--media-radius);
-		object-fit: cover;
-		object-position: center;
-		flex-shrink: 0;
+
+		img {
+			width: 100%;
+			height: 100%;
+			border-radius: var(--media-radius);
+			object-fit: cover;
+			object-position: center;
+			display: block;
+		}
 	}
 
 	.info {
@@ -533,5 +567,10 @@
 
 	.volume media-volume-range {
 		flex: 1;
+	}
+
+	.volume media-mute-button[mediavolumelevel='off'] {
+		border-color: var(--accent-9);
+		background-color: var(--accent-3);
 	}
 </style>
