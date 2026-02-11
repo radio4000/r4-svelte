@@ -316,10 +316,13 @@
 					{m.broadcasts_leave()}
 				</button>
 			</div>
-			<div class="volume" mediacontroller={mediaControllerId}>
-				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+			<div class="volume">
+				<media-mute-button
+					mediacontroller={mediaControllerId}
+					class="btn"
+					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
-				<media-volume-range></media-volume-range>
+				<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
 			</div>
 		{:else}
 			<div class="transport">
@@ -327,11 +330,14 @@
 				{@render btnPlay()}
 				{@render btnNext()}
 			</div>
-			<div class="volume" mediacontroller={mediaControllerId}>
+			<div class="volume">
 				{@render btnShuffle()}
-				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+				<media-mute-button
+					mediacontroller={mediaControllerId}
+					class="btn"
+					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
-				<media-volume-range></media-volume-range>
+				<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
 			</div>
 		{/if}
 	</menu>
