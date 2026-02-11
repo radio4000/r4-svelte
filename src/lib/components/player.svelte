@@ -249,11 +249,21 @@
 				<a href={resolve(`/${channel.slug}`)} class="avatar">
 					<ChannelAvatar id={channel.image} alt={channel.name} />
 				</a>
+				{#if track}
+					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
+					{#if ytid}
+						<img class="track-artwork" src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} />
+					{/if}
+				{/if}
 				<div class="info">
-					<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
 					{#if track}
 						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
-						<small><a href={trackHref}>{track.title}</a></small>
+						<a href={trackHref}><strong>{track.title}</strong></a>
+						{#if track.description}
+							<small class="description">{track.description}</small>
+						{/if}
+					{:else}
+						<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
 					{/if}
 				</div>
 				{#if isListeningToBroadcast && broadcastingChannel}
@@ -426,6 +436,15 @@
 		}
 	}
 
+	.track-artwork {
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: var(--media-radius);
+		object-fit: cover;
+		object-position: center;
+		flex-shrink: 0;
+	}
+
 	.info {
 		flex: 1;
 		min-width: 0;
@@ -435,7 +454,9 @@
 		line-height: 1.3;
 
 		strong,
-		small {
+		small,
+		a {
+			max-width: 100%;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
@@ -445,6 +466,10 @@
 			color: inherit;
 			text-decoration: none;
 		}
+	}
+
+	.description {
+		color: var(--gray-9);
 	}
 
 	.btn-leave {

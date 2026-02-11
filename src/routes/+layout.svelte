@@ -232,7 +232,6 @@
 		flex-direction: column;
 	}
 
-
 	.app-version {
 		margin: 0.25rem 0.5rem 0.5rem;
 		font-size: var(--font-2);
