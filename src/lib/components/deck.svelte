@@ -140,8 +140,8 @@
 		display: none;
 	}
 
-	.deck.expanded :global(.video) {
-		max-height: 30dvh;
+	.deck.expanded:not(.hide-queue) :global(.video) {
+		max-height: 25dvh;
 	}
 
 	.deck-body {
@@ -165,6 +165,11 @@
 	/* Hide queue panel via CSS — keeps it in the DOM */
 	.deck.hide-queue :global(.queue-panel) {
 		display: none;
+	}
+
+	/* When queue is hidden, let video fill all available space */
+	.deck.hide-queue :global(.video) {
+		max-height: none;
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */
