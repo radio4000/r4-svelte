@@ -1,3 +1,4 @@
+import {tick} from 'svelte'
 import {playTrack, play, seekTo, setUserInitiatedPlay, getMediaPlayer} from '$lib/api'
 import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
@@ -417,7 +418,7 @@ function stopBroadcastTableListener(channelId) {
 	}
 }
 
-function applyBroadcastState(channelId, decks) {
+async function applyBroadcastState(channelId, decks) {
 	if (!Array.isArray(decks) || !decks.length) return
 
 	const incomingTrackIds = new Set(decks.map((d) => d?.track_id).filter(Boolean))
@@ -430,6 +431,7 @@ function applyBroadcastState(channelId, decks) {
 	}
 
 	// Remove excess decks — prefer removing those whose track is NOT in the incoming state
+	let removed = false
 	while (sortedIds.length > decks.length) {
 		const removeIdx = sortedIds.findIndex((id) => {
 			const d = appState.decks[id]
@@ -438,7 +440,11 @@ function applyBroadcastState(channelId, decks) {
 		const removeId = removeIdx >= 0 ? sortedIds.splice(removeIdx, 1)[0] : sortedIds.pop()
 		if (removeId != null) removeDeck(removeId)
 		sortedIds = getSortedDeckIds()
+		removed = true
 	}
+
+	// Let Svelte tear down removed deck components and their media elements
+	if (removed) await tick()
 
 	// Map broadcast state to listener decks by track_id, then fill positionally
 	/** @type {Set<number>} */

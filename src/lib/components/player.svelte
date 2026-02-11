@@ -238,7 +238,14 @@
 					<Icon icon="sidebar-fill-right" />
 				</button>
 				{#if deckCount > 1}
-					<button onclick={() => removeDeck(deckId)} {@attach tooltip({content: 'Close deck', position: 'top'})}>
+					<button
+						onclick={() => {
+							removeDeck(deckId)
+							const bchId = getBroadcastingChannelId()
+							if (bchId) notifyBroadcastState(bchId)
+						}}
+						{@attach tooltip({content: 'Close deck', position: 'top'})}
+					>
 						<Icon icon="delete" />
 					</button>
 				{/if}
