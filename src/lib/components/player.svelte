@@ -254,18 +254,18 @@
 					{#if ytid}
 						<img class="track-artwork" src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} />
 					{/if}
-				{/if}
-				<div class="info">
-					{#if track}
-						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+					<div class="info">
 						<a href={trackHref}><strong>{track.title}</strong></a>
 						{#if track.description}
 							<small class="description">{track.description}</small>
 						{/if}
-					{:else}
+					</div>
+				{:else}
+					<div class="info">
 						<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
-					{/if}
-				</div>
+					</div>
+				{/if}
 				{#if isListeningToBroadcast && broadcastingChannel}
 					<span class="caps btn-leave">Live</span>
 				{/if}
@@ -310,24 +310,30 @@
 
 	<!-- 4. Controls -->
 	<menu class="controls">
-		<media-control-bar mediacontroller={mediaControllerId}>
-			{#if isListeningToBroadcast}
+		{#if isListeningToBroadcast}
+			<div class="transport">
 				<button onclick={() => leaveBroadcast(deckId)} class="btn">
 					{m.broadcasts_leave()}
 				</button>
+			</div>
+			<div class="volume" mediacontroller={mediaControllerId}>
 				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
 				<media-volume-range></media-volume-range>
-			{:else}
-				{@render btnShuffle()}
+			</div>
+		{:else}
+			<div class="transport">
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
+			</div>
+			<div class="volume" mediacontroller={mediaControllerId}>
+				{@render btnShuffle()}
 				<media-mute-button class="btn" {@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
 				<media-volume-range></media-volume-range>
-			{/if}
-		</media-control-bar>
+			</div>
+		{/if}
 	</menu>
 </div>
 
@@ -357,6 +363,7 @@
 		onclick={() => togglePlay(mediaElement)}
 		disabled={!canPlay}
 		class="play"
+		class:active={deck?.is_playing}
 		{@attach tooltip({content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
 	>
 		<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
@@ -485,15 +492,40 @@
 	}
 
 	.video {
-		flex-shrink: 0;
+		flex: 1 0 auto;
 		aspect-ratio: 16 / 9;
 		width: 100%;
-		max-height: 30dvh;
+		max-height: 25dvh;
 		background: black;
 	}
 
 	.controls {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		border-top: 1px solid var(--gray-6);
 		flex-shrink: 0;
+		margin-top: auto;
+		padding: 0.2rem 0.4rem;
+		gap: 0.4rem;
+	}
+
+	.transport {
+		display: flex;
+		align-items: center;
+		gap: 0.1rem;
+	}
+
+	.volume {
+		display: flex;
+		align-items: center;
+		gap: 0.1rem;
+		flex: 1;
+		justify-content: flex-end;
+	}
+
+	.volume media-volume-range {
+		flex: 1;
 	}
 </style>
