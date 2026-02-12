@@ -193,6 +193,17 @@
 	})
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
+
+	// Apply speed to media element and notify broadcast
+	$effect(() => {
+		const el = mediaElement
+		const speed = deck?.speed ?? 1
+		if (el && 'playbackRate' in el) {
+			el.playbackRate = speed
+		}
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) untrack(() => notifyBroadcastState(broadcastingChannelId))
+	})
 </script>
 
 <div class="player">
@@ -292,6 +303,29 @@
 			{@render btnPlay()}
 			{@render btnNext()}
 			{@render btnShuffle()}
+			{#if appState.show_speed_control}
+				<div class="speed">
+					<button
+						class="speed-btn"
+						class:active={deck?.speed != null && deck.speed !== 1}
+						onclick={() => { if (deck) deck.speed = 1 }}
+						{@attach tooltip({content: 'Reset speed', position: 'top'})}
+					>
+						{deck?.speed ?? 1}x
+					</button>
+					<input
+						type="range"
+						min="0.25"
+						max="2"
+						step="0.25"
+						value={deck?.speed ?? 1}
+						oninput={(e) => {
+							if (deck) deck.speed = Number(e.currentTarget.value)
+						}}
+						class="speed-range"
+					/>
+				</div>
+			{/if}
 		{/if}
 		<div class="volume">
 			<media-mute-button
@@ -531,6 +565,29 @@
 		flex-shrink: 0;
 		font-size: var(--font-2);
 		margin-left: auto;
+	}
+
+	.speed {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.speed-btn {
+		font-size: var(--font-1);
+		min-width: 2.5em;
+		text-align: center;
+		flex-shrink: 0;
+	}
+
+	.speed-range {
+		flex: 1 1 0;
+		min-width: 0;
+		width: 100%;
+		cursor: pointer;
+		accent-color: var(--accent-9);
 	}
 
 	.deck-controls {

@@ -31,4 +31,12 @@
 			Auto-play track when opening a new deck
 		</label>
 	</fieldset>
+
+	<fieldset>
+		<legend>Speed control</legend>
+		<label>
+			<input type="checkbox" bind:checked={appState.show_speed_control} />
+			Show playback speed slider in deck transport
+		</label>
+	</fieldset>
 </article>

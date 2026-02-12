@@ -36,6 +36,7 @@ export interface Deck {
 	track_played_at?: string
 	seeked_at?: string
 	seek_position?: number
+	speed?: number
 }
 
 export function createDefaultDeck(id: number): Deck {
@@ -57,7 +58,8 @@ export function createDefaultDeck(id: number): Deck {
 		listening_to_channel_id: undefined,
 		track_played_at: undefined,
 		seeked_at: undefined,
-		seek_position: undefined
+		seek_position: undefined,
+		speed: 1
 	}
 }
 
@@ -88,6 +90,8 @@ export interface AppState {
 	default_new_deck_volume: 0 | 1
 	/** Whether new decks auto-play when a track is loaded */
 	autoplay_new_deck: boolean
+	/** Show playback speed control in deck transport */
+	show_speed_control?: boolean
 	font_family?: string
 	user?: User
 	language?: string
@@ -122,6 +126,7 @@ export interface Broadcast {
 	muted?: boolean
 	show_video_player?: boolean
 	queue_panel_visible?: boolean
+	speed?: number
 }
 
 export interface BroadcastWithChannel extends Broadcast {

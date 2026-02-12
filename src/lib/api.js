@@ -178,7 +178,13 @@ export async function playTrack(deckId, id, endReason, startReason) {
 		retries--
 	}
 	log.debug('playTrack calling play()', {deckId, retriesLeft: retries})
-	play(deckId)
+	// Apply volume before playing to avoid audible flash at wrong volume
+	const player = getMediaPlayer(deckId)
+	if (player) {
+		player.volume = deck.volume
+		player.muted = deck.muted ?? false
+	}
+	play(deckId, player)
 }
 
 /**

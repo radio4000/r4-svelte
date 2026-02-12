@@ -35,6 +35,7 @@ export const defaultAppState: AppState = {
 	hide_track_artwork: false,
 	default_new_deck_volume: 1,
 	autoplay_new_deck: true,
+	show_speed_control: false,
 	font_family: undefined,
 
 	user: undefined,

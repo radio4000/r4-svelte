@@ -281,6 +281,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 		if (typeof broadcast.show_video_player === 'boolean') deck.show_video_player = broadcast.show_video_player
 		if (typeof broadcast.queue_panel_visible === 'boolean') deck.queue_panel_visible = broadcast.queue_panel_visible
 		if (typeof broadcast.is_playing === 'boolean') deck.is_playing = broadcast.is_playing
+		if (typeof broadcast.speed === 'number') deck.speed = broadcast.speed
 
 		const mediaEl = getMediaPlayer(deckId)
 		if (mediaEl) {
@@ -290,6 +291,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 				if (broadcast.is_playing && mediaEl.paused) mediaEl.play()
 				if (!broadcast.is_playing && !mediaEl.paused) mediaEl.pause()
 			}
+			if (typeof broadcast.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = broadcast.speed
 		}
 	}
 	return true
@@ -315,7 +317,8 @@ function getBroadcastDeckState() {
 			volume: deck?.volume ?? 0,
 			muted: deck?.muted ?? false,
 			show_video_player: deck?.show_video_player ?? true,
-			queue_panel_visible: deck?.queue_panel_visible ?? true
+			queue_panel_visible: deck?.queue_panel_visible ?? true,
+			speed: deck?.speed ?? 1
 		}
 	})
 }
@@ -490,6 +493,7 @@ async function applyBroadcastState(channelId, decks) {
 		if (typeof state?.show_video_player === 'boolean') deck.show_video_player = state.show_video_player
 		if (typeof state?.queue_panel_visible === 'boolean') deck.queue_panel_visible = state.queue_panel_visible
 		if (typeof state?.is_playing === 'boolean') deck.is_playing = state.is_playing
+		if (typeof state?.speed === 'number') deck.speed = state.speed
 		if (!state?.track_id) {
 			deck.playlist_track = undefined
 			deck.is_playing = false
@@ -507,7 +511,8 @@ async function applyBroadcastState(channelId, decks) {
 				volume: state.volume,
 				muted: state.muted,
 				show_video_player: state.show_video_player,
-				queue_panel_visible: state.queue_panel_visible
+				queue_panel_visible: state.queue_panel_visible,
+				speed: state.speed
 			})
 		} else {
 			const mediaEl = getMediaPlayer(deckId)
@@ -518,6 +523,7 @@ async function applyBroadcastState(channelId, decks) {
 					if (state.is_playing && mediaEl.paused) mediaEl.play()
 					if (!state.is_playing && !mediaEl.paused) mediaEl.pause()
 				}
+				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = state.speed
 			}
 			if (state?.track_played_at || state?.seeked_at || state?.seek_position != null) {
 				const track = tracksCollection.get(state.track_id)
