@@ -167,6 +167,7 @@ export function addDeck(): Deck {
 	const id = appState.next_deck_id
 	const deck = createDefaultDeck(id)
 	deck.volume = appState.default_new_deck_volume ?? 1
+	deck.muted = deck.volume === 0
 	appState.decks[id] = deck
 	appState.next_deck_id = id + 1
 	return deck

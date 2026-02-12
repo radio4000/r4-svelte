@@ -292,64 +292,7 @@
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
 
-	<!-- 4. Transport + volume — above channel header -->
-	<menu class="transport">
-		{#if isListeningToBroadcast}
-			<button onclick={() => leaveBroadcast(deckId)} class="btn">
-				{m.broadcasts_leave()}
-			</button>
-		{:else}
-			{@render btnPrev()}
-			{@render btnPlay()}
-			{@render btnNext()}
-			{@render btnShuffle()}
-			{#if appState.show_speed_control}
-				<div class="speed">
-					<button
-						class="speed-btn"
-						class:active={deck?.speed != null && deck.speed !== 1}
-						onclick={() => { if (deck) deck.speed = 1 }}
-						{@attach tooltip({content: 'Reset speed', position: 'top'})}
-					>
-						{deck?.speed ?? 1}x
-					</button>
-					<input
-						type="range"
-						min="0.25"
-						max="2"
-						step="0.25"
-						value={deck?.speed ?? 1}
-						oninput={(e) => {
-							if (deck) deck.speed = Number(e.currentTarget.value)
-						}}
-						class="speed-range"
-					/>
-				</div>
-			{/if}
-		{/if}
-		<div class="volume">
-			<media-mute-button
-				mediacontroller={mediaControllerId}
-				class="btn"
-				{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-			></media-mute-button>
-			<input
-				type="range"
-				min="0"
-				max="1"
-				step="0.01"
-				value={deck?.volume ?? 1}
-				oninput={(e) => {
-					const val = Number(e.currentTarget.value)
-					if (deck) deck.volume = val
-					if (mediaElement) mediaElement.volume = val
-				}}
-				class="volume-range"
-			/>
-		</div>
-	</menu>
-
-	<!-- 5. Channel/track info + deck toggle -->
+	<!-- 4. Channel/track info + deck toggle -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 		{#if isListeningToBroadcast && broadcastingChannel}
@@ -411,6 +354,65 @@
 			</div>
 		{/if}
 	</footer>
+
+	<!-- 5. Transport + volume -->
+	<menu class="transport">
+		{#if isListeningToBroadcast}
+			<button onclick={() => leaveBroadcast(deckId)} class="btn">
+				{m.broadcasts_leave()}
+			</button>
+		{:else}
+			{@render btnPrev()}
+			{@render btnPlay()}
+			{@render btnNext()}
+			{@render btnShuffle()}
+			{#if appState.show_speed_control}
+				<div class="speed">
+					<button
+						class="speed-btn"
+						class:active={deck?.speed != null && deck.speed !== 1}
+						onclick={() => { if (deck) deck.speed = 1 }}
+						{@attach tooltip({content: 'Reset speed', position: 'top'})}
+					>
+						{deck?.speed ?? 1}x
+					</button>
+					<input
+						type="range"
+						min="0.25"
+						max="2"
+						step="0.25"
+						value={deck?.speed ?? 1}
+						oninput={(e) => {
+							if (deck) deck.speed = Number(e.currentTarget.value)
+						}}
+						class="speed-range"
+						data-default={!deck?.speed || deck.speed === 1 || null}
+					/>
+				</div>
+			{/if}
+		{/if}
+		<div class="volume">
+			<media-mute-button
+				mediacontroller={mediaControllerId}
+				class="btn"
+				{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+			></media-mute-button>
+			<input
+				type="range"
+				min="0"
+				max="1"
+				step="0.01"
+				value={deck?.volume ?? 1}
+				oninput={(e) => {
+					const val = Number(e.currentTarget.value)
+					if (deck) deck.volume = val
+					if (mediaElement) mediaElement.volume = val
+				}}
+				class="volume-range"
+				data-muted={deck?.muted || deck?.volume === 0 || null}
+			/>
+		</div>
+	</menu>
 </div>
 
 {#snippet btnPrev()}
@@ -587,6 +589,10 @@
 		min-width: 0;
 		width: 100%;
 		cursor: pointer;
+		accent-color: var(--gray-7);
+	}
+
+	.speed-range:not([data-default]) {
 		accent-color: var(--accent-9);
 	}
 
@@ -643,6 +649,10 @@
 		width: 100%;
 		cursor: pointer;
 		accent-color: var(--accent-9);
+	}
+
+	.volume-range[data-muted] {
+		accent-color: var(--gray-7);
 	}
 
 	.volume :global(media-mute-button) {

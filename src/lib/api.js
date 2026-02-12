@@ -182,7 +182,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 	const player = getMediaPlayer(deckId)
 	if (player) {
 		player.volume = deck.volume
-		player.muted = deck.muted ?? false
+		player.muted = deck.volume === 0 ? true : (deck.muted ?? false)
 	}
 	play(deckId, player)
 }
