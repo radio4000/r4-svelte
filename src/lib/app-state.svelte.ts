@@ -170,13 +170,11 @@ export function addDeck(): Deck {
 	return deck
 }
 
-/** Remove a deck by ID (cannot remove the last deck) */
+/** Remove a deck by ID. When the last deck is removed, reset to an empty deck 1 that auto-hides. */
 export function removeDeck(deckId: number): void {
 	delete appState.decks[deckId]
 	const remainingIds = Object.keys(appState.decks)
 	if (remainingIds.length === 0) {
-		const deck = createDefaultDeck(1)
-		appState.decks = {1: deck}
 		appState.active_deck_id = 1
 		appState.next_deck_id = 2
 		return

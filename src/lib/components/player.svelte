@@ -201,6 +201,12 @@
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
 			<div class="header-id" class:active={isActiveDeck}>
+				<IconR4 />
+				{#if showDeckNumber}
+					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
+				{/if}
+			</div>
+			<menu class="deck-controls">
 				<button
 					onclick={() => {
 						removeDeck(deckId)
@@ -211,12 +217,6 @@
 				>
 					<Icon icon="delete" />
 				</button>
-				<IconR4 />
-				{#if showDeckNumber}
-					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
-				{/if}
-			</div>
-			<menu class="deck-controls">
 				<button
 					onclick={() => toggleVideoPlayer(deckId)}
 					class:active={deck?.show_video_player}

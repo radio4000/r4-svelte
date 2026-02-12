@@ -168,9 +168,15 @@
 		display: none;
 	}
 
-	/* When queue is hidden, let video fill all available space */
+	/* When queue is hidden, let video fill available space but not overflow */
 	.deck.hide-queue :global(.video) {
 		max-height: none;
+		flex: 1;
+	}
+
+	/* In expanded + hide-queue, constrain so controls/footer stay visible */
+	.deck.expanded.hide-queue :global(.video) {
+		max-height: calc(100dvh - 10rem);
 	}
 
 	/* Broadcast listener: no queue, so use less space */
