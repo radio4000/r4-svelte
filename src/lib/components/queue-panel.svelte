@@ -23,6 +23,24 @@
 	let showClearHistoryModal = $state(false)
 	let searchQuery = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
+	/** @type {HTMLElement | undefined} */
+	let scrollContainer = $state()
+
+	function scrollToActive() {
+		if (!scrollContainer || !deck?.playlist_track) return
+		// Try finding the already-rendered active element
+		const active = scrollContainer.querySelector('article.active')
+		if (active) {
+			active.scrollIntoView({behavior: 'smooth', block: 'center'})
+			return
+		}
+		// Virtual list: estimate position from track index
+		const idx = trackIds.indexOf(deck.playlist_track)
+		if (idx < 0) return
+		const viewport = scrollContainer.querySelector('.virtual-viewport') ?? scrollContainer
+		const itemHeight = 72 // matches defaultEstimatedItemHeight
+		viewport.scrollTo({top: Math.max(0, idx * itemHeight - viewport.clientHeight / 2), behavior: 'smooth'})
+	}
 
 	/** @type {string[]} */
 	let trackIds = $derived(deck?.playlist_tracks || [])
@@ -115,9 +133,14 @@
 
 	<div class="search-container">
 		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
+		{#if view === 'queue' && deck?.playlist_track}
+			<button onclick={scrollToActive} {@attach tooltip({content: 'Scroll to current track'})}>
+				<Icon icon="arrow-down" size={16} />
+			</button>
+		{/if}
 	</div>
 
-	<main class="scroll">
+	<main class="scroll" bind:this={scrollContainer}>
 		{#if view === 'queue'}
 			{#if filteredQueueTracks.length > 0}
 				<Tracklist

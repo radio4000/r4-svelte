@@ -299,7 +299,19 @@
 				class="btn"
 				{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 			></media-mute-button>
-			<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
+			<input
+				type="range"
+				min="0"
+				max="1"
+				step="0.01"
+				value={deck?.volume ?? 1}
+				oninput={(e) => {
+					const val = Number(e.currentTarget.value)
+					if (deck) deck.volume = val
+					if (mediaElement) mediaElement.volume = val
+				}}
+				class="volume-range"
+			/>
 		</div>
 	</menu>
 
@@ -565,14 +577,23 @@
 		align-items: center;
 		gap: 0.1rem;
 		flex: 1;
-		justify-content: flex-end;
+		min-width: 0;
 	}
 
-	.volume media-volume-range {
-		flex: 1;
+	.volume-range {
+		flex: 1 1 0;
+		min-width: 0;
+		width: 100%;
+		cursor: pointer;
+		accent-color: var(--accent-9);
 	}
 
-	.volume media-mute-button[mediavolumelevel='off'] {
+	.volume :global(media-mute-button) {
+		--media-control-background: transparent;
+		--media-control-hover-background: transparent;
+	}
+
+	.volume :global(media-mute-button[mediavolumelevel='off']) {
 		border-color: var(--accent-9);
 		background-color: var(--accent-3);
 	}
