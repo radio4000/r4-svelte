@@ -324,7 +324,7 @@ export function toggleTheme() {
 export function toggleQueuePanel(deckId) {
 	const deck = appState.decks[deckId]
 	if (!deck) return
-	deck.queue_panel_visible = !deck.queue_panel_visible
+	deck.hide_queue_panel = !deck.hide_queue_panel
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
@@ -333,7 +333,7 @@ export function toggleQueuePanel(deckId) {
 export function toggleVideoPlayer(deckId) {
 	const deck = appState.decks[deckId]
 	if (!deck) return
-	deck.show_video_player = !deck.show_video_player
+	deck.hide_video_player = !deck.hide_video_player
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
@@ -352,8 +352,8 @@ export function togglePlayerExpanded(deckId) {
 	if (!deck) return
 	deck.expanded = !deck.expanded
 	if (deck.expanded && deck.compact) deck.compact = false
-	if (deck.expanded && !deck.show_video_player) {
-		deck.show_video_player = true
+	if (deck.expanded && deck.hide_video_player) {
+		deck.hide_video_player = false
 	}
 }
 
@@ -594,7 +594,7 @@ export function previous(deckId, track, activeQueue, endReason) {
 /** @param {number} deckId */
 export function toggleVideo(deckId) {
 	const deck = appState.decks[deckId]
-	if (deck) deck.show_video_player = !deck.show_video_player
+	if (deck) deck.hide_video_player = !deck.hide_video_player
 }
 
 /** @param {number} deckId */
@@ -604,7 +604,7 @@ export function eject(deckId) {
 	deck.playlist_track = undefined
 	deck.playlist_tracks = []
 	deck.playlist_tracks_shuffled = []
-	deck.show_video_player = false
+	deck.hide_video_player = true
 	deck.shuffle = false
 	deck.is_playing = false
 }

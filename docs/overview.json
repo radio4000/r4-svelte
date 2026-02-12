@@ -15,10 +15,10 @@
 		{"name": "appState.shuffle", "desc": "Shuffle enabled."},
 		{"name": "appState.volume", "desc": "Volume 0-1."},
 
-		{"name": "appState.show_video_player", "desc": "Show/hide video."},
+		{"name": "appState.hide_video_player", "desc": "Hide/show video."},
 		{"name": "appState.deck.compact", "desc": "Compact player UI per deck."},
 		{"name": "appState.deck.expanded", "desc": "Fullscreen player UI per deck."},
-		{"name": "appState.queue_panel_visible", "desc": "Sidebar open."},
+		{"name": "appState.hide_queue_panel", "desc": "Hide/show sidebar."},
 		{"name": "appState.queue_panel_width", "desc": "Sidebar width."},
 
 		{"name": "appState.channels_display", "desc": "'grid' | 'list'."},

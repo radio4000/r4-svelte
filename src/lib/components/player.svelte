@@ -235,7 +235,7 @@
 				</button>
 				<button
 					onclick={() => toggleVideoPlayer(deckId)}
-					class:active={deck?.show_video_player}
+					class:active={deck?.hide_video_player}
 					aria-label={m.player_visible()}
 					{@attach tooltip({content: m.player_visible(), position: 'top'})}
 				>
@@ -244,7 +244,7 @@
 				{#if !isListeningToBroadcast}
 					<button
 						onclick={() => toggleQueuePanel(deckId)}
-						class:active={deck?.queue_panel_visible}
+						class:active={deck?.hide_queue_panel}
 						aria-label={m.queue_visible()}
 						{@attach tooltip({content: m.queue_visible(), position: 'top'})}
 					>

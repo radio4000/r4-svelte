@@ -74,8 +74,8 @@
 		class:listening={isListeningToBroadcast}
 		class:active-deck={isActiveDeck}
 		class:resizing
-		class:hide-queue={!deck?.queue_panel_visible}
-		class:hide-video={!deck?.show_video_player}
+		class:hide-queue={deck?.hide_queue_panel}
+		class:hide-video={deck?.hide_video_player}
 		data-deck={deckId}
 		style={deckStyle}
 	>

@@ -62,9 +62,9 @@ function loadState(): AppState {
 				deck.is_playing = false // always reset
 				deck.shuffle = parsed.shuffle ?? false
 				deck.volume = parsed.volume ?? 0.7
-				deck.show_video_player = parsed.show_video_player ?? true
+				deck.hide_video_player = !(parsed.show_video_player ?? true)
 				deck.expanded = parsed.player_expanded ?? false
-				deck.queue_panel_visible = parsed.queue_panel_visible ?? false
+				deck.hide_queue_panel = !(parsed.queue_panel_visible ?? false)
 				deck.queue_panel_width = parsed.queue_panel_width
 				deck.broadcasting_channel_id = parsed.broadcasting_channel_id
 				deck.listening_to_channel_id = undefined // always reset
@@ -92,7 +92,18 @@ function loadState(): AppState {
 				state = {...state, ...parsed}
 				// Ensure each deck has all fields from createDefaultDeck
 				for (const [id, deck] of Object.entries(state.decks)) {
-					state.decks[Number(id)] = {...createDefaultDeck(Number(id)), ...(deck as Deck)}
+					const deckState = deck as Deck & {show_video_player?: boolean; queue_panel_visible?: boolean}
+					// Migrate legacy per-deck keys if present in persisted state
+					const migratedDeck = {...deckState}
+					if (typeof deckState.show_video_player === 'boolean' && typeof deckState.hide_video_player !== 'boolean') {
+						migratedDeck.hide_video_player = !deckState.show_video_player
+					}
+					if (typeof deckState.queue_panel_visible === 'boolean' && typeof deckState.hide_queue_panel !== 'boolean') {
+						migratedDeck.hide_queue_panel = !deckState.queue_panel_visible
+					}
+					delete migratedDeck.show_video_player
+					delete migratedDeck.queue_panel_visible
+					state.decks[Number(id)] = {...createDefaultDeck(Number(id)), ...migratedDeck}
 				}
 			} else {
 				state = {...state, ...parsed}

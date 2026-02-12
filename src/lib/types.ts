@@ -26,10 +26,10 @@ export interface Deck {
 	shuffle: boolean
 	volume: number
 	muted?: boolean
-	show_video_player: boolean
+	hide_video_player: boolean
 	compact: boolean
 	expanded: boolean
-	queue_panel_visible: boolean
+	hide_queue_panel: boolean
 	queue_panel_width?: number
 	broadcasting_channel_id?: string
 	listening_to_channel_id?: string
@@ -49,10 +49,10 @@ export function createDefaultDeck(id: number): Deck {
 		shuffle: false,
 		volume: 1,
 		muted: false,
-		show_video_player: true,
+		hide_video_player: false,
 		compact: false,
 		expanded: false,
-		queue_panel_visible: true,
+		hide_queue_panel: false,
 		queue_panel_width: undefined,
 		broadcasting_channel_id: undefined,
 		listening_to_channel_id: undefined,
