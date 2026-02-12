@@ -194,16 +194,21 @@
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 
-	// Apply speed to media element and notify broadcast
+	// Apply speed to media element
 	$effect(() => {
 		const el = mediaElement
 		const speed = deck?.speed ?? 1
 		if (el && 'playbackRate' in el) {
 			el.playbackRate = speed
 		}
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) untrack(() => notifyBroadcastState(broadcastingChannelId))
 	})
+
+	function handleSpeedChange(speed) {
+		if (!deck) return
+		deck.speed = speed
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
 </script>
 
 <div class="player">
@@ -371,7 +376,7 @@
 					<button
 						class="speed-btn"
 						class:active={deck?.speed != null && deck.speed !== 1}
-						onclick={() => { if (deck) deck.speed = 1 }}
+						onclick={() => handleSpeedChange(1)}
 						{@attach tooltip({content: 'Reset speed', position: 'top'})}
 					>
 						{deck?.speed ?? 1}x
@@ -382,9 +387,7 @@
 						max="2"
 						step="0.25"
 						value={deck?.speed ?? 1}
-						oninput={(e) => {
-							if (deck) deck.speed = Number(e.currentTarget.value)
-						}}
+						oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
 						class="speed-range"
 						data-default={!deck?.speed || deck.speed === 1 || null}
 					/>

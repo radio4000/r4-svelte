@@ -109,6 +109,13 @@ export async function playTrack(deckId, id, endReason, startReason) {
 		return
 	}
 
+	// If same track is already loaded, just ensure it's playing (don't reload)
+	if (deck.playlist_track === id && startReason === 'user_click_track') {
+		log.log('play_track_same_track', {deckId, id})
+		play(deckId)
+		return
+	}
+
 	// Set flag for user-initiated playback (respects autoplay setting for fresh decks)
 	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
 	if (userInitiatedReasons.includes(startReason)) {

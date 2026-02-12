@@ -283,8 +283,10 @@ async function playBroadcastTrack(deckId, broadcast) {
 		if (typeof broadcast.is_playing === 'boolean') deck.is_playing = broadcast.is_playing
 		if (typeof broadcast.speed === 'number') deck.speed = broadcast.speed
 
-		const mediaEl = getMediaPlayer(deckId)
-		if (mediaEl) {
+		// Apply to media element — delay slightly so YouTube has time to initialize after load
+		const applyToMedia = () => {
+			const mediaEl = getMediaPlayer(deckId)
+			if (!mediaEl) return
 			if (typeof broadcast.volume === 'number') mediaEl.volume = broadcast.volume
 			if (typeof broadcast.muted === 'boolean') mediaEl.muted = broadcast.muted
 			if (typeof broadcast.is_playing === 'boolean') {
@@ -293,6 +295,9 @@ async function playBroadcastTrack(deckId, broadcast) {
 			}
 			if (typeof broadcast.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = broadcast.speed
 		}
+		applyToMedia()
+		// Re-apply after a short delay — YouTube resets playbackRate on video load
+		setTimeout(applyToMedia, 1000)
 	}
 	return true
 }
@@ -327,7 +332,7 @@ function broadcastStateUpdate(channelId) {
 	const state = getBroadcastDeckState()
 	const entry = broadcastStateChannels.get(channelId)
 	if (!entry) return
-	console.info('[broadcast] state_send', {channelId, decks: state.length})
+	console.info('[broadcast] state_send', {channelId, decks: state.length, speeds: state.map((d) => d.speed)})
 	entry.channel.send({
 		type: 'broadcast',
 		event: 'state',
@@ -369,7 +374,7 @@ function startBroadcastStateListener(channelId) {
 		.channel(`broadcast-state:${channelId}`)
 		.on('broadcast', {event: 'state'}, (payload) => {
 			const decks = payload?.payload?.decks ?? payload?.decks
-			console.info('[broadcast] state_receive', {channelId, decks: Array.isArray(decks) ? decks.length : 0})
+			console.info('[broadcast] state_receive', {channelId, decks: Array.isArray(decks) ? decks.length : 0, speeds: Array.isArray(decks) ? decks.map((d) => d?.speed) : []})
 			applyBroadcastState(channelId, decks)
 		})
 		.subscribe((status) => {
