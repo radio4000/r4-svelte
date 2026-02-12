@@ -13,7 +13,6 @@
 		toggleDeckCompact,
 		togglePlayerExpanded,
 		toggleQueuePanel,
-		toggleShuffle,
 		toggleVideoPlayer,
 		getUserInitiatedPlay,
 		setUserInitiatedPlay
@@ -370,7 +369,6 @@
 			{@render btnPrev()}
 			{@render btnPlay()}
 			{@render btnNext()}
-			{@render btnShuffle()}
 			{#if appState.show_speed_control}
 				<div class="speed">
 					<button
@@ -448,20 +446,6 @@
 		{@attach tooltip({content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
 	>
 		<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-	</button>
-{/snippet}
-
-{#snippet btnShuffle()}
-	<button
-		onclick={(e) => {
-			e.preventDefault()
-			e.stopPropagation()
-			toggleShuffle(deckId)
-		}}
-		class={['shuffle', {active: deck?.shuffle}]}
-		{@attach tooltip({content: m.player_tooltip_shuffle()})}
-	>
-		<Icon icon="shuffle" />
 	</button>
 {/snippet}
 
