@@ -162,7 +162,7 @@
 	function applyInitialVolume() {
 		if (!mediaElement || !deck) return
 		mediaElement.volume = deck.volume
-		mediaElement.muted = deck.volume === 0
+		mediaElement.muted = deck.muted ?? false
 	}
 
 	function handleVolumeChange(e) {
@@ -186,8 +186,9 @@
 	}
 
 	$effect(() => {
-		if (mediaElement) {
-			applyInitialVolume()
+		const el = mediaElement
+		if (el) {
+			untrack(() => applyInitialVolume())
 		}
 	})
 
@@ -195,11 +196,21 @@
 </script>
 
 <div class="player">
-	<!-- 1. Header: top bar + channel info row -->
+	<!-- 1. Top bar: logo + deck controls -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
 			<div class="header-id" class:active={isActiveDeck}>
+				<button
+					onclick={() => {
+						removeDeck(deckId)
+						const bchId = getBroadcastingChannelId()
+						if (bchId) notifyBroadcastState(bchId)
+					}}
+					{@attach tooltip({content: 'Close deck', position: 'top'})}
+				>
+					<Icon icon="delete" />
+				</button>
 				<IconR4 />
 				{#if showDeckNumber}
 					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
@@ -212,7 +223,7 @@
 					aria-label={m.player_visible()}
 					{@attach tooltip({content: m.player_visible(), position: 'top'})}
 				>
-					<Icon icon="video" />
+					<Icon icon="tv" />
 				</button>
 				{#if !isListeningToBroadcast}
 					<button
@@ -237,20 +248,48 @@
 				>
 					<Icon icon="sidebar-fill-right" />
 				</button>
-				{#if deckCount > 1}
-					<button
-						onclick={() => {
-							removeDeck(deckId)
-							const bchId = getBroadcastingChannelId()
-							if (bchId) notifyBroadcastState(bchId)
-						}}
-						{@attach tooltip({content: 'Close deck', position: 'top'})}
-					>
-						<Icon icon="delete" />
-					</button>
-				{/if}
 			</menu>
 		</div>
+	</header>
+
+	<!-- 2. Video — always in DOM; deck.hide-video CSS hides visually -->
+	<media-controller id={mediaControllerId} class="video" data-clickable="true">
+		{#if track?.provider === 'youtube'}
+			<youtube-video
+				slot="media"
+				bind:this={youtubePlayer}
+				{src}
+				autoplay={userHasPlayed || undefined}
+				onplay={handlePlay}
+				onpause={handlePause}
+				onseeked={handleSeeked}
+				onended={handleEndTrack}
+				onerror={handleError}
+				onvolumechange={handleVolumeChange}
+			></youtube-video>
+		{:else if track?.provider === 'soundcloud'}
+			<soundcloud-player
+				slot="media"
+				bind:this={soundcloudPlayer}
+				{src}
+				autoplay={userHasPlayed || undefined}
+				onplay={handlePlay}
+				onpause={handlePause}
+				onseeked={handleSeeked}
+				onended={handleEndTrack}
+				onerror={handleError}
+				onvolumechange={handleVolumeChange}
+			></soundcloud-player>
+		{/if}
+		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
+	</media-controller>
+
+	<!-- 3. Queue/history (injected by deck) -->
+	{@render children?.()}
+
+	<!-- 4. Channel/track info — bottom of deck -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 		{#if isListeningToBroadcast && broadcastingChannel}
 			<div class="header-info">
 				<a href={resolve(`/${broadcastingChannel.slug}`)} class="avatar">
@@ -306,44 +345,9 @@
 				{/if}
 			</div>
 		{/if}
-	</header>
+	</footer>
 
-	<!-- 2. Video — always in DOM; deck.hide-video CSS hides visually -->
-	<media-controller id={mediaControllerId} class="video" data-clickable="true">
-		{#if track?.provider === 'youtube'}
-			<youtube-video
-				slot="media"
-				bind:this={youtubePlayer}
-				{src}
-				autoplay={userHasPlayed || undefined}
-				onplay={handlePlay}
-				onpause={handlePause}
-				onseeked={handleSeeked}
-				onended={handleEndTrack}
-				onerror={handleError}
-				onvolumechange={handleVolumeChange}
-			></youtube-video>
-		{:else if track?.provider === 'soundcloud'}
-			<soundcloud-player
-				slot="media"
-				bind:this={soundcloudPlayer}
-				{src}
-				autoplay={userHasPlayed || undefined}
-				onplay={handlePlay}
-				onpause={handlePause}
-				onseeked={handleSeeked}
-				onended={handleEndTrack}
-				onerror={handleError}
-				onvolumechange={handleVolumeChange}
-			></soundcloud-player>
-		{/if}
-		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
-	</media-controller>
-
-	<!-- 3. Queue/history (injected by deck) -->
-	{@render children?.()}
-
-	<!-- 4. Controls -->
+	<!-- 5. Controls — below track info -->
 	<menu class="controls">
 		{#if isListeningToBroadcast}
 			<div class="transport">
@@ -472,7 +476,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0 0.4rem 0.3rem;
+		padding: 0.3rem 0.4rem;
 	}
 
 	.avatar {
@@ -546,14 +550,19 @@
 		background: black;
 	}
 
+	.header-footer {
+		margin-top: auto;
+		flex-shrink: 0;
+		border-top: 1px solid var(--gray-6);
+		cursor: pointer;
+	}
+
 	.controls {
 		width: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		border-top: 1px solid var(--gray-6);
 		flex-shrink: 0;
-		margin-top: auto;
 		padding: 0.2rem 0.4rem;
 		gap: 0.4rem;
 	}
