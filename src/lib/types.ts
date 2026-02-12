@@ -124,8 +124,6 @@ export interface Broadcast {
 	is_playing?: boolean
 	volume?: number
 	muted?: boolean
-	show_video_player?: boolean
-	queue_panel_visible?: boolean
 	speed?: number
 }
 

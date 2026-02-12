@@ -75,7 +75,9 @@
 				<button
 					class="speed-btn"
 					class:active={deck?.speed != null && deck.speed !== 1}
-					onclick={() => { if (deck) deck.speed = 1 }}
+					onclick={() => {
+						if (deck) deck.speed = 1
+					}}
 				>
 					{deck?.speed ?? 1}x
 				</button>

@@ -278,8 +278,6 @@ async function playBroadcastTrack(deckId, broadcast) {
 		if (broadcast.seek_position != null) deck.seek_position = broadcast.seek_position
 		if (typeof broadcast.volume === 'number') deck.volume = broadcast.volume
 		if (typeof broadcast.muted === 'boolean') deck.muted = broadcast.muted
-		if (typeof broadcast.show_video_player === 'boolean') deck.show_video_player = broadcast.show_video_player
-		if (typeof broadcast.queue_panel_visible === 'boolean') deck.queue_panel_visible = broadcast.queue_panel_visible
 		if (typeof broadcast.is_playing === 'boolean') deck.is_playing = broadcast.is_playing
 		if (typeof broadcast.speed === 'number') deck.speed = broadcast.speed
 
@@ -321,8 +319,6 @@ function getBroadcastDeckState() {
 			seek_position: deck?.seek_position ?? null,
 			volume: deck?.volume ?? 0,
 			muted: deck?.muted ?? false,
-			show_video_player: deck?.show_video_player ?? true,
-			queue_panel_visible: deck?.queue_panel_visible ?? true,
 			speed: deck?.speed ?? 1
 		}
 	})
@@ -374,7 +370,11 @@ function startBroadcastStateListener(channelId) {
 		.channel(`broadcast-state:${channelId}`)
 		.on('broadcast', {event: 'state'}, (payload) => {
 			const decks = payload?.payload?.decks ?? payload?.decks
-			console.info('[broadcast] state_receive', {channelId, decks: Array.isArray(decks) ? decks.length : 0, speeds: Array.isArray(decks) ? decks.map((d) => d?.speed) : []})
+			console.info('[broadcast] state_receive', {
+				channelId,
+				decks: Array.isArray(decks) ? decks.length : 0,
+				speeds: Array.isArray(decks) ? decks.map((d) => d?.speed) : []
+			})
 			applyBroadcastState(channelId, decks)
 		})
 		.subscribe((status) => {
@@ -495,8 +495,6 @@ async function applyBroadcastState(channelId, decks) {
 		if (state?.seek_position != null) deck.seek_position = state.seek_position
 		if (typeof state?.volume === 'number') deck.volume = state.volume
 		if (typeof state?.muted === 'boolean') deck.muted = state.muted
-		if (typeof state?.show_video_player === 'boolean') deck.show_video_player = state.show_video_player
-		if (typeof state?.queue_panel_visible === 'boolean') deck.queue_panel_visible = state.queue_panel_visible
 		if (typeof state?.is_playing === 'boolean') deck.is_playing = state.is_playing
 		if (typeof state?.speed === 'number') deck.speed = state.speed
 		if (!state?.track_id) {
@@ -515,8 +513,6 @@ async function applyBroadcastState(channelId, decks) {
 				is_playing: state.is_playing,
 				volume: state.volume,
 				muted: state.muted,
-				show_video_player: state.show_video_player,
-				queue_panel_visible: state.queue_panel_visible,
 				speed: state.speed
 			})
 		} else {
