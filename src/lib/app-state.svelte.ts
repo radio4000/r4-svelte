@@ -33,6 +33,8 @@ export const defaultAppState: AppState = {
 
 	theme: undefined,
 	hide_track_artwork: false,
+	default_new_deck_volume: 1,
+	autoplay_new_deck: true,
 	font_family: undefined,
 
 	user: undefined,
@@ -45,7 +47,7 @@ export const defaultAppState: AppState = {
 
 // Load from local storage on module init
 function loadState(): AppState {
-	let state = {...defaultAppState, decks: {1: createDefaultDeck(1)}}
+	let state: AppState = {...defaultAppState, decks: {}}
 	try {
 		const storedState = localStorage.getItem(STATE_KEY)
 		if (storedState) {
@@ -133,8 +135,7 @@ function loadState(): AppState {
 		.filter((id) => Number.isFinite(id))
 		.sort((a, b) => a - b)
 	if (deckIds.length === 0) {
-		const deck = createDefaultDeck(1)
-		state.decks = {1: deck}
+		state.decks = {}
 		state.active_deck_id = 1
 		state.next_deck_id = 2
 	} else {
@@ -164,7 +165,7 @@ export function getDeck(deckId: number): Deck | undefined {
 export function addDeck(): Deck {
 	const id = appState.next_deck_id
 	const deck = createDefaultDeck(id)
-	deck.volume = 0
+	deck.volume = appState.default_new_deck_volume ?? 1
 	appState.decks[id] = deck
 	appState.next_deck_id = id + 1
 	return deck

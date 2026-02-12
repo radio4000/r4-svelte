@@ -3,7 +3,8 @@
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
-	import {togglePlayPause} from '$lib/api'
+	import {togglePlayPause, next, previous} from '$lib/api'
+	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 
@@ -25,13 +26,28 @@
 
 	let ytid = $derived(!track || appState.hide_track_artwork ? null : track.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
+
+	/** @type {string[]} */
+	let trackIds = $derived(deck?.playlist_tracks || [])
+	/** @type {string[]} */
+	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
+
+	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 </script>
 
 <div class="deck-compact-bar">
-	<div class="header-info">
+	<div class="controls">
+		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous">
+			<Icon icon="previous-fill" />
+		</button>
 		<button class="play" onclick={() => togglePlayPause(deckId)} aria-label="Play/pause">
 			<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 		</button>
+		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next">
+			<Icon icon="next-fill" />
+		</button>
+	</div>
+	<div class="header-info">
 		{#if channel}
 			<a class="avatar" href={resolve(`/${channel.slug}`)}>
 				<ChannelAvatar id={channel.image} alt={channel.name} />
@@ -51,6 +67,10 @@
 			{/if}
 		</div>
 	</div>
+	<div class="volume">
+		<media-mute-button mediacontroller={mediaControllerId} class="btn"></media-mute-button>
+		<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
+	</div>
 	<button class="expand" onclick={() => (deck.compact = false)} aria-label="Expand deck">
 		<Icon icon="sidebar-fill-right" />
 	</button>
@@ -60,12 +80,19 @@
 	.deck-compact-bar {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.4rem;
 		padding: 0.3rem 0.6rem;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		background: var(--header-bg);
 		min-width: 0;
+	}
+
+	.controls {
+		display: flex;
+		align-items: center;
+		gap: 0.1rem;
+		flex-shrink: 0;
 	}
 
 	.header-info {
@@ -100,13 +127,15 @@
 		}
 	}
 
-	.deck-compact-bar .play,
-	.deck-compact-bar .expand {
+	.volume {
+		display: flex;
+		align-items: center;
+		gap: 0.1rem;
 		flex-shrink: 0;
 	}
 
 	.deck-compact-bar .expand {
-		margin-left: auto;
+		flex-shrink: 0;
 	}
 
 	.info {

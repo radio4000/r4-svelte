@@ -46,7 +46,7 @@ export function createDefaultDeck(id: number): Deck {
 		playlist_tracks_shuffled: [],
 		is_playing: false,
 		shuffle: false,
-		volume: 0.7,
+		volume: 1,
 		muted: false,
 		show_video_player: true,
 		compact: false,
@@ -84,6 +84,10 @@ export interface AppState {
 	channel?: Channel
 	shortcuts?: Record<string, string>
 	hide_track_artwork: boolean
+	/** Default volume for new decks: 0 (silent) or 1 (full) */
+	default_new_deck_volume: 0 | 1
+	/** Whether new decks auto-play when a track is loaded */
+	autoplay_new_deck: boolean
 	font_family?: string
 	user?: User
 	language?: string

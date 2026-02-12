@@ -93,10 +93,13 @@ export async function checkUser() {
  */
 export async function playTrack(deckId, id, endReason, startReason) {
 	log.log('play_track', {deckId, id, endReason, startReason})
-	const deck = appState.decks[deckId]
+	let deck = appState.decks[deckId]
 	if (!deck) {
-		log.warn('play_track_no_deck', {deckId})
-		return
+		// Auto-create deck when all decks have been closed
+		deck = addDeck()
+		deckId = deck.id
+		appState.active_deck_id = deckId
+		log.log('play_track_created_deck', {deckId})
 	}
 
 	const track = tracksCollection.get(id) ?? tracksCollection.state.get(id)
@@ -106,10 +109,13 @@ export async function playTrack(deckId, id, endReason, startReason) {
 		return
 	}
 
-	// Set flag for user-initiated playback
+	// Set flag for user-initiated playback (respects autoplay setting for fresh decks)
 	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
 	if (userInitiatedReasons.includes(startReason)) {
-		setUserInitiatedPlay(deckId, true)
+		const deckAlreadyPlaying = deck.is_playing || deck.playlist_track
+		if (appState.autoplay_new_deck || deckAlreadyPlaying) {
+			setUserInitiatedPlay(deckId, true)
+		}
 	}
 
 	// Build playlist from tracks already loaded in collection (same channel/slug)

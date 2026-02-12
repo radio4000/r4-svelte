@@ -91,10 +91,6 @@
 				{m.nav_history()} ({playHistory.length})
 			</button>
 		</menu>
-	</header>
-
-	<div class="search-container">
-		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 		{#if view === 'queue' && trackIds.length > 1}
 			<menu class="queue-actions">
 				<button
@@ -105,15 +101,20 @@
 					<Icon icon="shuffle" size={16} />
 				</button>
 				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
-					<Icon icon="history" size={16} />
-					{m.common_clear()}
+					<Icon icon="delete" size={16} />
 				</button>
 			</menu>
 		{:else if view === 'history' && playHistory.length > 0}
-			<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.queue_no_history()})}
-				><Icon icon="delete" size={16} />{m.common_clear()}</button
-			>
+			<menu class="queue-actions">
+				<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.common_clear()})}>
+					<Icon icon="delete" size={16} />
+				</button>
+			</menu>
 		{/if}
+	</header>
+
+	<div class="search-container">
+		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 	</div>
 
 	<main class="scroll">

@@ -242,12 +242,6 @@
 				>
 					<Icon icon="fullscreen" />
 				</button>
-				<button
-					onclick={() => toggleDeckCompact(deckId)}
-					{@attach tooltip({content: 'Minimize deck', position: 'top'})}
-				>
-					<Icon icon="sidebar-fill-right" />
-				</button>
 			</menu>
 		</div>
 	</header>
@@ -287,7 +281,29 @@
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
 
-	<!-- 4. Channel/track info — bottom of deck -->
+	<!-- 4. Transport + volume — above channel header -->
+	<menu class="transport">
+		{#if isListeningToBroadcast}
+			<button onclick={() => leaveBroadcast(deckId)} class="btn">
+				{m.broadcasts_leave()}
+			</button>
+		{:else}
+			{@render btnPrev()}
+			{@render btnPlay()}
+			{@render btnNext()}
+			{@render btnShuffle()}
+		{/if}
+		<div class="volume">
+			<media-mute-button
+				mediacontroller={mediaControllerId}
+				class="btn"
+				{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+			></media-mute-button>
+			<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
+		</div>
+	</menu>
+
+	<!-- 5. Channel/track info + deck toggle -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 		{#if isListeningToBroadcast && broadcastingChannel}
@@ -343,43 +359,12 @@
 						<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
 					</div>
 				{/if}
+				<button class="compact-toggle" onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
+					<Icon icon="sidebar-fill-right" />
+				</button>
 			</div>
 		{/if}
 	</footer>
-
-	<!-- 5. Controls — below track info -->
-	<menu class="controls">
-		{#if isListeningToBroadcast}
-			<div class="transport">
-				<button onclick={() => leaveBroadcast(deckId)} class="btn">
-					{m.broadcasts_leave()}
-				</button>
-			</div>
-			<div class="volume">
-				<media-mute-button
-					mediacontroller={mediaControllerId}
-					class="btn"
-					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-				></media-mute-button>
-				<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
-			</div>
-		{:else}
-			<div class="transport">
-				{@render btnPrev()}
-				{@render btnPlay()}
-				{@render btnNext()}
-			</div>
-			<div class="volume">
-				{@render btnShuffle()}
-				<media-mute-button
-					mediacontroller={mediaControllerId}
-					class="btn"
-					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-				></media-mute-button>
-				<media-volume-range mediacontroller={mediaControllerId}></media-volume-range>
-			</div>
-		{/if}
-	</menu>
 </div>
 
 {#snippet btnPrev()}
@@ -476,7 +461,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0.3rem 0.4rem;
+		padding: 0.3rem 0.6rem;
 	}
 
 	.avatar {
@@ -550,27 +535,29 @@
 		background: black;
 	}
 
-	.header-footer {
-		margin-top: auto;
-		flex-shrink: 0;
-		border-top: 1px solid var(--gray-6);
-		cursor: pointer;
-	}
-
-	.controls {
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		flex-shrink: 0;
-		padding: 0.2rem 0.4rem;
-		gap: 0.4rem;
-	}
-
 	.transport {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.1rem;
+		flex-shrink: 0;
+		padding: 0.5rem 0.6rem;
+		border-top: 1px solid var(--gray-6);
+	}
+
+	.header-footer {
+		margin-top: auto;
+		flex-shrink: 0;
+		cursor: pointer;
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		background: var(--header-bg);
+		margin: auto 0.4rem 0.6rem;
+	}
+
+	.compact-toggle {
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	.volume {
