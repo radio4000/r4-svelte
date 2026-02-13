@@ -1,5 +1,5 @@
 <script>
-	import {InfiniteCanvas} from '$lib/infinite-canvas.js'
+	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
 	import {untrack} from 'svelte'
 
 	/**
@@ -14,19 +14,19 @@
 	 * @prop {{slug?: string}} [channel]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, backgroundColor?: string|null, fogColor?: string|null, onclick?: (item: MediaItem) => void}} */
-	let {media = [], activeId, backgroundColor = null, fogColor = null, onclick} = $props()
+	/** @type {{media?: MediaItem[], activeId?: string, backgroundColor?: string|null, onclick?: (item: MediaItem) => void}} */
+	let {media = [], activeId, backgroundColor = null, onclick} = $props()
 
 	/** @type {HTMLDivElement} */
 	let container
-	/** @type {InfiniteCanvas} */
+	/** @type {InfiniteCanvasOGL} */
 	let canvas
 
 	function getThemeColor(variable) {
 		if (typeof document === 'undefined') return '#ff0000'
 
 		// Resolve CSS variable (and light-dark) via a temp element
-		// getComputedStyle().color returns rgb() format which Three.js accepts directly
+		// getComputedStyle().color returns rgb() format which OGL accepts
 		const div = document.createElement('div')
 		div.style.color = `var(${variable})`
 		div.style.visibility = 'hidden'
@@ -41,12 +41,11 @@
 	$effect(() => {
 		if (!container) return
 		const accentColor = getThemeColor('--accent-9')
-		canvas = new InfiniteCanvas(container, {
+		canvas = new InfiniteCanvasOGL(container, {
 			media: untrack(() => media),
 			activeId: untrack(() => activeId),
 			accentColor,
 			backgroundColor,
-			fogColor,
 			onClick: onclick
 		})
 		return () => canvas?.dispose()
@@ -79,9 +78,17 @@
 	}
 
 	.canvas-container {
+		position: relative;
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
+	}
+
+	.canvas-container :global(canvas) {
+		position: absolute;
+		inset: 0;
+		width: 100% !important;
+		height: 100% !important;
 	}
 
 	.controls-hint {
@@ -90,7 +97,6 @@
 		right: var(--space-2);
 		padding: var(--space-2) var(--space-3);
 		font-size: var(--font-2);
-		line-height: 1.6;
 		pointer-events: none;
 		text-align: right;
 	}
