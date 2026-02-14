@@ -156,8 +156,8 @@
 					type="button"
 					role="menuitem"
 					{@attach tooltip({content: 'Play in new deck'})}
-					onclick={() => {
-						playTrackInNewDeck(track.id)
+					onclick={async () => {
+						await playTrackInNewDeck(track.id, track.slug)
 						menu?.close()
 					}}><Icon icon="sidebar-fill-right" size={16} /></button
 				>

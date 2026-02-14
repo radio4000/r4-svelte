@@ -213,9 +213,16 @@ export async function playChannel(deckId, {id, slug}, trackId) {
 	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
 
-export async function playTrackInNewDeck(trackId) {
+/**
+ * @param {string} trackId
+ * @param {string} [slug]
+ */
+export async function playTrackInNewDeck(trackId, slug) {
 	const deck = addDeck()
 	appState.active_deck_id = deck.id
+	if (slug && !(tracksCollection.get(trackId) ?? tracksCollection.state.get(trackId))) {
+		await ensureTracksLoaded(slug)
+	}
 	await playTrack(deck.id, trackId, null, 'user_click_track')
 }
 
