@@ -103,12 +103,7 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title">
-				{track.title}
-				{#if track.discogs_url}
-					<small>· {m.track_meta_discogs()}</small>
-				{/if}
-			</h3>
+			<h3 class="title">{track.title}</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
@@ -119,6 +114,9 @@
 		</div>
 		<time>
 			<span class="mobile">&rarr;</span>
+			{#if track.discogs_url}
+				<small class="discogs">{m.track_meta_discogs()}</small>
+			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</div>
@@ -249,7 +247,9 @@
 		display: flex;
 		flex-flow: column;
 		place-items: flex-end;
-		place-content: center;
+		place-content: flex-start;
+		padding-top: 0.1rem;
+		gap: 0.15rem;
 		/* because this is the actual link with some trickery */
 		cursor: pointer;
 
