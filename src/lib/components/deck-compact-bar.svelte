@@ -34,6 +34,7 @@
 
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
+	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
 
 	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
@@ -47,38 +48,40 @@
 </script>
 
 <div class="deck-compact-bar">
+	<div class="controls">
+		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous">
+			<Icon icon="previous-fill" />
+		</button>
+		<button class="play" class:active={deck?.is_playing} onclick={() => togglePlayPause(deckId)} aria-label="Play/pause">
+			<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+		</button>
+		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next">
+			<Icon icon="next-fill" />
+		</button>
+	</div>
 	<div class="header-info">
 		{#if displayChannel}
 			<a class="avatar" href={resolve(`/${displayChannel.slug}`)}>
 				<ChannelAvatar id={displayChannel.image} alt={displayChannel.name} />
 			</a>
 		{/if}
-		{#if imageSrc && displayTrack && displayChannel}
-			<a class="artwork" href={resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}>
+		{#if imageSrc && displayTrack && displaySlug}
+			<a class="artwork" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>
 				<img src={imageSrc} alt={displayTrack.title} />
 			</a>
 		{/if}
 		<div class="info">
 			{#if displayChannel}
 				<a class="channel" href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+			{:else if displaySlug}
+				<a class="channel" href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
 			{/if}
-			{#if displayTrack && displayChannel}
-				<a class="track" href={resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
+			{#if displayTrack && displaySlug}
+				<a class="track" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
 			{/if}
 		</div>
 	</div>
 	<div class="row-controls">
-		<div class="controls">
-			<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous">
-				<Icon icon="previous-fill" />
-			</button>
-			<button class="play" onclick={() => togglePlayPause(deckId)} aria-label="Play/pause">
-				<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-			</button>
-			<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next">
-				<Icon icon="next-fill" />
-			</button>
-		</div>
 		{#if appState.show_speed_control}
 			<div class="speed">
 				<button
@@ -159,7 +162,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		min-width: 0;
+		min-width: 12rem;
 		flex: 1 1 auto;
 	}
 

@@ -155,22 +155,18 @@
 	}
 
 	header {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		grid-template-areas:
-			'info'
-			'actions'
-			'hero';
+		display: flex;
+		flex-direction: column;
 		gap: clamp(0.45rem, 2vw, 0.75rem);
 		padding: clamp(0.45rem, 2vw, 0.7rem);
-		align-items: start;
+		align-items: stretch;
 	}
 
 	.info {
 		display: grid;
 		gap: 0.35rem;
 		min-width: 0;
-		grid-area: info;
+		flex: 1 1 auto;
 	}
 
 	h1 {
@@ -191,15 +187,11 @@
 		justify-content: center;
 		gap: 0.35rem;
 		align-items: center;
-		grid-area: actions;
-		align-self: start;
-		justify-self: stretch;
+		align-self: center;
 	}
 
 	.hero {
-		grid-area: hero;
-		justify-self: center;
-		align-self: start;
+		align-self: center;
 	}
 
 	.hero :global(figure) {
@@ -257,10 +249,8 @@
 
 	@media (min-width: 640px) {
 		header {
-			grid-template-columns: minmax(0, 1fr) auto;
-			grid-template-areas:
-				'info actions'
-				'info hero';
+			flex-direction: row;
+			flex-wrap: wrap;
 			column-gap: 0.8rem;
 			align-items: center;
 		}
@@ -269,20 +259,17 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: flex-start;
-			justify-self: end;
 			align-self: center;
 		}
 
 		.hero {
-			justify-self: end;
 			align-self: center;
 		}
 	}
 
 	@media (min-width: 900px) {
 		header {
-			grid-template-columns: minmax(0, 1fr) auto auto;
-			grid-template-areas: 'info actions hero';
+			flex-wrap: nowrap;
 			column-gap: 0.9rem;
 			align-items: center;
 		}
