@@ -23,7 +23,19 @@
 		return [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
 	})
 
-	let ytid = $derived(!track || appState.hide_track_artwork ? null : track.media_id)
+	let lastTrack = $state()
+	let lastChannel = $state()
+	$effect(() => {
+		if (track) lastTrack = track
+	})
+	$effect(() => {
+		if (channel) lastChannel = channel
+	})
+
+	let displayTrack = $derived(track ?? lastTrack)
+	let displayChannel = $derived(channel ?? lastChannel)
+
+	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
 	/** @type {string[]} */
@@ -36,22 +48,22 @@
 
 <div class="deck-compact-bar">
 	<div class="header-info">
-		{#if channel}
-			<a class="avatar" href={resolve(`/${channel.slug}`)}>
-				<ChannelAvatar id={channel.image} alt={channel.name} />
+		{#if displayChannel}
+			<a class="avatar" href={resolve(`/${displayChannel.slug}`)}>
+				<ChannelAvatar id={displayChannel.image} alt={displayChannel.name} />
 			</a>
 		{/if}
-		{#if imageSrc && track && channel}
-			<a class="artwork" href={resolve(`/${channel.slug}/tracks/${track.id}`)}>
-				<img src={imageSrc} alt={track.title} />
+		{#if imageSrc && displayTrack && displayChannel}
+			<a class="artwork" href={resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}>
+				<img src={imageSrc} alt={displayTrack.title} />
 			</a>
 		{/if}
 		<div class="info">
-			{#if channel}
-				<a class="channel" href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+			{#if displayChannel}
+				<a class="channel" href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
 			{/if}
-			{#if track}
-				<a class="track" href={resolve(`/${channel?.slug}/tracks/${track.id}`)}>{track.title}</a>
+			{#if displayTrack && displayChannel}
+				<a class="track" href={resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
 			{/if}
 		</div>
 	</div>
@@ -132,7 +144,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		flex: 1;
+		flex: 0 1 auto;
 		min-width: 0;
 	}
 
@@ -148,7 +160,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		min-width: 0;
-		flex: 1;
+		flex: 1 1 auto;
 	}
 
 	.avatar {
@@ -180,7 +192,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.1rem;
-		flex: 1;
+		flex: 0 0 auto;
 		min-width: 0;
 	}
 
@@ -192,9 +204,8 @@
 	}
 
 	.range {
-		flex: 1 1 0;
-		min-width: 0;
-		width: 100%;
+		flex: 0 0 4.5rem;
+		width: 4.5rem;
 		cursor: pointer;
 		accent-color: var(--accent-9);
 	}
@@ -232,5 +243,11 @@
 		white-space: nowrap;
 		color: inherit;
 		text-decoration: none;
+	}
+
+	@media (max-width: 760px) {
+		.range {
+			display: none;
+		}
 	}
 </style>
