@@ -69,11 +69,11 @@
 						})}
 					</small>
 				</p>
-				{#if channel.description}
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-				{/if}
 				{#if channel.url}
 					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				{/if}
+				{#if channel.description}
+					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 				{/if}
 			</div>
 			<menu class="channel-actions">
@@ -211,6 +211,15 @@
 	.dates,
 	.url {
 		color: var(--gray-10);
+	}
+
+	.url {
+		font-style: italic;
+		color: var(--gray-9);
+	}
+
+	.url a {
+		color: inherit;
 	}
 
 	main {
