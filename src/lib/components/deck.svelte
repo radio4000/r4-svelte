@@ -104,15 +104,20 @@
 	}
 
 	.resize-handle {
-		width: 5px;
+		width: 2px;
 		cursor: col-resize;
 		background: var(--gray-7);
 		flex-shrink: 0;
 		touch-action: none;
+		transition:
+			width 120ms ease,
+			background-color 120ms ease;
 	}
 
 	.resize-handle:hover,
+	.resize-handle:focus-visible,
 	.deck.resizing .resize-handle {
+		width: 5px;
 		background: var(--accent, var(--gray-5));
 	}
 
