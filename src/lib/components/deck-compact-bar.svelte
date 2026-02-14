@@ -3,6 +3,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {togglePlayPause, next, previous, getMediaPlayer} from '$lib/api'
+	import {queuePrev} from '$lib/player/queue'
 	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -43,13 +44,18 @@
 	let trackIds = $derived(deck?.playlist_tracks || [])
 	/** @type {string[]} */
 	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
+	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
+	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
+	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
+	// next() loops to queue start, so any current track in a non-empty queue can go next
+	let canNextFromQueue = $derived(canPlayFromQueue)
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 </script>
 
 <div class="deck-compact-bar">
 	<div class="controls">
-		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous">
+		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous" disabled={!canPrevFromQueue}>
 			<Icon icon="previous-fill" />
 		</button>
 		<button
@@ -57,10 +63,11 @@
 			class:active={deck?.is_playing}
 			onclick={() => togglePlayPause(deckId)}
 			aria-label="Play/pause"
+			disabled={!canPlayFromQueue}
 		>
 			<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 		</button>
-		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next">
+		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next" disabled={!canNextFromQueue}>
 			<Icon icon="next-fill" />
 		</button>
 	</div>

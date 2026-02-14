@@ -17,6 +17,7 @@
 		getUserInitiatedPlay,
 		setUserInitiatedPlay
 	} from '$lib/api'
+	import {queuePrev} from '$lib/player/queue'
 	import {leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -64,6 +65,11 @@
 
 	/** @type {string[]} */
 	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
+	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
+	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
+	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
+	// next() loops to queue start, so any current track in a non-empty queue can go next
+	let canNextFromQueue = $derived(canPlayFromQueue)
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
@@ -412,6 +418,7 @@
 {#snippet btnPrev()}
 	<button
 		onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
+		disabled={!canPrevFromQueue}
 		class="prev"
 		{@attach tooltip({content: m.player_tooltip_prev()})}
 	>
@@ -422,7 +429,7 @@
 {#snippet btnNext()}
 	<button
 		onclick={() => next(deckId, track, activeQueue, 'user_next')}
-		disabled={!canPlay}
+		disabled={!canNextFromQueue}
 		class="next"
 		{@attach tooltip({content: m.player_tooltip_next()})}
 	>
@@ -433,7 +440,7 @@
 {#snippet btnPlay()}
 	<button
 		onclick={() => togglePlay(mediaElement)}
-		disabled={!canPlay}
+		disabled={!canPlayFromQueue}
 		class="play"
 		class:active={deck?.is_playing}
 		{@attach tooltip({content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
