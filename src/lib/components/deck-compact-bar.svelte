@@ -36,6 +36,7 @@
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
 	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
+	let supportsPlaybackSpeed = $derived(displayTrack?.provider === 'youtube')
 
 	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
@@ -94,7 +95,7 @@
 		</div>
 	</div>
 	<div class="row-controls">
-		{#if appState.show_speed_control}
+		{#if appState.show_speed_control && supportsPlaybackSpeed}
 			<div class="speed">
 				<button
 					class="speed-btn"

@@ -59,6 +59,7 @@
 
 	let src = $derived(track?.url)
 	let mediaElement = $derived(track?.provider === 'youtube' ? youtubePlayer : soundcloudPlayer)
+	let supportsPlaybackSpeed = $derived(track?.provider === 'youtube')
 
 	/** @type {string[]} */
 	let trackIds = $derived(deck?.playlist_tracks || [])
@@ -364,7 +365,7 @@
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
-				{#if appState.show_speed_control}
+				{#if appState.show_speed_control && supportsPlaybackSpeed}
 					<div class="speed">
 						<button
 							class="speed-btn"
