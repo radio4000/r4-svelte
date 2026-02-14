@@ -48,8 +48,7 @@
 	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
 	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
 	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
-	// next() loops to queue start, so any current track in a non-empty queue can go next
-	let canNextFromQueue = $derived(canPlayFromQueue)
+	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 </script>
