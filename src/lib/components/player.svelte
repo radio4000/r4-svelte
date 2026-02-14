@@ -211,7 +211,7 @@
 </script>
 
 <div class="player">
-	<!-- 1. Top bar: logo + deck controls -->
+	<!-- 1. Top bar: logo + player controls -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
@@ -221,42 +221,59 @@
 					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
 				{/if}
 			</div>
-			<menu class="deck-controls">
-				<button
-					onclick={() => {
-						removeDeck(deckId)
-						const bchId = getBroadcastingChannelId()
-						if (bchId) notifyBroadcastState(bchId)
-					}}
-					{@attach tooltip({content: 'Close deck', position: 'top'})}
-				>
-					<Icon icon="close" />
-				</button>
-				<button
-					onclick={() => toggleVideoPlayer(deckId)}
-					class:active={deck?.hide_video_player}
-					aria-label={m.player_visible()}
-					{@attach tooltip({content: m.player_visible(), position: 'top'})}
-				>
-					<Icon icon="tv" />
-				</button>
-				{#if !isListeningToBroadcast}
-					<button
-						onclick={() => toggleQueuePanel(deckId)}
-						class:active={deck?.hide_queue_panel}
-						aria-label={m.queue_visible()}
-						{@attach tooltip({content: m.queue_visible(), position: 'top'})}
-					>
-						<Icon icon="unordered-list" />
+			<menu class="player-controls">
+				{#if isListeningToBroadcast}
+					<button onclick={() => leaveBroadcast(deckId)} class="btn">
+						{m.broadcasts_leave()}
 					</button>
+				{:else}
+					{@render btnPrev()}
+					{@render btnPlay()}
+					{@render btnNext()}
+					{#if appState.show_speed_control}
+						<div class="speed">
+							<button
+								class="speed-btn"
+								class:active={deck?.speed != null && deck.speed !== 1}
+								onclick={() => handleSpeedChange(1)}
+								{@attach tooltip({content: 'Reset speed', position: 'top'})}
+							>
+								{deck?.speed ?? 1}x
+							</button>
+							<input
+								type="range"
+								min="0.25"
+								max="2"
+								step="0.25"
+								value={deck?.speed ?? 1}
+								oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
+								class="speed-range"
+								data-default={!deck?.speed || deck.speed === 1 || null}
+							/>
+						</div>
+					{/if}
 				{/if}
-				<button
-					onclick={() => togglePlayerExpanded(deckId)}
-					class:active={deck?.expanded}
-					{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
-				>
-					<Icon icon="fullscreen" />
-				</button>
+				<div class="volume">
+					<media-mute-button
+						mediacontroller={mediaControllerId}
+						class="btn"
+						{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+					></media-mute-button>
+					<input
+						type="range"
+						min="0"
+						max="1"
+						step="0.01"
+						value={deck?.volume ?? 1}
+						oninput={(e) => {
+							const val = Number(e.currentTarget.value)
+							if (deck) deck.volume = val
+							if (mediaElement) mediaElement.volume = val
+						}}
+						class="volume-range"
+						data-muted={deck?.muted || deck?.volume === 0 || null}
+					/>
+				</div>
 			</menu>
 		</div>
 	</header>
@@ -353,67 +370,49 @@
 							<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
 						</div>
 					{/if}
-					<button class="compact-toggle" onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
-						<Icon icon="sidebar-fill-right" />
-					</button>
 				</div>
 			{/if}
 		</footer>
 
-		<!-- 5. Transport + volume -->
-		<menu class="transport">
-			{#if isListeningToBroadcast}
-				<button onclick={() => leaveBroadcast(deckId)} class="btn">
-					{m.broadcasts_leave()}
+		<menu class="layout-controls">
+			<button
+				onclick={() => {
+					removeDeck(deckId)
+					const bchId = getBroadcastingChannelId()
+					if (bchId) notifyBroadcastState(bchId)
+				}}
+				{@attach tooltip({content: 'Close deck', position: 'top'})}
+			>
+				<Icon icon="close" />
+			</button>
+			<button
+				onclick={() => toggleVideoPlayer(deckId)}
+				class:active={deck?.hide_video_player}
+				aria-label={m.player_visible()}
+				{@attach tooltip({content: m.player_visible(), position: 'top'})}
+			>
+				<Icon icon="tv" />
+			</button>
+			{#if !isListeningToBroadcast}
+				<button
+					onclick={() => toggleQueuePanel(deckId)}
+					class:active={deck?.hide_queue_panel}
+					aria-label={m.queue_visible()}
+					{@attach tooltip({content: m.queue_visible(), position: 'top'})}
+				>
+					<Icon icon="unordered-list" />
 				</button>
-			{:else}
-				{@render btnPrev()}
-				{@render btnPlay()}
-				{@render btnNext()}
-				{#if appState.show_speed_control}
-					<div class="speed">
-						<button
-							class="speed-btn"
-							class:active={deck?.speed != null && deck.speed !== 1}
-							onclick={() => handleSpeedChange(1)}
-							{@attach tooltip({content: 'Reset speed', position: 'top'})}
-						>
-							{deck?.speed ?? 1}x
-						</button>
-						<input
-							type="range"
-							min="0.25"
-							max="2"
-							step="0.25"
-							value={deck?.speed ?? 1}
-							oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
-							class="speed-range"
-							data-default={!deck?.speed || deck.speed === 1 || null}
-						/>
-					</div>
-				{/if}
 			{/if}
-			<div class="volume">
-				<media-mute-button
-					mediacontroller={mediaControllerId}
-					class="btn"
-					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-				></media-mute-button>
-				<input
-					type="range"
-					min="0"
-					max="1"
-					step="0.01"
-					value={deck?.volume ?? 1}
-					oninput={(e) => {
-						const val = Number(e.currentTarget.value)
-						if (deck) deck.volume = val
-						if (mediaElement) mediaElement.volume = val
-					}}
-					class="volume-range"
-					data-muted={deck?.muted || deck?.volume === 0 || null}
-				/>
-			</div>
+			<button
+				onclick={() => togglePlayerExpanded(deckId)}
+				class:active={deck?.expanded}
+				{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
+			>
+				<Icon icon="fullscreen" />
+			</button>
+			<button onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
+				<Icon icon="sidebar-fill-right" />
+			</button>
 		</menu>
 	</section>
 </div>
@@ -585,10 +584,24 @@
 		accent-color: var(--accent-9);
 	}
 
-	.deck-controls {
+	.player-controls {
 		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		flex: 1;
+		justify-content: flex-end;
+		min-width: 0;
+	}
+
+	.layout-controls {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
 		gap: 0.1rem;
 		flex-shrink: 0;
+		width: 100%;
+		padding: 0.5rem 0.6rem;
+		border-top: 1px solid var(--gray-6);
 	}
 
 	.video {
@@ -597,16 +610,6 @@
 		width: 100%;
 		max-height: 25dvh;
 		background: black;
-	}
-
-	.transport {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.1rem;
-		flex-shrink: 0;
-		padding: 0.5rem 0.6rem;
-		border-top: 1px solid var(--gray-6);
 	}
 
 	.bottom-chrome {
@@ -622,11 +625,6 @@
 		border-radius: var(--border-radius);
 		background: var(--header-bg);
 		margin: 0 0.4rem 0.6rem;
-	}
-
-	.compact-toggle {
-		flex-shrink: 0;
-		margin-left: auto;
 	}
 
 	.volume {

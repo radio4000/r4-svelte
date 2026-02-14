@@ -245,6 +245,7 @@
 
 	.compact-decks {
 		display: flex;
+		flex-direction: column;
 		gap: 0.5rem;
 		padding: 0.4rem 0.5rem;
 		border-top: 1px solid var(--gray-5);
@@ -259,7 +260,7 @@
 	}
 
 	.compact-decks :global(.deck-compact-bar) {
-		flex: 1;
+		flex: 0 0 auto;
 		min-width: 0;
 	}
 
@@ -279,14 +280,11 @@
 		}
 
 		.compact-decks {
-			overflow-x: auto;
-			scroll-snap-type: x mandatory;
-			padding-inline: 0.25rem;
+			padding-inline: 0.5rem;
 		}
 
 		.compact-decks :global(.deck-compact-bar) {
-			scroll-snap-align: start;
-			min-width: 200px;
+			min-width: 0;
 		}
 	}
 

@@ -54,9 +54,6 @@
 				<a class="track" href={resolve(`/${channel?.slug}/tracks/${track.id}`)}>{track.title}</a>
 			{/if}
 		</div>
-		<button class="expand" onclick={() => (deck.compact = false)} aria-label="Expand deck">
-			<Icon icon="sidebar-fill-right" />
-		</button>
 	</div>
 	<div class="row-controls">
 		<div class="controls">
@@ -113,14 +110,17 @@
 				data-muted={deck?.muted || deck?.volume === 0 || null}
 			/>
 		</div>
+		<button class="expand" onclick={() => (deck.compact = false)} aria-label="Expand deck">
+			<Icon icon="sidebar-fill-right" />
+		</button>
 	</div>
 </div>
 
 <style>
 	.deck-compact-bar {
 		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
+		align-items: center;
+		gap: 0.4rem;
 		padding: 0.3rem 0.6rem;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
@@ -132,6 +132,8 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
+		flex: 1;
+		min-width: 0;
 	}
 
 	.controls {
@@ -214,7 +216,6 @@
 
 	.expand {
 		flex-shrink: 0;
-		margin-left: auto;
 	}
 
 	.info {
