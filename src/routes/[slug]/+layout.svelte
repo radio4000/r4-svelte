@@ -58,30 +58,10 @@
 	<div class="channel-layout fill-height">
 		<header>
 			<div class="info">
-				<menu>
-					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-					{#if channel.source !== 'v1'}
-						{#if hasChannel}
-							<ButtonFollow {channel} />
-						{:else}
-							<a href={authUrl} class="btn" title={m.button_follow()}>
-								<Icon icon="favorite" />
-							</a>
-						{/if}
-					{/if}
-					<button type="button" onclick={() => (appState.modal_share = {channel})}>
-						<Icon icon="share" size={16} />
-						{m.share_native()}
-					</button>
-				</menu>
-				<p class="slug"><small>@{slug}</small></p>
 				<h1>{channel.name}</h1>
-				{#if channel.description}
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-				{/if}
-				{#if channel.url}
-					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
-				{/if}
+				<p class="slug">
+					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
+				</p>
 				<p class="dates">
 					<small>
 						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
@@ -89,8 +69,32 @@
 						})}
 					</small>
 				</p>
+				{#if channel.description}
+					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
+				{/if}
+				{#if channel.url}
+					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				{/if}
 			</div>
-			<ChannelHero {channel} />
+			<menu class="channel-actions">
+				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
+				{#if channel.source !== 'v1'}
+					{#if hasChannel}
+						<ButtonFollow {channel} />
+					{:else}
+						<a href={authUrl} class="btn" title={m.button_follow()}>
+							<Icon icon="favorite" />
+						</a>
+					{/if}
+				{/if}
+				<button type="button" onclick={() => (appState.modal_share = {channel})}>
+					<Icon icon="share" size={16} />
+					{m.share_native()}
+				</button>
+			</menu>
+			<div class="hero">
+				<ChannelHero {channel} />
+			</div>
 		</header>
 
 		<div class="horizontalOverflow channel-nav">
@@ -151,35 +155,62 @@
 	}
 
 	header {
-		display: flex;
-		flex-flow: row;
-		gap: 0.75rem;
-		padding: 0.5rem;
-	}
-
-	header :global(figure) {
-		max-width: 7rem;
-		min-width: 0;
-		flex-shrink: 0;
-		align-self: flex-end;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			'info'
+			'actions'
+			'hero';
+		gap: clamp(0.45rem, 2vw, 0.75rem);
+		padding: clamp(0.45rem, 2vw, 0.7rem);
+		align-items: start;
 	}
 
 	.info {
-		flex: 1;
+		display: grid;
+		gap: 0.35rem;
 		min-width: 0;
+		grid-area: info;
 	}
 
 	h1 {
-		margin-top: var(--space-3);
-		font-size: var(--font-9);
+		margin-top: 0.1rem;
+		font-size: clamp(var(--font-7), 7vw, var(--font-9));
+		line-height: 1.05;
 	}
 
 	.description {
 		white-space: pre-wrap;
 	}
 
-	menu {
-		margin-bottom: 0.75rem;
+	.channel-actions {
+		margin: 0;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.35rem;
+		align-items: center;
+		grid-area: actions;
+		align-self: start;
+		justify-self: stretch;
+	}
+
+	.hero {
+		grid-area: hero;
+		justify-self: center;
+		align-self: start;
+	}
+
+	.hero :global(figure) {
+		max-width: clamp(6rem, 38vw, 9rem);
+		min-width: 0;
+	}
+
+	.slug,
+	.dates,
+	.url {
+		color: var(--gray-10);
 	}
 
 	main {
@@ -215,15 +246,40 @@
 		margin-left: auto;
 	}
 
-	@media (max-width: 500px) {
+	@media (min-width: 640px) {
 		header {
-			flex-direction: column;
+			grid-template-columns: minmax(0, 1fr) auto;
+			grid-template-areas:
+				'info actions'
+				'info hero';
+			column-gap: 0.8rem;
 			align-items: center;
-			text-align: center;
 		}
 
-		menu {
-			justify-content: center;
+		.channel-actions {
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			justify-self: end;
+			align-self: center;
+		}
+
+		.hero {
+			justify-self: end;
+			align-self: center;
+		}
+	}
+
+	@media (min-width: 900px) {
+		header {
+			grid-template-columns: minmax(0, 1fr) auto auto;
+			grid-template-areas: 'info actions hero';
+			column-gap: 0.9rem;
+			align-items: center;
+		}
+
+		.hero :global(figure) {
+			max-width: clamp(6rem, 16vw, 10rem);
 		}
 	}
 </style>
