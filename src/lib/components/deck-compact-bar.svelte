@@ -52,7 +52,12 @@
 		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous">
 			<Icon icon="previous-fill" />
 		</button>
-		<button class="play" class:active={deck?.is_playing} onclick={() => togglePlayPause(deckId)} aria-label="Play/pause">
+		<button
+			class="play"
+			class:active={deck?.is_playing}
+			onclick={() => togglePlayPause(deckId)}
+			aria-label="Play/pause"
+		>
 			<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 		</button>
 		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next">

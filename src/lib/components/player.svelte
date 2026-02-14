@@ -406,7 +406,6 @@
 				<Icon icon="sidebar-fill-right" />
 			</button>
 		</menu>
-
 	</section>
 </div>
 
@@ -516,15 +515,6 @@
 		align-items: center;
 		gap: 0.4rem;
 		padding: 0.3rem 0.6rem;
-	}
-
-	.avatar {
-		flex-shrink: 0;
-		width: 2.5rem;
-
-		:global(img) {
-			border-radius: var(--media-radius);
-		}
 	}
 
 	.track-artwork {
