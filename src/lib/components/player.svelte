@@ -230,7 +230,7 @@
 					}}
 					{@attach tooltip({content: 'Close deck', position: 'top'})}
 				>
-					<Icon icon="delete" />
+					<Icon icon="close" />
 				</button>
 				<button
 					onclick={() => toggleVideoPlayer(deckId)}
@@ -296,124 +296,126 @@
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
 
-	<!-- 4. Channel/track info + deck toggle -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
-		{#if isListeningToBroadcast && broadcastingChannel}
-			<div class="header-info">
-				<a href={resolve(`/${broadcastingChannel.slug}`)} class="avatar">
-					<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
-				</a>
-				{#if channel && track}
-					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
-					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
-					{#if ytid}
-						<a href={trackHref} class="track-artwork"
-							><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
-						>
-					{/if}
-					<div class="info">
-						<a href={trackHref}><strong>{track.title}</strong></a>
-						<small class="description">
-							<a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a>
-							{#if channel.slug !== broadcastingChannel.slug}
-								&middot; <a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
-							{/if}
-						</small>
-					</div>
-				{:else}
-					<div class="info">
-						<strong><a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a></strong>
-					</div>
-				{/if}
-				<span class="caps btn-leave">Live</span>
-			</div>
-		{:else if channel}
-			<div class="header-info">
-				<a href={resolve(`/${channel.slug}`)} class="avatar">
-					<ChannelAvatar id={channel.image} alt={channel.name} />
-				</a>
-				{#if track}
-					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
-					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
-					{#if ytid}
-						<a href={trackHref} class="track-artwork"
-							><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
-						>
-					{/if}
-					<div class="info">
-						<a href={trackHref}><strong>{track.title}</strong></a>
-						{#if track.description}
-							<small class="description">{track.description}</small>
+	<section class="bottom-chrome">
+		<!-- 4. Channel/track info + deck toggle -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
+			{#if isListeningToBroadcast && broadcastingChannel}
+				<div class="header-info">
+					<a href={resolve(`/${broadcastingChannel.slug}`)} class="avatar">
+						<ChannelAvatar id={broadcastingChannel.image} alt={broadcastingChannel.name} />
+					</a>
+					{#if channel && track}
+						{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
+						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+						{#if ytid}
+							<a href={trackHref} class="track-artwork"
+								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+							>
 						{/if}
-					</div>
-				{:else}
-					<div class="info">
-						<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
-					</div>
-				{/if}
-				<button class="compact-toggle" onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
-					<Icon icon="sidebar-fill-right" />
-				</button>
-			</div>
-		{/if}
-	</footer>
-
-	<!-- 5. Transport + volume -->
-	<menu class="transport">
-		{#if isListeningToBroadcast}
-			<button onclick={() => leaveBroadcast(deckId)} class="btn">
-				{m.broadcasts_leave()}
-			</button>
-		{:else}
-			{@render btnPrev()}
-			{@render btnPlay()}
-			{@render btnNext()}
-			{#if appState.show_speed_control}
-				<div class="speed">
-					<button
-						class="speed-btn"
-						class:active={deck?.speed != null && deck.speed !== 1}
-						onclick={() => handleSpeedChange(1)}
-						{@attach tooltip({content: 'Reset speed', position: 'top'})}
-					>
-						{deck?.speed ?? 1}x
+						<div class="info">
+							<a href={trackHref}><strong>{track.title}</strong></a>
+							<small class="description">
+								<a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a>
+								{#if channel.slug !== broadcastingChannel.slug}
+									&middot; <a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+								{/if}
+							</small>
+						</div>
+					{:else}
+						<div class="info">
+							<strong><a href={resolve(`/${broadcastingChannel.slug}`)}>{broadcastingChannel.name}</a></strong>
+						</div>
+					{/if}
+					<span class="caps btn-leave">Live</span>
+				</div>
+			{:else if channel}
+				<div class="header-info">
+					<a href={resolve(`/${channel.slug}`)} class="avatar">
+						<ChannelAvatar id={channel.image} alt={channel.name} />
+					</a>
+					{#if track}
+						{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
+						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+						{#if ytid}
+							<a href={trackHref} class="track-artwork"
+								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+							>
+						{/if}
+						<div class="info">
+							<a href={trackHref}><strong>{track.title}</strong></a>
+							{#if track.description}
+								<small class="description">{track.description}</small>
+							{/if}
+						</div>
+					{:else}
+						<div class="info">
+							<strong><a href={resolve(`/${channel.slug}`)}>{channel.name}</a></strong>
+						</div>
+					{/if}
+					<button class="compact-toggle" onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
+						<Icon icon="sidebar-fill-right" />
 					</button>
-					<input
-						type="range"
-						min="0.25"
-						max="2"
-						step="0.25"
-						value={deck?.speed ?? 1}
-						oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
-						class="speed-range"
-						data-default={!deck?.speed || deck.speed === 1 || null}
-					/>
 				</div>
 			{/if}
-		{/if}
-		<div class="volume">
-			<media-mute-button
-				mediacontroller={mediaControllerId}
-				class="btn"
-				{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-			></media-mute-button>
-			<input
-				type="range"
-				min="0"
-				max="1"
-				step="0.01"
-				value={deck?.volume ?? 1}
-				oninput={(e) => {
-					const val = Number(e.currentTarget.value)
-					if (deck) deck.volume = val
-					if (mediaElement) mediaElement.volume = val
-				}}
-				class="volume-range"
-				data-muted={deck?.muted || deck?.volume === 0 || null}
-			/>
-		</div>
-	</menu>
+		</footer>
+
+		<!-- 5. Transport + volume -->
+		<menu class="transport">
+			{#if isListeningToBroadcast}
+				<button onclick={() => leaveBroadcast(deckId)} class="btn">
+					{m.broadcasts_leave()}
+				</button>
+			{:else}
+				{@render btnPrev()}
+				{@render btnPlay()}
+				{@render btnNext()}
+				{#if appState.show_speed_control}
+					<div class="speed">
+						<button
+							class="speed-btn"
+							class:active={deck?.speed != null && deck.speed !== 1}
+							onclick={() => handleSpeedChange(1)}
+							{@attach tooltip({content: 'Reset speed', position: 'top'})}
+						>
+							{deck?.speed ?? 1}x
+						</button>
+						<input
+							type="range"
+							min="0.25"
+							max="2"
+							step="0.25"
+							value={deck?.speed ?? 1}
+							oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
+							class="speed-range"
+							data-default={!deck?.speed || deck.speed === 1 || null}
+						/>
+					</div>
+				{/if}
+			{/if}
+			<div class="volume">
+				<media-mute-button
+					mediacontroller={mediaControllerId}
+					class="btn"
+					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+				></media-mute-button>
+				<input
+					type="range"
+					min="0"
+					max="1"
+					step="0.01"
+					value={deck?.volume ?? 1}
+					oninput={(e) => {
+						const val = Number(e.currentTarget.value)
+						if (deck) deck.volume = val
+						if (mediaElement) mediaElement.volume = val
+					}}
+					class="volume-range"
+					data-muted={deck?.muted || deck?.volume === 0 || null}
+				/>
+			</div>
+		</menu>
+	</section>
 </div>
 
 {#snippet btnPrev()}
@@ -607,14 +609,19 @@
 		border-top: 1px solid var(--gray-6);
 	}
 
-	.header-footer {
+	.bottom-chrome {
 		margin-top: auto;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.header-footer {
 		flex-shrink: 0;
 		cursor: pointer;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		background: var(--header-bg);
-		margin: auto 0.4rem 0.6rem;
+		margin: 0 0.4rem 0.6rem;
 	}
 
 	.compact-toggle {

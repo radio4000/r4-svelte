@@ -23,12 +23,4 @@
 	.deck-strip:empty {
 		display: none;
 	}
-
-	@media (max-width: 768px) {
-		.deck-strip {
-			flex-direction: column;
-			width: 100%;
-			height: auto;
-		}
-	}
 </style>
