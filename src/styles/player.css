@@ -45,6 +45,12 @@ media-time-range {
 	--media-control-background: none;
 }
 
+media-time-range {
+	/* Keep elapsed/played progress in active theme color. */
+	--media-range-bar-color: var(--accent-9);
+	--media-range-thumb-background: var(--accent-9);
+}
+
 .player {
 	h2 a,
 	h3 a {

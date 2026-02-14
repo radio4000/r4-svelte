@@ -54,7 +54,8 @@ export function setUserInitiatedPlay(deckId, value) {
 export function getMediaPlayer(deckId) {
 	return /** @type {any} */ (
 		document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
-			document.querySelector(`[data-deck="${deckId}"] soundcloud-player`)
+			document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
+			document.querySelector(`[data-deck="${deckId}"] audio[slot="media"]`)
 	)
 }
 
@@ -378,10 +379,13 @@ export function openSearch(event) {
 /** @param {number} deckId */
 export function togglePlayPause(deckId) {
 	const player = getMediaPlayer(deckId)
+	const deck = appState.decks[deckId]
 	if (player) {
 		if (player.paused) {
+			if (deck) deck.is_playing = true
 			player.play()
 		} else {
+			if (deck) deck.is_playing = false
 			player.pause()
 		}
 	}

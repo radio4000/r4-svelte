@@ -17,6 +17,7 @@
 	"account_sign_in_prompt": "Please sign in to manage your account",
 	"app_loading": "Preparing R5…",
 	"app_name": "R5",
+	"app_version": "Version {sha}",
 	"auth_already_have_account": "Already have an account? Sign in instead.",
 	"auth_already_have_account_intro": "Already have an account?",
 	"auth_card_create_description": "I'm new to Radio4000",
@@ -292,6 +293,7 @@
 	"page_title_spam_warrior": "Spam Channel Review - R5 Admin",
 	"page_title_stats": "R5 / Stats",
 	"player_empty_prompt": "Find some sweet music",
+	"player_hidden": "Player hidden",
 	"player_live_indicator": "🔴 LIVE",
 	"player_tooltip_expand": "Expand player <kbd>F</kbd>",
 	"player_tooltip_mute": "Mute <kbd>M</kbd>",
@@ -306,6 +308,7 @@
 	"queue_clear_history_confirm": "Are you sure you want to clear your listening history? This cannot be undone.",
 	"queue_clear_history_title": "Clear listening history",
 	"queue_empty": "No tracks match this filter.",
+	"queue_hidden": "Queue hidden",
 	"queue_history_hint": "Start playing tracks to see history",
 	"queue_no_history": "No matching history entries.",
 	"queue_no_play_history": "No listening history yet.",
@@ -599,6 +602,5 @@
 	"track_related_heading": "Other tracks using the same YouTube video:",
 	"track_urls_page_title": "Track URLs - {name} - R5",
 	"tracks_no_media_id": "No YouTube ID for {url}",
-	"tracks_no_results": "No tracks found.",
-	"app_version": "Version {sha}"
+	"tracks_no_results": "No tracks found."
 }

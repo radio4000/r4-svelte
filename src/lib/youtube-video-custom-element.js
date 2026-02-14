@@ -21,6 +21,7 @@ class YouTube2Element extends HTMLElement {
 
 	/** @type {YT.PlayerError | null} */
 	#errorCode = null
+	#lastDuration = NaN
 
 	constructor() {
 		super()
@@ -126,6 +127,11 @@ class YouTube2Element extends HTMLElement {
 
 			// @ts-expect-error onVideoProgress is undocumented but works
 			this.api.addEventListener('onVideoProgress', () => {
+				const duration = this.api?.getDuration?.() ?? NaN
+				if (Number.isFinite(duration) && duration > 0 && Math.abs(duration - this.#lastDuration) > 0.25) {
+					this.#lastDuration = duration
+					this.dispatchEvent(new Event('durationchange'))
+				}
 				// log.debug('onVideoProgress fired, dispatching timeupdate')
 				this.dispatchEvent(new Event('timeupdate'))
 			})
@@ -178,6 +184,7 @@ class YouTube2Element extends HTMLElement {
 		// Reset state for new video
 		this.#autoplayAttempted = false
 		this.#errorCode = null
+		this.#lastDuration = NaN
 
 		// Fire durationchange to signal new media
 		this.dispatchEvent(new Event('durationchange'))

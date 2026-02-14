@@ -9,7 +9,7 @@
 		next,
 		play,
 		previous,
-		togglePlay,
+		togglePlayPause,
 		toggleDeckCompact,
 		togglePlayerExpanded,
 		toggleQueuePanel,
@@ -24,6 +24,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
+	import {inferPlayerProvider} from '$lib/media'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -37,11 +38,11 @@
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
-	let showDeckNumber = $derived(deckCount > 1)
 
 	// Both media player elements
 	let youtubePlayer = $state()
 	let soundcloudPlayer = $state()
+	let audioPlayer = $state()
 
 	// Reactive track lookup - get from collection state
 	// untrack the collection access to avoid state_unsafe_mutation during hydration
@@ -56,10 +57,34 @@
 		if (!track?.slug) return undefined
 		return untrack(() => [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug))
 	})
+	let lastTrack = $state()
+	let lastChannel = $state()
+	$effect(() => {
+		if (track) lastTrack = track
+	})
+	$effect(() => {
+		if (channel) lastChannel = channel
+	})
+	let displayTrack = $derived(track ?? lastTrack)
+	let displayChannel = $derived(channel ?? lastChannel)
 
 	let src = $derived(track?.url)
-	let mediaElement = $derived(track?.provider === 'youtube' ? youtubePlayer : soundcloudPlayer)
-	let supportsPlaybackSpeed = $derived(track?.provider === 'youtube')
+	let provider = $derived(inferPlayerProvider(track?.provider, track?.url))
+	let useNativeAudio = $derived(provider === 'audio')
+	let mediaElement = $derived.by(() => {
+		if (provider === 'youtube') return youtubePlayer
+		if (provider === 'soundcloud') return soundcloudPlayer
+		if (useNativeAudio) return audioPlayer
+		return undefined
+	})
+	let supportsPlaybackSpeed = $derived(
+		provider !== 'soundcloud' && Boolean(mediaElement && 'playbackRate' in mediaElement)
+	)
+	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
+	let speedMax = $derived(useNativeAudio ? 3 : 2)
+	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
+	let nativeCurrentTime = $state(0)
+	let nativeDuration = $state(0)
 
 	/** @type {string[]} */
 	let trackIds = $derived(deck?.playlist_tracks || [])
@@ -69,8 +94,7 @@
 	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
 	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
 	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
-	// next() loops to queue start, so any current track in a non-empty queue can go next
-	let canNextFromQueue = $derived(canPlayFromQueue)
+	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
@@ -83,7 +107,7 @@
 		if (!id) return undefined
 		return untrack(() => channelsCollection.state.get(id))
 	})
-	let headerChannel = $derived(isListeningToBroadcast ? broadcastingChannel : channel)
+	let headerChannel = $derived(isListeningToBroadcast ? broadcastingChannel : displayChannel)
 
 	// Track previous track ID to detect changes for autoplay
 	let prevTrackId = $state(/** @type {string|undefined} */ (undefined))
@@ -115,6 +139,9 @@
 		didPlay = true
 		userHasPlayed = true
 		if (deck) deck.is_playing = true
+		if (deck && mediaElement && 'playbackRate' in mediaElement) {
+			mediaElement.playbackRate = deck.speed ?? 1
+		}
 		if (deck && mediaElement) {
 			deck.seeked_at = new Date().toISOString()
 			deck.seek_position = mediaElement.currentTime ?? 0
@@ -173,6 +200,9 @@
 	}
 
 	function handleVolumeChange(e) {
+		// Providers can emit synthetic volumechange during initialization/load.
+		// Keep deck volume authoritative and only sync trusted/user-originated changes.
+		if (!e.isTrusted) return
 		const {volume} = e.target
 		if (!deck) return
 		const muted = Boolean(e.target.muted)
@@ -213,8 +243,72 @@
 	function handleSpeedChange(speed) {
 		if (!deck) return
 		deck.speed = speed
+		if (mediaElement && 'playbackRate' in mediaElement) {
+			mediaElement.playbackRate = speed
+		}
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
+
+	function handleNativeRangeInput(value) {
+		if (!mediaElement || !useNativeAudio) return
+		const next = Number(value)
+		if (!Number.isFinite(next)) return
+		const duration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
+		const maxSeek = duration > 0 ? Math.max(0, duration - 0.25) : next
+		const seekTo = Math.max(0, Math.min(next, maxSeek))
+		mediaElement.currentTime = seekTo
+		nativeCurrentTime = seekTo
+		if (deck) {
+			deck.seeked_at = new Date().toISOString()
+			deck.seek_position = seekTo
+		}
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
+
+	$effect(() => {
+		if (!useNativeAudio || !audioPlayer) return
+		const el = audioPlayer
+		const sync = () => {
+			nativeCurrentTime = Number.isFinite(el.currentTime) ? el.currentTime : 0
+			nativeDuration = Number.isFinite(el.duration) ? el.duration : 0
+		}
+		sync()
+		el.addEventListener('timeupdate', sync)
+		el.addEventListener('loadedmetadata', sync)
+		el.addEventListener('durationchange', sync)
+		el.addEventListener('seeked', sync)
+		return () => {
+			el.removeEventListener('timeupdate', sync)
+			el.removeEventListener('loadedmetadata', sync)
+			el.removeEventListener('durationchange', sync)
+			el.removeEventListener('seeked', sync)
+		}
+	})
+
+	function handleToggleMute() {
+		if (!deck || !mediaElement) return
+		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
+		mediaElement.muted = nextMuted
+		deck.muted = nextMuted
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
+
+	function handleMuteButtonClick() {
+		if (!deck || !mediaElement) return
+		const before = Boolean(mediaElement.muted)
+		queueMicrotask(() => {
+			const after = Boolean(mediaElement.muted)
+			if (after === before) {
+				handleToggleMute()
+				return
+			}
+			deck.muted = after
+			const broadcastingChannelId = getBroadcastingChannelId()
+			if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+		})
 	}
 </script>
 
@@ -225,14 +319,11 @@
 		<div class="header-top">
 			<div class="header-id" class:active={isActiveDeck}>
 				<IconR4 />
-				{#if showDeckNumber}
-					<span class="deck-number" class:active={isActiveDeck}>{deckNumber}</span>
-				{/if}
 			</div>
 			{#if headerChannel}
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					<strong>{headerChannel.name}</strong>
+					<strong class="active-track-title">{headerChannel.name}</strong>
 				</a>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
@@ -249,8 +340,11 @@
 				<button
 					onclick={() => toggleVideoPlayer(deckId)}
 					class:active={deck?.hide_video_player}
-					aria-label={m.player_visible()}
-					{@attach tooltip({content: m.player_visible(), position: 'top'})}
+					aria-label={deck?.hide_video_player ? m.player_visible() : m.player_hidden()}
+					{@attach tooltip({
+						content: deck?.hide_video_player ? m.player_visible() : m.player_hidden(),
+						position: 'top'
+					})}
 				>
 					<Icon icon="tv" />
 				</button>
@@ -258,8 +352,8 @@
 					<button
 						onclick={() => toggleQueuePanel(deckId)}
 						class:active={deck?.hide_queue_panel}
-						aria-label={m.queue_visible()}
-						{@attach tooltip({content: m.queue_visible(), position: 'top'})}
+						aria-label={deck?.hide_queue_panel ? m.queue_visible() : m.queue_hidden()}
+						{@attach tooltip({content: deck?.hide_queue_panel ? m.queue_visible() : m.queue_hidden(), position: 'top'})}
 					>
 						<Icon icon="unordered-list" />
 					</button>
@@ -275,57 +369,94 @@
 		</div>
 	</header>
 
-	<!-- 2. Video — always in DOM; deck.hide-video CSS hides visually -->
-	<media-controller id={mediaControllerId} class="video" data-clickable="true">
-		{#if track?.provider === 'youtube'}
-			<youtube-video
-				slot="media"
-				bind:this={youtubePlayer}
+	<!-- 2. Media player -->
+	{#if useNativeAudio && track?.url}
+		<div class="video video-audio">
+			<audio
+				class="native-audio-player"
+				bind:this={audioPlayer}
 				{src}
+				controls
 				autoplay={userHasPlayed || undefined}
+				preload="metadata"
 				onplay={handlePlay}
 				onpause={handlePause}
 				onseeked={handleSeeked}
 				onended={handleEndTrack}
 				onerror={handleError}
 				onvolumechange={handleVolumeChange}
-			></youtube-video>
-		{:else if track?.provider === 'soundcloud'}
-			<soundcloud-player
-				slot="media"
-				bind:this={soundcloudPlayer}
-				{src}
-				autoplay={userHasPlayed || undefined}
-				onplay={handlePlay}
-				onpause={handlePause}
-				onseeked={handleSeeked}
-				onended={handleEndTrack}
-				onerror={handleError}
-				onvolumechange={handleVolumeChange}
-			></soundcloud-player>
-		{/if}
-		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
-	</media-controller>
+			></audio>
+		</div>
+	{:else}
+		<media-controller id={mediaControllerId} class="video" data-clickable="true">
+			{#if provider === 'youtube'}
+				<youtube-video
+					slot="media"
+					bind:this={youtubePlayer}
+					{src}
+					autoplay={userHasPlayed || undefined}
+					onplay={handlePlay}
+					onpause={handlePause}
+					onseeked={handleSeeked}
+					onended={handleEndTrack}
+					onerror={handleError}
+					onvolumechange={handleVolumeChange}
+				></youtube-video>
+			{:else if provider === 'soundcloud'}
+				<soundcloud-player
+					slot="media"
+					bind:this={soundcloudPlayer}
+					{src}
+					autoplay={userHasPlayed || undefined}
+					onplay={handlePlay}
+					onpause={handlePause}
+					onseeked={handleSeeked}
+					onended={handleEndTrack}
+					onerror={handleError}
+					onvolumechange={handleVolumeChange}
+				></soundcloud-player>
+			{/if}
+			<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
+		</media-controller>
+	{/if}
 
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
 
 	<section class="bottom-chrome">
+		{#if appState.show_track_range_control !== false && displayTrack}
+			<div class="progress-row">
+				{#if useNativeAudio}
+					<input
+						type="range"
+						min="0"
+						max={Math.max(0, (nativeDuration || 0) - 0.01)}
+						step="0.01"
+						value={nativeCurrentTime}
+						oninput={(e) => handleNativeRangeInput(e.currentTarget.value)}
+						class="progress-native"
+					/>
+				{:else}
+					<media-time-range mediacontroller={mediaControllerId}></media-time-range>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- 4. Channel/track info + deck toggle -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
-				<div class="header-info">
-					{#if track && channel}
-						{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
-						{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
+				<div class="header-info active-track-bg">
+					{#if displayTrack && displayChannel}
+						{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
+						{@const trackHref = resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}
 						{#if ytid}
 							<a href={trackHref} class="track-artwork"
-								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
 							>
 						{/if}
 						<div class="info">
-							<a href={trackHref}><strong>{track.title}</strong></a>
+							<a href={trackHref} class="active-track-title"><strong>{displayTrack.title}</strong></a>
 							<small class="description">Live broadcast</small>
 						</div>
 					{:else}
@@ -335,20 +466,20 @@
 					{/if}
 					<span class="caps btn-leave">Live</span>
 				</div>
-			{:else if channel}
-				{#if track}
-					{@const ytid = !appState.hide_track_artwork && track.media_id ? track.media_id : null}
-					{@const trackHref = resolve(`/${channel.slug}/tracks/${track.id}`)}
-					<div class="header-info">
+			{:else if displayChannel}
+				{#if displayTrack}
+					{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
+					{@const trackHref = resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}
+					<div class="header-info active-track-bg">
 						{#if ytid}
 							<a href={trackHref} class="track-artwork"
-								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={track.title} /></a
+								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
 							>
 						{/if}
 						<div class="info">
-							<a href={trackHref}><strong>{track.title}</strong></a>
-							{#if track.description}
-								<small class="description">{track.description}</small>
+							<a href={trackHref} class="active-track-title"><strong>{displayTrack.title}</strong></a>
+							{#if displayTrack.description}
+								<small class="description">{displayTrack.description}</small>
 							{/if}
 						</div>
 					</div>
@@ -373,13 +504,13 @@
 							onclick={() => handleSpeedChange(1)}
 							{@attach tooltip({content: 'Reset speed', position: 'top'})}
 						>
-							{deck?.speed ?? 1}x
+							{Number(deck?.speed ?? 1).toFixed(2)}x
 						</button>
 						<input
 							type="range"
-							min="0.25"
-							max="2"
-							step="0.25"
+							min={speedMin}
+							max={speedMax}
+							step={speedStep}
 							value={deck?.speed ?? 1}
 							oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
 							class="speed-range"
@@ -392,6 +523,8 @@
 				<media-mute-button
 					mediacontroller={mediaControllerId}
 					class="btn"
+					class:active={Boolean(deck?.muted)}
+					onclick={handleMuteButtonClick}
 					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
 				<input
@@ -440,7 +573,7 @@
 
 {#snippet btnPlay()}
 	<button
-		onclick={() => togglePlay(mediaElement)}
+		onclick={() => togglePlayPause(deckId)}
 		disabled={!canPlayFromQueue}
 		class="play"
 		class:active={deck?.is_playing}
@@ -457,6 +590,7 @@
 		flex: 1;
 		min-height: 0;
 	}
+
 
 	.header {
 		display: flex;
@@ -508,21 +642,16 @@
 		color: var(--accent-9);
 	}
 
-	.deck-number {
-		font-size: var(--font-2);
-		font-weight: 700;
-		color: var(--gray-9);
-	}
-
-	.deck-number.active {
-		color: var(--accent-9);
-	}
-
 	.header-info {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
 		padding: 0.3rem 0.6rem;
+	}
+
+	.active-track-bg {
+		background: var(--accent-2);
+		border-radius: 4px;
 	}
 
 	.track-artwork {
@@ -565,6 +694,32 @@
 
 	.description {
 		color: var(--gray-9);
+		font-size: var(--font-3);
+	}
+
+	.active-track-title {
+		display: inline-flex;
+		max-width: 100%;
+		background: var(--accent-9);
+		color: var(--gray-1);
+		padding-inline: var(--space-1);
+		border-radius: 2px;
+		text-decoration: none;
+	}
+
+	.active-track-title:visited {
+		color: var(--gray-1);
+	}
+
+	.active-track-title strong {
+		color: inherit;
+		font-size: var(--font-4);
+		font-weight: 600;
+	}
+
+	.info a.active-track-title,
+	.info a.active-track-title:visited {
+		color: var(--gray-1);
 	}
 
 	.btn-leave {
@@ -636,10 +791,36 @@
 		background: black;
 	}
 
+	.native-audio-player {
+		width: 100%;
+	}
+
 	.bottom-chrome {
 		margin-top: auto;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.progress-row {
+		padding: 0 0.45rem 0.08rem;
+		line-height: 0;
+	}
+
+	.progress-row :global(media-time-range) {
+		width: 100%;
+		--media-range-track-height: 1px;
+		--media-control-height: 10px;
+		--media-control-background: transparent;
+	}
+
+	.progress-native {
+		width: 100%;
+		display: block;
+		cursor: pointer;
+		accent-color: var(--accent-9);
+		height: 10px;
+		margin: 0;
+		padding: 0;
 	}
 
 	.header-footer {
@@ -674,10 +855,29 @@
 	.volume :global(media-mute-button) {
 		--media-control-background: transparent;
 		--media-control-hover-background: transparent;
+		--media-icon-color: currentColor;
+		--media-icon-color-hover: currentColor;
+		color: var(--text, var(--gray-12));
 	}
 
-	.volume :global(media-mute-button[mediavolumelevel='off']) {
+	.volume :global(media-mute-button.active) {
+		color: var(--accent-10);
 		border-color: var(--accent-9);
 		background-color: var(--accent-3);
+	}
+
+	@media (max-width: 768px) {
+		.bottom-controls {
+			gap: 0.1rem;
+			justify-content: flex-start;
+		}
+
+		.bottom-controls .volume {
+			flex: 1.6;
+		}
+
+		.bottom-controls .volume-range {
+			min-width: 8rem;
+		}
 	}
 </style>

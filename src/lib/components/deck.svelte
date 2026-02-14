@@ -100,7 +100,9 @@
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
 		background: var(--footer-bg);
+		border: 1px solid var(--gray-6);
 		position: relative;
+		margin: 0.3rem;
 	}
 
 	.resize-handle {

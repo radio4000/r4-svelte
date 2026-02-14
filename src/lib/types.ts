@@ -92,6 +92,8 @@ export interface AppState {
 	autoplay_new_deck: boolean
 	/** Show playback speed control in deck transport */
 	show_speed_control?: boolean
+	/** Show track progress/range control in deck transport */
+	show_track_range_control?: boolean
 	font_family?: string
 	user?: User
 	language?: string

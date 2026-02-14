@@ -39,4 +39,12 @@
 			Show playback speed slider in deck transport
 		</label>
 	</fieldset>
+
+	<fieldset>
+		<legend>Track range</legend>
+		<label>
+			<input type="checkbox" bind:checked={appState.show_track_range_control} />
+			Show track progress bar in deck transport
+		</label>
+	</fieldset>
 </article>

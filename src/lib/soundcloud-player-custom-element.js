@@ -23,6 +23,10 @@ class SoundCloudPlayerElement extends HTMLElement {
 	/** Cached values since SC Widget uses async getters */
 	#cachedPaused = true
 	#cachedVolume = 1
+	#cachedMuted = false
+	#lastNonZeroVolume = 1
+	#preMuteVolume = 1
+	#hasExplicitVolume = false
 	#cachedDuration = NaN
 	#cachedCurrentTime = 0
 
@@ -95,10 +99,16 @@ class SoundCloudPlayerElement extends HTMLElement {
 				this.#resolveLoad?.()
 				log.debug('ready')
 
-				// Set initial volume/mute state
-				if (this.hasAttribute('muted')) {
-					this.api.setVolume(0)
-				}
+				// Seed cache from widget only if app hasn't already set an explicit volume.
+				this.api.getVolume((vol) => {
+					if (this.#hasExplicitVolume) return
+					const normalized = Number.isFinite(Number(vol)) ? Number(vol) / 100 : 1
+					this.#cachedVolume = normalized
+					if (normalized > 0) this.#lastNonZeroVolume = normalized
+				})
+				if (this.hasAttribute('muted')) this.muted = true
+				// Ensure media-chrome receives initial mute/volume state.
+				this.dispatchEvent(new Event('volumechange'))
 
 				// Load track if src is already set or was pending
 				if (this.src || this.#pendingVideoLoad) {
@@ -130,6 +140,14 @@ class SoundCloudPlayerElement extends HTMLElement {
 			this.api.bind(globalThis.SC.Widget.Events.PLAY_PROGRESS, (data) => {
 				// data = {currentPosition: ms, relativePosition: 0-1}
 				this.#cachedCurrentTime = data.currentPosition / 1000
+				// Keep duration in sync while provider metadata stabilizes.
+				if (data.relativePosition > 0) {
+					const duration = this.#cachedCurrentTime / data.relativePosition
+					if (Number.isFinite(duration) && duration > 0 && Math.abs(duration - this.#cachedDuration) > 0.25) {
+						this.#cachedDuration = duration
+						this.dispatchEvent(new Event('durationchange'))
+					}
+				}
 				this.dispatchEvent(new Event('timeupdate'))
 			})
 
@@ -180,6 +198,10 @@ class SoundCloudPlayerElement extends HTMLElement {
 				this.#pendingVideoLoad = true
 			}
 		}
+
+		if (attrName === 'muted' && oldValue !== newValue) {
+			this.muted = this.hasAttribute('muted')
+		}
 	}
 
 	async #loadTrack() {
@@ -208,6 +230,14 @@ class SoundCloudPlayerElement extends HTMLElement {
 			this.#cachedDuration = duration / 1000
 			this.dispatchEvent(new Event('durationchange'))
 		})
+
+		// Widget load can reset internal volume state; re-emit and reapply current state.
+		if (this.#cachedMuted) {
+			this.api.setVolume(0)
+		} else if (this.#cachedVolume >= 0 && this.api?.setVolume) {
+			this.api.setVolume(this.#cachedVolume * 100)
+		}
+		this.dispatchEvent(new Event('volumechange'))
 	}
 
 	async play() {
@@ -255,29 +285,49 @@ class SoundCloudPlayerElement extends HTMLElement {
 	set volume(val) {
 		if (this.volume === val) return
 		this.#cachedVolume = val
+		this.#hasExplicitVolume = true
+		if (val > 0) {
+			this.#lastNonZeroVolume = val
+		}
 		this.#loadComplete.then(() => {
 			log.debug('setting volume to:', val)
 			if (this.api?.setVolume) {
-				// SoundCloud expects 0-100
-				this.api.setVolume(val * 100)
+				// Keep muted state independent from the remembered volume.
+				// While muted, apply 0 to widget but retain cached volume for restore.
+				this.api.setVolume(this.#cachedMuted ? 0 : val * 100)
 			}
+			this.dispatchEvent(new Event('volumechange'))
 		})
 	}
 
 	get muted() {
-		return this.#cachedVolume === 0
+		return this.#cachedMuted
 	}
 
 	set muted(val) {
 		if (this.muted === val) return
+		this.#cachedMuted = Boolean(val)
 		this.#loadComplete.then(() => {
 			log.debug('setting muted to:', val)
 			if (val && this.api?.setVolume) {
-				this.#cachedVolume = 0
+				const snapshot =
+					this.#cachedVolume > 0 ? this.#cachedVolume : this.#lastNonZeroVolume > 0 ? this.#lastNonZeroVolume : 1
+				this.#preMuteVolume = snapshot
+				this.#lastNonZeroVolume = snapshot
+				this.setAttribute('muted', '')
 				this.api.setVolume(0)
 			} else if (!val && this.api?.setVolume) {
-				this.#cachedVolume = 1
-				this.api.setVolume(100)
+				const restore =
+					this.#preMuteVolume > 0
+						? this.#preMuteVolume
+						: this.#cachedVolume > 0
+							? this.#cachedVolume
+							: this.#lastNonZeroVolume > 0
+								? this.#lastNonZeroVolume
+								: 1
+				this.#cachedVolume = restore
+				this.removeAttribute('muted')
+				this.api.setVolume(restore * 100)
 			}
 			this.dispatchEvent(new Event('volumechange'))
 		})

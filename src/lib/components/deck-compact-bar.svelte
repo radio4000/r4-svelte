@@ -4,6 +4,8 @@
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {togglePlayPause, next, previous, getMediaPlayer} from '$lib/api'
 	import {queuePrev} from '$lib/player/queue'
+	import {inferPlayerProvider} from '$lib/media'
+	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -36,7 +38,14 @@
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
 	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
-	let supportsPlaybackSpeed = $derived(displayTrack?.provider === 'youtube')
+	let provider = $derived(inferPlayerProvider(displayTrack?.provider, displayTrack?.url))
+	let supportsPlaybackSpeed = $derived(provider !== 'soundcloud' && Boolean(displayTrack))
+	let useNativeAudio = $derived(provider === 'audio')
+	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
+	let speedMax = $derived(useNativeAudio ? 3 : 2)
+	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
+	let nativeCurrentTime = $state(0)
+	let nativeDuration = $state(0)
 
 	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
@@ -51,27 +60,95 @@
 	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
+
+	function emitBroadcastUpdate() {
+		const broadcastingChannelId = getBroadcastingChannelId()
+		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	}
+
+	function handleToggleMute() {
+		if (!deck) return
+		const mediaElement = getMediaPlayer(deckId)
+		if (!mediaElement) return
+		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
+		mediaElement.muted = nextMuted
+		deck.muted = nextMuted
+		emitBroadcastUpdate()
+	}
+
+	function handleMuteButtonClick() {
+		if (!deck) return
+		const mediaElement = getMediaPlayer(deckId)
+		if (!mediaElement) return
+		const before = Boolean(mediaElement.muted)
+		queueMicrotask(() => {
+			const after = Boolean(mediaElement.muted)
+			if (after === before) {
+				handleToggleMute()
+				return
+			}
+			deck.muted = after
+			emitBroadcastUpdate()
+		})
+	}
+
+	function handleNativeRangeInput(value) {
+		const mediaElement = getMediaPlayer(deckId)
+		if (!mediaElement || !useNativeAudio) return
+		const next = Number(value)
+		if (!Number.isFinite(next)) return
+		const duration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
+		const maxSeek = duration > 0 ? Math.max(0, duration - 0.25) : next
+		const seekTo = Math.max(0, Math.min(next, maxSeek))
+		mediaElement.currentTime = seekTo
+		nativeCurrentTime = seekTo
+		if (deck) {
+			deck.seeked_at = new Date().toISOString()
+			deck.seek_position = seekTo
+		}
+		emitBroadcastUpdate()
+	}
+
+	$effect(() => {
+		const mediaElement = getMediaPlayer(deckId)
+		if (!mediaElement || !useNativeAudio) return
+		const sync = () => {
+			nativeCurrentTime = Number.isFinite(mediaElement.currentTime) ? mediaElement.currentTime : 0
+			nativeDuration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
+		}
+		sync()
+		mediaElement.addEventListener('timeupdate', sync)
+		mediaElement.addEventListener('loadedmetadata', sync)
+		mediaElement.addEventListener('durationchange', sync)
+		mediaElement.addEventListener('seeked', sync)
+		return () => {
+			mediaElement.removeEventListener('timeupdate', sync)
+			mediaElement.removeEventListener('loadedmetadata', sync)
+			mediaElement.removeEventListener('durationchange', sync)
+			mediaElement.removeEventListener('seeked', sync)
+		}
+	})
 </script>
 
 <div class="deck-compact-bar">
-	<div class="controls">
-		<button onclick={() => previous(deckId, track, activeQueue, 'user_prev')} aria-label="Previous" disabled={!canPrevFromQueue}>
-			<Icon icon="previous-fill" />
-		</button>
-		<button
-			class="play"
-			class:active={deck?.is_playing}
-			onclick={() => togglePlayPause(deckId)}
-			aria-label="Play/pause"
-			disabled={!canPlayFromQueue}
-		>
-			<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-		</button>
-		<button onclick={() => next(deckId, track, activeQueue, 'user_next')} aria-label="Next" disabled={!canNextFromQueue}>
-			<Icon icon="next-fill" />
-		</button>
-	</div>
-	<div class="header-info">
+	{#if appState.show_track_range_control !== false && displayTrack}
+		<div class="progress">
+			{#if useNativeAudio}
+				<input
+					type="range"
+					min="0"
+					max={Math.max(0, (nativeDuration || 0) - 0.01)}
+					step="0.01"
+					value={nativeCurrentTime}
+					oninput={(e) => handleNativeRangeInput(e.currentTarget.value)}
+					class="progress-native"
+				/>
+			{:else}
+				<media-time-range mediacontroller={mediaControllerId}></media-time-range>
+			{/if}
+		</div>
+	{/if}
+	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
 		{#if displayChannel}
 			<a class="avatar" href={resolve(`/${displayChannel.slug}`)}>
 				<ChannelAvatar id={displayChannel.image} alt={displayChannel.name} />
@@ -84,16 +161,49 @@
 		{/if}
 		<div class="info">
 			{#if displayChannel}
-				<a class="channel" href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+				<a class="channel active-track-title" href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
 			{:else if displaySlug}
-				<a class="channel" href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
+				<a class="channel active-track-title" href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
+			{:else if displayTrack}
+				<span class="channel active-track-title">@unknown</span>
 			{/if}
-			{#if displayTrack && displaySlug}
-				<a class="track" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
+			{#if displayTrack}
+				{#if displaySlug}
+					<a class="track active-track-title" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}
+						>{displayTrack.title}</a
+					>
+				{:else}
+					<span class="track active-track-title">{displayTrack.title}</span>
+				{/if}
 			{/if}
 		</div>
 	</div>
 	<div class="row-controls">
+		<div class="controls">
+			<button
+				onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
+				aria-label="Previous"
+				disabled={!canPrevFromQueue}
+			>
+				<Icon icon="previous-fill" />
+			</button>
+			<button
+				class="play"
+				class:active={deck?.is_playing}
+				onclick={() => togglePlayPause(deckId)}
+				aria-label="Play/pause"
+				disabled={!canPlayFromQueue}
+			>
+				<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+			</button>
+			<button
+				onclick={() => next(deckId, track, activeQueue, 'user_next')}
+				aria-label="Next"
+				disabled={!canNextFromQueue}
+			>
+				<Icon icon="next-fill" />
+			</button>
+		</div>
 		{#if appState.show_speed_control && supportsPlaybackSpeed}
 			<div class="speed">
 				<button
@@ -101,18 +211,25 @@
 					class:active={deck?.speed != null && deck.speed !== 1}
 					onclick={() => {
 						if (deck) deck.speed = 1
+						const mediaElement = getMediaPlayer(deckId)
+						if (mediaElement && 'playbackRate' in mediaElement) mediaElement.playbackRate = 1
+						emitBroadcastUpdate()
 					}}
 				>
-					{deck?.speed ?? 1}x
+					{Number(deck?.speed ?? 1).toFixed(2)}x
 				</button>
 				<input
 					type="range"
-					min="0.25"
-					max="2"
-					step="0.25"
+					min={speedMin}
+					max={speedMax}
+					step={speedStep}
 					value={deck?.speed ?? 1}
 					oninput={(e) => {
-						if (deck) deck.speed = Number(e.currentTarget.value)
+						const speed = Number(e.currentTarget.value)
+						if (deck) deck.speed = speed
+						const mediaElement = getMediaPlayer(deckId)
+						if (mediaElement && 'playbackRate' in mediaElement) mediaElement.playbackRate = speed
+						emitBroadcastUpdate()
 					}}
 					class="range"
 					data-default={!deck?.speed || deck.speed === 1 || null}
@@ -120,7 +237,13 @@
 			</div>
 		{/if}
 		<div class="volume">
-			<media-mute-button mediacontroller={mediaControllerId} class="btn"></media-mute-button>
+			<media-mute-button
+				mediacontroller={mediaControllerId}
+				class="btn"
+				class:active={Boolean(deck?.muted)}
+				onclick={handleMuteButtonClick}
+				aria-label="Mute"
+			></media-mute-button>
 			<input
 				type="range"
 				min="0"
@@ -132,6 +255,7 @@
 					if (deck) deck.volume = val
 					const mediaElement = getMediaPlayer(deckId)
 					if (mediaElement) mediaElement.volume = val
+					emitBroadcastUpdate()
 				}}
 				class="range"
 				data-muted={deck?.muted || deck?.volume === 0 || null}
@@ -147,20 +271,48 @@
 	.deck-compact-bar {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.4rem;
 		padding: 0.3rem 0.6rem;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		background: var(--header-bg);
 		min-width: 0;
+		overflow: hidden;
 	}
+
 
 	.row-controls {
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		flex: 0 1 auto;
+		flex: 0 0 auto;
+		margin-left: auto;
 		min-width: 0;
+		order: 3;
+	}
+
+	.progress {
+		order: 1;
+		flex: 1 0 100%;
+		min-width: 0;
+	}
+
+	.progress :global(media-time-range) {
+		width: 100%;
+		--media-range-track-height: 1px;
+		--media-control-height: 9px;
+		--media-control-background: transparent;
+	}
+
+	.progress-native {
+		width: 100%;
+		display: block;
+		cursor: pointer;
+		accent-color: var(--accent-9);
+		height: 9px;
+		margin: 0;
+		padding: 0;
 	}
 
 	.controls {
@@ -174,8 +326,15 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		min-width: 12rem;
-		flex: 1 1 auto;
+		padding: 0.1rem 0.2rem;
+		min-width: 0;
+		flex: 1 1 0;
+		order: 2;
+	}
+
+	.active-track-bg {
+		background: var(--accent-2);
+		border-radius: 4px;
 	}
 
 	.avatar {
@@ -219,8 +378,8 @@
 	}
 
 	.range {
-		flex: 0 0 4.5rem;
-		width: 4.5rem;
+		flex: 0 0 6rem;
+		width: 6rem;
 		cursor: pointer;
 		accent-color: var(--accent-9);
 	}
@@ -233,9 +392,13 @@
 	.volume :global(media-mute-button) {
 		--media-control-background: transparent;
 		--media-control-hover-background: transparent;
+		--media-icon-color: currentColor;
+		--media-icon-color-hover: currentColor;
+		color: var(--text, var(--gray-12));
 	}
 
-	.volume :global(media-mute-button[mediavolumelevel='off']) {
+	.volume :global(media-mute-button.active) {
+		color: var(--accent-10);
 		border-color: var(--accent-9);
 		background-color: var(--accent-3);
 	}
@@ -249,10 +412,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.1rem;
+		flex: 1 1 auto;
 	}
 
 	.channel,
 	.track {
+		display: block;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -260,8 +425,66 @@
 		text-decoration: none;
 	}
 
+	.active-track-title {
+		display: inline-flex;
+		align-self: flex-start;
+		max-width: 100%;
+		background: var(--accent-9);
+		color: var(--gray-1);
+		padding-inline: var(--space-1);
+		border-radius: 2px;
+	}
+
+	.active-track-title:visited {
+		color: var(--gray-1);
+	}
+
 	@media (max-width: 760px) {
+		.deck-compact-bar {
+			row-gap: 0.25rem;
+		}
+
+		.header-info {
+			order: 2;
+			flex: 1 1 auto;
+		}
+
+		.row-controls {
+			order: 3;
+			margin-left: 0;
+		}
+
+		.progress {
+			order: 1;
+		}
+
+		.progress :global(media-time-range) {
+			--media-control-height: 8px;
+		}
+
+		.progress-native {
+			height: 8px;
+		}
+
 		.range {
+			display: none;
+		}
+	}
+
+	@media (max-width: 560px) {
+		.artwork {
+			display: none;
+		}
+
+		.header-info {
+			gap: 0.25rem;
+		}
+
+		.row-controls {
+			gap: 0.2rem;
+		}
+
+		.channel {
 			display: none;
 		}
 	}
