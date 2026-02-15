@@ -430,24 +430,25 @@ async function applyBroadcastState(channelId, decks) {
 	if (!Array.isArray(decks) || !decks.length) return
 
 	const incomingTrackIds = new Set(decks.map((d) => d?.track_id).filter(Boolean))
-	let sortedIds = getSortedDeckIds()
+	let managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
 
-	// Add decks if needed
-	while (sortedIds.length < decks.length) {
-		addDeck()
-		sortedIds = getSortedDeckIds()
+	// Add managed decks if needed for this specific broadcast channel.
+	while (managedIds.length < decks.length) {
+		const deck = addDeck()
+		deck.listening_to_channel_id = channelId
+		managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
 	}
 
-	// Remove excess decks — prefer removing those whose track is NOT in the incoming state
+	// Remove excess managed decks only (never touch unrelated local decks).
 	let removed = false
-	while (sortedIds.length > decks.length) {
-		const removeIdx = sortedIds.findIndex((id) => {
+	while (managedIds.length > decks.length) {
+		const removeIdx = managedIds.findIndex((id) => {
 			const d = appState.decks[id]
 			return !d?.playlist_track || !incomingTrackIds.has(d.playlist_track)
 		})
-		const removeId = removeIdx >= 0 ? sortedIds.splice(removeIdx, 1)[0] : sortedIds.pop()
+		const removeId = removeIdx >= 0 ? managedIds.splice(removeIdx, 1)[0] : managedIds.pop()
 		if (removeId != null) removeDeck(removeId)
-		sortedIds = getSortedDeckIds()
+		managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
 		removed = true
 	}
 
@@ -464,7 +465,7 @@ async function applyBroadcastState(channelId, decks) {
 	for (let bi = 0; bi < decks.length; bi++) {
 		const trackId = decks[bi]?.track_id
 		if (!trackId) continue
-		const match = sortedIds.find((id) => !usedIds.has(id) && appState.decks[id]?.playlist_track === trackId)
+		const match = managedIds.find((id) => !usedIds.has(id) && appState.decks[id]?.playlist_track === trackId)
 		if (match != null) {
 			deckForBi[bi] = match
 			usedIds.add(match)
@@ -474,7 +475,7 @@ async function applyBroadcastState(channelId, decks) {
 	// Second: fill remaining positionally
 	for (let bi = 0; bi < decks.length; bi++) {
 		if (deckForBi[bi] != null) continue
-		const available = sortedIds.find((id) => !usedIds.has(id))
+		const available = managedIds.find((id) => !usedIds.has(id))
 		if (available != null) {
 			deckForBi[bi] = available
 			usedIds.add(available)

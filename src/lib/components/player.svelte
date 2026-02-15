@@ -435,6 +435,7 @@
 						value={nativeCurrentTime}
 						oninput={(e) => handleNativeRangeInput(e.currentTarget.value)}
 						class="progress-native"
+						style={`--progress-pct: ${nativeDuration > 0 ? (nativeCurrentTime / nativeDuration) * 100 : 0}%`}
 					/>
 				{:else}
 					<media-time-range mediacontroller={mediaControllerId}></media-time-range>
@@ -590,7 +591,6 @@
 		flex: 1;
 		min-height: 0;
 	}
-
 
 	.header {
 		display: flex;
@@ -816,11 +816,52 @@
 	.progress-native {
 		width: 100%;
 		display: block;
+		appearance: none;
+		-webkit-appearance: none;
 		cursor: pointer;
-		accent-color: var(--accent-9);
 		height: 10px;
 		margin: 0;
 		padding: 0;
+		background: linear-gradient(
+			to right,
+			var(--accent-9) 0 var(--progress-pct, 0%),
+			var(--gray-5) var(--progress-pct, 0%) 100%
+		);
+		border-radius: 999px;
+	}
+
+	.progress-native::-webkit-slider-runnable-track {
+		height: 1px;
+		background: transparent;
+	}
+
+	.progress-native::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 8px;
+		height: 8px;
+		margin-top: -3.5px;
+		border-radius: 999px;
+		background: var(--accent-9);
+		border: 0;
+	}
+
+	.progress-native::-moz-range-track {
+		height: 1px;
+		background: transparent;
+	}
+
+	.progress-native::-moz-range-progress {
+		height: 1px;
+		background: var(--accent-9);
+	}
+
+	.progress-native::-moz-range-thumb {
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: var(--accent-9);
+		border: 0;
 	}
 
 	.header-footer {

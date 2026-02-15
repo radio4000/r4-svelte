@@ -93,7 +93,7 @@
 	}
 </script>
 
-<article class:active={active || selected}>
+<article class:active class:selected={selected && !active}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="card" ondblclick={dblclick}>
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
@@ -230,8 +230,9 @@
 		}
 	}
 
-	.active {
-		background: var(--accent-2);
+	.active,
+	.selected {
+		background: var(--accent-3);
 	}
 
 	p {

@@ -55,8 +55,23 @@ export function getMediaPlayer(deckId) {
 	return /** @type {any} */ (
 		document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
 			document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
-			document.querySelector(`[data-deck="${deckId}"] audio[slot="media"]`)
+			document.querySelector(`[data-deck="${deckId}"] audio.native-audio-player`)
 	)
+}
+
+/**
+ * Wait until a media element exists for a deck.
+ * @param {number} deckId
+ * @param {number} [timeoutMs]
+ */
+async function waitForMediaPlayer(deckId, timeoutMs = 3000) {
+	const deadline = performance.now() + timeoutMs
+	while (performance.now() < deadline) {
+		const player = getMediaPlayer(deckId)
+		if (player && 'paused' in player) return /** @type {MediaPlayer} */ (player)
+		await new Promise((r) => requestAnimationFrame(r))
+	}
+	return null
 }
 
 export async function checkUser() {
@@ -113,7 +128,8 @@ export async function playTrack(deckId, id, endReason, startReason) {
 	// If same track is already loaded, just ensure it's playing (don't reload)
 	if (deck.playlist_track === id && startReason === 'user_click_track') {
 		log.log('play_track_same_track', {deckId, id})
-		play(deckId)
+		const player = await waitForMediaPlayer(deckId)
+		play(deckId, player)
 		return
 	}
 
@@ -172,22 +188,9 @@ export async function playTrack(deckId, id, endReason, startReason) {
 
 	// Wait for Svelte to update the DOM (render the player element) before calling play
 	await tick()
-	let retries = 10
-	while (retries > 0) {
-		const player = getMediaPlayer(deckId)
-		log.debug('playTrack waiting for player element', {
-			deckId,
-			retries,
-			found: !!player,
-			hasPaused: player && 'paused' in player
-		})
-		if (player && 'paused' in player) break
-		await new Promise((r) => requestAnimationFrame(r))
-		retries--
-	}
-	log.debug('playTrack calling play()', {deckId, retriesLeft: retries})
+	const player = await waitForMediaPlayer(deckId)
+	log.debug('playTrack calling play()', {deckId, foundPlayer: !!player})
 	// Apply volume before playing to avoid audible flash at wrong volume
-	const player = getMediaPlayer(deckId)
 	if (player) {
 		player.volume = deck.volume
 		player.muted = deck.volume === 0 ? true : (deck.muted ?? false)
@@ -471,7 +474,7 @@ export function rotateQueue(deckId) {
 	log.log('rotate_queue', {deckId, current})
 }
 
-/** @typedef {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void}} MediaPlayer */
+/** @typedef {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void, currentTime: number, duration: number, volume: number, muted: boolean}} MediaPlayer */
 
 /**
  * @param {number} deckId
