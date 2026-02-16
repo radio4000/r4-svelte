@@ -54,12 +54,7 @@
 	})
 
 	const historyQuery = useLiveQuery((q) =>
-		view === 'history'
-			? q.from({history: playHistoryCollection}).orderBy(({history}) => history.started_at, 'desc')
-			: q
-					.from({history: playHistoryCollection})
-					.orderBy(({history}) => history.started_at, 'desc')
-					.limit(0)
+		q.from({history: playHistoryCollection}).orderBy(({history}) => history.started_at, 'desc')
 	)
 	let playHistory = $derived(historyQuery.data || [])
 
