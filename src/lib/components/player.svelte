@@ -471,6 +471,14 @@
 
 		<menu class="player-controls bottom-controls">
 			{#if isListeningToBroadcast}
+				<button
+					disabled
+					class="play status"
+					aria-label={deck?.is_playing ? 'Broadcast is playing' : 'Broadcast is paused'}
+					title={deck?.is_playing ? 'Broadcast is playing' : 'Broadcast is paused'}
+				>
+					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+				</button>
 				<button onclick={() => leaveBroadcast(deckId)} class="btn">
 					{m.broadcasts_leave()}
 				</button>

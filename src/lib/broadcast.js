@@ -73,6 +73,17 @@ export function getBroadcastingChannelId() {
 export async function joinBroadcast(deckId, channelId) {
 	console.info('[broadcast] joinBroadcast', {deckId, channelId})
 	try {
+		// If switching channels without leaving first, tear down old listeners.
+		const previousListeningChannels = new Set(
+			Object.values(appState.decks)
+				.map((deck) => deck.listening_to_channel_id)
+				.filter((id) => Boolean(id && id !== channelId))
+		)
+		for (const previousChannelId of previousListeningChannels) {
+			stopBroadcastStateListener(previousChannelId)
+			stopBroadcastTableListener(previousChannelId)
+		}
+
 		const {data} = await sdk.supabase.from('broadcast').select('*').eq('channel_id', channelId).single().throwOnError()
 
 		// Prefetch all tracks for this channel
@@ -88,9 +99,23 @@ export async function joinBroadcast(deckId, channelId) {
 		}
 
 		await playBroadcastTrack(deckId, data)
+
+		// Listener mode should only contain decks driven by this broadcast channel.
+		let listenerDeckId = deckId
+		if (!appState.decks[listenerDeckId]) {
+			const byChannel = getSortedDeckIds().find((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+			listenerDeckId = byChannel ?? appState.active_deck_id
+		}
+		for (const id of getSortedDeckIds()) {
+			if (id === listenerDeckId) continue
+			stopBroadcastSync(id)
+			removeDeck(id)
+		}
+		appState.active_deck_id = listenerDeckId
+
 		startBroadcastStateListener(channelId)
 		startBroadcastTableListener(channelId)
-		log.log(`joined ${label(channelId)} on deck ${deckId}`)
+		log.log(`joined ${label(channelId)} on deck ${listenerDeckId}`)
 	} catch (error) {
 		log.error(`join failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
 	}
@@ -338,10 +363,16 @@ function deckTargetsBroadcastChannel(deck, channelId) {
 
 function getBroadcastDeckState(channelId) {
 	let ids = getSortedDeckIds().filter((id) => deckTargetsBroadcastChannel(appState.decks[id], channelId))
-	// Fallback: if no deck is explicitly marked yet, broadcast active deck state.
-	// This covers the short window right after "start broadcast".
-	if (!ids.length && appState.decks[appState.active_deck_id]) {
-		ids = [appState.active_deck_id]
+	// Fallback: if no deck is explicitly mapped yet, prefer the deck that is
+	// currently playing, then one with a selected track, then active deck.
+	// This avoids reporting paused state from an unrelated active deck.
+	if (!ids.length) {
+		const sorted = getSortedDeckIds()
+		const playing = sorted.find((id) => Boolean(appState.decks[id]?.is_playing))
+		const withTrack = sorted.find((id) => Boolean(appState.decks[id]?.playlist_track))
+		const active = appState.decks[appState.active_deck_id] ? appState.active_deck_id : undefined
+		const fallback = playing ?? withTrack ?? active
+		if (fallback != null) ids = [fallback]
 	}
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]

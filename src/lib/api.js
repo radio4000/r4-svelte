@@ -484,6 +484,7 @@ export function rotateQueue(deckId) {
  * @param {MediaPlayer | null} [player]
  */
 export function play(deckId, player) {
+	const deck = appState.decks[deckId]
 	if (!player) {
 		const el = getMediaPlayer(deckId)
 		if (el && 'paused' in el) player = /** @type {MediaPlayer} */ (el)
@@ -497,15 +498,18 @@ export function play(deckId, player) {
 	if (result instanceof Promise) {
 		return result
 			.then(() => {
+				if (deck) deck.is_playing = true
 				log.log('play() succeeded')
 				const broadcastingChannelId = getBroadcastingChannelId()
 				if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 			})
 			.catch((error) => {
+				if (deck) deck.is_playing = false
 				log.warn('play() was prevented:', error.message || error)
 				throw error
 			})
 	}
+	if (deck) deck.is_playing = true
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	return Promise.resolve()
