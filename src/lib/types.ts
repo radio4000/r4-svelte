@@ -19,6 +19,7 @@ export interface TrackWithMeta extends Track {
 
 export interface Deck {
 	id: number
+	playlist_title?: string
 	playlist_track?: string
 	playlist_tracks: string[]
 	playlist_tracks_shuffled: string[]
@@ -42,6 +43,7 @@ export interface Deck {
 export function createDefaultDeck(id: number): Deck {
 	return {
 		id,
+		playlist_title: undefined,
 		playlist_track: undefined,
 		playlist_tracks: [],
 		playlist_tracks_shuffled: [],

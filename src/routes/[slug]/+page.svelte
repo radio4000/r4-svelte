@@ -53,6 +53,12 @@
 		})
 	)
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let filteredPlaylistTitle = $derived.by(() => {
+		const search = searchValue.trim()
+		if (search) return search
+		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
+		return ''
+	})
 
 	function toggleTag(tag: string) {
 		const next = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag]
@@ -68,7 +74,7 @@
 	function playFilteredTracks() {
 		if (!filteredTracks.length) return
 		const ids = filteredTracks.map((t) => t.id)
-		setPlaylist(appState.active_deck_id, ids)
+		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
@@ -135,6 +141,7 @@
 		{#if tracksQuery.isReady && visibleTracks.length > 0}
 			<Tracklist
 				tracks={visibleTracks}
+				playlistTitle={isFiltering ? filteredPlaylistTitle : undefined}
 				{canEdit}
 				grouped={!isFiltering}
 				virtual={false}

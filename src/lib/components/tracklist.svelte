@@ -15,6 +15,7 @@
 	/** @type {{
 		tracks: Track[],
 		deckId?: number,
+		playlistTitle?: string,
 		footer?: (props: {track: Track}) => any,
 		grouped?: boolean,
 		canEdit?: boolean,
@@ -28,6 +29,7 @@
 	const {
 		tracks,
 		deckId,
+		playlistTitle,
 		footer,
 		grouped = false,
 		canEdit = false,
@@ -55,7 +57,8 @@
 		if (playContext && tracks.length) {
 			setPlaylist(
 				targetDeck,
-				tracks.map((track) => track.id)
+				tracks.map((track) => track.id),
+				{title: playlistTitle}
 			)
 		}
 		playTrack(targetDeck, trackId, null, 'user_click_track')

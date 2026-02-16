@@ -102,11 +102,12 @@
 
 	const isLoading = $derived(viewQuery.loading || channelsLoading)
 	const tracks = $derived(viewQuery.tracks)
+	const playlistTitle = $derived(searchQuery.trim())
 
 	async function playSearchResults() {
 		if (!tracks.length) return
 		const ids = tracks.map((t) => t.id)
-		setPlaylist(appState.active_deck_id, ids)
+		setPlaylist(appState.active_deck_id, ids, {title: playlistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 

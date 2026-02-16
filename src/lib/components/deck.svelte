@@ -2,7 +2,6 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {playHistoryCollection} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '@tanstack/svelte-db'
 	import Player from '$lib/components/player.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 
@@ -13,13 +12,10 @@
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
-	// For deck 1: only show when there are tracks queued or a track playing
-	const historyQuery = useLiveQuery((q) =>
-		q.from({history: playHistoryCollection}).orderBy(({history}) => history.started_at, 'desc')
-	)
-	let hasContent = $derived(
-		(deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || (historyQuery.data?.length ?? 0) > 0
-	)
+	// For deck 1: only show when there are tracks queued/playing or any history exists.
+	// Read collection size directly to avoid spinning up one full live query per deck.
+	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+	let hasContent = $derived((deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory)
 
 	// Deck 1 hides when empty; additional decks are always visible
 	let visible = $derived(showPlayer && deck && (deckId !== 1 || hasContent))

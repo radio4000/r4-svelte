@@ -83,8 +83,6 @@
 	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
 	let speedMax = $derived(useNativeAudio ? 3 : 2)
 	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
-	let nativeCurrentTime = $state(0)
-	let nativeDuration = $state(0)
 
 	/** @type {string[]} */
 	let trackIds = $derived(deck?.playlist_tracks || [])
@@ -231,6 +229,34 @@
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 
+	// Track progress from the media element directly (bypasses media-chrome's
+	// external mediacontroller association which doesn't work with Svelte 5).
+	let mediaDuration = $state(NaN)
+	let mediaCurrentTime = $state(0)
+
+	$effect(() => {
+		const el = mediaElement
+		if (!el) return
+		const onTime = () => {
+			mediaCurrentTime = el.currentTime ?? 0
+		}
+		const onDuration = () => {
+			const d = el.duration
+			mediaDuration = Number.isFinite(d) ? d : NaN
+		}
+		el.addEventListener('timeupdate', onTime)
+		el.addEventListener('durationchange', onDuration)
+		el.addEventListener('loadedmetadata', onDuration)
+		// Seed initial values
+		onTime()
+		onDuration()
+		return () => {
+			el.removeEventListener('timeupdate', onTime)
+			el.removeEventListener('durationchange', onDuration)
+			el.removeEventListener('loadedmetadata', onDuration)
+		}
+	})
+
 	// Apply speed to media element
 	$effect(() => {
 		const el = mediaElement
@@ -250,43 +276,6 @@
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
-	function handleNativeRangeInput(value) {
-		if (!mediaElement || !useNativeAudio) return
-		const next = Number(value)
-		if (!Number.isFinite(next)) return
-		const duration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
-		const maxSeek = duration > 0 ? Math.max(0, duration - 0.25) : next
-		const seekTo = Math.max(0, Math.min(next, maxSeek))
-		mediaElement.currentTime = seekTo
-		nativeCurrentTime = seekTo
-		if (deck) {
-			deck.seeked_at = new Date().toISOString()
-			deck.seek_position = seekTo
-		}
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-	}
-
-	$effect(() => {
-		if (!useNativeAudio || !audioPlayer) return
-		const el = audioPlayer
-		const sync = () => {
-			nativeCurrentTime = Number.isFinite(el.currentTime) ? el.currentTime : 0
-			nativeDuration = Number.isFinite(el.duration) ? el.duration : 0
-		}
-		sync()
-		el.addEventListener('timeupdate', sync)
-		el.addEventListener('loadedmetadata', sync)
-		el.addEventListener('durationchange', sync)
-		el.addEventListener('seeked', sync)
-		return () => {
-			el.removeEventListener('timeupdate', sync)
-			el.removeEventListener('loadedmetadata', sync)
-			el.removeEventListener('durationchange', sync)
-			el.removeEventListener('seeked', sync)
-		}
-	})
-
 	function handleToggleMute() {
 		if (!deck || !mediaElement) return
 		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
@@ -294,21 +283,6 @@
 		deck.muted = nextMuted
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-	}
-
-	function handleMuteButtonClick() {
-		if (!deck || !mediaElement) return
-		const before = Boolean(mediaElement.muted)
-		queueMicrotask(() => {
-			const after = Boolean(mediaElement.muted)
-			if (after === before) {
-				handleToggleMute()
-				return
-			}
-			deck.muted = after
-			const broadcastingChannelId = getBroadcastingChannelId()
-			if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-		})
 	}
 </script>
 
@@ -323,7 +297,12 @@
 			{#if headerChannel}
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					<strong class="active-track-title">{headerChannel.name}</strong>
+					<span class="header-channel-text">
+						<strong class="active-track-title">{headerChannel.name}</strong>
+						{#if deck?.playlist_title}
+							<small class="deck-title">{deck.playlist_title}</small>
+						{/if}
+					</span>
 				</a>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
@@ -370,9 +349,36 @@
 	</header>
 
 	<!-- 2. Media player -->
-	{#if useNativeAudio && track?.url}
-		<div class="video video-audio">
+	<media-controller id={mediaControllerId} class="video" data-clickable="true">
+		{#if provider === 'youtube'}
+			<youtube-video
+				slot="media"
+				bind:this={youtubePlayer}
+				{src}
+				autoplay={userHasPlayed || undefined}
+				onplay={handlePlay}
+				onpause={handlePause}
+				onseeked={handleSeeked}
+				onended={handleEndTrack}
+				onerror={handleError}
+				onvolumechange={handleVolumeChange}
+			></youtube-video>
+		{:else if provider === 'soundcloud'}
+			<soundcloud-player
+				slot="media"
+				bind:this={soundcloudPlayer}
+				{src}
+				autoplay={userHasPlayed || undefined}
+				onplay={handlePlay}
+				onpause={handlePause}
+				onseeked={handleSeeked}
+				onended={handleEndTrack}
+				onerror={handleError}
+				onvolumechange={handleVolumeChange}
+			></soundcloud-player>
+		{:else if track?.url}
 			<audio
+				slot="media"
 				class="native-audio-player"
 				bind:this={audioPlayer}
 				{src}
@@ -386,39 +392,9 @@
 				onerror={handleError}
 				onvolumechange={handleVolumeChange}
 			></audio>
-		</div>
-	{:else}
-		<media-controller id={mediaControllerId} class="video" data-clickable="true">
-			{#if provider === 'youtube'}
-				<youtube-video
-					slot="media"
-					bind:this={youtubePlayer}
-					{src}
-					autoplay={userHasPlayed || undefined}
-					onplay={handlePlay}
-					onpause={handlePause}
-					onseeked={handleSeeked}
-					onended={handleEndTrack}
-					onerror={handleError}
-					onvolumechange={handleVolumeChange}
-				></youtube-video>
-			{:else if provider === 'soundcloud'}
-				<soundcloud-player
-					slot="media"
-					bind:this={soundcloudPlayer}
-					{src}
-					autoplay={userHasPlayed || undefined}
-					onplay={handlePlay}
-					onpause={handlePause}
-					onseeked={handleSeeked}
-					onended={handleEndTrack}
-					onerror={handleError}
-					onvolumechange={handleVolumeChange}
-				></soundcloud-player>
-			{/if}
-			<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
-		</media-controller>
-	{/if}
+		{/if}
+		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
+	</media-controller>
 
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
@@ -426,20 +402,19 @@
 	<section class="bottom-chrome">
 		{#if appState.show_track_range_control !== false && displayTrack}
 			<div class="progress-row">
-				{#if useNativeAudio}
-					<input
-						type="range"
-						min="0"
-						max={Math.max(0, (nativeDuration || 0) - 0.01)}
-						step="0.01"
-						value={nativeCurrentTime}
-						oninput={(e) => handleNativeRangeInput(e.currentTarget.value)}
-						class="progress-native"
-						style={`--progress-pct: ${nativeDuration > 0 ? (nativeCurrentTime / nativeDuration) * 100 : 0}%`}
-					/>
-				{:else}
-					<media-time-range mediacontroller={mediaControllerId}></media-time-range>
-				{/if}
+				<input
+					type="range"
+					min="0"
+					max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
+					step="any"
+					value={mediaCurrentTime}
+					oninput={(e) => {
+						const val = Number(e.currentTarget.value)
+						if (mediaElement) mediaElement.currentTime = val
+					}}
+					class="progress-range"
+					disabled={!Number.isFinite(mediaDuration)}
+				/>
 			</div>
 		{/if}
 
@@ -522,10 +497,10 @@
 			{/if}
 			<div class="volume">
 				<media-mute-button
-					mediacontroller={mediaControllerId}
+					bind:this={muteButtonEl}
 					class="btn"
 					class:active={Boolean(deck?.muted)}
-					onclick={handleMuteButtonClick}
+					onclick={handleToggleMute}
 					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 				></media-mute-button>
 				<input
@@ -616,10 +591,21 @@
 		color: inherit;
 	}
 
+	.header-channel-text {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
 	.header-channel :global(img) {
 		width: 2.5rem;
 		height: 2.5rem;
 		border-radius: var(--media-radius);
+	}
+
+	.header-channel .active-track-title {
+		width: fit-content;
+		max-width: 100%;
 	}
 
 	.header-channel strong {
@@ -629,6 +615,15 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.deck-title {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--font-2);
+		color: var(--gray-9);
 	}
 
 	.header-id {
@@ -806,62 +801,16 @@
 		line-height: 0;
 	}
 
-	.progress-row :global(media-time-range) {
+	.progress-range {
 		width: 100%;
-		--media-range-track-height: 1px;
-		--media-control-height: 10px;
-		--media-control-background: transparent;
-	}
-
-	.progress-native {
-		width: 100%;
-		display: block;
-		appearance: none;
-		-webkit-appearance: none;
-		cursor: pointer;
 		height: 10px;
-		margin: 0;
-		padding: 0;
-		background: linear-gradient(
-			to right,
-			var(--accent-9) 0 var(--progress-pct, 0%),
-			var(--gray-5) var(--progress-pct, 0%) 100%
-		);
-		border-radius: 999px;
+		cursor: pointer;
+		accent-color: var(--accent-9);
 	}
 
-	.progress-native::-webkit-slider-runnable-track {
-		height: 1px;
-		background: transparent;
-	}
-
-	.progress-native::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 8px;
-		height: 8px;
-		margin-top: -3.5px;
-		border-radius: 999px;
-		background: var(--accent-9);
-		border: 0;
-	}
-
-	.progress-native::-moz-range-track {
-		height: 1px;
-		background: transparent;
-	}
-
-	.progress-native::-moz-range-progress {
-		height: 1px;
-		background: var(--accent-9);
-	}
-
-	.progress-native::-moz-range-thumb {
-		width: 8px;
-		height: 8px;
-		border-radius: 999px;
-		background: var(--accent-9);
-		border: 0;
+	.progress-range:disabled {
+		opacity: 0.4;
+		cursor: default;
 	}
 
 	.header-footer {
@@ -891,20 +840,6 @@
 
 	.volume-range[data-muted] {
 		accent-color: var(--gray-7);
-	}
-
-	.volume :global(media-mute-button) {
-		--media-control-background: transparent;
-		--media-control-hover-background: transparent;
-		--media-icon-color: currentColor;
-		--media-icon-color-hover: currentColor;
-		color: var(--text, var(--gray-12));
-	}
-
-	.volume :global(media-mute-button.active) {
-		color: var(--accent-10);
-		border-color: var(--accent-9);
-		background-color: var(--accent-3);
 	}
 
 	@media (max-width: 768px) {

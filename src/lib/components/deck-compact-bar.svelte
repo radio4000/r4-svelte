@@ -44,8 +44,6 @@
 	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
 	let speedMax = $derived(useNativeAudio ? 3 : 2)
 	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
-	let nativeCurrentTime = $state(0)
-	let nativeDuration = $state(0)
 
 	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
@@ -91,62 +89,12 @@
 			emitBroadcastUpdate()
 		})
 	}
-
-	function handleNativeRangeInput(value) {
-		const mediaElement = getMediaPlayer(deckId)
-		if (!mediaElement || !useNativeAudio) return
-		const next = Number(value)
-		if (!Number.isFinite(next)) return
-		const duration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
-		const maxSeek = duration > 0 ? Math.max(0, duration - 0.25) : next
-		const seekTo = Math.max(0, Math.min(next, maxSeek))
-		mediaElement.currentTime = seekTo
-		nativeCurrentTime = seekTo
-		if (deck) {
-			deck.seeked_at = new Date().toISOString()
-			deck.seek_position = seekTo
-		}
-		emitBroadcastUpdate()
-	}
-
-	$effect(() => {
-		const mediaElement = getMediaPlayer(deckId)
-		if (!mediaElement || !useNativeAudio) return
-		const sync = () => {
-			nativeCurrentTime = Number.isFinite(mediaElement.currentTime) ? mediaElement.currentTime : 0
-			nativeDuration = Number.isFinite(mediaElement.duration) ? mediaElement.duration : 0
-		}
-		sync()
-		mediaElement.addEventListener('timeupdate', sync)
-		mediaElement.addEventListener('loadedmetadata', sync)
-		mediaElement.addEventListener('durationchange', sync)
-		mediaElement.addEventListener('seeked', sync)
-		return () => {
-			mediaElement.removeEventListener('timeupdate', sync)
-			mediaElement.removeEventListener('loadedmetadata', sync)
-			mediaElement.removeEventListener('durationchange', sync)
-			mediaElement.removeEventListener('seeked', sync)
-		}
-	})
 </script>
 
 <div class="deck-compact-bar">
 	{#if appState.show_track_range_control !== false && displayTrack}
 		<div class="progress">
-			{#if useNativeAudio}
-				<input
-					type="range"
-					min="0"
-					max={Math.max(0, (nativeDuration || 0) - 0.01)}
-					step="0.01"
-					value={nativeCurrentTime}
-					oninput={(e) => handleNativeRangeInput(e.currentTarget.value)}
-					class="progress-native"
-					style={`--progress-pct: ${nativeDuration > 0 ? (nativeCurrentTime / nativeDuration) * 100 : 0}%`}
-				/>
-			{:else}
-				<media-time-range mediacontroller={mediaControllerId}></media-time-range>
-			{/if}
+			<media-time-range mediacontroller={mediaControllerId}></media-time-range>
 		</div>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
@@ -286,15 +234,17 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		flex: 0 0 auto;
-		margin-left: auto;
+		flex: 1 1 20rem;
+		margin-left: 0;
 		min-width: 0;
 		order: 3;
+		justify-content: flex-end;
 	}
 
 	.progress {
 		order: 1;
 		flex: 1 0 100%;
+		width: 100%;
 		min-width: 0;
 	}
 
@@ -303,57 +253,6 @@
 		--media-range-track-height: 1px;
 		--media-control-height: 9px;
 		--media-control-background: transparent;
-	}
-
-	.progress-native {
-		width: 100%;
-		display: block;
-		appearance: none;
-		-webkit-appearance: none;
-		cursor: pointer;
-		height: 9px;
-		margin: 0;
-		padding: 0;
-		background: linear-gradient(
-			to right,
-			var(--accent-9) 0 var(--progress-pct, 0%),
-			var(--gray-5) var(--progress-pct, 0%) 100%
-		);
-		border-radius: 999px;
-	}
-
-	.progress-native::-webkit-slider-runnable-track {
-		height: 1px;
-		background: transparent;
-	}
-
-	.progress-native::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 7px;
-		height: 7px;
-		margin-top: -3px;
-		border-radius: 999px;
-		background: var(--accent-9);
-		border: 0;
-	}
-
-	.progress-native::-moz-range-track {
-		height: 1px;
-		background: transparent;
-	}
-
-	.progress-native::-moz-range-progress {
-		height: 1px;
-		background: var(--accent-9);
-	}
-
-	.progress-native::-moz-range-thumb {
-		width: 7px;
-		height: 7px;
-		border-radius: 999px;
-		background: var(--accent-9);
-		border: 0;
 	}
 
 	.controls {
@@ -369,7 +268,7 @@
 		gap: 0.4rem;
 		padding: 0.1rem 0.2rem;
 		min-width: 0;
-		flex: 1 1 0;
+		flex: 1 1 auto;
 		order: 2;
 	}
 
@@ -407,7 +306,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.1rem;
-		flex: 0 0 auto;
+		flex: 1 1 0;
 		min-width: 0;
 	}
 
@@ -419,8 +318,9 @@
 	}
 
 	.range {
-		flex: 0 0 6rem;
-		width: 6rem;
+		flex: 1 1 auto;
+		width: 100%;
+		min-width: 0;
 		cursor: pointer;
 		accent-color: var(--accent-9);
 	}
@@ -482,33 +382,40 @@
 
 	@media (max-width: 760px) {
 		.deck-compact-bar {
+			display: grid;
+			grid-template-columns: 1fr;
+			grid-template-areas:
+				'progress'
+				'info'
+				'controls';
 			row-gap: 0.25rem;
 		}
 
+		.progress {
+			grid-area: progress;
+			order: initial;
+		}
+
 		.header-info {
-			order: 2;
+			grid-area: info;
+			order: initial;
 			flex: 1 1 auto;
+			width: 100%;
+			min-height: 2rem;
 		}
 
 		.row-controls {
-			order: 3;
+			grid-area: controls;
+			order: initial;
 			margin-left: 0;
-		}
-
-		.progress {
-			order: 1;
+			flex: 1 1 100%;
+			width: 100%;
+			justify-content: flex-start;
+			flex-wrap: wrap;
 		}
 
 		.progress :global(media-time-range) {
 			--media-control-height: 8px;
-		}
-
-		.progress-native {
-			height: 8px;
-		}
-
-		.range {
-			display: none;
 		}
 	}
 
@@ -523,10 +430,6 @@
 
 		.row-controls {
 			gap: 0.2rem;
-		}
-
-		.channel {
-			display: none;
 		}
 	}
 </style>

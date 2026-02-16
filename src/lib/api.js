@@ -265,12 +265,15 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 /**
  * @param {number} deckId
  * @param {string[]} trackIds
+ * @param {{title?: string}} [options]
  */
-export function setPlaylist(deckId, trackIds) {
+export function setPlaylist(deckId, trackIds, options = {}) {
 	const deck = appState.decks[deckId]
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
+	const nextTitle = options.title?.trim()
+	deck.playlist_title = nextTitle || undefined
 }
 
 /**
