@@ -3,10 +3,17 @@
 	import {setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
+	import {
+		channelsCollection,
+		tracksCollection,
+		broadcastsCollection,
+		checkTracksFreshness
+	} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
+	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelHero from '$lib/components/channel-hero.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
@@ -27,6 +34,9 @@
 			.findOne()
 	)
 	let channel = $derived(channelQuery.data)
+	let isListeningToChannel = $derived(
+		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
+	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
@@ -44,6 +54,21 @@
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 	)
 
+	// Channel-specific broadcast live query so "Live" state updates on this page
+	// even when /broadcasts is not open.
+	const channelBroadcastQuery = useLiveQuery((q) =>
+		channel?.id
+			? q
+					.from({b: broadcastsCollection})
+					.where(({b}) => eq(b.channel_id, channel.id))
+					.findOne()
+			: q
+					.from({b: broadcastsCollection})
+					.orderBy(({b}) => b.channel_id, 'asc')
+					.limit(0)
+	)
+	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
+
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 </script>
@@ -58,7 +83,10 @@
 	<div class="channel-layout fill-height">
 		<header>
 			<div class="info">
-				<h1>{channel.name}</h1>
+				<h1>
+					{channel.name}
+					{#if isChannelLive}<span class="live-badge">Live</span>{/if}
+				</h1>
 				<p class="slug">
 					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
 				</p>
@@ -78,6 +106,21 @@
 			</div>
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
+				{#if channel.id && isChannelLive && !canEdit}
+					<button
+						type="button"
+						onclick={() => {
+							if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+							else joinBroadcast(appState.active_deck_id, channel.id)
+						}}
+					>
+						<Icon icon="signal" />
+						{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+					</button>
+				{/if}
+				{#if canEdit && channel.source !== 'v1'}
+					<BroadcastControls deckId={appState.active_deck_id} channelId={channel.id} isLiveOverride={isChannelLive} />
+				{/if}
 				{#if channel.source !== 'v1'}
 					{#if hasChannel}
 						<ButtonFollow {channel} />
@@ -173,6 +216,19 @@
 		margin-top: 0.1rem;
 		font-size: clamp(var(--font-7), 7vw, var(--font-9));
 		line-height: 1.05;
+	}
+
+	.live-badge {
+		display: inline-block;
+		vertical-align: middle;
+		margin-left: 0.35rem;
+		font-size: var(--font-2);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		background: var(--accent-9);
+		color: var(--gray-1);
+		padding: 0 0.35rem;
+		border-radius: 3px;
 	}
 
 	.description {

@@ -411,6 +411,12 @@
 					oninput={(e) => {
 						const val = Number(e.currentTarget.value)
 						if (mediaElement) mediaElement.currentTime = val
+						if (deck) {
+							deck.seeked_at = new Date().toISOString()
+							deck.seek_position = val
+						}
+						const broadcastingChannelId = getBroadcastingChannelId()
+						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 					}}
 					class="progress-range"
 					disabled={!Number.isFinite(mediaDuration)}
@@ -513,6 +519,8 @@
 						const val = Number(e.currentTarget.value)
 						if (deck) deck.volume = val
 						if (mediaElement) mediaElement.volume = val
+						const broadcastingChannelId = getBroadcastingChannelId()
+						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 					}}
 					class="volume-range"
 					data-muted={deck?.muted || deck?.volume === 0 || null}

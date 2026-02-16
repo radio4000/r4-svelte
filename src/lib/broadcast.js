@@ -98,12 +98,22 @@ export async function joinBroadcast(deckId, channelId) {
 
 /** @param {number} deckId */
 export function leaveBroadcast(deckId) {
-	stopBroadcastSync(deckId)
 	const channelId = appState.decks[deckId]?.listening_to_channel_id
-	if (channelId) stopBroadcastStateListener(channelId)
-	if (channelId) stopBroadcastTableListener(channelId)
-	for (const deck of Object.values(appState.decks)) {
-		if (deck.listening_to_channel_id === channelId) {
+	stopBroadcastSync(deckId)
+	if (channelId) {
+		stopBroadcastStateListener(channelId)
+		stopBroadcastTableListener(channelId)
+		const decksToClose = Object.entries(appState.decks)
+			.filter(([, deck]) => deck.listening_to_channel_id === channelId)
+			.map(([id]) => Number(id))
+		for (const id of decksToClose) {
+			stopBroadcastSync(id)
+			removeDeck(id)
+		}
+	} else {
+		// Fallback: if invoked on a non-listening deck, preserve old behavior.
+		const deck = appState.decks[deckId]
+		if (deck) {
 			deck.listening_to_channel_id = undefined
 			deck.is_playing = false
 		}
@@ -160,10 +170,20 @@ export async function stopBroadcast(channelId) {
 	if (!channelId) return
 	try {
 		await sdk.supabase.from('broadcast').delete().eq('channel_id', channelId).throwOnError()
+		// Optimistic local sync so UI updates immediately even if realtime is delayed.
+		if (broadcastsCollection.state.has(channelId)) {
+			broadcastsCollection.utils.writeDelete(channelId)
+		}
+		for (const deck of Object.values(appState.decks)) {
+			if (deck.broadcasting_channel_id === channelId) {
+				deck.broadcasting_channel_id = undefined
+			}
+		}
 		stopBroadcastState(channelId)
 		log.log(`stopped ${label(channelId)}`)
 	} catch (error) {
 		log.error(`stop failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
+		throw error
 	}
 }
 
@@ -306,8 +326,23 @@ function getSortedDeckIds() {
 		.sort((a, b) => a - b)
 }
 
-function getBroadcastDeckState() {
-	const ids = getSortedDeckIds()
+function deckTargetsBroadcastChannel(deck, channelId) {
+	if (!deck || !channelId) return false
+	if (deck.broadcasting_channel_id === channelId) return true
+	if (!deck.playlist_track) return false
+	const track = tracksCollection.get(deck.playlist_track)
+	if (!track?.slug) return false
+	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+	return channel?.id === channelId
+}
+
+function getBroadcastDeckState(channelId) {
+	let ids = getSortedDeckIds().filter((id) => deckTargetsBroadcastChannel(appState.decks[id], channelId))
+	// Fallback: if no deck is explicitly marked yet, broadcast active deck state.
+	// This covers the short window right after "start broadcast".
+	if (!ids.length && appState.decks[appState.active_deck_id]) {
+		ids = [appState.active_deck_id]
+	}
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]
 		return {
@@ -325,7 +360,7 @@ function getBroadcastDeckState() {
 }
 
 function broadcastStateUpdate(channelId) {
-	const state = getBroadcastDeckState()
+	const state = getBroadcastDeckState(channelId)
 	const entry = broadcastStateChannels.get(channelId)
 	if (!entry) return
 	console.info('[broadcast] state_send', {channelId, decks: state.length, speeds: state.map((d) => d.speed)})
