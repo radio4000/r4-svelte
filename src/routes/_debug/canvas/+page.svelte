@@ -1,5 +1,5 @@
 <script>
-	import InfiniteCanvas from '$lib/components/infinite-canvas.svelte'
+	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {channelAvatarUrl} from '$lib/utils'
 	import {shufflePlayChannel, playTrack} from '$lib/api'
