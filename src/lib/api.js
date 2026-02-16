@@ -6,8 +6,7 @@ import {
 	leaveBroadcast,
 	notifyBroadcastState,
 	upsertRemoteBroadcast,
-	getBroadcastingChannelId,
-	isV1Track
+	getBroadcastingChannelId
 } from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
@@ -168,7 +167,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 
 	// Auto-update broadcast if currently broadcasting
 	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId && startReason !== 'broadcast_sync' && !isV1Track(id)) {
+	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
 		try {
 			await upsertRemoteBroadcast(broadcastingChannelId, id)
 			notifyBroadcastState(broadcastingChannelId)

@@ -48,6 +48,14 @@
 		flex-direction: column;
 		min-height: 0;
 		overflow-y: auto;
+		flex: 1 1 24rem;
+		min-width: min(36rem, 45vw);
+	}
+
+	.deck-strip-broadcasts :global(.deck.listening) {
+		width: 100%;
+		min-width: 0;
+		flex: 1 1 auto;
 	}
 
 	.deck-strip:empty {
@@ -71,6 +79,8 @@
 
 		.deck-strip-broadcasts {
 			overflow-y: visible;
+			flex: 1 1 auto;
+			min-width: 0;
 		}
 	}
 </style>

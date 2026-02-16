@@ -45,6 +45,9 @@ const broadcastStateListeners = new Map()
  */
 const broadcastTableListeners = new Map()
 const lastAppliedSeek = new Map()
+const broadcastStateSeqByChannel = new Map()
+const lastReceivedStateSeqByChannel = new Map()
+const seekJobSeqByDeck = new Map()
 
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {
@@ -178,9 +181,6 @@ export async function startBroadcast(channelId, trackId) {
 	if (isV1Channel(channelId)) {
 		throw new Error('Legacy channels cannot broadcast')
 	}
-	if (isV1Track(trackId)) {
-		throw new Error('This track is from a legacy channel and cannot be streamed live')
-	}
 
 	await upsertRemoteBroadcast(channelId, trackId)
 	startBroadcastState(channelId)
@@ -246,10 +246,17 @@ function calculateSeekTime(broadcast, track) {
 	return Math.floor(elapsed)
 }
 
-async function seekWhenReady(deckId, seconds) {
+function nextSeekJobId(deckId) {
+	const next = (seekJobSeqByDeck.get(deckId) ?? 0) + 1
+	seekJobSeqByDeck.set(deckId, next)
+	return next
+}
+
+async function seekWhenReady(deckId, seconds, jobId) {
 	const deadline = performance.now() + 8000
 	let mediaEl
 	while (performance.now() < deadline) {
+		if (seekJobSeqByDeck.get(deckId) !== jobId) return false
 		mediaEl = getMediaPlayer(deckId)
 		if (mediaEl && typeof mediaEl.currentTime === 'number') {
 			const hasDuration = Number.isFinite(mediaEl.duration) && mediaEl.duration > 0
@@ -259,11 +266,13 @@ async function seekWhenReady(deckId, seconds) {
 	}
 	if (!mediaEl || typeof mediaEl.currentTime !== 'number') return false
 
+	if (seekJobSeqByDeck.get(deckId) !== jobId) return false
 	seekTo(deckId, seconds)
 	play(deckId)
 
 	let adjustTries = 10
 	while (adjustTries > 0) {
+		if (seekJobSeqByDeck.get(deckId) !== jobId) return false
 		if (Math.abs(mediaEl.currentTime - seconds) < 1) return true
 		seekTo(deckId, seconds)
 		await new Promise((r) => setTimeout(r, 200))
@@ -312,7 +321,8 @@ async function playBroadcastTrack(deckId, broadcast) {
 	setUserInitiatedPlay(deckId, true)
 	await playTrack(deckId, track_id, null, 'broadcast_sync')
 	if (seekTime !== undefined) {
-		await seekWhenReady(deckId, seekTime)
+		const seekJobId = nextSeekJobId(deckId)
+		await seekWhenReady(deckId, seekTime, seekJobId)
 		log.log(`seek +${seekTime}s`)
 	}
 	const deck = appState.decks[deckId]
@@ -351,28 +361,13 @@ function getSortedDeckIds() {
 		.sort((a, b) => a - b)
 }
 
-function deckTargetsBroadcastChannel(deck, channelId) {
-	if (!deck || !channelId) return false
-	if (deck.broadcasting_channel_id === channelId) return true
-	if (!deck.playlist_track) return false
-	const track = tracksCollection.get(deck.playlist_track)
-	if (!track?.slug) return false
-	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-	return channel?.id === channelId
-}
-
-function getBroadcastDeckState(channelId) {
-	let ids = getSortedDeckIds().filter((id) => deckTargetsBroadcastChannel(appState.decks[id], channelId))
-	// Fallback: if no deck is explicitly mapped yet, prefer the deck that is
-	// currently playing, then one with a selected track, then active deck.
-	// This avoids reporting paused state from an unrelated active deck.
-	if (!ids.length) {
-		const sorted = getSortedDeckIds()
-		const playing = sorted.find((id) => Boolean(appState.decks[id]?.is_playing))
-		const withTrack = sorted.find((id) => Boolean(appState.decks[id]?.playlist_track))
-		const active = appState.decks[appState.active_deck_id] ? appState.active_deck_id : undefined
-		const fallback = playing ?? withTrack ?? active
-		if (fallback != null) ids = [fallback]
+function getBroadcastDeckState() {
+	// Mirror the broadcaster workspace: send all local (non-listener) decks.
+	// Previous channel/track-based filtering could drop some open decks, causing
+	// listeners to open fewer decks than the broadcaster.
+	let ids = getSortedDeckIds().filter((id) => !appState.decks[id]?.listening_to_channel_id)
+	if (!ids.length && appState.decks[appState.active_deck_id]) {
+		ids = [appState.active_deck_id]
 	}
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]
@@ -391,14 +386,16 @@ function getBroadcastDeckState(channelId) {
 }
 
 function broadcastStateUpdate(channelId) {
-	const state = getBroadcastDeckState(channelId)
+	const state = getBroadcastDeckState()
 	const entry = broadcastStateChannels.get(channelId)
 	if (!entry) return
+	const seq = (broadcastStateSeqByChannel.get(channelId) ?? 0) + 1
+	broadcastStateSeqByChannel.set(channelId, seq)
 	console.info('[broadcast] state_send', {channelId, decks: state.length, speeds: state.map((d) => d.speed)})
 	entry.channel.send({
 		type: 'broadcast',
 		event: 'state',
-		payload: {channel_id: channelId, decks: state}
+		payload: {channel_id: channelId, decks: state, seq}
 	})
 }
 
@@ -435,6 +432,15 @@ function startBroadcastStateListener(channelId) {
 	const channel = sdk.supabase
 		.channel(`broadcast-state:${channelId}`)
 		.on('broadcast', {event: 'state'}, (payload) => {
+			const seq = payload?.payload?.seq ?? payload?.seq
+			if (typeof seq === 'number') {
+				const lastSeq = lastReceivedStateSeqByChannel.get(channelId) ?? 0
+				if (seq <= lastSeq) {
+					console.info('[broadcast] state_drop_stale', {channelId, seq, lastSeq})
+					return
+				}
+				lastReceivedStateSeqByChannel.set(channelId, seq)
+			}
 			const decks = payload?.payload?.decks ?? payload?.decks
 			console.info('[broadcast] state_receive', {
 				channelId,
@@ -458,6 +464,7 @@ function stopBroadcastStateListener(channelId) {
 		channel.unsubscribe()
 		broadcastStateListeners.delete(channelId)
 	}
+	lastReceivedStateSeqByChannel.delete(channelId)
 }
 
 function startBroadcastTableListener(channelId) {
@@ -598,7 +605,8 @@ async function applyBroadcastState(channelId, decks) {
 				if (track) {
 					const seekTime = calculateSeekTime(state, track)
 					if (seekTime !== undefined && shouldApplySeek(deckId, seekTime)) {
-						void seekWhenReady(deckId, seekTime)
+						const seekJobId = nextSeekJobId(deckId)
+						void seekWhenReady(deckId, seekTime, seekJobId)
 					}
 				}
 			}

@@ -58,6 +58,49 @@
 	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
 
 	const mediaControllerId = $derived(`r5-deck-${deckId}`)
+	let mediaDuration = $state(NaN)
+	let mediaCurrentTime = $state(0)
+
+	$effect(() => {
+		const currentTrackId = deck?.playlist_track
+		if (!currentTrackId) return
+		let stopped = false
+		let rafId = 0
+		let cleanup = () => {}
+
+		const bind = () => {
+			if (stopped) return
+			const el = getMediaPlayer(deckId)
+			if (!el) {
+				rafId = requestAnimationFrame(bind)
+				return
+			}
+			const onTime = () => {
+				mediaCurrentTime = el.currentTime ?? 0
+			}
+			const onDuration = () => {
+				const d = el.duration
+				mediaDuration = Number.isFinite(d) ? d : NaN
+			}
+			el.addEventListener('timeupdate', onTime)
+			el.addEventListener('durationchange', onDuration)
+			el.addEventListener('loadedmetadata', onDuration)
+			onTime()
+			onDuration()
+			cleanup = () => {
+				el.removeEventListener('timeupdate', onTime)
+				el.removeEventListener('durationchange', onDuration)
+				el.removeEventListener('loadedmetadata', onDuration)
+			}
+		}
+
+		rafId = requestAnimationFrame(bind)
+		return () => {
+			stopped = true
+			cancelAnimationFrame(rafId)
+			cleanup()
+		}
+	})
 
 	function emitBroadcastUpdate() {
 		const broadcastingChannelId = getBroadcastingChannelId()
@@ -94,7 +137,20 @@
 <div class="deck-compact-bar">
 	{#if appState.show_track_range_control !== false && displayTrack}
 		<div class="progress">
-			<media-time-range mediacontroller={mediaControllerId}></media-time-range>
+			<input
+				type="range"
+				min="0"
+				max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
+				step="any"
+				value={mediaCurrentTime}
+				oninput={(e) => {
+					const val = Number(e.currentTarget.value)
+					const mediaElement = getMediaPlayer(deckId)
+					if (mediaElement) mediaElement.currentTime = val
+				}}
+				class="progress-range"
+				disabled={!Number.isFinite(mediaDuration)}
+			/>
 		</div>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
@@ -248,11 +304,16 @@
 		min-width: 0;
 	}
 
-	.progress :global(media-time-range) {
+	.progress-range {
 		width: 100%;
-		--media-range-track-height: 1px;
-		--media-control-height: 9px;
-		--media-control-background: transparent;
+		height: 10px;
+		cursor: pointer;
+		accent-color: var(--accent-9);
+	}
+
+	.progress-range:disabled {
+		opacity: 0.4;
+		cursor: default;
 	}
 
 	.controls {
