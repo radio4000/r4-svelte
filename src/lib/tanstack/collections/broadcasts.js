@@ -57,6 +57,21 @@ export const broadcastsCollection = createCollection(
 )
 
 /**
+ * Reconcile broadcastsCollection state from a fresh snapshot.
+ * @param {BroadcastWithChannel[]} broadcasts
+ */
+function reconcileBroadcastsSnapshot(broadcasts) {
+	const nextIds = new Set(broadcasts.map((b) => b.channel_id))
+	for (const b of broadcasts) broadcastsCollection.utils.writeUpsert(b)
+	for (const existing of broadcastsCollection.state.values()) {
+		if (!nextIds.has(existing.channel_id)) {
+			broadcastsCollection.utils.writeDelete(existing.channel_id)
+		}
+	}
+	syncBroadcastingState([...broadcastsCollection.state.values()])
+}
+
+/**
  * Sync broadcasting_channel_id on all decks from the broadcasts list
  * @param {BroadcastWithChannel[]} broadcasts
  */
@@ -100,3 +115,27 @@ sdk.supabase
 	.subscribe((status) => {
 		log.info('broadcasts subscription status', {status})
 	})
+
+// Realtime can be flaky depending on network/session; keep a lightweight polling fallback.
+if (typeof window !== 'undefined') {
+	const refreshBroadcasts = async () => {
+		try {
+			const broadcasts = await readBroadcasts()
+			reconcileBroadcastsSnapshot(broadcasts)
+		} catch (error) {
+			log.warn('broadcasts poll failed', error)
+		}
+	}
+	const pollIntervalMs = 10000
+	const timerId = window.setInterval(refreshBroadcasts, pollIntervalMs)
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible') void refreshBroadcasts()
+	})
+	window.addEventListener(
+		'beforeunload',
+		() => {
+			clearInterval(timerId)
+		},
+		{once: true}
+	)
+}
