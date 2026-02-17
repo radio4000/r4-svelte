@@ -2,44 +2,59 @@
 	"src/lib/app-state.svelte.ts": [
 		{"name": "appState", "desc": "Reactive UI state, persisted to localStorage."},
 		{"name": "defaultAppState", "desc": "Default values for appState."},
+		{"name": "canEditChannel(channelId)", "desc": "Can current user edit this channel?"},
 
 		{"name": "appState.user", "desc": "Current authenticated user."},
 		{"name": "appState.channel", "desc": "Selected channel."},
-		{"name": "appState.channels", "desc": "Loaded channels list."},
-		{"name": "appState.decks", "desc": "Per-deck player state (multiple players)."},
-
-		{"name": "appState.playlist_track", "desc": "Current playing track ID."},
-		{"name": "appState.playlist_tracks", "desc": "Queue (original order)."},
-		{"name": "appState.playlist_tracks_shuffled", "desc": "Queue (shuffled order)."},
-		{"name": "appState.is_playing", "desc": "Playback state."},
-		{"name": "appState.shuffle", "desc": "Shuffle enabled."},
-		{"name": "appState.volume", "desc": "Volume 0-1."},
-
-		{"name": "appState.hide_video_player", "desc": "Hide/show video."},
-		{"name": "appState.deck.compact", "desc": "Compact player UI per deck."},
-		{"name": "appState.deck.expanded", "desc": "Fullscreen player UI per deck."},
-		{"name": "appState.hide_queue_panel", "desc": "Hide/show sidebar."},
-		{"name": "appState.queue_panel_width", "desc": "Sidebar width."},
+		{"name": "appState.channels", "desc": "User's channel IDs."},
+		{"name": "appState.decks", "desc": "Record<number, Deck> — per-deck player state."},
+		{"name": "appState.next_deck_id", "desc": "Next deck ID to assign."},
+		{"name": "appState.active_deck_id", "desc": "Currently focused deck ID."},
 
 		{"name": "appState.channels_display", "desc": "'grid' | 'list'."},
 		{"name": "appState.channels_filter", "desc": "Track count filter."},
 		{"name": "appState.channels_order", "desc": "Sort field or 'shuffle'."},
 		{"name": "appState.channels_order_direction", "desc": "'asc' | 'desc'."},
 
-		{"name": "appState.broadcasting_channel_id", "desc": "Channel we're broadcasting."},
-		{"name": "appState.listening_to_channel_id", "desc": "Channel we're listening to."},
-
 		{"name": "appState.theme", "desc": "Light/dark."},
 		{"name": "appState.language", "desc": "Locale."},
 		{"name": "appState.shortcuts", "desc": "Custom keybindings."},
 		{"name": "appState.custom_css_variables", "desc": "Theme overrides."},
 		{"name": "appState.hide_track_artwork", "desc": "Hide album art."},
+		{"name": "appState.default_new_deck_volume", "desc": "Default volume for new decks: 0 | 1."},
+		{"name": "appState.autoplay_new_deck", "desc": "Whether new decks auto-play."},
+		{"name": "appState.show_speed_control", "desc": "Show playback speed control."},
+		{"name": "appState.show_track_range_control", "desc": "Show track progress/range control."},
+		{"name": "appState.font_family", "desc": "Custom font override."},
 
 		{"name": "appState.modal_track_add", "desc": "Add track modal state."},
 		{"name": "appState.modal_track_edit", "desc": "Edit track modal state."},
-		{"name": "appState.modal_shortcuts", "desc": "Shortcuts modal open."},
+		{"name": "appState.modal_share", "desc": "Share modal state."},
+		{"name": "appState.modal_shortcuts", "desc": "Shortcuts modal open."}
+	],
 
-		{"name": "canEditChannel(channelId)", "desc": "Can current user edit this channel?"}
+	"Deck (per-deck state in appState.decks[id])": [
+		{"name": "createDefaultDeck(id)", "desc": "Create a Deck with default values."},
+		{"name": "addDeck()", "desc": "Add a new deck, returns it."},
+		{"name": "removeDeck(deckId)", "desc": "Remove a deck by ID."},
+		{"name": "deck.playlist_track", "desc": "Current playing track ID."},
+		{"name": "deck.playlist_tracks", "desc": "Queue (original order)."},
+		{"name": "deck.playlist_tracks_shuffled", "desc": "Queue (shuffled order)."},
+		{"name": "deck.is_playing", "desc": "Playback state."},
+		{"name": "deck.shuffle", "desc": "Shuffle enabled."},
+		{"name": "deck.volume", "desc": "Volume 0-1."},
+		{"name": "deck.muted", "desc": "Muted state."},
+		{"name": "deck.speed", "desc": "Playback speed."},
+		{"name": "deck.hide_video_player", "desc": "Hide/show video."},
+		{"name": "deck.compact", "desc": "Compact player UI."},
+		{"name": "deck.expanded", "desc": "Fullscreen player UI."},
+		{"name": "deck.hide_queue_panel", "desc": "Hide/show sidebar."},
+		{"name": "deck.queue_panel_width", "desc": "Sidebar width."},
+		{"name": "deck.broadcasting_channel_id", "desc": "Channel this deck is broadcasting."},
+		{"name": "deck.listening_to_channel_id", "desc": "Channel this deck is listening to."},
+		{"name": "deck.track_played_at", "desc": "Timestamp when track started playing."},
+		{"name": "deck.seeked_at", "desc": "Timestamp of last seek."},
+		{"name": "deck.seek_position", "desc": "Seek position in seconds."}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -87,35 +102,42 @@
 
 	"src/lib/api.js": [
 		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
+		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
+		{"name": "setUserInitiatedPlay(deckId, value)", "desc": "Set user-initiated play flag for a deck."},
+		{"name": "getMediaPlayer(deckId)", "desc": "Find the media player element for a deck."},
 
-		{"name": "playTrack(id, endReason, startReason)", "desc": "Start playback of a track."},
+		{"name": "playTrack(deckId, id, endReason, startReason)", "desc": "Start playback of a track."},
 		{
-			"name": "playChannel({id, slug}, trackId?)",
+			"name": "playChannel(deckId, {id, slug}, trackId?)",
 			"desc": "Play a channel, optionally starting from a specific track ID."
 		},
-		{"name": "shufflePlayChannel({id, slug})", "desc": "Random start plus shuffle."},
-		{"name": "togglePlayPause()", "desc": "Toggle YouTube player play/pause."},
-		{"name": "playFromHere(trackId)", "desc": "Play from track to end."},
+		{"name": "playTrackInNewDeck(trackId, slug)", "desc": "Play a track in a newly created deck."},
+		{"name": "playChannelInNewDeck(channel, trackId?)", "desc": "Play a channel in a newly created deck."},
+		{"name": "shufflePlayChannel(deckId, {id, slug})", "desc": "Random start plus shuffle."},
+		{"name": "togglePlayPause(deckId)", "desc": "Toggle play/pause for a deck."},
+		{"name": "playFromHere(deckId, trackId)", "desc": "Play from track to end."},
 
-		{"name": "setPlaylist(trackIds)", "desc": "Set queue to track IDs."},
-		{"name": "addToPlaylist(trackIds)", "desc": "Append track IDs to queue."},
-		{"name": "playNext(trackIds)", "desc": "Insert after current track."},
-		{"name": "removeFromQueue(trackId)", "desc": "Remove track from queue."},
-		{"name": "clearQueue()", "desc": "Keep current track, clear the rest."},
-		{"name": "shuffleRemaining()", "desc": "Shuffle remaining tracks."},
-		{"name": "rotateQueue()", "desc": "Move played to end."},
-		{"name": "toggleShuffle()", "desc": "Toggle shuffle mode (switch between original/shuffled order)."},
+		{"name": "setPlaylist(deckId, trackIds, options?)", "desc": "Set queue to track IDs."},
+		{"name": "addToPlaylist(deckId, trackIds)", "desc": "Append track IDs to queue."},
+		{"name": "playNext(deckId, trackIds)", "desc": "Insert after current track."},
+		{"name": "removeFromQueue(deckId, trackId)", "desc": "Remove track from queue."},
+		{"name": "clearQueue(deckId)", "desc": "Keep current track, clear the rest."},
+		{"name": "shuffleRemaining(deckId)", "desc": "Shuffle remaining tracks."},
+		{"name": "rotateQueue(deckId)", "desc": "Move played to end."},
+		{"name": "toggleShuffle(deckId)", "desc": "Toggle shuffle mode (switch between original/shuffled order)."},
 
-		{"name": "play(player?)", "desc": "Resume playback."},
+		{"name": "play(deckId, player?)", "desc": "Resume playback."},
 		{"name": "pause(player)", "desc": "Pause playback."},
 		{"name": "togglePlay(player)", "desc": "Toggle playback."},
-		{"name": "seekTo(seconds)", "desc": "Seek to position in current track."},
-		{"name": "next(track, activeQueue, endReason)", "desc": "Advance to next track."},
-		{"name": "previous(track, activeQueue, endReason)", "desc": "Return to previous track."},
-		{"name": "toggleVideo()", "desc": "Toggle video player visibility."},
-		{"name": "eject()", "desc": "Clear player state."},
+		{"name": "seekTo(deckId, seconds)", "desc": "Seek to position in current track."},
+		{"name": "next(deckId, track, activeQueue, endReason)", "desc": "Advance to next track."},
+		{"name": "previous(deckId, track, activeQueue, endReason)", "desc": "Return to previous track."},
+		{"name": "toggleVideo(deckId)", "desc": "Toggle video player visibility."},
+		{"name": "eject(deckId)", "desc": "Clear deck player state."},
 
 		{"name": "toggleTheme()", "desc": "Light/dark mode."},
+		{"name": "toggleQueuePanel(deckId)", "desc": "Toggle queue sidebar for a deck."},
+		{"name": "toggleVideoPlayer(deckId)", "desc": "Toggle video player for a deck."},
 		{"name": "toggleDeckCompact(deckId)", "desc": "Compact/expand a deck."},
 		{"name": "togglePlayerExpanded(deckId)", "desc": "Fullscreen a deck."},
 		{"name": "openSearch()", "desc": "Focus search input."},
@@ -152,10 +174,16 @@
 		{"name": "mix.count()", "desc": "Count tracks."}
 	],
 
-	"src/lib/search.js": [
+	"src/lib/search-fts.js": [
 		{"name": "buildFtsFilter(query)", "desc": "Build FTS filter combining websearch + prefix."},
 		{"name": "searchChannels(query, {limit?})", "desc": "Search channels remotely."},
-		{"name": "searchTracks(query, {limit?, channelSlug?})", "desc": "Search tracks remotely."},
+		{"name": "searchTracks(query, {limit?, channelSlug?})", "desc": "Search tracks remotely."}
+	],
+
+	"src/lib/search.js": [
+		{"name": "findChannelBySlug(slug)", "desc": "Find channel locally, fall back to remote."},
+		{"name": "searchChannels (re-export)", "desc": "Re-exported from search-fts."},
+		{"name": "searchTracks (re-export)", "desc": "Re-exported from search-fts."},
 		{"name": "searchAll(query, {limit?})", "desc": "Search @channel, #tag, and free-text (FTS)."},
 		{"name": "fuzzySearch(query, items, keys, {limit?, threshold?})", "desc": "Generic local fuzzy search."},
 		{"name": "searchTracksLocal(query, tracks, {limit?})", "desc": "Local tracks search."},
@@ -163,11 +191,15 @@
 	],
 
 	"src/lib/broadcast.js": [
+		{"name": "isV1Track(trackId)", "desc": "Check if track belongs to a v1 channel."},
+		{"name": "isUserBroadcasting(channelId)", "desc": "Check if user is broadcasting on a channel."},
+		{"name": "notifyBroadcastState(channelId)", "desc": "Push broadcast state update via realtime."},
+		{"name": "getBroadcastingChannelId()", "desc": "Get the channel ID being broadcast from any deck."},
 		{"name": "startBroadcast(channelId, trackId?)", "desc": "Start broadcasting."},
 		{"name": "stopBroadcast(channelId)", "desc": "Stop broadcasting."},
-		{"name": "joinBroadcast(channelId)", "desc": "Listen to broadcast."},
-		{"name": "leaveBroadcast()", "desc": "Stop listening."},
-		{"name": "upsertRemoteBroadcast(channelId, trackId)", "desc": "Upsert broadcast record."},
+		{"name": "joinBroadcast(deckId, channelId)", "desc": "Listen to broadcast on a deck."},
+		{"name": "leaveBroadcast(deckId)", "desc": "Stop listening on a deck."},
+		{"name": "upsertRemoteBroadcast(channelId)", "desc": "Upsert broadcast record."},
 		{"name": "validateListeningState()", "desc": "Verify listening state."}
 	],
 

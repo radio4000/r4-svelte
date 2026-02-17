@@ -133,11 +133,6 @@ export function canEditChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)
 }
 
-/** Get a deck by ID */
-export function getDeck(deckId: number): Deck | undefined {
-	return appState.decks[deckId]
-}
-
 /** Add a new deck, returns it */
 export function addDeck(): Deck {
 	const id = appState.next_deck_id
