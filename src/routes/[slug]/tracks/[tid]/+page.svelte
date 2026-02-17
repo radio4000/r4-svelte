@@ -64,7 +64,7 @@
 	</ul>
 	<article>
 		<header>
-			<nav class="horizontalOverflow track-tabs">
+			<nav class="tabs track-tabs">
 				<a href="?tab=r5" class:active={activeTab === 'r5' || !activeTab}>
 					<Icon icon="circle-info" size={16} />
 					{m.track_detail_nav_r5()}

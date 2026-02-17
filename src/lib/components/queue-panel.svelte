@@ -99,7 +99,7 @@
 
 <div class="queue-panel">
 	<header>
-		<menu class="tab-nav">
+		<menu class="tabs">
 			<button onclick={() => (view = 'queue')} class:active={view === 'queue'}>
 				<Icon icon="unordered-list" size={16} />
 				{m.button_queue()} ({queueTracks.length})
@@ -219,9 +219,7 @@
 
 	header {
 		display: flex;
-		align-items: center;
 		justify-content: space-between;
-		padding: 0.5rem;
 		background: var(--aside-bg);
 		border-bottom: 1px solid var(--gray-5);
 	}
@@ -259,38 +257,6 @@
 		gap: 0.25rem;
 	}
 
-	.tab-nav {
-		display: flex;
-	}
-
-	.tab-nav button {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		white-space: nowrap;
-		padding: 0.5rem 0.5rem 0.45rem;
-		background: none;
-		border: none;
-		border-radius: 0;
-	}
-
-	.tab-nav button:hover {
-		background: var(--gray-3);
-		text-decoration: underline;
-		text-decoration-thickness: 0.1px;
-		text-decoration-color: var(--gray-10);
-		text-underline-offset: max(0.1em, 2px);
-	}
-
-	.tab-nav button:focus-visible {
-		outline: 2px solid var(--accent-9);
-		outline-offset: -2px;
-	}
-
-	.tab-nav button.active {
-		box-shadow: inset 0 -2px 0 var(--accent-9);
-	}
-
 	.search-container :global(.search-input) {
 		flex: 1 1 12rem;
 		min-width: 0;
@@ -301,10 +267,7 @@
 	}
 
 	.queue-actions {
-		display: flex;
-		gap: var(--space-1);
-		flex: 0 0 auto;
-		margin-left: auto;
+		padding: 0.5rem 0.5rem;
 	}
 
 	.tracks :global(.slug),

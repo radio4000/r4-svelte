@@ -3,7 +3,7 @@
 </svelte:head>
 
 <div class="container">
-	<nav data-grouped class="horizontalOverflow">
+	<nav class="nav-grouped">
 		<a class="active" href="/_debug">DEBUG</a>
 		<a href="/_debug/appstate">appState</a>
 		<a href="/_debug/async-test">Async</a>
@@ -14,6 +14,7 @@
 		<a href="/_debug/spam-angel">Spam</a>
 		<a href="/_debug/tanstack">Tanstack</a>
 		<a href="/_debug/tooltips">Tooltips</a>
+		<a href="/_debug/styles">Styles</a>
 		<a href="/_debug/views">Views</a>
 	</nav>
 

@@ -15,7 +15,7 @@
 <article class="constrained">
 	<h1>{m.settings_title()}</h1>
 
-	<menu data-vertical>
+	<menu class="nav-vertical">
 		{#if !appState.user}
 			<a href="/auth">
 				<Icon icon="user" />
@@ -42,7 +42,7 @@
 		</a>
 	</menu>
 
-	<menu data-vertical>
+	<menu class="nav-vertical">
 		<a href="/about">
 			<Icon icon="circle-info" />
 			{m.nav_about()}

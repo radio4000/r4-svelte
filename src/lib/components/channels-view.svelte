@@ -97,7 +97,7 @@
 		>
 			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
 				{viewLabelMap[display]()}{/snippet}
-			<div class="view-modes">
+			<menu class="view-modes">
 				<button
 					class:active={display === 'grid'}
 					onclick={() => setDisplay('grid')}
@@ -126,7 +126,7 @@
 				>
 					<Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small>
 				</button>
-			</div>
+			</menu>
 			<SortControls bind:order bind:direction />
 		</PopoverMenu>
 	</header>
@@ -174,26 +174,6 @@
 
 		:global(h1, h2, h3) {
 			margin: 0;
-		}
-	}
-
-	.view-modes {
-		display: flex;
-		gap: 0.2rem;
-		padding-bottom: 0.5rem;
-		margin-bottom: 0.2rem;
-		border-bottom: 1px solid var(--gray-6);
-
-		button {
-			flex: 1;
-			flex-direction: column;
-			gap: 0.2rem;
-			padding: 0.2rem;
-			min-width: 3.5rem;
-
-			small {
-				color: inherit;
-			}
 		}
 	}
 </style>

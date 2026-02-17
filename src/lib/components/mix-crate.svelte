@@ -218,29 +218,12 @@
 		animation: pulse-border 1s ease-in-out infinite;
 	}
 
-	.suggestions,
-	.sources {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
 	.suggestions {
 		min-height: 7.2rem;
 		align-content: start;
 	}
 
-	.suggestions button,
-	.sources button {
-		font-size: var(--font-2);
-		padding: 0.2rem 0.5rem;
-	}
-
 	.suggestions button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-
 		> :global(.placeholder),
 		> :global(img) {
 			margin-left: -0.3rem;
