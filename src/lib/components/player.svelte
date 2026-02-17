@@ -511,7 +511,6 @@
 			{/if}
 			<div class="volume">
 				<media-mute-button
-					bind:this={muteButtonEl}
 					class="btn"
 					class:active={Boolean(deck?.muted)}
 					onclick={handleToggleMute}
