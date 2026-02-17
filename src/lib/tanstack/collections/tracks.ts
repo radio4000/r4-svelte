@@ -373,7 +373,10 @@ export async function ensureTracksLoaded(slug: string): Promise<void> {
 		queryFn: () => fetchTracksBySlug(slug)
 	})
 
-	await tracksCollection.preload()
+	// Ensure sync is started so write utils are available
+	if (!tracksCollection.isReady()) {
+		tracksCollection.startSyncImmediate()
+	}
 
 	tracksCollection.utils.writeBatch(() => {
 		for (const track of data) {
