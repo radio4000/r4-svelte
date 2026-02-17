@@ -9,10 +9,9 @@ import {appState} from '$lib/app-state.svelte'
 
 const BROADCAST_SELECT = `
 	channel_id,
-	track_id,
 	track_played_at,
-	channels:channels_with_tracks (*),
-	tracks:channel_tracks!track_id (*)
+	decks,
+	channels:channels_with_tracks (*)
 `
 
 /**
@@ -57,13 +56,32 @@ export const broadcastsCollection = createCollection(
 )
 
 /**
- * Sync appState.broadcasting_channel_id from the broadcasts list
+ * Reconcile broadcastsCollection state from a fresh snapshot.
+ * @param {BroadcastWithChannel[]} broadcasts
+ */
+function reconcileBroadcastsSnapshot(broadcasts) {
+	const nextIds = new Set(broadcasts.map((b) => b.channel_id))
+	for (const b of broadcasts) broadcastsCollection.utils.writeUpsert(b)
+	for (const existing of broadcastsCollection.state.values()) {
+		if (!nextIds.has(existing.channel_id)) {
+			broadcastsCollection.utils.writeDelete(existing.channel_id)
+		}
+	}
+	syncBroadcastingState([...broadcastsCollection.state.values()])
+}
+
+/**
+ * Sync broadcasting_channel_id on all decks from the broadcasts list
  * @param {BroadcastWithChannel[]} broadcasts
  */
 function syncBroadcastingState(broadcasts) {
 	const userChannelId = appState.channels?.[0]
 	const isUserBroadcasting = userChannelId && broadcasts.some((b) => b.channel_id === userChannelId)
-	appState.broadcasting_channel_id = isUserBroadcasting ? userChannelId : undefined
+	for (const deck of Object.values(appState.decks)) {
+		if (deck.broadcasting_channel_id === userChannelId) {
+			deck.broadcasting_channel_id = isUserBroadcasting ? userChannelId : undefined
+		}
+	}
 }
 
 sdk.supabase
@@ -84,7 +102,11 @@ sdk.supabase
 			const oldData = /** @type {{channel_id: string}} */ (payload.old)
 			broadcastsCollection.utils.writeDelete(oldData.channel_id)
 			if (oldData.channel_id === appState.channels?.[0]) {
-				appState.broadcasting_channel_id = undefined
+				for (const deck of Object.values(appState.decks)) {
+					if (deck.broadcasting_channel_id === oldData.channel_id) {
+						deck.broadcasting_channel_id = undefined
+					}
+				}
 			}
 			syncBroadcastingState([...broadcastsCollection.state.values()])
 		}
@@ -92,3 +114,27 @@ sdk.supabase
 	.subscribe((status) => {
 		log.info('broadcasts subscription status', {status})
 	})
+
+// Realtime can be flaky depending on network/session; keep a lightweight polling fallback.
+if (typeof window !== 'undefined') {
+	const refreshBroadcasts = async () => {
+		try {
+			const broadcasts = await readBroadcasts()
+			reconcileBroadcastsSnapshot(broadcasts)
+		} catch (error) {
+			log.warn('broadcasts poll failed', error)
+		}
+	}
+	const pollIntervalMs = 10000
+	const timerId = window.setInterval(refreshBroadcasts, pollIntervalMs)
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible') void refreshBroadcasts()
+	})
+	window.addEventListener(
+		'beforeunload',
+		() => {
+			clearInterval(timerId)
+		},
+		{once: true}
+	)
+}

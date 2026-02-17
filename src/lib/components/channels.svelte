@@ -16,13 +16,17 @@
 	const {channels = [], display: initialDisplay} = $props()
 
 	const activeChannelId = $derived.by(() => {
-		if (appState.listening_to_channel_id) return appState.listening_to_channel_id
-		const trackId = appState.playlist_track
-		if (!trackId) return
-		const track = tracksCollection.state.get(trackId)
-		if (!track?.slug) return
-		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-		return channel?.id
+		// Check all decks for listening_to_channel_id or active playlist_track
+		for (const deck of Object.values(appState.decks)) {
+			if (deck.listening_to_channel_id) return deck.listening_to_channel_id
+			const trackId = deck.playlist_track
+			if (!trackId) continue
+			const track = tracksCollection.state.get(trackId)
+			if (!track?.slug) continue
+			const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+			if (channel?.id) return channel.id
+		}
+		return undefined
 	})
 
 	let shuffleSeed = $state(0)
@@ -98,7 +102,7 @@
 
 	function handleCanvasClick(item) {
 		if (!item.slug || !item.id) return
-		shufflePlayChannel({id: item.id, slug: item.slug})
+		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */

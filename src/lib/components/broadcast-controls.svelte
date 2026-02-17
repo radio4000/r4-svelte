@@ -1,48 +1,65 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import {startBroadcast, stopBroadcast} from '$lib/broadcast'
+	import {getMediaPlayer} from '$lib/api'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	const userChannelId = $derived(appState?.channels?.[0])
-	// Access .state.size to create reactive dependency, then check if broadcasting
-	const isBroadcasting = $derived(
-		userChannelId && (broadcastsCollection.state.size, broadcastsCollection.state.get(userChannelId))
-	)
+	/** @type {{deckId?: number, channelId?: string, isLiveOverride?: boolean}} */
+	let {deckId = 1, channelId, isLiveOverride} = $props()
+
+	let deck = $derived(appState.decks[deckId])
+
+	const userChannelId = $derived(channelId ?? appState?.channels?.[0])
+	// Check collection only (source of truth) — deck state is synced via effect below
+	const isBroadcasting = $derived.by(() => {
+		if (typeof isLiveOverride === 'boolean') return isLiveOverride
+		if (!userChannelId) return false
+		void broadcastsCollection.state.size
+		return broadcastsCollection.state.has(userChannelId)
+	})
 	let error = $state(/** @type {string|null} */ (null))
+	const canStartBroadcast = $derived(Boolean(deck?.playlist_track))
 
 	$effect(() => {
-		void appState.playlist_track
+		void deck?.playlist_track
 		error = null
 	})
 
+	// Sync broadcasting_channel_id from collection state → deck
 	$effect(() => {
-		appState.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
+		if (deck) {
+			deck.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
+		}
 	})
 
 	async function stopBroadcasting() {
-		if (userChannelId) {
-			await stopBroadcast(userChannelId)
+		error = null
+		try {
+			if (userChannelId) {
+				await stopBroadcast(userChannelId)
+			}
+			if (deck) deck.broadcasting_channel_id = undefined
+		} catch (e) {
+			error = /** @type {Error} */ (e).message
 		}
-		appState.broadcasting_channel_id = undefined
 	}
 
 	async function start() {
 		error = null
-		if (!appState.playlist_track) {
+		if (!deck?.playlist_track) {
 			error = m.broadcast_requires_track()
 			return
 		}
 
-		/** @type {HTMLElement & {paused: boolean, play(): void} | null} */
-		const player = document.querySelector('youtube-video')
+		const player = getMediaPlayer(deckId)
 		if (player?.paused) player.play()
 
-		if (userChannelId && appState.playlist_track) {
+		if (userChannelId && deck.playlist_track) {
 			try {
-				await startBroadcast(userChannelId, appState.playlist_track)
-				appState.broadcasting_channel_id = userChannelId
+				await startBroadcast(userChannelId, deck.playlist_track)
+				deck.broadcasting_channel_id = userChannelId
 			} catch (e) {
 				error = /** @type {Error} */ (e).message
 			}
@@ -54,7 +71,7 @@
 	<div>
 		{#if isBroadcasting}
 			<button onclick={() => stopBroadcasting()}>{m.broadcast_stop_button()}</button>
-		{:else}
+		{:else if canStartBroadcast}
 			<button onclick={start}>
 				<Icon icon="signal" strokeWidth={1.7}></Icon>
 				{m.broadcast_start_button()}

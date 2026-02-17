@@ -1,6 +1,21 @@
+// SC Widget API: https://developers.soundcloud.com/docs/api/html5-widget
 import {logger} from '$lib/logger'
 
 const log = logger.ns('soundcloud-player').seal()
+let soundcloudApiReadyPromise = null
+
+/**
+ * Minimal TimeRanges shim so media-chrome can read seekable/buffered ranges.
+ * @param {number} start
+ * @param {number} end
+ */
+function timeRanges(start, end) {
+	return {
+		length: end > start ? 1 : 0,
+		start: () => start,
+		end: () => end
+	}
+}
 
 class SoundCloudPlayerElement extends HTMLElement {
 	static observedAttributes = ['src', 'autoplay', 'controls', 'muted', 'playsinline']
@@ -20,11 +35,15 @@ class SoundCloudPlayerElement extends HTMLElement {
 	/** @type {number | null} */
 	#errorCode = null
 
-	/** Cached values since SC Widget uses async getters */
+	/** Cached values — SC Widget only exposes async callback getters, so we mirror state locally. */
 	#cachedPaused = true
 	#cachedVolume = 1
+	#cachedMuted = false
 	#cachedDuration = NaN
 	#cachedCurrentTime = 0
+	#lastDuration = NaN
+	#metadataFired = false
+	#progressTimer = null
 
 	constructor() {
 		super()
@@ -55,24 +74,68 @@ class SoundCloudPlayerElement extends HTMLElement {
 	}
 
 	disconnectedCallback() {
-		// Unbind all widget events to prevent memory leaks
+		this.#stopProgressTimer()
 		if (this.api) {
 			log.debug('disconnectedCallback: unbinding widget events')
-			this.api.unbind(globalThis.SC.Widget.Events.READY)
-			this.api.unbind(globalThis.SC.Widget.Events.PLAY)
-			this.api.unbind(globalThis.SC.Widget.Events.PAUSE)
-			this.api.unbind(globalThis.SC.Widget.Events.FINISH)
-			this.api.unbind(globalThis.SC.Widget.Events.PLAY_PROGRESS)
-			this.api.unbind(globalThis.SC.Widget.Events.SEEK)
-			this.api.unbind(globalThis.SC.Widget.Events.ERROR)
+			const events = globalThis.SC.Widget.Events
+			this.api.unbind(events.READY)
+			this.api.unbind(events.PLAY)
+			this.api.unbind(events.PAUSE)
+			this.api.unbind(events.FINISH)
+			this.api.unbind(events.PLAY_PROGRESS)
+			this.api.unbind(events.SEEK)
+			this.api.unbind(events.ERROR)
+		}
+	}
+
+	#stopProgressTimer() {
+		if (this.#progressTimer) {
+			clearInterval(this.#progressTimer)
+			this.#progressTimer = null
+		}
+	}
+
+	/**
+	 * Poll position and duration from the widget — primary source for timeupdate,
+	 * analogous to YouTube's onVideoProgress.
+	 */
+	#startProgressTimer() {
+		if (this.#progressTimer) return
+		this.#progressTimer = setInterval(() => {
+			if (!this.api) return
+			this.api.getPosition((ms) => {
+				if (Number.isFinite(ms)) this.#cachedCurrentTime = ms / 1000
+				this.dispatchEvent(new Event('timeupdate'))
+			})
+			this.api.getDuration((ms) => {
+				this.#updateDuration(ms)
+			})
+		}, 250)
+	}
+
+	/** Update cached duration (ms from widget) and fire events when changed. */
+	#updateDuration(ms) {
+		if (!Number.isFinite(ms) || ms <= 0) return
+		const sec = ms / 1000
+		if (Math.abs(sec - this.#lastDuration) > 0.25) {
+			this.#lastDuration = sec
+			this.#cachedDuration = sec
+			this.dispatchEvent(new Event('durationchange'))
+			if (!this.#metadataFired) {
+				this.#metadataFired = true
+				this.dispatchEvent(new Event('loadedmetadata'))
+			}
 		}
 	}
 
 	async #initializePlayer() {
 		log.debug('initializePlayer')
-		const iframe = this.shadowRoot?.querySelector('iframe')
+		// Guard against double init (connectedCallback + attributeChangedCallback race)
+		if (this.api) return
 
-		// Don't initialize without a src, similar to YouTube player
+		const iframe = this.shadowRoot?.querySelector('iframe')
+		if (!iframe) return
+
 		const initialSrc = this.getAttribute('src')
 		if (!initialSrc) {
 			log.debug('No src yet, skipping initialization')
@@ -80,28 +143,31 @@ class SoundCloudPlayerElement extends HTMLElement {
 		}
 
 		if (iframe && !iframe.src) {
-			// Build SoundCloud embed URL
 			const trackUrl = this.getAttribute('src') || ''
 			const autoplay = this.hasAttribute('autoplay') ? 'true' : 'false'
-			iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(trackUrl)}&auto_play=${autoplay}&visual=true&show_user=true&show_artwork=true`
+			iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(trackUrl)}&auto_play=${autoplay}&visual=false&show_user=false&show_artwork=false`
 		}
 
 		try {
 			this.api = globalThis.SC.Widget(iframe)
 
-			// Bind events
 			this.api.bind(globalThis.SC.Widget.Events.READY, () => {
 				this.isLoaded = true
 				this.#resolveLoad?.()
 				log.debug('ready')
 
-				// Set initial volume/mute state
-				if (this.hasAttribute('muted')) {
-					this.api.setVolume(0)
-				}
+				// Seed cached volume from widget state.
+				this.api.getVolume((vol) => {
+					const normalized = Number.isFinite(Number(vol)) ? Number(vol) / 100 : 1
+					this.#cachedVolume = normalized
+				})
+				if (this.hasAttribute('muted')) this.#applyMuted(true)
+				this.dispatchEvent(new Event('volumechange'))
 
-				// Load track if src is already set or was pending
-				if (this.src || this.#pendingVideoLoad) {
+				// Fetch initial duration.
+				this.api.getDuration((ms) => this.#updateDuration(ms))
+
+				if (this.#pendingVideoLoad) {
 					log.debug('onReady calling loadTrack')
 					this.#pendingVideoLoad = false
 					this.#loadTrack()
@@ -111,6 +177,7 @@ class SoundCloudPlayerElement extends HTMLElement {
 			this.api.bind(globalThis.SC.Widget.Events.PLAY, () => {
 				log.debug('PLAY event')
 				this.#cachedPaused = false
+				this.#startProgressTimer()
 				this.dispatchEvent(new Event('play'))
 				this.dispatchEvent(new Event('playing'))
 			})
@@ -118,37 +185,38 @@ class SoundCloudPlayerElement extends HTMLElement {
 			this.api.bind(globalThis.SC.Widget.Events.PAUSE, () => {
 				log.debug('PAUSE event')
 				this.#cachedPaused = true
+				this.#stopProgressTimer()
+				this.dispatchEvent(new Event('timeupdate'))
 				this.dispatchEvent(new Event('pause'))
 			})
 
 			this.api.bind(globalThis.SC.Widget.Events.FINISH, () => {
 				log.debug('FINISH event')
 				this.#cachedPaused = true
+				this.#stopProgressTimer()
+				this.dispatchEvent(new Event('timeupdate'))
 				this.dispatchEvent(new Event('ended'))
 			})
 
 			this.api.bind(globalThis.SC.Widget.Events.PLAY_PROGRESS, (data) => {
-				// data = {currentPosition: ms, relativePosition: 0-1}
-				this.#cachedCurrentTime = data.currentPosition / 1000
-				this.dispatchEvent(new Event('timeupdate'))
+				// Secondary: derive duration from relativePosition when getDuration lags.
+				if (data.relativePosition > 0 && data.currentPosition > 0) {
+					const derived = data.currentPosition / data.relativePosition
+					this.#updateDuration(derived)
+				}
 			})
 
 			this.api.bind(globalThis.SC.Widget.Events.SEEK, (data) => {
-				// data = {currentPosition: ms}
 				this.#cachedCurrentTime = data.currentPosition / 1000
+				this.dispatchEvent(new Event('timeupdate'))
 				this.dispatchEvent(new Event('seeked'))
 			})
 
 			this.api.bind(globalThis.SC.Widget.Events.ERROR, (error) => {
 				log.error('SoundCloud error:', error)
 				this.#errorCode = error
+				this.#stopProgressTimer()
 				this.dispatchEvent(new Event('error'))
-			})
-
-			// Cache duration when available
-			this.api.getDuration((duration) => {
-				this.#cachedDuration = duration / 1000
-				this.dispatchEvent(new Event('durationchange'))
 			})
 
 			log.debug('SC.Widget created:', !!this.api)
@@ -161,7 +229,6 @@ class SoundCloudPlayerElement extends HTMLElement {
 		if (attrName === 'src' && oldValue !== newValue && newValue) {
 			log.debug('src changed to:', newValue)
 
-			// If player was never initialized (no api), initialize it now
 			if (!this.api) {
 				log.debug('Player not initialized yet, initializing now with src')
 				try {
@@ -180,6 +247,10 @@ class SoundCloudPlayerElement extends HTMLElement {
 				this.#pendingVideoLoad = true
 			}
 		}
+
+		if (attrName === 'muted' && oldValue !== newValue) {
+			this.#applyMuted(this.hasAttribute('muted'))
+		}
 	}
 
 	async #loadTrack() {
@@ -191,23 +262,30 @@ class SoundCloudPlayerElement extends HTMLElement {
 		// Reset state for new track
 		this.#errorCode = null
 		this.#cachedDuration = NaN
+		this.#lastDuration = NaN
+		this.#cachedCurrentTime = 0
+		this.#metadataFired = false
+		this.#stopProgressTimer()
 
 		// Fire durationchange to signal new media
 		this.dispatchEvent(new Event('durationchange'))
 
 		if (!this.api) return
 
-		// Load the new track
 		const options = {
-			auto_play: this.hasAttribute('autoplay')
+			auto_play: this.hasAttribute('autoplay'),
+			callback: () => {
+				// Widget finished loading the new track — refresh duration and reapply volume.
+				this.api.getDuration((ms) => this.#updateDuration(ms))
+				if (this.#cachedMuted) {
+					this.api.setVolume(0)
+				} else if (this.api?.setVolume) {
+					this.api.setVolume(this.#cachedVolume * 100)
+				}
+				this.dispatchEvent(new Event('volumechange'))
+			}
 		}
 		this.api.load(trackUrl, options)
-
-		// Update cached duration
-		this.api.getDuration((duration) => {
-			this.#cachedDuration = duration / 1000
-			this.dispatchEvent(new Event('durationchange'))
-		})
 	}
 
 	async play() {
@@ -234,14 +312,34 @@ class SoundCloudPlayerElement extends HTMLElement {
 
 	set currentTime(val) {
 		if (this.currentTime === val) return
+		// Update cache immediately so media-chrome reads the new value right away.
+		this.#cachedCurrentTime = val
 		this.#loadComplete.then(() => {
-			// SoundCloud expects milliseconds
 			this.api?.seekTo(val * 1000)
 		})
 	}
 
 	get duration() {
 		return this.#cachedDuration
+	}
+
+	/** media-chrome reads seekable to determine if the time range is interactive. */
+	get seekable() {
+		const d = this.#cachedDuration
+		return timeRanges(0, Number.isFinite(d) ? d : 0)
+	}
+
+	/** media-chrome reads buffered for the progress indicator. */
+	get buffered() {
+		const d = this.#cachedDuration
+		return timeRanges(0, Number.isFinite(d) ? d : 0)
+	}
+
+	get readyState() {
+		// 0 = HAVE_NOTHING, 1 = HAVE_METADATA, 4 = HAVE_ENOUGH_DATA
+		if (!this.isLoaded) return 0
+		if (Number.isFinite(this.#cachedDuration)) return 4
+		return 1
 	}
 
 	get error() {
@@ -258,26 +356,28 @@ class SoundCloudPlayerElement extends HTMLElement {
 		this.#loadComplete.then(() => {
 			log.debug('setting volume to:', val)
 			if (this.api?.setVolume) {
-				// SoundCloud expects 0-100
-				this.api.setVolume(val * 100)
+				this.api.setVolume(this.#cachedMuted ? 0 : val * 100)
 			}
+			this.dispatchEvent(new Event('volumechange'))
 		})
 	}
 
 	get muted() {
-		return this.#cachedVolume === 0
+		return this.#cachedMuted
 	}
 
 	set muted(val) {
-		if (this.muted === val) return
+		this.#applyMuted(Boolean(val))
+	}
+
+	/** Internal mute handler — avoids re-entrant attributeChangedCallback loops. */
+	#applyMuted(val) {
+		if (this.#cachedMuted === val) return
+		this.#cachedMuted = val
 		this.#loadComplete.then(() => {
 			log.debug('setting muted to:', val)
-			if (val && this.api?.setVolume) {
-				this.#cachedVolume = 0
-				this.api.setVolume(0)
-			} else if (!val && this.api?.setVolume) {
-				this.#cachedVolume = 1
-				this.api.setVolume(100)
+			if (this.api?.setVolume) {
+				this.api.setVolume(val ? 0 : this.#cachedVolume * 100)
 			}
 			this.dispatchEvent(new Event('volumechange'))
 		})
@@ -300,32 +400,50 @@ class SoundCloudPlayerElement extends HTMLElement {
 
 		if (globalThis.SC?.Widget) {
 			log.debug('loadSoundCloudAPI resolving with existing global SC.Widget instance')
-			return new Promise((resolve) => resolve(globalThis.SC))
+			return Promise.resolve(globalThis.SC)
 		}
 
-		return new Promise((resolve) => {
-			// SC Widget API will be ready when the script loads
-			const checkSC = setInterval(() => {
-				if (globalThis.SC?.Widget) {
-					clearInterval(checkSC)
-					log.debug('SoundCloud API loaded')
-					resolve(globalThis.SC)
+		if (!soundcloudApiReadyPromise) {
+			soundcloudApiReadyPromise = new Promise((resolve, reject) => {
+				const existing = document.querySelector('script[src*="soundcloud.com/player/api.js"]')
+				const script = existing ?? document.createElement('script')
+				if (!existing) {
+					script.src = 'https://w.soundcloud.com/player/api.js'
+					script.async = true
+					document.head.appendChild(script)
+					log.debug('SoundCloud API script added')
 				}
-			}, 100)
 
-			this.#loadScript()
-		})
-	}
+				const timeout = setTimeout(() => {
+					clearInterval(poll)
+					reject(new Error('SoundCloud API load timeout'))
+				}, 12000)
 
-	#loadScript() {
-		if (!document.querySelector('script[src*="soundcloud.com/player/api.js"]')) {
-			const script = document.createElement('script')
-			script.src = 'https://w.soundcloud.com/player/api.js'
-			document.head.appendChild(script)
-			log.debug('SoundCloud API script added')
-		} else {
-			log.debug('SoundCloud API script already exists')
+				const poll = setInterval(() => {
+					if (globalThis.SC?.Widget) {
+						clearInterval(poll)
+						clearTimeout(timeout)
+						resolve(globalThis.SC)
+					}
+				}, 200)
+
+				script.addEventListener(
+					'load',
+					() => {
+						if (globalThis.SC?.Widget) {
+							clearInterval(poll)
+							clearTimeout(timeout)
+							resolve(globalThis.SC)
+						}
+					},
+					{once: true}
+				)
+			}).catch((err) => {
+				soundcloudApiReadyPromise = null
+				throw err
+			})
 		}
+		return soundcloudApiReadyPromise
 	}
 }
 

@@ -99,9 +99,10 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 
 	const {data, error} = await query
 	if (error) throw error
+	const tracks = (data || []) as Track[]
 
 	// Fallback to v1 if v2 returns empty (race condition: channel not loaded yet)
-	if (!data?.length) {
+	if (!tracks.length) {
 		const {data: v1Data, error: v1Error} = await sdk.firebase.readTracks({slug})
 		if (v1Error) throw v1Error
 		if (v1Data?.length) {
@@ -111,7 +112,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		}
 	}
 
-	return (data || []) as Track[]
+	return tracks
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
@@ -330,7 +331,11 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 		queryFn: async () => {
 			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
 			const localLatest = cachedTracks.reduce(
-				(max: string | null, t: Track) => (!max || (t.updated_at && t.updated_at > max) ? t.updated_at : max),
+				(max: string | null, t: Track | null | undefined) => {
+					const updated = t?.updated_at
+					if (!updated) return max
+					return !max || updated > max ? updated : max
+				},
 				null as string | null
 			)
 
@@ -360,13 +365,15 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 }
 
 export async function ensureTracksLoaded(slug: string): Promise<void> {
-	const existing = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (existing.length) return
 
 	const data = await queryClient.fetchQuery<Track[]>({
 		queryKey: ['tracks', slug],
 		queryFn: () => fetchTracksBySlug(slug)
 	})
+
+	await tracksCollection.preload()
 
 	tracksCollection.utils.writeBatch(() => {
 		for (const track of data) {

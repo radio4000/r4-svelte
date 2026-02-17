@@ -67,6 +67,18 @@
 	}
 }
 
+.virtual-item.track-item {
+	border-bottom: 1px solid var(--gray-3);
+
+	&:hover {
+		background: light-dark(var(--gray-2), var(--gray-2));
+	}
+
+	&[aria-selected='true'] {
+		background: var(--accent-2);
+	}
+}
+
 .grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 20vw, 280px), 1fr));

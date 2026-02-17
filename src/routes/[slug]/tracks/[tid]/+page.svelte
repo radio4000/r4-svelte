@@ -3,6 +3,7 @@
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
+	import {canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
@@ -21,6 +22,7 @@
 
 	// Channel is already loaded in layout, read from collection
 	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === data.slug))
+	const canEdit = $derived(canEditChannel(channel?.id))
 
 	// Find track by ID from already-loaded tracks
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
@@ -58,7 +60,7 @@
 	</p>
 {:else}
 	<ul class="list HIGHLIGHT">
-		<li><TrackCard {track} /></li>
+		<li><TrackCard {track} {canEdit} /></li>
 	</ul>
 	<article>
 		<header>

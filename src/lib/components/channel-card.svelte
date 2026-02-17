@@ -11,7 +11,7 @@
 
 	const broadcasting = $derived(
 		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)) ||
-			appState.listening_to_channel_id === channel.id
+			Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id)
 	)
 
 	/** @param {MouseEvent} event */

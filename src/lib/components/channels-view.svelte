@@ -2,6 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {shufflePlayChannel} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import {channelAvatarUrl} from '$lib/utils.ts'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
@@ -53,7 +54,7 @@
 
 	function handleCanvasClick(item) {
 		if (!item.slug || !item.id) return
-		shufflePlayChannel({id: item.id, slug: item.slug})
+		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'infinite'} value */

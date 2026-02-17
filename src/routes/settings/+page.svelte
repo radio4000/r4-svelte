@@ -32,6 +32,10 @@
 			<Icon icon="palette" />
 			{m.settings_appearance()}
 		</a>
+		<a href="/settings/player">
+			<Icon icon="tv" />
+			Player
+		</a>
 		<a href="/settings/keyboard">
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}

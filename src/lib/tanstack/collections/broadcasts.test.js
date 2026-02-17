@@ -3,10 +3,9 @@ import {sdk} from '@radio4000/sdk'
 
 const BROADCAST_SELECT = `
 	channel_id,
-	track_id,
 	track_played_at,
-	channels:channels_with_tracks (*),
-	tracks:channel_tracks!track_id (*)
+	decks,
+	channels:channels_with_tracks (*)
 `
 
 describe('broadcasts', () => {
@@ -25,8 +24,12 @@ describe('broadcasts', () => {
 		for (const broadcast of broadcasts) {
 			// Broadcast fields
 			expect(typeof broadcast.channel_id).toBe('string')
-			expect(typeof broadcast.track_id).toBe('string')
 			expect(typeof broadcast.track_played_at).toBe('string')
+
+			// decks field — may be null if broadcast was created before migration
+			if (broadcast.decks != null) {
+				expect(Array.isArray(broadcast.decks)).toBe(true)
+			}
 
 			// Channel fields (should never be null per DB constraints)
 			expect(broadcast.channels).toBeDefined()
@@ -35,16 +38,6 @@ describe('broadcasts', () => {
 			expect(typeof broadcast.channels.slug).toBe('string')
 			expect(typeof broadcast.channels.created_at).toBe('string')
 			expect(typeof broadcast.channels.updated_at).toBe('string')
-
-			// Track from channel_tracks view - has slug
-			if (broadcast.tracks !== null) {
-				expect(typeof broadcast.tracks.id).toBe('string')
-				expect(typeof broadcast.tracks.title).toBe('string')
-				expect(typeof broadcast.tracks.url).toBe('string')
-				expect(typeof broadcast.tracks.slug).toBe('string')
-				expect(typeof broadcast.tracks.created_at).toBe('string')
-				expect(typeof broadcast.tracks.updated_at).toBe('string')
-			}
 		}
 	})
 

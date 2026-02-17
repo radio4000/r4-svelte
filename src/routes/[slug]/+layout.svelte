@@ -3,10 +3,17 @@
 	import {setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, tracksCollection, checkTracksFreshness} from '$lib/tanstack/collections'
+	import {
+		channelsCollection,
+		tracksCollection,
+		broadcastsCollection,
+		checkTracksFreshness
+	} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
+	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelHero from '$lib/components/channel-hero.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
@@ -27,6 +34,9 @@
 			.findOne()
 	)
 	let channel = $derived(channelQuery.data)
+	let isListeningToChannel = $derived(
+		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
+	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
@@ -44,6 +54,21 @@
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 	)
 
+	// Channel-specific broadcast live query so "Live" state updates on this page
+	// even when /broadcasts is not open.
+	const channelBroadcastQuery = useLiveQuery((q) =>
+		channel?.id
+			? q
+					.from({b: broadcastsCollection})
+					.where(({b}) => eq(b.channel_id, channel.id))
+					.findOne()
+			: q
+					.from({b: broadcastsCollection})
+					.orderBy(({b}) => b.channel_id, 'asc')
+					.limit(0)
+	)
+	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
+
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 </script>
@@ -58,30 +83,13 @@
 	<div class="channel-layout fill-height">
 		<header>
 			<div class="info">
-				<menu>
-					<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-					{#if channel.source !== 'v1'}
-						{#if hasChannel}
-							<ButtonFollow {channel} />
-						{:else}
-							<a href={authUrl} class="btn" title={m.button_follow()}>
-								<Icon icon="favorite" />
-							</a>
-						{/if}
-					{/if}
-					<button type="button" onclick={() => (appState.modal_share = {channel})}>
-						<Icon icon="share" size={16} />
-						{m.share_native()}
-					</button>
-				</menu>
-				<p class="slug"><small>@{slug}</small></p>
-				<h1>{channel.name}</h1>
-				{#if channel.description}
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-				{/if}
-				{#if channel.url}
-					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
-				{/if}
+				<h1>
+					{channel.name}
+					{#if isChannelLive}<span class="live-badge">Live</span>{/if}
+				</h1>
+				<p class="slug">
+					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
+				</p>
 				<p class="dates">
 					<small>
 						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
@@ -89,8 +97,47 @@
 						})}
 					</small>
 				</p>
+				{#if channel.url}
+					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				{/if}
+				{#if channel.description}
+					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
+				{/if}
 			</div>
-			<ChannelHero {channel} />
+			<menu class="channel-actions">
+				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
+				{#if channel.id && isChannelLive && !canEdit}
+					<button
+						type="button"
+						onclick={() => {
+							if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+							else joinBroadcast(appState.active_deck_id, channel.id)
+						}}
+					>
+						<Icon icon="signal" />
+						{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+					</button>
+				{/if}
+				{#if canEdit && channel.source !== 'v1'}
+					<BroadcastControls deckId={appState.active_deck_id} channelId={channel.id} isLiveOverride={isChannelLive} />
+				{/if}
+				{#if channel.source !== 'v1'}
+					{#if hasChannel}
+						<ButtonFollow {channel} />
+					{:else}
+						<a href={authUrl} class="btn" title={m.button_follow()}>
+							<Icon icon="favorite" />
+						</a>
+					{/if}
+				{/if}
+				<button type="button" onclick={() => (appState.modal_share = {channel})}>
+					<Icon icon="share" size={16} />
+					{m.share_native()}
+				</button>
+			</menu>
+			<div class="hero">
+				<ChannelHero {channel} />
+			</div>
 		</header>
 
 		<div class="horizontalOverflow channel-nav">
@@ -152,34 +199,75 @@
 
 	header {
 		display: flex;
-		flex-flow: row;
-		gap: 0.75rem;
-		padding: 0.5rem;
-	}
-
-	header :global(figure) {
-		max-width: 7rem;
-		min-width: 0;
-		flex-shrink: 0;
-		align-self: flex-end;
+		flex-direction: column;
+		gap: clamp(0.45rem, 2vw, 0.75rem);
+		padding: clamp(0.45rem, 2vw, 0.7rem);
+		align-items: stretch;
 	}
 
 	.info {
-		flex: 1;
+		display: grid;
+		gap: 0.35rem;
 		min-width: 0;
+		flex: 1 1 auto;
 	}
 
 	h1 {
-		margin-top: var(--space-3);
-		font-size: var(--font-9);
+		margin-top: 0.1rem;
+		font-size: clamp(var(--font-7), 7vw, var(--font-9));
+		line-height: 1.05;
+	}
+
+	.live-badge {
+		display: inline-block;
+		vertical-align: middle;
+		margin-left: 0.35rem;
+		font-size: var(--font-2);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		background: var(--accent-9);
+		color: var(--gray-1);
+		padding: 0 0.35rem;
+		border-radius: 3px;
 	}
 
 	.description {
 		white-space: pre-wrap;
 	}
 
-	menu {
-		margin-bottom: 0.75rem;
+	.channel-actions {
+		margin: 0;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.35rem;
+		align-items: center;
+		align-self: center;
+	}
+
+	.hero {
+		align-self: center;
+	}
+
+	.hero :global(figure) {
+		max-width: clamp(6rem, 38vw, 9rem);
+		min-width: 0;
+	}
+
+	.slug,
+	.dates,
+	.url {
+		color: var(--gray-10);
+	}
+
+	.url {
+		font-style: italic;
+		color: var(--gray-9);
+	}
+
+	.url a {
+		color: inherit;
 	}
 
 	main {
@@ -215,15 +303,35 @@
 		margin-left: auto;
 	}
 
-	@media (max-width: 500px) {
+	@media (min-width: 640px) {
 		header {
-			flex-direction: column;
+			flex-direction: row;
+			flex-wrap: wrap;
+			column-gap: 0.8rem;
 			align-items: center;
-			text-align: center;
 		}
 
-		menu {
-			justify-content: center;
+		.channel-actions {
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			align-self: center;
+		}
+
+		.hero {
+			align-self: center;
+		}
+	}
+
+	@media (min-width: 900px) {
+		header {
+			flex-wrap: nowrap;
+			column-gap: 0.9rem;
+			align-items: center;
+		}
+
+		.hero :global(figure) {
+			max-width: clamp(6rem, 16vw, 10rem);
 		}
 	}
 </style>

@@ -4,10 +4,10 @@
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
 	import KeyboardShortcuts from '$lib/components/keyboard-shortcuts.svelte'
-	import LayoutFooter from '$lib/components/layout-footer.svelte'
+	import DeckStrip from '$lib/components/deck-strip.svelte'
+	import DeckCompactBar from '$lib/components/deck-compact-bar.svelte'
 	import LayoutHeader from '$lib/components/layout-header.svelte'
 	import LiveChat from '$lib/components/live-chat.svelte'
-	import QueuePanel from '$lib/components/queue-panel.svelte'
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import {onMount} from 'svelte'
@@ -37,6 +37,12 @@
 
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
+	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
+	let compactDeckIds = $derived(
+		Object.values(appState.decks)
+			.filter((deck) => deck.compact)
+			.map((deck) => deck.id)
+	)
 
 	function inferNavigatorLocale() {
 		if (typeof navigator === 'undefined') return undefined
@@ -110,7 +116,9 @@
 	$effect(() => {
 		const handler = async () => {
 			log.log('beforeunload_closing_db')
-			appState.broadcasting_channel_id = undefined
+			for (const deck of Object.values(appState.decks)) {
+				deck.broadcasting_channel_id = undefined
+			}
 		}
 		window.addEventListener('beforeunload', handler)
 		return () => window.removeEventListener('beforeunload', handler)
@@ -135,11 +143,7 @@
 			<ToolTip />
 
 			{#key uiLocale}
-				<div
-					class={['layout', {asideVisible: appState.queue_panel_visible}]}
-					data-locale={uiLocale}
-					style:--queue-panel-width={appState.queue_panel_width ? `${appState.queue_panel_width}px` : null}
-				>
+				<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
 					<LayoutHeader preloading={data.preloading} />
 
 					<div class="content-wrapper">
@@ -150,10 +154,15 @@
 								</main>
 							</div>
 
-							<QueuePanel />
+							<DeckStrip />
 						</section>
-
-						<LayoutFooter />
+						{#if compactDeckIds.length}
+							<section class="compact-decks" aria-label="Compact decks">
+								{#each compactDeckIds as deckId (deckId)}
+									<DeckCompactBar {deckId} />
+								{/each}
+							</section>
+						{/if}
 					</div>
 
 					{#if chatPanelVisible}
@@ -184,6 +193,10 @@
 		top: 0;
 		height: 100dvh;
 		flex-shrink: 0;
+	}
+
+	.deckExpanded > :global(header) {
+		display: none;
 	}
 
 	.content-wrapper {
@@ -230,14 +243,26 @@
 		color: var(--gray-9);
 	}
 
-	.content > :global(aside) {
-		display: none;
-		width: var(--queue-panel-width, 400px);
-		flex-shrink: 0;
+	.compact-decks {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		/*
+		padding: 0.4rem 0.5rem;
+		 */
+		background: var(--header-bg);
+		position: sticky;
+		bottom: 0;
+		z-index: 30;
 	}
 
-	.asideVisible .content > :global(aside) {
-		display: flex;
+	.compact-decks:empty {
+		display: none;
+	}
+
+	.compact-decks :global(.deck-compact-bar) {
+		flex: 0 0 auto;
+		min-width: 0;
 	}
 
 	@media (max-width: 768px) {
@@ -251,20 +276,18 @@
 			height: auto;
 		}
 
-		.asideVisible .content {
+		.content {
 			flex-direction: column;
 		}
 
-		.asideVisible .scroll-area {
-			display: none;
+		.compact-decks {
+			padding-inline: 0.5rem;
+			position: relative;
+			bottom: auto;
 		}
 
-		.asideVisible .content > :global(aside) {
-			position: static;
-			inset: auto;
-			width: 100%;
-			height: 100%;
-			z-index: 100;
+		.compact-decks :global(.deck-compact-bar) {
+			min-width: 0;
 		}
 	}
 

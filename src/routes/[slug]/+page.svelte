@@ -1,15 +1,8 @@
-<script module lang="ts">
-	import {SvelteMap} from 'svelte/reactivity'
-
-	// Track render limit per channel (persists during session)
-	const channelLimits = new SvelteMap<string, number>()
-</script>
-
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
-	import {canEditChannel} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -22,6 +15,8 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
+
+	const RENDER_LIMIT = 40
 
 	let searchInput = $state(page.url.searchParams.get('search') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
@@ -46,7 +41,6 @@
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(canEditChannel(channel?.id))
-	let renderLimit = $derived(slug ? (channelLimits.get(slug) ?? 40) : 40)
 	let aggregatedTags = $derived(getChannelTags(allTracks))
 	let isSearching = $derived(searchValue !== '' || selectedTags.length > 0)
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
@@ -60,13 +54,16 @@
 			direction: isSorting ? direction : undefined
 		})
 	)
-	let baseTracks = $derived(isFiltering ? filteredTracks : allTracks)
-	let visibleTracks = $derived(isSearching || !renderLimit ? baseTracks : baseTracks.slice(0, renderLimit))
-	let hasMore = $derived(!isSearching && renderLimit && baseTracks.length > renderLimit)
-
-	function showAll() {
-		if (slug) channelLimits.set(slug, 0)
-	}
+	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let showAll = $state(false)
+	let renderedTracks = $derived(isFiltering || showAll ? visibleTracks : visibleTracks.slice(0, RENDER_LIMIT))
+	let hasMore = $derived(!isFiltering && !showAll && visibleTracks.length > RENDER_LIMIT)
+	let filteredPlaylistTitle = $derived.by(() => {
+		const search = searchValue.trim()
+		if (search) return search
+		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
+		return ''
+	})
 
 	function toggleTag(tag: string) {
 		const next = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag]
@@ -82,13 +79,16 @@
 	function playFilteredTracks() {
 		if (!filteredTracks.length) return
 		const ids = filteredTracks.map((t) => t.id)
-		setPlaylist(ids)
-		playTrack(ids[0], null, 'play_search')
+		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueFilteredTracks() {
 		if (!filteredTracks.length) return
-		addToPlaylist(filteredTracks.map((t) => t.id))
+		addToPlaylist(
+			appState.active_deck_id,
+			filteredTracks.map((t) => t.id)
+		)
 	}
 </script>
 
@@ -143,18 +143,30 @@
 			{/if}
 		</header>
 
-		{#if tracksQuery.isReady && visibleTracks.length > 0}
-			<Tracklist tracks={visibleTracks} {canEdit} grouped={!isFiltering} virtual={false} onTagClick={toggleTag} />
+		{#if tracksQuery.isReady && renderedTracks.length > 0}
+			<Tracklist
+				tracks={renderedTracks}
+				playlistTitle={isFiltering ? filteredPlaylistTitle : undefined}
+				{canEdit}
+				grouped={!isFiltering}
+				virtual={false}
+				playContext={true}
+				onTagClick={toggleTag}
+			/>
 		{/if}
 
 		<footer>
-			{#if tracksQuery.isReady && hasMore}
-				<button onclick={showAll}>Show all {baseTracks.length} tracks</button>
+			{#if hasMore}
+				<p class="load-more">
+					{renderedTracks.length} / {visibleTracks.length}
+					<button type="button" onclick={() => (showAll = true)}
+						>{m.channels_load_more({count: visibleTracks.length - renderedTracks.length})}</button
+					>
+				</p>
 			{/if}
-
 			{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
 				<p class="empty">No tracks match your filter</p>
-			{:else if !tracksQuery.isReady && (channel.track_count ?? 0) > 0}
+			{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 				<p class="empty">{m.channel_loading_tracks()}</p>
 			{:else if tracksQuery.isReady && allTracks.length === 0}
 				{#if canEdit}

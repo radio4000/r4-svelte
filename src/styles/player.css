@@ -1,10 +1,10 @@
-/* The player has two states: compact & expanded
- * each provides responsive layout from small to huge */
+/* Global styles for media-chrome custom elements */
 
 youtube-video,
 soundcloud-player {
 	aspect-ratio: 16 / 9;
 	height: auto;
+	height: 100%;
 	min-width: 200px;
 
 	&:not([slot='media']) {
@@ -19,8 +19,6 @@ media-control-bar {
 	--media-text-color: var(--gray-12);
 	--media-primary-color: var(--gray-12);
 	--media-icon-color: var(--gray-12);
-	/* --media-control-height: 2rem; */
-	/* --media-control-background: transparent; */
 	--media-control-padding: 0.5rem;
 	--media-control-background: transparent;
 	--media-control-hover-background: transparent;
@@ -47,6 +45,12 @@ media-time-range {
 	--media-control-background: none;
 }
 
+media-time-range {
+	/* Keep elapsed/played progress in active theme color. */
+	--media-range-bar-color: var(--accent-9);
+	--media-range-thumb-background: var(--accent-9);
+}
+
 .player {
 	h2 a,
 	h3 a {
@@ -66,171 +70,5 @@ media-time-range {
 
 	media-volume-range {
 		display: none;
-	}
-}
-
-.player.compact {
-	--size: 2.5rem;
-	--gap: 0.2rem;
-
-	display: flex;
-	flex-flow: row nowrap;
-	place-items: center;
-	min-height: var(--size);
-	padding: var(--gap);
-	gap: var(--gap);
-
-	@media (max-width: 520px) {
-		.artwork,
-		.prev,
-		media-time-range {
-			display: none;
-		}
-	}
-
-	@media (max-width: 768px) {
-		media-time-range {
-			width: 60px;
-		}
-		media-mute-button,
-		button {
-			/* smaller */
-			padding-left: var(--gap);
-			padding-right: var(--gap);
-		}
-	}
-
-	.channel img,
-	.channel .placeholder,
-	.artwork {
-		max-width: none;
-		width: var(--size);
-		height: var(--size);
-	}
-
-	.text {
-		/* this allows the flex child to shrink. default is "auto" */
-		min-width: 0;
-	}
-
-	/* no wrapping text */
-	.text :where(h3, p) {
-		line-height: 1;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	menu {
-		margin-left: auto;
-	}
-
-	.timebar {
-		display: none;
-	}
-
-	.channel h2 {
-		display: none;
-	}
-
-	youtube-video,
-	soundcloud-player {
-		display: none;
-
-		position: fixed;
-		left: 0;
-		bottom: 3rem;
-		aspect-ratio: 16 / 9;
-		width: auto;
-	}
-
-	menu media-mute-button,
-	menu button {
-		/* equal width */
-		flex: 1;
-	}
-}
-
-.player.expanded {
-	margin: auto;
-	max-width: 1080px;
-	height: 100%;
-	display: flex;
-	flex-flow: column;
-	/* place-items: center; */
-	padding: 1rem;
-
-	.channel {
-		display: flex;
-		gap: 0.5rem;
-		place-items: center;
-		margin-bottom: auto;
-	}
-
-	.timebar {
-		margin-top: auto;
-		width: 100%;
-	}
-
-	/* track artwork is replaced by youtube video */
-	.artwork {
-		display: none;
-	}
-
-	.channel img {
-		width: 2.5rem;
-		height: 2.5rem;
-	}
-
-	.text {
-		margin-top: 2rem;
-		margin-bottom: 2rem;
-		order: 1;
-		/* avoid layout jumps when no track description */
-		/* min-height: 4rem; */
-		h3 + p small {
-			/* font-size: var(--font-4); */
-		}
-	}
-
-	media-controller:has(youtube-video),
-	media-controller:has(soundcloud-player) {
-		width: 100%;
-		margin: auto;
-		background: black;
-	}
-
-	/* hidden in expanded mode, because we have .timebar */
-	menu :where(media-time-range, media-time-display) {
-		display: none;
-	}
-
-	> menu {
-		justify-content: center;
-		order: 5;
-
-		@media (min-width: 768px) {
-			/* bigger menu */
-			media-mute-button,
-			button {
-				min-height: 3rem;
-				min-width: 3rem;
-			}
-		}
-	}
-}
-
-/* space for sidebar */
-.layout.asideVisible {
-	@media (max-width: 768px) {
-		max-height: calc(100% - 4rem);
-	}
-
-	footer.expanded {
-		right: var(--queue-panel-width, 400px);
-
-		@media (max-width: 768px) {
-			right: 0;
-		}
 	}
 }

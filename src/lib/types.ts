@@ -17,14 +17,36 @@ export interface TrackWithMeta extends Track {
 	discogs_data?: object
 }
 
-export interface AppState {
+export interface Deck {
 	id: number
+	playlist_title?: string
+	playlist_slug?: string
+	playlist_track?: string
 	playlist_tracks: string[]
 	playlist_tracks_shuffled: string[]
-	playlist_track?: string
 	is_playing: boolean
-	theme?: string
+	shuffle: boolean
 	volume: number
+	muted?: boolean
+	hide_video_player: boolean
+	compact: boolean
+	expanded: boolean
+	hide_queue_panel: boolean
+	queue_panel_width?: number
+	broadcasting_channel_id?: string
+	listening_to_channel_id?: string
+	track_played_at?: string
+	seeked_at?: string
+	seek_position?: number
+	speed?: number
+}
+
+export interface AppState {
+	id: number
+	decks: Record<number, Deck>
+	next_deck_id: number
+	active_deck_id: number
+	theme?: string
 	custom_css_variables: Record<string, string>
 	channels_display: string
 	channels_filter: string
@@ -40,15 +62,16 @@ export interface AppState {
 	channels?: string[]
 	/** the user's primary channel (full object) */
 	channel?: Channel
-	shuffle: boolean
-	broadcasting_channel_id?: string
-	listening_to_channel_id?: string
-	queue_panel_visible: boolean
-	queue_panel_width?: number
-	show_video_player: boolean
-	player_expanded?: boolean
 	shortcuts?: Record<string, string>
 	hide_track_artwork: boolean
+	/** Default volume for new decks: 0 (silent) or 1 (full) */
+	default_new_deck_volume: 0 | 1
+	/** Whether new decks auto-play when a track is loaded */
+	autoplay_new_deck: boolean
+	/** Show playback speed control in deck transport */
+	show_speed_control?: boolean
+	/** Show track progress/range control in deck transport */
+	show_track_range_control?: boolean
 	font_family?: string
 	user?: User
 	language?: string
@@ -72,15 +95,33 @@ interface User {
 
 export type KeyBindingsConfig = Record<string, string>
 
+export interface BroadcastDeckState {
+	index: number
+	track_id: string | null
+	track_played_at: string | null
+	is_playing: boolean
+	seeked_at: string | null
+	seek_position: number | null
+	volume: number
+	muted: boolean
+	speed: number
+}
+
 export interface Broadcast {
 	channel_id: string
-	track_id: string
+	track_id?: string | null
 	track_played_at: string
+	decks?: BroadcastDeckState[]
+	seeked_at?: string
+	seek_position?: number
+	is_playing?: boolean
+	volume?: number
+	muted?: boolean
+	speed?: number
 }
 
 export interface BroadcastWithChannel extends Broadcast {
 	channels: Channel
-	tracks: Track | null
 }
 
 export interface PlayHistory {

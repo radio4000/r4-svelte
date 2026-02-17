@@ -1,5 +1,5 @@
 <script>
-	import {toggleQueuePanel, resetLocalData} from '$lib/api'
+	import {resetLocalData} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 
@@ -29,11 +29,10 @@
 
 	<section>
 		<h2>Reactivity tests</h2>
-		<button onclick={toggleQueuePanel} class:active={appState.queue_panel_visible}>Toggle queue</button>
-		<br />
-		<br />
-		<InputRange bind:value={appState.volume} min={0} max={1} step={0.1} />
-		<p>Volume: {appState.volume}</p>
+		{#if appState.decks[1]}
+			<InputRange bind:value={appState.decks[1].volume} min={0} max={1} step={0.1} />
+			<p>Volume: {appState.decks[1].volume}</p>
+		{/if}
 	</section>
 </div>
 

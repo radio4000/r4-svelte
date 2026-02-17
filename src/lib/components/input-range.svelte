@@ -26,7 +26,6 @@
 		flex: 1;
 		margin: 0;
 		background: transparent;
-		cursor: pointer;
 		position: relative;
 		z-index: 2;
 		accent-color: var(--gray-9);

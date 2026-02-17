@@ -12,21 +12,11 @@
 		return appState.shortcuts || DEFAULT_KEY_BINDINGS
 	})
 
-	const shortcutActions = [
-		'togglePlayerExpanded',
-		'openSearch',
-		'togglePlayPause',
-		'toggleQueuePanel',
-		'toggleShuffle',
-		'gotoSettings',
-		'showShortcutsHelp'
-	]
+	const shortcutActions = ['openSearch', 'togglePlayPause', 'toggleShuffle', 'gotoSettings', 'showShortcutsHelp']
 
 	const actionLabelMap = {
-		togglePlayerExpanded: () => m.shortcuts_action_togglePlayerExpanded(),
 		openSearch: () => m.shortcuts_action_openSearch(),
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
-		toggleQueuePanel: () => m.shortcuts_action_toggleQueuePanel(),
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()

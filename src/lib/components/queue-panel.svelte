@@ -1,7 +1,6 @@
 <script>
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {fuzzySearch} from '$lib/search'
-	import {inArray} from '@tanstack/db'
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {relativeTime} from '$lib/dates'
@@ -14,27 +13,44 @@
 	import Tracklist from './tracklist.svelte'
 	import * as m from '$lib/paraglide/messages'
 
+	/** @type {{deckId: number}} */
+	let {deckId} = $props()
+
+	let deck = $derived(appState.decks[deckId])
+
 	let view = $state('queue') // 'queue' or 'history'
 	let showClearHistoryModal = $state(false)
 	let searchQuery = $state('')
+	let selectedTrackId = $state(/** @type {string | null} */ (null))
+	/** @type {HTMLElement | undefined} */
+	let scrollContainer = $state()
 
-	// Resize handle state
-	const MIN_WIDTH = 200
-	const MAX_WIDTH = 800
-	let isDragging = $state(false)
+	function scrollToActive() {
+		if (!scrollContainer || !deck?.playlist_track) return
+		// Try finding the already-rendered active element
+		const active = scrollContainer.querySelector('article.active')
+		if (active) {
+			active.scrollIntoView({behavior: 'smooth', block: 'center'})
+			return
+		}
+		// Virtual list: estimate position from track index
+		const idx = trackIds.indexOf(deck.playlist_track)
+		if (idx < 0) return
+		const viewport = scrollContainer.querySelector('.virtual-viewport') ?? scrollContainer
+		const itemHeight = 72 // matches defaultEstimatedItemHeight
+		viewport.scrollTo({top: Math.max(0, idx * itemHeight - viewport.clientHeight / 2), behavior: 'smooth'})
+	}
 
 	/** @type {string[]} */
-	let trackIds = $derived(appState.playlist_tracks || [])
+	let trackIds = $derived(deck?.playlist_tracks || [])
 
-	// Query tracks from collection, preserving playlist order
-	const tracksQuery = useLiveQuery((q) =>
-		q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, trackIds))
-	)
-
+	// Read tracks directly from collection state, preserving playlist order
 	/** @type {import('$lib/types').Track[]} */
 	let queueTracks = $derived.by(() => {
-		const trackMap = new Map((tracksQuery.data || []).map((t) => [t.id, t]))
-		return trackIds.map((id) => trackMap.get(id)).filter((t) => t !== undefined)
+		const ids = trackIds
+		if (!ids.length) return []
+		void tracksCollection.state.size // subscribe to collection changes
+		return ids.map((id) => tracksCollection.state.get(id)).filter((t) => t != null)
 	})
 
 	const historyQuery = useLiveQuery((q) =>
@@ -42,39 +58,14 @@
 	)
 	let playHistory = $derived(historyQuery.data || [])
 
-	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags']))
+	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description']))
 
 	let filteredPlayHistory = $derived(fuzzySearch(searchQuery, playHistory, ['title', 'slug']))
 
-	/** @param {PointerEvent} e */
-	function startDrag(e) {
-		if (window.matchMedia('(max-width: 768px)').matches) return
-		isDragging = true
-		document.body.style.cursor = 'ew-resize'
-		document.body.style.userSelect = 'none'
-		window.addEventListener('pointermove', onDrag)
-		window.addEventListener('pointerup', stopDrag)
-		e.preventDefault()
-	}
-
-	/** @param {PointerEvent} e */
-	function onDrag(e) {
-		if (!isDragging) return
-		const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, window.innerWidth - e.clientX))
-		appState.queue_panel_width = newWidth
-	}
-
-	function stopDrag() {
-		isDragging = false
-		document.body.style.cursor = ''
-		document.body.style.userSelect = ''
-		window.removeEventListener('pointermove', onDrag)
-		window.removeEventListener('pointerup', stopDrag)
-	}
-
 	function clearQueue() {
-		appState.playlist_tracks = []
-		appState.playlist_track = undefined
+		if (!deck) return
+		deck.playlist_tracks = []
+		deck.playlist_track = undefined
 	}
 
 	function clearHistory() {
@@ -106,10 +97,9 @@
 	}
 </script>
 
-<aside class:dragging={isDragging}>
-	<div class="resize-handle" onpointerdown={startDrag} role="separator" aria-orientation="vertical"></div>
+<div class="queue-panel">
 	<header>
-		<menu>
+		<menu class="tab-nav">
 			<button onclick={() => (view = 'queue')} class:active={view === 'queue'}>
 				<Icon icon="unordered-list" size={16} />
 				{m.button_queue()} ({queueTracks.length})
@@ -119,35 +109,47 @@
 				{m.nav_history()} ({playHistory.length})
 			</button>
 		</menu>
-	</header>
-
-	<div class="search-container">
-		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 		{#if view === 'queue' && trackIds.length > 1}
 			<menu class="queue-actions">
 				<button
-					onclick={shuffleRemaining}
+					onclick={() => shuffleRemaining(deckId)}
 					{@attach tooltip({content: m.queue_shuffle_remaining()})}
 					title={m.queue_shuffle_remaining()}
 				>
 					<Icon icon="shuffle" size={16} />
 				</button>
 				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
-					<Icon icon="history" size={16} />
-					{m.common_clear()}
+					<Icon icon="delete" size={16} />
 				</button>
 			</menu>
 		{:else if view === 'history' && playHistory.length > 0}
-			<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.queue_no_history()})}
-				><Icon icon="delete" size={16} />{m.common_clear()}</button
-			>
+			<menu class="queue-actions">
+				<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.common_clear()})}>
+					<Icon icon="delete" size={16} />
+				</button>
+			</menu>
+		{/if}
+	</header>
+
+	<div class="search-container">
+		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
+		{#if view === 'queue' && deck?.playlist_track}
+			<button onclick={scrollToActive} {@attach tooltip({content: 'Scroll to current track'})}>
+				<Icon icon="arrow-down" size={16} />
+			</button>
 		{/if}
 	</div>
 
-	<main class="scroll">
+	<main class="scroll" bind:this={scrollContainer}>
 		{#if view === 'queue'}
 			{#if filteredQueueTracks.length > 0}
-				<Tracklist tracks={filteredQueueTracks} virtual={true} />
+				<Tracklist
+					tracks={filteredQueueTracks}
+					{deckId}
+					virtual={true}
+					{selectedTrackId}
+					onSelectTrack={(trackId) => (selectedTrackId = trackId)}
+				/>
 			{:else if queueTracks.length === 0}
 				<div class="empty-state">
 					<p>{m.queue_no_tracks()}</p>
@@ -192,7 +194,7 @@
 			</div>
 		{/if}
 	</main>
-</aside>
+</div>
 
 <Dialog bind:showModal={showClearHistoryModal}>
 	{#snippet header()}
@@ -206,43 +208,13 @@
 </Dialog>
 
 <style>
-	aside {
-		position: relative;
+	.queue-panel {
 		display: flex;
 		flex-direction: column;
-		height: 100%;
-		background: var(--aside-bg);
-		border-left: 1px solid var(--gray-6);
-
-		/* perf trick! */
-		contain: layout size;
-	}
-
-	aside.dragging {
-		user-select: none;
-	}
-
-	.resize-handle {
-		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		width: 6px;
-		cursor: ew-resize;
-		background: transparent;
-		z-index: 10;
-		touch-action: none;
-	}
-
-	.resize-handle:hover,
-	aside.dragging .resize-handle {
-		background: var(--accent-7);
-	}
-
-	@media (max-width: 768px) {
-		.resize-handle {
-			display: none;
-		}
+		flex: 1;
+		min-height: 0;
+		width: 100%;
+		border-top: 1px solid var(--gray-6);
 	}
 
 	header {
@@ -255,7 +227,11 @@
 	}
 
 	main {
+		display: flex;
+		flex-direction: column;
 		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
 	}
 
 	.empty-state {
@@ -276,14 +252,47 @@
 
 	.search-container {
 		display: flex;
+		flex-wrap: wrap;
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-5);
 		align-items: center;
 		gap: 0.25rem;
 	}
 
+	.tab-nav {
+		display: flex;
+	}
+
+	.tab-nav button {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		white-space: nowrap;
+		padding: 0.5rem 0.5rem 0.45rem;
+		background: none;
+		border: none;
+		border-radius: 0;
+	}
+
+	.tab-nav button:hover {
+		background: var(--gray-3);
+		text-decoration: underline;
+		text-decoration-thickness: 0.1px;
+		text-decoration-color: var(--gray-10);
+		text-underline-offset: max(0.1em, 2px);
+	}
+
+	.tab-nav button:focus-visible {
+		outline: 2px solid var(--accent-9);
+		outline-offset: -2px;
+	}
+
+	.tab-nav button.active {
+		box-shadow: inset 0 -2px 0 var(--accent-9);
+	}
+
 	.search-container :global(.search-input) {
-		flex: 1;
+		flex: 1 1 12rem;
 		min-width: 0;
 	}
 
@@ -294,6 +303,8 @@
 	.queue-actions {
 		display: flex;
 		gap: var(--space-1);
+		flex: 0 0 auto;
+		margin-left: auto;
 	}
 
 	.tracks :global(.slug),
