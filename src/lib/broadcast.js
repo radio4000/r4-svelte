@@ -49,6 +49,14 @@ const broadcastStateSeqByChannel = new Map()
 const lastReceivedStateSeqByChannel = new Map()
 const seekJobSeqByDeck = new Map()
 
+/**
+ * Tracks the broadcaster's last known seek "intent" per deck.
+ * We only re-seek when this fingerprint changes — periodic polls
+ * with the same intent are ignored to prevent seek loops.
+ * @type {Map<number, {seeked_at: string|null, track_played_at: string|null, is_playing: boolean, seek_position: number|null}>}
+ */
+const lastSeekIntent = new Map()
+
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {
 	if (!channelId) return false
@@ -220,6 +228,9 @@ function stopBroadcastSync(deckId) {
 		channel.unsubscribe()
 		broadcastChannels.delete(deckId)
 	}
+	lastSeekIntent.delete(deckId)
+	lastAppliedSeek.delete(deckId)
+	seekJobSeqByDeck.delete(deckId)
 }
 
 /**
@@ -235,15 +246,15 @@ function calculateSeekTime(broadcast, track) {
 			if (elapsed < 0) return undefined
 			const base = broadcast.is_playing ? broadcast.seek_position + elapsed : broadcast.seek_position
 			if (track.duration && base >= track.duration) return undefined
-			return Math.floor(base)
+			return Math.round(base)
 		}
-		return Math.floor(broadcast.seek_position)
+		return Math.round(broadcast.seek_position)
 	}
 	if (!broadcast.track_played_at) return undefined
 	const elapsed = (Date.now() - new Date(broadcast.track_played_at).getTime()) / 1000
 	if (elapsed < 0) return undefined
 	if (track.duration && elapsed >= track.duration) return undefined
-	return Math.floor(elapsed)
+	return Math.round(elapsed)
 }
 
 function nextSeekJobId(deckId) {
@@ -268,24 +279,61 @@ async function seekWhenReady(deckId, seconds, jobId) {
 
 	if (seekJobSeqByDeck.get(deckId) !== jobId) return false
 	seekTo(deckId, seconds)
-	play(deckId)
 
+	// Retry seek up to 10 times if position hasn't landed yet
 	let adjustTries = 10
 	while (adjustTries > 0) {
 		if (seekJobSeqByDeck.get(deckId) !== jobId) return false
-		if (Math.abs(mediaEl.currentTime - seconds) < 1) return true
+		if (Math.abs(mediaEl.currentTime - seconds) < 1) break
 		seekTo(deckId, seconds)
 		await new Promise((r) => setTimeout(r, 200))
 		adjustTries--
 	}
+
+	// Only start playback after seek has landed
+	if (seekJobSeqByDeck.get(deckId) !== jobId) return false
+	const deck = appState.decks[deckId]
+	if (deck?.is_playing) play(deckId)
 	return true
 }
 
+/**
+ * Check if the broadcaster's intent (seek/play action) actually changed.
+ * Returns true only when the broadcaster did something new (seeked, changed track timing,
+ * toggled play/pause). Periodic polls with the same intent are ignored.
+ * @param {number} deckId
+ * @param {{seeked_at?: string|null, track_played_at?: string|null, is_playing?: boolean, seek_position?: number|null}} state
+ */
+function hasIntentChanged(deckId, state) {
+	const prev = lastSeekIntent.get(deckId)
+	const intent = {
+		seeked_at: state.seeked_at ?? null,
+		track_played_at: state.track_played_at ?? null,
+		is_playing: state.is_playing ?? false,
+		seek_position: state.seek_position ?? null
+	}
+	if (!prev) {
+		lastSeekIntent.set(deckId, intent)
+		return true
+	}
+	// Detect actual broadcaster actions: new seek, new track start, or play/pause toggle
+	const changed =
+		prev.seeked_at !== intent.seeked_at ||
+		prev.track_played_at !== intent.track_played_at ||
+		prev.is_playing !== intent.is_playing
+	if (changed) {
+		lastSeekIntent.set(deckId, intent)
+	}
+	return changed
+}
+
 function shouldApplySeek(deckId, targetSeconds) {
+	// Position tolerance — if already close enough, no need to seek
 	const mediaEl = getMediaPlayer(deckId)
 	if (mediaEl && typeof mediaEl.currentTime === 'number') {
-		if (Math.abs(mediaEl.currentTime - targetSeconds) < 1.5) return false
+		if (Math.abs(mediaEl.currentTime - targetSeconds) < 2) return false
 	}
+	// Time throttle — don't seek the same deck more than once per 3 seconds
 	const last = lastAppliedSeek.get(deckId)
 	const now = Date.now()
 	if (last && now - last < 3000) return false
@@ -600,7 +648,9 @@ async function applyBroadcastState(channelId, decks) {
 				}
 				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = state.speed
 			}
-			if (state?.track_played_at || state?.seeked_at || state?.seek_position != null) {
+			// Only seek when broadcaster's intent changed (new seek, play/pause toggle, new track start).
+			// Periodic polls with the same intent are skipped to prevent seek loops.
+			if (hasIntentChanged(deckId, state)) {
 				const track = tracksCollection.get(state.track_id)
 				if (track) {
 					const seekTime = calculateSeekTime(state, track)
