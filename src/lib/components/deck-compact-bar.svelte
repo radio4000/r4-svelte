@@ -9,6 +9,7 @@
 	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 
 	/** @type {{deckId: number}} */
 	let {deckId} = $props()
@@ -167,26 +168,28 @@
 			</a>
 		{/if}
 		<div class="info">
-			{#if displayChannel}
-				<a class="channel active-track-title" href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
-			{:else if displaySlug}
-				<a class="channel active-track-title" href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
-			{:else if displayTrack}
-				<span class="channel active-track-title">@unknown</span>
-			{/if}
-			{#if displayTrack}
-				{#if displaySlug}
-					<a class="track active-track-title" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}
-						>{displayTrack.title}</a
-					>
-				{:else}
-					<span class="track active-track-title">{displayTrack.title}</span>
+			<h3 class="title">
+				{#if displayChannel}
+					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+				{:else if displaySlug}
+					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
+				{:else if displayTrack}
+					<span>@unknown</span>
 				{/if}
+			</h3>
+			{#if displayTrack}
+				<p class="description">
+					{#if displaySlug}
+						<a href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
+					{:else}
+						<span>{displayTrack.title}</span>
+					{/if}
+				</p>
 			{/if}
 		</div>
 	</div>
 	<div class="row-controls">
-		<div class="controls">
+		<menu class="controls">
 			<button
 				onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
 				aria-label="Previous"
@@ -210,7 +213,7 @@
 			>
 				<Icon icon="next-fill" />
 			</button>
-		</div>
+		</menu>
 		{#if appState.show_speed_control && supportsPlaybackSpeed}
 			<div class="speed">
 				<button
@@ -268,7 +271,12 @@
 				data-muted={deck?.muted || deck?.volume === 0 || null}
 			/>
 		</div>
-		<button class="expand" onclick={() => (deck.compact = false)} aria-label="Expand deck">
+		<button
+			class="expand"
+			onclick={() => (deck.compact = false)}
+			aria-label="Expand deck"
+			{@attach tooltip({content: 'Expand deck'})}
+		>
 			<Icon icon="sidebar-fill-right" />
 		</button>
 	</div>
@@ -276,11 +284,12 @@
 
 <style>
 	.deck-compact-bar {
+		min-height: 49px;
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.4rem;
-		padding: 0.3rem 0.6rem;
+		gap: 0.2rem;
+		padding: 0.3rem 0.5rem;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		background: var(--header-bg);
@@ -291,7 +300,7 @@
 	.row-controls {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.2rem;
 		flex: 1 1 20rem;
 		margin-left: 0;
 		min-width: 0;
@@ -309,44 +318,26 @@
 	.progress-range {
 		width: 100%;
 		height: 10px;
-		cursor: pointer;
-		accent-color: var(--accent-9);
-	}
-
-	.progress-range:disabled {
-		opacity: 0.4;
-		cursor: default;
 	}
 
 	.controls {
-		display: flex;
 		align-items: center;
-		gap: 0.1rem;
-		flex-shrink: 0;
+		flex: 1;
 	}
 
 	.header-info {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
-		padding: 0.1rem 0.2rem;
+		gap: 0.5rem;
 		min-width: 0;
 		flex: 1 1 auto;
 		order: 2;
-	}
-
-	.active-track-bg {
-		background: var(--accent-2);
-		border-radius: 4px;
 	}
 
 	.avatar {
 		width: 32px;
 		height: 32px;
 		flex-shrink: 0;
-		:global(img) {
-			border-radius: var(--media-radius);
-		}
 	}
 
 	.artwork {
@@ -360,7 +351,6 @@
 			border-radius: var(--media-radius);
 			object-fit: cover;
 			object-position: center;
-			display: block;
 		}
 	}
 
@@ -368,9 +358,13 @@
 	.volume {
 		display: flex;
 		align-items: center;
-		gap: 0.1rem;
 		flex: 1 1 0;
 		min-width: 0;
+	}
+
+	.volume {
+		max-width: 10rem;
+		gap: 0.2rem;
 	}
 
 	.speed-btn {
@@ -382,10 +376,7 @@
 
 	.range {
 		flex: 1 1 auto;
-		width: 100%;
 		min-width: 0;
-		cursor: pointer;
-		accent-color: var(--accent-9);
 	}
 
 	.range[data-muted],
@@ -417,33 +408,36 @@
 		flex-direction: column;
 		gap: 0.1rem;
 		flex: 1 1 auto;
+		line-height: 1.2;
 	}
 
-	.channel,
-	.track {
-		display: block;
+	.title {
+		font-size: var(--font-4);
+		font-weight: 600;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.description {
+		margin: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.title a,
+	.description a {
 		color: inherit;
 		text-decoration: none;
 	}
 
-	.active-track-title {
-		display: inline-flex;
-		align-self: flex-start;
-		max-width: 100%;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding-inline: var(--space-1);
-		border-radius: 2px;
+	.title a:visited,
+	.description a:visited {
+		color: inherit;
 	}
 
-	.active-track-title:visited {
-		color: var(--gray-1);
-	}
-
-	@media (max-width: 760px) {
+	@media (max-width: 768px) {
 		.deck-compact-bar {
 			display: grid;
 			grid-template-columns: 1fr;
@@ -451,7 +445,7 @@
 				'progress'
 				'info'
 				'controls';
-			row-gap: 0.25rem;
+			row-gap: 0.2rem;
 		}
 
 		.progress {
@@ -488,10 +482,6 @@
 		}
 
 		.header-info {
-			gap: 0.25rem;
-		}
-
-		.row-controls {
 			gap: 0.2rem;
 		}
 	}

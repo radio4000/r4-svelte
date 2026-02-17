@@ -385,7 +385,7 @@
 		border-color: var(--c-gray5);
 	}
 
-	@media (max-width: 600px) {
+	@media (max-width: 640px) {
 		.crossfader {
 			max-width: none;
 		}

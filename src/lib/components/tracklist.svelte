@@ -341,8 +341,4 @@
 	.virtual-item {
 		box-sizing: border-box;
 	}
-
-	.virtual-item[aria-selected='true'] {
-		background: var(--accent-2);
-	}
 </style>

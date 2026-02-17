@@ -247,8 +247,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		/*
 		padding: 0.4rem 0.5rem;
-		border-top: 1px solid var(--gray-5);
+		 */
 		background: var(--header-bg);
 		position: sticky;
 		bottom: 0;

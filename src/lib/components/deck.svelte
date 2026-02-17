@@ -98,7 +98,6 @@
 		background: var(--footer-bg);
 		border: 1px solid var(--gray-6);
 		position: relative;
-		margin: 0.3rem;
 	}
 
 	.resize-handle {

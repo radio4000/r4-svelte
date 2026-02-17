@@ -4,6 +4,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Bugs
 
+- deck-strip `allDecksCompact` derived not reactive — `Object.keys(appState.decks)` in `$derived` doesn't re-fire when deck keys are added after initial empty state. Svelte 5 `$state` proxy edge case. Refactored to single `$derived.by` using `Object.entries()` reading deck properties directly. Verify fix holds.
+
 ## Backlog
 
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.

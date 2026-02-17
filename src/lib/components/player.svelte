@@ -298,7 +298,7 @@
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					<span class="header-channel-text">
-						<strong class="active-track-title">{headerChannel.name}</strong>
+						<h3 class="title">{headerChannel.name}</h3>
 						{#if deck?.playlist_title}
 							<small class="deck-title">{deck.playlist_title}</small>
 						{/if}
@@ -438,8 +438,8 @@
 							>
 						{/if}
 						<div class="info">
-							<a href={trackHref} class="active-track-title"><strong>{displayTrack.title}</strong></a>
-							<small class="description">Live broadcast</small>
+							<h3 class="title"><a href={trackHref}>{displayTrack.title}</a></h3>
+							<p class="description">Live broadcast</p>
 						</div>
 					{:else}
 						<div class="info">
@@ -459,9 +459,9 @@
 							>
 						{/if}
 						<div class="info">
-							<a href={trackHref} class="active-track-title"><strong>{displayTrack.title}</strong></a>
+							<h3 class="title"><a href={trackHref}>{displayTrack.title}</a></h3>
 							{#if displayTrack.description}
-								<small class="description">{displayTrack.description}</small>
+								<p class="description">{displayTrack.description}</p>
 							{/if}
 						</div>
 					</div>
@@ -535,7 +535,11 @@
 					/>
 				</div>
 			{/if}
-			<button onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
+			<button
+				onclick={() => toggleDeckCompact(deckId)}
+				aria-label="Minimize deck"
+				{@attach tooltip({content: 'Minimize deck', position: 'top'})}
+			>
 				<Icon icon="sidebar-fill-right" />
 			</button>
 		</menu>
@@ -617,21 +621,17 @@
 	.header-channel :global(img) {
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: var(--media-radius);
 	}
 
-	.header-channel .active-track-title {
-		width: fit-content;
-		max-width: 100%;
-	}
-
-	.header-channel strong {
+	.header-channel .title {
 		font-size: var(--font-4);
 		font-weight: 600;
 		line-height: 1.2;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		width: fit-content;
+		max-width: 100%;
 	}
 
 	.deck-title {
@@ -658,7 +658,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0.3rem 0.6rem;
+		padding: 0.3rem 0.5rem;
 	}
 
 	.active-track-bg {
@@ -688,50 +688,32 @@
 		flex-direction: column;
 		align-items: flex-start;
 		line-height: 1.3;
-
-		strong,
-		small,
-		a {
-			max-width: 100%;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
-
-		a {
-			color: inherit;
-			text-decoration: none;
-		}
 	}
 
-	.description {
-		color: var(--gray-9);
-		font-size: var(--font-3);
-	}
-
-	.active-track-title {
-		display: inline-flex;
+	.info .title {
+		font-size: var(--font-4);
+		font-weight: 600;
 		max-width: 100%;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding-inline: var(--space-1);
-		border-radius: 2px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.info .description {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--gray-9);
+	}
+
+	.info a {
+		color: inherit;
 		text-decoration: none;
 	}
 
-	.active-track-title:visited {
-		color: var(--gray-1);
-	}
-
-	.active-track-title strong {
+	.info a:visited {
 		color: inherit;
-		font-size: var(--font-4);
-		font-weight: 600;
-	}
-
-	.info a.active-track-title,
-	.info a.active-track-title:visited {
-		color: var(--gray-1);
 	}
 
 	.btn-leave {
@@ -768,9 +750,7 @@
 	}
 
 	.player-controls {
-		display: flex;
 		align-items: center;
-		gap: 0.2rem;
 		justify-content: flex-end;
 		min-width: 0;
 	}
@@ -778,21 +758,18 @@
 	.bottom-controls {
 		width: 100%;
 		flex-shrink: 0;
-		padding: 0.45rem 0.6rem;
+		padding: 0.5rem;
 		border-top: 1px solid var(--gray-6);
 	}
 
 	.layout-controls {
-		display: flex;
 		align-items: center;
-		gap: 0.1rem;
 		flex-shrink: 0;
 	}
 
 	.top-layout-controls {
 		justify-content: flex-end;
 		margin-left: auto;
-		padding: 0;
 	}
 
 	.video {
@@ -821,28 +798,21 @@
 	.progress-range {
 		width: 100%;
 		height: 10px;
-		cursor: pointer;
-		accent-color: var(--accent-9);
-	}
-
-	.progress-range:disabled {
-		opacity: 0.4;
-		cursor: default;
 	}
 
 	.header-footer {
 		flex-shrink: 0;
 		cursor: pointer;
-		border: 1px solid var(--gray-6);
-		border-radius: var(--border-radius);
+		border-top: 1px solid var(--gray-6);
 		background: var(--header-bg);
-		margin: 0 0.4rem 0.6rem;
 	}
 
 	.volume {
+		margin-left: auto;
+		max-width: 10rem;
 		display: flex;
+		gap: 0.2rem;
 		align-items: center;
-		gap: 0.1rem;
 		flex: 1;
 		min-width: 0;
 	}
@@ -851,8 +821,6 @@
 		flex: 1 1 0;
 		min-width: 0;
 		width: 100%;
-		cursor: pointer;
-		accent-color: var(--accent-9);
 	}
 
 	.volume-range[data-muted] {
