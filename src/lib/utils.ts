@@ -2,15 +2,20 @@ export function uuid() {
 	return crypto.randomUUID()
 }
 
+const RE_DIACRITICS = /[\u0300-\u036f]/g
+const RE_NON_ALNUM = /[^a-z0-9 -]/g
+const RE_WHITESPACE = /\s+/g
+const RE_MULTI_DASH = /-+/g
+
 export function slugify(str: string): string {
 	return String(str)
 		.normalize('NFKD')
-		.replace(/[\u0300-\u036f]/g, '')
+		.replace(RE_DIACRITICS, '')
 		.trim()
 		.toLowerCase()
-		.replace(/[^a-z0-9 -]/g, '')
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
+		.replace(RE_NON_ALNUM, '')
+		.replace(RE_WHITESPACE, '-')
+		.replace(RE_MULTI_DASH, '-')
 }
 
 export function delay(ms: number): Promise<void> {
@@ -21,9 +26,11 @@ export function trimWithEllipsis(text?: string | null, maxLength: number = 267) 
 	return !text || text.length <= maxLength ? text || '' : `${text.substring(0, maxLength)}…`
 }
 
+const RE_MENTION = /@\w+/g
+
 export function parseSearchTokens(query) {
-	const mentions = query.match(/@\w+/g) || []
-	const cleanQuery = query.replace(/@\w+/g, '').trim()
+	const mentions = query.match(RE_MENTION) || []
+	const cleanQuery = query.replace(RE_MENTION, '').trim()
 	return {
 		text: cleanQuery,
 		mentions: mentions.map((m) => m.slice(1)) // remove @

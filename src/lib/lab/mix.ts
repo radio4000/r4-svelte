@@ -13,6 +13,8 @@ import {tracksCollection} from '$lib/tanstack/collections'
 import {queueUnique} from '$lib/player/queue'
 import {shuffleArray} from '$lib/utils'
 
+const RE_HASH_PREFIX = /^#/
+
 type Track = {
 	id: string
 	slug?: string | null
@@ -77,7 +79,7 @@ function createMix(initial: Track[] = []): Mix {
 		},
 
 		withTag(tag: string) {
-			const normalized = tag.toLowerCase().replace(/^#/, '')
+			const normalized = tag.toLowerCase().replace(RE_HASH_PREFIX, '')
 			tracks = tracks.filter((t) => {
 				if (t.tags?.some((x) => x.toLowerCase() === normalized)) return true
 				return t.description?.toLowerCase().includes(`#${normalized}`)

@@ -197,9 +197,11 @@ class YouTube2Element extends HTMLElement {
 		}
 	}
 
+	static #RE_VIDEO_ID = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/
+
 	#extractVideoId(url) {
 		if (!url) return null
-		const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/)
+		const match = url.match(YouTube2Element.#RE_VIDEO_ID)
 		return match?.[1] || null
 	}
 

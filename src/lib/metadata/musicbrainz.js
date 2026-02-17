@@ -32,21 +32,20 @@ export async function pull(mediaId, title) {
 	}
 }
 
+const RE_SEPARATORS = /\s*(\/\/|\\\\|\|\||--)\s*.+$/
+const RE_PARENS = /\s*\([^)]+\)$/
+const RE_BRACKETS = /\s*\[[^\]]+\]$/
+const RE_FEAT = /\s*(feat\.?|ft\.?|featuring|with)\s+.+$/i
+const RE_REMIX = /\s*(remix|edit|version|mix|dub)\s*.+$/i
+
 function cleanTitle(title) {
-	return (
-		title
-			// Remove everything after // or similar separators (album info, etc.)
-			.replace(/\s*(\/\/|\\\\|\|\||--)\s*.+$/, '')
-			// Remove parenthetical info at end
-			.replace(/\s*\([^)]+\)$/, '')
-			// Remove bracketed info at end
-			.replace(/\s*\[[^\]]+\]$/, '')
-			// Remove feat/featuring info
-			.replace(/\s*(feat\.?|ft\.?|featuring|with)\s+.+$/i, '')
-			// Remove remix/edit info
-			.replace(/\s*(remix|edit|version|mix|dub)\s*.+$/i, '')
-			.trim()
-	)
+	return title
+		.replace(RE_SEPARATORS, '')
+		.replace(RE_PARENS, '')
+		.replace(RE_BRACKETS, '')
+		.replace(RE_FEAT, '')
+		.replace(RE_REMIX, '')
+		.trim()
 }
 
 function parseTrackTitle(title) {

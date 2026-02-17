@@ -20,6 +20,7 @@ export type View = {
 
 const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle'] as const
 const validDirections = ['asc', 'desc'] as const
+const RE_SPLIT_TOKENS = /\s+/
 
 export function parseView(params: URLSearchParams): View {
 	const view: View = {}
@@ -50,7 +51,7 @@ export function parseSearchQueryToView(input: string): View {
 	const channels: string[] = []
 	const tags: string[] = []
 	const rest: string[] = []
-	for (const token of input.trim().split(/\s+/).filter(Boolean)) {
+	for (const token of input.trim().split(RE_SPLIT_TOKENS).filter(Boolean)) {
 		if (token.startsWith('@')) {
 			const slug = token.slice(1)
 			if (slug) channels.push(slug)

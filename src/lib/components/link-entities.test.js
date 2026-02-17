@@ -1,5 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
+const ENTITY_REGEX = /(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
+
 // Simple function to test the text parsing logic without Svelte component complexity
 /** @param {any} text @param {{slug: string} | null} [track] */
 function createLinkedParts(text, track = null) {
@@ -9,32 +11,29 @@ function createLinkedParts(text, track = null) {
 	const parts = []
 	let lastIndex = 0
 
-	text.replace(
-		/(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu,
-		(match, prefix, entity, offset) => {
-			// Add text before the match
-			if (offset > lastIndex) {
-				parts.push({type: 'text', content: text.slice(lastIndex, offset)})
-			}
-
-			// Add the prefix as text
-			if (prefix) {
-				parts.push({type: 'text', content: prefix})
-			}
-
-			// Add the entity as a link
-			const searchQuery = entity.startsWith('@') ? entity : track?.slug ? `@${track.slug} ${entity}` : entity
-
-			parts.push({
-				type: 'link',
-				content: entity,
-				href: `/search?q=${encodeURIComponent(searchQuery)}`
-			})
-
-			lastIndex = offset + match.length
-			return match
+	text.replace(ENTITY_REGEX, (match, prefix, entity, offset) => {
+		// Add text before the match
+		if (offset > lastIndex) {
+			parts.push({type: 'text', content: text.slice(lastIndex, offset)})
 		}
-	)
+
+		// Add the prefix as text
+		if (prefix) {
+			parts.push({type: 'text', content: prefix})
+		}
+
+		// Add the entity as a link
+		const searchQuery = entity.startsWith('@') ? entity : track?.slug ? `@${track.slug} ${entity}` : entity
+
+		parts.push({
+			type: 'link',
+			content: entity,
+			href: `/search?q=${encodeURIComponent(searchQuery)}`
+		})
+
+		lastIndex = offset + match.length
+		return match
+	})
 
 	// Add remaining text
 	if (lastIndex < text.length) {

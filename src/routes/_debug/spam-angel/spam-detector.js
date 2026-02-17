@@ -1,3 +1,4 @@
+/* eslint-disable e18e/prefer-static-regex */
 import {businessPartners, spamDomains, spamKeywords, suspiciousPhrases} from './spam-words'
 
 // Music-related terms that suggest legitimacy

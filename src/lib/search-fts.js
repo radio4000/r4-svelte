@@ -5,23 +5,29 @@ import {sdk} from '@radio4000/sdk'
  * search.js re-exports these and adds collection-dependent orchestration (searchAll).
  */
 
+const RE_WEBSEARCH = /\bor\b|^-|\s-|"/
+const RE_SPLIT_WORDS = /\s+/
+const RE_NON_WORD = /[^\p{L}\p{N}]/gu
+const RE_FILTER_CHARS = /[,()]/g
+const RE_MULTI_SPACE = /\s+/g
+
 /** Detect websearch operators that would break prefix syntax */
-const hasWebsearchSyntax = (q) => /\bor\b|^-|\s-|"/.test(q.toLowerCase())
+const hasWebsearchSyntax = (q) => RE_WEBSEARCH.test(q.toLowerCase())
 
 /** Convert query to prefix format: "jazz house" → "jazz:* & house:*" */
 const toPrefix = (q) => {
 	if (hasWebsearchSyntax(q)) return null
 	const words = q
 		.trim()
-		.split(/\s+/)
-		.map((w) => w.replace(/[^\p{L}\p{N}]/gu, ''))
+		.split(RE_SPLIT_WORDS)
+		.map((w) => w.replace(RE_NON_WORD, ''))
 		.filter(Boolean)
 	if (!words.length) return null
 	return words.map((w) => `${w}:*`).join(' & ')
 }
 
 /** Sanitize query for PostgREST filter syntax (commas and parens break parsing) */
-const sanitizeForFilter = (q) => q.replace(/[,()]/g, ' ').replace(/\s+/g, ' ').trim()
+const sanitizeForFilter = (q) => q.replace(RE_FILTER_CHARS, ' ').replace(RE_MULTI_SPACE, ' ').trim()
 
 /** Build FTS filter combining websearch + prefix */
 export const buildFtsFilter = (query) => {

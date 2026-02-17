@@ -17,8 +17,8 @@
 		"i18n": "node i18n/sync.js && bunx @inlang/paraglide-js compile --project ./i18n/project.inlang --outdir ./src/lib/paraglide"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.14",
-		"@e18e/eslint-plugin": "^0.1.4",
+		"@biomejs/biome": "2.4.2",
+		"@e18e/eslint-plugin": "^0.2.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.6",
 		"@sveltejs/kit": "^2.50.2",
@@ -44,7 +44,7 @@
 		"yargs": "^18.0.0"
 	},
 	"dependencies": {
-		"@humanspeak/svelte-virtual-list": "^0.3.10",
+		"@humanspeak/svelte-virtual-list": "^0.4.0",
 		"@inlang/paraglide-js": "^2.10.0",
 		"@inlang/plugin-m-function-matcher": "^2.2.0",
 		"@inlang/plugin-message-format": "^4.2.0",
