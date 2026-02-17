@@ -109,29 +109,31 @@ export async function joinBroadcast(deckId, channelId) {
 			}
 		}
 
+		// Tear down all existing decks before applying broadcast state
+		for (const id of getSortedDeckIds()) {
+			stopBroadcastSync(id)
+			removeDeck(id)
+		}
+
 		// Use decks jsonb if available (multi-deck), fall back to single-deck fields
 		if (Array.isArray(data?.decks) && data.decks.length) {
 			await applyBroadcastState(channelId, data.decks)
 		} else if (data?.track_id) {
-			await playBroadcastTrack(deckId, data)
+			const deck = addDeck()
+			deck.listening_to_channel_id = channelId
+			deck.hide_queue_panel = true
+			await playBroadcastTrack(deck.id, data)
 		}
 
-		// Listener mode should only contain decks driven by this broadcast channel.
-		let listenerDeckId = deckId
-		if (!appState.decks[listenerDeckId]) {
-			const byChannel = getSortedDeckIds().find((id) => appState.decks[id]?.listening_to_channel_id === channelId)
-			listenerDeckId = byChannel ?? appState.active_deck_id
+		// Set active deck to the first listener deck
+		const listenerIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+		if (listenerIds.length) {
+			appState.active_deck_id = listenerIds[0]
 		}
-		for (const id of getSortedDeckIds()) {
-			if (id === listenerDeckId) continue
-			stopBroadcastSync(id)
-			removeDeck(id)
-		}
-		appState.active_deck_id = listenerDeckId
 
 		startBroadcastStateListener(channelId)
 		startBroadcastTableListener(channelId)
-		log.log(`joined ${label(channelId)} on deck ${listenerDeckId}`)
+		log.log(`joined ${label(channelId)} on ${listenerIds.length} deck(s)`)
 	} catch (error) {
 		log.error(`join failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
 	}
@@ -584,6 +586,7 @@ async function applyBroadcastState(channelId, decks) {
 	while (managedIds.length < decks.length) {
 		const deck = addDeck()
 		deck.listening_to_channel_id = channelId
+		deck.hide_queue_panel = true
 		managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
 	}
 

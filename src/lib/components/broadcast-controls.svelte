@@ -12,15 +12,12 @@
 	let deck = $derived(appState.decks[deckId])
 
 	const userChannelId = $derived(channelId ?? appState?.channels?.[0])
-	// Access .state.size to create reactive dependency, then check if broadcasting
+	// Check collection only (source of truth) — deck state is synced via effect below
 	const isBroadcasting = $derived.by(() => {
 		if (typeof isLiveOverride === 'boolean') return isLiveOverride
 		if (!userChannelId) return false
 		void broadcastsCollection.state.size
-		return Boolean(
-			broadcastsCollection.state.has(userChannelId) ||
-			Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannelId)
-		)
+		return broadcastsCollection.state.has(userChannelId)
 	})
 	let error = $state(/** @type {string|null} */ (null))
 	const canStartBroadcast = $derived(Boolean(deck?.playlist_track))
@@ -30,6 +27,7 @@
 		error = null
 	})
 
+	// Sync broadcasting_channel_id from collection state → deck
 	$effect(() => {
 		if (deck) {
 			deck.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined

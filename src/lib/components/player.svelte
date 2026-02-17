@@ -509,30 +509,32 @@
 					</div>
 				{/if}
 			{/if}
-			<div class="volume">
-				<media-mute-button
-					class="btn"
-					class:active={Boolean(deck?.muted)}
-					onclick={handleToggleMute}
-					{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-				></media-mute-button>
-				<input
-					type="range"
-					min="0"
-					max="1"
-					step="0.01"
-					value={deck?.volume ?? 1}
-					oninput={(e) => {
-						const val = Number(e.currentTarget.value)
-						if (deck) deck.volume = val
-						if (mediaElement) mediaElement.volume = val
-						const broadcastingChannelId = getBroadcastingChannelId()
-						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-					}}
-					class="volume-range"
-					data-muted={deck?.muted || deck?.volume === 0 || null}
-				/>
-			</div>
+			{#if !isListeningToBroadcast}
+				<div class="volume">
+					<media-mute-button
+						class="btn"
+						class:active={Boolean(deck?.muted)}
+						onclick={handleToggleMute}
+						{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
+					></media-mute-button>
+					<input
+						type="range"
+						min="0"
+						max="1"
+						step="0.01"
+						value={deck?.volume ?? 1}
+						oninput={(e) => {
+							const val = Number(e.currentTarget.value)
+							if (deck) deck.volume = val
+							if (mediaElement) mediaElement.volume = val
+							const broadcastingChannelId = getBroadcastingChannelId()
+							if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+						}}
+						class="volume-range"
+						data-muted={deck?.muted || deck?.volume === 0 || null}
+					/>
+				</div>
+			{/if}
 			<button onclick={() => toggleDeckCompact(deckId)} aria-label="Minimize deck">
 				<Icon icon="sidebar-fill-right" />
 			</button>

@@ -115,19 +115,21 @@
 					{/if}
 
 					{#if !isOwnChannel}
-						<button
-							type="button"
-							onclick={(e) => {
-								e.preventDefault()
-								if (joined) {
-									leaveBroadcast(appState.active_deck_id)
-								} else {
-									joinBroadcast(appState.active_deck_id, broadcast.channel_id)
-								}
-							}}
-						>
-							{joined ? m.broadcasts_leave() : m.broadcasts_join()}
-						</button>
+						<menu class="channel-actions">
+							<button
+								type="button"
+								onclick={(e) => {
+									e.preventDefault()
+									if (joined) {
+										leaveBroadcast(appState.active_deck_id)
+									} else {
+										joinBroadcast(appState.active_deck_id, broadcast.channel_id)
+									}
+								}}
+							>
+								{joined ? m.broadcasts_leave() : m.broadcasts_join()}
+							</button>
+						</menu>
 					{/if}
 				</ChannelCard>
 			</div>
@@ -161,6 +163,11 @@
 
 	p:has(.live) {
 		margin: 1rem 0;
+	}
+
+	.channel-actions {
+		display: flex;
+		justify-content: flex-end;
 	}
 
 	.live {

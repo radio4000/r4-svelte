@@ -111,27 +111,26 @@ function loadState(): AppState {
 			}
 		}
 
-		// Migrate old queue format into deck 1
+		// Migration: merge legacy QUEUE_KEY data if decks don't have queue arrays yet
 		const storedQueue = localStorage.getItem(QUEUE_KEY)
 		if (storedQueue) {
 			const parsed = JSON.parse(storedQueue)
 			if (parsed.decks) {
-				// New queue format: {decks: {1: {playlist_tracks, playlist_tracks_shuffled}, ...}}
 				for (const [id, queueData] of Object.entries(parsed.decks)) {
 					const deckId = Number(id)
-					if (state.decks[deckId]) {
+					const deck = state.decks[deckId]
+					if (deck && !deck.playlist_tracks?.length) {
 						const q = queueData as {playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]}
-						state.decks[deckId].playlist_tracks = q.playlist_tracks ?? []
-						state.decks[deckId].playlist_tracks_shuffled = q.playlist_tracks_shuffled ?? []
+						deck.playlist_tracks = q.playlist_tracks ?? []
+						deck.playlist_tracks_shuffled = q.playlist_tracks_shuffled ?? []
 					}
 				}
-			} else {
-				// Old queue format: {playlist_tracks, playlist_tracks_shuffled}
-				if (state.decks[1]) {
-					state.decks[1].playlist_tracks = parsed.playlist_tracks ?? []
-					state.decks[1].playlist_tracks_shuffled = parsed.playlist_tracks_shuffled ?? []
-				}
+			} else if (state.decks[1] && !state.decks[1].playlist_tracks?.length) {
+				state.decks[1].playlist_tracks = parsed.playlist_tracks ?? []
+				state.decks[1].playlist_tracks_shuffled = parsed.playlist_tracks_shuffled ?? []
 			}
+			// Clean up legacy key — data now lives in STATE_KEY
+			localStorage.removeItem(QUEUE_KEY)
 		}
 	} catch (err) {
 		log.warn('Failed to load app state:', err)
@@ -200,32 +199,14 @@ export function removeDeck(deckId: number): void {
 	}
 }
 
-// Persist queue (large arrays) per deck — skip broadcast listener decks
-$effect.root(() => {
-	$effect(() => {
-		const decksQueue: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> = {}
-		for (const [id, deck] of Object.entries(appState.decks)) {
-			if (deck.listening_to_channel_id) continue
-			decksQueue[Number(id)] = {
-				playlist_tracks: deck.playlist_tracks,
-				playlist_tracks_shuffled: deck.playlist_tracks_shuffled
-			}
-		}
-		localStorage.setItem(QUEUE_KEY, JSON.stringify({decks: decksQueue}))
-	})
-})
-
-// Persist state (everything except queue arrays inside decks) — skip broadcast listener decks
+// Persist full app state (including queue arrays) — skip broadcast listener decks
 $effect.root(() => {
 	$effect(() => {
 		const state = {...appState} as Record<string, unknown>
-		// Deep clone decks, stripping queue arrays
-		const decks: Record<number, Partial<Deck>> = {}
+		const decks: Record<number, Deck> = {}
 		for (const [id, deck] of Object.entries(appState.decks)) {
 			if (deck.listening_to_channel_id) continue
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const {playlist_tracks: _q, playlist_tracks_shuffled: _qs, ...rest} = deck
-			decks[Number(id)] = rest
+			decks[Number(id)] = {...deck}
 		}
 		state.decks = decks
 		localStorage.setItem(STATE_KEY, JSON.stringify(state))
