@@ -398,7 +398,7 @@ export async function ensureTracksLoaded(slug: string): Promise<void> {
 	})
 
 	// Ensure collection sync is ready before manual writes
-	await tracksCollection.preload()
+	// await tracksCollection.preload()
 
 	tracksCollection.utils.writeBatch(() => {
 		for (const track of data) {

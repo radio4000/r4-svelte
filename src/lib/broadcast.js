@@ -362,7 +362,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 		try {
 			const {data, error} = await sdk.tracks.readTrack(track_id)
 			if (error || !data) throw new Error(`Track ${track_id} not found`)
-			await tracksCollection.preload()
+			// await tracksCollection.preload()
 			tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
 			track = /** @type {import('$lib/types').Track} */ (data)
 		} catch (error) {

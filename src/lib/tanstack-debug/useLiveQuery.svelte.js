@@ -135,7 +135,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		currentUnsubscribe = subscription.unsubscribe.bind(subscription)
 
 		if (currentCollection.status === `idle`) {
-			currentCollection.preload().catch(console.error)
+			// currentCollection.preload().catch(console.error)
 		}
 
 		return () => {
