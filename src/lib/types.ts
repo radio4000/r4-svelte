@@ -41,32 +41,6 @@ export interface Deck {
 	speed?: number
 }
 
-export function createDefaultDeck(id: number): Deck {
-	return {
-		id,
-		playlist_title: undefined,
-		playlist_slug: undefined,
-		playlist_track: undefined,
-		playlist_tracks: [],
-		playlist_tracks_shuffled: [],
-		is_playing: false,
-		shuffle: false,
-		volume: 1,
-		muted: false,
-		hide_video_player: false,
-		compact: false,
-		expanded: false,
-		hide_queue_panel: false,
-		queue_panel_width: undefined,
-		broadcasting_channel_id: undefined,
-		listening_to_channel_id: undefined,
-		track_played_at: undefined,
-		seeked_at: undefined,
-		seek_position: undefined,
-		speed: 1
-	}
-}
-
 export interface AppState {
 	id: number
 	decks: Record<number, Deck>

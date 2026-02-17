@@ -1,12 +1,35 @@
 import type {AppState, Deck} from './types.ts'
-import {createDefaultDeck} from './types.ts'
 import {logger} from '$lib/logger'
 import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
 
 const log = logger.ns('appstate').seal()
 
-// Internally, for performance reasons, we split a couple of keys
-// into their own localstorage group to avoid serializing them on every change.
+export function createDefaultDeck(id: number): Deck {
+	return {
+		id,
+		playlist_title: undefined,
+		playlist_slug: undefined,
+		playlist_track: undefined,
+		playlist_tracks: [],
+		playlist_tracks_shuffled: [],
+		is_playing: false,
+		shuffle: false,
+		volume: 1,
+		muted: false,
+		hide_video_player: false,
+		compact: false,
+		expanded: false,
+		hide_queue_panel: false,
+		queue_panel_width: undefined,
+		broadcasting_channel_id: undefined,
+		listening_to_channel_id: undefined,
+		track_played_at: undefined,
+		seeked_at: undefined,
+		seek_position: undefined,
+		speed: 1
+	}
+}
+
 const STATE_KEY = LOCAL_STORAGE_KEYS.appState
 const QUEUE_KEY = LOCAL_STORAGE_KEYS.appStateQueue
 
@@ -54,83 +77,25 @@ function loadState(): AppState {
 		const storedState = localStorage.getItem(STATE_KEY)
 		if (storedState) {
 			const parsed = JSON.parse(storedState)
-
-			// Migration: detect old format (has playlist_track at top level, no decks key)
-			if (!parsed.decks && ('playlist_track' in parsed || 'is_playing' in parsed || 'volume' in parsed)) {
-				log.log('migrating old state to deck format')
-				const deck = createDefaultDeck(1)
-				deck.playlist_track = parsed.playlist_track
-				deck.is_playing = false // always reset
-				deck.shuffle = parsed.shuffle ?? false
-				deck.volume = parsed.volume ?? 0.7
-				deck.hide_video_player = !(parsed.show_video_player ?? true)
-				deck.expanded = parsed.player_expanded ?? false
-				deck.hide_queue_panel = !(parsed.queue_panel_visible ?? false)
-				deck.queue_panel_width = parsed.queue_panel_width
-				deck.broadcasting_channel_id = parsed.broadcasting_channel_id
-				deck.listening_to_channel_id = undefined // always reset
-
-				// Remove old flat player fields before merging
-				for (const key of [
-					'playlist_track',
-					'playlist_tracks',
-					'playlist_tracks_shuffled',
-					'is_playing',
-					'shuffle',
-					'volume',
-					'show_video_player',
-					'player_expanded',
-					'queue_panel_visible',
-					'queue_panel_width',
-					'broadcasting_channel_id',
-					'listening_to_channel_id'
-				])
-					delete (parsed as Record<string, unknown>)[key]
-
-				state = {...state, ...parsed, decks: {1: deck}, next_deck_id: 2}
-			} else if (parsed.decks) {
-				// New format: merge decks
-				state = {...state, ...parsed}
-				// Ensure each deck has all fields from createDefaultDeck
-				for (const [id, deck] of Object.entries(state.decks)) {
-					const deckState = deck as Deck & {show_video_player?: boolean; queue_panel_visible?: boolean}
-					// Migrate legacy per-deck keys if present in persisted state
-					const migratedDeck = {...deckState}
-					if (typeof deckState.show_video_player === 'boolean' && typeof deckState.hide_video_player !== 'boolean') {
-						migratedDeck.hide_video_player = !deckState.show_video_player
-					}
-					if (typeof deckState.queue_panel_visible === 'boolean' && typeof deckState.hide_queue_panel !== 'boolean') {
-						migratedDeck.hide_queue_panel = !deckState.queue_panel_visible
-					}
-					delete migratedDeck.show_video_player
-					delete migratedDeck.queue_panel_visible
-					state.decks[Number(id)] = {...createDefaultDeck(Number(id)), ...migratedDeck}
-				}
-			} else {
-				state = {...state, ...parsed}
+			state = {...state, ...parsed}
+			for (const [id, deck] of Object.entries(state.decks)) {
+				state.decks[Number(id)] = {...createDefaultDeck(Number(id)), ...(deck as Deck)}
 			}
 		}
-
-		// Migration: merge legacy QUEUE_KEY data if decks don't have queue arrays yet
+		// Queue arrays are stored separately to avoid serializing them on every small state change
 		const storedQueue = localStorage.getItem(QUEUE_KEY)
 		if (storedQueue) {
-			const parsed = JSON.parse(storedQueue)
-			if (parsed.decks) {
-				for (const [id, queueData] of Object.entries(parsed.decks)) {
-					const deckId = Number(id)
-					const deck = state.decks[deckId]
-					if (deck && !deck.playlist_tracks?.length) {
-						const q = queueData as {playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]}
-						deck.playlist_tracks = q.playlist_tracks ?? []
-						deck.playlist_tracks_shuffled = q.playlist_tracks_shuffled ?? []
-					}
+			const queues = JSON.parse(storedQueue) as Record<
+				string,
+				{playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]}
+			>
+			for (const [id, q] of Object.entries(queues)) {
+				const deck = state.decks[Number(id)]
+				if (deck) {
+					deck.playlist_tracks = q.playlist_tracks ?? []
+					deck.playlist_tracks_shuffled = q.playlist_tracks_shuffled ?? []
 				}
-			} else if (state.decks[1] && !state.decks[1].playlist_tracks?.length) {
-				state.decks[1].playlist_tracks = parsed.playlist_tracks ?? []
-				state.decks[1].playlist_tracks_shuffled = parsed.playlist_tracks_shuffled ?? []
 			}
-			// Clean up legacy key — data now lives in STATE_KEY
-			localStorage.removeItem(QUEUE_KEY)
 		}
 	} catch (err) {
 		log.warn('Failed to load app state:', err)
@@ -199,16 +164,32 @@ export function removeDeck(deckId: number): void {
 	}
 }
 
-// Persist full app state (including queue arrays) — skip broadcast listener decks
+// Persist state in two groups to avoid serializing large queue arrays on every small change.
+// STATE_KEY: everything except playlist_tracks/playlist_tracks_shuffled
+// QUEUE_KEY: just the queue arrays per deck
 $effect.root(() => {
 	$effect(() => {
 		const state = {...appState} as Record<string, unknown>
-		const decks: Record<number, Deck> = {}
+		const decks: Record<number, Partial<Deck>> = {}
 		for (const [id, deck] of Object.entries(appState.decks)) {
 			if (deck.listening_to_channel_id) continue
-			decks[Number(id)] = {...deck}
+			const d = {...deck} as Partial<Deck>
+			delete d.playlist_tracks
+			delete d.playlist_tracks_shuffled
+			decks[Number(id)] = d
 		}
 		state.decks = decks
 		localStorage.setItem(STATE_KEY, JSON.stringify(state))
+	})
+	$effect(() => {
+		const queues: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> = {}
+		for (const [id, deck] of Object.entries(appState.decks)) {
+			if (deck.listening_to_channel_id) continue
+			queues[Number(id)] = {
+				playlist_tracks: deck.playlist_tracks,
+				playlist_tracks_shuffled: deck.playlist_tracks_shuffled
+			}
+		}
+		localStorage.setItem(QUEUE_KEY, JSON.stringify(queues))
 	})
 })

@@ -29,7 +29,7 @@ export const tracksCollection = createCollection<Track, string>(
 		},
 		syncMode: 'on-demand',
 		queryClient,
-		getKey: (item) => item?.id,
+		getKey: (item) => item.id,
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
@@ -99,34 +99,10 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 
 	const {data, error} = await query
 	if (error) throw error
-
-	// Some tracks can be missing from channel_tracks view (e.g. unsupported provider parsing).
-	// Fetch via channel_track join to ensure all channel-linked tracks are visible.
-	let linkedTracks: Track[] = []
-	if (channel?.id) {
-		const {data: linkedData, error: linkedError} = await sdk.supabase
-			.from('channel_track')
-			.select('tracks(*)')
-			.eq('channel_id', channel.id)
-		if (linkedError) {
-			log.warn('tracks fetch linked failed', {slug, channelId: channel.id, linkedError})
-		} else {
-			linkedTracks = (linkedData || [])
-				.map((row) => (row as {tracks?: Omit<Track, 'slug'>}).tracks)
-				.filter((t): t is Omit<Track, 'slug'> => Boolean(t))
-				.map((t) => ({...t, slug}))
-		}
-	}
-
-	const merged = new Map<string, Track>()
-	for (const t of (data || []) as Track[]) merged.set(t.id, t)
-	for (const t of linkedTracks) if (!merged.has(t.id)) merged.set(t.id, t)
-	const allTracks = [...merged.values()].toSorted((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-	if (opts?.limit) return allTracks.slice(0, opts.limit)
-	if (opts?.createdAfter) return allTracks.filter((t) => t.created_at > opts.createdAfter)
+	const tracks = (data || []) as Track[]
 
 	// Fallback to v1 if v2 returns empty (race condition: channel not loaded yet)
-	if (!allTracks.length) {
+	if (!tracks.length) {
 		const {data: v1Data, error: v1Error} = await sdk.firebase.readTracks({slug})
 		if (v1Error) throw v1Error
 		if (v1Data?.length) {
@@ -136,7 +112,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 		}
 	}
 
-	return allTracks
+	return tracks
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
