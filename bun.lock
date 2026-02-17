@@ -9,7 +9,7 @@
         "@inlang/paraglide-js": "^2.10.0",
         "@inlang/plugin-m-function-matcher": "^2.2.0",
         "@inlang/plugin-message-format": "^4.2.0",
-        "@radio4000/sdk": "^0.7.5",
+        "@radio4000/sdk": "^0.7.6",
         "@sveltejs/adapter-static": "^3.0.10",
         "@tanstack/offline-transactions": "^1.0.15",
         "@tanstack/query-db-collection": "^1.0.22",
@@ -321,7 +321,7 @@
 
     "@poppinss/exception": ["@poppinss/exception@1.2.3", "", {}, "sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw=="],
 
-    "@radio4000/sdk": ["@radio4000/sdk@0.7.5", "", { "dependencies": { "@supabase/supabase-js": "^2.96.0", "media-now": "^2.2.0", "uuid": "^13.0.0" } }, "sha512-MJ6k1ZtzGLl8nF/lUiLhDO9O0qPtqzTmXM1F2B+5LQ1G63683YQy77huI/Tq/brChyXyv6vYGi7CB1UsdOPY6g=="],
+    "@radio4000/sdk": ["@radio4000/sdk@0.7.6", "", { "dependencies": { "@supabase/supabase-js": "^2.96.0", "media-now": "^2.2.0", "uuid": "^13.0.0" } }, "sha512-nclrI8wpe4xxD/qPCpGGA/tmcEnXshNhLPMFr8iQ8jDbd6DpuD8vcAYU69ze8TZ8gf17bkgykUOnmt4QWKf86Q=="],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.55.1", "", { "os": "android", "cpu": "arm" }, "sha512-9R0DM/ykwfGIlNu6+2U09ga0WXeZ9MRC2Ter8jnz8415VbuIykVuc6bhdrbORFZANDmTDvq26mJrEVTl8TdnDg=="],
 
