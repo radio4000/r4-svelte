@@ -30,4 +30,4 @@ In +layout.js we `preload()` all channels from remote + a local file with v1 cha
 
 ## Legacy
 
-v1 channels from Firebase are read-only. See [v1-data.md](v1-data.md).
+v1 channels from Firebase are read-only. See [state-v1.md](state-v1.md).

@@ -4,7 +4,7 @@
 
 - #Search views: a system (?) for filtering tracks by channel, tags, and full-text search on the client, fast, cached reactive. Should open up for some nice features.
 - #Search changed its URL param from `?search=` to `?q=`, and now support @mentions and #hashtags as well as free text search across all channels and tracks
-- #Mix supports upp to /8 decks on /mix now (was 2)
+- #Mix supports up to 8 decks on /mix (was 2)
 - #i18n Improved Portuguese translations; removed unused translation keys across all languages
 - #UI Unified icon sizes to 20px across the app
 - #Player Keyboard navigation for tracklists—use arrow keys to move and enter/space to play
@@ -21,6 +21,22 @@
 - #Perf Tooltips now share a single DOM element instead of one per tooltip
 - #Perf Track freshness checks `updated_at` instead of fetching everything
 - #Perf Converted remaining web components to native Svelte components
+- #Player Multi-deck player with independent queues, playback speed, volume, and compact mode
+- #Player SoundCloud and audio file playback in decks
+- #Broadcast Multi-deck broadcasting — all deck state syncs to listeners via appState.decks
+- #Channels RSS feeds at `/@slug.rss`
+- #Channels Per-channel map page at `/@slug/map`
+- #Channels Redesigned channel header and navigation layout
+- #Tracks Track detail page with tabbed navigation and inline editing
+- #Tracks Discogs link on track cards
+- #Map OGL-based infinite canvas replaced Three.js
+- #UI Icons on play/queue buttons across search and channel pages
+- #UI App version number on load screen
+- #UI Unified menu and navigation controls
+- #Search Fixed /search not including v1 channels
+- #Tracks Fixed missing Discogs metadata
+- #Player Replaced internal media library with media-now
+- #Channels Backup export now runs client-side
 
 ## January 2026
 

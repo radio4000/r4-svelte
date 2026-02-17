@@ -1,6 +1,8 @@
 # Mix
 
-YouTube DJ mixer with multiple decks. Think modular gear on a table. Each section is a device you could unplug and swap. Crate = record box. Processor = effects unit. Decks = turntables. Crossfader = DJ mixer channel fader. The visual uses "pipes" connecting devices to reinforce the signal-flow mental model.
+Standalone experimental DJ mixer at `/mix`. Separate from the core multi-deck player (see [player.md](player.md)).
+
+Up to 8 decks. Think modular gear on a table. Each section is a device you could unplug and swap. Crate = record box. Processor = effects unit. Decks = turntables. Crossfader = DJ mixer channel fader. The visual uses "pipes" connecting devices to reinforce the signal-flow mental model.
 
 Crate -> Processor -> LOAD 1,2,3... -> Decks 1,2,3... --> Crossfader (when max 2 decks)
 

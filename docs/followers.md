@@ -35,7 +35,7 @@ let following = $derived(followQuery.data?.length > 0)
 
 ## pages
 
-Followers/following pages fetch directly via SDK (not from collection):
+Followers/following pages fetch directly via SDK (not from collection). Display settings (list/grid view) persist across visits.
 
 ```ts
 sdk.channels.readFollowers(channelId) // who follows this channel

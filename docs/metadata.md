@@ -35,3 +35,5 @@ The API layer keeps concerns separate: `pull` fetches metadata to local cache, `
 - track-meta-youtube.svelte
 - track-meta-musicbrainz.svelte
 - track-meta-discogs.svelte
+
+Track cards show a Discogs link when Discogs metadata is available.
