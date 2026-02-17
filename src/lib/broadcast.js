@@ -109,7 +109,12 @@ export async function joinBroadcast(deckId, channelId) {
 			}
 		}
 
-		await playBroadcastTrack(deckId, data)
+		// Use decks jsonb if available (multi-deck), fall back to single-deck fields
+		if (Array.isArray(data?.decks) && data.decks.length) {
+			await applyBroadcastState(channelId, data.decks)
+		} else if (data?.track_id) {
+			await playBroadcastTrack(deckId, data)
+		}
 
 		// Listener mode should only contain decks driven by this broadcast channel.
 		let listenerDeckId = deckId
@@ -158,18 +163,17 @@ export function leaveBroadcast(deckId) {
 }
 
 /**
- * Helper to upsert a broadcast record
+ * Helper to upsert a broadcast record with full deck state.
  * @param {string} channelId
- * @param {string} trackId
  */
-export async function upsertRemoteBroadcast(channelId, trackId) {
+export async function upsertRemoteBroadcast(channelId) {
 	return sdk.supabase
 		.from('broadcast')
 		.upsert(
 			{
 				channel_id: channelId,
-				track_id: trackId,
-				track_played_at: new Date().toISOString()
+				track_played_at: new Date().toISOString(),
+				decks: getBroadcastDeckState()
 			},
 			{onConflict: 'channel_id'}
 		)
@@ -190,7 +194,7 @@ export async function startBroadcast(channelId, trackId) {
 		throw new Error('Legacy channels cannot broadcast')
 	}
 
-	await upsertRemoteBroadcast(channelId, trackId)
+	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)
 	log.log(`started ${label(channelId)}`)
@@ -347,6 +351,7 @@ function shouldApplySeek(deckId, targetSeconds) {
  */
 async function playBroadcastTrack(deckId, broadcast) {
 	const {track_id, channel_id} = broadcast
+	if (!track_id) return false
 
 	// Check if track is already loaded
 	let track = tracksCollection.get(track_id)
@@ -433,6 +438,10 @@ function getBroadcastDeckState() {
 	})
 }
 
+/** @type {Map<string, ReturnType<typeof setTimeout>>} */
+const tableWriteTimers = new Map()
+const TABLE_WRITE_INTERVAL_MS = 15000
+
 function broadcastStateUpdate(channelId) {
 	const state = getBroadcastDeckState()
 	const entry = broadcastStateChannels.get(channelId)
@@ -445,6 +454,19 @@ function broadcastStateUpdate(channelId) {
 		event: 'state',
 		payload: {channel_id: channelId, decks: state, seq}
 	})
+
+	// Debounced table write so late joiners get a fresh snapshot
+	if (!tableWriteTimers.has(channelId)) {
+		tableWriteTimers.set(
+			channelId,
+			setTimeout(() => {
+				tableWriteTimers.delete(channelId)
+				upsertRemoteBroadcast(channelId).catch((err) => {
+					log.warn('table_write_failed', {channelId, error: /** @type {Error} */ (err).message})
+				})
+			}, TABLE_WRITE_INTERVAL_MS)
+		)
+	}
 }
 
 function startBroadcastState(channelId) {
@@ -472,6 +494,11 @@ function stopBroadcastState(channelId) {
 		entry.channel.unsubscribe()
 		clearInterval(entry.intervalId)
 		broadcastStateChannels.delete(channelId)
+	}
+	const timer = tableWriteTimers.get(channelId)
+	if (timer) {
+		clearTimeout(timer)
+		tableWriteTimers.delete(channelId)
 	}
 }
 

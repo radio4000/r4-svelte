@@ -164,7 +164,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
 		try {
-			await upsertRemoteBroadcast(broadcastingChannelId, id)
+			await upsertRemoteBroadcast(broadcastingChannelId)
 			notifyBroadcastState(broadcastingChannelId)
 			log.log('broadcast_auto_updated', {
 				channelId: broadcastingChannelId,

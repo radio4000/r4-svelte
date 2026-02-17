@@ -9,10 +9,9 @@ import {appState} from '$lib/app-state.svelte'
 
 const BROADCAST_SELECT = `
 	channel_id,
-	track_id,
 	track_played_at,
-	channels:channels_with_tracks (*),
-	tracks:channel_tracks!track_id (*)
+	decks,
+	channels:channels_with_tracks (*)
 `
 
 /**

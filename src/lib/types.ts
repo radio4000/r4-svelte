@@ -119,10 +119,23 @@ interface User {
 
 export type KeyBindingsConfig = Record<string, string>
 
+export interface BroadcastDeckState {
+	index: number
+	track_id: string | null
+	track_played_at: string | null
+	is_playing: boolean
+	seeked_at: string | null
+	seek_position: number | null
+	volume: number
+	muted: boolean
+	speed: number
+}
+
 export interface Broadcast {
 	channel_id: string
-	track_id: string
+	track_id?: string | null
 	track_played_at: string
+	decks?: BroadcastDeckState[]
 	seeked_at?: string
 	seek_position?: number
 	is_playing?: boolean
@@ -133,7 +146,6 @@ export interface Broadcast {
 
 export interface BroadcastWithChannel extends Broadcast {
 	channels: Channel
-	tracks: Track | null
 }
 
 export interface PlayHistory {

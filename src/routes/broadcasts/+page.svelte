@@ -81,6 +81,8 @@
 		{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 			{@const joined = Object.values(appState.decks).some((d) => d.listening_to_channel_id === broadcast.channel_id)}
 			{@const isOwnChannel = broadcast.channel_id === appState.channels?.[0]}
+			{@const primaryTrackId = deckStatesByChannel.get(broadcast.channel_id)?.[0]?.track_id ?? broadcast.decks?.[0]?.track_id}
+			{@const primaryLabel = getTrackLabel(primaryTrackId)}
 			<div class:active={joined}>
 				<ChannelCard channel={broadcast.channels}>
 					<p>
@@ -89,8 +91,8 @@
 							{m.broadcasts_since()}
 							{timeAgo(broadcast.track_played_at)}
 						{/if}
-						{#if broadcast.tracks}
-							<em>{broadcast.tracks.title}</em> via
+						{#if primaryLabel}
+							<em>{primaryLabel}</em> via
 							<a href="/{broadcast.channels.slug}">@{broadcast.channels.slug}</a>
 						{:else}
 							<em>...</em>
