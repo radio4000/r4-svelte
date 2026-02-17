@@ -112,7 +112,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 		log.log('play_track_created_deck', {deckId})
 	}
 
-	const track = tracksCollection.get(id) ?? tracksCollection.state.get(id)
+	const track = tracksCollection.get(id)
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined
@@ -219,7 +219,7 @@ export async function playChannel(deckId, {id, slug}, trackId) {
 export async function playTrackInNewDeck(trackId, slug) {
 	const deck = addDeck()
 	appState.active_deck_id = deck.id
-	if (slug && !(tracksCollection.get(trackId) ?? tracksCollection.state.get(trackId))) {
+	if (slug && !tracksCollection.get(trackId)) {
 		await ensureTracksLoaded(slug)
 	}
 	await playTrack(deck.id, trackId, null, 'user_click_track')

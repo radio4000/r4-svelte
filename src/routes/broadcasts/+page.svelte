@@ -81,7 +81,8 @@
 		{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 			{@const joined = Object.values(appState.decks).some((d) => d.listening_to_channel_id === broadcast.channel_id)}
 			{@const isOwnChannel = broadcast.channel_id === appState.channels?.[0]}
-			{@const primaryTrackId = deckStatesByChannel.get(broadcast.channel_id)?.[0]?.track_id ?? broadcast.decks?.[0]?.track_id}
+			{@const primaryTrackId =
+				deckStatesByChannel.get(broadcast.channel_id)?.[0]?.track_id ?? broadcast.decks?.[0]?.track_id}
 			{@const primaryLabel = getTrackLabel(primaryTrackId)}
 			<div class:active={joined}>
 				<ChannelCard channel={broadcast.channels}>
