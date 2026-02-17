@@ -1,9 +1,6 @@
 import type {AppState, Deck} from './types.ts'
 import {logger} from '$lib/logger'
 import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-
-const log = logger.ns('appstate').seal()
-
 export function createDefaultDeck(id: number): Deck {
 	return {
 		id,
@@ -29,6 +26,8 @@ export function createDefaultDeck(id: number): Deck {
 		speed: 1
 	}
 }
+
+const log = logger.ns('appstate').seal()
 
 const STATE_KEY = LOCAL_STORAGE_KEYS.appState
 const QUEUE_KEY = LOCAL_STORAGE_KEYS.appStateQueue
