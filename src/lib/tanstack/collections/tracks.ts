@@ -11,7 +11,6 @@ import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
 import {searchTracks} from '$lib/search-fts'
-import {isDirectAudioUrl} from '$lib/media'
 import type {Track} from '$lib/types'
 
 export const tracksCollection = createCollection<Track, string>(
@@ -217,7 +216,7 @@ export function addTrack(
 ) {
 	const parsed = parseUrl(input.url)
 	const media_id = parsed?.provider === 'youtube' ? parsed.id : null
-	const provider = parsed?.provider || (isDirectAudioUrl(input.url) ? 'audio' : null)
+	const provider = parsed?.provider || null
 	const tx = getOfflineExecutor().createOfflineTransaction({
 		mutationFnName: 'syncTracks',
 		metadata: {channelId: channel.id, slug: channel.slug},

@@ -4,7 +4,7 @@
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {togglePlayPause, next, previous, getMediaPlayer} from '$lib/api'
 	import {queuePrev} from '$lib/player/queue'
-	import {inferPlayerProvider} from '$lib/media'
+	import {parseUrl} from 'media-now/parse-url'
 	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
@@ -38,9 +38,11 @@
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
 	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
-	let provider = $derived(inferPlayerProvider(displayTrack?.provider, displayTrack?.url))
+	let provider = $derived(
+		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
+	)
 	let supportsPlaybackSpeed = $derived(provider !== 'soundcloud' && Boolean(displayTrack))
-	let useNativeAudio = $derived(provider === 'audio')
+	let useNativeAudio = $derived(provider === 'file')
 	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
 	let speedMax = $derived(useNativeAudio ? 3 : 2)
 	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)

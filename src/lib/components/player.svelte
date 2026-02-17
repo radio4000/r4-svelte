@@ -24,7 +24,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
-	import {inferPlayerProvider} from '$lib/media'
+	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -69,8 +69,8 @@
 	let displayChannel = $derived(channel ?? lastChannel)
 
 	let src = $derived(track?.url)
-	let provider = $derived(inferPlayerProvider(track?.provider, track?.url))
-	let useNativeAudio = $derived(provider === 'audio')
+	let provider = $derived(track?.provider || (track?.url ? parseUrl(track.url)?.provider : null) || null)
+	let useNativeAudio = $derived(provider === 'file')
 	let mediaElement = $derived.by(() => {
 		if (provider === 'youtube') return youtubePlayer
 		if (provider === 'soundcloud') return soundcloudPlayer
