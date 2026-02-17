@@ -20,7 +20,8 @@ export default ts.config(
 			globals: {
 				...globals.browser,
 				...globals.node,
-				__GIT_INFO__: 'readonly'
+				__GIT_INFO__: 'readonly',
+				__REPO_URL__: 'readonly'
 			}
 		}
 	},

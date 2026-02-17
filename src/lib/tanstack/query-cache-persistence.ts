@@ -31,7 +31,7 @@ function cleanForIDB(client: PersistedClient): PersistedClient {
 		JSON.stringify(client, function (_key, value) {
 			if (typeof value === 'function') return undefined
 			if (value && typeof value === 'object') {
-				while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) ancestors.pop()
+				while (ancestors.length > 0 && ancestors.at(-1) !== this) ancestors.pop()
 				if (ancestors.includes(value)) return undefined
 				ancestors.push(value)
 			}

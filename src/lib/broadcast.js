@@ -5,6 +5,8 @@ import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
 
+/** @typedef {import('$lib/types').Broadcast} Broadcast */
+
 const log = logger.ns('broadcast').seal()
 
 /** Get slug for a channel ID, or short ID if not found */
@@ -95,7 +97,9 @@ export async function joinBroadcast(deckId, channelId) {
 			stopBroadcastTableListener(previousChannelId)
 		}
 
-		const {data} = await sdk.supabase.from('broadcast').select('*').eq('channel_id', channelId).single().throwOnError()
+		const {data} = /** @type {{data: Broadcast}} */ (
+			await sdk.supabase.from('broadcast').select('*').eq('channel_id', channelId).single().throwOnError()
+		)
 
 		// Prefetch all tracks for this channel
 		const broadcast = broadcastsCollection.state.get(channelId)
@@ -174,6 +178,7 @@ export async function upsertRemoteBroadcast(channelId) {
 		.upsert(
 			{
 				channel_id: channelId,
+				track_id: getBroadcastDeckState()?.[0]?.track_id ?? '',
 				track_played_at: new Date().toISOString(),
 				decks: getBroadcastDeckState()
 			},

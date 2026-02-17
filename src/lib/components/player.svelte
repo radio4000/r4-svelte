@@ -425,7 +425,6 @@
 		{/if}
 
 		<!-- 4. Channel/track info + deck toggle -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">

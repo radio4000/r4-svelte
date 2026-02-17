@@ -47,7 +47,7 @@ export default defineConfig({
 	},
 	define: {
 		__GIT_INFO__: JSON.stringify(getGitInfo()),
-		__REPO_URL__: JSON.stringify(typeof pkg.repository === 'string' ? pkg.repository : (pkg.repository?.url ?? ''))
+		__REPO_URL__: JSON.stringify(pkg.repository)
 	},
 	test: {
 		reporters: ['dot'],

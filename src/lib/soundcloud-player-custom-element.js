@@ -43,6 +43,7 @@ class SoundCloudPlayerElement extends HTMLElement {
 	#cachedCurrentTime = 0
 	#lastDuration = NaN
 	#metadataFired = false
+	/** @type {ReturnType<typeof setInterval> | null} */
 	#progressTimer = null
 
 	constructor() {
@@ -405,7 +406,9 @@ class SoundCloudPlayerElement extends HTMLElement {
 
 		if (!soundcloudApiReadyPromise) {
 			soundcloudApiReadyPromise = new Promise((resolve, reject) => {
-				const existing = document.querySelector('script[src*="soundcloud.com/player/api.js"]')
+				const existing = /** @type {HTMLScriptElement | null} */ (
+					document.querySelector('script[src*="soundcloud.com/player/api.js"]')
+				)
 				const script = existing ?? document.createElement('script')
 				if (!existing) {
 					script.src = 'https://w.soundcloud.com/player/api.js'

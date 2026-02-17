@@ -6,3 +6,4 @@ declare const __GIT_INFO__: {
 	date: string
 	remoteUrl: string
 }
+declare const __REPO_URL__: string
