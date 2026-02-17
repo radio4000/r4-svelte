@@ -14,14 +14,14 @@
 
 <aside class="deck-strip" class:all-compact={allDecksCompact}>
 	<div class="deck-strip-main">
-		{#each localDeckIds as deckId, i (deckId)}
-			<Deck {deckId} deckNumber={i + 1} deckCount={deckIds.length} />
+		{#each localDeckIds as deckId (deckId)}
+			<Deck {deckId} />
 		{/each}
 	</div>
 	{#if listeningDeckIds.length}
 		<div class="deck-strip-broadcasts" aria-label="Broadcast listener decks">
-			{#each listeningDeckIds as deckId, i (deckId)}
-				<Deck {deckId} deckNumber={i + 1} deckCount={deckIds.length} />
+			{#each listeningDeckIds as deckId (deckId)}
+				<Deck {deckId} />
 			{/each}
 		</div>
 	{/if}

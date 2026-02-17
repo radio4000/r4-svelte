@@ -33,8 +33,8 @@
 
 	const log = logger.ns('player').seal()
 
-	/** @type {{deckId: number, deckNumber?: number, deckCount?: number, children?: import('svelte').Snippet}} */
-	let {deckId, deckNumber = 1, deckCount = 1, children} = $props()
+	/** @type {{deckId: number, children?: import('svelte').Snippet}} */
+	let {deckId, children} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -96,7 +96,6 @@
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
-	const canPlay = $derived(Boolean(channel && track))
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
 	// The channel that is broadcasting (the DJ), looked up by ID

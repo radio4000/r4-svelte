@@ -5,8 +5,8 @@
 	import Player from '$lib/components/player.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 
-	/** @type {{deckId: number, deckNumber?: number, deckCount?: number}} */
-	let {deckId, deckNumber = 1, deckCount = 1} = $props()
+	/** @type {{deckId: number}} */
+	let {deckId} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
@@ -78,7 +78,7 @@
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
-			<Player {deckId} {deckNumber} {deckCount}>
+			<Player {deckId}>
 				{#if !isListeningToBroadcast}
 					<QueuePanel {deckId} />
 				{/if}

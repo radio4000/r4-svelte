@@ -6,6 +6,7 @@ import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
+/** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
 
 const log = logger.ns('broadcast').seal()
 
@@ -246,7 +247,7 @@ function stopBroadcastSync(deckId) {
 
 /**
  * Calculate elapsed seconds from track_played_at
- * @param {import('$lib/types').Broadcast} broadcast
+ * @param {Partial<BroadcastDeckState> & {track_played_at?: string | null}} broadcast
  * @param {import('$lib/types').Track} track
  * @returns {number|undefined}
  */
@@ -354,7 +355,7 @@ function shouldApplySeek(deckId, targetSeconds) {
 
 /**
  * @param {number} deckId
- * @param {import('$lib/types').Broadcast} broadcast
+ * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null}} broadcast
  */
 async function playBroadcastTrack(deckId, broadcast) {
 	const {track_id, channel_id} = broadcast
