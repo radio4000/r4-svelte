@@ -17,11 +17,13 @@
 		getUserInitiatedPlay,
 		setUserInitiatedPlay
 	} from '$lib/api'
-	import {queuePrev} from '$lib/player/queue'
+	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import SpeedControl from '$lib/components/speed-control.svelte'
+	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
 	import {parseUrl} from 'media-now/parse-url'
@@ -77,22 +79,10 @@
 		if (useNativeAudio) return audioPlayer
 		return undefined
 	})
-	let supportsPlaybackSpeed = $derived(
-		provider !== 'soundcloud' && Boolean(mediaElement && 'playbackRate' in mediaElement)
-	)
-	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
-	let speedMax = $derived(useNativeAudio ? 3 : 2)
-	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
-
-	/** @type {string[]} */
-	let trackIds = $derived(deck?.playlist_tracks || [])
-
-	/** @type {string[]} */
-	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
-	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
-	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
-	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
-	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
+	let activeQueue = $derived(getActiveQueue(deck))
+	let canPlayFromQueue = $derived(canPlay(activeQueue, track?.id))
+	let canPrevFromQueue = $derived(canPrev(activeQueue, track?.id))
+	let canNextFromQueue = $derived(canNext(activeQueue, track?.id))
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
@@ -264,25 +254,6 @@
 			el.playbackRate = speed
 		}
 	})
-
-	function handleSpeedChange(speed) {
-		if (!deck) return
-		deck.speed = speed
-		if (mediaElement && 'playbackRate' in mediaElement) {
-			mediaElement.playbackRate = speed
-		}
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-	}
-
-	function handleToggleMute() {
-		if (!deck || !mediaElement) return
-		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
-		mediaElement.muted = nextMuted
-		deck.muted = nextMuted
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-	}
 </script>
 
 <div class="player">
@@ -484,54 +455,10 @@
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
-				{#if appState.show_speed_control && supportsPlaybackSpeed}
-					<div class="speed">
-						<button
-							class="speed-btn"
-							class:active={deck?.speed != null && deck.speed !== 1}
-							onclick={() => handleSpeedChange(1)}
-							{@attach tooltip({content: 'Reset speed', position: 'top'})}
-						>
-							{Number(deck?.speed ?? 1).toFixed(2)}x
-						</button>
-						<input
-							type="range"
-							min={speedMin}
-							max={speedMax}
-							step={speedStep}
-							value={deck?.speed ?? 1}
-							oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
-							class="speed-range"
-							data-default={!deck?.speed || deck.speed === 1 || null}
-						/>
-					</div>
-				{/if}
+				<SpeedControl {deckId} {provider} />
 			{/if}
 			{#if !isListeningToBroadcast}
-				<div class="volume">
-					<media-mute-button
-						class="btn"
-						class:active={Boolean(deck?.muted)}
-						onclick={handleToggleMute}
-						{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
-					></media-mute-button>
-					<input
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						value={deck?.volume ?? 1}
-						oninput={(e) => {
-							const val = Number(e.currentTarget.value)
-							if (deck) deck.volume = val
-							if (mediaElement) mediaElement.volume = val
-							const broadcastingChannelId = getBroadcastingChannelId()
-							if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-						}}
-						class="volume-range"
-						data-muted={deck?.muted || deck?.volume === 0 || null}
-					/>
-				</div>
+				<VolumeControl {deckId} />
 			{/if}
 			<button
 				onclick={() => toggleDeckCompact(deckId)}
@@ -720,33 +647,6 @@
 		margin-left: auto;
 	}
 
-	.speed {
-		display: flex;
-		align-items: center;
-		gap: 0.2rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.speed-btn {
-		font-size: var(--font-1);
-		min-width: 2.5em;
-		text-align: center;
-		flex-shrink: 0;
-	}
-
-	.speed-range {
-		flex: 1 1 0;
-		min-width: 0;
-		width: 100%;
-		cursor: pointer;
-		accent-color: var(--gray-7);
-	}
-
-	.speed-range:not([data-default]) {
-		accent-color: var(--accent-9);
-	}
-
 	.player-controls {
 		align-items: center;
 		justify-content: flex-end;
@@ -805,38 +705,10 @@
 		background: var(--header-bg);
 	}
 
-	.volume {
-		margin-left: auto;
-		max-width: 10rem;
-		display: flex;
-		gap: 0.2rem;
-		align-items: center;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.volume-range {
-		flex: 1 1 0;
-		min-width: 0;
-		width: 100%;
-	}
-
-	.volume-range[data-muted] {
-		accent-color: var(--gray-7);
-	}
-
 	@media (max-width: 768px) {
 		.bottom-controls {
 			gap: 0.1rem;
 			justify-content: flex-start;
-		}
-
-		.bottom-controls .volume {
-			flex: 1.6;
-		}
-
-		.bottom-controls .volume-range {
-			min-width: 8rem;
 		}
 	}
 </style>

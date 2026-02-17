@@ -64,14 +64,16 @@
 
 {#if visible}
 	<section
-		class="deck"
-		class:expanded={deck?.expanded}
-		class:compact={deck?.compact}
-		class:listening={isListeningToBroadcast}
-		class:active-deck={isActiveDeck}
-		class:resizing
-		class:hide-queue={deck?.hide_queue_panel}
-		class:hide-video={deck?.hide_video_player}
+		class={{
+			deck: true,
+			expanded: deck?.expanded,
+			compact: deck?.compact,
+			listening: isListeningToBroadcast,
+			'active-deck': isActiveDeck,
+			resizing,
+			'hide-queue': deck?.hide_queue_panel,
+			'hide-video': deck?.hide_video_player
+		}}
 		data-deck={deckId}
 		style={deckStyle}
 	>

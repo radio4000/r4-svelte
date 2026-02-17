@@ -3,11 +3,11 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import {togglePlayPause, next, previous, getMediaPlayer} from '$lib/api'
-	import {queuePrev} from '$lib/player/queue'
+	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
-	import 'media-chrome'
 	import Icon from '$lib/components/icon.svelte'
+	import SpeedControl from '$lib/components/speed-control.svelte'
+	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 
@@ -42,25 +42,14 @@
 	let provider = $derived(
 		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
 	)
-	let supportsPlaybackSpeed = $derived(provider !== 'soundcloud' && Boolean(displayTrack))
-	let useNativeAudio = $derived(provider === 'file')
-	let speedMin = $derived(useNativeAudio ? 0.25 : 0.25)
-	let speedMax = $derived(useNativeAudio ? 3 : 2)
-	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
-
 	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
 	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
-	/** @type {string[]} */
-	let trackIds = $derived(deck?.playlist_tracks || [])
-	/** @type {string[]} */
-	let activeQueue = $derived(deck?.shuffle ? deck?.playlist_tracks_shuffled || [] : trackIds)
-	let hasTrackInQueue = $derived(Boolean(track?.id && activeQueue.includes(track.id)))
-	let canPlayFromQueue = $derived(Boolean(activeQueue.length && hasTrackInQueue))
-	let canPrevFromQueue = $derived(Boolean(track?.id && queuePrev(activeQueue, track.id)))
-	let canNextFromQueue = $derived(Boolean(activeQueue.length > 1 && hasTrackInQueue))
+	let activeQueue = $derived(getActiveQueue(deck))
+	let canPlayFromQueue = $derived(canPlay(activeQueue, track?.id))
+	let canPrevFromQueue = $derived(canPrev(activeQueue, track?.id))
+	let canNextFromQueue = $derived(canNext(activeQueue, track?.id))
 
-	const mediaControllerId = $derived(`r5-deck-${deckId}`)
 	let mediaDuration = $state(NaN)
 	let mediaCurrentTime = $state(0)
 
@@ -104,37 +93,6 @@
 			cleanup()
 		}
 	})
-
-	function emitBroadcastUpdate() {
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-	}
-
-	function handleToggleMute() {
-		if (!deck) return
-		const mediaElement = getMediaPlayer(deckId)
-		if (!mediaElement) return
-		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
-		mediaElement.muted = nextMuted
-		deck.muted = nextMuted
-		emitBroadcastUpdate()
-	}
-
-	function handleMuteButtonClick() {
-		if (!deck) return
-		const mediaElement = getMediaPlayer(deckId)
-		if (!mediaElement) return
-		const before = Boolean(mediaElement.muted)
-		queueMicrotask(() => {
-			const after = Boolean(mediaElement.muted)
-			if (after === before) {
-				handleToggleMute()
-				return
-			}
-			deck.muted = after
-			emitBroadcastUpdate()
-		})
-	}
 </script>
 
 <div class="deck-compact-bar">
@@ -214,63 +172,8 @@
 				<Icon icon="next-fill" />
 			</button>
 		</menu>
-		{#if appState.show_speed_control && supportsPlaybackSpeed}
-			<div class="speed">
-				<button
-					class="speed-btn"
-					class:active={deck?.speed != null && deck.speed !== 1}
-					onclick={() => {
-						if (deck) deck.speed = 1
-						const mediaElement = getMediaPlayer(deckId)
-						if (mediaElement && 'playbackRate' in mediaElement) mediaElement.playbackRate = 1
-						emitBroadcastUpdate()
-					}}
-				>
-					{Number(deck?.speed ?? 1).toFixed(2)}x
-				</button>
-				<input
-					type="range"
-					min={speedMin}
-					max={speedMax}
-					step={speedStep}
-					value={deck?.speed ?? 1}
-					oninput={(e) => {
-						const speed = Number(e.currentTarget.value)
-						if (deck) deck.speed = speed
-						const mediaElement = getMediaPlayer(deckId)
-						if (mediaElement && 'playbackRate' in mediaElement) mediaElement.playbackRate = speed
-						emitBroadcastUpdate()
-					}}
-					class="range"
-					data-default={!deck?.speed || deck.speed === 1 || null}
-				/>
-			</div>
-		{/if}
-		<div class="volume">
-			<media-mute-button
-				mediacontroller={mediaControllerId}
-				class="btn"
-				class:active={Boolean(deck?.muted)}
-				onclick={handleMuteButtonClick}
-				aria-label="Mute"
-			></media-mute-button>
-			<input
-				type="range"
-				min="0"
-				max="1"
-				step="0.01"
-				value={deck?.volume ?? 1}
-				oninput={(e) => {
-					const val = Number(e.currentTarget.value)
-					if (deck) deck.volume = val
-					const mediaElement = getMediaPlayer(deckId)
-					if (mediaElement) mediaElement.volume = val
-					emitBroadcastUpdate()
-				}}
-				class="range"
-				data-muted={deck?.muted || deck?.volume === 0 || null}
-			/>
-		</div>
+		<SpeedControl {deckId} {provider} />
+		<VolumeControl {deckId} />
 		<button
 			class="expand"
 			onclick={() => (deck.compact = false)}
@@ -352,50 +255,6 @@
 			object-fit: cover;
 			object-position: center;
 		}
-	}
-
-	.speed,
-	.volume {
-		display: flex;
-		align-items: center;
-		flex: 1 1 0;
-		min-width: 0;
-	}
-
-	.volume {
-		max-width: 10rem;
-		gap: 0.2rem;
-	}
-
-	.speed-btn {
-		font-size: var(--font-1);
-		min-width: 2.5em;
-		text-align: center;
-		flex-shrink: 0;
-	}
-
-	.range {
-		flex: 1 1 auto;
-		min-width: 0;
-	}
-
-	.range[data-muted],
-	.range[data-default] {
-		accent-color: var(--gray-7);
-	}
-
-	.volume :global(media-mute-button) {
-		--media-control-background: transparent;
-		--media-control-hover-background: transparent;
-		--media-icon-color: currentColor;
-		--media-icon-color-hover: currentColor;
-		color: var(--text, var(--gray-12));
-	}
-
-	.volume :global(media-mute-button.active) {
-		color: var(--accent-10);
-		border-color: var(--accent-9);
-		background-color: var(--accent-3);
 	}
 
 	.expand {

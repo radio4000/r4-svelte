@@ -4,14 +4,18 @@ Uses [media-chrome](https://www.media-chrome.org/) with [media-now](https://gith
 
 ## Architecture
 
-- `media-now` handles provider abstraction (replaced internal media library)
+- `media-now` handles provider abstraction
 - `youtube-video-custom-element.js` - YouTube IFrame API wrapper
 - `soundcloud-player-custom-element.js` - SoundCloud Widget API wrapper
 - Both implement HTMLMediaElement-compatible interface for media-chrome
 
 ## Multi-deck
 
-The player supports multiple independent decks. Each deck has its own queue, playback speed, volume, and compact mode. Deck state lives in `appState.decks` — keyed by numeric ID, displayed as A–Z labels.
+The player supports multiple independent decks. Each deck has its own queue, active track, playback speed, volume, and layout config. Deck state lives in `appState.decks` — keyed by numeric ID.
+
+## Shared controls
+
+`speed-control.svelte` and `volume-control.svelte` are shared between `player.svelte` and `deck-compact-bar.svelte`.
 
 ## Key patterns
 
@@ -37,5 +41,8 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 
 ## Layout
 
-The player is (as of this writing) inside the main +layout.svelte,
-and is either considered to be in "compact" or "expanded" mode.
+Four booleans on the `Deck` type control layout: `compact`, `expanded`, `hide_video_player`, and `hide_queue_panel`. `compact` and `expanded` are mutually exclusive — toggling one clears the other (`toggleDeckCompact`/`toggleDeckExpanded` in `api.js`). Expanding also force-clears `hide_video_player`.
+
+The component tree is always `deck.svelte` > `Player` > `QueuePanel`. The flags don't swap components — they toggle CSS classes (`.compact`, `.expanded`, `.hide-video`, `.hide-queue`) on the `.deck` wrapper. The one exception is `compact`, which renders a separate `deck-compact-bar` in `+layout.svelte` instead of the full deck.
+
+`hide_video_player` and `hide_queue_panel` hide their respective panels via CSS while keeping them in the DOM. `+layout.svelte` derives `anyDeckExpanded` and `compactDeckIds` from `appState.decks` to control top-level rendering.

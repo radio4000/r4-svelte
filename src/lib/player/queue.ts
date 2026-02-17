@@ -48,3 +48,26 @@ export function queueRotate(queue: string[], currentId: string): string[] {
 export function queueUnique(queue: string[]): string[] {
 	return [...new Set(queue)]
 }
+
+/** Get the active queue array for a deck (respects shuffle) */
+export function getActiveQueue(
+	deck: {shuffle?: boolean; playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]} | undefined
+): string[] {
+	if (!deck) return []
+	return deck.shuffle ? deck.playlist_tracks_shuffled || [] : deck.playlist_tracks || []
+}
+
+/** Can the deck play from its queue? */
+export function canPlay(queue: string[], trackId: string | undefined): boolean {
+	return Boolean(queue.length && trackId && queue.includes(trackId))
+}
+
+/** Can we go to the previous track? */
+export function canPrev(queue: string[], trackId: string | undefined): boolean {
+	return Boolean(trackId && queuePrev(queue, trackId))
+}
+
+/** Can we go to the next track? */
+export function canNext(queue: string[], trackId: string | undefined): boolean {
+	return Boolean(queue.length > 1 && trackId && queue.includes(trackId))
+}

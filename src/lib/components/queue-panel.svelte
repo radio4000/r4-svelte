@@ -41,8 +41,7 @@
 		viewport.scrollTo({top: Math.max(0, idx * itemHeight - viewport.clientHeight / 2), behavior: 'smooth'})
 	}
 
-	/** @type {string[]} */
-	let trackIds = $derived(deck?.playlist_tracks || [])
+	let trackIds = $derived(deck?.playlist_tracks ?? [])
 
 	// Read tracks directly from collection state, preserving playlist order
 	/** @type {import('$lib/types').Track[]} */
