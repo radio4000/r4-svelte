@@ -93,7 +93,7 @@
 
 <main>
 	<header>
-		<menu data-grouped>
+		<menu class="nav-grouped">
 			<a href="/_debug">&larr;</a>
 		</menu>
 		<div>
@@ -152,10 +152,10 @@
 									{Math.round(channel.analysis.confidence * 100)}%
 								</span>
 
-								<div class="actions">
+								<menu class="actions">
 									<button class="danger" onclick={() => setDecision(channel.id, true)}>Delete</button>
 									<button onclick={() => setDecision(channel.id, false)}>Keep</button>
-								</div>
+								</menu>
 							</div>
 
 							{#if isExpanded || (channel.description?.length ?? 0) > 100}

@@ -206,13 +206,6 @@
 		width: 100%;
 	}
 
-	.tags-menu {
-		max-height: 300px;
-		overflow-y: auto;
-		flex-direction: column;
-		gap: 0;
-	}
-
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;

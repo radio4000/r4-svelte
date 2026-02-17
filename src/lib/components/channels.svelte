@@ -155,7 +155,7 @@
 	<menu class="filtermenu">
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
-			<menu data-vertical>
+			<menu class="nav-vertical">
 				<button
 					class:active={filter === 'all'}
 					onclick={() => setFilter('all')}
@@ -209,7 +209,7 @@
 		>
 			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
 				{viewLabelMap[display]()}{/snippet}
-			<div class="view-modes">
+			<menu class="view-modes">
 				<button
 					class:active={display === 'grid'}
 					onclick={() => setDisplay('grid')}
@@ -240,7 +240,7 @@
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
 					><Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small></button
 				>
-			</div>
+			</menu>
 			<SortControls
 				bind:order={appState.channels_order}
 				bind:direction={appState.channels_order_direction}
@@ -313,26 +313,6 @@
 		gap: 0.5rem;
 		margin: 0.5rem 0.5rem 1rem;
 		z-index: 1;
-	}
-
-	.view-modes {
-		display: flex;
-		gap: 0.2rem;
-		padding-bottom: 0.5rem;
-		margin-bottom: 0.2rem;
-		border-bottom: 1px solid var(--gray-6);
-
-		button {
-			flex: 1;
-			flex-direction: column;
-			gap: 0.2rem;
-			padding: 0.2rem;
-			min-width: 3.5rem;
-
-			small {
-				color: inherit;
-			}
-		}
 	}
 
 	footer p {

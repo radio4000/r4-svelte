@@ -104,7 +104,7 @@
 </script>
 
 <div class="constrained">
-	<menu data-grouped>
+	<menu class="nav-grouped">
 		<a href="/_debug">&larr;</a>
 	</menu>
 	<h1>Media Chrome</h1>

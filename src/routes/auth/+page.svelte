@@ -48,7 +48,7 @@
 			</section>
 		{/if}
 
-		<menu data-vertical>
+		<menu class="nav-vertical">
 			{#if !userChannelsQuery.data?.length}
 				<a href="/create-channel">{m.auth_create_radio_cta()}</a>
 			{/if}
@@ -56,7 +56,7 @@
 			<button type="button" onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button>
 		</menu>
 	{:else}
-		<menu class="options">
+		<menu class="nav-options">
 			<a href="/auth/create-account{redirectParam}">
 				<h3>{m.auth_card_create_title()}</h3>
 				<p>{m.auth_card_create_description()}</p>
@@ -75,33 +75,5 @@
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 1rem;
 		margin-block: 1.5rem;
-	}
-
-	.options {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
-		margin-top: 2rem;
-		text-align: center;
-		font-size: var(--font-6);
-
-		> a {
-			text-decoration: none;
-			padding: 2rem 1rem;
-			border: 1px solid var(--gray-6);
-			border-radius: var(--border-radius);
-
-			&:hover {
-				background: var(--accent-3);
-				color: light-dark(var(--gray-12), var(--gray-12));
-				border-color: light-dark(var(--accent-1), var(--accent-12));
-			}
-		}
-
-		h3 {
-			text-decoration: underline;
-			font-size: var(--font-7);
-			font-weight: 600;
-		}
 	}
 </style>

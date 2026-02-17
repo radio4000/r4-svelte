@@ -140,7 +140,7 @@
 			</div>
 		</header>
 
-		<div class="horizontalOverflow channel-nav">
+		<div class="tabs channel-nav">
 			<nav aria-label={m.nav_tracks()}>
 				<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
 					<Icon icon="unordered-list" size={16} />
@@ -236,12 +236,8 @@
 	}
 
 	.channel-actions {
-		margin: 0;
-		display: flex;
-		flex-direction: row;
 		flex-wrap: wrap;
 		justify-content: center;
-		gap: 0.35rem;
 		align-items: center;
 		align-self: center;
 	}
@@ -289,13 +285,11 @@
 	}
 
 	.channel-nav {
-		display: flex;
 		align-items: stretch;
 		gap: 0;
 	}
 
 	.channel-nav nav {
-		display: flex;
 		align-items: stretch;
 	}
 
@@ -313,9 +307,7 @@
 
 		.channel-actions {
 			flex-direction: column;
-			align-items: center;
 			justify-content: flex-start;
-			align-self: center;
 		}
 
 		.hero {

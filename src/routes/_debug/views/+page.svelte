@@ -73,7 +73,7 @@
 </svelte:head>
 
 <article class="container">
-	<menu data-grouped>
+	<menu class="nav-grouped">
 		<a href="/_debug">&larr;</a>
 	</menu>
 

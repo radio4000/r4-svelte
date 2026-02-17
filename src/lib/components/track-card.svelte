@@ -131,7 +131,7 @@
 			>
 			<button type="button" role="menuitem" onclick={() => menu?.close()}>{m.common_cancel()}</button>
 		{:else}
-			<menu data-horizontal>
+			<menu>
 				<button
 					type="button"
 					role="menuitem"
@@ -166,7 +166,7 @@
 					><Icon icon="share" size={16} /></button
 				>
 			</menu>
-			<menu data-vertical>
+			<menu class="nav-vertical">
 				<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
 				{#if canEdit}
 					<button type="button" role="menuitem" onclick={editTrack}

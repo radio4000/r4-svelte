@@ -40,7 +40,7 @@
 
 <article>
 	<header>
-		<menu data-grouped>
+		<menu class="nav-grouped">
 			<a href="/_debug">&larr;</a>
 		</menu>
 		<h1>Infinite Canvas</h1>

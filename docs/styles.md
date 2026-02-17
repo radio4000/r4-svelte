@@ -42,7 +42,8 @@ From `layout.css`:
 - `.list` — dividers + hover
 - `.grid` — responsive card grid
 - `.row` / `.row--vcenter` — flex row
-- `menu` / `menu[data-vertical]` / `menu[data-grouped]` — menus
+- `.tabs` — tab row (links or buttons) with underline active
+- `menu` / `menu.nav-vertical` / `menu.nav-grouped` — menus
 - `dl.meta` — key-value pairs
 
 Assume all elements have default styling we can rely on.

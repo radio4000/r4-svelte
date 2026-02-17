@@ -67,7 +67,7 @@
 			<p class="error" role="alert">{providerError}</p>
 		{/if}
 
-		<menu data-vertical>
+		<menu class="nav-vertical">
 			<div>
 				<p>
 					<span>Email</span>
