@@ -44,12 +44,12 @@
 	let soundcloudPlayer = $state()
 	let audioPlayer = $state()
 
-	// Reactive track lookup - get from collection state
-	// untrack the collection access to avoid state_unsafe_mutation during hydration
+	// Reactive track lookup - re-derive when playlist_track or collection changes
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
 		if (!id) return undefined
-		return untrack(() => tracksCollection.state.get(id))
+		void tracksCollection.state.size // subscribe to collection changes
+		return tracksCollection.state.get(id)
 	})
 
 	// Reactive channel lookup based on track

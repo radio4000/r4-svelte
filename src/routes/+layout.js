@@ -9,7 +9,8 @@ import {
 	channelsCollection,
 	spamDecisionsCollection,
 	broadcastsCollection,
-	followsCollection
+	followsCollection,
+	ensureTracksLoaded
 } from '$lib/tanstack/collections'
 import {cacheReady} from '$lib/tanstack/query-cache-persistence'
 import {collectionsHydrated} from '$lib/tanstack/collection-persistence'
@@ -55,6 +56,16 @@ async function preload() {
 		})
 
 		validateListeningState().catch((err) => log.error('validate_listening_state_error', err))
+
+		// Restore tracks for saved deck queues so players can display on refresh
+		const deckSlugs = new Set(
+			Object.values(appState.decks)
+				.map((d) => d.playlist_slug)
+				.filter(Boolean)
+		)
+		for (const slug of /** @type {Set<string>} */ (deckSlugs)) {
+			ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
+		}
 
 		// For debugging and console experimentation
 		// @ts-expect-error debugging

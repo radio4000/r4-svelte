@@ -200,11 +200,12 @@ export function removeDeck(deckId: number): void {
 	}
 }
 
-// Persist queue (large arrays) per deck
+// Persist queue (large arrays) per deck — skip broadcast listener decks
 $effect.root(() => {
 	$effect(() => {
 		const decksQueue: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> = {}
 		for (const [id, deck] of Object.entries(appState.decks)) {
+			if (deck.listening_to_channel_id) continue
 			decksQueue[Number(id)] = {
 				playlist_tracks: deck.playlist_tracks,
 				playlist_tracks_shuffled: deck.playlist_tracks_shuffled
@@ -214,13 +215,14 @@ $effect.root(() => {
 	})
 })
 
-// Persist state (everything except queue arrays inside decks)
+// Persist state (everything except queue arrays inside decks) — skip broadcast listener decks
 $effect.root(() => {
 	$effect(() => {
 		const state = {...appState} as Record<string, unknown>
 		// Deep clone decks, stripping queue arrays
 		const decks: Record<number, Partial<Deck>> = {}
 		for (const [id, deck] of Object.entries(appState.decks)) {
+			if (deck.listening_to_channel_id) continue
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const {playlist_tracks: _q, playlist_tracks_shuffled: _qs, ...rest} = deck
 			decks[Number(id)] = rest

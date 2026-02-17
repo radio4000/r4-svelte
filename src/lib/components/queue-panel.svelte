@@ -1,5 +1,4 @@
 <script>
-	import {untrack} from 'svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {fuzzySearch} from '$lib/search'
 	import {appState} from '$lib/app-state.svelte'
@@ -50,7 +49,8 @@
 	let queueTracks = $derived.by(() => {
 		const ids = trackIds
 		if (!ids.length) return []
-		return untrack(() => ids.map((id) => tracksCollection.state.get(id)).filter((t) => t != null))
+		void tracksCollection.state.size // subscribe to collection changes
+		return ids.map((id) => tracksCollection.state.get(id)).filter((t) => t != null)
 	})
 
 	const historyQuery = useLiveQuery((q) =>

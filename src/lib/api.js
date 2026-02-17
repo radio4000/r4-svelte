@@ -153,6 +153,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 	}
 
 	deck.playlist_track = id
+	deck.playlist_slug = track.slug ?? undefined
 	if (startReason !== 'broadcast_sync') {
 		deck.track_played_at = new Date().toISOString()
 		deck.seeked_at = deck.track_played_at
