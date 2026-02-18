@@ -158,7 +158,7 @@ export function queryViewTracks(getView: () => View) {
 		return {
 			queryKey: ['tracks', 'search', search],
 			queryFn: async () => {
-				const tracks = (await searchTracks(search, {limit: 4000})) as Track[]
+				const tracks = (await searchTracks(search, {limit: 100})) as Track[]
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})

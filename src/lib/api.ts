@@ -271,13 +271,18 @@ export function setPlaylist(deckId: number, trackIds: string[], options: {title?
  */
 export function addToPlaylist(deckId, trackIds) {
 	const deck = getDeck(deckId)
-	if (!deck) return
+	if (!deck) {
+		log.warn('addToPlaylist: no deck', {deckId})
+		return
+	}
+	const before = deck.playlist_tracks?.length ?? 0
 	const currentTracks = deck.playlist_tracks || []
 	deck.playlist_tracks = [...currentTracks, ...trackIds]
 
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
+	log.log('addToPlaylist', {deckId, added: trackIds.length, before, after: deck.playlist_tracks.length})
 }
 
 /**

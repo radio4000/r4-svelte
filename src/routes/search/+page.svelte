@@ -100,7 +100,8 @@
 		}
 	})
 
-	const isLoading = $derived(viewQuery.loading || channelsLoading)
+	const tracksLoading = $derived(viewQuery.loading)
+	const isLoading = $derived(tracksLoading || channelsLoading)
 	const tracks = $derived(viewQuery.tracks)
 	const playlistTitle = $derived(searchQuery.trim())
 
@@ -136,15 +137,15 @@
 		<SearchStatus {searchQuery} channelCount={channels.length} trackCount={tracks.length} />
 	</p>
 
-	{#if searchQuery && isLoading}
-		<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching…</p>
-	{:else if searchQuery}
-		{#if channels.length === 0 && tracks.length === 0}
+	{#if searchQuery}
+		{#if !isLoading && channels.length === 0 && tracks.length === 0}
 			<p>{m.search_no_results()} "{searchQuery}"</p>
 			<p>{m.search_tip_slug()}</p>
 		{/if}
 
-		{#if channels.length > 0}
+		{#if channelsLoading}
+			<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching channels…</p>
+		{:else if channels.length > 0}
 			<section>
 				<h2>
 					{channels.length === 1
@@ -162,7 +163,7 @@
 		{/if}
 
 		<menu>
-			{#if searchQuery && !isLoading && tracks.length > 0}
+			{#if !tracksLoading && tracks.length > 0}
 				<button type="button" onclick={playSearchResults}
 					><Icon icon="play-fill" size={16} />{m.search_play_all()}</button
 				>
@@ -172,7 +173,9 @@
 			{/if}
 		</menu>
 
-		{#if tracks.length > 0}
+		{#if tracksLoading}
+			<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching tracks…</p>
+		{:else if tracks.length > 0}
 			<section>
 				<h2>
 					{tracks.length === 1
