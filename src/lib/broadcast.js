@@ -15,19 +15,6 @@ function label(channelId) {
 	return channelsCollection.get(channelId)?.slug || channelId?.slice(0, 8)
 }
 
-/** @param {string} channelId */
-function isV1Channel(channelId) {
-	return channelsCollection.get(channelId)?.source === 'v1'
-}
-
-/** @param {string} trackId */
-export function isV1Track(trackId) {
-	const track = tracksCollection.get(trackId)
-	if (!track) return false
-	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-	return channel?.source === 'v1'
-}
-
 /** Supabase realtime channels keyed by deckId
  * @type {Map<number, any>}
  */
@@ -198,10 +185,6 @@ export async function startBroadcast(channelId, trackId) {
 		log.log(`skipped ${label(channelId)} (no track)`)
 		return
 	}
-	if (isV1Channel(channelId)) {
-		throw new Error('Legacy channels cannot broadcast')
-	}
-
 	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)

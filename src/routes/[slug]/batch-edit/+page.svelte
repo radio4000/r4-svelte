@@ -40,8 +40,7 @@
 			return meta ? {...track, ...meta} : track
 		})
 	)
-	const readonly = $derived(channel?.source === 'v1')
-	const canEdit = $derived(!readonly && canEditChannel(channel?.id))
+	const canEdit = $derived(canEditChannel(channel?.id))
 
 	/** @type {string[]} */
 	let selectedTracks = $state([])
@@ -419,9 +418,7 @@
 			</PopoverMenu>
 		</menu>
 
-		{#if readonly}
-			<p class="hint warn">READ ONLY, this is a v1 channel</p>
-		{:else if !canEdit}
+		{#if !canEdit}
 			<p class="hint warn">(READ ONLY, you do not have edit access)</p>
 		{/if}
 	</header>

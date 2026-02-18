@@ -26,8 +26,4 @@ Query cache is not persisted by default, but we can persists to IndexedDB via `q
 
 ## Channels
 
-In +layout.js we `preload()` all channels from remote + a local file with v1 channels. We trade a slower first-load for faster pages afterwards. This feels good now, but if we get to +4 channels let's reconsider.
-
-## Legacy
-
-v1 channels from Firebase are read-only. See [state-v1.md](state-v1.md).
+In +layout.js we `preload()` all channels from remote. We trade a slower first-load for faster pages afterwards. This feels good now, but if we get to +4 channels let's reconsider.

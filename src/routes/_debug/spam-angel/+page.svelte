@@ -124,10 +124,7 @@
 								<div class="info">
 									<div class="title-row">
 										<h3><a href="/{channel.slug}">{channel.name}</a></h3>
-										<span class="meta"
-											>{channel.slug} · {formatDate(channel.created_at)}{#if channel.source === 'v1'}
-												· <span class="tag" data-type="v1">v1</span>{/if}</span
-										>
+										<span class="meta">{channel.slug} · {formatDate(channel.created_at)}</span>
 									</div>
 
 									<div class="evidence">
@@ -339,9 +336,6 @@
 	}
 	.tag[data-type='music'] {
 		background: light-dark(hsl(120 50% 90%), hsl(120 30% 25%));
-	}
-	.tag[data-type='v1'] {
-		background: light-dark(hsl(220 50% 90%), hsl(220 30% 25%));
 	}
 	.score {
 		min-width: 2.5rem;

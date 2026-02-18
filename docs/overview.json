@@ -191,7 +191,6 @@
 	],
 
 	"src/lib/broadcast.js": [
-		{"name": "isV1Track(trackId)", "desc": "Check if track belongs to a v1 channel."},
 		{"name": "isUserBroadcasting(channelId)", "desc": "Check if user is broadcasting on a channel."},
 		{"name": "notifyBroadcastState(channelId)", "desc": "Push broadcast state update via realtime."},
 		{"name": "getBroadcastingChannelId()", "desc": "Get the channel ID being broadcast from any deck."},
@@ -311,12 +310,6 @@
 		{"name": "sdk.search.searchChannels(query, {limit?})", "desc": "Search channels."},
 		{"name": "sdk.search.searchTracks(query, {limit?})", "desc": "Search tracks."},
 		{"name": "sdk.search.searchAll(query, {limit?})", "desc": "Search all."},
-
-		{"name": "sdk.firebase.readChannel(slug)", "desc": "Read v1 channel."},
-		{"name": "sdk.firebase.readChannels({limit?})", "desc": "Read v1 channels."},
-		{"name": "sdk.firebase.readTracks({channelId?, slug?})", "desc": "Read v1 tracks."},
-		{"name": "sdk.firebase.parseChannel(rawChannel)", "desc": "Parse v1 channel to v2."},
-		{"name": "sdk.firebase.parseTrack(rawTrack, channelId, channelSlug)", "desc": "Parse v1 track to v2."},
 
 		{"name": "sdk.utils.extractTokens(str)", "desc": "Extract mentions and tags."}
 	],

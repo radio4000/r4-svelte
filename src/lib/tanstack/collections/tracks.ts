@@ -6,7 +6,7 @@ import type {PendingMutation} from '@tanstack/db'
 import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
-import {channelsCollection, type Channel} from './channels'
+import type {Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
 import {log, txLog, getErrorMessage} from './utils'
 import {getOfflineExecutor} from './offline-executor'
@@ -83,36 +83,14 @@ export const tracksCollection = createCollection<Track, string>(
 )
 
 async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAfter?: string}): Promise<Track[]> {
-	const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === slug)
-
-	if (channel?.source === 'v1') {
-		log.info('tracks fetch v1', {slug})
-		const {data, error} = await sdk.firebase.readTracks({slug})
-		if (error) throw error
-		return (data || []).map((t) => sdk.firebase.parseTrack(t, channel.id, slug))
-	}
-
-	log.info('tracks fetch v2', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
+	log.info('tracks fetch', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
 	let query = sdk.supabase.from('channel_tracks').select('*').eq('slug', slug).order('created_at', {ascending: false})
 	if (opts?.limit) query = query.limit(opts.limit)
 	if (opts?.createdAfter) query = query.gt('created_at', opts.createdAfter)
 
 	const {data, error} = await query
 	if (error) throw error
-	const tracks = (data || []) as Track[]
-
-	// Fallback to v1 if v2 returns empty (race condition: channel not loaded yet)
-	if (!tracks.length) {
-		const {data: v1Data, error: v1Error} = await sdk.firebase.readTracks({slug})
-		if (v1Error) throw v1Error
-		if (v1Data?.length) {
-			const ch = [...channelsCollection.state.values()].find((c) => c.slug === slug)
-			const channelId = ch?.id || slug
-			return v1Data.map((t) => sdk.firebase.parseTrack(t, channelId, slug))
-		}
-	}
-
-	return tracks
+	return (data || []) as Track[]
 }
 
 async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {

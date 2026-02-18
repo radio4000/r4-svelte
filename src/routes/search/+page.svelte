@@ -71,7 +71,7 @@
 		}
 		if (v.search) {
 			promises.push(searchChannels(v.search))
-			// Also search locally (includes v1 channels not in Supabase)
+			// Also search locally (includes channels already loaded in memory)
 			const local = searchChannelsLocal(v.search, [...channelsCollection.state.values()])
 			if (local.length) promises.push(Promise.resolve(local))
 		}
