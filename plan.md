@@ -2,6 +2,17 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
+## Performance audit — $state proxy & useLiveQuery hotspots
+
+The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-push) eliminated ~140ms of blocking per query for large collections. The pattern — mutating a `$state` array item-by-item instead of replacing it — likely exists elsewhere. An agent should:
+
+1. **Grep for `.push(` on `$state` arrays** — any loop or spread-push into a `$state([])` variable is a candidate. Replace with single assignment.
+2. **Grep for `useLiveQuery` call sites** — each creates a `createLiveQueryCollection`. Check if the caller actually needs a live query or could use an existing reactive context/parent query instead (like the `[slug]` layout channel fix — root layout already had channels via context).
+3. **Check `player.svelte`** — has a `useLiveQuery` on `channelsCollection` (~350ms creation per deck). Could use channels context instead, same pattern as the `[slug]` layout fix.
+4. **Check `queue-panel.svelte`** — has 2 `useLiveQuery` calls (tracks by IDs, play history). The history one scans the full `playHistoryCollection` every time.
+5. **Profile `@tanstack/svelte-db` `useLiveQuery`** — the root layout uses the official version (not our debug copy). Verify it doesn't have the same reset-then-push pattern.
+6. **Count live query accumulation** — navigating back and forth creates new queries without cleaning up old ones (IDs keep incrementing). Check if disposed queries are GC'd or leak.
+
 ## Backlog
 
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.

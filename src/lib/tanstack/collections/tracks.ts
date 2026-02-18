@@ -348,7 +348,8 @@ export async function ensureTracksLoaded(slug: string): Promise<void> {
 
 	const data = await queryClient.fetchQuery<Track[]>({
 		queryKey: ['tracks', slug],
-		queryFn: () => fetchTracksBySlug(slug)
+		queryFn: () => fetchTracksBySlug(slug),
+		staleTime: 60 * 60 * 1000
 	})
 
 	// Ensure sync is started so write utils are available

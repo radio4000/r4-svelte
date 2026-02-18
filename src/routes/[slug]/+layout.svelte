@@ -1,16 +1,11 @@
 <script>
 	import {page} from '$app/state'
-	import {setTracksQueryCtx} from '$lib/contexts'
+	import {getChannelsCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {
-		channelsCollection,
-		tracksCollection,
-		broadcastsCollection,
-		checkTracksFreshness
-	} from '$lib/tanstack/collections'
+	import {tracksCollection, broadcastsCollection, checkTracksFreshness} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
@@ -26,14 +21,9 @@
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
-	// Reactive via useLiveQuery — updates when channel is edited. findOne() avoids scanning all rows.
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({ch: channelsCollection})
-			.where(({ch}) => eq(ch.slug, slug))
-			.findOne()
-	)
-	let channel = $derived(channelQuery.data)
+	// Instant lookup from root layout's already-reactive channels context
+	const getChannels = getChannelsCtx()
+	let channel = $derived(getChannels().find((c) => c.slug === slug))
 	let isListeningToChannel = $derived(
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)

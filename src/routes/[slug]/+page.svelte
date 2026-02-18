@@ -16,7 +16,7 @@
 
 	const tracksQuery = getTracksQueryCtx()
 
-	const RENDER_LIMIT = 40
+	const RENDER_LIMIT = 30
 
 	let searchInput = $state(page.url.searchParams.get('search') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])

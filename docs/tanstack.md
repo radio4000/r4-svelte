@@ -2,6 +2,20 @@
 
 Patterns for fetching data via network, mutating it and making sure it's up to date everywhere in the app.
 
+> **`collection.state` is not reactive to mutations.** `$derived` reading from `collection.state` works on load/reload (Svelte sees the initial assignment), but does NOT re-run when rows are inserted/updated/deleted — even with `void collection.state.size`. For reactive reads, use `useLiveQuery` and derive from `query.data`.
+>
+> ```js
+> // ✗ NOT reactive to collection changes
+> let tracks = $derived.by(() => {
+>     void tracksCollection.state.size
+>     return ids.map((id) => tracksCollection.state.get(id)).filter(Boolean)
+> })
+>
+> // ✓ Reactive
+> const query = useLiveQuery((q) => q.from({t: tracksCollection}).where(...))
+> let tracks = $derived(query.data ?? [])
+> ```
+
 ## Query — caches responses
 
 Smart cache in front of any async function. Key + function → data, loading/error states, deduplication.
