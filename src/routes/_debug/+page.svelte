@@ -8,6 +8,7 @@
 		<a href="/_debug/appstate">appState</a>
 		<a href="/_debug/async-test">Async</a>
 		<a href="/_debug/canvas">Canvas</a>
+		<a href="/_debug/decks">Decks</a>
 		<a href="/_debug/keyboard-list-navigation">Listbox nav</a>
 		<a href="/_debug/livequery-perf">Live query</a>
 		<a href="/_debug/media-chrome">Player chrome</a>

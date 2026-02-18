@@ -1,5 +1,6 @@
 <script>
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {inArray} from '@tanstack/db'
 	import {fuzzySearch} from '$lib/search'
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -43,12 +44,16 @@
 
 	let trackIds = $derived(deck?.playlist_tracks ?? [])
 
-	// Reactive track query by slug — re-renders when collection changes
+	// Resolve tracks by playlist IDs (works for cross-channel queues like search results)
 	const tracksQuery = useLiveQuery((q) =>
-		q.from({t: tracksCollection}).where(({t}) => eq(t.slug, deck?.playlist_slug ?? ''))
+		q.from({t: tracksCollection}).where(({t}) => inArray(t.id, trackIds.length ? trackIds : ['']))
 	)
 
-	let queueTracks = $derived(tracksQuery.data ?? [])
+	// Order by playlist_tracks position
+	let queueTracks = $derived.by(() => {
+		const byId = new Map((tracksQuery.data ?? []).map((t) => [t.id, t]))
+		return trackIds.map((id) => byId.get(id)).filter((t) => !!t)
+	})
 
 	const historyQuery = useLiveQuery((q) =>
 		q.from({history: playHistoryCollection}).orderBy(({history}) => history.started_at, 'desc')
