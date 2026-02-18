@@ -76,6 +76,7 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	if (key === 'todos-cached') return false
 	// if (key === 'channels') return false
 	if (key === 'broadcasts') return false
+	if (key === 'tracks-freshness') return false
 	// if (key === 'tracks') return false
 
 	return true

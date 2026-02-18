@@ -80,7 +80,7 @@
 					name="slug"
 					type="text"
 					required
-					pattern="[a-z0-9-]+"
+					pattern="[a-z0-9\-]+"
 					minlength="3"
 					title="At least 3 lowercase letters, numbers, or hyphens"
 					oninput={() => (slugTouched = true)}

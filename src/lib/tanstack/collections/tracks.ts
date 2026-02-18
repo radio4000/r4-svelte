@@ -40,13 +40,14 @@ export const tracksCollection = createCollection<Track, string>(
 			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
 
-			// Slug-based: fetch per channel, reusing per-slug cache when available
+			log.info('queryFn', {slugs, tagsIn, ftsEq, createdAfter})
+
+			// Slug-based: fetch per channel
 			if (slugs.length) {
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
-						const cached = queryClient.getQueryData<Track[]>(['tracks', s])
-						if (cached) return cached
 						const tracks = await fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+						log.info('queryFn fetched', {slug: s, count: tracks.length})
 						queryClient.setQueryData(['tracks', s], tracks)
 						return tracks
 					})
@@ -93,7 +94,7 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 	return (data || []) as Track[]
 }
 
-async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
+async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<Track | null> {
 	const track = mutation.modified as {id: string; url: string; title: string}
 	const channelId = metadata?.channelId as string
 	if (!channelId) throw new NonRetriableError('channelId required in transaction metadata')
@@ -101,6 +102,7 @@ async function handleTrackInsert(mutation: PendingMutation, metadata: Record<str
 	const {data, error} = await sdk.tracks.createTrack(channelId, track)
 	log.info('insert_done', {clientId: track.id, serverId: data?.id, match: track.id === data?.id, error})
 	if (error) throw new NonRetriableError(getErrorMessage(error))
+	return (data as Track) ?? null
 }
 
 async function handleTrackUpdate(mutation: PendingMutation): Promise<void> {
@@ -135,7 +137,9 @@ export const tracksAPI = {
 		for (const mutation of transaction.mutations) {
 			txLog.info('tracks', {type: mutation.type, slug, key: idempotencyKey.slice(0, 8)})
 			if (mutation.type === 'insert') {
-				await handleTrackInsert(mutation, metadata)
+				const serverTrack = await handleTrackInsert(mutation, metadata)
+				// Persist so data survives optimistic mutation cleanup
+				tracksCollection.utils.writeUpsert((serverTrack ?? mutation.modified) as Track)
 				needsInvalidation = true
 			} else if (mutation.type === 'update') {
 				await handleTrackUpdate(mutation)
@@ -317,9 +321,9 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 				null as string | null
 			)
 
-			const {data, error} = await sdk.supabase
+			const {data, error, count} = await sdk.supabase
 				.from('channel_tracks')
-				.select('updated_at')
+				.select('updated_at', {count: 'exact', head: false})
 				.eq('slug', slug)
 				.order('updated_at', {ascending: false})
 				.limit(1)
@@ -330,11 +334,22 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 			}
 
 			const remoteLatest = data?.[0]?.updated_at
-			const outdated = remoteLatest && (!localLatest || remoteLatest > localLatest)
+			const remoteCount = count ?? 0
+			const countMismatch = remoteCount !== cachedTracks.length
+			const outdated = countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
+
+			log.info('freshness', {
+				slug,
+				cached: cachedTracks.length,
+				remote: remoteCount,
+				localLatest,
+				remoteLatest,
+				outdated: !!outdated
+			})
 
 			if (outdated) {
-				log.info('freshness outdated', {slug, local: localLatest, remote: remoteLatest})
 				await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+				log.info('freshness invalidated', {slug})
 			}
 
 			return !!outdated

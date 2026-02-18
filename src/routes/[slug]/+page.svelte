@@ -171,7 +171,7 @@
 			{:else if tracksQuery.isReady && allTracks.length === 0}
 				{#if canEdit}
 					<p class="empty">
-						<a href="/add">Add your first track</a>
+						<a href="/add">Add your first track (tip: press "c")</a>
 					</p>
 				{:else}
 					<p class="empty">No tracks yet</p>

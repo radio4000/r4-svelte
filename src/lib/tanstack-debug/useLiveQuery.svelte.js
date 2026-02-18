@@ -1,5 +1,8 @@
-// Instrumented copy of @tanstack/svelte-db useLiveQuery - measurement only
-// MODIFIED: Removed SvelteMap to test performance impact
+// Instrumented copy of @tanstack/svelte-db useLiveQuery
+//
+// it adds measurement with performance.now()
+// it fixes some bugs around svelte mutated $state during render
+// it improves perf by avoiding some extra loops
 import {untrack} from 'svelte'
 import {BaseQueryBuilder, createLiveQueryCollection} from '@tanstack/db'
 import {logger} from '$lib/logger'
@@ -113,7 +116,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		currentCollection.onFirstReady(() => {
 			status = currentCollection.status
 			const total = performance.now() - t0
-			log.info(`#${id} ready`, {
+			log.debug(`#${id} ready`, {
 				items: count,
 				total: `${total.toFixed(2)}ms`,
 				createCollection: `${tCreateCollection?.toFixed(2)}ms`,
@@ -126,7 +129,12 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 			() => {
 				// Only sync on actual changes, not initial state
 				syncDataFromCollection(currentCollection)
-				status = currentCollection.status
+				// untrack: this callback can fire during $derived evaluation
+				// (e.g. invalidateQueries → collection update → graph flush → emitEvents)
+				// so bare $state mutations would throw state_unsafe_mutation
+				untrack(() => {
+					status = currentCollection.status
+				})
 			},
 			{includeInitialState: false}
 		)

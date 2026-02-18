@@ -112,7 +112,7 @@ sdk.supabase
 		}
 	})
 	.subscribe((status) => {
-		log.info('broadcasts subscription status', {status})
+		log.debug('broadcasts subscription status', {status})
 	})
 
 // Realtime can be flaky depending on network/session; keep a lightweight polling fallback.

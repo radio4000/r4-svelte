@@ -5,7 +5,12 @@
 	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {tracksCollection, broadcastsCollection, checkTracksFreshness} from '$lib/tanstack/collections'
+	import {
+		tracksCollection,
+		channelsCollection,
+		broadcastsCollection,
+		checkTracksFreshness
+	} from '$lib/tanstack/collections'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
@@ -23,7 +28,14 @@
 
 	// Instant lookup from root layout's already-reactive channels context
 	const getChannels = getChannelsCtx()
-	let channel = $derived(getChannels().find((c) => c.slug === slug))
+	// Fallback: direct query by slug (triggers on-demand fetch if not in bulk list)
+	const channelBySlugQuery = useLiveQuery((q) =>
+		q
+			.from({channels: channelsCollection})
+			.where(({channels}) => eq(channels.slug, slug))
+			.findOne()
+	)
+	let channel = $derived(getChannels().find((c) => c.slug === slug) ?? channelBySlugQuery.data)
 	let isListeningToChannel = $derived(
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)
@@ -33,7 +45,9 @@
 
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
-		if (slug) checkTracksFreshness(slug)
+		if (slug) {
+			checkTracksFreshness(slug)
+		}
 	})
 
 	// Tracks query lives in layout - stays alive during [slug]/* navigation

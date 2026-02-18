@@ -44,7 +44,7 @@
 		}
 	}
 
-	async function verifyOtp(type = 'email') {
+	async function verifyOtp(/** @type {import('@supabase/supabase-js').EmailOtpType} */ type = 'email') {
 		loading = true
 		error = null
 		const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type})

@@ -75,7 +75,7 @@ async function waitForMediaPlayer(deckId: number, timeoutMs = 3000): Promise<Med
 
 export async function checkUser() {
 	try {
-		log.log('checkUser')
+		log.debug('checkUser')
 		const {data: userData, error: userError} = await sdk.supabase.auth.getUser()
 		if (userError || !userData?.user) {
 			appState.channels = []
