@@ -4,7 +4,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5, @radio4000/sdk, TanStack DB.
 
 Channels (`/@slug`) are collections of tracks. Tracks (`/@slug/tracks/:id`) are links to music (YouTube, SoundCloud, embeddable URLs).
 
-Data flows from the remote database ([radio4000-sdk](radio4000-sdk.md)) through the local sync layer ([tanstack](tanstack.md)). Some channels come from a [legacy Firebase import](state-v1.md).
+Data flows from the remote database ([radio4000-sdk](radio4000-sdk.md)) through the local sync layer ([tanstack](tanstack.md)).
 
 [player](player.md) handles playback, [queue](queue.md) manages upcoming tracks and history, [search](search-feature.md) finds channels and tracks, [broadcast](broadcast-feature.md) syncs listening in real-time, [followers](followers.md) lets you follow channels, [play-history](play-history.md) tracks what you've listened to, [metadata](metadata.md) enriches tracks via MusicBrainz and YouTube, [keyboard](keyboard.md) shortcuts, [dialogs](dialogs.md) for modals, [localization](localization-i18n.md), [styles](styles.md) for theming.
 

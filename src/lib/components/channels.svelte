@@ -42,8 +42,6 @@
 	const filteredChannels = $derived(
 		channels.filter((c) => {
 			if (filter === 'all') return true
-			if (filter === 'v1') return c.source === 'v1'
-			if (filter === 'v2') return c.source !== 'v1'
 			if (filter === 'artwork' && (!c.image || !c.track_count || c.track_count < 2)) return false
 			if (filter === '10+' && (!c.track_count || c.track_count < 10)) return false
 			if (filter === '100+' && (!c.track_count || c.track_count < 100)) return false
@@ -145,9 +143,7 @@
 		'10+': () => m.channels_filter_option_10(),
 		'100+': () => m.channels_filter_option_100(),
 		'1000+': () => m.channels_filter_option_1000(),
-		artwork: () => m.channels_filter_option_artwork(),
-		v1: () => m.channels_filter_option_v1(),
-		v2: () => m.channels_filter_option_v2()
+		artwork: () => m.channels_filter_option_artwork()
 	}
 </script>
 
@@ -185,18 +181,6 @@
 					onclick={() => setFilter('artwork')}
 					{@attach tooltip({content: m.channels_filter_tooltip_artwork(), position: 'right'})}
 					>{m.channels_filter_option_artwork()}</button
-				>
-				<button
-					class:active={filter === 'v1'}
-					onclick={() => setFilter('v1')}
-					{@attach tooltip({content: m.channels_filter_tooltip_v1(), position: 'right'})}
-					>{m.channels_filter_option_v1()}</button
-				>
-				<button
-					class:active={filter === 'v2'}
-					onclick={() => setFilter('v2')}
-					{@attach tooltip({content: m.channels_filter_tooltip_v2(), position: 'right'})}
-					>{m.channels_filter_option_v2()}</button
 				>
 			</menu>
 		</PopoverMenu>

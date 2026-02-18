@@ -118,17 +118,15 @@
 						{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
 					</button>
 				{/if}
-				{#if canEdit && channel.source !== 'v1'}
+				{#if canEdit}
 					<BroadcastControls deckId={appState.active_deck_id} channelId={channel.id} isLiveOverride={isChannelLive} />
 				{/if}
-				{#if channel.source !== 'v1'}
-					{#if hasChannel}
-						<ButtonFollow {channel} />
-					{:else}
-						<a href={authUrl} class="btn" title={m.button_follow()}>
-							<Icon icon="favorite" />
-						</a>
-					{/if}
+				{#if hasChannel}
+					<ButtonFollow {channel} />
+				{:else}
+					<a href={authUrl} class="btn" title={m.button_follow()}>
+						<Icon icon="favorite" />
+					</a>
 				{/if}
 				<button type="button" onclick={() => (appState.modal_share = {channel})}>
 					<Icon icon="share" size={16} />
