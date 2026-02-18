@@ -15,7 +15,7 @@
 		if (!deck) return
 		const mediaElement = getMediaPlayer(deckId)
 		if (!mediaElement) return
-		const nextMuted = !(mediaElement.muted ?? deck.muted ?? false)
+		const nextMuted = !mediaElement.muted
 		mediaElement.muted = nextMuted
 		deck.muted = nextMuted
 		const broadcastingChannelId = getBroadcastingChannelId()
@@ -27,6 +27,7 @@
 	<media-mute-button
 		class="btn"
 		class:active={Boolean(deck?.muted)}
+		mediamuted={deck?.muted ? '' : null}
 		onclick={handleToggleMute}
 		{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 	></media-mute-button>
@@ -40,7 +41,13 @@
 			const val = Number(e.currentTarget.value)
 			if (deck) deck.volume = val
 			const mediaElement = getMediaPlayer(deckId)
-			if (mediaElement) mediaElement.volume = val
+			if (mediaElement) {
+				mediaElement.volume = val
+				// Unmute if volume is raised and the mute was only technical (not user-explicit)
+				if (val > 0 && mediaElement.muted && !deck?.muted) {
+					mediaElement.muted = false
+				}
+			}
 			const broadcastingChannelId = getBroadcastingChannelId()
 			if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 		}}
