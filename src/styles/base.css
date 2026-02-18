@@ -29,7 +29,7 @@ html {
 	text-rendering: optimizeLegibility;
 	/* font-family: var(--sans-serif); */
 	/* font-family: 'Recursive', sans-serif; */
-	font-family: var(--font-family, 'Rosario', sans-serif);
+	font-family: var(--font-family, 'firava', sans-serif);
 	/* font-family: 'Radio Canada', sans-serif; */
 	scroll-behavior: smooth;
 	color-scheme: light dark;

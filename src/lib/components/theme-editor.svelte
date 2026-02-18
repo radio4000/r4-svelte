@@ -13,10 +13,10 @@
 	const uid = $props.id()
 
 	const fontFamilies = [
-		{value: '', label: 'Rosario (default)'},
+		{value: '', label: 'Firava (default)'},
+		{value: 'Rosario', label: 'Rosario'},
 		{value: 'Radio Canada', label: 'Radio Canada'},
 		{value: 'Recursive', label: 'Recursive'},
-		{value: 'firava', label: 'Firava'},
 		{value: 'var(--font-system)', label: 'System'}
 	]
 
@@ -32,7 +32,7 @@
 			name: '--accent-dark',
 			label: () => m.theme_color_accent_dark_label(),
 			description: () => m.theme_color_accent_desc(),
-			default: 'lch(86 48 124)',
+			default: 'oklch(0.8 0.14 222)',
 			theme: 'dark'
 		},
 		{
