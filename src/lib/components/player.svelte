@@ -28,6 +28,7 @@
 	import {logger} from '$lib/logger'
 	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
+	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -54,11 +55,12 @@
 		return tracksCollection.state.get(id)
 	})
 
-	// Reactive channel lookup based on track
-	let channel = $derived.by(() => {
-		if (!track?.slug) return undefined
-		return untrack(() => [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug))
-	})
+	// Reactive channel lookup via live query — uses deck.playlist_slug (persisted signal)
+	// so it works on reload before tracks are loaded
+	const channelQuery = useLiveQuery((q) =>
+		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.slug, deck?.playlist_slug ?? ''))
+	)
+	let channel = $derived(channelQuery.data?.[0])
 	let lastTrack = $state()
 	let lastChannel = $state()
 	$effect(() => {

@@ -439,7 +439,7 @@ function broadcastStateUpdate(channelId) {
 	if (!entry) return
 	const seq = (broadcastStateSeqByChannel.get(channelId) ?? 0) + 1
 	broadcastStateSeqByChannel.set(channelId, seq)
-	console.info('[broadcast] state_send', {channelId, decks: state.length, speeds: state.map((d) => d.speed)})
+	console.info('[broadcast] state_send', {channelId, decks: state})
 	entry.channel.send({
 		type: 'broadcast',
 		event: 'state',
@@ -508,11 +508,7 @@ function startBroadcastStateListener(channelId) {
 				lastReceivedStateSeqByChannel.set(channelId, seq)
 			}
 			const decks = payload?.payload?.decks ?? payload?.decks
-			console.info('[broadcast] state_receive', {
-				channelId,
-				decks: Array.isArray(decks) ? decks.length : 0,
-				speeds: Array.isArray(decks) ? decks.map((d) => d?.speed) : []
-			})
+			console.info('[broadcast] state_receive', {channelId, decks})
 			applyBroadcastState(channelId, decks)
 		})
 		.subscribe((status) => {
