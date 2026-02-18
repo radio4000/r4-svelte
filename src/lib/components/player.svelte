@@ -197,7 +197,8 @@
 		const muted = Boolean(e.target.muted)
 		if (deck.volume === volume && deck.muted === muted) return
 		deck.volume = volume
-		deck.muted = muted
+		// Don't persist muted=true when it's a side-effect of volume reaching 0
+		if (volume > 0 || !muted) deck.muted = muted
 		log.log('volumeChange', {volume, muted})
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
