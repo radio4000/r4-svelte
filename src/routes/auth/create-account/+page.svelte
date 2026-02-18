@@ -1,10 +1,15 @@
 <script>
+	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import * as m from '$lib/paraglide/messages'
 	import AuthSignup from '$lib/components/auth-signup.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 
 	const redirect = $derived(page.url.searchParams.get('redirect') || '/settings')
+
+	function handleSuccess() {
+		goto(redirect)
+	}
 </script>
 
 <svelte:head>
@@ -18,7 +23,7 @@
 
 	<h1>{m.auth_create_account_title()}</h1>
 
-	<AuthSignup {redirect} />
+	<AuthSignup onSuccess={handleSuccess} {redirect} />
 
 	<footer>
 		<p>{m.auth_already_have_account_intro()} <a href="/auth/login">{m.auth_card_login_title()}</a></p>

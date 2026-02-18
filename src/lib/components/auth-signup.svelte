@@ -6,7 +6,7 @@
 	let {onSuccess = () => {}, redirect = '/settings'} = $props()
 	const id = $props.id()
 
-	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'
+	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent' | 'confirmEmail'
 	let email = $state('')
 	let password = $state('')
 	let error = $state(/** @type {string | null} */ (null))
@@ -36,8 +36,10 @@
 		loading = false
 		if (authError) {
 			error = authError.message
-		} else if (data?.user) {
+		} else if (data?.session) {
 			onSuccess?.(data.user)
+		} else if (data?.user) {
+			step = 'confirmEmail'
 		}
 	}
 
@@ -46,9 +48,15 @@
 	}
 </script>
 
-{#if step === 'linkSent'}
+{#if step === 'confirmEmail'}
 	<section>
-		<h2>{m.auth_check_email()}</h2>
+		<h3>{m.auth_check_email()}</h3>
+		<p>{m.auth_click_link()}</p>
+		<p><small>{email}</small></p>
+	</section>
+{:else if step === 'linkSent'}
+	<section>
+		<h3>{m.auth_check_email()}</h3>
 		<p>{m.auth_magic_link_sent({email})}</p>
 		<menu>
 			<button type="button" onclick={() => sendMagicLink()} disabled={loading}>
@@ -142,16 +150,11 @@
 
 <style>
 	menu {
-		display: flex;
-		flex-direction: column;
 		gap: 0.5rem;
 		margin-top: 1rem;
 	}
 	section {
 		text-align: center;
-	}
-	h2 {
-		font-size: var(--font-7);
 	}
 	p:has(small) {
 		margin-top: 1rem;
