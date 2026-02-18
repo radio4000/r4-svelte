@@ -126,6 +126,11 @@ small {
 	color: var(--gray-10);
 }
 
+summary,
+label {
+	user-select: none;
+}
+
 ul,
 figure {
 	margin: 0;

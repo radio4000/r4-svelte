@@ -8,6 +8,7 @@
 	import SearchInput from '$lib/components/search-input.svelte'
 	import SearchStatus from '$lib/components/search-status.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ButtonFeedback from '$lib/components/button-feedback.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
@@ -104,6 +105,8 @@
 	const isLoading = $derived(tracksLoading || channelsLoading)
 	const tracks = $derived(viewQuery.tracks)
 	const playlistTitle = $derived(searchQuery.trim())
+	const deckCount = $derived(Object.keys(appState.decks).length)
+	const deckSuffix = $derived(deckCount > 1 ? ` (deck ${appState.active_deck_id})` : '')
 
 	async function playSearchResults() {
 		if (!tracks.length) return
@@ -164,12 +167,12 @@
 
 		<menu>
 			{#if !tracksLoading && tracks.length > 0}
-				<button type="button" onclick={playSearchResults}
-					><Icon icon="play-fill" size={16} />{m.search_play_all()}</button
-				>
-				<button type="button" onclick={queueSearchResults}
-					><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button
-				>
+				<ButtonFeedback onclick={playSearchResults} success="Playing {tracks.length} tracks{deckSuffix}">
+					<Icon icon="play-fill" size={16} />{m.search_play_all()}{deckSuffix}
+				</ButtonFeedback>
+				<ButtonFeedback onclick={queueSearchResults} success="Queued {tracks.length} tracks{deckSuffix}">
+					<Icon icon="next-fill" size={16} />{m.search_queue_all()}{deckSuffix}
+				</ButtonFeedback>
 			{/if}
 		</menu>
 
