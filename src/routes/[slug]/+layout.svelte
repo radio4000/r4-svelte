@@ -19,6 +19,8 @@
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import {relativeDate, relativeDateSolar} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
+	import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
+	import {setPlaylist, playTrack, seekTo, getMediaPlayer} from '$lib/api'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -75,6 +77,49 @@
 
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
+
+	let tracksWithDuration = $derived((tracksQuery.data ?? []).filter((t) => t.duration && t.duration > 0))
+
+	async function joinAutoRadio() {
+		if (!channel || !tracksWithDuration.length) return
+		const deckId = appState.active_deck_id
+		const rotationStartUnix = Math.floor(new Date(channel.created_at).getTime() / 1000)
+		const autoTracks = tracksWithDuration.map((t) => ({
+			id: t.id,
+			url: t.url,
+			durationSeconds: t.duration ?? 0,
+			title: t.title
+		}))
+		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
+		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+		if (!snap) return
+		await setPlaylist(
+			deckId,
+			shuffled.map((t) => t.id),
+			{title: channel.name}
+		)
+		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+		// Seek to current offset once the player is ready — recompute at seek time so the position is fresh.
+		// Also check currentTime > 0 as a fallback for SoundCloud, where duration is cached
+		// asynchronously and may lag behind actual playback start.
+		const deadline = performance.now() + 8000
+		while (performance.now() < deadline) {
+			const el = getMediaPlayer(deckId)
+			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
+			const hasStarted = el && el.currentTime > 0
+			if (hasDuration || hasStarted) {
+				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+				// SoundCloud may process seeks asynchronously and silently drop the first one
+				// while still buffering. Retry once after a short wait with a freshly computed offset.
+				await new Promise((r) => setTimeout(r, 350))
+				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+				break
+			}
+			await new Promise((r) => setTimeout(r, 150))
+		}
+	}
 </script>
 
 <svelte:head>
@@ -110,6 +155,12 @@
 			</div>
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
+				{#if tracksWithDuration.length > 0}
+					<button type="button" onclick={joinAutoRadio}>
+						<Icon icon="signal" />
+						{m.auto_radio_join()}
+					</button>
+				{/if}
 				{#if channel.id && isChannelLive && !canEdit}
 					<button
 						type="button"
