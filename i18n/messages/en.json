@@ -367,6 +367,8 @@
 	"share_native": "Share",
 	"share_track_title": "Share track",
 	"share_url_label": "URL",
+	"shortcuts_action_gotoDebug": "Go to debug",
+	"shortcuts_action_gotoHome": "Go to home",
 	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Open search",
 	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",

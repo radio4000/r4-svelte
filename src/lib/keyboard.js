@@ -8,7 +8,9 @@ export const DEFAULT_KEY_BINDINGS = {
 	'/': 'openSearch',
 	k: 'togglePlayPause',
 	s: 'toggleShuffle',
-	gs: 'gotoSettings',
+	'g h': 'gotoHome',
+	'g s': 'gotoSettings',
+	'g d': 'gotoDebug',
 	'Shift+Slash': 'showShortcutsHelp'
 }
 
@@ -21,7 +23,9 @@ export function initializeKeyboardShortcuts() {
 		openSearch,
 		togglePlayPause: () => togglePlayPause(appState.active_deck_id),
 		clearQueue: () => clearQueue(appState.active_deck_id),
+		gotoHome: () => goto('/'),
 		gotoSettings: () => goto('/settings'),
+		gotoDebug: () => goto('/_debug'),
 		showShortcutsHelp: () => {
 			appState.modal_shortcuts = true
 		}

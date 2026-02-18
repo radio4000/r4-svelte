@@ -12,7 +12,9 @@
 		openSearch: () => m.shortcuts_action_openSearch(),
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
+		gotoHome: () => m.shortcuts_action_gotoHome(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
+		gotoDebug: () => m.shortcuts_action_gotoDebug(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 
