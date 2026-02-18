@@ -37,7 +37,7 @@
 	</menu>
 
 	<h1>Decks</h1>
-	<p>Inspect and manipulate deck state. Changes are live and persist to localStorage.</p>
+	<p style="min-height: 3rem">Inspect and manipulate deck state. Changes are live and persist to localStorage.</p>
 
 	<section>
 		<menu>
@@ -60,11 +60,11 @@
 		{@const active = id === appState.active_deck_id}
 		<section>
 			<header>
-				<h3>
+				<h2>
 					Deck {id}
 					{#if active}<small>(active)</small>{/if}
 					{#if deck.playlist_slug}<small>&middot; {deck.playlist_slug}</small>{/if}
-				</h3>
+				</h2>
 				<menu>
 					{#if !active}
 						<button onclick={() => (appState.active_deck_id = id)}>Set active</button>
@@ -73,42 +73,44 @@
 				</menu>
 			</header>
 
-			<fieldset>
-				<legend>Layout &middot; <strong>{layoutLabel(deck)}</strong></legend>
+			<form class="form">
+				<fieldset>
+					<legend>Layout &middot; <strong>{layoutLabel(deck)}</strong></legend>
 
-				<menu>
-					<button disabled={layoutLabel(deck) === 'normal'} onclick={() => setNormal(deck)}>Normal</button>
-					<button disabled={deck.compact} onclick={() => setCompact(deck)}>Compact</button>
-					<button disabled={deck.expanded} onclick={() => setExpanded(deck)}>Expanded</button>
-				</menu>
+					<menu>
+						<button disabled={layoutLabel(deck) === 'normal'} onclick={() => setNormal(deck)}>Normal</button>
+						<button disabled={deck.compact} onclick={() => setCompact(deck)}>Compact</button>
+						<button disabled={deck.expanded} onclick={() => setExpanded(deck)}>Expanded</button>
+					</menu>
 
-				<menu>
-					<button onclick={() => toggleDeckCompact(id)}>Toggle compact</button>
-					<button onclick={() => togglePlayerExpanded(id)}>Toggle expanded</button>
-					<button onclick={() => toggleVideo(id)}>Toggle video</button>
-					<button onclick={() => toggleQueuePanel(id)}>Toggle queue</button>
-				</menu>
+					<menu>
+						<button onclick={() => toggleDeckCompact(id)}>Toggle compact</button>
+						<button onclick={() => togglePlayerExpanded(id)}>Toggle expanded</button>
+						<button onclick={() => toggleVideo(id)}>Toggle video</button>
+						<button onclick={() => toggleQueuePanel(id)}>Toggle queue</button>
+					</menu>
 
-				<div>
-					<label><input type="checkbox" bind:checked={deck.hide_video_player} /> hide_video_player</label>
-					<label><input type="checkbox" bind:checked={deck.hide_queue_panel} /> hide_queue_panel</label>
-					<label><input type="checkbox" bind:checked={deck.compact} /> compact</label>
-					<label><input type="checkbox" bind:checked={deck.expanded} /> expanded</label>
-				</div>
-			</fieldset>
+					<fieldset class="row">
+						<label><input type="checkbox" bind:checked={deck.hide_video_player} /> hide_video_player</label>
+						<label><input type="checkbox" bind:checked={deck.hide_queue_panel} /> hide_queue_panel</label>
+						<label><input type="checkbox" bind:checked={deck.compact} /> compact</label>
+						<label><input type="checkbox" bind:checked={deck.expanded} /> expanded</label>
+					</fieldset>
+				</fieldset>
 
-			<fieldset>
-				<legend>Playback</legend>
-				<div>
-					<label><input type="checkbox" bind:checked={deck.is_playing} /> is_playing</label>
-					<label><input type="checkbox" bind:checked={deck.shuffle} /> shuffle</label>
-					<label><input type="checkbox" bind:checked={deck.muted} /> muted</label>
-				</div>
-				<div>
-					<label>volume <InputRange bind:value={deck.volume} min={0} max={1} step={0.05} /></label>
-					<label>speed <InputRange bind:value={deck.speed} min={0.25} max={3} step={0.25} /></label>
-				</div>
-			</fieldset>
+				<fieldset>
+					<legend>Playback</legend>
+					<fieldset class="row">
+						<label><input type="checkbox" bind:checked={deck.is_playing} /> is_playing</label>
+						<label><input type="checkbox" bind:checked={deck.shuffle} /> shuffle</label>
+						<label><input type="checkbox" bind:checked={deck.muted} /> muted</label>
+					</fieldset>
+					<fieldset class="row">
+						<label>volume <InputRange bind:value={deck.volume} min={0} max={1} step={0.05} /></label>
+						<label>speed <InputRange bind:value={deck.speed} min={0.25} max={3} step={0.25} /></label>
+					</fieldset>
+				</fieldset>
+			</form>
 
 			<details>
 				<summary>State</summary>
@@ -147,3 +149,12 @@
 		<p>No decks. Add one above.</p>
 	{/if}
 </div>
+
+<style>
+	menu {
+		flex-wrap: wrap;
+	}
+	section {
+		margin-block: 2rem;
+	}
+</style>

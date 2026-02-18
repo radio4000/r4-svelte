@@ -1,29 +1,33 @@
+<script>
+	const pages = [
+		{href: 'appstate', title: 'appState', desc: 'Inspect and mutate live app state'},
+		{href: 'async-test', title: 'Async', desc: 'Async patterns and loading states'},
+		{href: 'canvas', title: 'Canvas', desc: 'Canvas rendering experiments'},
+		{href: 'decks', title: 'Decks', desc: 'Deck tracklist playground'},
+		{href: 'keyboard-list-navigation', title: 'Listbox nav', desc: 'Keyboard-driven list navigation'},
+		{href: 'livequery-perf', title: 'Live query', desc: 'TanStack live query benchmarks'},
+		{href: 'media-chrome', title: 'Player chrome', desc: 'Media player UI components'},
+		{href: 'spam-angel', title: 'Spam', desc: 'Spam detection tools'},
+		{href: 'tanstack', title: 'Tanstack', desc: 'TanStack DB collections and queries'},
+		{href: 'tooltips', title: 'Tooltips', desc: 'Tooltip positioning and behavior'},
+		{href: 'styles', title: 'Styles', desc: 'Global style reference'},
+		{href: 'views', title: 'Views', desc: 'Saved view CRUD and filtering'}
+	]
+</script>
+
 <svelte:head>
 	<title>Debug</title>
 </svelte:head>
 
-<div class="container">
-	<nav class="nav-grouped">
-		<a class="active" href="/_debug">DEBUG</a>
-		<a href="/_debug/appstate">appState</a>
-		<a href="/_debug/async-test">Async</a>
-		<a href="/_debug/canvas">Canvas</a>
-		<a href="/_debug/decks">Decks</a>
-		<a href="/_debug/keyboard-list-navigation">Listbox nav</a>
-		<a href="/_debug/livequery-perf">Live query</a>
-		<a href="/_debug/media-chrome">Player chrome</a>
-		<a href="/_debug/spam-angel">Spam</a>
-		<a href="/_debug/tanstack">Tanstack</a>
-		<a href="/_debug/tooltips">Tooltips</a>
-		<a href="/_debug/styles">Styles</a>
-		<a href="/_debug/views">Views</a>
-	</nav>
-
-	<p>Different pages meant to test the application.</p>
+<div class="constrained container">
+	<h1>Debug</h1>
+	<menu class="nav-options">
+		{#each pages as { href, title, desc } (href)}
+			<a href="/_debug/{href}">
+				<h3>{title}</h3>
+				<p>{desc}</p>
+			</a>
+		{/each}
+	</menu>
 </div>
 
-<style>
-	nav {
-		margin-block: 0.5rem 1rem;
-	}
-</style>
