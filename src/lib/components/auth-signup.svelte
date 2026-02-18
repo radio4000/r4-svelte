@@ -9,6 +9,7 @@
 	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent' | 'confirmEmail'
 	let email = $state('')
 	let password = $state('')
+	let code = $state('')
 	let error = $state(/** @type {string | null} */ (null))
 	let loading = $state(false)
 
@@ -43,6 +44,18 @@
 		}
 	}
 
+	async function verifyOtp(type = 'email') {
+		loading = true
+		error = null
+		const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type})
+		loading = false
+		if (authError) {
+			error = authError.message
+		} else if (data?.session) {
+			onSuccess?.(data.user)
+		}
+	}
+
 	function handleEmailContinue() {
 		step = 'email'
 	}
@@ -54,18 +67,74 @@
 		<p>{m.auth_click_link()}</p>
 		<p><small>{email}</small></p>
 	</section>
+	<form
+		class="form"
+		onsubmit={(e) => {
+			e.preventDefault()
+			verifyOtp('signup')
+		}}
+	>
+		<fieldset>
+			<label for="{id}-code">{m.auth_code_or_enter()}</label>
+			<input
+				id="{id}-code"
+				type="text"
+				inputmode="numeric"
+				bind:value={code}
+				required
+				minlength="6"
+				maxlength="6"
+				placeholder="123456"
+				autocomplete="one-time-code"
+			/>
+		</fieldset>
+		{#if error}
+			<p class="error" role="alert">{error}</p>
+		{/if}
+		<button type="submit" class="primary" disabled={loading || code.length < 6}>
+			{loading ? '…' : m.auth_code_verify()}
+		</button>
+	</form>
 {:else if step === 'linkSent'}
 	<section>
 		<h3>{m.auth_check_email()}</h3>
 		<p>{m.auth_magic_link_sent({email})}</p>
-		<menu>
-			<button type="button" onclick={() => sendMagicLink()} disabled={loading}>
-				{loading ? m.common_sending() : m.auth_resend()}
-			</button>
-			<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
-			<button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button>
-		</menu>
 	</section>
+	<form
+		class="form"
+		onsubmit={(e) => {
+			e.preventDefault()
+			verifyOtp('email')
+		}}
+	>
+		<fieldset>
+			<label for="{id}-code">{m.auth_code_or_enter()}</label>
+			<input
+				id="{id}-code"
+				type="text"
+				inputmode="numeric"
+				bind:value={code}
+				required
+				minlength="6"
+				maxlength="6"
+				placeholder="123456"
+				autocomplete="one-time-code"
+			/>
+		</fieldset>
+		{#if error}
+			<p class="error" role="alert">{error}</p>
+		{/if}
+		<button type="submit" class="primary" disabled={loading || code.length < 6}>
+			{loading ? '…' : m.auth_code_verify()}
+		</button>
+	</form>
+	<menu>
+		<button type="button" onclick={() => sendMagicLink()} disabled={loading}>
+			{loading ? m.common_sending() : m.auth_resend()}
+		</button>
+		<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
+		<button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button>
+	</menu>
 {:else if step === 'password'}
 	<form
 		class="form"
