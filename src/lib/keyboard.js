@@ -1,9 +1,9 @@
 import {createKeybindingsHandler} from 'tinykeys'
 import {goto} from '$app/navigation'
-import {openSearch, togglePlayPause, clearQueue, toggleShuffle} from '$lib/api.js'
+import {openSearch, togglePlayPause, clearQueue, toggleShuffle} from '$lib/api'
 import {appState} from '$lib/app-state.svelte'
 
-/** Maps keybinding to functions from api.js */
+/** Maps keybinding to functions from api.ts */
 export const DEFAULT_KEY_BINDINGS = {
 	'/': 'openSearch',
 	k: 'togglePlayPause',

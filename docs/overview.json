@@ -100,7 +100,7 @@
 		{"name": "clearPlayHistory()", "desc": "Clear all play history."}
 	],
 
-	"src/lib/api.js": [
+	"src/lib/api.ts": [
 		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
 		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
 		{"name": "setUserInitiatedPlay(deckId, value)", "desc": "Set user-initiated play flag for a deck."},

@@ -15,11 +15,11 @@ import {
 	queueRotate
 } from '$lib/player/queue'
 import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
+import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 
 const log = logger.ns('api').seal()
 
-/** @param {number} deckId @returns {import('$lib/types').Deck | undefined} */
-function getDeck(deckId) {
+function getDeck(deckId: number): Deck | undefined {
 	return appState.decks[deckId]
 }
 
@@ -30,50 +30,44 @@ function maybeBroadcastNotify() {
 }
 
 /** Sort tracks by created_at descending (newest first) */
-const sortByNewest = (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+const sortByNewest = (a: {created_at: string}, b: {created_at: string}) =>
+	new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 
-/**
- * @typedef {object} User
- * @prop {string} id
- * @prop {string} email
- */
-
-/** @type {Map<number, boolean>} */
-const userInitiatedPlayMap = new Map()
+const userInitiatedPlayMap = new Map<number, boolean>()
 
 /** Get the user-initiated play flag for a deck */
-export function getUserInitiatedPlay(deckId) {
+export function getUserInitiatedPlay(deckId: number) {
 	return userInitiatedPlayMap.get(deckId) ?? false
 }
 
 /** Set the user-initiated play flag for a deck */
-export function setUserInitiatedPlay(deckId, value) {
+export function setUserInitiatedPlay(deckId: number, value: boolean) {
 	userInitiatedPlayMap.set(deckId, value)
 }
 
-/**
- * Find the media player element for a given deck.
- * @param {number} deckId
- * @returns {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void, currentTime: number, duration: number, volume: number, muted: boolean} | null}
- */
-export function getMediaPlayer(deckId) {
-	return /** @type {any} */ (
-		document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
-			document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
-			document.querySelector(`[data-deck="${deckId}"] audio.native-audio-player`)
-	)
+type MediaPlayer = HTMLElement & {
+	paused: boolean
+	play(): Promise<void> | void
+	pause(): void
+	currentTime: number
+	duration: number
+	volume: number
+	muted: boolean
 }
 
-/**
- * Wait until a media element exists for a deck.
- * @param {number} deckId
- * @param {number} [timeoutMs]
- */
-async function waitForMediaPlayer(deckId, timeoutMs = 3000) {
+/** Find the media player element for a given deck. */
+export function getMediaPlayer(deckId: number): MediaPlayer | null {
+	return (document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
+		document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
+		document.querySelector(`[data-deck="${deckId}"] audio.native-audio-player`)) as MediaPlayer | null
+}
+
+/** Wait until a media element exists for a deck. */
+async function waitForMediaPlayer(deckId: number, timeoutMs = 3000): Promise<MediaPlayer | null> {
 	const deadline = performance.now() + timeoutMs
 	while (performance.now() < deadline) {
 		const player = getMediaPlayer(deckId)
-		if (player && 'paused' in player) return /** @type {MediaPlayer} */ (player)
+		if (player && 'paused' in player) return player as MediaPlayer
 		await new Promise((r) => requestAnimationFrame(r))
 	}
 	return null
@@ -98,7 +92,7 @@ export async function checkUser() {
 
 		// Store IDs - collection handles fetching when needed
 		appState.channels = channels.map((c) => c.id)
-		appState.channel = /** @type {import('$lib/types').Channel | undefined} */ (channels[0])
+		appState.channel = channels[0] as Channel | undefined
 
 		return user
 	} catch (err) {
@@ -106,13 +100,12 @@ export async function checkUser() {
 	}
 }
 
-/**
- * @param {number} deckId
- * @param {string} id
- * @param {import('$lib/types').PlayEndReason | null} endReason - why was the previous (if any) track stopped?
- * @param {import('$lib/types').PlayStartReason} startReason - why was this track played?
- */
-export async function playTrack(deckId, id, endReason, startReason) {
+export async function playTrack(
+	deckId: number,
+	id: string,
+	endReason: PlayEndReason | null,
+	startReason: PlayStartReason
+) {
 	log.log('play_track', {deckId, id, endReason, startReason})
 	let deck = getDeck(deckId)
 	if (!deck) {
@@ -187,7 +180,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 			log.error('broadcast_auto_update_failed', {
 				channelId: broadcastingChannelId,
 				trackId: id,
-				error: /** @type {Error} */ (error).message
+				error: /** @type {Error} */ error.message
 			})
 		}
 	}
@@ -204,12 +197,7 @@ export async function playTrack(deckId, id, endReason, startReason) {
 	play(deckId, player)
 }
 
-/**
- * @param {number} deckId
- * @param {{id: string, slug: string}} channel
- * @param {string} [trackId] - optional track ID to start from
- */
-export async function playChannel(deckId, {id, slug}, trackId) {
+export async function playChannel(deckId: number, {id, slug}: {id: string; slug: string}, trackId?: string) {
 	log.log('play_channel', {deckId, id, slug})
 	leaveBroadcast(deckId)
 	await ensureTracksLoaded(slug)
@@ -268,12 +256,7 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-/**
- * @param {number} deckId
- * @param {string[]} trackIds
- * @param {{title?: string}} [options]
- */
-export function setPlaylist(deckId, trackIds, options = {}) {
+export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string} = {}) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
@@ -480,17 +463,11 @@ export function rotateQueue(deckId) {
 	log.log('rotate_queue', {deckId, current})
 }
 
-/** @typedef {HTMLElement & {paused: boolean, play(): Promise<void> | void, pause(): void, currentTime: number, duration: number, volume: number, muted: boolean}} MediaPlayer */
-
-/**
- * @param {number} deckId
- * @param {MediaPlayer | null} [player]
- */
-export function play(deckId, player) {
+export function play(deckId: number, player?: MediaPlayer | null) {
 	const deck = getDeck(deckId)
 	if (!player) {
 		const el = getMediaPlayer(deckId)
-		if (el && 'paused' in el) player = /** @type {MediaPlayer} */ (el)
+		if (el && 'paused' in el) player = el as MediaPlayer
 	}
 	if (!player) {
 		log.warn('Media player not ready')
@@ -516,8 +493,7 @@ export function play(deckId, player) {
 	return Promise.resolve()
 }
 
-/** @param {MediaPlayer} player */
-export function pause(player) {
+export function pause(player: MediaPlayer) {
 	if (!player) {
 		log.warn('Media player not ready')
 		return
@@ -526,8 +502,7 @@ export function pause(player) {
 	maybeBroadcastNotify()
 }
 
-/** @param {MediaPlayer} player */
-export function togglePlay(player) {
+export function togglePlay(player: MediaPlayer) {
 	if (!player) {
 		log.warn('Media player not ready')
 		return
@@ -560,13 +535,7 @@ export function seekTo(deckId, seconds) {
 	maybeBroadcastNotify()
 }
 
-/**
- * @param {number} deckId
- * @param {import('$lib/types').Track | undefined} track
- * @param {string[]} activeQueue
- * @param {import('$lib/types').PlayEndReason} endReason
- */
-export function next(deckId, track, activeQueue, endReason) {
+export function next(deckId: number, track: Track | undefined, activeQueue: string[], endReason: PlayEndReason) {
 	if (!track?.id) {
 		log.warn('No current track')
 		return
@@ -577,8 +546,7 @@ export function next(deckId, track, activeQueue, endReason) {
 	}
 	const nextId = queueNext(activeQueue, track.id)
 	if (nextId) {
-		/** @type {import('$lib/types').PlayStartReason} */
-		const startReason = endReason === 'youtube_error' ? 'track_error' : 'auto_next'
+		const startReason: PlayStartReason = endReason === 'youtube_error' ? 'track_error' : 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
@@ -588,13 +556,7 @@ export function next(deckId, track, activeQueue, endReason) {
 	}
 }
 
-/**
- * @param {number} deckId
- * @param {import('$lib/types').Track | undefined} track
- * @param {string[]} activeQueue
- * @param {import('$lib/types').PlayEndReason} endReason
- */
-export function previous(deckId, track, activeQueue, endReason) {
+export function previous(deckId: number, track: Track | undefined, activeQueue: string[], endReason: PlayEndReason) {
 	if (!track?.id) {
 		log.warn('No current track')
 		return

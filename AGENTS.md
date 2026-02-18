@@ -16,7 +16,7 @@ Broad file searches and `node_modules` reads are fine, but ideally not as a firs
 ```
 /src/routes           -- pages
 /src/lib/types.ts     -- type definitions
-/src/lib/api.js       -- data operations
+/src/lib/api.ts       -- data operations
 /src/lib/utils.ts     -- utility functions
 /src/lib/tanstack     -- data and state
 /src/lib/components   -- components

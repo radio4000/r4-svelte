@@ -35,7 +35,7 @@ Search only triggers for terms longer than 2 characters to avoid expensive queri
 
 ## Files
 
-The main search interface lives in src/routes/search/+page.svelte which handles the input, autocomplete, and smart execution logic. The global Cmd+K shortcut is registered in src/routes/+layout.svelte. Command functions like toggleTheme and toggleQueuePanel are defined in src/lib/api.js and imported into the search page to avoid code duplication. The search logic itself lives in src/lib/search.js.
+The main search interface lives in src/routes/search/+page.svelte which handles the input, autocomplete, and smart execution logic. The global Cmd+K shortcut is registered in src/routes/+layout.svelte. Command functions like toggleTheme and toggleQueuePanel are defined in src/lib/api.ts and imported into the search page to avoid code duplication. The search logic itself lives in src/lib/search.js.
 
 ## Integration Points
 
