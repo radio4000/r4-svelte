@@ -15,6 +15,30 @@ function label(channelId) {
 	return channelsCollection.get(channelId)?.slug || channelId?.slice(0, 8)
 }
 
+/** Compact one-line summary of deck states for logging */
+function deckSummary(decks) {
+	if (!Array.isArray(decks) || !decks.length) return '[]'
+	return decks
+		.map((d) => {
+			const parts = []
+			parts.push(d.is_playing ? '▶' : '⏸')
+			if (d.seek_position != null) parts.push(`seek:${Math.round(d.seek_position)}s`)
+			if (typeof d.volume === 'number') parts.push(`vol:${d.volume}`)
+			if (typeof d.speed === 'number' && d.speed !== 1) parts.push(`${d.speed}x`)
+			if (d.muted) parts.push('muted')
+			return parts.join(' ')
+		})
+		.join(' | ')
+}
+
+/** Log only when the message differs from the last one for this key */
+const _lastLogged = new Map()
+function logDedup(key, msg) {
+	if (_lastLogged.get(key) === msg) return
+	_lastLogged.set(key, msg)
+	log.debug(msg)
+}
+
 /** Supabase realtime channels keyed by deckId
  * @type {Map<number, any>}
  */
@@ -72,7 +96,7 @@ export function getBroadcastingChannelId() {
  * @param {string} channelId
  */
 export async function joinBroadcast(deckId, channelId) {
-	console.info('[broadcast] joinBroadcast', {deckId, channelId})
+	log.log(`joinBroadcast @${label(channelId)} deck:${deckId}`)
 	try {
 		// If switching channels without leaving first, tear down old listeners.
 		const previousListeningChannels = new Set(
@@ -180,7 +204,7 @@ export async function upsertRemoteBroadcast(channelId) {
  * @param {string} [trackId]
  */
 export async function startBroadcast(channelId, trackId) {
-	console.info('[broadcast] startBroadcast', {channelId, trackId})
+	log.log(`startBroadcast @${label(channelId)}`)
 	if (!trackId) {
 		log.log(`skipped ${label(channelId)} (no track)`)
 		return
@@ -439,7 +463,7 @@ function broadcastStateUpdate(channelId) {
 	if (!entry) return
 	const seq = (broadcastStateSeqByChannel.get(channelId) ?? 0) + 1
 	broadcastStateSeqByChannel.set(channelId, seq)
-	console.info('[broadcast] state_send', {channelId, decks: state})
+	logDedup(`send:${channelId}`, `state_send @${label(channelId)} ${deckSummary(state)}`)
 	entry.channel.send({
 		type: 'broadcast',
 		event: 'state',
@@ -465,12 +489,12 @@ function startBroadcastState(channelId) {
 	const channel = sdk.supabase
 		.channel(`broadcast-state:${channelId}`)
 		.on('broadcast', {event: 'request_state'}, () => {
-			console.info('[broadcast] state_request', {channelId})
+			log.log(`state_request @${label(channelId)}`)
 			broadcastStateUpdate(channelId)
 		})
 		.subscribe((status) => {
 			if (status === 'SUBSCRIBED') {
-				console.info('[broadcast] state_channel_subscribed', {channelId})
+				log.log(`state_channel_subscribed @${label(channelId)}`)
 				broadcastStateUpdate(channelId)
 			}
 		})
@@ -501,19 +525,16 @@ function startBroadcastStateListener(channelId) {
 			const seq = payload?.payload?.seq ?? payload?.seq
 			if (typeof seq === 'number') {
 				const lastSeq = lastReceivedStateSeqByChannel.get(channelId) ?? 0
-				if (seq <= lastSeq) {
-					console.info('[broadcast] state_drop_stale', {channelId, seq, lastSeq})
-					return
-				}
+				if (seq <= lastSeq) return
 				lastReceivedStateSeqByChannel.set(channelId, seq)
 			}
 			const decks = payload?.payload?.decks ?? payload?.decks
-			console.info('[broadcast] state_receive', {channelId, decks})
+			logDedup(`recv:${channelId}`, `state_receive @${label(channelId)} ${deckSummary(decks)}`)
 			applyBroadcastState(channelId, decks)
 		})
 		.subscribe((status) => {
 			if (status === 'SUBSCRIBED') {
-				console.info('[broadcast] state_listener_subscribed', {channelId})
+				log.log(`state_listener_subscribed @${label(channelId)}`)
 				channel.send({type: 'broadcast', event: 'request_state', payload: {channel_id: channelId}})
 			}
 		})
@@ -542,7 +563,7 @@ function startBroadcastTableListener(channelId) {
 				filter: `channel_id=eq.${channelId}`
 			},
 			() => {
-				console.info('[broadcast] broadcast_table_change', {channelId})
+				log.debug(`table_change @${label(channelId)}`)
 				const stateChannel = broadcastStateListeners.get(channelId)
 				if (stateChannel) {
 					stateChannel.send({type: 'broadcast', event: 'request_state', payload: {channel_id: channelId}})

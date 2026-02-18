@@ -115,7 +115,7 @@ sdk.supabase
 		log.debug('broadcasts subscription status', {status})
 	})
 
-// Realtime can be flaky depending on network/session; keep a lightweight polling fallback.
+// Refresh broadcasts on tab focus (realtime handles the rest).
 if (typeof window !== 'undefined') {
 	const refreshBroadcasts = async () => {
 		try {
@@ -125,16 +125,7 @@ if (typeof window !== 'undefined') {
 			log.warn('broadcasts poll failed', error)
 		}
 	}
-	const pollIntervalMs = 60000
-	const timerId = window.setInterval(refreshBroadcasts, pollIntervalMs)
 	document.addEventListener('visibilitychange', () => {
 		if (document.visibilityState === 'visible') void refreshBroadcasts()
 	})
-	window.addEventListener(
-		'beforeunload',
-		() => {
-			clearInterval(timerId)
-		},
-		{once: true}
-	)
 }
