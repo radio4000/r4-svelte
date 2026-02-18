@@ -30,7 +30,7 @@ Arrow keys navigate tracklists — up/down to move, enter/space to play the sele
 
 ## Seeking
 
-`seekTo(seconds)` in `api.js` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
+`seekTo(seconds)` in `api.ts` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
 
 When seeking after a track change, use `requestAnimationFrame` to wait for Svelte to render the new element.
 
@@ -41,8 +41,4 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 
 ## Layout
 
-Four booleans on the `Deck` type control layout: `compact`, `expanded`, `hide_video_player`, and `hide_queue_panel`. `compact` and `expanded` are mutually exclusive — toggling one clears the other (`toggleDeckCompact`/`toggleDeckExpanded` in `api.js`). Expanding also force-clears `hide_video_player`.
-
-The component tree is always `deck.svelte` > `Player` > `QueuePanel`. The flags don't swap components — they toggle CSS classes (`.compact`, `.expanded`, `.hide-video`, `.hide-queue`) on the `.deck` wrapper. The one exception is `compact`, which renders a separate `deck-compact-bar` in `+layout.svelte` instead of the full deck.
-
-`hide_video_player` and `hide_queue_panel` hide their respective panels via CSS while keeping them in the DOM. `+layout.svelte` derives `anyDeckExpanded` and `compactDeckIds` from `appState.decks` to control top-level rendering.
+See [player-ui.md](player-ui.md) for the full component tree, layout flags, and deck anatomy.

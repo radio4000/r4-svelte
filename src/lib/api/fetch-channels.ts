@@ -10,7 +10,7 @@ export async function fetchChannelBySlug(slug: string): Promise<Channel | null> 
 }
 
 export async function fetchAllChannels(): Promise<Channel[]> {
-	const {data} = await sdk.channels.readChannels()
+	const {data} = await sdk.channels.readChannels(4000)
 	const channels = (data || []) as Channel[]
 	log.info('fetchAllChannels', {count: channels.length})
 	return channels
