@@ -65,9 +65,11 @@
 	let lastChannel = $state()
 	$effect(() => {
 		if (track) lastTrack = track
+		else if (!deck?.playlist_track) lastTrack = undefined
 	})
 	$effect(() => {
 		if (channel) lastChannel = channel
+		else if (!deck?.playlist_track) lastChannel = undefined
 	})
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
