@@ -78,6 +78,7 @@
 	"auth_use_magic_link": "Use magic link instead",
 	"auth_use_password_instead": "Use password instead",
 	"auth_welcome_almost_done": "Welcome! You're almost done.",
+	"auto_radio_join": "Auto radio",
 	"batch_edit_applied_summary": "Applied edits ({count}) - can undo",
 	"batch_edit_column_created": "created",
 	"batch_edit_column_description": "description",
