@@ -647,9 +647,12 @@
 		margin-left: auto;
 	}
 
+	:global(.volume) {
+		margin-left: auto;
+	}
+
 	.player-controls {
 		align-items: center;
-		justify-content: flex-end;
 		min-width: 0;
 	}
 
@@ -686,6 +689,10 @@
 		margin-top: auto;
 		display: flex;
 		flex-direction: column;
+
+		@media (max-width: 768px) {
+			margin-top: 0;
+		}
 	}
 
 	.progress-row {

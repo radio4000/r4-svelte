@@ -13,17 +13,19 @@
 </script>
 
 <aside class="deck-strip" class:all-compact={allDecksCompact}>
-	<div class="deck-strip-main">
-		{#each localDeckIds as deckId (deckId)}
-			<Deck {deckId} />
-		{/each}
-	</div>
+	{#if localDeckIds.length}
+		<section class="local">
+			{#each localDeckIds as deckId (deckId)}
+				<Deck {deckId} />
+			{/each}
+		</section>
+	{/if}
 	{#if listeningDeckIds.length}
-		<div class="deck-strip-broadcasts" aria-label="Broadcast listener decks">
+		<section class="broadcasts" aria-label="Broadcast listener decks">
 			{#each listeningDeckIds as deckId (deckId)}
 				<Deck {deckId} />
 			{/each}
-		</div>
+		</section>
 	{/if}
 </aside>
 
@@ -35,15 +37,25 @@
 		flex-shrink: 0;
 		min-height: 0;
 		height: 100%;
+
+		&:empty {
+			display: none;
+		}
+
+		&.all-compact {
+			height: 0;
+			flex: 0 0 0;
+			overflow: hidden;
+		}
 	}
 
-	.deck-strip-main {
+	.local {
 		display: flex;
 		flex-direction: row;
 		min-height: 0;
 	}
 
-	.deck-strip-broadcasts {
+	.broadcasts {
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
@@ -52,32 +64,25 @@
 		min-width: min(36rem, 45vw);
 	}
 
-	.deck-strip-broadcasts :global(.deck.listening) {
+	.broadcasts :global(.deck.listening) {
 		width: 100%;
 		min-width: 0;
 		flex: 1 1 auto;
 	}
 
-	.deck-strip:empty {
-		display: none;
-	}
-
-	.deck-strip.all-compact {
-		height: 0;
-		flex: 0 0 0;
-		overflow: hidden;
-	}
-
 	@media (max-width: 768px) {
 		.deck-strip {
 			flex-direction: column;
+			height: auto;
+			flex-shrink: 1;
+			overflow-y: auto;
 		}
 
-		.deck-strip-main {
+		.local {
 			flex-direction: column;
 		}
 
-		.deck-strip-broadcasts {
+		.broadcasts {
 			overflow-y: visible;
 			flex: 1 1 auto;
 			min-width: 0;

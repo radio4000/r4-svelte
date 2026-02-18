@@ -122,6 +122,7 @@
 
 	@media (max-width: 768px) {
 		.deck {
+			flex: 1;
 			min-width: 0;
 			width: 100%;
 		}
