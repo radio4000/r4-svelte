@@ -2,14 +2,9 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
-## Bugs
-
-- deck-strip `allDecksCompact` derived not reactive — `Object.keys(appState.decks)` in `$derived` doesn't re-fire when deck keys are added after initial empty state. Svelte 5 `$state` proxy edge case. Refactored to single `$derived.by` using `Object.entries()` reading deck properties directly. Verify fix holds.
-
 ## Backlog
 
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
-- Channel tags helper — `countStrings(tracks.flatMap(t => t.tags ?? []))` is repeated in `[slug]/+page`, `[slug]/tags/+page`, `batch-edit/`. Extract a reusable `getChannelTags(tracks)` (or similar). Once available, can be used in channel cards, list view, etc. Consider how this can be performant since it might mean collection merging unique items from 5k items
 - 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. TBD: for tracks missing duration, could fetch via `media-now getMedia()` on demand. Low effort.
 - Test RTL-support

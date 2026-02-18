@@ -1,8 +1,8 @@
 <script>
 	import {logger} from '$lib/logger'
-	import {hunt as huntDiscogsUrl, pull as insertDiscogsMeta} from '$lib/metadata/discogs'
-	import {pull as insertMusicBrainzMeta} from '$lib/metadata/musicbrainz'
-	import {pullSingle as insertYouTubeMeta} from '$lib/metadata/youtube'
+	import {huntDiscogs, pullDiscogs} from '$lib/metadata/discogs'
+	import {pullMusicBrainz} from '$lib/metadata/musicbrainz'
+	import {pullYouTubeSingle} from '$lib/metadata/youtube'
 	import {trackMetaCollection, updateTrack} from '$lib/tanstack/collections'
 	import * as m from '$lib/paraglide/messages'
 
@@ -33,13 +33,13 @@
 				// Parallel harvest phase — each catches independently so one failure doesn't block the rest
 				const [youtube_data, musicbrainz_data] = await Promise.all([
 					!existing?.youtube_data
-						? insertYouTubeMeta(ytid).catch((err) => {
+						? pullYouTubeSingle(ytid).catch((err) => {
 								log.error('youtube failed', err)
 								return null
 							})
 						: null,
 					!existing?.musicbrainz_data
-						? insertMusicBrainzMeta(ytid, track.title).catch((err) => {
+						? pullMusicBrainz(ytid, track.title).catch((err) => {
 								log.error('musicbrainz failed', err)
 								return null
 							})
@@ -57,15 +57,15 @@
 				if (!existing?.discogs_data) {
 					if (track.discogs_url) {
 						log.info('fetching discogs', {discogs_url: track.discogs_url})
-						discogs_data = await insertDiscogsMeta(ytid, track.discogs_url)
+						discogs_data = await pullDiscogs(ytid, track.discogs_url)
 						log.info('discogs result', {discogs_data})
 					} else {
 						log.info('hunting discogs url', {title: track.title})
-						const discoveredUrl = await huntDiscogsUrl(track.id, ytid, track.title)
+						const discoveredUrl = await huntDiscogs(track.id, ytid, track.title)
 
 						if (discoveredUrl) {
 							log.info('found discogs url', {url: discoveredUrl})
-							discogs_data = await insertDiscogsMeta(ytid, discoveredUrl)
+							discogs_data = await pullDiscogs(ytid, discoveredUrl)
 						}
 					}
 				}

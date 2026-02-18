@@ -11,12 +11,12 @@ function getTracksToUpdate(mediaIds) {
 
 /**
  * Fetch YouTube metadata for channel tracks
- * @deprecated Use pullSingle or pull with mediaIds from tracksCollection instead
+ * @deprecated Use pullYouTubeSingle or pullYouTube instead
  * @param {string[]} mediaIds YouTube video IDs from channel tracks
  * @returns {Promise<Object[]>} Fetched metadata
  */
 export async function pullFromChannel(mediaIds) {
-	return await pull(mediaIds)
+	return await pullYouTube(mediaIds)
 }
 
 /**
@@ -24,9 +24,9 @@ export async function pullFromChannel(mediaIds) {
  * @param {string} mediaId YouTube video ID
  * @returns {Promise<Object|null>} Fetched metadata
  */
-export async function pullSingle(mediaId) {
+export async function pullYouTubeSingle(mediaId) {
 	const mediaIds = [mediaId]
-	return (await pull(mediaIds))[0] || null
+	return (await pullYouTube(mediaIds))[0] || null
 }
 
 /**
@@ -58,7 +58,7 @@ async function fetchBatch(ids, signal) {
  * @param {{signal?: AbortSignal, onProgress?: (event: PullProgressEvent) => void | Promise<void>}} [options]
  * @returns {Promise<Array<{id: string, duration: number, title?: string, [key: string]: unknown}>>} Fetched videos with metadata
  */
-export async function pull(mediaIds, {signal, onProgress} = {}) {
+export async function pullYouTube(mediaIds, {signal, onProgress} = {}) {
 	const toUpdate = getTracksToUpdate(mediaIds)
 	if (toUpdate.length === 0) {
 		log.info('all tracks already have metadata')

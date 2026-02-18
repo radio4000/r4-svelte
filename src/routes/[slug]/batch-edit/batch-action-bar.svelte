@@ -1,12 +1,12 @@
 <script>
 	import {batchUpdateTracksUniform, deleteTrackMeta, insertDurationFromMeta} from '$lib/tanstack/collections'
-	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
+	import {pullYouTube} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {getChannelTags} from '$lib/utils'
 
 	const uid = $props.id()
 
-	/** @type {{selectedIds?: string[], channel: import('$lib/types').Channel | null, allTags?: {value: string, count: number}[], tracks?: import('$lib/types').TrackWithMeta[] }} */
+	/** @type {{selectedIds?: string[], channel: import('$lib/types').Channel | null, allTags?: ReturnType<typeof getChannelTags>, tracks?: import('$lib/types').TrackWithMeta[] }} */
 	let {selectedIds = [], channel, allTags = [], tracks = []} = $props()
 
 	let showAppend = $state(false)
@@ -86,7 +86,7 @@
 		fetchProgress = {current: 0, total: 0}
 		try {
 			const mediaIds = /** @type {string[]} */ (selectedMissingMeta.map((t) => t.media_id).filter(Boolean))
-			await pullYouTubeMeta(mediaIds, {
+			await pullYouTube(mediaIds, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}
@@ -189,8 +189,8 @@
 	<dialog open>
 		<h3>Remove tag from {selectedIds.length} tracks</h3>
 		<menu>
-			{#each selectedTracksTags as { tag, count } (tag)}
-				<button onclick={() => removeTag(tag)}>#{tag} ({count})</button>
+			{#each selectedTracksTags as { value, count } (value)}
+				<button onclick={() => removeTag(value)}>#{value} ({count})</button>
 			{/each}
 		</menu>
 		<footer>

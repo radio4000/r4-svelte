@@ -197,11 +197,11 @@
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if filteredTags.length > 0}
 			<ol class="list">
-				{#each filteredTags as { tag, count } (tag)}
+				{#each filteredTags as { value, count } (value)}
 					<li>
 						<span class="tag">
-							<a href={`/search?q=@${channel.slug} ${tag}`}>
-								{tag}
+							<a href={`/search?q=@${channel.slug} ${value}`}>
+								{value}
 							</a>
 						</span>
 						<span class="count">{count}</span>

@@ -106,9 +106,9 @@
 							Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
 						{/snippet}
 						<menu class="tags-menu">
-							{#each aggregatedTags as { tag, count } (tag)}
-								<button type="button" class:active={selectedTags.includes(tag)} onclick={() => toggleTag(tag)}>
-									{tag} <span class="tag-count">({count})</span>
+							{#each aggregatedTags as { value, count } (value)}
+								<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+									{value} <span class="tag-count">({count})</span>
 								</button>
 							{/each}
 						</menu>

@@ -13,7 +13,7 @@
 		toggleDeckCompact,
 		togglePlayerExpanded,
 		toggleQueuePanel,
-		toggleVideoPlayer,
+		toggleVideo,
 		getUserInitiatedPlay,
 		setUserInitiatedPlay
 	} from '$lib/api'
@@ -287,7 +287,7 @@
 					<Icon icon="close" />
 				</button>
 				<button
-					onclick={() => toggleVideoPlayer(deckId)}
+					onclick={() => toggleVideo(deckId)}
 					class:active={deck?.hide_video_player}
 					aria-label={deck?.hide_video_player ? m.player_visible() : m.player_hidden()}
 					{@attach tooltip({

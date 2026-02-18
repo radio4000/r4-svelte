@@ -136,8 +136,10 @@
 		{"name": "eject(deckId)", "desc": "Clear deck player state."},
 
 		{"name": "toggleTheme()", "desc": "Light/dark mode."},
+		{"name": "getDeck(deckId)", "desc": "Internal: look up deck from appState.decks."},
+		{"name": "maybeBroadcastNotify()", "desc": "Internal: notify broadcast if currently broadcasting."},
+
 		{"name": "toggleQueuePanel(deckId)", "desc": "Toggle queue sidebar for a deck."},
-		{"name": "toggleVideoPlayer(deckId)", "desc": "Toggle video player for a deck."},
 		{"name": "toggleDeckCompact(deckId)", "desc": "Compact/expand a deck."},
 		{"name": "togglePlayerExpanded(deckId)", "desc": "Fullscreen a deck."},
 		{"name": "openSearch()", "desc": "Focus search input."},
@@ -242,8 +244,16 @@
 		{"name": "timeAgo(dateString)", "desc": "Relative time: 'Xm ago', 'Xh Ym ago'."},
 		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
 		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."},
-		{"name": "countStrings(strings)", "desc": "Count occurrences, sorted by frequency."},
-		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks."}
+		{"name": "countStrings(strings)", "desc": "Count occurrences → {value, count}[], sorted by frequency then alpha."},
+		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks → {value, count}[]."}
+	],
+
+	"src/lib/logger.js": [
+		{
+			"name": "logger",
+			"desc": "Sealed adze logger. Usage: logger.info('msg'), logger.ns('sync').seal() for namespaced."
+		},
+		{"name": "store", "desc": "Adze log store (cache: true, level: debug). Access logs via store.logs."}
 	],
 
 	"src/lib/components": [

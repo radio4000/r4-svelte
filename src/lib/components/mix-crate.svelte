@@ -51,9 +51,9 @@
 		}
 
 		// Extract tags from all loaded tracks via mix, filter to those appearing 2+ times
-		for (const {tag, count} of getChannelTags([...mixAll().tracks()])) {
+		for (const {value, count} of getChannelTags([...mixAll().tracks()])) {
 			if (count >= 2) {
-				all.push({type: 'tag', value: tag, label: `#${tag}`})
+				all.push({type: 'tag', value, label: `#${value}`})
 			}
 		}
 

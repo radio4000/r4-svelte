@@ -14,7 +14,7 @@ const log = logger.ns('metadata/discogs').seal()
  * @param {string} discogsUrl Discogs release/master URL
  * @returns {Promise<Object|null>} Discogs data
  */
-export async function pull(mediaId, discogsUrl) {
+export async function pullDiscogs(mediaId, discogsUrl) {
 	if (!mediaId || !discogsUrl) return null
 
 	const discogsData = await fetchDiscogs(discogsUrl)
@@ -44,7 +44,7 @@ export async function pull(mediaId, discogsUrl) {
  * @param {string} title Track title for search
  * @returns {Promise<string|null>} Discovered Discogs URL
  */
-export async function hunt(trackId, _mediaId, title) {
+export async function huntDiscogs(trackId, _mediaId, title) {
 	if (!title) return null
 
 	try {

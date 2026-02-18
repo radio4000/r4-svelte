@@ -190,20 +190,20 @@ export function pickRandomN<T>(n: number) {
  * Count string occurrences and sort by count (desc), then alphabetically.
  * @example
  * countStrings(['rock', 'jazz', 'rock', 'blues', 'jazz', 'jazz'])
- * // => [{tag: 'jazz', count: 3}, {tag: 'rock', count: 2}, {tag: 'blues', count: 1}]
+ * // => [{value: 'jazz', count: 3}, {value: 'rock', count: 2}, {value: 'blues', count: 1}]
  */
-export function countStrings(strings: string[]): Array<{tag: string; count: number}> {
+export function countStrings(strings: string[]): Array<{value: string; count: number}> {
 	const counts: Record<string, number> = {}
 	for (const s of strings) {
 		const key = s.toLowerCase()
 		counts[key] = (counts[key] || 0) + 1
 	}
 	return Object.entries(counts)
-		.map(([tag, count]) => ({tag, count}))
-		.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+		.map(([value, count]) => ({value, count}))
+		.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
 }
 
 /** Aggregate and count tags from an array of tracks. */
-export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{tag: string; count: number}> {
+export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{value: string; count: number}> {
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }

@@ -6,8 +6,9 @@
 	import {page} from '$app/state'
 	import {fuzzySearch} from '$lib/search'
 	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
-	import {pull as pullYouTubeMeta} from '$lib/metadata/youtube'
+	import {pullYouTube} from '$lib/metadata/youtube'
 	import {canEditChannel} from '$lib/app-state.svelte'
+	import {countStrings} from '$lib/utils'
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -74,7 +75,7 @@
 		fetchProgress = {current: 0, total: 0}
 		try {
 			const mediaIds = /** @type {string[]} */ (allTracksMissingMeta.map((t) => t.media_id).filter(Boolean))
-			await pullYouTubeMeta(mediaIds, {
+			await pullYouTube(mediaIds, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}
@@ -183,21 +184,8 @@
 		}
 	}
 
-	/** @param {import('$lib/types').Track[]} items @param {'tags' | 'mentions'} field */
-	function countByField(items, field) {
-		const counts = {}
-		for (const item of items) {
-			for (const val of item[field] || []) {
-				counts[val] = (counts[val] || 0) + 1
-			}
-		}
-		return Object.entries(counts)
-			.map(([value, count]) => ({value, count}))
-			.sort((a, b) => b.count - a.count)
-	}
-
-	let allTags = $derived(countByField(tracks, 'tags'))
-	let allMentions = $derived(countByField(tracks, 'mentions'))
+	let allTags = $derived(countStrings(tracks.flatMap((t) => t.tags ?? [])))
+	let allMentions = $derived(countStrings(tracks.flatMap((t) => t.mentions ?? [])))
 
 	let selectedCount = $derived(selectedTracks.length)
 	let hasSelection = $derived(selectedCount > 0)

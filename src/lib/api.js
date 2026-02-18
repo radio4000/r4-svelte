@@ -18,6 +18,17 @@ import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracks
 
 const log = logger.ns('api').seal()
 
+/** @param {number} deckId @returns {import('$lib/types').Deck | undefined} */
+function getDeck(deckId) {
+	return appState.decks[deckId]
+}
+
+/** Notify broadcast listeners if currently broadcasting */
+function maybeBroadcastNotify() {
+	const broadcastingChannelId = getBroadcastingChannelId()
+	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+}
+
 /** Sort tracks by created_at descending (newest first) */
 const sortByNewest = (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 
@@ -103,7 +114,7 @@ export async function checkUser() {
  */
 export async function playTrack(deckId, id, endReason, startReason) {
 	log.log('play_track', {deckId, id, endReason, startReason})
-	let deck = appState.decks[deckId]
+	let deck = getDeck(deckId)
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
 		deck = addDeck()
@@ -252,7 +263,7 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	const ids = tracks.map((t) => t.id)
 	const randomIndex = Math.floor(Math.random() * ids.length)
 	await setPlaylist(deckId, ids)
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (deck) deck.shuffle = true
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
@@ -263,7 +274,7 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
  * @param {{title?: string}} [options]
  */
 export function setPlaylist(deckId, trackIds, options = {}) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
@@ -276,7 +287,7 @@ export function setPlaylist(deckId, trackIds, options = {}) {
  * @param {string[]} trackIds
  */
 export function addToPlaylist(deckId, trackIds) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const currentTracks = deck.playlist_tracks || []
 	deck.playlist_tracks = [...currentTracks, ...trackIds]
@@ -292,7 +303,7 @@ export function addToPlaylist(deckId, trackIds) {
  * @param {string | string[]} trackIds
  */
 export function playNext(deckId, trackIds) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const ids = Array.isArray(trackIds) ? trackIds : [trackIds]
 	const currentId = deck.playlist_track
@@ -313,7 +324,7 @@ export function playNext(deckId, trackIds) {
  * @param {string} trackId
  */
 export function removeFromQueue(deckId, trackId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = queueRemove(deck.playlist_tracks, trackId)
 	if (deck.shuffle) {
@@ -331,25 +342,23 @@ export function toggleTheme() {
 
 /** @param {number} deckId */
 export function toggleQueuePanel(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.hide_queue_panel = !deck.hide_queue_panel
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 }
 
 /** @param {number} deckId */
-export function toggleVideoPlayer(deckId) {
-	const deck = appState.decks[deckId]
+export function toggleVideo(deckId) {
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.hide_video_player = !deck.hide_video_player
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 }
 
 /** @param {number} deckId */
 export function toggleDeckCompact(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.compact = !deck.compact
 	if (deck.compact && deck.expanded) deck.expanded = false
@@ -357,7 +366,7 @@ export function toggleDeckCompact(deckId) {
 
 /** @param {number} deckId */
 export function togglePlayerExpanded(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.expanded = !deck.expanded
 	if (deck.expanded && deck.compact) deck.compact = false
@@ -380,7 +389,7 @@ export function openSearch(event) {
 /** @param {number} deckId */
 export function togglePlayPause(deckId) {
 	const player = getMediaPlayer(deckId)
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (player) {
 		if (player.paused) {
 			if (deck) deck.is_playing = true
@@ -390,8 +399,7 @@ export function togglePlayPause(deckId) {
 			player.pause()
 		}
 	}
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 }
 
 /**
@@ -400,7 +408,7 @@ export function togglePlayPause(deckId) {
  * @param {string} trackId
  */
 export function playFromHere(deckId, trackId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const idx = deck.playlist_tracks.indexOf(trackId)
 	if (idx === -1) return
@@ -416,7 +424,7 @@ export function playFromHere(deckId, trackId) {
  * @param {number} deckId
  */
 export function clearQueue(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const current = deck.playlist_track
 	if (current) {
@@ -434,7 +442,7 @@ export function clearQueue(deckId) {
  * @param {number} deckId
  */
 export function toggleShuffle(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.shuffle = !deck.shuffle
 	if (deck.shuffle) {
@@ -447,7 +455,7 @@ export function toggleShuffle(deckId) {
  * @param {number} deckId
  */
 export function shuffleRemaining(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const current = deck.playlist_track
 	if (!current) return
@@ -461,7 +469,7 @@ export function shuffleRemaining(deckId) {
  * @param {number} deckId
  */
 export function rotateQueue(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	const current = deck.playlist_track
 	if (!current) return
@@ -479,7 +487,7 @@ export function rotateQueue(deckId) {
  * @param {MediaPlayer | null} [player]
  */
 export function play(deckId, player) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!player) {
 		const el = getMediaPlayer(deckId)
 		if (el && 'paused' in el) player = /** @type {MediaPlayer} */ (el)
@@ -495,8 +503,7 @@ export function play(deckId, player) {
 			.then(() => {
 				if (deck) deck.is_playing = true
 				log.log('play() succeeded')
-				const broadcastingChannelId = getBroadcastingChannelId()
-				if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+				maybeBroadcastNotify()
 			})
 			.catch((error) => {
 				if (deck) deck.is_playing = false
@@ -505,8 +512,7 @@ export function play(deckId, player) {
 			})
 	}
 	if (deck) deck.is_playing = true
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 	return Promise.resolve()
 }
 
@@ -517,8 +523,7 @@ export function pause(player) {
 		return
 	}
 	player.pause()
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 }
 
 /** @param {MediaPlayer} player */
@@ -547,13 +552,12 @@ export function seekTo(deckId, seconds) {
 		return
 	}
 	mediaEl.currentTime = seconds
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (deck) {
 		deck.seeked_at = new Date().toISOString()
 		deck.seek_position = seconds
 	}
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+	maybeBroadcastNotify()
 }
 
 /**
@@ -608,14 +612,8 @@ export function previous(deckId, track, activeQueue, endReason) {
 }
 
 /** @param {number} deckId */
-export function toggleVideo(deckId) {
-	const deck = appState.decks[deckId]
-	if (deck) deck.hide_video_player = !deck.hide_video_player
-}
-
-/** @param {number} deckId */
 export function eject(deckId) {
-	const deck = appState.decks[deckId]
+	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_track = undefined
 	deck.playlist_tracks = []

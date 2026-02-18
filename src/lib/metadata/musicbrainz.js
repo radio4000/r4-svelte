@@ -9,7 +9,7 @@ const log = logger.ns('metadata/musicbrainz').seal()
  * @param {string} title Track title to search
  * @returns {Promise<Object|null>} MusicBrainz data
  */
-export async function pull(mediaId, title) {
+export async function pullMusicBrainz(mediaId, title) {
 	if (!mediaId || !title) return null
 
 	const musicbrainzData = await search(title)
