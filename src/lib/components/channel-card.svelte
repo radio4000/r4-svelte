@@ -64,7 +64,7 @@
 			display: grid;
 			grid-template-columns: 4rem auto;
 			align-items: center;
-			padding: 0.2rem 0.5rem;
+			padding: 0.5rem;
 		}
 
 		:global(.grid) & {
@@ -76,9 +76,9 @@
 	h3 {
 		font-weight: 600;
 	}
+
 	h3,
 	p {
-		margin: 0;
 		line-height: 1.2;
 	}
 

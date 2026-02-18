@@ -235,12 +235,9 @@
 		background: var(--accent-3);
 	}
 
-	p {
-		margin: 0;
-		/* tags */
-		:global(a) {
-			color: var(--gray-10);
-		}
+	h3 + p {
+		line-height: 1.2;
+		color: light-dark(var(--gray-11), var(--gray-10));
 	}
 
 	time {
