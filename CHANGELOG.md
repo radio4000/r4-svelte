@@ -2,6 +2,11 @@
 
 ## February 2026
 
+- Removed Firebase — all v1 data migrated to PostgreSQL, so every Firebase code path could go
+- #UI Added `g h` and `g d` keyboard shortcuts to jump to home and debug pages
+- #Search Faster search page — channels and tracks now load in parallel instead of waiting for each other
+- #UI New `<FancyButton>` component used across search and other pages
+- #Player Fixed empty decks on page reload
 - #Search views: a system (?) for filtering tracks by channel, tags, and full-text search on the client, fast, cached reactive. Should open up for some nice features.
 - #Search changed its URL param from `?search=` to `?q=`, and now support @mentions and #hashtags as well as free text search across all channels and tracks
 - #Mix supports up to 8 decks on /mix (was 2)
