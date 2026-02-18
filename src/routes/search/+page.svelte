@@ -105,8 +105,9 @@
 	const isLoading = $derived(tracksLoading || channelsLoading)
 	const tracks = $derived(viewQuery.tracks)
 	const playlistTitle = $derived(searchQuery.trim())
-	const deckCount = $derived(Object.keys(appState.decks).length)
-	const deckSuffix = $derived(deckCount > 1 ? ` (deck ${appState.active_deck_id})` : '')
+	const deckKeys = $derived(Object.keys(appState.decks))
+	const multiDeck = $derived(deckKeys.length > 1)
+	const deckLabel = $derived(multiDeck ? `Deck ${deckKeys.indexOf(String(appState.active_deck_id)) + 1}` : '')
 
 	async function playSearchResults() {
 		if (!tracks.length) return
@@ -167,11 +168,13 @@
 
 		<menu>
 			{#if !tracksLoading && tracks.length > 0}
-				<ButtonFeedback onclick={playSearchResults} success="Playing {tracks.length} tracks{deckSuffix}">
-					<Icon icon="play-fill" size={16} />{m.search_play_all()}{deckSuffix}
+				<ButtonFeedback onclick={playSearchResults}>
+					{#snippet successChildren()}<Icon icon="play-fill" size={16} /> Playing {tracks.length}{/snippet}
+					<Icon icon="play-fill" size={16} />{multiDeck ? `Play on ${deckLabel}` : m.search_play_all()}
 				</ButtonFeedback>
-				<ButtonFeedback onclick={queueSearchResults} success="Queued {tracks.length} tracks{deckSuffix}">
-					<Icon icon="next-fill" size={16} />{m.search_queue_all()}{deckSuffix}
+				<ButtonFeedback onclick={queueSearchResults}>
+					{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
+					<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
 				</ButtonFeedback>
 			{/if}
 		</menu>
