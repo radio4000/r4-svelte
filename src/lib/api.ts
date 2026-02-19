@@ -261,6 +261,7 @@ export function setPlaylist(deckId: number, trackIds: string[], options: {title?
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
+	deck.auto_radio = undefined
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
 }

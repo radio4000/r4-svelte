@@ -90,7 +90,7 @@ describe('weeklyShuffle — determinism', () => {
 
 	it('same tracks in different input order => same shuffle (cross-client determinism)', () => {
 		const tracks = makeTracks(10)
-		const reversed = [...tracks].reverse()
+		const reversed = tracks.toReversed()
 		const r1 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS)
 		const r2 = weeklyShuffle(reversed, ROTATION_START, WEEK_A_MS)
 		expect(r1.tracks.map((t) => t.id)).toEqual(r2.tracks.map((t) => t.id))

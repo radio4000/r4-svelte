@@ -273,7 +273,14 @@
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					<span class="header-channel-text">
-						<h3 class="title">{headerChannel.name}</h3>
+						<h3 class="title">
+							{headerChannel.name}
+							{#if isListeningToBroadcast}
+								<span class="mode-badge">Live</span>
+							{:else if deck?.auto_radio}
+								<span class="mode-badge">Auto</span>
+							{/if}
+						</h3>
 						{#if deck?.playlist_title}
 							<small class="deck-title">{deck.playlist_title}</small>
 						{/if}
@@ -562,6 +569,20 @@
 		white-space: nowrap;
 		width: fit-content;
 		max-width: 100%;
+	}
+
+	.mode-badge {
+		display: inline-block;
+		vertical-align: middle;
+		margin-left: 0.3rem;
+		font-size: var(--font-1);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		background: var(--accent-9);
+		color: var(--gray-1);
+		padding: 0 0.3rem;
+		border-radius: 3px;
 	}
 
 	.deck-title {

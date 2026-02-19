@@ -99,12 +99,17 @@
 			{title: channel.name}
 		)
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+		// Mark the active deck as auto-radio. Set AFTER playTrack because playTrack may call
+		// setPlaylist internally (which clears auto_radio). Use active_deck_id in case playTrack
+		// auto-created a new deck.
+		const activeDeckId = appState.active_deck_id
+		if (appState.decks[activeDeckId]) appState.decks[activeDeckId].auto_radio = true
 		// Seek to current offset once the player is ready — recompute at seek time so the position is fresh.
 		// Also check currentTime > 0 as a fallback for SoundCloud, where duration is cached
 		// asynchronously and may lag behind actual playback start.
 		const deadline = performance.now() + 8000
 		while (performance.now() < deadline) {
-			const el = getMediaPlayer(deckId)
+			const el = getMediaPlayer(activeDeckId)
 			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
 			const hasStarted = el && el.currentTime > 0
 			if (hasDuration || hasStarted) {
