@@ -129,6 +129,11 @@
 			<h3 class="title">
 				{#if displayChannel}
 					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+					{#if deck?.listening_to_channel_id}
+						<span class="badge">Live</span>
+					{:else if deck?.auto_radio}
+						<span class="badge">Auto</span>
+					{/if}
 				{:else if displaySlug}
 					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
 				{:else if displayTrack}

@@ -8,10 +8,12 @@
  * order is identical for every client within the same week.
  */
 
+import {shuffleArray} from '$lib/utils'
+
 export interface AutoRadioTrack {
 	id: string
 	url: string
-	durationSeconds: number
+	duration: number
 	title?: string
 }
 
@@ -28,10 +30,7 @@ export interface WeeklyShuffleResult {
 	totalDuration: number
 }
 
-// ---------------------------------------------------------------------------
-// Seeded PRNG (mulberry32 — fast, good distribution, 32-bit state)
-// ---------------------------------------------------------------------------
-
+/** Seeded PRNG (mulberry32 — fast, good distribution, 32-bit state) */
 function mulberry32(seed: number): () => number {
 	let s = seed >>> 0
 	return () => {
@@ -50,10 +49,6 @@ function hashSeed(n: number): number {
 	return h ^ (h >>> 16)
 }
 
-// ---------------------------------------------------------------------------
-// Week number (Sunday-aligned UTC)
-// ---------------------------------------------------------------------------
-
 /** Returns the number of complete Sunday-aligned weeks since the Unix epoch. */
 function sundayWeekNumber(nowMs: number): number {
 	// Unix epoch (1970-01-01) was a Thursday. Offset to align to Sunday.
@@ -64,28 +59,15 @@ function sundayWeekNumber(nowMs: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// Fisher-Yates with seeded PRNG
-// ---------------------------------------------------------------------------
-
-function shuffleWithPrng<T>(arr: T[], rand: () => number): T[] {
-	const out = arr.slice()
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(rand() * (i + 1))
-		;[out[i], out[j]] = [out[j], out[i]]
-	}
-	return out
-}
-
-// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Validate and normalize tracks — keeps only those with durationSeconds > 0
+ * Validate and normalize tracks — keeps only those with duration > 0
  * and a non-empty url.
  */
 export function normalizeTracks(tracks: AutoRadioTrack[]): AutoRadioTrack[] {
-	return tracks.filter((t) => t.durationSeconds > 0 && t.url)
+	return tracks.filter((t) => t.duration > 0 && t.url)
 }
 
 /**
@@ -102,8 +84,8 @@ export function weeklyShuffle(tracks: AutoRadioTrack[], rotationStartUnix: numbe
 	const rawSeed = rotationStartUnix + week
 	const seed = hashSeed(rawSeed)
 	const rand = mulberry32(seed)
-	const shuffled = shuffleWithPrng(valid, rand)
-	const totalDuration = shuffled.reduce((sum, t) => sum + t.durationSeconds, 0)
+	const shuffled = shuffleArray(valid, rand)
+	const totalDuration = shuffled.reduce((sum, t) => sum + t.duration, 0)
 	return {tracks: shuffled, totalDuration}
 }
 
@@ -128,7 +110,7 @@ export function playbackState(
 	let acc = 0
 	let trackIndex = 0
 	for (let i = 0; i < tracks.length; i++) {
-		const end = acc + tracks[i].durationSeconds
+		const end = acc + tracks[i].duration
 		if (position < end) {
 			trackIndex = i
 			break
@@ -139,7 +121,7 @@ export function playbackState(
 
 	const currentTrack = tracks[trackIndex]
 	const offsetSeconds = position - acc
-	const secondsUntilNextTrack = currentTrack.durationSeconds - offsetSeconds
+	const secondsUntilNextTrack = currentTrack.duration - offsetSeconds
 	const nextTrack = tracks[(trackIndex + 1) % tracks.length]
 
 	return {
@@ -159,6 +141,7 @@ export class AutoRadio {
 	#rotationStartUnix: number
 	#shuffled: AutoRadioTrack[] = []
 	#totalDuration = 0
+	#week = -1
 
 	constructor(rotationStartUnix: number) {
 		this.#rotationStartUnix = rotationStartUnix
@@ -168,17 +151,17 @@ export class AutoRadio {
 		const result = weeklyShuffle(tracks, this.#rotationStartUnix, nowMs)
 		this.#shuffled = result.tracks
 		this.#totalDuration = result.totalDuration
+		this.#week = sundayWeekNumber(nowMs)
 	}
 
 	tick(nowMs = Date.now()): PlaybackSnapshot | null {
-		// Re-shuffle if the week rolled over since last setTracks call
-		if (this.#shuffled.length > 0) {
+		// Re-shuffle only when the week rolls over
+		const week = sundayWeekNumber(nowMs)
+		if (week !== this.#week && this.#shuffled.length > 0) {
 			const result = weeklyShuffle(this.#shuffled, this.#rotationStartUnix, nowMs)
-			// Only reassign if order actually changed (week boundary)
-			if (result.totalDuration !== this.#totalDuration) {
-				this.#shuffled = result.tracks
-				this.#totalDuration = result.totalDuration
-			}
+			this.#shuffled = result.tracks
+			this.#totalDuration = result.totalDuration
+			this.#week = week
 		}
 		return playbackState(this.#shuffled, this.#totalDuration, this.#rotationStartUnix, nowMs)
 	}

@@ -273,7 +273,14 @@
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					<span class="header-channel-text">
-						<h3 class="title">{headerChannel.name}</h3>
+						<h3 class="title">
+							{headerChannel.name}
+							{#if isListeningToBroadcast}
+								<span class="badge">Live</span>
+							{:else if deck?.auto_radio}
+								<span class="badge">Auto</span>
+							{/if}
+						</h3>
 						{#if deck?.playlist_title}
 							<small class="deck-title">{deck.playlist_title}</small>
 						{/if}

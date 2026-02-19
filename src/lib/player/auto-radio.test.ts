@@ -11,7 +11,7 @@ function makeTracks(n: number): AutoRadioTrack[] {
 	return Array.from({length: n}, (_, i) => ({
 		id: `t${i}`,
 		url: `https://example.com/${i}`,
-		durationSeconds: 60 + i, // 60s, 61s, 62s … to avoid uniform durations
+		duration: 60 + i, // 60s, 61s, 62s … to avoid uniform durations
 		title: `Track ${i}`
 	}))
 }
@@ -30,19 +30,19 @@ const WEEK_A_TZ_MS = WEEK_A_MS // UTC timestamps are timezone-agnostic
 // ---------------------------------------------------------------------------
 
 describe('normalizeTracks', () => {
-	it('removes tracks with durationSeconds <= 0', () => {
+	it('removes tracks with duration <= 0', () => {
 		const tracks: AutoRadioTrack[] = [
-			{id: 'a', url: 'u', durationSeconds: 0},
-			{id: 'b', url: 'u', durationSeconds: -5},
-			{id: 'c', url: 'u', durationSeconds: 30}
+			{id: 'a', url: 'u', duration: 0},
+			{id: 'b', url: 'u', duration: -5},
+			{id: 'c', url: 'u', duration: 30}
 		]
 		expect(normalizeTracks(tracks).map((t) => t.id)).toEqual(['c'])
 	})
 
 	it('removes tracks with empty url', () => {
 		const tracks: AutoRadioTrack[] = [
-			{id: 'a', url: '', durationSeconds: 30},
-			{id: 'b', url: 'https://x.com', durationSeconds: 30}
+			{id: 'a', url: '', duration: 30},
+			{id: 'b', url: 'https://x.com', duration: 30}
 		]
 		expect(normalizeTracks(tracks).map((t) => t.id)).toEqual(['b'])
 	})
@@ -90,7 +90,7 @@ describe('weeklyShuffle — determinism', () => {
 
 	it('same tracks in different input order => same shuffle (cross-client determinism)', () => {
 		const tracks = makeTracks(10)
-		const reversed = [...tracks].reverse()
+		const reversed = tracks.toReversed()
 		const r1 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS)
 		const r2 = weeklyShuffle(reversed, ROTATION_START, WEEK_A_MS)
 		expect(r1.tracks.map((t) => t.id)).toEqual(r2.tracks.map((t) => t.id))
@@ -105,7 +105,7 @@ describe('weeklyShuffle — determinism', () => {
 
 	it('totalDuration equals sum of all track durations', () => {
 		const tracks = makeTracks(5)
-		const expected = tracks.reduce((s, t) => s + t.durationSeconds, 0)
+		const expected = tracks.reduce((s, t) => s + t.duration, 0)
 		const {totalDuration} = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS)
 		expect(totalDuration).toBe(expected)
 	})
@@ -117,7 +117,7 @@ describe('weeklyShuffle — determinism', () => {
 
 describe('playbackState', () => {
 	const tracks = makeTracks(5) // durations: 60, 61, 62, 63, 64 => total 310
-	const total = tracks.reduce((s, t) => s + t.durationSeconds, 0) // 310
+	const total = tracks.reduce((s, t) => s + t.duration, 0) // 310
 
 	it('returns null for empty track list', () => {
 		expect(playbackState([], 0, ROTATION_START, WEEK_A_MS)).toBeNull()
@@ -171,7 +171,7 @@ describe('playbackState', () => {
 		const nowMs = (ROTATION_START + 90) * 1000
 		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
 		expect(snap.secondsUntilNextTrack).toBeGreaterThan(0)
-		expect(snap.secondsUntilNextTrack).toBeLessThanOrEqual(snap.currentTrack.durationSeconds)
+		expect(snap.secondsUntilNextTrack).toBeLessThanOrEqual(snap.currentTrack.duration)
 	})
 
 	it('works correctly for elapsed time before rotation start (negative elapsed)', () => {

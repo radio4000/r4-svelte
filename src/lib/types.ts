@@ -35,6 +35,7 @@ export interface Deck {
 	queue_panel_width?: number
 	broadcasting_channel_id?: string
 	listening_to_channel_id?: string
+	auto_radio?: boolean
 	track_played_at?: string
 	seeked_at?: string
 	seek_position?: number

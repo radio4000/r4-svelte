@@ -19,7 +19,7 @@
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import {relativeDate, relativeDateSolar} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
-	import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
+	import {weeklyShuffle, playbackState, normalizeTracks} from '$lib/player/auto-radio'
 	import {setPlaylist, playTrack, seekTo, getMediaPlayer} from '$lib/api'
 
 	let {children} = $props()
@@ -78,19 +78,13 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 
-	let tracksWithDuration = $derived((tracksQuery.data ?? []).filter((t) => t.duration && t.duration > 0))
+	let autoRadioTracks = $derived(normalizeTracks(tracksQuery.data ?? []))
 
 	async function joinAutoRadio() {
-		if (!channel || !tracksWithDuration.length) return
+		if (!channel || !autoRadioTracks.length) return
 		const deckId = appState.active_deck_id
 		const rotationStartUnix = Math.floor(new Date(channel.created_at).getTime() / 1000)
-		const autoTracks = tracksWithDuration.map((t) => ({
-			id: t.id,
-			url: t.url,
-			durationSeconds: t.duration ?? 0,
-			title: t.title
-		}))
-		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
+		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoRadioTracks, rotationStartUnix, Date.now())
 		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 		if (!snap) return
 		await setPlaylist(
@@ -99,22 +93,27 @@
 			{title: channel.name}
 		)
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+		// Mark the active deck as auto-radio. Set AFTER playTrack because playTrack may call
+		// setPlaylist internally (which clears auto_radio). Use active_deck_id in case playTrack
+		// auto-created a new deck.
+		const activeDeckId = appState.active_deck_id
+		if (appState.decks[activeDeckId]) appState.decks[activeDeckId].auto_radio = true
 		// Seek to current offset once the player is ready — recompute at seek time so the position is fresh.
 		// Also check currentTime > 0 as a fallback for SoundCloud, where duration is cached
 		// asynchronously and may lag behind actual playback start.
 		const deadline = performance.now() + 8000
 		while (performance.now() < deadline) {
-			const el = getMediaPlayer(deckId)
+			const el = getMediaPlayer(activeDeckId)
 			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
 			const hasStarted = el && el.currentTime > 0
 			if (hasDuration || hasStarted) {
 				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+				if (freshSnap) seekTo(activeDeckId, freshSnap.offsetSeconds)
 				// SoundCloud may process seeks asynchronously and silently drop the first one
 				// while still buffering. Retry once after a short wait with a freshly computed offset.
 				await new Promise((r) => setTimeout(r, 350))
 				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+				if (retrySnap) seekTo(activeDeckId, retrySnap.offsetSeconds)
 				break
 			}
 			await new Promise((r) => setTimeout(r, 150))
@@ -134,7 +133,7 @@
 			<div class="info">
 				<h1>
 					{channel.name}
-					{#if isChannelLive}<span class="live-badge">Live</span>{/if}
+					{#if isChannelLive}<span class="badge">Live</span>{/if}
 				</h1>
 				<p class="slug">
 					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
@@ -155,7 +154,7 @@
 			</div>
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-				{#if tracksWithDuration.length > 0}
+				{#if autoRadioTracks.length > 0}
 					<button type="button" onclick={joinAutoRadio}>
 						<Icon icon="signal" />
 						{m.auto_radio_join()}
@@ -269,19 +268,6 @@
 		margin-top: 0.1rem;
 		font-size: clamp(var(--font-7), 7vw, var(--font-9));
 		line-height: 1.05;
-	}
-
-	.live-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.35rem;
-		font-size: var(--font-2);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.35rem;
-		border-radius: 3px;
 	}
 
 	.description {
