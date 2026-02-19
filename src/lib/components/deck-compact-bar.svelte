@@ -130,9 +130,9 @@
 				{#if displayChannel}
 					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
 					{#if deck?.listening_to_channel_id}
-						<span class="mode-badge">Live</span>
+						<span class="badge">Live</span>
 					{:else if deck?.auto_radio}
-						<span class="mode-badge">Auto</span>
+						<span class="badge">Auto</span>
 					{/if}
 				{:else if displaySlug}
 					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
@@ -283,21 +283,7 @@
 		white-space: nowrap;
 	}
 
-	.mode-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.3rem;
-		font-size: var(--font-1);
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.3rem;
-		border-radius: 3px;
-	}
-
-	.description {
+.description {
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;

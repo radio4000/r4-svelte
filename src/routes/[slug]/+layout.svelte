@@ -139,7 +139,7 @@
 			<div class="info">
 				<h1>
 					{channel.name}
-					{#if isChannelLive}<span class="live-badge">Live</span>{/if}
+					{#if isChannelLive}<span class="badge">Live</span>{/if}
 				</h1>
 				<p class="slug">
 					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
@@ -276,20 +276,7 @@
 		line-height: 1.05;
 	}
 
-	.live-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.35rem;
-		font-size: var(--font-2);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.35rem;
-		border-radius: 3px;
-	}
-
-	.description {
+.description {
 		white-space: pre-wrap;
 	}
 
