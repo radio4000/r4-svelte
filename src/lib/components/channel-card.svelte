@@ -30,7 +30,7 @@
 			<h3>
 				{channel.name}
 				{#if broadcasting}
-					<span>{m.status_live_short()}</span>
+					<span class="channel-badge">{m.status_live_short()}</span>
 				{/if}
 				{#if channel.latest_track_at}
 					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
