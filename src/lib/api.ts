@@ -176,24 +176,26 @@ export async function playTrack(
 		deck.auto_radio_drifted = true
 	}
 
-	// Auto-update broadcast if currently broadcasting
+	// Auto-update broadcast if currently broadcasting.
+	// Notify live listeners immediately via WebSocket, then persist to DB for late joiners.
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
-		try {
-			await upsertRemoteBroadcast(broadcastingChannelId)
-			notifyBroadcastState(broadcastingChannelId)
-			log.log('broadcast_auto_updated', {
-				channelId: broadcastingChannelId,
-				trackId: id,
-				startReason
+		notifyBroadcastState(broadcastingChannelId)
+		upsertRemoteBroadcast(broadcastingChannelId)
+			.then(() => {
+				log.log('broadcast_auto_updated', {
+					channelId: broadcastingChannelId,
+					trackId: id,
+					startReason
+				})
 			})
-		} catch (error) {
-			log.error('broadcast_auto_update_failed', {
-				channelId: broadcastingChannelId,
-				trackId: id,
-				error: /** @type {Error} */ error.message
+			.catch((error) => {
+				log.error('broadcast_auto_update_failed', {
+					channelId: broadcastingChannelId,
+					trackId: id,
+					error: /** @type {Error} */ error.message
+				})
 			})
-		}
 	}
 
 	// Wait for Svelte to update the DOM (render the player element) before calling play
