@@ -1,4 +1,5 @@
 <script>
+	import {goto} from '$app/navigation'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -8,6 +9,12 @@
 	let error = $state(/** @type {string | null} */ (null))
 	let success = $state(false)
 	let loading = $state(false)
+
+	$effect(() => {
+		if (!appState.user) {
+			goto(`/auth?redirect=${encodeURIComponent('/settings/account/password')}`)
+		}
+	})
 
 	async function updatePassword(e) {
 		e.preventDefault()
@@ -47,9 +54,7 @@
 
 	<h1>{m.account_change_password()}</h1>
 
-	{#if !appState.user}
-		<p>{m.account_sign_in_prompt()}</p>
-	{:else}
+	{#if appState.user}
 		<form class="form" onsubmit={updatePassword}>
 			<fieldset>
 				<label for="new-password">{m.auth_new_password()}</label>

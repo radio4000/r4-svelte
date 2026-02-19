@@ -6,6 +6,10 @@
 	padding-inline: 0.5rem;
 }
 
+.constrained--smaller {
+	max-width: 40ch;
+}
+
 .container {
 	padding-inline: 0.5rem;
 }
@@ -148,6 +152,11 @@ nav {
 	a:has(svg, i) {
 		gap: 0.2rem;
 	}
+}
+
+menu.centerwrap {
+	flex-wrap: wrap;
+	justify-content: center;
 }
 
 menu + menu.nav-vertical {
