@@ -703,14 +703,12 @@ async function applyBroadcastState(channelId, decks) {
 export async function validateListeningState() {
 	for (const deck of Object.values(appState.decks)) {
 		if (!deck.listening_to_channel_id) continue
-
 		try {
 			const {data} = await sdk.supabase
 				.from('broadcast')
 				.select('channel_id')
 				.eq('channel_id', deck.listening_to_channel_id)
 				.single()
-
 			if (!data) {
 				deck.listening_to_channel_id = undefined
 			}

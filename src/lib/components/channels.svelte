@@ -3,8 +3,11 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
-	import {shuffleArray, channelAvatarUrl} from '$lib/utils.ts'
-	import {broadcastsCollection, channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelAvatarUrl} from '$lib/utils.ts'
+	import {broadcastsCollection, channelsCollection, tracksCollection, queryClient} from '$lib/tanstack/collections'
+	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/tanstack/collections/channels'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -13,7 +16,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	const {channels = [], display: initialDisplay} = $props()
+	const {display: initialDisplay} = $props()
 
 	const activeChannelId = $derived.by(() => {
 		// Check all decks for listening_to_channel_id or active playlist_track
@@ -29,9 +32,11 @@
 		return undefined
 	})
 
-	let shuffleSeed = $state(0)
-	let limit = $state(16)
-	let perPage = $state(100)
+	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
+	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
+	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
+	let loadedAll = $state(false)
+	let loadingMore = $state(false)
 	let filter = $derived(appState.channels_filter || '10+')
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
@@ -39,50 +44,104 @@
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
 	let display = $derived(appState.channels_display || initialDisplay || 'grid')
 
-	const filteredChannels = $derived(
-		channels.filter((c) => {
-			if (filter === 'all') return true
-			if (filter === 'broadcasting' && !broadcastsCollection.state.get(c.id)) return false
-			if (filter === 'artwork' && (!c.image || !c.track_count || c.track_count < 2)) return false
-			if (filter === '10+' && (!c.track_count || c.track_count < 10)) return false
-			if (filter === '100+' && (!c.track_count || c.track_count < 100)) return false
-			if (filter === '1000+' && (!c.track_count || c.track_count < 1000)) return false
-			return true
-		})
+	/** Minimum channel count for views that need a dense dataset */
+	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
+	const queryLimit = $derived(Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit))
+
+	// Reactive broadcast IDs for the broadcasting filter
+	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
+	const broadcastIds = $derived(
+		(broadcastsQuery.data ?? []).map((b) => /** @type {{channel_id: string}} */ (b).channel_id)
 	)
 
-	const sortKey = {
-		updated: (c) => c.latest_track_at ?? '',
-		created: (c) => c.created_at ?? '',
-		name: (c) => c.name?.toLowerCase() ?? '',
-		tracks: (c) => c.track_count ?? 0
+	/** @type {Record<string, string>} Sort key → DB column name (or 'shuffle' for random view) */
+	const sortColumns = {
+		shuffle: 'shuffle',
+		updated: 'latest_track_at',
+		created: 'created_at',
+		name: 'name',
+		tracks: 'track_count'
 	}
 
-	const sortedChannels = $derived(
-		order === 'shuffle'
-			? filteredChannels
-			: [...filteredChannels]
-					.filter((c) => order !== 'updated' || c.latest_track_at)
-					.sort((a, b) => {
-						const av = sortKey[order](a)
-						const bv = sortKey[order](b)
-						const cmp = av < bv ? -1 : av > bv ? 1 : 0
-						return orderDirection === 'asc' ? cmp : -cmp
-					})
-	)
+	/** @type {Record<string, number>} Filter → minimum track count */
+	const filterMinTracks = {artwork: 2, '10+': 10, '100+': 100, '1000+': 1000}
 
-	const orderedChannels = $derived.by(() => {
-		if (order === 'shuffle') {
-			void shuffleSeed
-			return shuffleArray([...sortedChannels])
+	/** Map UI filter/sort state → ChannelQueryParams for loadMoreChannels */
+	const channelQueryParams = $derived.by(() => ({
+		idIn: filter === 'broadcasting' && broadcastIds.length ? broadcastIds : undefined,
+		trackCountGte: filterMinTracks[filter],
+		imageNotNull: filter === 'artwork',
+		shuffle: order === 'shuffle',
+		orderColumn: sortColumns[order],
+		ascending: (orderDirection || 'desc') === 'asc'
+	}))
+
+	// Reset pagination when filter/sort changes
+	$effect(() => {
+		void filter
+		void order
+		void orderDirection
+		paginatedLimit = CHANNELS_PAGE_SIZE
+		fetchedUpTo = CHANNELS_PAGE_SIZE
+		loadedAll = false
+		nextPageSize = CHANNELS_PAGE_SIZE
+	})
+
+	// Fetch channels driven by the active filter + sort
+	const channelsQuery = useLiveQuery((q) => {
+		let base = q.from({ch: channelsCollection})
+		if (filter === 'broadcasting') {
+			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
+		} else {
+			const minTracks = filterMinTracks[filter]
+			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
+			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
 		}
-		return sortedChannels
+		const col = sortColumns[order]
+		if (col) {
+			base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+		}
+		return base.limit(queryLimit)
+	})
+	const channels = $derived(channelsQuery.data ?? [])
+	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
+
+	// Auto-fetch from supabase when the query needs more data than we have
+	$effect(() => {
+		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
+			fetchUpTo(queryLimit)
+		}
 	})
 
-	const realChannels = $derived({
-		filtered: filteredChannels,
-		displayed: orderedChannels.slice(0, limit)
-	})
+	/** Fetch from supabase until we have at least `target` rows (or exhaust the dataset) */
+	async function fetchUpTo(target) {
+		loadingMore = true
+		try {
+			while (fetchedUpTo < target && !loadedAll) {
+				const batch = Math.min(nextPageSize, target - fetchedUpTo)
+				const result = await loadMoreChannels({
+					...channelQueryParams,
+					offset: fetchedUpTo,
+					limit: batch
+				})
+				fetchedUpTo += batch
+				if (result.length < batch) loadedAll = true
+				nextPageSize *= 2
+			}
+		} finally {
+			loadingMore = false
+		}
+	}
+
+	async function handleLoadMore() {
+		paginatedLimit += nextPageSize
+		if (paginatedLimit > fetchedUpTo && !loadedAll) {
+			await fetchUpTo(paginatedLimit)
+		}
+	}
+
+	const orderedChannels = $derived(channels)
 
 	const canvasMedia = $derived(
 		orderedChannels.map((c) => ({
@@ -164,7 +223,10 @@
 					class:active={filter === 'broadcasting'}
 					onclick={() => setFilter('broadcasting')}
 					{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
-					>{m.channels_filter_option_broadcasting()}{#if broadcastsCollection.state.size} <span class="badge" style:background="var(--color-red)" style:color="white">{broadcastsCollection.state.size}</span>{/if}</button
+					>{m.channels_filter_option_broadcasting()}{#if broadcastsCollection.state.size}
+						<span class="badge" style:background="var(--color-red)" style:color="white"
+							>{broadcastsCollection.state.size}</span
+						>{/if}</button
 				>
 				<button
 					class:active={filter === '10+'}
@@ -236,7 +298,15 @@
 			<SortControls
 				bind:order={appState.channels_order}
 				bind:direction={appState.channels_order_direction}
-				onreshuffle={() => shuffleSeed++}
+				onreshuffle={() => {
+					paginatedLimit = CHANNELS_PAGE_SIZE
+					fetchedUpTo = CHANNELS_PAGE_SIZE
+					loadedAll = false
+					nextPageSize = CHANNELS_PAGE_SIZE
+					queryClient.invalidateQueries({
+						predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
+					})
+				}}
 			/>
 		</PopoverMenu>
 	</menu>
@@ -246,28 +316,30 @@
 			<MapChannels.default {channels} {openSlug} />
 		{/await}
 	{:else if display === 'tuner'}
-		<SpectrumScanner channels={realChannels.filtered} />
+		<SpectrumScanner {channels} />
 	{:else if display === 'infinite'}
 		{#await import('./infinite-canvas-ogl.svelte') then InfiniteCanvas}
 			<InfiniteCanvas.default media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
 		{/await}
 	{:else}
 		<ol class={display}>
-			{#each realChannels.displayed as channel (channel.id)}
+			{#each orderedChannels as channel (channel.id)}
 				<li>
 					<ChannelCard {channel} />
 				</li>
 			{/each}
 		</ol>
 		<footer>
-			{#if realChannels.displayed?.length > 0}
+			{#if orderedChannels.length > 0}
 				<p>
 					{m.channels_summary({
-						visible: realChannels.displayed.length,
-						total: realChannels.filtered.length
+						visible: orderedChannels.length,
+						total: channels.length
 					})}
-					{#if realChannels.displayed.length < realChannels.filtered.length}
-						<button onclick={() => (limit = limit + perPage)}>{m.channels_load_more({count: perPage})}</button>
+					{#if hasMore}
+						<button onclick={handleLoadMore} disabled={loadingMore}>
+							{loadingMore ? '...' : m.channels_load_more({count: nextPageSize})}
+						</button>
 					{/if}
 				</p>
 			{/if}

@@ -11,26 +11,21 @@
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import {onMount} from 'svelte'
-	import {setChannelsCtx} from '$lib/contexts'
+	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale, setLocale, locales, isLocale} from '$lib/paraglide/runtime'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
-	import {queryClient, channelsCollection} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {queryClient} from '$lib/tanstack/collections'
 
 	const log = logger.ns('layout').seal()
 
 	/** @type {import('./$types').LayoutProps} */
 	const {data, children} = $props()
 
-	// Query channels once at layout level, share via context
-	// Defer useLiveQuery until after preloading to avoid state_unsafe_mutation during hydration
-	const channelsQuery = useLiveQuery((q) => q.from({channels: channelsCollection}))
-	let channels = $derived(channelsQuery?.data || [])
-	setChannelsCtx(() => channels)
+	// Channels are now fetched on-demand by each page's useLiveQuery (no more fetch-all)
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)

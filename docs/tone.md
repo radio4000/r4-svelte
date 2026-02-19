@@ -5,13 +5,16 @@ Voice guide for all copy — UI text, docs, changelog, onboarding, errors. Anyon
 Radio4000 data model works with channels and tracks, and we also call it a "radio channel". Which to pick depends on context.
 
 Describe the current state or result, not the process.
+
 - Changelog: "Queue no longer resets between tracks" — not "Fixed queue reset bug"
 - Docs: "The player manages playback across decks" — not "We implemented a multi-deck system"
 
 Talk to the user. Suggest what to do next.
+
 - "Start your radio." not "Users can create a radio station."
 
 ## Complete when it adds information, terse when it doesn't
+
 Clarity is the goal, not brevity for its own sake. "Shuffle remaining tracks in queue" is dense with useful info — keep it. "Are you sure you want to delete this track? This action cannot be undone" says nothing that "Remove this track? Can't be undone." doesn't.
 
 Test: can you cut a word without losing meaning? Cut it. Does adding a word make the next action clearer? Add it.

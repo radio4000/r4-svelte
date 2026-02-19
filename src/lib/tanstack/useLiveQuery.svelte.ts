@@ -5,23 +5,60 @@
 // it improves perf by avoiding some extra loops
 import {untrack} from 'svelte'
 import {BaseQueryBuilder, createLiveQueryCollection} from '@tanstack/db'
+import type {
+	Collection,
+	Context,
+	GetResult,
+	InferResultType,
+	InitialQueryBuilder,
+	LiveQueryCollectionConfig,
+	NonSingleResult,
+	QueryBuilder,
+	SingleResult
+} from '@tanstack/db'
+import type {UseLiveQueryReturn, UseLiveQueryReturnWithCollection} from '@tanstack/svelte-db'
 import {logger} from '$lib/logger'
 
 const log = logger.ns('livequery').seal()
 
-function toValue(value) {
+function toValue(value: unknown) {
 	if (typeof value === `function`) {
 		return value()
 	}
 	return value
 }
 
+type MaybeGetter<T> = T | (() => T)
+
 let queryCounter = 0
 
-export function useLiveQuery(configOrQueryOrCollection, deps = []) {
+// Overloads matching @tanstack/svelte-db
+export function useLiveQuery<TContext extends Context>(
+	queryFn: (q: InitialQueryBuilder) => QueryBuilder<TContext>,
+	deps?: Array<() => unknown>
+): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext>>
+export function useLiveQuery<TContext extends Context>(
+	queryFn: (q: InitialQueryBuilder) => QueryBuilder<TContext> | undefined | null,
+	deps?: Array<() => unknown>
+): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext> | undefined>
+export function useLiveQuery<TContext extends Context>(
+	config: LiveQueryCollectionConfig<TContext>,
+	deps?: Array<() => unknown>
+): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext>>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches @tanstack/svelte-db signature
+export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & NonSingleResult>
+): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, Array<TResult>>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches @tanstack/svelte-db signature
+export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & SingleResult>
+): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- implementation overload
+export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
 	const id = ++queryCounter
 	const t0 = performance.now()
-	let tCreateCollection, tSyncData
+	let tCreateCollection: number | undefined
+	let tSyncData: number | undefined
 
 	const collection = $derived.by(() => {
 		let unwrappedParam = configOrQueryOrCollection
@@ -75,7 +112,8 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		}
 	})
 
-	let internalData = $state([])
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic collection values
+	let internalData: any[] = $state([])
 	let status = $state('disabled')
 
 	const syncDataFromCollection = (currentCollection) => {
@@ -86,7 +124,7 @@ export function useLiveQuery(configOrQueryOrCollection, deps = []) {
 		tSyncData = performance.now() - t1
 	}
 
-	let currentUnsubscribe = null
+	let currentUnsubscribe: (() => void) | null = null
 
 	$effect(() => {
 		const currentCollection = collection

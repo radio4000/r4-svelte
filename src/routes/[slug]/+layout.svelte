@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {getChannelsCtx, setTracksQueryCtx} from '$lib/contexts'
+	import {setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
@@ -28,16 +28,16 @@
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
-	// Instant lookup from root layout's already-reactive channels context
-	const getChannels = getChannelsCtx()
-	// Fallback: direct query by slug (triggers on-demand fetch if not in bulk list)
+	// Fetch channel by slug (triggers on-demand fetch)
 	const channelBySlugQuery = useLiveQuery((q) =>
 		q
 			.from({channels: channelsCollection})
 			.where(({channels}) => eq(channels.slug, slug))
 			.findOne()
 	)
-	let channel = $derived(getChannels().find((c) => c.slug === slug) ?? channelBySlugQuery.data)
+	let channel = $derived(
+		/** @type {import('$lib/types').Channel | undefined} */ (/** @type {unknown} */ (channelBySlugQuery.data))
+	)
 	let isListeningToChannel = $derived(
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)

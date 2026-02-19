@@ -15,7 +15,6 @@ import {
 import {getOfflineExecutor} from '$lib/tanstack/collections/offline-executor'
 import {cacheReady} from '$lib/tanstack/query-cache-persistence'
 import {collectionsHydrated} from '$lib/tanstack/collection-persistence'
-import {fetchAllChannels} from '$lib/api/fetch-channels'
 import {appState} from '$lib/app-state.svelte'
 import * as api from '$lib/api'
 import * as queue from '$lib/player/queue'
@@ -48,13 +47,6 @@ async function preload() {
 	log.debug('preloading')
 	try {
 		await cacheReady
-
-		// Prefetch all channels so search works immediately
-		await queryClient.prefetchQuery({
-			queryKey: ['channels'],
-			queryFn: fetchAllChannels,
-			staleTime: 24 * 60 * 60 * 1000 // 24h - match channelsCollection
-		})
 
 		validateListeningState().catch((err) => log.error('validate_listening_state_error', err))
 

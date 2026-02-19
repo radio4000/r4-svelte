@@ -64,10 +64,12 @@ function sundayWeekNumber(nowMs: number): number {
 
 /**
  * Validate and normalize tracks — keeps only those with duration > 0
- * and a non-empty url.
+ * and a non-empty url, narrowing nullable duration from DB Track to AutoRadioTrack.
  */
-export function normalizeTracks(tracks: AutoRadioTrack[]): AutoRadioTrack[] {
-	return tracks.filter((t) => t.duration > 0 && t.url)
+export function normalizeTracks(tracks: Array<{id: string; url: string; duration: number | null}>): AutoRadioTrack[] {
+	return tracks.filter(
+		(t): t is {id: string; url: string; duration: number} => !!t.duration && t.duration > 0 && !!t.url
+	) as AutoRadioTrack[]
 }
 
 /**

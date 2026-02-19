@@ -129,7 +129,9 @@ describe('playbackState', () => {
 
 	it('first track at rotation start (position 0)', () => {
 		const nowMs = ROTATION_START * 1000 // elapsed = 0
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.trackIndex).toBe(0)
 		expect(snap.currentTrack.id).toBe('t0')
 		expect(snap.offsetSeconds).toBeCloseTo(0, 5)
@@ -138,7 +140,9 @@ describe('playbackState', () => {
 	it('correct track and offset mid-sequence', () => {
 		// position = 60 (end of t0) => start of t1
 		const nowMs = (ROTATION_START + 60) * 1000
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.currentTrack.id).toBe('t1')
 		expect(snap.offsetSeconds).toBeCloseTo(0, 5)
 	})
@@ -146,7 +150,9 @@ describe('playbackState', () => {
 	it('correct offset within a track', () => {
 		// position = 90 => 30s into t1 (which starts at 60)
 		const nowMs = (ROTATION_START + 90) * 1000
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.currentTrack.id).toBe('t1')
 		expect(snap.offsetSeconds).toBeCloseTo(30, 5)
 	})
@@ -154,7 +160,9 @@ describe('playbackState', () => {
 	it('loop: after last track, wraps to first', () => {
 		// position = total => wraps to 0 => first track
 		const nowMs = (ROTATION_START + total) * 1000
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.trackIndex).toBe(0)
 		expect(snap.currentTrack.id).toBe('t0')
 	})
@@ -162,14 +170,18 @@ describe('playbackState', () => {
 	it('nextTrack is first track when current is last', () => {
 		// position just inside last track (t4 starts at 60+61+62+63=246)
 		const nowMs = (ROTATION_START + 246 + 1) * 1000
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.currentTrack.id).toBe('t4')
 		expect(snap.nextTrack.id).toBe('t0')
 	})
 
 	it('secondsUntilNextTrack is positive and <= current track duration', () => {
 		const nowMs = (ROTATION_START + 90) * 1000
-		const snap = playbackState(tracks, total, ROTATION_START, nowMs)!
+		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
+		expect(snap).not.toBeNull()
+		if (!snap) return
 		expect(snap.secondsUntilNextTrack).toBeGreaterThan(0)
 		expect(snap.secondsUntilNextTrack).toBeLessThanOrEqual(snap.currentTrack.duration)
 	})

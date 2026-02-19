@@ -4,7 +4,7 @@ import {NonRetriableError} from '@tanstack/offline-transactions'
 import {sdk} from '@radio4000/sdk'
 import {appState} from '$lib/app-state.svelte'
 import type {PendingMutation} from '@tanstack/db'
-import {fetchAllChannels, fetchChannelBySlug} from '$lib/api/fetch-channels'
+import {fetchChannelBySlug} from '$lib/api/fetch-channels'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {log, txLog, getErrorMessage} from './utils'
@@ -13,29 +13,100 @@ import type {Channel} from '$lib/types'
 
 export type {Channel}
 
+export const CHANNELS_PAGE_SIZE = 20
+
+export type ChannelQueryParams = {
+	idIn?: string[]
+	trackCountGte?: number
+	imageNotNull?: boolean
+	orderColumn?: string
+	ascending?: boolean
+	shuffle?: boolean
+}
+
+/** Build a Supabase channels query (without limit/range). Shared by queryFn and loadMoreChannels. */
+function buildChannelsQuery(params: ChannelQueryParams) {
+	const view = params.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
+	let query = sdk.supabase.from(view).select('*')
+	if (params.idIn?.length) {
+		query = query.in('id', params.idIn)
+	} else if (params.imageNotNull && params.trackCountGte) {
+		query = query.not('image', 'is', null).gte('track_count', params.trackCountGte)
+	} else if (params.trackCountGte) {
+		query = query.gte('track_count', params.trackCountGte)
+	}
+	if (params.shuffle) return query
+	return query.order(params.orderColumn ?? 'created_at', {ascending: params.ascending ?? true})
+}
+
+/** Fetch the next page of channels and upsert into the collection. */
+export async function loadMoreChannels(
+	params: ChannelQueryParams & {offset: number; limit: number}
+): Promise<Channel[]> {
+	log.info('channels loadMore', {offset: params.offset, limit: params.limit})
+	const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
+	if (error) throw error
+	const channels = (data || []) as Channel[]
+	if (channels.length) {
+		channelsCollection.utils.writeBatch(() => {
+			channels.forEach((ch) => {
+				channelsCollection.utils.writeUpsert(ch)
+			})
+		})
+	}
+	return channels
+}
+
+/** Parse d2ts loadSubsetOptions into domain params. Shared by queryKey and queryFn. */
+function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) {
+	const options = parseLoadSubsetOptions(opts)
+	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined
+	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as string[] | undefined
+	const trackCountGte = options.filters.find((f) => f.field[0] === 'track_count' && f.operator === 'gte')?.value as
+		| number
+		| undefined
+	const imageNotNull = options.filters.some(
+		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
+	)
+	const sort = options.sorts[0]
+	const shuffle = sort?.field[0] === 'shuffle'
+	return {
+		slug,
+		idIn,
+		trackCountGte,
+		imageNotNull,
+		shuffle,
+		orderColumn: shuffle ? undefined : ((sort?.field[0] as string) ?? 'created_at'),
+		ascending: sort ? sort.direction === 'asc' : true,
+		sortKey: shuffle ? 'shuffle' : sort ? `${sort.field[0]}_${sort.direction}` : 'default'
+	}
+}
+
 export const channelsCollection = createCollection<Channel, string>(
 	queryCollectionOptions({
 		queryKey: (opts) => {
-			const options = parseLoadSubsetOptions(opts)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-			return slug ? ['channels', slug] : ['channels']
+			const {slug, idIn, trackCountGte, imageNotNull, sortKey} = parseChannelParams(opts)
+			if (slug) return ['channels', slug]
+			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
+			if (imageNotNull && trackCountGte) return ['channels', 'artwork', sortKey]
+			if (trackCountGte) return ['channels', 'minTracks', trackCountGte, sortKey]
+			return ['channels', sortKey]
 		},
 		syncMode: 'on-demand',
 		queryClient,
 		getKey: (item) => item.id,
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx) => {
-			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
-			const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-
-			if (slug) {
-				log.info('channels queryFn (single)', {slug})
-				const channel = await fetchChannelBySlug(slug as string)
+			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
+			if (p.slug) {
+				log.info('channels queryFn (single)', {slug: p.slug})
+				const channel = await fetchChannelBySlug(p.slug)
 				return channel ? [channel] : []
 			}
-
-			log.info('channels queryFn (all)')
-			return fetchAllChannels()
+			log.info('channels queryFn', p)
+			const {data, error} = await buildChannelsQuery(p).limit(CHANNELS_PAGE_SIZE)
+			if (error) throw error
+			return (data || []) as Channel[]
 		}
 	})
 )

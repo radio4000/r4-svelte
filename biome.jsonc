@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**", "!src/lib/paraglide", "!**/*.svelte"]
+		"includes": ["src/**", "!src/lib/paraglide", "!**/*.svelte", "!src/lib/tanstack/useLiveQuery.svelte.ts"]
 	},
 	"formatter": {
 		"enabled": true,
