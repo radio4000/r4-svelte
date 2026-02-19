@@ -1,10 +1,7 @@
 import type {Channel as SDKChannel, Track as SDKTrack, Broadcast as SDKBroadcast} from '@radio4000/sdk'
 
-// Extends SDK Channel with r5-specific fields
+// Extends Channel with specific fields we use in this app (not persisted)
 export interface Channel extends SDKChannel {
-	broadcasting?: boolean
-	broadcast_track_id?: string | null
-	broadcast_started_at?: string | null
 	spam?: boolean
 }
 
