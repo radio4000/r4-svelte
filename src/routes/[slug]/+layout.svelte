@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {getChannelsCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {

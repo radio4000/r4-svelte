@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {tracksCollection} from '$lib/tanstack/collections'
 
 	interface Props {

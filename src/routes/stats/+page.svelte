@@ -10,7 +10,7 @@
 		followsCollection,
 		queryClient
 	} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack-debug/useLiveQuery.svelte'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import SyncStatus from '$lib/components/sync-status.svelte'
 
 	// Reactive reads — updates live as you play tracks, follow channels, etc.
