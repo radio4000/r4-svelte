@@ -346,7 +346,6 @@ function hasIntentChanged(deckId, state) {
 	return changed
 }
 
-
 /**
  * @param {number} deckId
  * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null}} broadcast
@@ -684,9 +683,7 @@ async function applyBroadcastState(channelId, decks) {
 						// Only skip if the listener is already within tolerance.
 						const mediaEl = getMediaPlayer(deckId)
 						const alreadyClose =
-							mediaEl &&
-							typeof mediaEl.currentTime === 'number' &&
-							Math.abs(mediaEl.currentTime - seekTime) < 2
+							mediaEl && typeof mediaEl.currentTime === 'number' && Math.abs(mediaEl.currentTime - seekTime) < 2
 						if (!alreadyClose) {
 							lastAppliedSeek.set(deckId, Date.now())
 							const seekJobId = nextSeekJobId(deckId)

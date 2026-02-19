@@ -169,7 +169,7 @@
 			</div>
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-+				{#if autoRadioTracks.length > 0}
+				+ {#if autoRadioTracks.length > 0}
 					<button type="button" onclick={joinAutoRadio} class:active={isAutoRadioDrifted}>
 						<Icon icon="signal" />
 						{isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}

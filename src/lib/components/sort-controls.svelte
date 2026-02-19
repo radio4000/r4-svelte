@@ -15,7 +15,7 @@
 </script>
 
 <div class="sort-row">
-	<select value={order} onchange={handleOrderChange}>
+	<select value={order} onchange={handleOrderChange} aria-label="Sort order">
 		<option value="shuffle">{m.channels_tooltip_shuffle()}</option>
 		<option value="updated">{m.channels_order_updated()}</option>
 		<option value="created">{m.channels_order_created()}</option>

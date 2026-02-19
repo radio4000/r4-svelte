@@ -288,12 +288,12 @@
 						class:drifted={deck?.listening_drifted}
 						onclick={() => {
 							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
-						}}>Live</button>
+						}}>Live</button
+					>
 				{:else if deck?.auto_radio}
-					<button
-						class="channel-badge"
-						class:drifted={deck?.auto_radio_drifted}
-						onclick={() => resyncAutoRadio(deckId)}>Auto</button>
+					<button class="channel-badge" class:drifted={deck?.auto_radio_drifted} onclick={() => resyncAutoRadio(deckId)}
+						>Auto</button
+					>
 				{/if}
 			{/if}
 			<menu class="layout-controls top-layout-controls">

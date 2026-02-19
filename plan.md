@@ -16,7 +16,7 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 ## Backlog
 
 - if i go to /search, write #dub, click queue all, it logs -->
-  api.ts:276 r5.api addToPlaylist: no deck {deckId: 1} addToPlaylist	@	api.ts:276 queueSearchResults	@	+page.svelte:122 handleClick	@	button-feedback.svelte:23
+  api.ts:276 r5.api addToPlaylist: no deck {deckId: 1} addToPlaylist @ api.ts:276 queueSearchResults @ +page.svelte:122 handleClick @ button-feedback.svelte:23
   it is correct i have no deck, but maybe it could just make what it needs?
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
 - 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.

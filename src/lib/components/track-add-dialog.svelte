@@ -81,7 +81,12 @@
 
 <svelte:window onkeydown={handleKeyDown} />
 
-<button class="btn" onclick={() => open()} aria-label={m.track_add_title()} {@attach tooltip({content: m.track_add_title()})}>
+<button
+	class="btn"
+	onclick={() => open()}
+	aria-label={m.track_add_title()}
+	{@attach tooltip({content: m.track_add_title()})}
+>
 	<Icon icon="add"></Icon>
 </button>
 

@@ -44,12 +44,12 @@ class Spinner extends HTMLElement {
 			['◡◡', '◠◠'],
 			'⣾⣽⣻⢿⡿⣟⣯⣷',
 			'⠁⠂⠄⡀⢀⠠⠐⠈',
-			[`>))'>`, ` >))'>`, `  >))'>`, `   >))'>`, `    >))'>`, `   <'((<`, `  <'((<`, ` <'((<`],
+			[`>))'>`, ` >))'>`, `  >))'>`, `   >))'>`, `    >))'>`, `   <'((<`, `  <'((<`, ` <'((<`]
 		]
 	}
 
 	get spinner() {
-		let i = this.getAttribute('spinner')
+		const i = this.getAttribute('spinner')
 
 		if (this.textContent) {
 			return this.textContent
@@ -70,9 +70,9 @@ class Spinner extends HTMLElement {
 
 	animate(spinner) {
 		let i = 0
-		let self = this
+		const self = this
 
-		let fps = this.getAttribute('fps')
+		const fps = this.getAttribute('fps')
 
 		function repeatOften(timestamp) {
 			if (fps) {

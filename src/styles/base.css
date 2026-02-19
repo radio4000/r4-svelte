@@ -98,7 +98,10 @@ h3 {
 	padding: 0 0.3rem;
 	border-radius: 3px;
 	line-height: 1.6;
-	transition: background 120ms, color 120ms, opacity 120ms;
+	transition:
+		background 120ms,
+		color 120ms,
+		opacity 120ms;
 	/* reset button element defaults */
 	border: none;
 	min-height: unset;
