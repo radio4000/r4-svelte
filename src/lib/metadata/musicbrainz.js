@@ -1,5 +1,6 @@
 import {logger} from '$lib/logger'
 import {trackMetaCollection} from '$lib/tanstack/collections'
+import {parseTitle} from 'media-now/parse-title'
 
 const log = logger.ns('metadata/musicbrainz').seal()
 
@@ -32,46 +33,6 @@ export async function pullMusicBrainz(mediaId, title) {
 	}
 }
 
-const RE_SEPARATORS = /\s*(\/\/|\\\\|\|\||--)\s*.+$/
-const RE_PARENS = /\s*\([^)]+\)$/
-const RE_BRACKETS = /\s*\[[^\]]+\]$/
-const RE_FEAT = /\s*(feat\.?|ft\.?|featuring|with)\s+.+$/i
-const RE_REMIX = /\s*(remix|edit|version|mix|dub)\s*.+$/i
-
-function cleanTitle(title) {
-	return title
-		.replace(RE_SEPARATORS, '')
-		.replace(RE_PARENS, '')
-		.replace(RE_BRACKETS, '')
-		.replace(RE_FEAT, '')
-		.replace(RE_REMIX, '')
-		.trim()
-}
-
-function parseTrackTitle(title) {
-	const cleanedTitle = cleanTitle(title)
-
-	// Try different separators
-	const separators = [' - ', ' – ', ': ', ' | ', ' by ']
-
-	for (const sep of separators) {
-		const parts = cleanedTitle.split(sep)
-		if (parts.length === 2) {
-			return {
-				artist: parts[0].trim(),
-				title: parts[1].trim(),
-				cleaned: cleanedTitle
-			}
-		}
-	}
-
-	return {
-		artist: null,
-		title: cleanedTitle,
-		cleaned: cleanedTitle
-	}
-}
-
 /**
  * Search MusicBrainz API without saving
  * @param {string} title Track title to search
@@ -80,7 +41,9 @@ function parseTrackTitle(title) {
 export async function search(title) {
 	if (!title) return null
 
-	const parsed = parseTrackTitle(title)
+	// Normalize middle dot separator before parsing (not yet in media-now)
+	const normalized = title.replace(/\s*·\s*/g, ' – ')
+	const parsed = parseTitle(normalized)
 
 	// Try multiple search strategies in order of specificity
 	const searchStrategies = []
