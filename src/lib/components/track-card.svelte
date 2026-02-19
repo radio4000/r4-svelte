@@ -214,7 +214,7 @@
 
 	.title {
 		font-size: var(--font-4);
-		font-weight: 600;
+		font-weight: 500;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;

@@ -15,6 +15,8 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 ## Backlog
 
+- We can't fetch more than 4k rows from supabase at a time, and some (1?) radio has more than 5k tracks. The last 1k are never loaded. How do we deal with this? I have no good ideas in the collection and ui.
+- In layout preload() we fetch 4k channels once. This won't scale. Fetch only what's requested? This is anyway what uselivequery was made for.. could be nice together with our View type.
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
 - 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. TBD: for tracks missing duration, could fetch via `media-now getMedia()` on demand. Low effort.
