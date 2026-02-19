@@ -4,7 +4,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
 	import {shuffleArray, channelAvatarUrl} from '$lib/utils.ts'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {broadcastsCollection, channelsCollection, tracksCollection} from '$lib/tanstack/collections'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -42,6 +42,7 @@
 	const filteredChannels = $derived(
 		channels.filter((c) => {
 			if (filter === 'all') return true
+			if (filter === 'broadcasting' && !broadcastsCollection.state.get(c.id)) return false
 			if (filter === 'artwork' && (!c.image || !c.track_count || c.track_count < 2)) return false
 			if (filter === '10+' && (!c.track_count || c.track_count < 10)) return false
 			if (filter === '100+' && (!c.track_count || c.track_count < 100)) return false
@@ -140,6 +141,7 @@
 
 	const filterLabelMap = {
 		all: () => m.channels_filter_option_all(),
+		broadcasting: () => m.channels_filter_option_broadcasting(),
 		'10+': () => m.channels_filter_option_10(),
 		'100+': () => m.channels_filter_option_100(),
 		'1000+': () => m.channels_filter_option_1000(),
@@ -157,6 +159,12 @@
 					onclick={() => setFilter('all')}
 					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
 					>{m.channels_filter_option_all()}</button
+				>
+				<button
+					class:active={filter === 'broadcasting'}
+					onclick={() => setFilter('broadcasting')}
+					{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
+					>{m.channels_filter_option_broadcasting()}{#if broadcastsCollection.state.size} <span class="badge" style:background="var(--color-red)" style:color="white">{broadcastsCollection.state.size}</span>{/if}</button
 				>
 				<button
 					class:active={filter === '10+'}
