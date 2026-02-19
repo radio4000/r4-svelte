@@ -141,6 +141,7 @@ export class AutoRadio {
 	#rotationStartUnix: number
 	#shuffled: AutoRadioTrack[] = []
 	#totalDuration = 0
+	#week = -1
 
 	constructor(rotationStartUnix: number) {
 		this.#rotationStartUnix = rotationStartUnix
@@ -150,17 +151,17 @@ export class AutoRadio {
 		const result = weeklyShuffle(tracks, this.#rotationStartUnix, nowMs)
 		this.#shuffled = result.tracks
 		this.#totalDuration = result.totalDuration
+		this.#week = sundayWeekNumber(nowMs)
 	}
 
 	tick(nowMs = Date.now()): PlaybackSnapshot | null {
-		// Re-shuffle if the week rolled over since last setTracks call
-		if (this.#shuffled.length > 0) {
+		// Re-shuffle only when the week rolls over
+		const week = sundayWeekNumber(nowMs)
+		if (week !== this.#week && this.#shuffled.length > 0) {
 			const result = weeklyShuffle(this.#shuffled, this.#rotationStartUnix, nowMs)
-			// Only reassign if order actually changed (week boundary)
-			if (result.totalDuration !== this.#totalDuration) {
-				this.#shuffled = result.tracks
-				this.#totalDuration = result.totalDuration
-			}
+			this.#shuffled = result.tracks
+			this.#totalDuration = result.totalDuration
+			this.#week = week
 		}
 		return playbackState(this.#shuffled, this.#totalDuration, this.#rotationStartUnix, nowMs)
 	}
