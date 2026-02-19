@@ -78,19 +78,13 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 
-	let tracksWithDuration = $derived((tracksQuery.data ?? []).filter((t) => t.duration && t.duration > 0))
+	let tracksWithDuration = $derived((tracksQuery.data ?? []).filter((t) => t.duration > 0))
 
 	async function joinAutoRadio() {
 		if (!channel || !tracksWithDuration.length) return
 		const deckId = appState.active_deck_id
 		const rotationStartUnix = Math.floor(new Date(channel.created_at).getTime() / 1000)
-		const autoTracks = tracksWithDuration.map((t) => ({
-			id: t.id,
-			url: t.url,
-			durationSeconds: t.duration ?? 0,
-			title: t.title
-		}))
-		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
+		const {tracks: shuffled, totalDuration} = weeklyShuffle(tracksWithDuration, rotationStartUnix, Date.now())
 		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 		if (!snap) return
 		await setPlaylist(
@@ -114,12 +108,12 @@
 			const hasStarted = el && el.currentTime > 0
 			if (hasDuration || hasStarted) {
 				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+				if (freshSnap) seekTo(activeDeckId, freshSnap.offsetSeconds)
 				// SoundCloud may process seeks asynchronously and silently drop the first one
 				// while still buffering. Retry once after a short wait with a freshly computed offset.
 				await new Promise((r) => setTimeout(r, 350))
 				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+				if (retrySnap) seekTo(activeDeckId, retrySnap.offsetSeconds)
 				break
 			}
 			await new Promise((r) => setTimeout(r, 150))

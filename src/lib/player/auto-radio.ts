@@ -11,7 +11,7 @@
 export interface AutoRadioTrack {
 	id: string
 	url: string
-	durationSeconds: number
+	duration: number
 	title?: string
 }
 
@@ -81,11 +81,11 @@ function shuffleWithPrng<T>(arr: T[], rand: () => number): T[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate and normalize tracks — keeps only those with durationSeconds > 0
+ * Validate and normalize tracks — keeps only those with duration > 0
  * and a non-empty url.
  */
 export function normalizeTracks(tracks: AutoRadioTrack[]): AutoRadioTrack[] {
-	return tracks.filter((t) => t.durationSeconds > 0 && t.url)
+	return tracks.filter((t) => t.duration > 0 && t.url)
 }
 
 /**
@@ -103,7 +103,7 @@ export function weeklyShuffle(tracks: AutoRadioTrack[], rotationStartUnix: numbe
 	const seed = hashSeed(rawSeed)
 	const rand = mulberry32(seed)
 	const shuffled = shuffleWithPrng(valid, rand)
-	const totalDuration = shuffled.reduce((sum, t) => sum + t.durationSeconds, 0)
+	const totalDuration = shuffled.reduce((sum, t) => sum + t.duration, 0)
 	return {tracks: shuffled, totalDuration}
 }
 
@@ -128,7 +128,7 @@ export function playbackState(
 	let acc = 0
 	let trackIndex = 0
 	for (let i = 0; i < tracks.length; i++) {
-		const end = acc + tracks[i].durationSeconds
+		const end = acc + tracks[i].duration
 		if (position < end) {
 			trackIndex = i
 			break
@@ -139,7 +139,7 @@ export function playbackState(
 
 	const currentTrack = tracks[trackIndex]
 	const offsetSeconds = position - acc
-	const secondsUntilNextTrack = currentTrack.durationSeconds - offsetSeconds
+	const secondsUntilNextTrack = currentTrack.duration - offsetSeconds
 	const nextTrack = tracks[(trackIndex + 1) % tracks.length]
 
 	return {
