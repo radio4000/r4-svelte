@@ -2,6 +2,12 @@
 
 ## February 2026
 
+- #Broadcast Auto radio — decks sync playback across listeners using universal time and track durations, with an "auto" badge on active decks
+- #Channels Channels load on demand with server-side queries; server-side shuffle for the random view; new broadcasting filter
+- #Auth Sign-up flow supports OTP code verification alongside magic links; fixed email/password auth errors
+- #Player Volume stays at zero when advancing tracks instead of resetting
+- #Queue Clearing a deck's queue also clears its active track
+- #UI Fixed theme color picker applying incorrect values
 - Removed Firebase — all v1 data migrated to PostgreSQL, so every Firebase code path could go
 - #UI Added `g h` and `g d` keyboard shortcuts to jump to home and debug pages
 - #Search Faster search page — channels and tracks now load in parallel instead of waiting for each other
