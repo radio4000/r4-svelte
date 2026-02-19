@@ -1,6 +1,6 @@
 {
-	"theme_color": "lch(97.5% 0 282)",
-	"background_color": "lch(97.5% 0 282)",
+  "theme_color": "lch(97.5% 0 282)",
+  "background_color": "lch(97.5% 0 282)",
   "icons": [
     {
       "src": "/favicon.png",
@@ -18,28 +18,29 @@
       "text": "description"
     }
   },
-	"id": "radio4000.com",
-	"name": "Radio5000",
-	"short_name": "R5",
-	"display": "standalone",
-	"display_override": ["minimal-ui"],
-	"orientation": "portrait",
-	"start_url": "/",
+  "id": "radio4000.com",
+  "description": "Collect, curate, play and share your own radio channel",
+  "name": "Radio4000",
+  "short_name": "R4",
+  "display": "standalone",
+  "display_override": ["minimal-ui"],
+  "orientation": "portrait",
+  "start_url": "/",
   "app": {
     "launch": {
       "web_url": "https://radio4000.com/"
     }
   },
-	"screenshots": [
-		{
-			"src": "/screenshot-phone.webp",
-			"sizes": "750x1334",
-			"form_factor": "narrow"
-		},
-		{
-			"src": "/screenshot-wide.webp",
-			"sizes": "2360x1640",
-			"form_factor": "wide"
-		}
-	]
+  "screenshots": [
+    {
+      "src": "/screenshot-phone.webp",
+      "sizes": "750x1334",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-wide.webp",
+      "sizes": "2360x1640",
+      "form_factor": "wide"
+    }
+  ]
 }

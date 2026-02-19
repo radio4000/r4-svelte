@@ -23,7 +23,7 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--gray-4);
-		color: var(--gray-7);
+		color: var(--gray-10);
 		font-size: var(--font-7);
 		text-transform: uppercase;
 	}

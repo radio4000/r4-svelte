@@ -31,6 +31,7 @@
 			href={resolve('/search')}
 			class="btn"
 			class:active={page.route.id === '/search'}
+			aria-label={m.nav_search()}
 			{@attach tooltip({content: m.nav_search()})}
 		>
 			<Icon icon="search" />
@@ -39,6 +40,7 @@
 			href={resolve('/broadcasts')}
 			class="btn"
 			class:active={page.route.id === '/broadcasts'}
+			aria-label={m.nav_broadcasts()}
 			{@attach tooltip({content: m.nav_broadcasts()})}
 		>
 			<Icon icon="signal" />
@@ -68,6 +70,7 @@
 			href={resolve('/settings')}
 			class="btn settings-link"
 			class:active={page.route.id?.startsWith('/settings')}
+			aria-label={m.nav_settings()}
 			{@attach tooltip({content: m.nav_settings()})}
 		>
 			<Icon icon="settings" />
