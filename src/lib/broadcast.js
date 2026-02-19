@@ -346,19 +346,6 @@ function hasIntentChanged(deckId, state) {
 	return changed
 }
 
-function shouldApplySeek(deckId, targetSeconds) {
-	// Position tolerance — if already close enough, no need to seek
-	const mediaEl = getMediaPlayer(deckId)
-	if (mediaEl && typeof mediaEl.currentTime === 'number') {
-		if (Math.abs(mediaEl.currentTime - targetSeconds) < 2) return false
-	}
-	// Time throttle — don't seek the same deck more than once per 3 seconds
-	const last = lastAppliedSeek.get(deckId)
-	const now = Date.now()
-	if (last && now - last < 3000) return false
-	lastAppliedSeek.set(deckId, now)
-	return true
-}
 
 /**
  * @param {number} deckId
@@ -691,9 +678,20 @@ async function applyBroadcastState(channelId, decks) {
 				const track = tracksCollection.get(state.track_id)
 				if (track) {
 					const seekTime = calculateSeekTime(state, track)
-					if (seekTime !== undefined && shouldApplySeek(deckId, seekTime)) {
-						const seekJobId = nextSeekJobId(deckId)
-						void seekWhenReady(deckId, seekTime, seekJobId)
+					if (seekTime !== undefined) {
+						// Bypass time throttle when intent changed — the dedup in hasIntentChanged
+						// already guarantees this only fires once per broadcaster action.
+						// Only skip if the listener is already within tolerance.
+						const mediaEl = getMediaPlayer(deckId)
+						const alreadyClose =
+							mediaEl &&
+							typeof mediaEl.currentTime === 'number' &&
+							Math.abs(mediaEl.currentTime - seekTime) < 2
+						if (!alreadyClose) {
+							lastAppliedSeek.set(deckId, Date.now())
+							const seekJobId = nextSeekJobId(deckId)
+							void seekWhenReady(deckId, seekTime, seekJobId)
+						}
 					}
 				}
 			}
