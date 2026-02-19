@@ -1,5 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
+	import {logger} from '$lib/logger'
+
+	const log = logger.ns('auth').seal()
 
 	let {onsubmit} = $props()
 	let email = $state('')
@@ -28,6 +31,7 @@
 		} catch (err) {
 			error = err
 			errorMessage = err.message || 'Failed to send reset email'
+			log.error('password reset failed:', err)
 		} finally {
 			loading = false
 		}

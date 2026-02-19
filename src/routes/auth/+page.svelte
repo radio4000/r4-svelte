@@ -1,5 +1,6 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
+	import {logger} from '$lib/logger'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -15,6 +16,23 @@
 	const userChannelsQuery = useLiveQuery((q) =>
 		q.from({channels: channelsCollection}).where(({channels}) => inArray(channels.id, appState.channels || []))
 	)
+
+	const log = logger.ns('auth').seal()
+	let signOutError = $state(/** @type {string | null} */ (null))
+
+	async function handleSignOut() {
+		signOutError = null
+		try {
+			const {error} = await sdk.auth.signOut()
+			if (error) {
+				signOutError = error.message
+				log.error('signOut failed:', error)
+			}
+		} catch (err) {
+			signOutError = err instanceof Error ? err.message : 'Sign out failed'
+			log.error('signOut failed:', err)
+		}
+	}
 </script>
 
 <svelte:head>
@@ -53,8 +71,12 @@
 				<a href="/create-channel">{m.auth_create_radio_cta()}</a>
 			{/if}
 			<a href="/settings">Settings</a>
-			<button type="button" onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button>
+			<button type="button" onclick={handleSignOut}>{m.auth_log_out()}</button>
 		</menu>
+
+		{#if signOutError}
+			<p class="error" role="alert">{signOutError}</p>
+		{/if}
 	{:else}
 		<menu class="nav-options">
 			<a href="/auth/create-account{redirectParam}">

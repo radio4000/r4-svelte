@@ -6,6 +6,8 @@
 	import IconR4 from '$lib/components/icon-r4.svelte'
 
 	const redirect = $derived(page.url.searchParams.get('redirect') || '/settings')
+	let step = $state('providers')
+	const isCheckEmail = $derived(step === 'linkSent')
 
 	function handleSuccess() {
 		goto(redirect)
@@ -21,13 +23,17 @@
 		<IconR4 />
 	</figure>
 
-	<h1>{m.auth_login_title()}</h1>
+	{#if !isCheckEmail}
+		<h1>{m.auth_login_title()}</h1>
+	{/if}
 
-	<AuthLogin onSuccess={handleSuccess} {redirect} />
+	<AuthLogin onSuccess={handleSuccess} {redirect} bind:step />
 
-	<footer>
-		<p>{m.auth_new_to_r4_intro()} <a href="/auth/create-account">{m.auth_card_create_title()}</a></p>
-	</footer>
+	{#if !isCheckEmail}
+		<footer>
+			<p>{m.auth_new_to_r4_intro()} <a href="/auth/create-account">{m.auth_card_create_title()}</a></p>
+		</footer>
+	{/if}
 </article>
 
 <style>

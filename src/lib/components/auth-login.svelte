@@ -1,56 +1,86 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
+	import {logger} from '$lib/logger'
 	import AuthProviders from './auth-providers.svelte'
+	// import ButtonFeedback from './button-feedback.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {onSuccess, redirect = '/settings'} = $props()
-	const id = $props.id()
+	const log = logger.ns('auth').seal()
 
-	let step = $state('providers') // 'providers' | 'email' | 'password' | 'linkSent'
+	let {onSuccess, redirect = '/settings', step = $bindable('providers')} = $props()
+	const id = $props.id()
 	let email = $state('')
 	let password = $state('')
 	let code = $state('')
 	let error = $state(/** @type {string | null} */ (null))
 	let loading = $state(false)
+	let showCode = $state(false)
 
-	async function sendMagicLink() {
+	async function sendMagicLink({rethrow = false} = {}) {
 		loading = true
 		error = null
-		const {error: authError} = await sdk.supabase.auth.signInWithOtp({
-			email,
-			options: {
-				emailRedirectTo: window.location.origin + redirect
+		try {
+			const {error: authError} = await sdk.supabase.auth.signInWithOtp({
+				email,
+				options: {
+					emailRedirectTo: window.location.origin + redirect
+				}
+			})
+			if (authError) {
+				error = authError.message
+				if (rethrow) throw authError
+			} else {
+				step = 'linkSent'
+				showCode = false
 			}
-		})
-		loading = false
-		if (authError) {
-			error = authError.message
-		} else {
-			step = 'linkSent'
+		} catch (err) {
+			if (!error) {
+				error = err instanceof Error ? err.message : 'Failed to send magic link'
+			}
+			log.error('sendMagicLink failed:', err)
+			if (rethrow) throw err
+		} finally {
+			loading = false
 		}
 	}
 
 	async function signInWithPassword() {
 		loading = true
 		error = null
-		const {data, error: authError} = await sdk.auth.signIn({email, password})
-		loading = false
-		if (authError) {
-			error = authError.message
-		} else if (data?.user) {
-			onSuccess?.(data.user)
+		try {
+			const {data, error: authError} = await sdk.auth.signIn({email, password})
+			if (authError) {
+				error = authError.message
+			} else if (data?.user) {
+				onSuccess?.(data.user)
+			} else {
+				error = 'Sign in failed — please try again'
+			}
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Sign in failed'
+			log.error('signInWithPassword failed:', err)
+		} finally {
+			loading = false
 		}
 	}
 
 	async function verifyOtp() {
 		loading = true
 		error = null
-		const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type: 'email'})
-		loading = false
-		if (authError) {
-			error = authError.message
-		} else if (data?.session) {
-			onSuccess?.(data.user)
+		try {
+			const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type: 'email'})
+			if (authError) {
+				error = authError.message
+			} else if (data?.session) {
+				onSuccess?.(data.user)
+			} else {
+				error = 'Verification failed — please try again'
+			}
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Verification failed'
+			log.error('verifyOtp failed:', err)
+		} finally {
+			loading = false
 		}
 	}
 
@@ -64,41 +94,45 @@
 		<h2>{m.auth_check_email()}</h2>
 		<p>{m.auth_magic_link_sent({email})}</p>
 	</section>
-	<form
-		class="form"
-		onsubmit={(e) => {
-			e.preventDefault()
-			verifyOtp()
-		}}
-	>
-		<fieldset>
-			<label for="{id}-code">{m.auth_code_or_enter()}</label>
-			<input
-				id="{id}-code"
-				type="text"
-				inputmode="numeric"
-				bind:value={code}
-				required
-				minlength="6"
-				maxlength="6"
-				placeholder="123456"
-				autocomplete="one-time-code"
-			/>
-		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
+	{#if showCode}
+		<form
+			class="form"
+			onsubmit={(e) => {
+				e.preventDefault()
+				verifyOtp()
+			}}
+		>
+			<fieldset>
+				<label for="{id}-code">{m.auth_code_or_enter()}</label>
+				<input
+					id="{id}-code"
+					type="text"
+					inputmode="numeric"
+					bind:value={code}
+					required
+					disabled={loading}
+					minlength="6"
+					maxlength="6"
+					placeholder="123456"
+					autocomplete="one-time-code"
+				/>
+			</fieldset>
+			<button type="submit" class="primary" disabled={loading || code.length < 6}>
+				{loading ? '…' : m.auth_code_verify()}
+			</button>
+		</form>
+	{/if}
+	<menu class="centerwrap">
+		{#if !showCode}
+			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button>
 		{/if}
-		<button type="submit" class="primary" disabled={loading || code.length < 6}>
-			{loading ? '…' : m.auth_code_verify()}
-		</button>
-	</form>
-	<menu>
-		<button type="button" onclick={() => sendMagicLink()} disabled={loading}>
-			{loading ? m.common_sending() : m.auth_resend()}
-		</button>
-		<button type="button" onclick={() => (step = 'email')}>{m.auth_use_different_email()}</button>
+		<!-- <ButtonFeedback onclick={() => sendMagicLink({rethrow: true})} success={m.auth_resend_success()}>
+			{m.auth_resend()}
+		</ButtonFeedback> -->
 		<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
 	</menu>
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button></p>
 {:else if step === 'password'}
 	<form
 		class="form"
@@ -129,17 +163,15 @@
 				placeholder="Enter your password…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.auth_logging_in() : m.auth_log_in()}
 		</button>
 	</form>
-	<menu>
-		<button type="button" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button>
+	<menu class="centerwrap">
 		<a href="/auth/reset-password">{m.auth_forgot_password()}</a>
 	</menu>
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button></p>
 {:else if step === 'email'}
 	<form
 		class="form"
@@ -159,32 +191,29 @@
 				placeholder="Enter your email address…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.common_sending() : m.auth_continue_with_email()}
 		</button>
 	</form>
-	<menu>
+	<menu class="centerwrap">
 		<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
-		<button type="button" onclick={() => (step = 'providers')}>← {m.common_back()}</button>
 	</menu>
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
+	<p><button type="button" class="link" onclick={() => (step = 'providers')}>← {m.common_back()}</button></p>
 {:else}
 	<AuthProviders onEmailClick={handleEmailContinue} {redirect} />
+	{#if error}<p class="error" role="alert">{error}</p>{/if}
 {/if}
 
 <style>
-	menu {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		margin-top: 1rem;
-	}
 	section {
 		text-align: center;
 	}
 	h2 {
 		font-size: var(--font-7);
+	}
+	p:has(button.link) {
+		text-align: center;
+		margin-top: 1rem;
 	}
 </style>
