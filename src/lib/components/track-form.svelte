@@ -1,4 +1,5 @@
 <script>
+	import {untrack} from 'svelte'
 	import {addTrack, updateTrack} from '$lib/tanstack/collections/tracks'
 	import {getMedia} from 'media-now'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
@@ -21,6 +22,9 @@
 	let error = $state('')
 	let submitting = $state(false)
 	let fetchingTitle = $state(false)
+	let liveDiscogsUrl = $state(untrack(() => initialDiscogsUrl))
+	/** All possible suggestion tags from the loaded discogs resource */
+	let allDiscogsSuggestions = $state(/** @type {string[]} */ ([]))
 
 	/** @type {HTMLInputElement | undefined} */
 	let titleInput = $state()
@@ -44,12 +48,23 @@
 		}
 	}
 
+	/** Extract hashtag words from text (without the # prefix, lowercased) */
+	function parseHashtags(text) {
+		return [...(text ?? '').matchAll(/#([\w-]+)/g)].map((m) => m[1].toLowerCase())
+	}
+
 	/** @param {{detail: string[]}} event */
 	function handleDiscogsSuggestion(event) {
-		const hashtags = event.detail.map((t) => `#${t}`).join(' ')
-		if (descriptionInput) {
-			descriptionInput.value = descriptionInput.value ? `${descriptionInput.value} ${hashtags}` : hashtags
+		const selected = event.detail
+		if (!descriptionInput) return
+		let desc = descriptionInput.value
+		// Remove all current discogs suggestions from description (clean slate for this section)
+		for (const tag of allDiscogsSuggestions) {
+			desc = desc.replace(new RegExp(`(?:^|\\s)#${tag}(?=\\s|$)`, 'gi'), '').trim()
 		}
+		// Re-add selected ones
+		const hashtags = selected.map((t) => `#${t}`).join(' ')
+		descriptionInput.value = hashtags ? (desc ? `${desc} ${hashtags}` : hashtags) : desc
 	}
 
 	/** @param {SubmitEvent} event */
@@ -108,8 +123,7 @@
 		}
 	}
 
-	const discogsUrl = $derived(initialDiscogsUrl)
-	const isValidDiscogsUrl = $derived(discogsUrl?.includes('discogs.com'))
+	const isValidDiscogsUrl = $derived(liveDiscogsUrl?.includes('discogs.com'))
 </script>
 
 {#if error}
@@ -161,12 +175,19 @@
 			name="discogs_url"
 			type="url"
 			value={initialDiscogsUrl}
+			oninput={(e) => (liveDiscogsUrl = /** @type {HTMLInputElement} */ (e.target).value)}
 			placeholder="https://discogs.com/release/..."
 		/>
 	</fieldset>
 
 	{#if isValidDiscogsUrl}
-		<R4DiscogsResource url={discogsUrl} suggestions={true} onsuggestion={handleDiscogsSuggestion} />
+		<R4DiscogsResource
+			url={liveDiscogsUrl}
+			suggestions={true}
+			preselected={parseHashtags(initialDescription)}
+			onload={(all) => (allDiscogsSuggestions = all)}
+			onsuggestion={handleDiscogsSuggestion}
+		/>
 	{/if}
 
 	<button type="submit" disabled={submitting}>

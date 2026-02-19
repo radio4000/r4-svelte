@@ -115,7 +115,7 @@
 		<time>
 			<span class="mobile">&rarr;</span>
 			{#if track.discogs_url}
-				<small class="discogs">{m.track_meta_discogs()}</small>
+				<a href="{permalink}?tab=discogs" class="discogs">{m.track_meta_discogs()}</a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
@@ -137,7 +137,11 @@
 					role="menuitem"
 					{@attach tooltip({content: m.common_play()})}
 					onclick={() => {
-						playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+						if (onPlay) {
+							onPlay(track.id)
+						} else {
+							playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+						}
 						menu?.close()
 					}}><Icon icon="play-fill" size={16} /></button
 				>

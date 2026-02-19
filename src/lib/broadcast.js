@@ -4,6 +4,7 @@ import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
+import {ephemeralTracks} from '$lib/ephemeral-tracks'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
@@ -348,25 +349,44 @@ function hasIntentChanged(deckId, state) {
 
 /**
  * @param {number} deckId
- * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null}} broadcast
+ * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null, track_url?: string | null, track_title?: string | null, track_media_id?: string | null}} broadcast
  */
 async function playBroadcastTrack(deckId, broadcast) {
 	const {track_id, channel_id} = broadcast
 	if (!track_id) return false
 
-	// Check if track is already loaded
-	let track = tracksCollection.get(track_id)
+	// Check if track is already loaded (DB collection or ephemeral map)
+	let track = tracksCollection.get(track_id) ?? ephemeralTracks.get(track_id)
 	if (!track) {
-		// Track not loaded - fetch it directly by ID
-		try {
-			const {data, error} = await sdk.tracks.readTrack(track_id)
-			if (error || !data) throw new Error(`Track ${track_id} not found`)
-			// await tracksCollection.preload()
-			tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
-			track = /** @type {import('$lib/types').Track} */ (data)
-		} catch (error) {
-			log.error(`play failed:`, /** @type {Error} */ (error).message)
-			return false
+		// Ephemeral track — reconstruct from broadcast-included data
+		if (broadcast.track_url) {
+			const uri = broadcast.track_url
+			const ytId =
+				uri.match(/[?&]v=([^&]+)/)?.[1] ?? uri.match(/youtu\.be\/([^?]+)/)?.[1] ?? broadcast.track_media_id ?? null
+			const now = new Date().toISOString()
+			track = /** @type {import('$lib/types').Track} */ ({
+				id: track_id,
+				url: uri,
+				title: broadcast.track_title ?? track_id,
+				media_id: ytId,
+				created_at: now,
+				updated_at: now,
+				slug: null
+			})
+			ephemeralTracks.set(track_id, track)
+			log.log('play_broadcast_ephemeral', {track_id, url: uri})
+		} else {
+			// Track not loaded - fetch it directly by ID
+			try {
+				const {data, error} = await sdk.tracks.readTrack(track_id)
+				if (error || !data) throw new Error(`Track ${track_id} not found`)
+				// await tracksCollection.preload()
+				tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
+				track = /** @type {import('$lib/types').Track} */ (data)
+			} catch (error) {
+				log.error(`play failed:`, /** @type {Error} */ (error).message)
+				return false
+			}
 		}
 	}
 
@@ -426,16 +446,23 @@ function getBroadcastDeckState() {
 	}
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]
+		const trackId = deck?.playlist_track ?? null
+		// Include ephemeral track data so listeners can reconstruct tracks not in the DB
+		const ephemeral = trackId ? ephemeralTracks.get(trackId) : null
 		return {
 			index,
-			track_id: deck?.playlist_track ?? null,
+			track_id: trackId,
 			track_played_at: deck?.track_played_at ?? null,
 			is_playing: deck?.is_playing ?? false,
 			seeked_at: deck?.seeked_at ?? null,
 			seek_position: deck?.seek_position ?? null,
 			volume: deck?.volume ?? 0,
 			muted: deck?.muted ?? false,
-			speed: deck?.speed ?? 1
+			speed: deck?.speed ?? 1,
+			// Extra fields for ephemeral tracks (Discogs videos, etc.)
+			track_url: ephemeral?.url ?? null,
+			track_title: ephemeral?.title ?? null,
+			track_media_id: ephemeral?.media_id ?? null
 		}
 	})
 }
@@ -674,7 +701,7 @@ async function applyBroadcastState(channelId, decks) {
 			// Only seek when broadcaster's intent changed (new seek, play/pause toggle, new track start).
 			// Periodic polls with the same intent are skipped to prevent seek loops.
 			if (hasIntentChanged(deckId, state)) {
-				const track = tracksCollection.get(state.track_id)
+				const track = tracksCollection.get(state.track_id) ?? ephemeralTracks.get(state.track_id)
 				if (track) {
 					const seekTime = calculateSeekTime(state, track)
 					if (seekTime !== undefined) {

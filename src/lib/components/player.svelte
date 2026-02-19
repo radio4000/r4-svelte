@@ -29,6 +29,7 @@
 	import {logger} from '$lib/logger'
 	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
+	import {ephemeralTracks} from '$lib/ephemeral-tracks'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import * as m from '$lib/paraglide/messages'
 
@@ -53,7 +54,7 @@
 		const id = deck?.playlist_track
 		if (!id) return undefined
 		void tracksCollection.state.size // subscribe to collection changes
-		return tracksCollection.state.get(id)
+		return tracksCollection.state.get(id) ?? ephemeralTracks.get(id)
 	})
 
 	// Reactive channel lookup via live query — uses deck.playlist_slug (persisted signal)

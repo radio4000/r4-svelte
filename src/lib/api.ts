@@ -15,6 +15,7 @@ import {
 	queueRotate
 } from '$lib/player/queue'
 import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
+import {ephemeralTracks} from '$lib/ephemeral-tracks'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
 
@@ -119,12 +120,15 @@ export async function playTrack(
 		log.log('play_track_created_deck', {deckId})
 	}
 
-	const track = tracksCollection.get(id)
+	const track = tracksCollection.get(id) ?? ephemeralTracks.get(id)
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined
 		return
 	}
+
+	// Ephemeral tracks (Discogs videos etc.) are not in the DB collection
+	const isEphemeral = !tracksCollection.get(id)
 
 	// If same track is already loaded, just ensure it's playing (don't reload)
 	if (deck.playlist_track === id && startReason === 'user_click_track') {
@@ -144,29 +148,37 @@ export async function playTrack(
 	}
 
 	// Build playlist from tracks already loaded in collection (same channel/slug)
-	const channelTracks = [...tracksCollection.state.values()].filter((t) => t?.slug === track.slug).sort(sortByNewest)
+	// Skip for ephemeral tracks — caller manages the playlist via setPlaylist()
+	const channelTracks = isEphemeral
+		? []
+		: [...tracksCollection.state.values()].filter((t) => t?.slug === track.slug).sort(sortByNewest)
 	const ids = channelTracks.map((t) => t.id)
 
-	// Record play history
+	// Record play history (skip for ephemeral tracks — no channel/slug)
 	const previousTrackId = deck.playlist_track
-	if (previousTrackId && previousTrackId !== id && endReason) {
+	if (!isEphemeral && previousTrackId && previousTrackId !== id && endReason) {
 		const mediaController = document.querySelector(`media-controller#r5-deck-${deckId}`)
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
 	}
-	if (startReason && track.slug) {
+	if (!isEphemeral && startReason && track.slug) {
 		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
 	}
 
 	deck.playlist_track = id
-	deck.playlist_slug = track.slug ?? undefined
+	deck.playlist_slug = isEphemeral ? undefined : (track.slug ?? undefined)
 	if (startReason !== 'broadcast_sync') {
 		deck.track_played_at = new Date().toISOString()
 		deck.seeked_at = deck.track_played_at
 		deck.seek_position = 0
 	}
-	if (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)) await setPlaylist(deckId, ids)
+	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)))
+		await setPlaylist(deckId, ids)
+	// Ensure ephemeral track is included in the current playlist
+	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
+		deck.playlist_tracks = [...deck.playlist_tracks, id]
+	}
 
 	// Mark auto-radio drift when the user intentionally deviates from the scheduled rotation.
 	// endReason 'user_next' catches the Next button (which sets startReason 'auto_next').
