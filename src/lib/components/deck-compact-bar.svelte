@@ -283,7 +283,7 @@
 		white-space: nowrap;
 	}
 
-.description {
+	.description {
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;

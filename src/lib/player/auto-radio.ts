@@ -8,6 +8,8 @@
  * order is identical for every client within the same week.
  */
 
+import {shuffleArray} from '$lib/utils'
+
 export interface AutoRadioTrack {
 	id: string
 	url: string
@@ -28,10 +30,7 @@ export interface WeeklyShuffleResult {
 	totalDuration: number
 }
 
-// ---------------------------------------------------------------------------
-// Seeded PRNG (mulberry32 — fast, good distribution, 32-bit state)
-// ---------------------------------------------------------------------------
-
+/** Seeded PRNG (mulberry32 — fast, good distribution, 32-bit state) */
 function mulberry32(seed: number): () => number {
 	let s = seed >>> 0
 	return () => {
@@ -50,10 +49,6 @@ function hashSeed(n: number): number {
 	return h ^ (h >>> 16)
 }
 
-// ---------------------------------------------------------------------------
-// Week number (Sunday-aligned UTC)
-// ---------------------------------------------------------------------------
-
 /** Returns the number of complete Sunday-aligned weeks since the Unix epoch. */
 function sundayWeekNumber(nowMs: number): number {
 	// Unix epoch (1970-01-01) was a Thursday. Offset to align to Sunday.
@@ -61,19 +56,6 @@ function sundayWeekNumber(nowMs: number): number {
 	const msPerWeek = 7 * 24 * 60 * 60 * 1000
 	const offsetMs = EPOCH_DAY_OF_WEEK * 24 * 60 * 60 * 1000
 	return Math.floor((nowMs + offsetMs) / msPerWeek)
-}
-
-// ---------------------------------------------------------------------------
-// Fisher-Yates with seeded PRNG
-// ---------------------------------------------------------------------------
-
-function shuffleWithPrng<T>(arr: T[], rand: () => number): T[] {
-	const out = arr.slice()
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(rand() * (i + 1))
-		;[out[i], out[j]] = [out[j], out[i]]
-	}
-	return out
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +84,7 @@ export function weeklyShuffle(tracks: AutoRadioTrack[], rotationStartUnix: numbe
 	const rawSeed = rotationStartUnix + week
 	const seed = hashSeed(rawSeed)
 	const rand = mulberry32(seed)
-	const shuffled = shuffleWithPrng(valid, rand)
+	const shuffled = shuffleArray(valid, rand)
 	const totalDuration = shuffled.reduce((sum, t) => sum + t.duration, 0)
 	return {tracks: shuffled, totalDuration}
 }

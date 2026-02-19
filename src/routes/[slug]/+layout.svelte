@@ -19,7 +19,7 @@
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import {relativeDate, relativeDateSolar} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
-	import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
+	import {weeklyShuffle, playbackState, normalizeTracks} from '$lib/player/auto-radio'
 	import {setPlaylist, playTrack, seekTo, getMediaPlayer} from '$lib/api'
 
 	let {children} = $props()
@@ -78,13 +78,13 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 
-	let tracksWithDuration = $derived((tracksQuery.data ?? []).filter((t) => t.duration > 0))
+	let autoRadioTracks = $derived(normalizeTracks(tracksQuery.data ?? []))
 
 	async function joinAutoRadio() {
-		if (!channel || !tracksWithDuration.length) return
+		if (!channel || !autoRadioTracks.length) return
 		const deckId = appState.active_deck_id
 		const rotationStartUnix = Math.floor(new Date(channel.created_at).getTime() / 1000)
-		const {tracks: shuffled, totalDuration} = weeklyShuffle(tracksWithDuration, rotationStartUnix, Date.now())
+		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoRadioTracks, rotationStartUnix, Date.now())
 		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 		if (!snap) return
 		await setPlaylist(
@@ -154,7 +154,7 @@
 			</div>
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-				{#if tracksWithDuration.length > 0}
+				{#if autoRadioTracks.length > 0}
 					<button type="button" onclick={joinAutoRadio}>
 						<Icon icon="signal" />
 						{m.auto_radio_join()}
@@ -270,7 +270,7 @@
 		line-height: 1.05;
 	}
 
-.description {
+	.description {
 		white-space: pre-wrap;
 	}
 

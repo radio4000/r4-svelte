@@ -571,7 +571,7 @@
 		max-width: 100%;
 	}
 
-.deck-title {
+	.deck-title {
 		max-width: 100%;
 		overflow: hidden;
 		text-overflow: ellipsis;

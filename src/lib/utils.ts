@@ -37,12 +37,12 @@ export function parseSearchTokens(query) {
 	}
 }
 
-/** Fisher-Yates shuffle http://bost.ocks.org/mike/shuffle/ */
-export function shuffleArray<T>(arr: Array<T>): Array<T> {
+/** Fisher-Yates shuffle. Pass a custom `rand` for deterministic (seeded) shuffles. */
+export function shuffleArray<T>(arr: Array<T>, rand: () => number = Math.random): Array<T> {
 	const array = arr.slice()
 	let m = array.length
 	while (m) {
-		const i = Math.floor(Math.random() * m--)
+		const i = Math.floor(rand() * m--)
 		const t = array[m]
 		array[m] = array[i]
 		array[i] = t
