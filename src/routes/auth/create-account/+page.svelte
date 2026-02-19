@@ -38,14 +38,13 @@
 
 <style>
 	.constrained {
-		border: 1px solid;
 		display: flex;
 		flex-flow: column;
 	}
+
 	h1 {
 		margin: 0 auto 2rem;
 		font-size: var(--font-7);
-		text-align: center;
 	}
 
 	footer {
