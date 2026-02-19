@@ -88,9 +88,6 @@
 				autocomplete="one-time-code"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading || code.length < 6}>
 			{loading ? '…' : m.auth_code_verify()}
 		</button>
@@ -121,9 +118,6 @@
 				autocomplete="one-time-code"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading || code.length < 6}>
 			{loading ? '…' : m.auth_code_verify()}
 		</button>
@@ -166,9 +160,6 @@
 				placeholder="Choose a password…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.auth_creating_account() : m.auth_create_account()}
 		</button>
@@ -195,9 +186,6 @@
 				placeholder="Enter your email address…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.common_sending() : m.auth_continue_with_email()}
 		</button>
@@ -215,6 +203,10 @@
 			>.</small
 		>
 	</p>
+{/if}
+
+{#if error}
+	<p class="error" role="alert">{error}</p>
 {/if}
 
 <style>

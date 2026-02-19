@@ -85,9 +85,6 @@
 				autocomplete="one-time-code"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading || code.length < 6}>
 			{loading ? '…' : m.auth_code_verify()}
 		</button>
@@ -129,9 +126,6 @@
 				placeholder="Enter your password…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.auth_logging_in() : m.auth_log_in()}
 		</button>
@@ -159,9 +153,6 @@
 				placeholder="Enter your email address…"
 			/>
 		</fieldset>
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.common_sending() : m.auth_continue_with_email()}
 		</button>
@@ -172,6 +163,10 @@
 	</menu>
 {:else}
 	<AuthProviders onEmailClick={handleEmailContinue} {redirect} />
+{/if}
+
+{#if error}
+	<p class="error" role="alert">{error}</p>
 {/if}
 
 <style>
