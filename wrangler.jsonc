@@ -2,7 +2,7 @@
 	"name": "r5",
 	"account_id": "46bcc6e9a78b2e839068c0685143e1a2",
 	"main": ".svelte-kit/cloudflare/_worker.js",
-	"compatibility_date": "2025-11-17",
+	"compatibility_date": "2026-02-14",
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare/public"

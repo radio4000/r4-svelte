@@ -179,6 +179,6 @@ describe('playbackState', () => {
 		const nowMs = (ROTATION_START - 100) * 1000
 		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
 		expect(snap).not.toBeNull()
-		expect(snap!.offsetSeconds).toBeGreaterThanOrEqual(0)
+		expect(snap?.offsetSeconds).toBeGreaterThanOrEqual(0)
 	})
 })
