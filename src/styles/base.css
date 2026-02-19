@@ -88,6 +88,31 @@ h3 {
 	letter-spacing: 0.03em;
 }
 
+.channel-badge {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 0.3rem;
+	font-size: var(--font-1);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	background: var(--accent-9);
+	color: var(--gray-1);
+	padding: 0 0.3rem;
+	border-radius: 3px;
+}
+
+.channel-badge.drifted {
+	background: var(--gray-1);
+	color: var(--accent-9);
+	box-shadow: inset 0 0 0 1.5px var(--accent-9);
+}
+
+.channel-badge.drifted::after {
+	content: ' ↺';
+	font-style: normal;
+}
+
 p {
 	font-size: var(--font-4);
 	margin: 0;

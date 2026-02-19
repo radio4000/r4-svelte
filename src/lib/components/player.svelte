@@ -15,10 +15,11 @@
 		toggleQueuePanel,
 		toggleVideo,
 		getUserInitiatedPlay,
-		setUserInitiatedPlay
+		setUserInitiatedPlay,
+		resyncAutoRadio
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
-	import {leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
+	import {joinBroadcast, leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -273,19 +274,27 @@
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					<span class="header-channel-text">
-						<h3 class="title">
-							{headerChannel.name}
-							{#if isListeningToBroadcast}
-								<span class="mode-badge">Live</span>
-							{:else if deck?.auto_radio}
-								<span class="mode-badge">Auto</span>
-							{/if}
-						</h3>
+						<h3 class="title">{headerChannel.name}</h3>
 						{#if deck?.playlist_title}
 							<small class="deck-title">{deck.playlist_title}</small>
 						{/if}
 					</span>
 				</a>
+				{#if deck?.broadcasting_channel_id}
+					<span class="channel-badge">Broadcasting</span>
+				{:else if isListeningToBroadcast}
+					<button
+						class="channel-badge"
+						class:drifted={deck?.listening_drifted}
+						onclick={() => {
+							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
+						}}>Live</button>
+				{:else if deck?.auto_radio}
+					<button
+						class="channel-badge"
+						class:drifted={deck?.auto_radio_drifted}
+						onclick={() => resyncAutoRadio(deckId)}>Auto</button>
+				{/if}
 			{/if}
 			<menu class="layout-controls top-layout-controls">
 				<button
@@ -396,6 +405,8 @@
 						if (deck) {
 							deck.seeked_at = new Date().toISOString()
 							deck.seek_position = val
+							if (deck.auto_radio) deck.auto_radio_drifted = true
+							if (deck.listening_to_channel_id) deck.listening_drifted = true
 						}
 						const broadcastingChannelId = getBroadcastingChannelId()
 						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
@@ -569,20 +580,6 @@
 		white-space: nowrap;
 		width: fit-content;
 		max-width: 100%;
-	}
-
-	.mode-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.3rem;
-		font-size: var(--font-1);
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.3rem;
-		border-radius: 3px;
 	}
 
 	.deck-title {

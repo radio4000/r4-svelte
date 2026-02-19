@@ -36,6 +36,10 @@ export interface Deck {
 	broadcasting_channel_id?: string
 	listening_to_channel_id?: string
 	auto_radio?: boolean
+	auto_radio_drifted?: boolean
+	auto_radio_channel_slug?: string
+	auto_radio_rotation_start?: number
+	listening_drifted?: boolean
 	track_played_at?: string
 	seeked_at?: string
 	seek_position?: number

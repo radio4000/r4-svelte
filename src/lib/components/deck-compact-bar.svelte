@@ -2,7 +2,8 @@
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
-	import {togglePlayPause, next, previous, getMediaPlayer} from '$lib/api'
+	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
+	import {joinBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import Icon from '$lib/components/icon.svelte'
@@ -108,6 +109,8 @@
 					const val = Number(e.currentTarget.value)
 					const mediaElement = getMediaPlayer(deckId)
 					if (mediaElement) mediaElement.currentTime = val
+					if (deck?.auto_radio) deck.auto_radio_drifted = true
+					if (deck?.listening_to_channel_id) deck.listening_drifted = true
 				}}
 				class="progress-range"
 				disabled={!Number.isFinite(mediaDuration)}
@@ -129,10 +132,20 @@
 			<h3 class="title">
 				{#if displayChannel}
 					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
-					{#if deck?.listening_to_channel_id}
-						<span class="mode-badge">Live</span>
+					{#if deck?.broadcasting_channel_id}
+						<span class="channel-badge">Broadcasting</span>
+					{:else if deck?.listening_to_channel_id}
+						<button
+							class="channel-badge"
+							class:drifted={deck?.listening_drifted}
+							onclick={() => joinBroadcast(deckId, deck.listening_to_channel_id)}>Live</button
+						>
 					{:else if deck?.auto_radio}
-						<span class="mode-badge">Auto</span>
+						<button
+							class="channel-badge"
+							class:drifted={deck?.auto_radio_drifted}
+							onclick={() => resyncAutoRadio(deckId)}>Auto</button
+						>
 					{/if}
 				{:else if displaySlug}
 					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
@@ -281,20 +294,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.mode-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.3rem;
-		font-size: var(--font-1);
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.3rem;
-		border-radius: 3px;
 	}
 
 	.description {

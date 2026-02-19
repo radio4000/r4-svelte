@@ -396,6 +396,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 	const deck = appState.decks[deckId]
 	if (deck) {
 		deck.listening_to_channel_id = channel_id
+		deck.listening_drifted = false
 		if (broadcast.track_played_at) deck.track_played_at = broadcast.track_played_at
 		if (broadcast.seeked_at) deck.seeked_at = broadcast.seeked_at
 		if (broadcast.seek_position != null) deck.seek_position = broadcast.seek_position

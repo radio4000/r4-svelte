@@ -44,6 +44,14 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
+	// True when the active deck is playing this channel's auto-radio but has drifted off schedule
+	let isAutoRadioDrifted = $derived(
+		Boolean(
+			channel?.slug &&
+			appState.decks[appState.active_deck_id]?.auto_radio_channel_slug === channel.slug &&
+			appState.decks[appState.active_deck_id]?.auto_radio_drifted
+		)
+	)
 
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
@@ -93,17 +101,24 @@
 		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
 		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 		if (!snap) return
-		await setPlaylist(
-			deckId,
+		// playTrack first — it may create a new deck if none exists. setPlaylist before playTrack
+		// would silently fail when no deck exists, causing playTrack to load all channel tracks instead.
+		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+		// Capture the actual deck id (playTrack may have auto-created a new one)
+		const activeDeckId = appState.active_deck_id
+		// Replace the playlist with only duration-filtered shuffled tracks, then mark auto-radio.
+		// Must set auto_radio after setPlaylist because setPlaylist clears it.
+		setPlaylist(
+			activeDeckId,
 			shuffled.map((t) => t.id),
 			{title: channel.name}
 		)
-		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
-		// Mark the active deck as auto-radio. Set AFTER playTrack because playTrack may call
-		// setPlaylist internally (which clears auto_radio). Use active_deck_id in case playTrack
-		// auto-created a new deck.
-		const activeDeckId = appState.active_deck_id
-		if (appState.decks[activeDeckId]) appState.decks[activeDeckId].auto_radio = true
+		if (appState.decks[activeDeckId]) {
+			appState.decks[activeDeckId].auto_radio = true
+			appState.decks[activeDeckId].auto_radio_drifted = false
+			appState.decks[activeDeckId].auto_radio_channel_slug = channel.slug
+			appState.decks[activeDeckId].auto_radio_rotation_start = rotationStartUnix
+		}
 		// Seek to current offset once the player is ready — recompute at seek time so the position is fresh.
 		// Also check currentTime > 0 as a fallback for SoundCloud, where duration is cached
 		// asynchronously and may lag behind actual playback start.
@@ -114,12 +129,12 @@
 			const hasStarted = el && el.currentTime > 0
 			if (hasDuration || hasStarted) {
 				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+				if (freshSnap) seekTo(activeDeckId, freshSnap.offsetSeconds)
 				// SoundCloud may process seeks asynchronously and silently drop the first one
 				// while still buffering. Retry once after a short wait with a freshly computed offset.
 				await new Promise((r) => setTimeout(r, 350))
 				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+				if (retrySnap) seekTo(activeDeckId, retrySnap.offsetSeconds)
 				break
 			}
 			await new Promise((r) => setTimeout(r, 150))
@@ -139,7 +154,7 @@
 			<div class="info">
 				<h1>
 					{channel.name}
-					{#if isChannelLive}<span class="live-badge">Live</span>{/if}
+					{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
 				</h1>
 				<p class="slug">
 					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
@@ -161,9 +176,9 @@
 			<menu class="channel-actions">
 				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
 				{#if tracksWithDuration.length > 0}
-					<button type="button" onclick={joinAutoRadio}>
+					<button type="button" onclick={joinAutoRadio} class:active={isAutoRadioDrifted}>
 						<Icon icon="signal" />
-						{m.auto_radio_join()}
+						{isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 					</button>
 				{/if}
 				{#if channel.id && isChannelLive && !canEdit}
@@ -276,28 +291,15 @@
 		line-height: 1.05;
 	}
 
-	.live-badge {
-		display: inline-block;
-		vertical-align: middle;
-		margin-left: 0.35rem;
-		font-size: var(--font-2);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		padding: 0 0.35rem;
-		border-radius: 3px;
-	}
-
 	.description {
 		white-space: pre-wrap;
 	}
 
 	.channel-actions {
 		flex-wrap: wrap;
-		justify-content: center;
+		justify-content: flex-end;
 		align-items: center;
-		align-self: center;
+		align-self: flex-end;
 	}
 
 	.hero {
