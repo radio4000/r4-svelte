@@ -2,28 +2,34 @@
 
 ## Remote
 
-Supabase PostgreSQL is the source of truth. Access via `@radio4000/sdk` or the `r4` CLI.
+Supabase PostgreSQL is the source of truth. Access via [`@radio4000/sdk`](radio4000-sdk.md) or the `r4` CLI. See [overview.json](overview.json) for all available methods.
 
 ## App state
 
-`appState` is a Svelte-reactive global object persisted to localStorage. Holds player state, queue, user settings - anything that should survive page refresh but isn't synced to the server.
+`appState` is a Svelte-reactive global object persisted to localStorage (`app-state.svelte.ts`). Holds deck/player state, queue contents, user settings, UI preferences — anything that should survive page refresh but isn't synced to the server. See `AppState` and `Deck` types in `types.ts`.
+
+Persistence is split into two localStorage keys: one for general state, one for queue arrays (to avoid serializing large arrays on every small change).
 
 ## Local sync and persistence
 
-The data flows like this:
+Data flows from remote to components through a caching layer:
 
 ```
-useLiveQuery → Collection (memory) → Query Cache (IDB) → Remote (Supabase)
+Remote (Supabase) → Query Cache (IDB) → Collection (memory) → useLiveQuery → Component
 ```
 
-When a component calls `useLiveQuery`, the collection parses your query and checks the query _cache_. If data exists and is fresh (see cache config), it's used directly. If stale or missing, it fetches from remote via the collection's queryFn().
+When a component calls `useLiveQuery`, the collection checks the query cache. If data exists and is fresh (see cache config), it's used directly. If stale or missing, it fetches from remote via the collection's `queryFn()`.
 
-Query cache is not persisted by default, but we can persists to IndexedDB via `query-cache-persistence.ts`). On reload:
+Query cache is persisted to IndexedDB via `query-cache-persistence.ts`. On app boot (`+layout.js`):
 
-1. IDB restores query cache (e.g. `['tracks', 'starttv']`)
-2. `useLiveQuery` reads from cache, populates collection — instant UI
-3. `checkTracksFreshness()` validates against remote (see `tracks.ts`) — if outdated, triggers background refetch
+1. `collectionsHydrated` — restore collection state from IDB (if enabled)
+2. `cacheReady` — restore query cache from IDB
+3. `preload()` — prefetch channels, restore deck tracks
+4. `useLiveQuery` reads from cache, populates collections — instant UI
+5. `checkTracksFreshness()` validates against remote (see `tracks.ts`) — if outdated, triggers background refetch
+
+For the full picture on collections, queries, mutations, and live queries, see [tanstack.md](tanstack.md).
 
 ## Channels
 
-In +layout.js we `preload()` all channels from remote. We trade a slower first-load for faster pages afterwards. This feels good now, but if we get to +4 channels let's reconsider.
+In `+layout.js` we `preload()` all channels from remote via `prefetchQuery`. We trade a slower first-load for faster pages afterwards. This feels good now, but if we get to +4 channels let's reconsider.

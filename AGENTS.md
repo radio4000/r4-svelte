@@ -6,12 +6,10 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 
 For any task or question:
 
-1. **Read docs first** — `docs/overview.json` (full API reference), then any topic-specific doc. Most answers are already there. Use the docs to assess whether existing APIs cover the task or if new concepts are needed.
+1. **Read docs first** — `docs/overview.json` (full API reference). Read any topic-specific doc inside the ./docs folder. Most answers are already there. Assess whether existing APIs cover the task or if new concepts are needed.
 2. **Ask clarifying questions** if the task is ambiguous — before exploring or planning.
 3. Once done review your work with `bun run check && bun run types`
-4. Update @plan.md and @docs if needed.
-
-Broad file searches and `node_modules` reads are fine, but ideally not as a first step.
+4. Update @plan.md and docs where needed
 
 ```
 /src/routes           -- pages
@@ -31,12 +29,11 @@ Broad file searches and `node_modules` reads are fine, but ideally not as a firs
 - [styles](docs/styles.md) - rely on global styles, don't add CSS unless needed
 - [tanstack](docs/tanstack.md) - TanStack DB deep-dive
 - [browser-testing](docs/browser-testing.md) - testing with agent-browser
-- See `docs/` for topic-specific docs (player, queue, search, broadcast, mix, metadata, etc.)
+- See `docs/` for topic-specific docs (player, search, broadcast, etc.)
 
 ## Debug
 
 `window.r5` exposes sdk, appState, queryClient, tracksCollection, channelsCollection for console testing.
 Use `/src/routes/_debug` freely for (temporary) test routes and playgrounds.
 The `r4 --help` CLI can help inspect data from remote PostgreSQL
-
 Be concise. Short answers, no walls of text.

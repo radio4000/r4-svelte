@@ -2,27 +2,16 @@
 
 Voice guide for all copy — UI text, docs, changelog, onboarding, errors. Anyone writing words that a user or contributor reads should follow this.
 
-## The radio metaphor
-
-Radio4000 speaks in radio language. Users "start a radio", "tune in", go "on the air", "listen along." Not "create an account", "subscribe", "follow a channel." The data model says `channel`; the UI says `radio`. This metaphor is the product identity — use it everywhere copy touches a user.
-
-## Say what IS, not what was DONE
+Radio4000 data model works with channels and tracks, and we also call it a "radio channel". Which to pick depends on context.
 
 Describe the current state or result, not the process.
-
 - Changelog: "Queue no longer resets between tracks" — not "Fixed queue reset bug"
-- Success: "Your radio is live!" — not "Radio successfully created"
 - Docs: "The player manages playback across decks" — not "We implemented a multi-deck system"
 
-## Second person, action-oriented
-
-Talk to the user. Tell them what to do next.
-
+Talk to the user. Suggest what to do next.
 - "Start your radio." not "Users can create a radio station."
-- "Add some tracks to get started." not "Tracks can be added from the radio page."
 
 ## Complete when it adds information, terse when it doesn't
-
 Clarity is the goal, not brevity for its own sake. "Shuffle remaining tracks in queue" is dense with useful info — keep it. "Are you sure you want to delete this track? This action cannot be undone" says nothing that "Remove this track? Can't be undone." doesn't.
 
 Test: can you cut a word without losing meaning? Cut it. Does adding a word make the next action clearer? Add it.
