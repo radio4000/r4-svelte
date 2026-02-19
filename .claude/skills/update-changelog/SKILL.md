@@ -12,7 +12,7 @@ Radio4000 (r5) is a web app, not a library. No breaking changes to track. No mar
 
 ## Style
 
-Narrative threads, not commit logs. Changelogs translate the chaos of development into coherent progress.
+Follow [docs/tone.md](../../docs/tone.md) for voice. Narrative threads, not commit logs. Changelogs translate the chaos of development into coherent progress.
 
 A flat list of `- #Domain` bullet points. No sub-headers, no "Improvements"/"Fixes" sections, no intro paragraphs.
 

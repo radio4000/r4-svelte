@@ -2,6 +2,8 @@
 
 ## Writing style
 
+For voice and tone across all copy (UI, docs, changelog), see [tone.md](tone.md).
+
 Lead with the point. Skip preambles, start mid-thought when context is clear.
 
 Assume domain knowledge. Say "use debouncing" not "you might want to consider implementing a debouncing mechanism." Reference concepts directly without basic explanations.

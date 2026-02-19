@@ -26,7 +26,8 @@ Broad file searches and `node_modules` reads are fine, but ideally not as a firs
 
 - [overview](docs/overview.json) - **read this first** — all exported functions, SDK methods, components, types
 - [state](docs/state.md) - how data flows (remote, local sync, app state)
-- [code-style](docs/code-style.md) - writing style, code conventions, HTML/CSS, Svelte
+- [tone](docs/tone.md) - voice and tone for all copy (UI, docs, changelog)
+- [code-style](docs/code-style.md) - code conventions, HTML/CSS, Svelte
 - [styles](docs/styles.md) - rely on global styles, don't add CSS unless needed
 - [tanstack](docs/tanstack.md) - TanStack DB deep-dive
 - [browser-testing](docs/browser-testing.md) - testing with agent-browser
