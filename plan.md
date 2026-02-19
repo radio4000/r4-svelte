@@ -13,21 +13,15 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 5. **Profile `@tanstack/svelte-db` `useLiveQuery`** — root layout now uses our custom copy (swapped to fix `state_unsafe_mutation`). Other components still use the official version. Verify it doesn't have the same reset-then-push pattern.
 6. **Count live query accumulation** — navigating back and forth creates new queries without cleaning up old ones (IDs keep incrementing). Check if disposed queries are GC'd or leak.
 
-## Server-side shuffle via `random_channels_with_tracks`
+## ~~Server-side shuffle via `random_channels_with_tracks`~~ Done
 
-Shuffle is currently client-only (`shuffleArray` on loaded channels). Postgres already has a `random_channels_with_tracks` view that returns rows in random order (same schema as `channels_with_tracks`).
-
-**What to do:**
-
-1. In `buildChannelsQuery` (`channels.ts`), accept an optional `shuffle` flag. When true, query `random_channels_with_tracks` instead of `channels_with_tracks`. All other filters (track_count, image, etc.) apply the same way — only the source view changes.
-2. In `channelQueryParams` (`channels.svelte`), pass `shuffle: order === 'shuffle'` so `loadMoreChannels` uses the random view.
-3. For the `useLiveQuery`, the initial fetch already goes through `queryFn` which calls `buildChannelsQuery` — so `queryFn` picks up the random view automatically via `loadSubsetOptions` metadata or a new filter signal. Consider: d2ts `.where()` can't express "use a different view", so either (a) pass shuffle via a custom query key segment and detect it in `queryFn`, or (b) add a `.meta()` extension. Option (a) is simpler — add a sentinel filter like `.where(({ch}) => eq(ch.__shuffle, true))` or just detect the absence of a sort column (shuffle = no `sortColumns[order]` match).
-4. "Load more" with shuffle should fetch _different_ random channels each page (Postgres randomizes per query). Duplicates are possible — `writeUpsert` handles that, but the UI might show fewer new channels than expected. Consider: track seen IDs and add `.not('id', 'in', seenIds)` to subsequent pages, or accept occasional duplicates.
-5. Remove client-side `shuffleArray` from `orderedChannels` — server handles it. Keep `shuffleSeed` for re-shuffle (invalidate the query to get a fresh random set).
-6. Cache key for shuffle queries should include a seed or timestamp so re-shuffle doesn't serve stale cache.
+`buildChannelsQuery` switches `.from()` to `random_channels_with_tracks` when `shuffle: true`. Signal flows via d2ts `orderBy('shuffle')` → `parseChannelParams` detects it → `queryFn` and `loadMoreChannels` both use the random view. Re-shuffle invalidates the query cache. Duplicate pages possible (Postgres re-randomizes per query); `writeUpsert` dedupes.
 
 ## Backlog
 
+- if i go to /search, write #dub, click queue all, it logs -->
+  api.ts:276 r5.api addToPlaylist: no deck {deckId: 1} addToPlaylist	@	api.ts:276 queueSearchResults	@	+page.svelte:122 handleClick	@	button-feedback.svelte:23
+  it is correct i have no deck, but maybe it could just make what it needs?
 - We can't fetch more than 4k rows from supabase at a time, and some (1?) radio has more than 5k tracks. The last 1k are never loaded. How do we deal with this? I have no good ideas in the collection and ui.
 - ~~In layout preload() we fetch 4k channels once.~~ **Done.** Channels now fetched on demand — `channels.svelte` drives the query via `useLiveQuery` with `.where()` + `.orderBy()`, and `channelsCollection.queryFn` translates filters/sorts into scoped Supabase queries on `channels_with_tracks`. Removed channels context, `fetchAllChannels`, layout preload. Each filter (10+, 100+, artwork, broadcasting, all) and sort combo caches independently (staleTime 24h). Search still needs a dedicated endpoint (no longer has all channels prefetched).
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.

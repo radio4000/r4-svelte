@@ -21,11 +21,13 @@ export type ChannelQueryParams = {
 	imageNotNull?: boolean
 	orderColumn?: string
 	ascending?: boolean
+	shuffle?: boolean
 }
 
 /** Build a Supabase channels query (without limit/range). Shared by queryFn and loadMoreChannels. */
 function buildChannelsQuery(params: ChannelQueryParams) {
-	let query = sdk.supabase.from('channels_with_tracks').select('*')
+	const view = params.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
+	let query = sdk.supabase.from(view).select('*')
 	if (params.idIn?.length) {
 		query = query.in('id', params.idIn)
 	} else if (params.imageNotNull && params.trackCountGte) {
@@ -33,6 +35,7 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 	} else if (params.trackCountGte) {
 		query = query.gte('track_count', params.trackCountGte)
 	}
+	if (params.shuffle) return query
 	return query.order(params.orderColumn ?? 'created_at', {ascending: params.ascending ?? true})
 }
 
@@ -66,14 +69,16 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
 	)
 	const sort = options.sorts[0]
+	const shuffle = sort?.field[0] === 'shuffle'
 	return {
 		slug,
 		idIn,
 		trackCountGte,
 		imageNotNull,
-		orderColumn: (sort?.field[0] as string) ?? 'created_at',
+		shuffle,
+		orderColumn: shuffle ? undefined : ((sort?.field[0] as string) ?? 'created_at'),
 		ascending: sort ? sort.direction === 'asc' : true,
-		sortKey: sort ? `${sort.field[0]}_${sort.direction}` : 'default'
+		sortKey: shuffle ? 'shuffle' : sort ? `${sort.field[0]}_${sort.direction}` : 'default'
 	}
 }
 

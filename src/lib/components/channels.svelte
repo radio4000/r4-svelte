@@ -3,8 +3,8 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
-	import {shuffleArray, channelAvatarUrl} from '$lib/utils.ts'
-	import {broadcastsCollection, channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelAvatarUrl} from '$lib/utils.ts'
+	import {broadcastsCollection, channelsCollection, tracksCollection, queryClient} from '$lib/tanstack/collections'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/tanstack/collections/channels'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
@@ -32,7 +32,6 @@
 		return undefined
 	})
 
-	let shuffleSeed = $state(0)
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
@@ -55,8 +54,14 @@
 		(broadcastsQuery.data ?? []).map((b) => /** @type {{channel_id: string}} */ (b).channel_id)
 	)
 
-	/** @type {Record<string, string>} Sort key → DB column name */
-	const sortColumns = {updated: 'latest_track_at', created: 'created_at', name: 'name', tracks: 'track_count'}
+	/** @type {Record<string, string>} Sort key → DB column name (or 'shuffle' for random view) */
+	const sortColumns = {
+		shuffle: 'shuffle',
+		updated: 'latest_track_at',
+		created: 'created_at',
+		name: 'name',
+		tracks: 'track_count'
+	}
 
 	/** @type {Record<string, number>} Filter → minimum track count */
 	const filterMinTracks = {artwork: 2, '10+': 10, '100+': 100, '1000+': 1000}
@@ -66,8 +71,9 @@
 		idIn: filter === 'broadcasting' && broadcastIds.length ? broadcastIds : undefined,
 		trackCountGte: filterMinTracks[filter],
 		imageNotNull: filter === 'artwork',
-		orderColumn: sortColumns[order] ?? 'created_at',
-		ascending: sortColumns[order] ? (orderDirection || 'desc') === 'asc' : true
+		shuffle: order === 'shuffle',
+		orderColumn: sortColumns[order],
+		ascending: (orderDirection || 'desc') === 'asc'
 	}))
 
 	// Reset pagination when filter/sort changes
@@ -94,9 +100,7 @@
 		}
 		const col = sortColumns[order]
 		if (col) {
-			base = base.orderBy(({ch}) => ch[col], orderDirection || 'desc')
-		} else {
-			base = base.orderBy(({ch}) => ch.created_at, 'asc')
+			base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
 		}
 		return base.limit(queryLimit)
 	})
@@ -137,13 +141,7 @@
 		}
 	}
 
-	const orderedChannels = $derived.by(() => {
-		if (order === 'shuffle') {
-			void shuffleSeed
-			return shuffleArray([...channels])
-		}
-		return channels
-	})
+	const orderedChannels = $derived(channels)
 
 	const canvasMedia = $derived(
 		orderedChannels.map((c) => ({
@@ -300,7 +298,15 @@
 			<SortControls
 				bind:order={appState.channels_order}
 				bind:direction={appState.channels_order_direction}
-				onreshuffle={() => shuffleSeed++}
+				onreshuffle={() => {
+					paginatedLimit = CHANNELS_PAGE_SIZE
+					fetchedUpTo = CHANNELS_PAGE_SIZE
+					loadedAll = false
+					nextPageSize = CHANNELS_PAGE_SIZE
+					queryClient.invalidateQueries({
+						predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
+					})
+				}}
 			/>
 		</PopoverMenu>
 	</menu>
