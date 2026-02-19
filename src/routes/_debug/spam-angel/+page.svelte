@@ -1,12 +1,11 @@
 <script>
-	import {getChannelsCtx} from '$lib/contexts'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {analyzeChannel} from './spam-detector.js'
-	import {spamDecisionsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection, spamDecisionsCollection} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 
-	const getChannels = getChannelsCtx()
-	const allChannels = $derived(getChannels())
+	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
+	const allChannels = $derived(channelsQuery.data ?? [])
 
 	const decisionsQuery = useLiveQuery((q) => q.from({d: spamDecisionsCollection}))
 	const decisions = $derived(decisionsQuery.data ?? [])

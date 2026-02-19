@@ -7,16 +7,29 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-push) eliminated ~140ms of blocking per query for large collections. The pattern — mutating a `$state` array item-by-item instead of replacing it — likely exists elsewhere. An agent should:
 
 1. **Grep for `.push(` on `$state` arrays** — any loop or spread-push into a `$state([])` variable is a candidate. Replace with single assignment.
-2. **Grep for `useLiveQuery` call sites** — each creates a `createLiveQueryCollection`. Check if the caller actually needs a live query or could use an existing reactive context/parent query instead (like the `[slug]` layout channel fix — root layout already had channels via context).
-3. **Check `player.svelte`** — has a `useLiveQuery` on `channelsCollection` (~350ms creation per deck). Could use channels context instead, same pattern as the `[slug]` layout fix.
+2. **Grep for `useLiveQuery` call sites** — each creates a `createLiveQueryCollection`. Check if the caller actually needs a live query or could use a one-off `collection.get()` instead.
+3. **Check `player.svelte`** — has a `useLiveQuery` on `channelsCollection` (~350ms creation per deck). Could use `channelsCollection.get(id)` instead since it only needs a single channel lookup.
 4. **Check `queue-panel.svelte`** — has 2 `useLiveQuery` calls (tracks by IDs, play history). The history one scans the full `playHistoryCollection` every time.
 5. **Profile `@tanstack/svelte-db` `useLiveQuery`** — root layout now uses our custom copy (swapped to fix `state_unsafe_mutation`). Other components still use the official version. Verify it doesn't have the same reset-then-push pattern.
 6. **Count live query accumulation** — navigating back and forth creates new queries without cleaning up old ones (IDs keep incrementing). Check if disposed queries are GC'd or leak.
 
+## Server-side shuffle via `random_channels_with_tracks`
+
+Shuffle is currently client-only (`shuffleArray` on loaded channels). Postgres already has a `random_channels_with_tracks` view that returns rows in random order (same schema as `channels_with_tracks`).
+
+**What to do:**
+
+1. In `buildChannelsQuery` (`channels.ts`), accept an optional `shuffle` flag. When true, query `random_channels_with_tracks` instead of `channels_with_tracks`. All other filters (track_count, image, etc.) apply the same way — only the source view changes.
+2. In `channelQueryParams` (`channels.svelte`), pass `shuffle: order === 'shuffle'` so `loadMoreChannels` uses the random view.
+3. For the `useLiveQuery`, the initial fetch already goes through `queryFn` which calls `buildChannelsQuery` — so `queryFn` picks up the random view automatically via `loadSubsetOptions` metadata or a new filter signal. Consider: d2ts `.where()` can't express "use a different view", so either (a) pass shuffle via a custom query key segment and detect it in `queryFn`, or (b) add a `.meta()` extension. Option (a) is simpler — add a sentinel filter like `.where(({ch}) => eq(ch.__shuffle, true))` or just detect the absence of a sort column (shuffle = no `sortColumns[order]` match).
+4. "Load more" with shuffle should fetch _different_ random channels each page (Postgres randomizes per query). Duplicates are possible — `writeUpsert` handles that, but the UI might show fewer new channels than expected. Consider: track seen IDs and add `.not('id', 'in', seenIds)` to subsequent pages, or accept occasional duplicates.
+5. Remove client-side `shuffleArray` from `orderedChannels` — server handles it. Keep `shuffleSeed` for re-shuffle (invalidate the query to get a fresh random set).
+6. Cache key for shuffle queries should include a seed or timestamp so re-shuffle doesn't serve stale cache.
+
 ## Backlog
 
 - We can't fetch more than 4k rows from supabase at a time, and some (1?) radio has more than 5k tracks. The last 1k are never loaded. How do we deal with this? I have no good ideas in the collection and ui.
-- In layout preload() we fetch 4k channels once. This won't scale. Fetch only what's requested? This is anyway what uselivequery was made for.. could be nice together with our View type.
+- ~~In layout preload() we fetch 4k channels once.~~ **Done.** Channels now fetched on demand — `channels.svelte` drives the query via `useLiveQuery` with `.where()` + `.orderBy()`, and `channelsCollection.queryFn` translates filters/sorts into scoped Supabase queries on `channels_with_tracks`. Removed channels context, `fetchAllChannels`, layout preload. Each filter (10+, 100+, artwork, broadcasting, all) and sort combo caches independently (staleTime 24h). Search still needs a dedicated endpoint (no longer has all channels prefetched).
 - Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
 - 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
 - Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. TBD: for tracks missing duration, could fetch via `media-now getMedia()` on demand. Low effort.

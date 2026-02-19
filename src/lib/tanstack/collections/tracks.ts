@@ -373,6 +373,7 @@ export async function ensureTracksLoaded(slug: string): Promise<void> {
 	}
 
 	tracksCollection.utils.writeBatch(() => {
+		log.debug('ensureTracksLoaded', slug, data.length)
 		for (const track of data) {
 			tracksCollection.utils.writeUpsert(track)
 		}
