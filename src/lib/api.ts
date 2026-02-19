@@ -16,6 +16,7 @@ import {
 } from '$lib/player/queue'
 import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
+import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
 
 const log = logger.ns('api').seal()
 
@@ -108,6 +109,8 @@ export async function playTrack(
 ) {
 	log.log('play_track', {deckId, id, endReason, startReason})
 	let deck = getDeck(deckId)
+	// Capture before deck may be replaced (auto-create) or auto_radio may be cleared by setPlaylist
+	const wasAutoRadio = deck?.auto_radio
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
 		deck = addDeck()
@@ -165,6 +168,14 @@ export async function playTrack(
 	}
 	if (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)) await setPlaylist(deckId, ids)
 
+	// Mark auto-radio drift when the user intentionally deviates from the scheduled rotation.
+	// endReason 'user_next' catches the Next button (which sets startReason 'auto_next').
+	// 'play_channel' and 'auto_next' (from natural track end) are not drift.
+	const isUserDeviation = startReason === 'user_prev' || startReason === 'user_click_track' || endReason === 'user_next'
+	if (wasAutoRadio && isUserDeviation) {
+		deck.auto_radio_drifted = true
+	}
+
 	// Auto-update broadcast if currently broadcasting
 	const broadcastingChannelId = getBroadcastingChannelId()
 	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
@@ -200,6 +211,11 @@ export async function playTrack(
 export async function playChannel(deckId: number, {id, slug}: {id: string; slug: string}, trackId?: string) {
 	log.log('play_channel', {deckId, id, slug})
 	leaveBroadcast(deckId)
+	const d = getDeck(deckId)
+	if (d) {
+		d.auto_radio = undefined
+		d.auto_radio_drifted = undefined
+	}
 	await ensureTracksLoaded(slug)
 	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug).sort(sortByNewest)
 	if (!tracks.length) {
@@ -242,6 +258,11 @@ export async function playChannelInNewDeck(channel, trackId) {
 export async function shufflePlayChannel(deckId, {id, slug}) {
 	log.log('shuffle_play_channel', {deckId, id, slug})
 	leaveBroadcast(deckId)
+	const d = getDeck(deckId)
+	if (d) {
+		d.auto_radio = undefined
+		d.auto_radio_drifted = undefined
+	}
 	await ensureTracksLoaded(slug)
 	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (!tracks.length) {
@@ -261,7 +282,6 @@ export function setPlaylist(deckId: number, trackIds: string[], options: {title?
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
-	deck.auto_radio = undefined
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
 }
@@ -589,6 +609,74 @@ export function eject(deckId) {
 	deck.hide_video_player = true
 	deck.shuffle = false
 	deck.is_playing = false
+}
+
+/**
+ * Resync the deck to the current auto-radio position.
+ * Uses the stored rotation params to recompute the expected track + offset,
+ * navigating to the right track if needed, then seeking.
+ */
+export async function resyncAutoRadio(deckId: number) {
+	const deck = getDeck(deckId)
+	if (!deck?.auto_radio || !deck.auto_radio_channel_slug || deck.auto_radio_rotation_start == null) return
+
+	const slug = deck.auto_radio_channel_slug
+	const rotationStartUnix = deck.auto_radio_rotation_start
+
+	const tracksWithDuration = [...tracksCollection.state.values()].filter(
+		(t) => t.slug === slug && t.duration && t.duration > 0
+	)
+	if (!tracksWithDuration.length) return
+
+	const autoTracks = tracksWithDuration.map((t) => ({
+		id: t.id,
+		url: t.url ?? '',
+		durationSeconds: t.duration ?? 0,
+		title: t.title ?? ''
+	}))
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
+	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+	if (!snap) return
+
+	const isSameTrack = deck.playlist_track === snap.currentTrack.id
+	if (!isSameTrack) {
+		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+		// Re-apply duration-filtered shuffled playlist (playTrack may have overwritten with all channel tracks)
+		setPlaylist(
+			deckId,
+			shuffled.map((t) => t.id)
+		)
+	}
+
+	// Restore auto-radio flags (setPlaylist clears auto_radio)
+	const d = getDeck(deckId)
+	if (d) {
+		d.auto_radio = true
+		d.auto_radio_drifted = false
+		d.auto_radio_rotation_start = rotationStartUnix
+		d.auto_radio_channel_slug = slug
+	}
+
+	if (isSameTrack) {
+		seekTo(deckId, snap.offsetSeconds)
+	} else {
+		// Wait for media ready, then seek to freshly computed offset
+		const deadline = performance.now() + 8000
+		while (performance.now() < deadline) {
+			const el = getMediaPlayer(deckId)
+			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
+			const hasStarted = el && el.currentTime > 0
+			if (hasDuration || hasStarted) {
+				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+				await new Promise((r) => setTimeout(r, 350))
+				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+				break
+			}
+			await new Promise((r) => setTimeout(r, 150))
+		}
+	}
 }
 
 /**

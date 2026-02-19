@@ -87,7 +87,7 @@
 			<div class:active={joined}>
 				<ChannelCard channel={broadcast.channels}>
 					<p>
-						<span class="live">{isOwnChannel ? m.broadcasts_you_are_live() : m.broadcasts_live()}</span>
+						<span class="channel-badge">{isOwnChannel ? m.broadcasts_you_are_live() : m.broadcasts_live()}</span>
 						{#if !isOwnChannel}
 							{m.broadcasts_since()}
 							{timeAgo(broadcast.track_played_at)}
@@ -162,20 +162,12 @@
 		gap: 1rem;
 	}
 
-	p:has(.live) {
+	p:has(.channel-badge) {
 		margin: 1rem 0;
 	}
 
 	.channel-actions {
 		display: flex;
 		justify-content: flex-end;
-	}
-
-	.live {
-		display: inline-block;
-		background: var(--accent-5);
-		color: var(--gray-12);
-		padding: 0 0.5rem;
-		border-radius: var(--border-radius);
 	}
 </style>
