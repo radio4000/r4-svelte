@@ -138,7 +138,8 @@
 						<button
 							class="channel-badge"
 							class:drifted={deck?.listening_drifted}
-							onclick={() => joinBroadcast(deckId, deck.listening_to_channel_id)}>Live</button
+							onclick={() => deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
+							>Live</button
 						>
 					{:else if deck?.auto_radio}
 						<button

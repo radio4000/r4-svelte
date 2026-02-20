@@ -633,7 +633,7 @@ export async function resyncAutoRadio(deckId: number) {
 	const autoTracks = tracksWithDuration.map((t) => ({
 		id: t.id,
 		url: t.url ?? '',
-		durationSeconds: t.duration ?? 0,
+		duration: t.duration ?? 0,
 		title: t.title ?? ''
 	}))
 	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())

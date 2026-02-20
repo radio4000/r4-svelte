@@ -1,6 +1,9 @@
 // Copied from https://github.com/oskarrough/rough-spinner
 
 class Spinner extends HTMLElement {
+	/** @type {number | ReturnType<typeof setInterval> | undefined} */
+	timer
+
 	static get observedAttributes() {
 		return ['spinner']
 	}
@@ -8,23 +11,23 @@ class Spinner extends HTMLElement {
 	connectedCallback() {
 		// If we don't delay `this.textContent` can be undefined.
 		requestAnimationFrame(() => {
-			this.timer = this.animate(this.spinner)
+			this.startSpinner(this.spinner)
 		})
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
 		if (name === 'spinner' && oldValue && newValue) {
 			clearInterval(this.timer)
-			this.timer = this.animate(this.spinner)
+			this.startSpinner(this.spinner)
 		}
 	}
 
 	get interval() {
-		return this.getAttribute('interval') || 500
+		return Number(this.getAttribute('interval')) || 500
 	}
 
 	set interval(val) {
-		this.setAttribute('interval', val)
+		this.setAttribute('interval', String(val))
 	}
 
 	get spinners() {
@@ -59,41 +62,41 @@ class Spinner extends HTMLElement {
 			return this.spinners[1]
 		}
 
-		if (this.spinners[i]) {
-			return this.spinners[i]
-		}
+		return this.spinners[i] || this.spinners[1]
 	}
 
 	set spinner(val) {
 		this.setAttribute('spinner', val)
 	}
 
-	animate(spinner) {
+	/** @param {string | string[]} spinner */
+	startSpinner(spinner) {
 		let i = 0
-		const self = this
 
 		const fps = this.getAttribute('fps')
 
-		function repeatOften(timestamp) {
-			if (fps) {
+		if (fps) {
+			const step = () => {
 				setTimeout(() => {
-					self.innerHTML = spinner[i]
+					this.innerHTML = spinner[i]
 					i = (i + 1) % spinner.length
-					self.timer = requestAnimationFrame(repeatOften)
-				}, 1000 / fps)
-			} else {
-				self.timer = setInterval(() => {
-					self.innerHTML = spinner[i]
-					i = (i + 1) % spinner.length
-				}, self.interval)
+					this.timer = requestAnimationFrame(step)
+				}, 1000 / Number(fps))
 			}
+			this.timer = requestAnimationFrame(step)
+		} else {
+			this.timer = setInterval(() => {
+				this.innerHTML = spinner[i]
+				i = (i + 1) % spinner.length
+			}, this.interval)
 		}
-
-		self.timer = requestAnimationFrame(repeatOften)
 	}
 
 	disconnectedCallback() {
-		cancelAnimationFrame(this.timer)
+		if (this.timer != null) {
+			cancelAnimationFrame(/** @type {number} */ (this.timer))
+			clearInterval(this.timer)
+		}
 	}
 }
 
