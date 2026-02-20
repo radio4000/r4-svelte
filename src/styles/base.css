@@ -167,6 +167,17 @@ a:visited {
 	/* color: var(--accent-9); */
 }
 
+a[href^='http://']:not(.btn):not([data-no-external-icon])::after,
+a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
+	content: '↗';
+	display: inline-block;
+	margin-left: 0.2em;
+	font-size: 0.85em;
+	line-height: 1;
+	vertical-align: text-top;
+	opacity: 0.85;
+}
+
 hr {
 	display: block;
 	border: 0;
