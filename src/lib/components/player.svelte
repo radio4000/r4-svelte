@@ -300,8 +300,8 @@
 			<menu class="layout-controls top-layout-controls">
 				<button
 					onclick={() => {
-						removeDeck(deckId)
 						const bchId = getBroadcastingChannelId()
+						removeDeck(deckId)
 						if (bchId) notifyBroadcastState(bchId)
 					}}
 					{@attach tooltip({content: 'Close deck', position: 'top'})}
