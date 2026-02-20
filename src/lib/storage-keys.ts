@@ -9,8 +9,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 /** All IndexedDB database names used by R5. */
 export const IDB_DATABASES = {
-	keyval: 'r5-keyval',
-	offlineMutations: 'r5-offline-mutations'
+	keyval: 'r5-keyval'
 } as const
 
 /** Key within the keyval database for query cache. */

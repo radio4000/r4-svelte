@@ -12,7 +12,6 @@ import {
 	followsCollection,
 	ensureTracksLoaded
 } from '$lib/tanstack/collections'
-import {getOfflineExecutor} from '$lib/tanstack/collections/offline-executor'
 import {cacheReady} from '$lib/tanstack/query-cache-persistence'
 import {collectionsHydrated} from '$lib/tanstack/collection-persistence'
 import {appState} from '$lib/app-state.svelte'
@@ -58,12 +57,14 @@ async function preload() {
 				.map((d) => d.playlist_slug)
 				.filter(Boolean)
 		)
+		if (deckSlugs.size) {
+			log.debug('ensuring_tracks_for_decks', {slugs: [...deckSlugs]})
+		}
 		for (const slug of /** @type {Set<string>} */ (deckSlugs)) {
 			ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
 		}
 
 		// For debugging and console experimentation
-		const offlineExecutor = getOfflineExecutor()
 		// @ts-expect-error debugging
 		window.r5 = {
 			sdk,
@@ -75,27 +76,9 @@ async function preload() {
 			broadcastsCollection,
 			followsCollection,
 			spamDecisionsCollection,
-			offlineExecutor,
 			queue,
 			api
 		}
-
-		// Debug: check for stuck offline transactions
-		offlineExecutor.peekOutbox().then((txs) => {
-			if (txs.length) {
-				log.warn('offline_outbox_pending', {
-					count: txs.length,
-					transactions: txs.map((tx) => ({
-						id: tx.id,
-						mutationFnName: tx.mutationFnName,
-						mutations: tx.mutations?.length,
-						createdAt: tx.createdAt
-					}))
-				})
-			} else {
-				log.debug('offline_outbox_empty')
-			}
-		})
 	} catch (err) {
 		log.error('preloading_error', err)
 	} finally {

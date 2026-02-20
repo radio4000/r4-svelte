@@ -1,14 +1,14 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
-import {NonRetriableError} from '@tanstack/offline-transactions'
 import {sdk} from '@radio4000/sdk'
 import {appState} from '$lib/app-state.svelte'
-import type {PendingMutation} from '@tanstack/db'
 import {fetchChannelBySlug} from '$lib/api/fetch-channels'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
-import {log, txLog, getErrorMessage} from './utils'
-import {getOfflineExecutor} from './offline-executor'
+import {logger} from '$lib/logger'
+import {getErrorMessage} from './utils'
+
+const log = logger.ns('channels').seal()
 import type {Channel} from '$lib/types'
 
 export type {Channel}
@@ -82,8 +82,8 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 	}
 }
 
-export const channelsCollection = createCollection<Channel, string>(
-	queryCollectionOptions({
+export const channelsCollection = createCollection<Channel, string>({
+	...queryCollectionOptions({
 		queryKey: (opts) => {
 			const {slug, idIn, trackCountGte, imageNotNull, sortKey} = parseChannelParams(opts)
 			if (slug) return ['channels', slug]
@@ -95,7 +95,7 @@ export const channelsCollection = createCollection<Channel, string>(
 		syncMode: 'on-demand',
 		queryClient,
 		getKey: (item) => item.id,
-		staleTime: 24 * 60 * 60 * 1000,
+		staleTime: 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
 			if (p.slug) {
@@ -108,14 +108,39 @@ export const channelsCollection = createCollection<Channel, string>(
 			if (error) throw error
 			return (data || []) as Channel[]
 		}
-	})
-)
+	}),
+	onInsert: async ({transaction}) => {
+		log.info('channels onInsert', {count: transaction.mutations.length})
+		for (const m of transaction.mutations) {
+			const metadata = (m.metadata || {}) as Record<string, unknown>
+			await handleChannelInsert(m.modified, metadata)
+		}
+		log.info('channels onInsert done')
+	},
+	onUpdate: async ({transaction}) => {
+		log.info('channels onUpdate', {count: transaction.mutations.length})
+		for (const m of transaction.mutations) {
+			const serverChannel = await handleChannelUpdate(m.modified.id, m.changes as Record<string, unknown>)
+			if (serverChannel) {
+				log.info('channels onUpdate writeUpsert', {id: serverChannel.id})
+				channelsCollection.utils.writeUpsert(serverChannel)
+			}
+		}
+		log.info('channels onUpdate done')
+	},
+	onDelete: async ({transaction}) => {
+		log.info('channels onDelete', {count: transaction.mutations.length})
+		for (const m of transaction.mutations) {
+			await handleChannelDelete(m.original.id)
+		}
+		await queryClient.invalidateQueries({queryKey: ['channels']})
+		log.info('channels onDelete done')
+	}
+})
 
-async function handleChannelInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<void> {
-	const channel = mutation.modified as {id: string; name: string; slug: string}
+async function handleChannelInsert(channel: Channel, metadata: Record<string, unknown>): Promise<void> {
 	const userId = metadata.userId as string
-	if (!channel) throw new NonRetriableError('Invalid mutation: missing modified data')
-	if (!userId) throw new NonRetriableError('userId required in transaction metadata')
+	if (!userId) throw new Error('userId required in transaction metadata')
 	log.info('channel_insert_start', {id: channel.id, name: channel.name})
 	const response = await sdk.channels.createChannel({
 		id: channel.id,
@@ -125,7 +150,7 @@ async function handleChannelInsert(mutation: PendingMutation, metadata: Record<s
 	})
 	if ('error' in response && response.error) {
 		log.info('channel_insert_done', {clientId: channel.id, error: response.error})
-		throw new NonRetriableError(getErrorMessage(response.error))
+		throw new Error(getErrorMessage(response.error))
 	}
 	const data = 'data' in response ? (response.data as {id: string} | null) : null
 	log.info('channel_insert_done', {clientId: channel.id, serverId: data?.id})
@@ -134,73 +159,31 @@ async function handleChannelInsert(mutation: PendingMutation, metadata: Record<s
 	}
 }
 
-async function handleChannelUpdate(mutation: PendingMutation): Promise<void> {
-	const channel = mutation.modified as {id: string}
-	const changes = mutation.changes as Record<string, unknown>
+async function handleChannelUpdate(id: string, changes: Record<string, unknown>): Promise<Channel | null> {
 	const actualChanges = {...changes}
 	delete actualChanges.updated_at
 	if (Object.keys(actualChanges).length === 0) {
-		log.info('channel_update_skip', {id: channel.id, reason: 'no changes'})
-		return
+		log.info('channel_update_skip', {id, reason: 'no changes'})
+		return null
 	}
-	log.info('channel_update_start', {id: channel.id, changes: actualChanges})
-	const response = await sdk.channels.updateChannel(channel.id, actualChanges)
-	log.info('channel_update_done', {id: channel.id, error: response.error})
-	if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
+	log.info('channel_update_start', {id, changes: actualChanges})
+	const response = await sdk.channels.updateChannel(id, actualChanges)
+	log.info('channel_update_done', {id, error: response.error})
+	if (response.error) throw new Error(getErrorMessage(response.error))
+	return (response.data as Channel) ?? null
 }
 
-async function handleChannelDelete(mutation: PendingMutation): Promise<void> {
-	const channel = mutation.original as {id: string}
-	log.info('channel_delete_start', {id: channel.id})
-	const response = await sdk.channels.deleteChannel(channel.id)
-	log.info('channel_delete_done', {id: channel.id, error: response.error})
-	if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
-}
-
-export const channelsAPI = {
-	async syncChannels({
-		transaction,
-		idempotencyKey
-	}: {
-		transaction: {mutations: Array<PendingMutation>; metadata?: Record<string, unknown>}
-		idempotencyKey: string
-	}) {
-		const metadata = transaction.metadata || {}
-		let needsFullInvalidation = false
-
-		for (const mutation of transaction.mutations) {
-			txLog.info('channels', {type: mutation.type, key: idempotencyKey.slice(0, 8)})
-			if (mutation.type === 'insert') {
-				await handleChannelInsert(mutation, metadata)
-				needsFullInvalidation = true
-			} else if (mutation.type === 'update') {
-				await handleChannelUpdate(mutation)
-				// Persist the optimistic data so it survives transaction cleanup
-				channelsCollection.utils.writeUpsert(mutation.modified as unknown as Channel)
-			} else if (mutation.type === 'delete') {
-				await handleChannelDelete(mutation)
-				needsFullInvalidation = true
-			} else {
-				txLog.warn('channels unhandled type', {type: mutation.type})
-			}
-		}
-		log.info('channel_tx_complete', {idempotencyKey: idempotencyKey.slice(0, 8)})
-
-		if (needsFullInvalidation) {
-			await queryClient.invalidateQueries({queryKey: ['channels']})
-		}
-	}
+async function handleChannelDelete(id: string): Promise<void> {
+	log.info('channel_delete_start', {id})
+	const response = await sdk.channels.deleteChannel(id)
+	log.info('channel_delete_done', {id, error: response.error})
+	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
 export function createChannel(input: {name: string; slug: string; description?: string}): Promise<Channel> {
 	const userId = appState.user?.id
 	if (!userId) throw new Error('Must be signed in to create a channel')
 
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncChannels',
-		metadata: {userId},
-		autoCommit: false
-	})
 	const channel: Channel = {
 		id: uuid(),
 		name: input.name,
@@ -216,42 +199,23 @@ export function createChannel(input: {name: string; slug: string; description?: 
 		favorites: null,
 		followers: null
 	}
-	tx.mutate(() => {
-		channelsCollection.insert(channel)
-	})
-	return tx.commit().then(() => channel)
+	return channelsCollection.insert(channel, {metadata: {userId}}).isPersisted.promise.then(() => channel)
 }
 
 export function updateChannel(id: string, changes: Record<string, unknown>) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncChannels',
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		const channel = channelsCollection.get(id)
-		if (!channel) return
-		channelsCollection.update(id, (draft) => {
+	return channelsCollection
+		.update(id, (draft) => {
 			Object.assign(draft, changes)
 		})
-	})
-	return tx.commit()
+		.isPersisted.promise.then(() => {})
 }
 
 export function deleteChannel(id: string) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncChannels',
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		const channel = channelsCollection.get(id)
-		if (channel) {
-			channelsCollection.delete(id)
-			appState.channels = appState.channels?.filter((cid) => cid !== id)
-			if (appState.channel?.id === id) appState.channel = undefined
-			for (const deck of Object.values(appState.decks)) {
-				if (deck.broadcasting_channel_id === id) deck.broadcasting_channel_id = undefined
-			}
-		}
-	})
-	return tx.commit()
+	// Clean up app state (not managed by collection, not automatically rolled back)
+	appState.channels = appState.channels?.filter((cid) => cid !== id)
+	if (appState.channel?.id === id) appState.channel = undefined
+	for (const deck of Object.values(appState.decks)) {
+		if (deck.broadcasting_channel_id === id) deck.broadcasting_channel_id = undefined
+	}
+	return channelsCollection.delete(id).isPersisted.promise.then(() => {})
 }

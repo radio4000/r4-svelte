@@ -3,7 +3,6 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
 	import {channelsCollection, createChannel, updateChannel, deleteChannel} from '$lib/tanstack/collections'
-	import SyncStatus from '$lib/components/sync-status.svelte'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')
@@ -157,6 +156,4 @@
 			<p>No channels found</p>
 		{/if}
 	</details>
-
-	<SyncStatus />
 </div>

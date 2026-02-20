@@ -1,8 +1,8 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {localStorageCollectionOptions} from '@tanstack/db'
-import {logger} from '$lib/logger'
 import {uuid} from '$lib/utils'
 import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
+import {logger} from '$lib/logger'
 
 const log = logger.ns('history').seal()
 

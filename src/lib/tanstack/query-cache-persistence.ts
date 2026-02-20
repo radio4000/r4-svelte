@@ -74,7 +74,7 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 
 	const key = query.queryKey?.[0]
 	if (key === 'todos-cached') return false
-	if (key === 'channels') return false
+	if (key === 'channels' && query.queryKey.includes('shuffle')) return false
 	if (key === 'broadcasts') return false
 	if (key === 'tracks-freshness') return false
 	// if (key === 'tracks') return false
@@ -85,8 +85,8 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 const persistOptions = {
 	queryClient,
 	persister: idbPersister,
-	maxAge: 24 * 60 * 60 * 1000,
-	buster: '6',
+	maxAge: 60 * 60 * 1000,
+	buster: '7',
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 

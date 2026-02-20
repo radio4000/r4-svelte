@@ -2,7 +2,7 @@
 
 // Shared utilities
 export {queryClient} from './collections/query-client'
-export {log, txLog, offlineLog, getErrorMessage} from './collections/utils'
+export {getErrorMessage} from './collections/utils'
 
 // Local-only collections (localStorage)
 export {trackMetaCollection, deleteTrackMeta, type TrackMeta} from './collections/track-meta'
@@ -15,20 +15,12 @@ export {
 } from './collections/play-history'
 export {spamDecisionsCollection, type SpamDecision} from './collections/spam-decisions'
 
-// Synced collections (with offline support)
+// Synced collections
 export {followsCollection, followChannel, unfollowChannel, loadUserFollows} from './collections/follows'
-export {
-	channelsCollection,
-	channelsAPI,
-	createChannel,
-	updateChannel,
-	deleteChannel,
-	type Channel
-} from './collections/channels'
+export {channelsCollection, createChannel, updateChannel, deleteChannel, type Channel} from './collections/channels'
 export {broadcastsCollection, readBroadcasts, readBroadcast} from './collections/broadcasts'
 export {
 	tracksCollection,
-	tracksAPI,
 	getTrackWithMeta,
 	addTrack,
 	updateTrack,
@@ -40,6 +32,3 @@ export {
 	ensureTracksLoaded,
 	insertDurationFromMeta
 } from './collections/tracks'
-
-// Offline executor
-export {getOfflineExecutor} from './collections/offline-executor'

@@ -246,31 +246,35 @@ tracksCollection.utils.writeBatch(() => {
 
 ## Mutations
 
-### Online-only (simple)
+### Collection handlers (tracks, channels)
+
+`collection.insert()` / `.update()` / `.delete()` fire `onInsert` / `onUpdate` / `onDelete` handlers. The handler persists to the server, then an auto-refetch updates `syncedData`.
+
+**Critical: write server response back in handlers.** When a transaction completes, the optimistic overlay is cleared immediately — but the auto-refetch hasn't finished yet. Without a `writeUpsert`, the UI briefly flashes back to stale data.
 
 ```ts
-const todoCollection = createCollection({
-	onInsert: async ({transaction}) => {
-		await api.create(transaction.mutations[0].modified)
-		return {refetch: false}
+onInsert: async ({transaction}) => {
+	for (const m of transaction.mutations) {
+		const optimistic = m.modified as Track
+		const serverTrack = await handleTrackInsert(m, m.metadata)
+		if (serverTrack) {
+			// Merge view-only fields (e.g. slug) from optimistic data,
+			// since the server returns from the base table, not the view.
+			collection.utils.writeUpsert({...optimistic, ...serverTrack})
+		}
 	}
-})
-todoCollection.insert({id, text}) // fires onInsert
-todoCollection.insert({id, text}, {optimistic: false}) // wait for server
+},
+onUpdate: async ({transaction}) => {
+	for (const m of transaction.mutations) {
+		const serverTrack = await handleTrackUpdate(m)
+		if (serverTrack) {
+			collection.utils.writeUpsert(serverTrack)
+		}
+	}
+}
 ```
 
-### Offline-first (tracks, channels)
-
-```ts
-const tx = executor.createOfflineTransaction({mutationFnName: 'syncTracks'})
-tx.mutate(() => tracksCollection.insert(newTrack))
-await tx.commit()
-```
-
-1. Persist to IndexedDB outbox (durable)
-2. Apply optimistic update to collection (instant UI)
-3. Sync to server when online (via mutationFn)
-4. Remove from outbox on success
+**Why the merge on insert?** `createTrack` returns from the `tracks` table, but the collection uses the `channel_tracks` view (which adds `slug` via a join). Without merging, the written row has no `slug`, and live queries filtering by `slug` won't match it.
 
 Transaction states: `pending` → `persisting` → `completed` (or `failed`). Use `await tx.isPersisted.promise` to wait.
 
@@ -292,20 +296,12 @@ Direct `collection.insert()`/`delete()` require handlers. `utils.write*` bypasse
 
 ```ts
 export function addTrack(channel: {id: string; slug: string}, input: {url: string; title: string}) {
-	const tx = offlineExecutor.createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug}
-	})
-	tx.mutate(() => {
-		tracksCollection.insert({
-			id: crypto.randomUUID(),
-			url: input.url,
-			title: input.title,
-			slug: channel.slug,
-			created_at: new Date().toISOString()
-		})
-	})
-	return tx.commit()
+	return tracksCollection
+		.insert(
+			{id: uuid(), url: input.url, title: input.title, slug: channel.slug, created_at: new Date().toISOString(), ...},
+			{metadata: {channelId: channel.id, slug: channel.slug}}
+		)
+		.isPersisted.promise.then(() => {})
 }
 ```
 
@@ -350,26 +346,22 @@ Within a transaction: insert+update → insert (merged), insert+delete → remov
 
 ## Terminology
 
-| Term                               | Source   | What it is                                                        |
-| ---------------------------------- | -------- | ----------------------------------------------------------------- |
-| **Collection**                     | TanStack | Reactive data store (`tracksCollection`)                          |
-| **Mutation**                       | TanStack | Single change: `insert`, `update`, or `delete`                    |
-| **Transaction**                    | TanStack | Batch of mutations that commit together                           |
-| **Live Query**                     | TanStack | `useLiveQuery()` - reactive query that updates UI                 |
-| **Offline Transaction**            | TanStack | `createOfflineTransaction()` - persists to IndexedDB outbox first |
-| **Offline Executor**               | TanStack | `startOfflineExecutor()` - manages outbox, leader election, retry |
-| **mutationFn**                     | TanStack | Function that syncs a transaction to the server                   |
-| `syncTracks`                       | **Ours** | Our mutationFn name - dispatches to SDK by mutation type          |
-| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that create offline transactions             |
+| Term                               | Source   | What it is                                                           |
+| ---------------------------------- | -------- | -------------------------------------------------------------------- |
+| **Collection**                     | TanStack | Reactive data store (`tracksCollection`)                             |
+| **Mutation**                       | TanStack | Single change: `insert`, `update`, or `delete`                       |
+| **Transaction**                    | TanStack | Batch of mutations that commit together                              |
+| **Live Query**                     | TanStack | `useLiveQuery()` - reactive query that updates UI                    |
+| **Handler**                        | TanStack | `onInsert`/`onUpdate`/`onDelete` — persists mutation, auto-refetches |
+| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that call `collection.insert/update/delete`     |
 
 ## Packages
 
-| Package                          | What it provides                                                  |
-| -------------------------------- | ----------------------------------------------------------------- |
-| `@tanstack/svelte-db`            | `createCollection()`, `useLiveQuery()`, `eq`                      |
-| `@tanstack/query-db-collection`  | `queryCollectionOptions()`, `parseLoadSubsetOptions()`            |
-| `@tanstack/svelte-query`         | `QueryClient`, `createQuery`, `queryOptions`                      |
-| `@tanstack/offline-transactions` | `startOfflineExecutor()`, `IndexedDBAdapter`, `NonRetriableError` |
+| Package                         | What it provides                                       |
+| ------------------------------- | ------------------------------------------------------ |
+| `@tanstack/svelte-db`           | `createCollection()`, `useLiveQuery()`, `eq`           |
+| `@tanstack/query-db-collection` | `queryCollectionOptions()`, `parseLoadSubsetOptions()` |
+| `@tanstack/svelte-query`        | `QueryClient`, `createQuery`, `queryOptions`           |
 
 ## Debugging
 
