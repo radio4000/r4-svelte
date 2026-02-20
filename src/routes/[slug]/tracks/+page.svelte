@@ -16,8 +16,6 @@
 
 	const tracksQuery = getTracksQueryCtx()
 
-	const RENDER_LIMIT = 30
-
 	let searchInput = $state(page.url.searchParams.get('search') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
 	let searchValue = $derived(page.url.searchParams.get('search') ?? '')
@@ -55,9 +53,6 @@
 		})
 	)
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
-	let showAll = $state(false)
-	let renderedTracks = $derived(isFiltering || showAll ? visibleTracks : visibleTracks.slice(0, RENDER_LIMIT))
-	let hasMore = $derived(!isFiltering && !showAll && visibleTracks.length > RENDER_LIMIT)
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
 		if (search) return search
@@ -139,9 +134,9 @@
 			{/if}
 		</header>
 
-		{#if tracksQuery.isReady && renderedTracks.length > 0}
+		{#if tracksQuery.isReady && visibleTracks.length > 0}
 			<Tracklist
-				tracks={renderedTracks}
+				tracks={visibleTracks}
 				playlistTitle={isFiltering ? filteredPlaylistTitle : undefined}
 				{canEdit}
 				grouped={!isFiltering}
@@ -152,14 +147,6 @@
 		{/if}
 
 		<footer>
-			{#if hasMore}
-				<p class="load-more">
-					{renderedTracks.length} / {visibleTracks.length}
-					<button type="button" onclick={() => (showAll = true)}
-						>{m.channels_load_more({count: visibleTracks.length - renderedTracks.length})}</button
-					>
-				</p>
-			{/if}
 			{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
 				<p class="empty">No tracks match your filter</p>
 			{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}

@@ -1,14 +1,20 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {getTracksQueryCtx} from '$lib/contexts'
-	import {canEditChannel} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import Tracklist from '$lib/components/tracklist.svelte'
+	import ChannelCard from '$lib/components/channel-card.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
+	import Icon from '$lib/components/icon.svelte'
 	import {relativeDate} from '$lib/dates'
+	import {extractHashtags, extractMentions} from '$lib/utils'
+	import {findChannelBySlug} from '$lib/search'
+	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	const PREVIEW_LIMIT = 10
+	const TAG_PREVIEW_LIMIT = 5
 
 	const tracksQuery = getTracksQueryCtx()
 
@@ -17,6 +23,52 @@
 	let allTracks = $derived(tracksQuery.data || [])
 	let previewTracks = $derived(allTracks.slice(0, PREVIEW_LIMIT))
 	let canEdit = $derived(canEditChannel(channel?.id))
+
+	// Featured tags/channels parsed from description
+	let featuredTags = $derived(
+		extractHashtags(channel?.description ?? '').map((t) => t.slice(1)) // strip #
+	)
+	let featuredMentions = $derived(
+		extractMentions(channel?.description ?? '').map((s) => s.slice(1)) // strip @
+	)
+
+	// Per-tag sections — store full matching list, slice only for display
+	let tagSections = $derived(
+		featuredTags.map((tag) => {
+			const tracks = allTracks.filter((t) => t.tags?.includes(tag))
+			return {tag, tracks}
+		})
+	)
+
+	let mentionedChannels = $state<import('$lib/types').Channel[]>([])
+	$effect(() => {
+		const slugs = featuredMentions
+		if (!slugs.length) {
+			mentionedChannels = []
+			return
+		}
+		let stale = false
+		Promise.all(slugs.map(findChannelBySlug)).then((results) => {
+			if (stale) return
+			mentionedChannels = results.filter((c) => c !== undefined) as import('$lib/types').Channel[]
+		})
+		return () => {
+			stale = true
+		}
+	})
+
+	function playTagTracks(tracks: {id: string}[], tag: string) {
+		const ids = tracks.map((t) => t.id)
+		setPlaylist(appState.active_deck_id, ids, {title: `#${tag}`})
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
+	}
+
+	function queueTagTracks(tracks: {id: string}[]) {
+		addToPlaylist(
+			appState.active_deck_id,
+			tracks.map((t) => t.id)
+		)
+	}
 </script>
 
 <svelte:head>
@@ -24,7 +76,7 @@
 </svelte:head>
 
 {#if channel}
-	<section>
+	<article>
 		<div class="channel-meta">
 			<p class="dates">
 				<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
@@ -38,39 +90,85 @@
 		</div>
 
 		{#if tracksQuery.isReady && previewTracks.length > 0}
-			<Tracklist tracks={previewTracks} {canEdit} grouped={false} virtual={false} playContext={true} />
+			<section class="track-section">
+				<header>
+					<h3>Latest</h3>
+					<a href="/{slug}/tracks">
+						{allTracks.length > PREVIEW_LIMIT ? `All ${allTracks.length}` : `All`}
+					</a>
+				</header>
+				<Tracklist tracks={previewTracks} {canEdit} grouped={false} virtual={false} playContext={true} />
+			</section>
+		{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
+			<p class="empty">{m.channel_loading_tracks()}</p>
+		{:else if tracksQuery.isReady && allTracks.length === 0}
+			<p class="empty">
+				{#if canEdit}
+					<a href="/add">Add your first track (tip: press "c")</a>
+				{:else}
+					No tracks yet
+				{/if}
+			</p>
 		{/if}
 
-		<footer>
-			{#if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
-				<p class="empty">{m.channel_loading_tracks()}</p>
-			{:else if tracksQuery.isReady && allTracks.length === 0}
-				{#if canEdit}
-					<p class="empty">
-						<a href="/add">Add your first track (tip: press "c")</a>
-					</p>
-				{:else}
-					<p class="empty">No tracks yet</p>
-				{/if}
+		{#if mentionedChannels.length > 0}
+			<section class="featured-channels">
+				<header><h3>Featured radios</h3></header>
+				<ul class="grid grid--scroll">
+					{#each mentionedChannels as ch (ch.id)}
+						<li><ChannelCard channel={ch} /></li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
+		{#each tagSections as { tag, tracks } (tag)}
+			{#if tracks.length > 0}
+				<section class="track-section">
+					<header>
+						<h3><a href="/{slug}/tracks?tags={tag}">#{tag}</a></h3>
+						<menu>
+							<button type="button" onclick={() => playTagTracks(tracks, tag)} title="Play #{tag}">
+								<Icon icon="play-fill" size={14} />
+							</button>
+							<button type="button" onclick={() => queueTagTracks(tracks)} title="Queue #{tag}">
+								<Icon icon="next-fill" size={14} />
+							</button>
+							{#if tracks.length > TAG_PREVIEW_LIMIT}
+								<a href="/{slug}/tracks?tags={tag}">All {tracks.length}</a>
+							{/if}
+						</menu>
+					</header>
+					<Tracklist
+						tracks={tracks.slice(0, TAG_PREVIEW_LIMIT)}
+						playlistTracks={tracks}
+						playlistTitle="#{tag}"
+						{canEdit}
+						grouped={false}
+						virtual={false}
+						playContext={true}
+					/>
+				</section>
 			{/if}
-			{#if allTracks.length > 0}
-				<a href="/{slug}/tracks" class="show-all">
-					{allTracks.length > PREVIEW_LIMIT
-						? `Show all ${allTracks.length} tracks`
-						: `All tracks (${allTracks.length})`}
-				</a>
-			{/if}
-		</footer>
-	</section>
+		{/each}
+	</article>
 {/if}
 
 <style>
-	.channel-meta {
-		padding: 0.5rem;
+	article {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-		border-bottom: 1px solid var(--gray-4);
+	}
+
+	.channel-meta {
+		margin: 0.75rem;
+		padding: 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		background: var(--gray-2);
+		border: 1px solid var(--gray-4);
+		border-radius: var(--border-radius);
 	}
 
 	.dates {
@@ -78,7 +176,20 @@
 	}
 
 	.description {
-		white-space: pre-wrap;
+		white-space: pre-line;
+	}
+
+	/* Pill-style links inside the description (tags + mentions from LinkEntities) */
+	.description :global(a),
+	.description :global(.tag-link) {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.12rem 0.45rem;
+		border: 1px solid var(--gray-5);
+		border-radius: 999px;
+		text-decoration: none;
+		margin: 0 0.2rem 0.2rem 0;
+		vertical-align: middle;
 	}
 
 	.url {
@@ -90,17 +201,42 @@
 		color: inherit;
 	}
 
-	.empty {
-		padding: 1rem;
-	}
-
-	footer {
-		padding: 0.75rem 1rem;
-		text-align: center;
+	.track-section,
+	.featured-channels {
 		border-top: 1px solid var(--gray-4);
 	}
 
-	.show-all {
-		display: inline-block;
+	.track-section > header,
+	.featured-channels > header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.4rem 0.5rem 0.2rem;
+		gap: 0.5rem;
+	}
+
+	.track-section > header h3,
+	.featured-channels > header h3 {
+		font-size: var(--font-3);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--gray-10);
+	}
+
+	.track-section > header menu {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		margin-left: auto;
+	}
+
+	.featured-channels ul {
+		margin: 0;
+		padding: 0 0.5rem 0.5rem;
+	}
+
+	.empty {
+		padding: 1rem;
 	}
 </style>

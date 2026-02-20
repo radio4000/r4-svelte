@@ -14,6 +14,7 @@
 
 	/** @type {{
 		tracks: Track[],
+		playlistTracks?: Track[],
 		deckId?: number,
 		playlistTitle?: string,
 		footer?: (props: {track: Track}) => any,
@@ -28,6 +29,7 @@
 	*/
 	const {
 		tracks,
+		playlistTracks,
 		deckId,
 		playlistTitle,
 		footer,
@@ -54,10 +56,11 @@
 
 	const playFromList = (trackId) => {
 		const targetDeck = deckId ?? appState.active_deck_id
-		if (playContext && tracks.length) {
+		const contextTracks = playlistTracks ?? tracks
+		if (playContext && contextTracks.length) {
 			setPlaylist(
 				targetDeck,
-				tracks.map((track) => track.id),
+				contextTracks.map((track) => track.id),
 				{title: playlistTitle}
 			)
 		}
@@ -138,9 +141,8 @@
 		/** @type {FlatItem[]} */
 		const items = []
 		for (const [year, monthsMap] of groupedTracks) {
-			items.push({type: 'year', value: year, id: `year-${year}`})
 			for (const [month, monthTracks] of monthsMap) {
-				items.push({type: 'month', value: month, id: `month-${year}-${month}`})
+				items.push({type: 'month', value: `${month} ${year}`, id: `month-${year}-${month}`})
 				for (const {track, index} of monthTracks) {
 					items.push({type: 'track', track, index, id: track.id})
 				}
@@ -161,11 +163,7 @@
 				viewportClass="virtual-viewport"
 			>
 				{#snippet renderItem(item)}
-					{#if item.type === 'year'}
-						<div class="virtual-item year-item">
-							<h2 class="caps">{item.value}</h2>
-						</div>
-					{:else if item.type === 'month'}
+					{#if item.type === 'month'}
 						<div class="virtual-item month-item">
 							<h3 class="caps">{item.value}</h3>
 						</div>
@@ -210,38 +208,35 @@
 			})}
 		>
 			{#each groupedTracks as [year, months] (year)}
-				<section class="year">
-					<h2 class="caps">{year}</h2>
-					{#each months as [month, monthTracks] (month)}
-						<section class="month">
-							<h3 class="caps">{month}</h3>
-							<ul class="list tracks">
-								{#each monthTracks as item (item.track.id)}
-									{@const track = item.track}
-									{@const index = item.index}
-									<li
-										role="option"
-										aria-selected="false"
-										id="track-{track.id}"
-										data-track-id={track.id}
-										onclick={(event) => selectTrackFromEvent(event, track.id)}
-									>
-										<TrackCard
-											{track}
-											{index}
-											{deckId}
-											selected={selectedTrackId === track.id}
-											onPlay={playContext ? playFromList : undefined}
-											{canEdit}
-											{onTagClick}
-										/>
-										{@render footer?.({track})}
-									</li>
-								{/each}
-							</ul>
-						</section>
-					{/each}
-				</section>
+				{#each months as [month, monthTracks] (month)}
+					<section class="month">
+						<h3 class="caps">{month} {year}</h3>
+						<ul class="list tracks">
+							{#each monthTracks as item (item.track.id)}
+								{@const track = item.track}
+								{@const index = item.index}
+								<li
+									role="option"
+									aria-selected="false"
+									id="track-{track.id}"
+									data-track-id={track.id}
+									onclick={(event) => selectTrackFromEvent(event, track.id)}
+								>
+									<TrackCard
+										{track}
+										{index}
+										{deckId}
+										selected={selectedTrackId === track.id}
+										onPlay={playContext ? playFromList : undefined}
+										{canEdit}
+										{onTagClick}
+									/>
+									{@render footer?.({track})}
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{/each}
 			{/each}
 		</div>
 	{:else}
@@ -286,7 +281,6 @@
 {/if}
 
 <style>
-	h2,
 	h3 {
 		line-height: 1.2;
 		margin-right: 0.5rem;
@@ -295,20 +289,6 @@
 
 	.timeline .list > li:first-child {
 		border-top: 1px solid var(--gray-4);
-	}
-
-	/* sticky year - only for non-virtual timeline */
-	.timeline h2 {
-		display: flex;
-		justify-content: flex-end;
-		position: sticky;
-		top: 0;
-		z-index: 1;
-		background: var(--gray-1);
-	}
-
-	.timeline > section {
-		margin-top: 0.5rem;
 	}
 
 	.month:not(:first-of-type) {

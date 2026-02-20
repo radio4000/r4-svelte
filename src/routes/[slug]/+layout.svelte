@@ -157,11 +157,37 @@
 					</p>
 				</div>
 				<menu class="channel-actions">
+					{#if canEdit}
+						<span>
+							<BroadcastControls
+								deckId={appState.active_deck_id}
+								channelId={channel.id}
+								isLiveOverride={isChannelLive}
+							/>
+						</span>
+					{:else if channel.id && isChannelLive}
+						<span>
+							<button
+								type="button"
+								onclick={() => {
+									if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+									else joinBroadcast(appState.active_deck_id, channel.id)
+								}}
+							>
+								<Icon icon="signal" />
+							</button>
+						</span>
+					{/if}
 					<span>
 						<ButtonPlay class="primary" {channel} trackId={tid} />
 						{#if autoRadioTracks.length > 0}
-							<button type="button" onclick={joinAutoRadio} class:active={isAutoRadioDrifted}>
-								<Icon icon="signal" />
+							<button
+								type="button"
+								onclick={joinAutoRadio}
+								class:active={isAutoRadioDrifted}
+								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+							>
+								<Icon icon="infinite" />
 							</button>
 						{/if}
 					</span>
@@ -177,28 +203,6 @@
 							<Icon icon="share" size={16} />
 						</button>
 					</span>
-					{#if canEdit || (channel.id && isChannelLive && !canEdit)}
-						<span>
-							{#if canEdit}
-								<BroadcastControls
-									deckId={appState.active_deck_id}
-									channelId={channel.id}
-									isLiveOverride={isChannelLive}
-								/>
-							{/if}
-							{#if channel.id && isChannelLive && !canEdit}
-								<button
-									type="button"
-									onclick={() => {
-										if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
-										else joinBroadcast(appState.active_deck_id, channel.id)
-									}}
-								>
-									<Icon icon="signal" />
-								</button>
-							{/if}
-						</span>
-					{/if}
 				</menu>
 			</header>
 
