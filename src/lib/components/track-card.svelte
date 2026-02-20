@@ -9,6 +9,7 @@
 	import LinkEntities from './link-entities.svelte'
 	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
+	import {isDbId} from '$lib/utils'
 
 	interface Props {
 		track: Track
@@ -39,7 +40,7 @@
 	}: Props = $props()
 
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
-	const isRealTrack = $derived(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(track?.id ?? ''))
+	const isRealTrack = $derived(isDbId(track?.id))
 	const active = $derived.by(() => {
 		if (deckId != null) {
 			const deck = appState.decks[deckId]

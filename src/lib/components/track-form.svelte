@@ -4,6 +4,7 @@
 	import {getMedia} from 'media-now'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {extractHashtags} from '$lib/utils'
 
 	const uid = $props.id()
 
@@ -46,11 +47,6 @@
 		} finally {
 			if (url === pendingUrl) fetchingTitle = false
 		}
-	}
-
-	/** Extract hashtag words from text (without the # prefix, lowercased) */
-	function parseHashtags(text) {
-		return [...(text ?? '').matchAll(/#([\w-]+)/g)].map((m) => m[1].toLowerCase())
 	}
 
 	/** @param {{detail: string[]}} event */
@@ -184,7 +180,7 @@
 		<R4DiscogsResource
 			url={liveDiscogsUrl}
 			suggestions={true}
-			preselected={parseHashtags(initialDescription)}
+			preselected={extractHashtags(initialDescription).map((t) => t.slice(1))}
 			onload={(all) => (allDiscogsSuggestions = all)}
 			onsuggestion={handleDiscogsSuggestion}
 		/>

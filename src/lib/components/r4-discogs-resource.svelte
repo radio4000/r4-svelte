@@ -4,7 +4,8 @@
 	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
 	import {setPlaylist, playTrack, addToPlaylist, playNext} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {ephemeralTracks} from '$lib/ephemeral-tracks'
+	import {tracksCollection} from '$lib/tanstack/collections'
+	import {isDbId} from '$lib/utils'
 
 	/**
 	 * @typedef {{position: string, type_: string, title: string, duration: string}} DiscogsTracklistItem
@@ -133,10 +134,11 @@
 			media_id: ytId ?? null,
 			created_at: now,
 			updated_at: now,
-			// Carry channel slug so the player knows which channel context to display
-			slug: tracks[0]?.slug ?? null,
+			// No slug — ephemeral tracks must not appear in channel tracksQuery (filtered by slug)
+			slug: null,
 			// discogs_url only on real DB tracks (drives the link in track-card)
-			discogs_url: null
+			// Carry the release URL so "add to radio" can pre-fill the Discogs field
+			discogs_url: url || null
 		})
 	}
 
@@ -160,16 +162,16 @@
 
 	/** Register/unregister ephemeral tracks when resource/tracks change */
 	$effect(() => {
-		const toRegister = allPlayableTracks.filter((t) => t.id.startsWith('discogs:'))
+		const toRegister = allPlayableTracks.filter((t) => !isDbId(t.id))
 		for (const t of toRegister) {
-			ephemeralTracks.set(t.id, t)
+			tracksCollection.utils.writeUpsert(t)
 		}
 		return () => {
 			// Only remove tracks not referenced in any deck's current playlist
 			const activeDeckIds = new Set(Object.values(appState.decks).flatMap((d) => d.playlist_tracks ?? []))
 			for (const t of toRegister) {
-				if (!activeDeckIds.has(t.id)) {
-					ephemeralTracks.delete(t.id)
+				if (!activeDeckIds.has(t.id) && tracksCollection.state.has(t.id)) {
+					tracksCollection.utils.writeDelete(t.id)
 				}
 			}
 		}
@@ -281,7 +283,7 @@
 			<ul class="list tracklist">
 				{#each tracklistItems as trackItem, i (trackItem.position + trackItem.title)}
 					{@const t = playableTracks[i]}
-					{@const isReal = !t.id.startsWith('discogs:')}
+					{@const isReal = isDbId(t.id)}
 					{@const hasVideo = t.id.startsWith('discogs:') && !!t.url}
 					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
 					<li

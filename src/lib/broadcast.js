@@ -4,7 +4,7 @@ import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
-import {ephemeralTracks} from '$lib/ephemeral-tracks'
+import {isDbId} from '$lib/utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
@@ -181,12 +181,6 @@ export function leaveBroadcast(deckId) {
 	log.log(`left deck ${deckId}`)
 }
 
-/** @param {string | null | undefined} id */
-function isDbTrackId(id) {
-	// Ephemeral IDs (e.g. "discogs:…") are not UUIDs and can't go in the track_id column
-	return Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
-}
-
 /**
  * Helper to upsert a broadcast record with full deck state.
  * @param {string} channelId
@@ -195,9 +189,7 @@ export async function upsertRemoteBroadcast(channelId) {
 	const deckState = getBroadcastDeckState()
 	const firstTrackId = deckState?.[0]?.track_id ?? null
 	// track_id column is a UUID — use nil UUID for ephemeral tracks (decks JSON has the data)
-	const dbTrackId = isDbTrackId(firstTrackId)
-		? /** @type {string} */ (firstTrackId)
-		: '00000000-0000-0000-0000-000000000000'
+	const dbTrackId = isDbId(firstTrackId) ? /** @type {string} */ (firstTrackId) : '00000000-0000-0000-0000-000000000000'
 	return sdk.supabase
 		.from('broadcast')
 		.upsert(
@@ -367,10 +359,9 @@ async function playBroadcastTrack(deckId, broadcast) {
 	const {track_id, channel_id} = broadcast
 	if (!track_id) return false
 
-	// Check if track is already loaded (DB collection or ephemeral map)
-	let track = tracksCollection.get(track_id) ?? ephemeralTracks.get(track_id)
+	// Check if track is already loaded; if not, reconstruct from broadcast-included data
+	let track = tracksCollection.get(track_id)
 	if (!track) {
-		// Ephemeral track — reconstruct from broadcast-included data
 		if (broadcast.track_url) {
 			const uri = broadcast.track_url
 			const ytId =
@@ -385,7 +376,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 				updated_at: now,
 				slug: null
 			})
-			ephemeralTracks.set(track_id, track)
+			tracksCollection.utils.writeUpsert(track)
 			log.log('play_broadcast_ephemeral', {track_id, url: uri})
 		} else {
 			// Track not loaded - fetch it directly by ID
@@ -459,8 +450,8 @@ function getBroadcastDeckState() {
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]
 		const trackId = deck?.playlist_track ?? null
-		// Include ephemeral track data so listeners can reconstruct tracks not in the DB
-		const ephemeral = trackId ? ephemeralTracks.get(trackId) : null
+		// Include non-DB track data so listeners can reconstruct tracks not in the DB
+		const nonDbTrack = trackId && !isDbId(trackId) ? tracksCollection.get(trackId) : null
 		return {
 			index,
 			track_id: trackId,
@@ -471,10 +462,10 @@ function getBroadcastDeckState() {
 			volume: deck?.volume ?? 0,
 			muted: deck?.muted ?? false,
 			speed: deck?.speed ?? 1,
-			// Extra fields for ephemeral tracks (Discogs videos, etc.)
-			track_url: ephemeral?.url ?? null,
-			track_title: ephemeral?.title ?? null,
-			track_media_id: ephemeral?.media_id ?? null
+			// Extra fields for non-DB tracks (Discogs videos, etc.)
+			track_url: nonDbTrack?.url ?? null,
+			track_title: nonDbTrack?.title ?? null,
+			track_media_id: nonDbTrack?.media_id ?? null
 		}
 	})
 }
@@ -717,7 +708,7 @@ async function applyBroadcastState(channelId, decks) {
 			// Only seek when broadcaster's intent changed (new seek, play/pause toggle, new track start).
 			// Periodic polls with the same intent are skipped to prevent seek loops.
 			if (hasIntentChanged(deckId, state)) {
-				const track = tracksCollection.get(state.track_id) ?? ephemeralTracks.get(state.track_id)
+				const track = tracksCollection.get(state.track_id)
 				if (track) {
 					const seekTime = calculateSeekTime(state, track)
 					if (seekTime !== undefined) {

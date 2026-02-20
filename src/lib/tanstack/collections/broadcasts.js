@@ -63,7 +63,7 @@ function reconcileBroadcastsSnapshot(broadcasts) {
 	const nextIds = new Set(broadcasts.map((b) => b.channel_id))
 	for (const b of broadcasts) broadcastsCollection.utils.writeUpsert(b)
 	for (const existing of broadcastsCollection.state.values()) {
-		if (!nextIds.has(existing.channel_id)) {
+		if (!nextIds.has(existing.channel_id) && broadcastsCollection.state.has(existing.channel_id)) {
 			broadcastsCollection.utils.writeDelete(existing.channel_id)
 		}
 	}
@@ -100,7 +100,9 @@ sdk.supabase
 
 		if (payload.eventType === 'DELETE') {
 			const oldData = /** @type {{channel_id: string}} */ (payload.old)
-			broadcastsCollection.utils.writeDelete(oldData.channel_id)
+			if (broadcastsCollection.state.has(oldData.channel_id)) {
+				broadcastsCollection.utils.writeDelete(oldData.channel_id)
+			}
 			if (oldData.channel_id === appState.channels?.[0]) {
 				for (const deck of Object.values(appState.decks)) {
 					if (deck.broadcasting_channel_id === oldData.channel_id) {

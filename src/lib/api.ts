@@ -5,7 +5,7 @@ import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray} from '$lib/utils.ts'
+import {shuffleArray, isDbId} from '$lib/utils.ts'
 import {
 	queueInsertManyAfter,
 	queueNext,
@@ -15,7 +15,6 @@ import {
 	queueRotate
 } from '$lib/player/queue'
 import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
-import {ephemeralTracks} from '$lib/ephemeral-tracks'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
 
@@ -120,15 +119,15 @@ export async function playTrack(
 		log.log('play_track_created_deck', {deckId})
 	}
 
-	const track = tracksCollection.get(id) ?? ephemeralTracks.get(id)
+	const track = tracksCollection.get(id)
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined
 		return
 	}
 
-	// Ephemeral tracks (Discogs videos etc.) are not in the DB collection
-	const isEphemeral = !tracksCollection.get(id)
+	// Ephemeral tracks (Discogs videos etc.) have non-UUID synthetic IDs
+	const isEphemeral = !isDbId(id)
 
 	// If same track is already loaded, just ensure it's playing (don't reload)
 	if (deck.playlist_track === id && startReason === 'user_click_track') {
