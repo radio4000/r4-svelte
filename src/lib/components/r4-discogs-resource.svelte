@@ -287,7 +287,7 @@
 {/if}
 
 {#if resource}
-	<div class="r4-discogs-resource">
+	<div class="r4-discogs-resource" class:r4-discogs-resource--full={full}>
 		<div class="release-header">
 			{#if resource.thumb}
 				<img class="release-thumb" src={resource.thumb} alt="" loading="lazy" />
@@ -473,6 +473,11 @@
 		background: var(--gray-2);
 	}
 
+	.r4-discogs-resource--full .release-header {
+		gap: 0.75rem;
+		padding: 0.7rem 0.8rem;
+	}
+
 	.release-thumb {
 		width: 42px;
 		height: 42px;
@@ -543,6 +548,10 @@
 		border-bottom: 1px solid var(--gray-3);
 	}
 
+	.r4-discogs-resource--full .release-community {
+		padding: 0.5rem 0.8rem;
+	}
+
 	.release-community span {
 		display: inline-flex;
 		align-items: center;
@@ -553,6 +562,10 @@
 		margin: 0;
 		font-style: normal;
 		padding: 0;
+	}
+
+	.r4-discogs-resource--full .tracklist {
+		padding: 0.25rem 0.45rem 0.45rem;
 	}
 
 	.tracklist-item {
@@ -566,6 +579,13 @@
 			opacity: 1;
 			cursor: pointer;
 		}
+	}
+
+	/* Keep text aligned with rows that have artwork by reserving the same slot */
+	.tracklist-item:not(.has-video) :global(.card)::before {
+		content: '';
+		flex: 0 0 38px;
+		align-self: center;
 	}
 
 	.track-hints {
