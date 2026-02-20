@@ -1,6 +1,4 @@
 <script>
-	import {untrack} from 'svelte'
-	import {pullDiscogs} from '$lib/metadata/discogs'
 	import {updateTrack} from '$lib/tanstack/collections/tracks'
 	import R4DiscogsResource from './r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -14,41 +12,12 @@
 	 * }} */
 	let {data, track, tracks = [], channel, canEdit = false} = $props()
 
-	let editingUrl = $state(untrack(() => track?.discogs_url ?? ''))
 	let saving = $state(false)
 	let saveError = $state('')
 	let showRaw = $state(false)
-	/** Show the URL edit form — always open when no discogs_url, toggled when one exists */
-	let showUrlEdit = $state(untrack(() => !track?.discogs_url))
-
-	const livePreviewUrl = $derived(editingUrl?.includes('discogs.com') ? editingUrl : '')
-
-	const discogsSearchUrl = $derived(
-		track?.title
-			? `https://www.discogs.com/search?q=${encodeURIComponent(track.title)}&type=release`
-			: 'https://www.discogs.com/search'
-	)
 
 	/** Track has a media/URL we can play */
 	const trackHasMedia = $derived(!!(track?.url || track?.media_id))
-
-	async function handleSave() {
-		if (!track || !channel) return
-		saving = true
-		saveError = ''
-		try {
-			const url = editingUrl || null
-			await updateTrack(channel, track.id, {discogs_url: url})
-			if (track.media_id && url) {
-				await pullDiscogs(track.media_id, url)
-			}
-			showUrlEdit = false
-		} catch (e) {
-			saveError = /** @type {Error} */ (e).message
-		} finally {
-			saving = false
-		}
-	}
 
 	/** Called when user picks a video from the release for a track that has no URL */
 	async function handleSelectMedia(uri, title) {
@@ -75,6 +44,10 @@
 	/>
 {:else if !canEdit}
 	<p>{m.track_meta_no_discogs()}</p>
+{/if}
+
+{#if saveError}
+	<p class="error">{m.common_error()}: {saveError}</p>
 {/if}
 
 {#if data}
@@ -143,74 +116,7 @@
 	{/if}
 {/if}
 
-{#if canEdit}
-	<section class="discogs-edit">
-		{#if track?.discogs_url && !showUrlEdit}
-			<button type="button" class="ghost change-btn" onclick={() => (showUrlEdit = true)}> Change release </button>
-		{:else}
-			<fieldset>
-				<label for="discogs-url-input">Discogs URL</label>
-				<input
-					id="discogs-url-input"
-					type="url"
-					value={editingUrl}
-					oninput={(e) => (editingUrl = /** @type {HTMLInputElement} */ (e.target).value)}
-					placeholder="https://www.discogs.com/release/..."
-				/>
-			</fieldset>
-
-			{#if livePreviewUrl && livePreviewUrl !== track?.discogs_url}
-				<R4DiscogsResource url={livePreviewUrl} full={true} {tracks} />
-			{/if}
-
-			<div class="discogs-actions">
-				<a href={discogsSearchUrl} target="_blank" rel="noopener noreferrer">Search Discogs</a>
-				{#if track?.discogs_url}
-					<button type="button" class="ghost" onclick={() => (showUrlEdit = false)}>Cancel</button>
-				{/if}
-				<button onclick={handleSave} disabled={saving || !livePreviewUrl}>
-					{saving ? m.common_save() + '...' : m.common_save()}
-				</button>
-			</div>
-		{/if}
-
-		{#if saveError}
-			<p class="error">{m.common_error()}: {saveError}</p>
-		{/if}
-	</section>
-{/if}
-
 <style>
-	.discogs-edit {
-		display: flex;
-		flex-flow: column;
-		gap: 0.5rem;
-		margin-top: 1rem;
-		padding-top: 0.5rem;
-		border-top: 1px solid var(--gray-3);
-
-		fieldset {
-			display: flex;
-			flex-flow: column;
-			gap: 0.25rem;
-			border: 0;
-			padding: 0;
-			margin: 0;
-		}
-	}
-
-	.discogs-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.change-btn {
-		align-self: flex-start;
-		font-size: var(--font-3);
-		color: var(--gray-8);
-	}
-
 	.error {
 		color: var(--red-6);
 	}

@@ -15,14 +15,17 @@
 	 * @property {{name: string}[]} [artists]
 	 * @property {string} title
 	 * @property {number} [year]
+	 * @property {string} [released_formatted]
+	 * @property {string} [country]
 	 * @property {string[]} [genres]
 	 * @property {string[]} [styles]
 	 * @property {{name: string, catno?: string}[]} [labels]
+	 * @property {{name: string, qty: string, descriptions?: string[]}[]} [formats]
+	 * @property {{have: number, want: number, rating: {count: number, average: number}} } [community]
 	 * @property {DiscogsTracklistItem[]} [tracklist]
 	 * @property {DiscogsVideo[]} [videos]
 	 * @property {string} [uri]
 	 * @property {string} [thumb]
-	 * @property {string} [country]
 	 */
 
 	/** @type {{
@@ -52,6 +55,7 @@
 	let resource = $state(null)
 	let selectedTags = $state(/** @type {string[]} */ ([]))
 	let initializedForUrl = $state('')
+	let selectedTrackId = $state(/** @type {string | null} */ (null))
 
 	$effect(() => {
 		if (url) {
@@ -189,12 +193,12 @@
 		playTrack(deckId, trackId, null, 'user_click_track')
 	}
 
-	/** Single-click on a tracklist row — skips clicks on interactive elements */
+	/** Single-click on a tracklist row — select; double-click plays (via TrackCard dblclick) */
 	function handleRowClick(event, track) {
 		if (!track) return
 		const target = /** @type {HTMLElement} */ (event.target)
 		if (target.closest('button, a, input, [role="button"]')) return
-		playFromRelease(track.id)
+		selectedTrackId = track.id
 	}
 
 	function handlePlayRelease() {
@@ -214,14 +218,21 @@
 	const releaseMeta = $derived.by(() => {
 		if (!resource) return ''
 		const parts = []
-		if (resource.year) parts.push(String(resource.year))
+		const date = resource.released_formatted || (resource.year ? String(resource.year) : '')
+		if (date) parts.push(date)
+		if (resource.country) parts.push(resource.country)
+		const format = resource.formats?.[0]
+		if (format) {
+			const descParts =
+				format.descriptions?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d)).slice(0, 2) ?? []
+			const fmtStr = [format.name, ...descParts].join(' ')
+			if (fmtStr) parts.push(fmtStr)
+		}
 		const label = resource.labels?.[0]
 		if (label) {
-			const catno = label.catno && label.catno !== 'none' ? ` — ${label.catno}` : ''
+			const catno = label.catno && label.catno !== 'none' ? ` ${label.catno}` : ''
 			parts.push(`${label.name}${catno}`)
 		}
-		const genres = [...(resource.genres ?? []), ...(resource.styles ?? [])].join(', ')
-		if (genres) parts.push(genres)
 		return parts.join(' · ')
 	})
 	const artistsDisplay = $derived(
@@ -236,6 +247,7 @@
 
 {#if url && !resource}
 	<div class="r4-discogs-resource r4-discogs-resource--loading">
+		<Icon icon="tag" size={12} />
 		<span class="caps">Loading…</span>
 	</div>
 {/if}
@@ -268,7 +280,29 @@
 					</button>
 				</menu>
 			{/if}
+			{#if resource.uri}
+				<a
+					class="discogs-link caps"
+					href={resource.uri}
+					target="_blank"
+					rel="noopener noreferrer"
+					title="View on Discogs"
+				>
+					<Icon icon="tag" size={12} />
+					Discogs
+				</a>
+			{/if}
 		</div>
+
+		{#if full && resource.community}
+			<div class="release-community">
+				<span>{resource.community.have} have</span>
+				<span>{resource.community.want} want</span>
+				{#if resource.community.rating.count > 0}
+					<span>{resource.community.rating.average.toFixed(2)} / 5 ({resource.community.rating.count} ratings)</span>
+				{/if}
+			</div>
+		{/if}
 
 		{#if full && tracklistItems.length > 0}
 			<ul class="list tracklist">
@@ -283,7 +317,7 @@
 						class:is-real={isReal}
 						onclick={(e) => handleRowClick(e, t)}
 					>
-						<TrackCard track={t} canEdit={false} onPlay={playFromRelease}>
+						<TrackCard track={t} canEdit={false} onPlay={playFromRelease} selected={selectedTrackId === t.id}>
 							{#snippet children(track)}
 								{#if hasVideo && onSelectMedia}
 									<button type="button" class="ghost use-btn" onclick={() => onSelectMedia?.(track.url, track.title)}>
@@ -322,11 +356,14 @@
 		display: block;
 		margin: 0.5rem 0;
 		font-size: var(--font-4);
-		font-style: italic;
+		border: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
+		overflow: hidden;
 
 		fieldset {
 			flex-flow: row wrap;
 			font-style: normal;
+			padding: 0.5rem;
 		}
 		legend {
 			float: left;
@@ -334,8 +371,12 @@
 	}
 
 	.r4-discogs-resource--loading {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
 		padding: 0.5rem;
 		color: var(--gray-7);
+		background: var(--gray-2);
 	}
 
 	label {
@@ -350,7 +391,8 @@
 		align-items: center;
 		gap: 0.5rem;
 		font-style: normal;
-		padding: 0.25rem 0.5rem;
+		padding: 0.35rem 0.5rem;
+		background: var(--gray-2);
 	}
 
 	.release-thumb {
@@ -378,7 +420,6 @@
 	}
 
 	.release-meta {
-		color: var(--gray-7);
 		font-size: var(--font-3);
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -389,6 +430,31 @@
 		display: flex;
 		gap: 0.15rem;
 		flex-shrink: 0;
+	}
+
+	.discogs-link {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		color: var(--gray-8);
+		text-decoration: none;
+		padding: 0.15rem 0.3rem;
+		border-radius: 3px;
+		border: 1px solid var(--gray-5);
+
+		&:hover {
+			color: var(--gray-12);
+			border-color: var(--gray-7);
+		}
+	}
+
+	.release-community {
+		display: flex;
+		gap: 0.75rem;
+		padding: 0.25rem 0.5rem;
+		font-size: var(--font-3);
+		border-bottom: 1px solid var(--gray-3);
 	}
 
 	.tracklist {
