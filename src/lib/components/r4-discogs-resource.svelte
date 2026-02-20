@@ -248,25 +248,26 @@
 		if (inChannel > 0) parts.push(`${inChannel} already in this channel`)
 		return parts.join(' · ')
 	})
-	const releaseMeta = $derived.by(() => {
-		if (!resource) return ''
-		const parts = []
+	const releaseMetaItems = $derived.by(() => {
+		if (!resource) return []
+		/** @type {{icon: string, label: string, value: string}[]} */
+		const items = []
 		const date = resource.released_formatted || (resource.year ? String(resource.year) : '')
-		if (date) parts.push(date)
-		if (resource.country) parts.push(resource.country)
+		if (date) items.push({icon: 'history', label: 'Release date', value: date})
+		if (resource.country) items.push({icon: 'map', label: 'Country', value: resource.country})
 		const format = resource.formats?.[0]
 		if (format) {
 			const descParts =
 				format.descriptions?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d)).slice(0, 2) ?? []
 			const fmtStr = [format.name, ...descParts].join(' ')
-			if (fmtStr) parts.push(fmtStr)
+			if (fmtStr) items.push({icon: 'tv', label: 'Format', value: fmtStr})
 		}
 		const label = resource.labels?.[0]
 		if (label) {
 			const catno = label.catno && label.catno !== 'none' ? ` ${label.catno}` : ''
-			parts.push(`${label.name}${catno}`)
+			items.push({icon: 'tag', label: 'Label', value: `${label.name}${catno}`})
 		}
-		return parts.join(' · ')
+		return items
 	})
 	const artistsDisplay = $derived(
 		/** @type {DiscogsResource | null} */ (resource)?.artists_sort ||
@@ -299,8 +300,15 @@
 						{artistsDisplay} — {resource.title}
 					{/if}
 				</h3>
-				{#if releaseMeta}
-					<small class="release-meta">{releaseMeta}</small>
+				{#if releaseMetaItems.length > 0}
+					<small class="release-meta">
+						{#each releaseMetaItems as item (item.label)}
+							<span title={item.label}>
+								<Icon icon={item.icon} size={11} />
+								{item.value}
+							</span>
+						{/each}
+					</small>
 				{/if}
 			</div>
 			{#if full && allPlayableTracks.length > 0}
@@ -330,14 +338,24 @@
 		{#if full && (releaseStats || resource.community)}
 			<div class="release-community" aria-label="Release summary">
 				{#if releaseStats}
-					<span>{releaseStats}</span>
+					<span>
+						<Icon icon="unordered-list" size={12} />
+						{releaseStats}
+					</span>
 				{/if}
 				{#if resource.community}
-					<span>{resource.community.have} have</span>
-					<span>{resource.community.want} want</span>
+					<span title="Users who have this release">
+						<Icon icon="users" size={12} />
+						{resource.community.have} have
+					</span>
+					<span title="Users who want this release">
+						<Icon icon="favorite" size={12} />
+						{resource.community.want} want
+					</span>
 				{/if}
 				{#if Number(resource.community?.rating?.count) > 0}
-					<span>
+					<span title="Average Discogs rating">
+						<Icon icon="chart-scatter" size={12} />
 						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({resource.community?.rating?.count ?? 0} ratings)
 					</span>
 				{/if}
@@ -481,9 +499,16 @@
 
 	.release-meta {
 		font-size: var(--font-3);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 0.55rem;
+	}
+
+	.release-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
+		min-width: 0;
 	}
 
 	.release-actions {
@@ -516,6 +541,12 @@
 		padding: 0.25rem 0.5rem;
 		font-size: var(--font-3);
 		border-bottom: 1px solid var(--gray-3);
+	}
+
+	.release-community span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
 	}
 
 	.tracklist {

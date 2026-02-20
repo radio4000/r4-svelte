@@ -31,7 +31,6 @@
 		discogs_url={track.discogs_url ?? undefined}
 		onsubmit={handleSubmit}
 	/>
-	<p><a href="/{data.slug}/tracks/{data.tid}/delete">{m.common_delete()} track</a></p>
 {:else if !isSignedIn}
 	<p><a href="/auth">{m.auth_sign_in_to_edit()}</a></p>
 {:else}

@@ -52,17 +52,6 @@
 {/if}
 
 {#if data}
-	<div class="meta-toolbar">
-		<div></div>
-		<button
-			type="button"
-			onclick={() => (showRaw = !showRaw)}
-			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
-			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
-		>
-			<Icon icon="code" size={16} />
-		</button>
-	</div>
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
@@ -123,13 +112,23 @@
 			{/if}
 		</dl>
 	{/if}
+	<div class="meta-toolbar">
+		<button
+			type="button"
+			onclick={() => (showRaw = !showRaw)}
+			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+		>
+			<Icon icon="code" size={16} />
+		</button>
+	</div>
 {/if}
 
 <style>
 	.meta-toolbar {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		margin-bottom: 0.5rem;
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 0.5rem;
 	}
 
 	.error {

@@ -24,12 +24,15 @@
 
 			// Add the entity as a link
 			const isTag = entity.startsWith('#')
-			const searchQuery = entity.startsWith('@') ? entity : slug ? `@${slug} ${entity}` : entity
+			const isMention = entity.startsWith('@')
+			const href = isMention
+				? `/${encodeURIComponent(entity.slice(1))}`
+				: `/search?q=${encodeURIComponent(slug ? `@${slug} ${entity}` : entity)}`
 
 			parts.push({
 				type: 'link',
 				content: entity,
-				href: `/search?q=${encodeURIComponent(searchQuery)}`,
+				href,
 				isTag
 			})
 
