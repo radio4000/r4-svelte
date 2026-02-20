@@ -254,7 +254,7 @@
 			{@render children()}
 		</main>
 	</div>
-{:else}
+{:else if channelBySlugQuery.isReady}
 	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {/if}
 
