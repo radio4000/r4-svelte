@@ -5,7 +5,6 @@
 	import {trimWithEllipsis} from '$lib/utils.ts'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import ChannelHero from './channel-hero.svelte'
-	import LinkEntities from './link-entities.svelte'
 
 	/** @type {{channel: import('$lib/types').Channel, href?: string, children?: import('svelte').Snippet}}*/
 	let {channel, href, children} = $props()
@@ -33,23 +32,21 @@
 				{#if broadcasting}
 					<span class="channel-badge">{m.status_live_short()}</span>
 				{/if}
+			</h3>
+			<p>
+				{trimWithEllipsis(channel.description)}
+				{#if channel.track_count}
+					<small>({channel.track_count})</small>
+				{/if}
 				{#if channel.latest_track_at}
 					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
 				{/if}
-			</h3>
+			</p>
+			{#if children}
+				{@render children()}
+			{/if}
 		</div>
 	</a>
-	{#if channel.description}
-		<p class="description">
-			<LinkEntities slug={channel.slug} text={trimWithEllipsis(channel.description)} />
-			{#if channel.track_count}
-				<small>({channel.track_count})</small>
-			{/if}
-		</p>
-	{/if}
-	{#if children}
-		{@render children()}
-	{/if}
 </article>
 
 <style>
@@ -109,13 +106,9 @@
 		min-height: 2rem;
 	}
 
-	.description {
+	h3 + p {
 		color: light-dark(var(--gray-11), var(--gray-10));
 		overflow-wrap: break-word;
-
-		:global(.list) & {
-			padding-left: calc(4rem + 0.5rem);
-		}
 	}
 
 	.live-dot {
