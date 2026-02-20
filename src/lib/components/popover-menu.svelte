@@ -2,8 +2,8 @@
 	import {untrack} from 'svelte'
 	import {createAttachmentKey} from 'svelte/attachments'
 
-	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, [key: string]: any}} */
-	let {children, trigger, btnClass, closeOnClick = true, onclose, triggerAttachment, ...rest} = $props()
+	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, align?: 'left' | 'right', [key: string]: any}} */
+	let {children, trigger, btnClass, closeOnClick = true, onclose, triggerAttachment, align = 'left', ...rest} = $props()
 
 	const id = $props.id()
 
@@ -32,7 +32,9 @@
 			if (!buttonEl) return
 			const rect = buttonEl.getBoundingClientRect()
 			const popoverRect = el.getBoundingClientRect()
-			const left = Math.min(rect.left, window.innerWidth - popoverRect.width - 8)
+			const left = align === 'right'
+				? Math.max(8, rect.right - popoverRect.width)
+				: Math.min(rect.left, window.innerWidth - popoverRect.width - 8)
 			el.style.top = `${rect.bottom + 4}px`
 			el.style.left = `${Math.max(8, left)}px`
 		}
