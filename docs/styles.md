@@ -2,13 +2,14 @@
 
 Preferences for styling with HTML and CSS in the app.
 
-The main layout.svelte imports our global `styles/style.css`. 
-Components and .svelte pages can optionally define scoped styles via `<style>`. Scoped styles often do not need arbitrary classes for styling, rely on the semantic HTML structure if possible. 
+The main layout.svelte imports our global `styles/style.css`.
+Components and .svelte pages can optionally define scoped styles via `<style>`. Scoped styles often do not need arbitrary classes for styling, rely on the semantic HTML structure if possible.
 Assume all elements have default styling we can rely on.
 
 ## Layout
 
 From `layout.css`:
+
 - `.constrained` — 80ch centered
 - `.focused` — vertically centered
 - `.scroll` — scrollable container
@@ -45,4 +46,3 @@ Base styles apply to `<button>` and `<select>`. Use `.btn` on links.
 - `.chip` — pill-shaped chip
 - `.icon-btn` — borderless icon button
 - `.active` — active/selected state
-
