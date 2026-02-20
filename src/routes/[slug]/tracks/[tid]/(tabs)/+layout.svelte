@@ -17,7 +17,9 @@
 	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === data.slug))
 	const canEdit = $derived(canEditChannel(channel?.id))
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const isTrackPlaying = $derived(Boolean(track?.id && Object.values(appState.decks).some((d) => d.playlist_track === track.id)))
+	const isTrackPlaying = $derived(
+		Boolean(track?.id && Object.values(appState.decks).some((d) => d.playlist_track === track.id))
+	)
 	const mediaId = $derived(track?.media_id ?? null)
 	const relatedTracks = $derived.by(() => {
 		if (!track?.media_id) return []
