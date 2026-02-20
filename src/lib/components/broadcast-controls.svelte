@@ -70,7 +70,10 @@
 {#if userChannelId}
 	<div>
 		{#if isBroadcasting}
-			<button onclick={() => stopBroadcasting()}>{m.broadcast_stop_button()}</button>
+			<button class="active" onclick={() => stopBroadcasting()}>
+				<Icon icon="signal" strokeWidth={1.7} />
+				{m.broadcast_stop_button()}
+			</button>
 		{:else if canStartBroadcast}
 			<button onclick={start}>
 				<Icon icon="signal" strokeWidth={1.7}></Icon>

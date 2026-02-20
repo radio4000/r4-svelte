@@ -27,7 +27,9 @@
 			const isMention = entity.startsWith('@')
 			const href = isMention
 				? `/${encodeURIComponent(entity.slice(1))}`
-				: `/search?q=${encodeURIComponent(slug ? `@${slug} ${entity}` : entity)}`
+				: slug
+					? `/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(entity.slice(1))}`
+					: `/search?q=${encodeURIComponent(entity)}`
 
 			parts.push({
 				type: 'link',

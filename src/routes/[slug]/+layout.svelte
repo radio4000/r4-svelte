@@ -145,7 +145,9 @@
 		<div class="channel-sticky">
 			<header>
 				<div class="avatar">
-					<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+					<a href="/{slug}/image" tabindex="-1">
+						<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+					</a>
 				</div>
 				<div class="info">
 					<h1>
@@ -153,7 +155,7 @@
 						{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
 					</h1>
 					<p class="slug">
-						<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
+						<small><a href="/{slug}">@{slug}</a></small>
 					</p>
 				</div>
 				<menu class="channel-actions">
