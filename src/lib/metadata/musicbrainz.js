@@ -41,9 +41,7 @@ export async function pullMusicBrainz(mediaId, title) {
 export async function search(title) {
 	if (!title) return null
 
-	// Normalize middle dot separator before parsing (not yet in media-now)
-	const normalized = title.replace(/\s*·\s*/g, ' – ')
-	const parsed = parseTitle(normalized)
+	const parsed = parseTitle(title)
 
 	// Try multiple search strategies in order of specificity
 	const searchStrategies = []
