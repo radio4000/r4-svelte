@@ -287,4 +287,11 @@
 			display: none;
 		}
 	}
+
+	/* Keep text columns aligned when some queue items have no artwork */
+	main :global(.card:not(:has(.artwork)))::before {
+		content: '';
+		flex: 0 0 var(--track-artwork-size);
+		align-self: center;
+	}
 </style>

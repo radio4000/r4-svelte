@@ -216,7 +216,7 @@
 	.artwork {
 		margin-bottom: auto;
 		aspect-ratio: 1/1;
-		width: 38px;
+		width: var(--track-artwork-size);
 		object-fit: cover;
 		object-position: center;
 		align-self: center;

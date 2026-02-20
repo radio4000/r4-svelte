@@ -584,7 +584,7 @@
 	/* Keep text aligned with rows that have artwork by reserving the same slot */
 	.tracklist-item:not(.has-video) :global(.card)::before {
 		content: '';
-		flex: 0 0 38px;
+		flex: 0 0 var(--track-artwork-size);
 		align-self: center;
 	}
 

@@ -108,7 +108,7 @@
 			height: auto;
 		}
 		@media (max-width: 768px) {
-			min-width: 38px;
+			min-width: var(--track-artwork-size);
 			height: 32px;
 		}
 	}
