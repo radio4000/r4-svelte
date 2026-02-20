@@ -117,9 +117,7 @@ describe('link-entities', () => {
 		const track = {slug: 'MyChannel'}
 		const parts = createLinkedParts('Love #TECHNO and @OSKAR', track)
 		const result = partsToHtml(parts)
-		expect(result).toBe(
-			'Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/OSKAR">@OSKAR</a>'
-		)
+		expect(result).toBe('Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/OSKAR">@OSKAR</a>')
 	})
 
 	test('handles malicious content safely', () => {

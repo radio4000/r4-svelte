@@ -14,10 +14,8 @@
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
-	import ChannelHero from '$lib/components/channel-hero.svelte'
+	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import LinkEntities from '$lib/components/link-entities.svelte'
-	import {relativeDate, relativeDateSolar} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
 	import {weeklyShuffle, playbackState, normalizeTracks} from '$lib/player/auto-radio'
 	import {setPlaylist, playTrack, seekTo, getMediaPlayer} from '$lib/api'
@@ -144,110 +142,116 @@
 
 {#if channel}
 	<div class="channel-layout fill-height">
-		<header>
-			<div class="info">
-				<h1>
-					{channel.name}
-					{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
-				</h1>
-				<p class="slug">
-					<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
-				</p>
-				<p class="dates">
-					<small>
-						{m.channel_since({date: relativeDateSolar(channel.created_at)})} · {m.channel_updated({
-							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
-						})}
-					</small>
-				</p>
-				{#if channel.url}
-					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
-				{/if}
-				{#if channel.description}
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-				{/if}
-			</div>
-			<menu class="channel-actions">
-				<ButtonPlay class="primary" {channel} trackId={tid} label={m.button_play_label()} />
-				+ {#if autoRadioTracks.length > 0}
-					<button type="button" onclick={joinAutoRadio} class:active={isAutoRadioDrifted}>
-						<Icon icon="signal" />
-						{isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-					</button>
-				{/if}
-				{#if channel.id && isChannelLive && !canEdit}
-					<button
-						type="button"
-						onclick={() => {
-							if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
-							else joinBroadcast(appState.active_deck_id, channel.id)
-						}}
-					>
-						<Icon icon="signal" />
-						{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-					</button>
-				{/if}
-				{#if canEdit}
-					<BroadcastControls deckId={appState.active_deck_id} channelId={channel.id} isLiveOverride={isChannelLive} />
-				{/if}
-				{#if hasChannel}
-					<ButtonFollow {channel} />
-				{:else}
-					<a href={authUrl} class="btn" title={m.button_follow()}>
-						<Icon icon="favorite" />
-					</a>
-				{/if}
-				<button type="button" onclick={() => (appState.modal_share = {channel})}>
-					<Icon icon="share" size={16} />
-					{m.share_native()}
-				</button>
-			</menu>
-			<div class="hero">
-				<ChannelHero {channel} />
-			</div>
-		</header>
+		<div class="channel-sticky">
+			<header>
+				<div class="avatar">
+					<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+				</div>
+				<div class="info">
+					<h1>
+						{channel.name}
+						{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
+					</h1>
+					<p class="slug">
+						<small><a href={page.url.pathname + page.url.search}>@{slug}</a></small>
+					</p>
+				</div>
+				<menu class="channel-actions">
+					{#if canEdit}
+						<span>
+							<BroadcastControls
+								deckId={appState.active_deck_id}
+								channelId={channel.id}
+								isLiveOverride={isChannelLive}
+							/>
+						</span>
+					{:else if channel.id && isChannelLive}
+						<span>
+							<button
+								type="button"
+								onclick={() => {
+									if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+									else joinBroadcast(appState.active_deck_id, channel.id)
+								}}
+							>
+								<Icon icon="signal" />
+							</button>
+						</span>
+					{/if}
+					<span>
+						<ButtonPlay class="primary" {channel} trackId={tid} />
+						{#if autoRadioTracks.length > 0}
+							<button
+								type="button"
+								onclick={joinAutoRadio}
+								class:active={isAutoRadioDrifted}
+								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+							>
+								<Icon icon="infinite" />
+							</button>
+						{/if}
+					</span>
+					<span>
+						{#if hasChannel}
+							<ButtonFollow {channel} />
+						{:else}
+							<a href={authUrl} class="btn" title={m.button_follow()}>
+								<Icon icon="favorite" />
+							</a>
+						{/if}
+						<button type="button" onclick={() => (appState.modal_share = {channel})} title={m.share_native()}>
+							<Icon icon="share" size={16} />
+						</button>
+					</span>
+				</menu>
+			</header>
 
-		<div class="tabs channel-nav">
-			<nav aria-label={m.nav_tracks()}>
-				<a href="/{slug}" class:active={routeId === '/[slug]' || routeId?.startsWith('/[slug]/tracks')}>
-					<Icon icon="unordered-list" size={16} />
-					{m.nav_tracks()} ({channel.track_count ?? 0})
-				</a>
-				<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
-					<Icon icon="hash" size={16} />
-					{m.channel_tags_link()}
-				</a>
-				<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
-					<Icon icon="sparkles" size={16} />
-					{m.nav_following()}
-				</a>
-				<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
-					<Icon icon="users" size={16} />
-					{m.nav_followers()}
-				</a>
-				{#if channel.longitude && channel.latitude}
-					<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
-						<Icon icon="map" size={16} />
-						{m.nav_map()}
+			<div class="tabs channel-nav">
+				<nav aria-label={m.nav_tracks()}>
+					<a href="/{slug}" class:active={routeId === '/[slug]'}>
+						<Icon icon="circle-info" size={16} />
+						Info
 					</a>
-				{/if}
-			</nav>
-			{#if canEdit}
-				<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
-					<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>
-						<Icon icon="settings" size={16} />
-						{m.common_edit()}
-					</a>
-					<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+					<a href="/{slug}/tracks" class:active={routeId?.startsWith('/[slug]/tracks')}>
 						<Icon icon="unordered-list" size={16} />
-						{m.batch_edit_nav_label()}
+						{m.nav_tracks()} ({channel.track_count ?? 0})
 					</a>
-					<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
-						<Icon icon="document-download" size={16} />
-						Backup
+					<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
+						<Icon icon="hash" size={16} />
+						{m.channel_tags_link()}
 					</a>
+					<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
+						<Icon icon="sparkles" size={16} />
+						{m.nav_following()}
+					</a>
+					<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
+						<Icon icon="users" size={16} />
+						{m.nav_followers()}
+					</a>
+					{#if channel.longitude && channel.latitude}
+						<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
+							<Icon icon="map" size={16} />
+							{m.nav_map()}
+						</a>
+					{/if}
 				</nav>
-			{/if}
+				{#if canEdit}
+					<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
+						<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>
+							<Icon icon="settings" size={16} />
+							{m.common_edit()}
+						</a>
+						<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+							<Icon icon="unordered-list" size={16} />
+							{m.batch_edit_nav_label()}
+						</a>
+						<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
+							<Icon icon="document-download" size={16} />
+							Backup
+						</a>
+					</nav>
+				{/if}
+			</div>
 		</div>
 
 		<main>
@@ -264,60 +268,63 @@
 		flex-direction: column;
 	}
 
+	.channel-sticky {
+		position: sticky;
+		top: 0;
+		z-index: 20;
+		background: var(--gray-1);
+	}
+
 	header {
 		display: flex;
-		flex-direction: column;
-		gap: clamp(0.45rem, 2vw, 0.75rem);
-		padding: clamp(0.45rem, 2vw, 0.7rem);
-		align-items: stretch;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.5rem;
+		border-bottom: 1px solid var(--gray-4);
+	}
+
+	.avatar {
+		width: 3rem;
+		flex-shrink: 0;
 	}
 
 	.info {
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.1rem;
 		min-width: 0;
-		flex: 1 1 auto;
+		flex: 1;
 	}
 
 	h1 {
-		margin-top: 0.1rem;
-		font-size: clamp(var(--font-7), 7vw, var(--font-9));
-		line-height: 1.05;
-	}
-
-	.description {
-		white-space: pre-wrap;
-	}
-
-	.channel-actions {
-		flex-wrap: wrap;
-		justify-content: flex-end;
-		align-items: center;
-		align-self: flex-end;
-	}
-
-	.hero {
-		align-self: center;
-	}
-
-	.hero :global(figure) {
-		max-width: clamp(6rem, 38vw, 9rem);
-		min-width: 0;
+		font-size: clamp(var(--font-5), 4vw, var(--font-7));
+		line-height: 1.1;
+		margin: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.slug,
-	.dates,
-	.url {
+	.dates {
 		color: var(--gray-10);
 	}
 
-	.url {
-		font-style: italic;
-		color: var(--gray-9);
+	.channel-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
 	}
 
-	.url a {
-		color: inherit;
+	.channel-actions span {
+		display: flex;
+		align-items: center;
+		gap: 0.15rem;
+	}
+
+	.channel-actions span + span {
+		padding-left: 0.5rem;
+		border-left: 1px solid var(--gray-5);
 	}
 
 	main {
@@ -330,18 +337,11 @@
 	}
 
 	.channel-nav {
-		/*stickyontop*/
-		position: sticky;
-		top: 0;
 		display: flex;
 		flex-wrap: nowrap;
 		overflow-x: auto;
 		background: var(--gray-1);
-		z-index: 20;
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
-	}
-
-	.channel-nav {
 		align-items: stretch;
 		gap: 0;
 	}
@@ -354,35 +354,5 @@
 
 	.channel-nav-secondary {
 		margin-left: auto;
-	}
-
-	@media (min-width: 640px) {
-		header {
-			flex-direction: row;
-			flex-wrap: wrap;
-			column-gap: 0.8rem;
-			align-items: center;
-		}
-
-		.channel-actions {
-			flex-direction: column;
-			justify-content: flex-start;
-		}
-
-		.hero {
-			align-self: center;
-		}
-	}
-
-	@media (min-width: 900px) {
-		header {
-			flex-wrap: nowrap;
-			column-gap: 0.9rem;
-			align-items: center;
-		}
-
-		.hero :global(figure) {
-			max-width: clamp(6rem, 16vw, 10rem);
-		}
 	}
 </style>
