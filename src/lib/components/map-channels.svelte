@@ -105,4 +105,11 @@
 	:global(.map-popup article h3 + p) {
 		display: none;
 	}
+
+	:global(.leaflet-popup-content-wrapper),
+	:global(.leaflet-popup-tip) {
+		background: var(--gray-1);
+		color: var(--gray-12);
+		box-shadow: var(--shadow-modal);
+	}
 </style>
