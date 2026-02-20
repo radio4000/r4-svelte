@@ -29,10 +29,14 @@
 
 	// Featured tags/channels parsed from description
 	let featuredTags = $derived(
-		extractHashtags(channel?.description ?? '').map((t) => t.slice(1)).slice(0, FEATURED_LIMIT) // strip #
+		extractHashtags(channel?.description ?? '')
+			.map((t) => t.slice(1))
+			.slice(0, FEATURED_LIMIT) // strip #
 	)
 	let featuredMentions = $derived(
-		extractMentions(channel?.description ?? '').map((s) => s.slice(1)).slice(0, FEATURED_LIMIT) // strip @
+		extractMentions(channel?.description ?? '')
+			.map((s) => s.slice(1))
+			.slice(0, FEATURED_LIMIT) // strip @
 	)
 
 	// Per-tag sections — store full matching list, slice only for display
@@ -211,6 +215,7 @@
 
 	.description {
 		white-space: pre-line;
+		overflow-wrap: break-word;
 	}
 
 	/* Pill-style links inside the description (tags + mentions from LinkEntities) */

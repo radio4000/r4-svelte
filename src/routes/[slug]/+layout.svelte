@@ -181,7 +181,7 @@
 						</span>
 					{/if}
 					<span>
-						<ButtonPlay class="primary" {channel} trackId={tid} />
+						<ButtonPlay {channel} trackId={tid} />
 						{#if autoRadioTracks.length > 0}
 							<button
 								type="button"
