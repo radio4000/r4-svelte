@@ -171,7 +171,7 @@
 
 			<fieldset>
 				<legend>Image</legend>
-				<R4AvatarUpload slug={channel.slug} />
+				<R4AvatarUpload slug={channel.slug} channelId={channel.id} />
 			</fieldset>
 
 			<button class="primary" type="submit" disabled={submitting}>

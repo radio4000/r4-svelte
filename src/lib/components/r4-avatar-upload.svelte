@@ -1,8 +1,9 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
+	import {updateChannel} from '$lib/tanstack/collections'
 
-	/** @type {{slug: string, onupload?: (data: unknown) => void}} */
-	let {slug, onupload} = $props()
+	/** @type {{slug: string, channelId: string, onupload?: (data: unknown) => void}} */
+	let {slug, channelId, onupload} = $props()
 	let loading = $state(false)
 	let error = $state(/** @type {string|null} */ (null))
 	let success = $state(false)
@@ -20,7 +21,9 @@
 					const body = await res.json().catch(() => null)
 					throw new Error(body?.message || body?.error || `Upload failed (${res.status})`)
 				}
-				const data = await res.json().catch(() => null)
+				const data = await res.json()
+				if (!data?.public_id) throw new Error('Upload succeeded but no image ID returned')
+				await updateChannel(channelId, {image: data.public_id})
 				success = true
 				onupload?.(data)
 			} catch (err) {
