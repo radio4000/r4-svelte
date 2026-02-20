@@ -5,6 +5,7 @@
 	let {showModal = $bindable(), header, children} = $props()
 
 	let dialog = $state()
+	let mousedownTarget = $state()
 
 	$effect(() => {
 		if (showModal) {
@@ -18,8 +19,9 @@
 <dialog
 	bind:this={dialog}
 	onclose={() => (showModal = false)}
+	onmousedown={(e) => (mousedownTarget = e.target)}
 	onclick={(e) => {
-		if (e.target === dialog) dialog.close()
+		if (e.target === dialog && mousedownTarget === dialog) dialog.close()
 	}}
 >
 	<div>
