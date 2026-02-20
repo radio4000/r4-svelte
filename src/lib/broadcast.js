@@ -181,19 +181,31 @@ export function leaveBroadcast(deckId) {
 	log.log(`left deck ${deckId}`)
 }
 
+/** @param {string | null | undefined} id */
+function isDbTrackId(id) {
+	// Ephemeral IDs (e.g. "discogs:…") are not UUIDs and can't go in the track_id column
+	return Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+}
+
 /**
  * Helper to upsert a broadcast record with full deck state.
  * @param {string} channelId
  */
 export async function upsertRemoteBroadcast(channelId) {
+	const deckState = getBroadcastDeckState()
+	const firstTrackId = deckState?.[0]?.track_id ?? null
+	// track_id column is a UUID — use nil UUID for ephemeral tracks (decks JSON has the data)
+	const dbTrackId = isDbTrackId(firstTrackId)
+		? /** @type {string} */ (firstTrackId)
+		: '00000000-0000-0000-0000-000000000000'
 	return sdk.supabase
 		.from('broadcast')
 		.upsert(
 			{
 				channel_id: channelId,
-				track_id: getBroadcastDeckState()?.[0]?.track_id ?? '',
+				track_id: dbTrackId,
 				track_played_at: new Date().toISOString(),
-				decks: getBroadcastDeckState()
+				decks: deckState
 			},
 			{onConflict: 'channel_id'}
 		)
@@ -685,7 +697,11 @@ async function applyBroadcastState(channelId, decks) {
 				is_playing: state.is_playing,
 				volume: state.volume,
 				muted: state.muted,
-				speed: state.speed
+				speed: state.speed,
+				// Pass ephemeral track fields so listeners can reconstruct non-DB tracks
+				track_url: state.track_url,
+				track_title: state.track_title,
+				track_media_id: state.track_media_id
 			})
 		} else {
 			const mediaEl = getMediaPlayer(deckId)

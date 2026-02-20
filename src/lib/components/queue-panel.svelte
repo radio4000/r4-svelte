@@ -6,6 +6,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {relativeTime} from '$lib/dates'
 	import {playHistoryCollection, clearPlayHistory, tracksCollection} from '$lib/tanstack/collections'
+	import {ephemeralTracks} from '$lib/ephemeral-tracks'
 	import {shuffleRemaining} from '$lib/api'
 	import Dialog from './dialog.svelte'
 	import SearchInput from './search-input.svelte'
@@ -49,10 +50,10 @@
 		q.from({t: tracksCollection}).where(({t}) => inArray(t.id, trackIds.length ? trackIds : ['']))
 	)
 
-	// Order by playlist_tracks position
+	// Order by playlist_tracks position (fall back to ephemeral tracks for non-DB tracks)
 	let queueTracks = $derived.by(() => {
 		const byId = new Map((tracksQuery.data ?? []).map((t) => [t.id, t]))
-		return trackIds.map((id) => byId.get(id)).filter((t) => !!t)
+		return trackIds.map((id) => byId.get(id) ?? ephemeralTracks.get(id)).filter((t) => !!t)
 	})
 
 	const historyQuery = useLiveQuery((q) =>
