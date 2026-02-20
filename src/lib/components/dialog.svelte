@@ -25,8 +25,7 @@
 	<div>
 		<header>
 			{@render header?.()}
-			<!-- svelte-ignore a11y_autofocus -->
-			<button autofocus onclick={() => dialog.close()} title={m.modal_close_label()} aria-label={m.modal_close_label()}>
+			<button onclick={() => dialog.close()} title={m.modal_close_label()} aria-label={m.modal_close_label()}>
 				<Icon icon="close" />
 			</button>
 		</header>

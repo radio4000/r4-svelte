@@ -56,6 +56,7 @@
 		const target = /** @type {HTMLElement | null} */ (event.target)
 		if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return
 		if (event.key === 'c' && !event.metaKey && !event.ctrlKey) {
+			event.preventDefault()
 			open()
 		}
 	}

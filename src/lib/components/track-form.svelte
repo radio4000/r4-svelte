@@ -119,6 +119,7 @@
 <form class="form" onsubmit={handleSubmit}>
 	<fieldset>
 		<label for="{uid}-url">URL</label>
+		<!-- svelte-ignore a11y_autofocus -->
 		<input
 			id="{uid}-url"
 			name="url"
@@ -126,6 +127,7 @@
 			value={initialUrl}
 			oninput={handleUrlInput}
 			required
+			autofocus
 			placeholder="https://..."
 		/>
 	</fieldset>
