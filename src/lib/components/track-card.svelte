@@ -121,7 +121,7 @@
 				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer">&rarr;</a>
 			{/if}
 			{#if track.slug && track.discogs_url}
-				<a href="{permalink}?tab=discogs" class="discogs">{m.track_meta_discogs()}</a>
+				<a href="{permalink}/discogs" class="discogs">{m.track_meta_discogs()}</a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>

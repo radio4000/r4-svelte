@@ -274,7 +274,7 @@
 			''
 	)
 	const tracklistItems = $derived(
-		(/** @type {DiscogsResource | null} */ (resource))?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
+		/** @type {DiscogsResource | null} */ (resource)?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
 	)
 </script>
 
