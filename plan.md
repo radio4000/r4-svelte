@@ -37,6 +37,11 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 ## In progress
 
+- Discogs UX pass in progress (track Discogs tab + add-track modal)
+  - improve release summary density (track/video/in-channel counts + cleaner status hints per row)
+  - dedupe duplicate Discogs videos by URI before matching
+  - allow "Use" on Discogs rows in add-track form to prefill URL/title
+
 - YouTube music credits in media-now — extract structured song/artist/album from YouTube watch pages.
   - **Research done**: YouTube embeds music metadata in `ytInitialData` → `horizontalCardListRenderer` (header "Music") → `videoAttributeViewModel`. A secondary `confirmDialogEndpoint` ("Song credits" dialog) has the same data plus optional `Writers`. No API key needed, single fetch to the watch page.
   - **Coverage**: 31/50 ko002 tracks had a music card, 14/50 had credits dialog. User uploads with no Content ID match return nothing.

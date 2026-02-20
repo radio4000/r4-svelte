@@ -31,6 +31,8 @@
 
 	/** @type {HTMLInputElement | undefined} */
 	let titleInput = $state()
+	/** @type {HTMLInputElement | undefined} */
+	let urlInput = $state()
 	/** @type {HTMLTextAreaElement | undefined} */
 	let descriptionInput = $state()
 	let pendingUrl = ''
@@ -63,6 +65,18 @@
 		// Re-add selected ones
 		const hashtags = selected.map((t) => `#${t}`).join(' ')
 		descriptionInput.value = hashtags ? (desc ? `${desc} ${hashtags}` : hashtags) : desc
+	}
+
+	/**
+	 * Prefill URL/title from a Discogs track row.
+	 * @param {string} uri
+	 * @param {string} title
+	 */
+	function handleDiscogsSelectMedia(uri, title) {
+		if (!uri) return
+		if (urlInput) urlInput.value = uri
+		if (titleInput) titleInput.value = title
+		pendingUrl = uri
 	}
 
 	/** @param {SubmitEvent} event */
@@ -133,6 +147,7 @@
 		<label for="{uid}-url">URL</label>
 		<!-- svelte-ignore a11y_autofocus -->
 		<input
+			bind:this={urlInput}
 			id="{uid}-url"
 			name="url"
 			type="url"
@@ -183,10 +198,12 @@
 	{#if isValidDiscogsUrl}
 		<R4DiscogsResource
 			url={liveDiscogsUrl}
+			full={mode === 'create'}
 			suggestions={true}
 			preselected={extractHashtags(initialDescription).map((t) => t.slice(1))}
 			onload={(all) => (allDiscogsSuggestions = all)}
 			onsuggestion={handleDiscogsSuggestion}
+			onSelectMedia={mode === 'create' ? handleDiscogsSelectMedia : undefined}
 		/>
 	{/if}
 

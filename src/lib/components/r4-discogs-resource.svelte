@@ -103,7 +103,10 @@
 	function matchVideo(trackItem, videos) {
 		if (!videos?.length) return undefined
 		const needle = trackItem.title.toLowerCase().trim()
-		return videos.find((v) => v.title.toLowerCase().trim().includes(needle))
+		return videos.find((v) => {
+			const title = v.title.toLowerCase().trim()
+			return title.includes(needle) || needle.includes(title)
+		})
 	}
 
 	/**
@@ -153,18 +156,38 @@
 	 * real R4 track > ephemeral video track > ephemeral no-video (broken) track.
 	 * All items are included so the full release is in the playlist.
 	 */
-	const playableTracks = $derived.by(() => {
-		if (!resource) return /** @type {import('$lib/types').Track[]} */ ([])
-		const res = /** @type {DiscogsResource} */ (resource)
-		return tracklistItems.map((item) => {
-			const video = matchVideo(item, res.videos ?? [])
-			if (!video) return makeEphemeralTrack(null, item.title, item.position)
-			return findRealTrack(video.uri, tracks) ?? makeEphemeralTrack(video, item.title, item.position)
+	const uniqueVideos = $derived.by(() => {
+		if (!resource?.videos?.length) return /** @type {DiscogsVideo[]} */ ([])
+		const seen = new Set()
+		return resource.videos.filter((video) => {
+			if (!video?.uri || seen.has(video.uri)) return false
+			seen.add(video.uri)
+			return true
+		})
+	})
+
+	const trackRows = $derived.by(() => {
+		if (!resource) return []
+		return tracklistItems.map((item, index) => {
+			const video = matchVideo(item, uniqueVideos)
+			const track = !video
+				? makeEphemeralTrack(null, item.title, item.position)
+				: (findRealTrack(video.uri, tracks) ?? makeEphemeralTrack(video, item.title, item.position))
+			const isReal = isDbId(track.id)
+			const hasVideo = !!video?.uri
+			return {
+				key: `${item.position}:${item.title}:${index}`,
+				item,
+				track,
+				video,
+				isReal,
+				hasVideo
+			}
 		})
 	})
 
 	/** Alias for clarity */
-	const allPlayableTracks = $derived(playableTracks)
+	const allPlayableTracks = $derived(trackRows.map((row) => row.track))
 
 	/** Register/unregister ephemeral tracks when resource/tracks change */
 	$effect(() => {
@@ -215,6 +238,16 @@
 	}
 
 	const suggestionsList = $derived(resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : [])
+	const releaseStats = $derived.by(() => {
+		if (!trackRows.length) return ''
+		const total = trackRows.length
+		const withVideo = trackRows.filter((row) => row.hasVideo).length
+		const inChannel = trackRows.filter((row) => row.isReal).length
+		const parts = [`${total} tracks`]
+		if (withVideo > 0) parts.push(`${withVideo} with video`)
+		if (inChannel > 0) parts.push(`${inChannel} already in this channel`)
+		return parts.join(' · ')
+	})
 	const releaseMeta = $derived.by(() => {
 		if (!resource) return ''
 		const parts = []
@@ -241,7 +274,7 @@
 			''
 	)
 	const tracklistItems = $derived(
-		resource ? /** @type {DiscogsResource} */ (resource.tracklist ?? []).filter((t) => t.type_ !== 'heading') : []
+		(/** @type {DiscogsResource | null} */ (resource))?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
 	)
 </script>
 
@@ -294,33 +327,60 @@
 			{/if}
 		</div>
 
-		{#if full && resource.community}
-			<div class="release-community">
-				<span>{resource.community.have} have</span>
-				<span>{resource.community.want} want</span>
-				{#if resource.community.rating.count > 0}
-					<span>{resource.community.rating.average.toFixed(2)} / 5 ({resource.community.rating.count} ratings)</span>
+		{#if full && (releaseStats || resource.community)}
+			<div class="release-community" aria-label="Release summary">
+				{#if releaseStats}
+					<span>{releaseStats}</span>
+				{/if}
+				{#if resource.community}
+					<span>{resource.community.have} have</span>
+					<span>{resource.community.want} want</span>
+				{/if}
+				{#if Number(resource.community?.rating?.count) > 0}
+					<span>
+						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({resource.community?.rating?.count ?? 0} ratings)
+					</span>
 				{/if}
 			</div>
 		{/if}
 
 		{#if full && tracklistItems.length > 0}
 			<ul class="list tracklist">
-				{#each tracklistItems as trackItem, i (trackItem.position + trackItem.title)}
-					{@const t = playableTracks[i]}
-					{@const isReal = isDbId(t.id)}
-					{@const hasVideo = t.id.startsWith('discogs:') && !!t.url}
+				{#each trackRows as row (row.key)}
+					{@const track = row.track}
 					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
 					<li
 						class="tracklist-item"
-						class:has-video={hasVideo}
-						class:is-real={isReal}
-						onclick={(e) => handleRowClick(e, t)}
+						class:has-video={row.hasVideo}
+						class:is-real={row.isReal}
+						onclick={(e) => handleRowClick(e, track)}
 					>
-						<TrackCard track={t} canEdit={false} onPlay={playFromRelease} selected={selectedTrackId === t.id}>
+						<TrackCard
+							{track}
+							canEdit={false}
+							onPlay={playFromRelease}
+							selected={selectedTrackId === track.id}
+							showImage={row.hasVideo}
+						>
+							{#snippet description()}
+								<span class="track-hints">
+									{row.item.position}{row.item.duration ? ` · ${row.item.duration}` : ''}
+									{#if row.isReal}
+										<small class="state state--real">in channel</small>
+									{:else if row.hasVideo}
+										<small class="state">video available</small>
+									{:else}
+										<small class="state state--muted">no video</small>
+									{/if}
+								</span>
+							{/snippet}
 							{#snippet children(track)}
-								{#if hasVideo && onSelectMedia}
-									<button type="button" class="ghost use-btn" onclick={() => onSelectMedia?.(track.url, track.title)}>
+								{#if row.hasVideo && onSelectMedia}
+									<button
+										type="button"
+										class="ghost use-btn"
+										onclick={() => onSelectMedia?.(track.url, row.item.title)}
+									>
 										Use
 									</button>
 								{/if}
@@ -451,6 +511,7 @@
 
 	.release-community {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 0.75rem;
 		padding: 0.25rem 0.5rem;
 		font-size: var(--font-3);
@@ -464,16 +525,42 @@
 	}
 
 	.tracklist-item {
-		opacity: 0.35;
+		opacity: 0.55;
 
 		&.has-video {
-			opacity: 0.75;
+			opacity: 0.85;
 		}
 
 		&.is-real {
 			opacity: 1;
 			cursor: pointer;
 		}
+	}
+
+	.track-hints {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: var(--font-3);
+		color: var(--gray-10);
+	}
+
+	.state {
+		border: 1px solid var(--gray-5);
+		border-radius: 999px;
+		padding: 0.05rem 0.35rem;
+		font-size: var(--font-2);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.state--real {
+		border-color: var(--accent-7);
+		color: var(--accent-11);
+	}
+
+	.state--muted {
+		color: var(--gray-8);
 	}
 
 	.use-btn {
