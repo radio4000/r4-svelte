@@ -2,6 +2,13 @@ export function uuid() {
 	return crypto.randomUUID()
 }
 
+const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Returns true if the string is a valid UUID (i.e. a real DB-persisted record ID, not an ephemeral one). */
+export function isDbId(id: string | null | undefined): boolean {
+	return Boolean(id && RE_UUID.test(id))
+}
+
 const RE_DIACRITICS = /[\u0300-\u036f]/g
 const RE_NON_ALNUM = /[^a-z0-9 -]/g
 const RE_WHITESPACE = /\s+/g

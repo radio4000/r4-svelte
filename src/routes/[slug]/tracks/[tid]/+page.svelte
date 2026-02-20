@@ -94,7 +94,7 @@
 			{:else if activeTab === 'musicbrainz'}
 				<TrackMetaMusicbrainz data={meta?.musicbrainz_data} {track} />
 			{:else if activeTab === 'discogs'}
-				<TrackMetaDiscogs data={meta?.discogs_data} />
+				<TrackMetaDiscogs data={meta?.discogs_data} {track} tracks={tracksQuery.data ?? []} {channel} {canEdit} />
 			{:else if activeTab === 'related'}
 				<TrackRelated {track} />
 			{:else}

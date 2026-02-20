@@ -5,7 +5,7 @@ import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray} from '$lib/utils.ts'
+import {shuffleArray, isDbId} from '$lib/utils.ts'
 import {
 	queueInsertManyAfter,
 	queueNext,
@@ -126,6 +126,9 @@ export async function playTrack(
 		return
 	}
 
+	// Ephemeral tracks (Discogs videos etc.) have non-UUID synthetic IDs
+	const isEphemeral = !isDbId(id)
+
 	// If same track is already loaded, just ensure it's playing (don't reload)
 	if (deck.playlist_track === id && startReason === 'user_click_track') {
 		log.log('play_track_same_track', {deckId, id})
@@ -144,29 +147,37 @@ export async function playTrack(
 	}
 
 	// Build playlist from tracks already loaded in collection (same channel/slug)
-	const channelTracks = [...tracksCollection.state.values()].filter((t) => t?.slug === track.slug).sort(sortByNewest)
+	// Skip for ephemeral tracks — caller manages the playlist via setPlaylist()
+	const channelTracks = isEphemeral
+		? []
+		: [...tracksCollection.state.values()].filter((t) => t?.slug === track.slug).sort(sortByNewest)
 	const ids = channelTracks.map((t) => t.id)
 
-	// Record play history
+	// Record play history (skip for ephemeral tracks — no channel/slug)
 	const previousTrackId = deck.playlist_track
-	if (previousTrackId && previousTrackId !== id && endReason) {
+	if (!isEphemeral && previousTrackId && previousTrackId !== id && endReason) {
 		const mediaController = document.querySelector(`media-controller#r5-deck-${deckId}`)
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
 	}
-	if (startReason && track.slug) {
+	if (!isEphemeral && startReason && track.slug) {
 		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
 	}
 
 	deck.playlist_track = id
-	deck.playlist_slug = track.slug ?? undefined
+	if (!isEphemeral) deck.playlist_slug = track.slug ?? undefined
 	if (startReason !== 'broadcast_sync') {
 		deck.track_played_at = new Date().toISOString()
 		deck.seeked_at = deck.track_played_at
 		deck.seek_position = 0
 	}
-	if (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)) await setPlaylist(deckId, ids)
+	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)))
+		await setPlaylist(deckId, ids)
+	// Ensure ephemeral track is included in the current playlist
+	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
+		deck.playlist_tracks = [...deck.playlist_tracks, id]
+	}
 
 	// Mark auto-radio drift when the user intentionally deviates from the scheduled rotation.
 	// endReason 'user_next' catches the Next button (which sets startReason 'auto_next').
@@ -279,13 +290,14 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string} = {}) {
+export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string; slug?: string} = {}) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
+	if (options.slug !== undefined) deck.playlist_slug = options.slug || undefined
 }
 
 /**
@@ -502,7 +514,14 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 		return Promise.reject(new Error('Media player not ready'))
 	}
 	log.debug('play() check', player, 'paused?', player.paused)
-	const result = player.play()
+	let result: Promise<void> | void
+	try {
+		result = player.play()
+	} catch (error) {
+		// YouTube API not ready yet (this.api is null) — swallow the sync throw
+		log.warn('play() threw (player not ready):', (error as Error).message || error)
+		return Promise.resolve()
+	}
 	if (result instanceof Promise) {
 		return result
 			.then(() => {
@@ -513,7 +532,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 			.catch((error) => {
 				if (deck) deck.is_playing = false
 				log.warn('play() was prevented:', error.message || error)
-				throw error
 			})
 	}
 	if (deck) deck.is_playing = true

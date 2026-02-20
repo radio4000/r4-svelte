@@ -30,6 +30,7 @@
 	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {isDbId} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -299,8 +300,8 @@
 			<menu class="layout-controls top-layout-controls">
 				<button
 					onclick={() => {
-						removeDeck(deckId)
 						const bchId = getBroadcastingChannelId()
+						removeDeck(deckId)
 						if (bchId) notifyBroadcastState(bchId)
 					}}
 					{@attach tooltip({content: 'Close deck', position: 'top'})}
@@ -423,14 +424,24 @@
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
 						{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-						{@const trackHref = resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}
+						{@const trackHref = isDbId(displayTrack.id)
+							? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
+							: null}
 						{#if ytid}
-							<a href={trackHref} class="track-artwork"
-								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
-							>
+							{#if trackHref}
+								<a href={trackHref} class="track-artwork"
+									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
+								>
+							{:else}
+								<span class="track-artwork"
+									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></span
+								>
+							{/if}
 						{/if}
 						<div class="info">
-							<h3 class="title"><a href={trackHref}>{displayTrack.title}</a></h3>
+							<h3 class="title">
+								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a>{:else}{displayTrack.title}{/if}
+							</h3>
 							<p class="description">Live broadcast</p>
 						</div>
 					{:else}
@@ -443,21 +454,41 @@
 			{:else if displayChannel}
 				{#if displayTrack}
 					{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-					{@const trackHref = resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)}
+					{@const trackHref = isDbId(displayTrack.id)
+						? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
+						: null}
 					<div class="header-info active-track-bg">
 						{#if ytid}
-							<a href={trackHref} class="track-artwork"
-								><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
-							>
+							{#if trackHref}
+								<a href={trackHref} class="track-artwork"
+									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
+								>
+							{:else}
+								<span class="track-artwork"
+									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></span
+								>
+							{/if}
 						{/if}
 						<div class="info">
-							<h3 class="title"><a href={trackHref}>{displayTrack.title}</a></h3>
+							<h3 class="title">
+								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a>{:else}{displayTrack.title}{/if}
+							</h3>
 							{#if displayTrack.description}
 								<p class="description">{displayTrack.description}</p>
 							{/if}
 						</div>
 					</div>
 				{/if}
+			{:else if displayTrack}
+				{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
+				<div class="header-info active-track-bg">
+					{#if ytid}
+						<img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} class="track-artwork" />
+					{/if}
+					<div class="info">
+						<h3 class="title">{displayTrack.title}</h3>
+					</div>
+				</div>
 			{/if}
 		</footer>
 

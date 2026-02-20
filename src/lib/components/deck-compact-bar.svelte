@@ -20,12 +20,14 @@
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
 		if (!id) return undefined
+		void tracksCollection.state.size
 		return tracksCollection.state.get(id)
 	})
 
 	let channel = $derived.by(() => {
-		if (!track?.slug) return undefined
-		return [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+		const slugToUse = track?.slug ?? deck?.playlist_slug
+		if (!slugToUse) return undefined
+		return [...channelsCollection.state.values()].find((ch) => ch.slug === slugToUse)
 	})
 
 	let lastTrack = $state()

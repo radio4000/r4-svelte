@@ -3,19 +3,28 @@ import {logger} from '$lib/logger'
 
 const log = logger.ns('metadata/discogs').seal()
 
+/** In-memory cache: url → {data, ts} — avoids repeat API hits within a session */
+const fetchCache = new Map()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
 /**
  * Fetch Discogs data without saving
  * @param {string} discogsUrl Discogs URL
  * @returns {Promise<Object|null>} Discogs data
  */
 export async function fetchDiscogs(discogsUrl) {
+	const cached = fetchCache.get(discogsUrl)
+	if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data
+
 	try {
 		const result = await getMedia(discogsUrl)
 		if (!result?.payload) return null
-		return {
+		const data = {
 			...result.payload,
 			_meta: {fetchedAt: new Date().toISOString()}
 		}
+		fetchCache.set(discogsUrl, {data, ts: Date.now()})
+		return data
 	} catch (error) {
 		log.error('fetch failed', {discogsUrl, error})
 		return null

@@ -4,6 +4,7 @@ import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
+import {isDbId} from '$lib/utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
@@ -185,14 +186,18 @@ export function leaveBroadcast(deckId) {
  * @param {string} channelId
  */
 export async function upsertRemoteBroadcast(channelId) {
+	const deckState = getBroadcastDeckState()
+	const firstTrackId = deckState?.[0]?.track_id ?? null
+	// track_id column is a UUID — use nil UUID for ephemeral tracks (decks JSON has the data)
+	const dbTrackId = isDbId(firstTrackId) ? /** @type {string} */ (firstTrackId) : '00000000-0000-0000-0000-000000000000'
 	return sdk.supabase
 		.from('broadcast')
 		.upsert(
 			{
 				channel_id: channelId,
-				track_id: getBroadcastDeckState()?.[0]?.track_id ?? '',
+				track_id: dbTrackId,
 				track_played_at: new Date().toISOString(),
-				decks: getBroadcastDeckState()
+				decks: deckState
 			},
 			{onConflict: 'channel_id'}
 		)
@@ -348,25 +353,43 @@ function hasIntentChanged(deckId, state) {
 
 /**
  * @param {number} deckId
- * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null}} broadcast
+ * @param {Partial<BroadcastDeckState> & {channel_id: string, track_id?: string | null, track_url?: string | null, track_title?: string | null, track_media_id?: string | null}} broadcast
  */
 async function playBroadcastTrack(deckId, broadcast) {
 	const {track_id, channel_id} = broadcast
 	if (!track_id) return false
 
-	// Check if track is already loaded
+	// Check if track is already loaded; if not, reconstruct from broadcast-included data
 	let track = tracksCollection.get(track_id)
 	if (!track) {
-		// Track not loaded - fetch it directly by ID
-		try {
-			const {data, error} = await sdk.tracks.readTrack(track_id)
-			if (error || !data) throw new Error(`Track ${track_id} not found`)
-			// await tracksCollection.preload()
-			tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
-			track = /** @type {import('$lib/types').Track} */ (data)
-		} catch (error) {
-			log.error(`play failed:`, /** @type {Error} */ (error).message)
-			return false
+		if (broadcast.track_url) {
+			const uri = broadcast.track_url
+			const ytId =
+				uri.match(/[?&]v=([^&]+)/)?.[1] ?? uri.match(/youtu\.be\/([^?]+)/)?.[1] ?? broadcast.track_media_id ?? null
+			const now = new Date().toISOString()
+			track = /** @type {import('$lib/types').Track} */ ({
+				id: track_id,
+				url: uri,
+				title: broadcast.track_title ?? track_id,
+				media_id: ytId,
+				created_at: now,
+				updated_at: now,
+				slug: null
+			})
+			tracksCollection.utils.writeUpsert(track)
+			log.log('play_broadcast_ephemeral', {track_id, url: uri})
+		} else {
+			// Track not loaded - fetch it directly by ID
+			try {
+				const {data, error} = await sdk.tracks.readTrack(track_id)
+				if (error || !data) throw new Error(`Track ${track_id} not found`)
+				// await tracksCollection.preload()
+				tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
+				track = /** @type {import('$lib/types').Track} */ (data)
+			} catch (error) {
+				log.error(`play failed:`, /** @type {Error} */ (error).message)
+				return false
+			}
 		}
 	}
 
@@ -426,16 +449,23 @@ function getBroadcastDeckState() {
 	}
 	return ids.map((id, index) => {
 		const deck = appState.decks[id]
+		const trackId = deck?.playlist_track ?? null
+		// Include non-DB track data so listeners can reconstruct tracks not in the DB
+		const nonDbTrack = trackId && !isDbId(trackId) ? tracksCollection.get(trackId) : null
 		return {
 			index,
-			track_id: deck?.playlist_track ?? null,
+			track_id: trackId,
 			track_played_at: deck?.track_played_at ?? null,
 			is_playing: deck?.is_playing ?? false,
 			seeked_at: deck?.seeked_at ?? null,
 			seek_position: deck?.seek_position ?? null,
 			volume: deck?.volume ?? 0,
 			muted: deck?.muted ?? false,
-			speed: deck?.speed ?? 1
+			speed: deck?.speed ?? 1,
+			// Extra fields for non-DB tracks (Discogs videos, etc.)
+			track_url: nonDbTrack?.url ?? null,
+			track_title: nonDbTrack?.title ?? null,
+			track_media_id: nonDbTrack?.media_id ?? null
 		}
 	})
 }
@@ -658,7 +688,11 @@ async function applyBroadcastState(channelId, decks) {
 				is_playing: state.is_playing,
 				volume: state.volume,
 				muted: state.muted,
-				speed: state.speed
+				speed: state.speed,
+				// Pass ephemeral track fields so listeners can reconstruct non-DB tracks
+				track_url: state.track_url,
+				track_title: state.track_title,
+				track_media_id: state.track_media_id
 			})
 		} else {
 			const mediaEl = getMediaPlayer(deckId)

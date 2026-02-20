@@ -9,7 +9,7 @@
 
 	let showModal = $state(false)
 	let recentTracks = $state([])
-	let trackData = $state({url: '', title: '', description: ''})
+	let trackData = $state({url: '', title: '', description: '', discogs_url: ''})
 
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
@@ -35,10 +35,11 @@
 						: track.description
 					: track.slug
 						? `via @${track.slug}`
-						: ''
+						: '',
+				discogs_url: track.discogs_url || ''
 			}
 		} else {
-			trackData = {url: data?.url || '', title: '', description: ''}
+			trackData = {url: data?.url || '', title: '', description: '', discogs_url: ''}
 		}
 		showModal = true
 	}
@@ -69,7 +70,7 @@
 		recentTracks.unshift(data)
 		if (recentTracks.length > 3) recentTracks.pop()
 
-		trackData = {url: '', title: '', description: ''}
+		trackData = {url: '', title: '', description: '', discogs_url: ''}
 		showModal = false
 
 		document.dispatchEvent(
@@ -103,6 +104,7 @@
 			url={trackData.url}
 			title={trackData.title}
 			description={trackData.description}
+			discogs_url={trackData.discogs_url}
 			onsubmit={handleSubmit}
 		/>
 	{/if}

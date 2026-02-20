@@ -9,6 +9,7 @@
 	import LinkEntities from './link-entities.svelte'
 	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
+	import {isDbId} from '$lib/utils'
 
 	interface Props {
 		track: Track
@@ -39,6 +40,7 @@
 	}: Props = $props()
 
 	const permalink = $derived(`/${track?.slug}/tracks/${track?.id}`)
+	const isRealTrack = $derived(isDbId(track?.id))
 	const active = $derived.by(() => {
 		if (deckId != null) {
 			const deck = appState.decks[deckId]
@@ -113,9 +115,13 @@
 			{/if}
 		</div>
 		<time>
-			<span class="mobile">&rarr;</span>
-			{#if track.discogs_url}
-				<small class="discogs">{m.track_meta_discogs()}</small>
+			{#if isRealTrack}
+				<span class="mobile">&rarr;</span>
+			{:else if track.url}
+				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer">&rarr;</a>
+			{/if}
+			{#if track.slug && track.discogs_url}
+				<a href="{permalink}?tab=discogs" class="discogs">{m.track_meta_discogs()}</a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
@@ -137,7 +143,11 @@
 					role="menuitem"
 					{@attach tooltip({content: m.common_play()})}
 					onclick={() => {
-						playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+						if (onPlay) {
+							onPlay(track.id)
+						} else {
+							playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+						}
 						menu?.close()
 					}}><Icon icon="play-fill" size={16} /></button
 				>
@@ -162,12 +172,20 @@
 				<button type="button" role="menuitem" {@attach tooltip({content: m.track_add_to_radio()})} onclick={addToRadio}
 					><Icon icon="add" size={16} /></button
 				>
-				<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
-					><Icon icon="share" size={16} /></button
-				>
+				{#if isRealTrack}
+					<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
+						><Icon icon="share" size={16} /></button
+					>
+				{/if}
 			</menu>
 			<menu class="nav-vertical">
-				<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
+				{#if isRealTrack}
+					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
+				{:else if track.url}
+					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
+						><Icon icon="circle-info" size={14} />Open video</a
+					>
+				{/if}
 				{#if canEdit}
 					<button type="button" role="menuitem" onclick={editTrack}
 						><Icon icon="settings" size={14} />{m.common_edit()}</button
