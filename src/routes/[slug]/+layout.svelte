@@ -69,12 +69,12 @@
 	)
 
 	// Channel-specific broadcast live query so "Live" state updates on this page
-	// even when /broadcasts is not open.
+	let channelId = $derived(channel?.id)
 	const channelBroadcastQuery = useLiveQuery((q) =>
-		channel?.id
+		channelId
 			? q
 					.from({b: broadcastsCollection})
-					.where(({b}) => eq(b.channel_id, channel.id))
+					.where(({b}) => eq(b.channel_id, channelId))
 					.findOne()
 			: q
 					.from({b: broadcastsCollection})

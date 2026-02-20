@@ -11,7 +11,6 @@
         "@inlang/plugin-message-format": "^4.3.0",
         "@radio4000/sdk": "^0.8.0",
         "@sveltejs/adapter-static": "^3.0.10",
-        "@tanstack/offline-transactions": "^1.0.17",
         "@tanstack/query-db-collection": "^1.0.24",
         "@tanstack/query-persist-client-core": "^5.91.19",
         "@tanstack/svelte-db": "^0.1.70",
@@ -414,8 +413,6 @@
     "@tanstack/db-ivm": ["@tanstack/db-ivm@0.1.17", "", { "dependencies": { "fractional-indexing": "^3.2.0", "sorted-btree": "^1.8.1" }, "peerDependencies": { "typescript": ">=4.7" } }, "sha512-DK7vm56CDxNuRAdsbiPs+gITJ+16tUtYgZg3BRTLYKGIDsy8sdIO7sQFq5zl7Y+aIKAPmMAbVp9UjJ75FTtwgQ=="],
 
     "@tanstack/eslint-plugin-query": ["@tanstack/eslint-plugin-query@5.91.4", "", { "dependencies": { "@typescript-eslint/utils": "^8.48.0" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0", "typescript": "^5.0.0" }, "optionalPeers": ["typescript"] }, "sha512-8a+GAeR7oxJ5laNyYBQ6miPK09Hi18o5Oie/jx8zioXODv/AUFLZQecKabPdpQSLmuDXEBPKFh+W5DKbWlahjQ=="],
-
-    "@tanstack/offline-transactions": ["@tanstack/offline-transactions@1.0.17", "", { "dependencies": { "@tanstack/db": "0.5.27" }, "peerDependencies": { "@react-native-community/netinfo": ">=11.0.0", "react-native": ">=0.70.0" }, "optionalPeers": ["@react-native-community/netinfo", "react-native"] }, "sha512-emrG3q7q6XHcC6w1LM5Jf1Jfl1UPkcdymtfLpqpzciUxdKacgRy6I24aS6yzBQs10C78LVvtxeMKTN7Hq15R5Q=="],
 
     "@tanstack/pacer-lite": ["@tanstack/pacer-lite@0.2.1", "", {}, "sha512-3PouiFjR4B6x1c969/Pl4ZIJleof1M0n6fNX8NRiC9Sqv1g06CVDlEaXUR4212ycGFyfq4q+t8Gi37Xy+z34iQ=="],
 

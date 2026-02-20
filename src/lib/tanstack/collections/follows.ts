@@ -3,6 +3,9 @@ import {queryCollectionOptions} from '@tanstack/query-db-collection'
 import {sdk} from '@radio4000/sdk'
 import {appState} from '$lib/app-state.svelte'
 import {queryClient} from './query-client'
+import {logger} from '$lib/logger'
+
+const log = logger.ns('follows').seal()
 
 // Channel IDs the current user follows
 export const followsCollection = createCollection<{id: string}, string>(
@@ -33,16 +36,24 @@ export async function followChannel(channelId: string) {
 	const userChannelId = appState.channels?.[0]
 	if (!userChannelId) return
 
+	log.info('follow', {channelId})
 	followsCollection.utils.writeInsert({id: channelId})
 	const {error} = await sdk.channels.followChannel(userChannelId, channelId)
-	if (error) followsCollection.utils.writeDelete(channelId)
+	if (error) {
+		log.warn('follow failed', {channelId, error})
+		followsCollection.utils.writeDelete(channelId)
+	}
 }
 
 export async function unfollowChannel(channelId: string) {
 	const userChannelId = appState.channels?.[0]
 	if (!userChannelId) return
 
+	log.info('unfollow', {channelId})
 	followsCollection.utils.writeDelete(channelId)
 	const {error} = await sdk.channels.unfollowChannel(userChannelId, channelId)
-	if (error) followsCollection.utils.writeInsert({id: channelId})
+	if (error) {
+		log.warn('unfollow failed', {channelId, error})
+		followsCollection.utils.writeInsert({id: channelId})
+	}
 }

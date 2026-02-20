@@ -11,7 +11,6 @@
 		queryClient,
 		ensureTracksLoaded
 	} from '$lib/tanstack/collections'
-	import SyncStatus from '$lib/components/sync-status.svelte'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')
@@ -193,7 +192,6 @@
 
 	<section>
 		<h2>Debug</h2>
-		<SyncStatus />
 		<details>
 			<summary>Cache keys ({cacheLines.length})</summary>
 			<pre>{cacheLines.join('\n') || 'none'}</pre>

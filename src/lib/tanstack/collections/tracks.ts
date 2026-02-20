@@ -1,20 +1,20 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
-import {NonRetriableError} from '@tanstack/offline-transactions'
 import {sdk} from '@radio4000/sdk'
-import type {PendingMutation} from '@tanstack/db'
 import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import type {Channel} from './channels'
 import {trackMetaCollection, type TrackMeta} from './track-meta'
-import {log, txLog, getErrorMessage} from './utils'
-import {getOfflineExecutor} from './offline-executor'
+import {logger} from '$lib/logger'
+import {getErrorMessage} from './utils'
+
+const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
 import type {Track} from '$lib/types'
 
-export const tracksCollection = createCollection<Track, string>(
-	queryCollectionOptions({
+export const tracksCollection = createCollection<Track, string>({
+	...queryCollectionOptions({
 		queryKey: (opts) => {
 			const options = parseLoadSubsetOptions(opts)
 			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
@@ -80,8 +80,44 @@ export const tracksCollection = createCollection<Track, string>(
 
 			return []
 		}
-	})
-)
+	}),
+	onInsert: async ({transaction}) => {
+		log.info('onInsert', {count: transaction.mutations.length})
+		for (const m of transaction.mutations) {
+			const metadata = (m.metadata || {}) as Record<string, unknown>
+			const serverTrack = await handleTrackInsert(m.modified, metadata)
+			if (serverTrack) {
+				// Merge view-only fields (e.g. slug) from the optimistic insert,
+				// since createTrack returns from the tracks table, not channel_tracks view.
+				const merged = {...m.modified, ...serverTrack}
+				log.info('onInsert writeUpsert', {id: merged.id})
+				tracksCollection.utils.writeUpsert(merged)
+			}
+		}
+		log.info('onInsert done')
+	},
+	onUpdate: async ({transaction}) => {
+		log.info('onUpdate', {count: transaction.mutations.length})
+		for (const m of transaction.mutations) {
+			const serverTrack = await handleTrackUpdate(m.modified.id, m.changes as Record<string, unknown>)
+			if (serverTrack) {
+				log.info('onUpdate writeUpsert', {id: serverTrack.id})
+				tracksCollection.utils.writeUpsert(serverTrack)
+			}
+		}
+		log.info('onUpdate done')
+	},
+	onDelete: async ({transaction}) => {
+		log.info('onDelete', {count: transaction.mutations.length})
+		let slug: string | undefined
+		for (const m of transaction.mutations) {
+			slug ??= (m.metadata as Record<string, unknown>)?.slug as string | undefined
+			await handleTrackDelete(m.original.id)
+		}
+		if (slug) await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+		log.info('onDelete done', {slug})
+	}
+})
 
 async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAfter?: string}): Promise<Track[]> {
 	log.info('tracks fetch', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
@@ -94,71 +130,34 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 	return (data || []) as Track[]
 }
 
-async function handleTrackInsert(mutation: PendingMutation, metadata: Record<string, unknown>): Promise<Track | null> {
-	const track = mutation.modified as {id: string; url: string; title: string}
+async function handleTrackInsert(track: Track, metadata: Record<string, unknown>): Promise<Track | null> {
 	const channelId = metadata?.channelId as string
-	if (!channelId) throw new NonRetriableError('channelId required in transaction metadata')
+	if (!channelId) throw new Error('channelId required in transaction metadata')
 	log.info('insert_start', {clientId: track.id, title: track.title, channelId})
-	const {data, error} = await sdk.tracks.createTrack(channelId, track)
+	const {data, error} = await sdk.tracks.createTrack(channelId, {
+		id: track.id,
+		url: track.url,
+		title: track.title,
+		description: track.description || undefined
+	})
 	log.info('insert_done', {clientId: track.id, serverId: data?.id, match: track.id === data?.id, error})
-	if (error) throw new NonRetriableError(getErrorMessage(error))
+	if (error) throw new Error(getErrorMessage(error))
 	return (data as Track) ?? null
 }
 
-async function handleTrackUpdate(mutation: PendingMutation): Promise<void> {
-	const track = mutation.modified as {id: string}
-	const changes = mutation.changes as Record<string, unknown>
-	log.info('update_start', {id: track.id, changes})
-	const response = await sdk.tracks.updateTrack(track.id, changes)
-	log.info('update_done', {id: track.id, error: response.error})
-	if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
+async function handleTrackUpdate(id: string, changes: Record<string, unknown>): Promise<Track | null> {
+	log.info('update_start', {id, changes})
+	const response = await sdk.tracks.updateTrack(id, changes)
+	log.info('update_done', {id, error: response.error})
+	if (response.error) throw new Error(getErrorMessage(response.error))
+	return (response.data as Track) ?? null
 }
 
-async function handleTrackDelete(mutation: PendingMutation): Promise<void> {
-	const track = mutation.original as {id: string}
-	log.info('delete_start', {id: track.id})
-	const response = await sdk.tracks.deleteTrack(track.id)
-	log.info('delete_done', {id: track.id, error: response.error})
-	if (response.error) throw new NonRetriableError(getErrorMessage(response.error))
-}
-
-export const tracksAPI = {
-	async syncTracks({
-		transaction,
-		idempotencyKey
-	}: {
-		transaction: {mutations: Array<PendingMutation>; metadata?: Record<string, unknown>}
-		idempotencyKey: string
-	}) {
-		const slug = transaction.metadata?.slug as string
-		const metadata = transaction.metadata || {}
-		let needsInvalidation = false
-
-		for (const mutation of transaction.mutations) {
-			txLog.info('tracks', {type: mutation.type, slug, key: idempotencyKey.slice(0, 8)})
-			if (mutation.type === 'insert') {
-				const serverTrack = await handleTrackInsert(mutation, metadata)
-				// Persist so data survives optimistic mutation cleanup
-				tracksCollection.utils.writeUpsert((serverTrack ?? mutation.modified) as Track)
-				needsInvalidation = true
-			} else if (mutation.type === 'update') {
-				await handleTrackUpdate(mutation)
-				// Persist optimistic data so it survives transaction cleanup
-				tracksCollection.utils.writeUpsert(mutation.modified as Track)
-			} else if (mutation.type === 'delete') {
-				await handleTrackDelete(mutation)
-				needsInvalidation = true
-			} else {
-				txLog.warn('tracks unhandled type', {type: mutation.type})
-			}
-		}
-		log.info('tx_complete', {idempotencyKey: idempotencyKey.slice(0, 8), slug})
-
-		if (slug && needsInvalidation) {
-			log.info('invalidate', {slug})
-			await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-		}
-	}
+async function handleTrackDelete(id: string): Promise<void> {
+	log.info('delete_start', {id})
+	const response = await sdk.tracks.deleteTrack(id)
+	log.info('delete_done', {id, error: response.error})
+	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
 export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
@@ -175,135 +174,72 @@ export function addTrack(
 	const parsed = parseUrl(input.url)
 	const media_id = parsed?.provider === 'youtube' ? parsed.id : null
 	const provider = parsed?.provider || null
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		tracksCollection.insert({
-			id: uuid(),
-			url: input.url,
-			title: input.title,
-			description: input.description || '',
-			slug: channel.slug,
-			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString(),
-			discogs_url: input.discogs_url || null,
-			duration: null,
-			fts: null,
-			mentions: null,
-			playback_error: null,
-			tags: null,
-			media_id,
-			provider
-		})
-	})
-	return tx.commit()
+	return tracksCollection
+		.insert(
+			{
+				id: uuid(),
+				url: input.url,
+				title: input.title,
+				description: input.description || '',
+				slug: channel.slug,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+				discogs_url: input.discogs_url || null,
+				duration: null,
+				fts: null,
+				mentions: null,
+				playback_error: null,
+				tags: null,
+				media_id,
+				provider
+			},
+			{metadata: {channelId: channel.id, slug: channel.slug}}
+		)
+		.isPersisted.promise.then(() => {})
 }
 
-export async function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		const track = tracksCollection.get(id)
-		if (!track) return
-		tracksCollection.update(id, (draft) => {
+export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
+	return tracksCollection
+		.update(id, {metadata: {slug: channel.slug}}, (draft) => {
 			Object.assign(draft, changes)
 		})
-	})
-	await tx.commit()
-	// Workaround: offline tx commit doesn't update query cache, causing syncedData revert
-	const track = tracksCollection.get(id)
-	if (track) tracksCollection.utils.writeUpsert({...track, ...changes})
+		.isPersisted.promise.then(() => {})
 }
 
 export function deleteTrack(channel: {id: string; slug: string}, id: string) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		const track = tracksCollection.get(id)
-		if (track) {
-			tracksCollection.delete(id)
-		}
-	})
-	return tx.commit()
+	return tracksCollection.delete(id, {metadata: {slug: channel.slug}}).isPersisted.promise.then(() => {})
 }
 
-export async function batchUpdateTracksUniform(channel: Channel, ids: string[], changes: Record<string, unknown>) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		for (const id of ids) {
-			const track = tracksCollection.get(id)
-			if (!track) continue
-			tracksCollection.update(id, (draft) => {
+export function batchUpdateTracksUniform(channel: Channel, ids: string[], changes: Record<string, unknown>) {
+	return tracksCollection
+		.update(ids, {metadata: {slug: channel.slug}}, (drafts) => {
+			for (const draft of drafts as Array<Track>) {
 				Object.assign(draft, changes)
-			})
-		}
-	})
-	await tx.commit()
-	// Derived live queries don't react to transaction updates, so manually trigger
-	tracksCollection.utils.writeBatch(() => {
-		for (const id of ids) {
-			const track = tracksCollection.get(id)
-			if (track) tracksCollection.utils.writeUpsert({...track, ...changes})
-		}
-	})
+			}
+		})
+		.isPersisted.promise.then(() => {})
 }
 
-export async function batchUpdateTracksIndividual(
+export function batchUpdateTracksIndividual(
 	channel: Channel,
 	updates: Array<{id: string; changes: Record<string, unknown>}>
 ) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		for (const {id, changes} of updates) {
-			const track = tracksCollection.get(id)
-			if (!track) continue
-			tracksCollection.update(id, (draft) => {
-				Object.assign(draft, changes)
-			})
-		}
-	})
-	await tx.commit()
-	// Derived live queries don't react to transaction updates, so manually trigger
-	tracksCollection.utils.writeBatch(() => {
-		for (const {id, changes} of updates) {
-			const track = tracksCollection.get(id)
-			if (track) tracksCollection.utils.writeUpsert({...track, ...changes})
-		}
-	})
+	return tracksCollection
+		.update(
+			updates.map((u) => u.id),
+			{metadata: {slug: channel.slug}},
+			(drafts) => {
+				for (const draft of drafts as Array<Track>) {
+					const update = updates.find((u) => u.id === draft.id)
+					if (update) Object.assign(draft, update.changes)
+				}
+			}
+		)
+		.isPersisted.promise.then(() => {})
 }
 
 export function batchDeleteTracks(channel: Channel, ids: string[]) {
-	const tx = getOfflineExecutor().createOfflineTransaction({
-		mutationFnName: 'syncTracks',
-		metadata: {channelId: channel.id, slug: channel.slug},
-		autoCommit: false
-	})
-	tx.mutate(() => {
-		for (const id of ids) {
-			const track = tracksCollection.get(id)
-			if (track) {
-				tracksCollection.delete(id)
-			}
-		}
-	})
-	return tx.commit()
+	return tracksCollection.delete(ids, {metadata: {slug: channel.slug}}).isPersisted.promise.then(() => {})
 }
 
 export async function checkTracksFreshness(slug: string): Promise<boolean> {

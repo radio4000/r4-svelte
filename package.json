@@ -50,7 +50,6 @@
 		"@inlang/plugin-message-format": "^4.3.0",
 		"@radio4000/sdk": "^0.8.0",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@tanstack/offline-transactions": "^1.0.17",
 		"@tanstack/query-db-collection": "^1.0.24",
 		"@tanstack/query-persist-client-core": "^5.91.19",
 		"@tanstack/svelte-db": "^0.1.70",
