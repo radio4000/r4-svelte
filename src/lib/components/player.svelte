@@ -459,6 +459,16 @@
 						</div>
 					</div>
 				{/if}
+			{:else if displayTrack}
+				{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
+				<div class="header-info active-track-bg">
+					{#if ytid}
+						<img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} class="track-artwork" />
+					{/if}
+					<div class="info">
+						<h3 class="title">{displayTrack.title}</h3>
+					</div>
+				</div>
 			{/if}
 		</footer>
 

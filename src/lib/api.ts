@@ -167,7 +167,7 @@ export async function playTrack(
 	}
 
 	deck.playlist_track = id
-	deck.playlist_slug = isEphemeral ? undefined : (track.slug ?? undefined)
+	deck.playlist_slug = track.slug ?? undefined
 	if (startReason !== 'broadcast_sync') {
 		deck.track_played_at = new Date().toISOString()
 		deck.seeked_at = deck.track_played_at
@@ -514,7 +514,14 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 		return Promise.reject(new Error('Media player not ready'))
 	}
 	log.debug('play() check', player, 'paused?', player.paused)
-	const result = player.play()
+	let result: Promise<void> | void
+	try {
+		result = player.play()
+	} catch (error) {
+		// YouTube API not ready yet (this.api is null) — swallow the sync throw
+		log.warn('play() threw (player not ready):', (error as Error).message || error)
+		return Promise.resolve()
+	}
 	if (result instanceof Promise) {
 		return result
 			.then(() => {
@@ -525,7 +532,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 			.catch((error) => {
 				if (deck) deck.is_playing = false
 				log.warn('play() was prevented:', error.message || error)
-				throw error
 			})
 	}
 	if (deck) deck.is_playing = true

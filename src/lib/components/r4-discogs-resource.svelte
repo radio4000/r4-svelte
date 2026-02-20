@@ -128,13 +128,15 @@
 		const id = uri ? `discogs:${uri}` : `discogs-no-video:${artistsDisplay}:${position}:${title}`
 		return /** @type {import('$lib/types').Track} */ ({
 			id,
-			title,
+			title: artistsDisplay ? `${artistsDisplay} — ${title}` : title,
 			url: uri,
 			media_id: ytId ?? null,
 			created_at: now,
 			updated_at: now,
-			slug: null,
-			discogs_url: resource?.uri ?? null
+			// Carry channel slug so the player knows which channel context to display
+			slug: tracks[0]?.slug ?? null,
+			// discogs_url only on real DB tracks (drives the link in track-card)
+			discogs_url: null
 		})
 	}
 
@@ -163,8 +165,12 @@
 			ephemeralTracks.set(t.id, t)
 		}
 		return () => {
+			// Only remove tracks not referenced in any deck's current playlist
+			const activeDeckIds = new Set(Object.values(appState.decks).flatMap((d) => d.playlist_tracks ?? []))
 			for (const t of toRegister) {
-				ephemeralTracks.delete(t.id)
+				if (!activeDeckIds.has(t.id)) {
+					ephemeralTracks.delete(t.id)
+				}
 			}
 		}
 	})

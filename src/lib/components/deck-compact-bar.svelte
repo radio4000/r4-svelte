@@ -2,6 +2,7 @@
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {ephemeralTracks} from '$lib/ephemeral-tracks'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
@@ -20,7 +21,8 @@
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
 		if (!id) return undefined
-		return tracksCollection.state.get(id)
+		void tracksCollection.state.size
+		return tracksCollection.state.get(id) ?? ephemeralTracks.get(id)
 	})
 
 	let channel = $derived.by(() => {
