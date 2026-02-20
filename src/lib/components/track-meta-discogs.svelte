@@ -69,6 +69,7 @@
 	<R4DiscogsResource
 		url={track.discogs_url}
 		full={true}
+		slug={channel?.slug}
 		{tracks}
 		onSelectMedia={!trackHasMedia && canEdit ? handleSelectMedia : undefined}
 	/>

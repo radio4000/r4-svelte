@@ -25,8 +25,9 @@
 	})
 
 	let channel = $derived.by(() => {
-		if (!track?.slug) return undefined
-		return [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
+		const slugToUse = track?.slug ?? deck?.playlist_slug
+		if (!slugToUse) return undefined
+		return [...channelsCollection.state.values()].find((ch) => ch.slug === slugToUse)
 	})
 
 	let lastTrack = $state()

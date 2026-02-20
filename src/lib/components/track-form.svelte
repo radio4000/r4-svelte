@@ -1,5 +1,4 @@
 <script>
-	import {untrack} from 'svelte'
 	import {addTrack, updateTrack} from '$lib/tanstack/collections/tracks'
 	import {getMedia} from 'media-now'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
@@ -23,7 +22,10 @@
 	let error = $state('')
 	let submitting = $state(false)
 	let fetchingTitle = $state(false)
-	let liveDiscogsUrl = $state(untrack(() => initialDiscogsUrl))
+	let liveDiscogsUrl = $state(/** @type {string} */ (''))
+	$effect(() => {
+		liveDiscogsUrl = initialDiscogsUrl
+	})
 	/** All possible suggestion tags from the loaded discogs resource */
 	let allDiscogsSuggestions = $state(/** @type {string[]} */ ([]))
 

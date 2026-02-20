@@ -2,7 +2,7 @@
 	import TrackCard from './track-card.svelte'
 	import Icon from './icon.svelte'
 	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
-	import {setPlaylist, playTrack, addToPlaylist, playNext} from '$lib/api'
+	import {setPlaylist, playTrack, playNext} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {tracksCollection} from '$lib/tanstack/collections'
 	import {isDbId} from '$lib/utils'
@@ -28,6 +28,7 @@
 	/** @type {{
 	 *   url: string,
 	 *   full?: boolean,
+	 *   slug?: string,
 	 *   suggestions?: boolean,
 	 *   preselected?: string[],
 	 *   tracks?: import('$lib/types').Track[],
@@ -38,6 +39,7 @@
 	let {
 		url,
 		full = false,
+		slug = '',
 		suggestions = false,
 		preselected = [],
 		tracks = [],
@@ -182,7 +184,7 @@
 		const deckId = appState.active_deck_id
 		const ids = allPlayableTracks.map((t) => t.id)
 		if (ids.length) {
-			setPlaylist(deckId, ids, {title: `${artistsDisplay} — ${resource?.title}`})
+			setPlaylist(deckId, ids, {title: `${artistsDisplay} — ${resource?.title}`, slug: slug || undefined})
 		}
 		playTrack(deckId, trackId, null, 'user_click_track')
 	}
@@ -198,14 +200,6 @@
 	function handlePlayRelease() {
 		if (!allPlayableTracks.length) return
 		playFromRelease(allPlayableTracks[0].id)
-	}
-
-	function handleAddToPlaylist() {
-		const deckId = appState.active_deck_id
-		addToPlaylist(
-			deckId,
-			allPlayableTracks.map((t) => t.id)
-		)
 	}
 
 	function handlePlayNext() {
@@ -271,9 +265,6 @@
 					</button>
 					<button type="button" title="Play next" onclick={handlePlayNext}>
 						<Icon icon="next-fill" size={14} />
-					</button>
-					<button type="button" title="Add to playlist" onclick={handleAddToPlaylist}>
-						<Icon icon="add" size={14} />
 					</button>
 				</menu>
 			{/if}

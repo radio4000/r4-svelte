@@ -166,7 +166,7 @@ export async function playTrack(
 	}
 
 	deck.playlist_track = id
-	deck.playlist_slug = track.slug ?? undefined
+	if (!isEphemeral) deck.playlist_slug = track.slug ?? undefined
 	if (startReason !== 'broadcast_sync') {
 		deck.track_played_at = new Date().toISOString()
 		deck.seeked_at = deck.track_played_at
@@ -290,13 +290,14 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string} = {}) {
+export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string; slug?: string} = {}) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
 	deck.playlist_tracks_shuffled = shuffleArray(trackIds)
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
+	if (options.slug !== undefined) deck.playlist_slug = options.slug || undefined
 }
 
 /**
