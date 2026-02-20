@@ -1,5 +1,6 @@
 <script>
 	import {relativeDateDetailed} from '$lib/dates.js'
+	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
@@ -14,10 +15,6 @@
 </script>
 
 {#if data}
-	<button onclick={() => (showRaw = !showRaw)}>
-		{showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
-	</button>
-
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
@@ -61,6 +58,24 @@
 			{/if}
 		</dl>
 	{/if}
+	<div class="meta-toolbar">
+		<button
+			type="button"
+			onclick={() => (showRaw = !showRaw)}
+			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+		>
+			<Icon icon="code" size={16} />
+		</button>
+	</div>
 {:else}
 	<p>{m.track_meta_no_youtube()}</p>
 {/if}
+
+<style>
+	.meta-toolbar {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 0.5rem;
+	}
+</style>

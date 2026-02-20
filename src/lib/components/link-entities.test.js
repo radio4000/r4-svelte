@@ -23,12 +23,15 @@ function createLinkedParts(text, track = null) {
 		}
 
 		// Add the entity as a link
-		const searchQuery = entity.startsWith('@') ? entity : track?.slug ? `@${track.slug} ${entity}` : entity
+		const isMention = entity.startsWith('@')
+		const href = isMention
+			? `/${encodeURIComponent(entity.slice(1))}`
+			: `/search?q=${encodeURIComponent(track?.slug ? `@${track.slug} ${entity}` : entity)}`
 
 		parts.push({
 			type: 'link',
 			content: entity,
-			href: `/search?q=${encodeURIComponent(searchQuery)}`
+			href
 		})
 
 		lastIndex = offset + match.length
@@ -67,7 +70,7 @@ describe('link-entities', () => {
 	test('converts mentions to search links', () => {
 		const parts = createLinkedParts('From @oskar channel')
 		const result = partsToHtml(parts)
-		expect(result).toBe('From <a href="/search?q=%40oskar">@oskar</a> channel')
+		expect(result).toBe('From <a href="/oskar">@oskar</a> channel')
 	})
 
 	test('handles multiple entities in one text', () => {
@@ -75,7 +78,7 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Great #house track from @radio4000 with #electronic vibes', track)
 		const result = partsToHtml(parts)
 		expect(result).toBe(
-			'Great <a href="/search?q=%40oskar%20%23house">#house</a> track from <a href="/search?q=%40radio4000">@radio4000</a> with <a href="/search?q=%40oskar%20%23electronic">#electronic</a> vibes'
+			'Great <a href="/search?q=%40oskar%20%23house">#house</a> track from <a href="/radio4000">@radio4000</a> with <a href="/search?q=%40oskar%20%23electronic">#electronic</a> vibes'
 		)
 	})
 
@@ -115,7 +118,7 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Love #TECHNO and @OSKAR', track)
 		const result = partsToHtml(parts)
 		expect(result).toBe(
-			'Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/search?q=%40OSKAR">@OSKAR</a>'
+			'Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/OSKAR">@OSKAR</a>'
 		)
 	})
 

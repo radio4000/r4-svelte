@@ -9,3 +9,23 @@ export const [getTracksQueryCtx, setTracksQueryCtx] = createContext<{
 	isReady: boolean
 	isLoading: boolean
 }>()
+
+/** Track detail state shared by [slug]/tracks/[tid] tab routes */
+export const [getTrackDetailCtx, setTrackDetailCtx] = createContext<{
+	track: Track | undefined
+	channel: import('$lib/types').Channel | undefined
+	canEdit: boolean
+	meta:
+		| {
+				media_id?: string
+				youtube_data?: {[key: string]: unknown}
+				musicbrainz_data?: object
+				discogs_data?: object
+		  }
+		| undefined
+	tracks: Track[]
+	relatedTracks: Track[]
+	hasYoutubeInfo: boolean
+	hasMusicbrainzInfo: boolean
+	hasDiscogsInfo: boolean
+}>()

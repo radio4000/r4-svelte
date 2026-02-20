@@ -248,25 +248,26 @@
 		if (inChannel > 0) parts.push(`${inChannel} already in this channel`)
 		return parts.join(' · ')
 	})
-	const releaseMeta = $derived.by(() => {
-		if (!resource) return ''
-		const parts = []
+	const releaseMetaItems = $derived.by(() => {
+		if (!resource) return []
+		/** @type {{icon: string, label: string, value: string}[]} */
+		const items = []
 		const date = resource.released_formatted || (resource.year ? String(resource.year) : '')
-		if (date) parts.push(date)
-		if (resource.country) parts.push(resource.country)
+		if (date) items.push({icon: 'history', label: 'Release date', value: date})
+		if (resource.country) items.push({icon: 'map', label: 'Country', value: resource.country})
 		const format = resource.formats?.[0]
 		if (format) {
 			const descParts =
 				format.descriptions?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d)).slice(0, 2) ?? []
 			const fmtStr = [format.name, ...descParts].join(' ')
-			if (fmtStr) parts.push(fmtStr)
+			if (fmtStr) items.push({icon: 'tv', label: 'Format', value: fmtStr})
 		}
 		const label = resource.labels?.[0]
 		if (label) {
 			const catno = label.catno && label.catno !== 'none' ? ` ${label.catno}` : ''
-			parts.push(`${label.name}${catno}`)
+			items.push({icon: 'tag', label: 'Label', value: `${label.name}${catno}`})
 		}
-		return parts.join(' · ')
+		return items
 	})
 	const artistsDisplay = $derived(
 		/** @type {DiscogsResource | null} */ (resource)?.artists_sort ||
@@ -274,7 +275,7 @@
 			''
 	)
 	const tracklistItems = $derived(
-		(/** @type {DiscogsResource | null} */ (resource))?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
+		/** @type {DiscogsResource | null} */ (resource)?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
 	)
 </script>
 
@@ -286,7 +287,7 @@
 {/if}
 
 {#if resource}
-	<div class="r4-discogs-resource">
+	<div class="r4-discogs-resource" class:r4-discogs-resource--full={full}>
 		<div class="release-header">
 			{#if resource.thumb}
 				<img class="release-thumb" src={resource.thumb} alt="" loading="lazy" />
@@ -299,8 +300,15 @@
 						{artistsDisplay} — {resource.title}
 					{/if}
 				</h3>
-				{#if releaseMeta}
-					<small class="release-meta">{releaseMeta}</small>
+				{#if releaseMetaItems.length > 0}
+					<small class="release-meta">
+						{#each releaseMetaItems as item (item.label)}
+							<span title={item.label}>
+								<Icon icon={item.icon} size={11} />
+								{item.value}
+							</span>
+						{/each}
+					</small>
 				{/if}
 			</div>
 			{#if full && allPlayableTracks.length > 0}
@@ -330,14 +338,24 @@
 		{#if full && (releaseStats || resource.community)}
 			<div class="release-community" aria-label="Release summary">
 				{#if releaseStats}
-					<span>{releaseStats}</span>
+					<span>
+						<Icon icon="unordered-list" size={12} />
+						{releaseStats}
+					</span>
 				{/if}
 				{#if resource.community}
-					<span>{resource.community.have} have</span>
-					<span>{resource.community.want} want</span>
+					<span title="Users who have this release">
+						<Icon icon="users" size={12} />
+						{resource.community.have} have
+					</span>
+					<span title="Users who want this release">
+						<Icon icon="favorite" size={12} />
+						{resource.community.want} want
+					</span>
 				{/if}
 				{#if Number(resource.community?.rating?.count) > 0}
-					<span>
+					<span title="Average Discogs rating">
+						<Icon icon="chart-scatter" size={12} />
 						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({resource.community?.rating?.count ?? 0} ratings)
 					</span>
 				{/if}
@@ -455,6 +473,11 @@
 		background: var(--gray-2);
 	}
 
+	.r4-discogs-resource--full .release-header {
+		gap: 0.75rem;
+		padding: 0.7rem 0.8rem;
+	}
+
 	.release-thumb {
 		width: 42px;
 		height: 42px;
@@ -481,9 +504,16 @@
 
 	.release-meta {
 		font-size: var(--font-3);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 0.55rem;
+	}
+
+	.release-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
+		min-width: 0;
 	}
 
 	.release-actions {
@@ -518,10 +548,24 @@
 		border-bottom: 1px solid var(--gray-3);
 	}
 
+	.r4-discogs-resource--full .release-community {
+		padding: 0.5rem 0.8rem;
+	}
+
+	.release-community span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+
 	.tracklist {
 		margin: 0;
 		font-style: normal;
 		padding: 0;
+	}
+
+	.r4-discogs-resource--full .tracklist {
+		padding: 0.25rem 0.45rem 0.45rem;
 	}
 
 	.tracklist-item {
@@ -535,6 +579,13 @@
 			opacity: 1;
 			cursor: pointer;
 		}
+	}
+
+	/* Keep text aligned with rows that have artwork by reserving the same slot */
+	.tracklist-item:not(.has-video) :global(.card)::before {
+		content: '';
+		flex: 0 0 var(--track-artwork-size);
+		align-self: center;
 	}
 
 	.track-hints {

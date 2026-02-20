@@ -2,6 +2,15 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
+## Recently done
+
+- Track detail tabs moved from `?tab=` query params to real nested routes:
+  - `/${slug}/tracks/${tid}`
+  - `/${slug}/tracks/${tid}/youtube`
+  - `/${slug}/tracks/${tid}/musicbrainz`
+  - `/${slug}/tracks/${tid}/discogs`
+  - `/${slug}/tracks/${tid}/related`
+
 ## Performance audit — $state proxy & useLiveQuery hotspots
 
 The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-push) eliminated ~140ms of blocking per query for large collections. The pattern — mutating a `$state` array item-by-item instead of replacing it — likely exists elsewhere. An agent should:

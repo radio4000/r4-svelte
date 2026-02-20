@@ -333,6 +333,9 @@
 		/*stickyontop*/
 		position: sticky;
 		top: 0;
+		display: flex;
+		flex-wrap: nowrap;
+		overflow-x: auto;
 		background: var(--gray-1);
 		z-index: 20;
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
@@ -345,6 +348,8 @@
 
 	.channel-nav nav {
 		align-items: stretch;
+		flex-shrink: 0;
+		min-width: max-content;
 	}
 
 	.channel-nav-secondary {
