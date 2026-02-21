@@ -155,6 +155,20 @@
 		position: relative;
 	}
 
+	/* Active indicator: left bar on desktop instead of background fill */
+	nav :global(.btn.active) {
+		background-color: var(--button-bg, var(--gray-1));
+		border-color: var(--gray-7);
+		box-shadow:
+			lch(0 0 0 / 0.06) 0px 4px 4px -1px,
+			lch(0 0 0 / 0.12) 0px 1px 1px 0px,
+			inset 3px 0 0 var(--accent-9);
+	}
+
+	nav :global(.btn.active svg) {
+		color: var(--accent-9);
+	}
+
 	@media (max-width: 768px) {
 		header {
 			align-items: center;
@@ -174,6 +188,14 @@
 
 		.settings-link {
 			margin-top: 0;
+		}
+
+		/* Active indicator: top bar on mobile */
+		nav :global(.btn.active) {
+			box-shadow:
+				lch(0 0 0 / 0.06) 0px 4px 4px -1px,
+				lch(0 0 0 / 0.12) 0px 1px 1px 0px,
+				inset 0 3px 0 var(--accent-9);
 		}
 	}
 	@media (min-width: 768px) {

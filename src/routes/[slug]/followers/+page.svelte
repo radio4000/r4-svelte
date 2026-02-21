@@ -11,17 +11,17 @@
 	let slug = $derived(page.params.slug)
 
 	/** @type {'grid' | 'list' | 'map' | 'infinite'} */
-	let display = $state(appState.followers_display || 'grid')
+	let display = $state(appState.channels_display || 'grid')
 	/** @type {'updated' | 'created' | 'name' | 'tracks'} */
-	let order = $state(appState.followers_order || 'updated')
+	let order = $state(appState.channels_order || 'updated')
 	/** @type {'asc' | 'desc'} */
-	let direction = $state(appState.followers_direction || 'desc')
+	let direction = $state(appState.channels_order_direction || 'desc')
 
 	// Sync to appState when settings change
 	$effect(() => {
-		appState.followers_display = display
-		appState.followers_order = order
-		appState.followers_direction = direction
+		appState.channels_display = display
+		appState.channels_order = order
+		appState.channels_order_direction = direction
 	})
 
 	const channelQuery = useLiveQuery((q) =>

@@ -61,7 +61,10 @@
 	})
 
 	function toggleTag(tag: string) {
-		const next = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag]
+		const normalized = tag.toLowerCase().trim()
+		const next = selectedTags.some((t) => t.toLowerCase() === normalized)
+			? selectedTags.filter((t) => t.toLowerCase() !== normalized)
+			: [...selectedTags, normalized]
 		const url = new URL(page.url)
 		if (next.length) {
 			url.searchParams.set('tags', next.join(','))

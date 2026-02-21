@@ -8,8 +8,8 @@
 	const isPlaying = $derived(
 		Boolean(
 			value &&
-				Object.values(appState.decks).some(
-					(d) => d.playlist_title?.toLowerCase() === value.toLowerCase()
+				Object.values(appState.decks).some((d) =>
+					d.playlist_title?.toLowerCase().split(/\s+/).includes(value.toLowerCase())
 				)
 		)
 	)
@@ -52,17 +52,20 @@
 
 	a.playing,
 	button.playing {
-		text-decoration: underline;
-		text-decoration-color: var(--accent-9);
-		text-underline-offset: 0.15em;
+		background: var(--accent-9);
+		color: var(--gray-1);
 	}
 
-	a.filtered,
+	a.filtered {
+		background: var(--accent-3);
+		box-shadow: 0 0 0 1px var(--gray-12);
+		color: var(--accent-11);
+	}
+
 	button.filtered {
-		color: var(--accent-9) !important;
-		text-decoration: underline;
-		text-decoration-color: var(--accent-9);
-		text-underline-offset: 0.15em;
+		background: var(--accent-3);
+		box-shadow: 0 0 0 1px var(--accent-9);
+		color: var(--accent-11);
 	}
 
 	a:hover,

@@ -85,6 +85,7 @@
 
 <button
 	class="btn"
+	class:active={showModal}
 	onclick={() => open()}
 	aria-label={m.track_add_title()}
 	{@attach tooltip({content: m.track_add_title()})}

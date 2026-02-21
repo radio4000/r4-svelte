@@ -74,6 +74,20 @@
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 	const isTagPlaying = (tag: string) => activeDeck?.playlist_title === `#${tag}` && activeDeck?.is_playing
 
+	// Tags from the active deck's playlist (e.g. "#house #techno" → ["house", "techno"])
+	const deckPlaylistTags = $derived(
+		activeDeck?.playlist_title
+			?.split(' ')
+			.filter((t) => t.startsWith('#'))
+			.map((t) => t.slice(1)) ?? []
+	)
+	// Tracks from this channel matching any of the current deck's playlist tags
+	const deckTagMatches = $derived(
+		deckPlaylistTags.length && tracksQuery.isReady
+			? allTracks.filter((t) => t.tags?.some((tag) => deckPlaylistTags.includes(tag)))
+			: []
+	)
+
 	async function playTagTracks(tracks: {id: string}[], tag: string) {
 		const ids = tracks.map((t) => t.id)
 		await playTrack(appState.active_deck_id, ids[0], null, 'play_search')
@@ -111,6 +125,28 @@
 				</p>
 			</div>
 		</div>
+
+		{#if deckTagMatches.length > 0}
+			<section class="track-section track-section--active">
+				<header>
+					<h3>
+						<a href="/{slug}/tracks?tags={encodeURIComponent(deckPlaylistTags.join(','))}">
+							{activeDeck?.playlist_title}
+						</a>
+						<small>({deckTagMatches.length})</small>
+					</h3>
+				</header>
+				<Tracklist
+					tracks={deckTagMatches.slice(0, TAG_PREVIEW_LIMIT)}
+					playlistTracks={deckTagMatches}
+					playlistTitle={activeDeck?.playlist_title}
+					{canEdit}
+					grouped={false}
+					virtual={false}
+					playContext={true}
+				/>
+			</section>
+		{/if}
 
 		{#if tracksQuery.isReady && previewTracks.length > 0}
 			<section class="track-section">
@@ -252,13 +288,22 @@
 	}
 
 	.track-section > header h3 {
-		font-size: var(--font-3);
+		font-size: var(--font-5);
 		font-weight: 600;
 		color: var(--gray-10);
 	}
 
+	.track-section--active > header h3 {
+		font-size: clamp(var(--font-6), 5vw, var(--font-8));
+		color: var(--accent-9);
+
+		a {
+			color: inherit;
+		}
+	}
+
 	.featured-channels > header h3 {
-		font-size: var(--font-3);
+		font-size: var(--font-5);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;

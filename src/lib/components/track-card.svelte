@@ -295,8 +295,7 @@
 	h3 + p {
 		line-height: 1.2;
 		color: light-dark(var(--gray-11), var(--gray-10));
-		overflow: hidden;
-		text-overflow: ellipsis;
+		overflow-x: auto;
 		white-space: nowrap;
 		padding-block: 0.1em;
 	}

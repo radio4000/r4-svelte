@@ -1,6 +1,7 @@
 <script>
 	import Tag from '$lib/components/tag.svelte'
 	import {ENTITY_REGEX} from '$lib/utils.ts'
+	import {page} from '$app/state'
 
 	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void}} */
 	const {text, slug, onTagClick} = $props()
@@ -11,6 +12,7 @@
 
 		const parts = []
 		let lastIndex = 0
+		const urlTags = page.url.searchParams.get('tags')?.split(',').filter(Boolean).map((t) => t.toLowerCase()) ?? []
 
 		text.replace(ENTITY_REGEX, (match, prefix, entity, offset) => {
 			// Add text before the match
@@ -26,11 +28,21 @@
 			// Add the entity as a link
 			const isTag = entity.startsWith('#')
 			const isMention = entity.startsWith('@')
-			const href = isMention
-				? `/${encodeURIComponent(entity.slice(1))}`
-				: slug
-					? `/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(entity.slice(1))}`
-					: `/search?q=${encodeURIComponent(entity)}`
+			let href
+			if (isMention) {
+				href = `/${encodeURIComponent(entity.slice(1))}`
+			} else if (slug) {
+				// Toggle: remove tag if already filtered, add if not
+				const tagName = entity.slice(1).toLowerCase()
+				const next = urlTags.includes(tagName)
+					? urlTags.filter((t) => t !== tagName)
+					: [...urlTags, tagName]
+				href = next.length
+					? `/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
+					: `/${encodeURIComponent(slug)}/tracks`
+			} else {
+				href = `/search?q=${encodeURIComponent(entity)}`
+			}
 
 			parts.push({
 				type: 'link',
@@ -55,7 +67,7 @@
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
 		{#if part.isTag && onTagClick}
-			<Tag onclick={() => onTagClick(part.content)} value={part.content}>{part.content}</Tag>
+			<Tag onclick={() => onTagClick(part.content.slice(1))} value={part.content}>{part.content}</Tag>
 		{:else}
 			<Tag href={part.href} value={part.isTag ? part.content : undefined}>{part.content}</Tag>
 		{/if}

@@ -33,6 +33,7 @@
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import {isDbId} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import Tag from '$lib/components/tag.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -46,6 +47,15 @@
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
+	const playlistTagsParam = $derived(
+		deck?.playlist_title
+			? deck.playlist_title
+					.split(' ')
+					.filter((t) => t.startsWith('#'))
+					.map((t) => t.slice(1))
+					.join(',')
+			: ''
+	)
 
 	// Both media player elements
 	let youtubePlayer = $state()
@@ -277,15 +287,36 @@
 				</div>
 			{/if}
 			{#if headerChannel}
-				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
-					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					<span class="header-channel-text">
-						<h3 class="title">{headerChannel.name}</h3>
+				<div class="header-channel">
+					<a class="avatar-link" href={resolve(`/${headerChannel.slug}`)}>
+						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+					</a>
+					<div class="header-channel-text">
+						<a
+							class="title"
+							href={resolve(
+								playlistTagsParam
+									? `/${headerChannel.slug}/tracks?tags=${encodeURIComponent(playlistTagsParam)}`
+									: `/${headerChannel.slug}`
+							)}
+						>
+							{headerChannel.name}
+						</a>
 						{#if deck?.playlist_title}
-							<small class="deck-title">{deck.playlist_title}</small>
+							<small class="deck-title">
+								{#each deck.playlist_title.split(' ') as tag (tag)}
+									{#if tag.startsWith('#')}
+										<Tag
+											href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
+										>{tag}</Tag>
+									{:else}
+										{tag}
+									{/if}
+								{/each}
+							</small>
 						{/if}
-					</span>
-				</a>
+					</div>
+				</div>
 				{#if deck?.broadcasting_channel_id}
 					<span class="channel-badge">Broadcasting</span>
 				{:else if isListeningToBroadcast}
@@ -559,12 +590,21 @@
 
 	.header-channel {
 		display: flex;
+		flex-direction: row;
 		align-items: center;
 		gap: 0.35rem;
 		min-width: 0;
 		max-width: min(58vw, 14rem);
-		text-decoration: none;
-		color: inherit;
+	}
+
+	.avatar-link {
+		flex-shrink: 0;
+		line-height: 0;
+
+		:global(img) {
+			width: 2.5rem;
+			height: 2.5rem;
+		}
 	}
 
 	.header-channel-text {
@@ -573,29 +613,25 @@
 		min-width: 0;
 	}
 
-	.header-channel :global(img) {
-		width: 2.5rem;
-		height: 2.5rem;
-	}
-
-	.header-channel .title {
+	.header-channel-text .title {
 		font-size: var(--font-4);
 		font-weight: 600;
 		line-height: 1.2;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		width: fit-content;
 		max-width: 100%;
+		text-decoration: none;
+		color: inherit;
 	}
 
 	.deck-title {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2em;
 		max-width: 100%;
 		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 		font-size: var(--font-2);
-		color: var(--gray-9);
 	}
 
 	.header-id {
