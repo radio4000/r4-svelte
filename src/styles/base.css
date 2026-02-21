@@ -159,6 +159,12 @@ img {
 a {
 	text-decoration-skip-ink: auto;
 	hyphens: auto;
+	text-decoration-color: transparent;
+	transition: text-decoration-color 150ms;
+}
+
+a:hover {
+	text-decoration-color: currentColor;
 }
 
 a:link,
