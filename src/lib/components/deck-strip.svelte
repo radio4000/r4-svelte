@@ -37,6 +37,7 @@
 		flex-shrink: 0;
 		min-height: 0;
 		height: 100%;
+		padding: 0.4rem;
 
 		&:empty {
 			display: none;

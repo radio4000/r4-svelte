@@ -29,6 +29,7 @@
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
+	const commitDate = $derived(__GIT_INFO__.date)
 
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
@@ -129,6 +130,7 @@
 				{#if sha}
 					<p class="app-version">
 						<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">{m.app_version({sha})}</a>
+						<time datetime={commitDate}>{new Date(commitDate).toLocaleString()}</time>
 					</p>
 				{/if}
 			</div>

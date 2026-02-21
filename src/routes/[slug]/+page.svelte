@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {page} from '$app/state'
+	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
@@ -7,6 +8,7 @@
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
 	import {relativeDate} from '$lib/dates'
 	import {extractHashtags, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
@@ -15,6 +17,7 @@
 
 	const PREVIEW_LIMIT = 10
 	const TAG_PREVIEW_LIMIT = 5
+	const FEATURED_LIMIT = 10
 
 	const tracksQuery = getTracksQueryCtx()
 
@@ -26,10 +29,14 @@
 
 	// Featured tags/channels parsed from description
 	let featuredTags = $derived(
-		extractHashtags(channel?.description ?? '').map((t) => t.slice(1)) // strip #
+		extractHashtags(channel?.description ?? '')
+			.map((t) => t.slice(1))
+			.slice(0, FEATURED_LIMIT) // strip #
 	)
 	let featuredMentions = $derived(
-		extractMentions(channel?.description ?? '').map((s) => s.slice(1)) // strip @
+		extractMentions(channel?.description ?? '')
+			.map((s) => s.slice(1))
+			.slice(0, FEATURED_LIMIT) // strip @
 	)
 
 	// Per-tag sections — store full matching list, slice only for display
@@ -55,6 +62,13 @@
 		return () => {
 			stale = true
 		}
+	})
+
+	let searchInput = $state('')
+	$effect(() => {
+		const q = searchInput.trim()
+		if (!q) return
+		goto(`/${slug}/tracks?search=${encodeURIComponent(q)}`)
 	})
 
 	function playTagTracks(tracks: {id: string}[], tag: string) {
@@ -89,6 +103,10 @@
 			{/if}
 		</div>
 
+		<div class="search-bar">
+			<SearchInput bind:value={searchInput} placeholder="Search tracks..." debounce={300} />
+		</div>
+
 		{#if tracksQuery.isReady && previewTracks.length > 0}
 			<section class="track-section">
 				<header>
@@ -97,7 +115,15 @@
 						{allTracks.length > PREVIEW_LIMIT ? `All ${allTracks.length}` : `All`}
 					</a>
 				</header>
-				<Tracklist tracks={previewTracks} {canEdit} grouped={false} virtual={false} playContext={true} />
+				<Tracklist
+					tracks={previewTracks}
+					playlistTracks={allTracks}
+					{canEdit}
+					grouped={false}
+					virtual={false}
+					playContext={true}
+				/>
+				<footer><a href="/{slug}/tracks">All {allTracks.length} tracks</a></footer>
 			</section>
 		{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 			<p class="empty">{m.channel_loading_tracks()}</p>
@@ -171,12 +197,25 @@
 		border-radius: var(--border-radius);
 	}
 
+	.search-bar {
+		padding: 0.5rem 0.75rem;
+	}
+
+	.search-bar :global(.search-input) {
+		width: 100%;
+	}
+
+	.search-bar :global(input[type='search']) {
+		width: 100%;
+	}
+
 	.dates {
 		color: var(--gray-10);
 	}
 
 	.description {
 		white-space: pre-line;
+		overflow-wrap: break-word;
 	}
 
 	/* Pill-style links inside the description (tags + mentions from LinkEntities) */
@@ -234,6 +273,11 @@
 	.featured-channels ul {
 		margin: 0;
 		padding: 0 0.5rem 0.5rem;
+	}
+
+	.track-section footer {
+		padding: 0.4rem;
+		text-align: center;
 	}
 
 	.empty {
