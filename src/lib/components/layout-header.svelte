@@ -12,6 +12,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
+	import PinsNav from '$lib/components/pins-nav.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const {preloading} = $props()
@@ -50,7 +51,11 @@
 		</a>
 	</nav>
 
-	<nav>
+	<nav class="pins">
+		<PinsNav />
+	</nav>
+
+	<nav class="user">
 		{#await preloading then}
 			<AddTrackDialog />
 			<EditTrackDialog />
@@ -94,8 +99,15 @@
 	}
 
 	.nav-secondary {
-		flex: 1;
 		justify-content: flex-start;
+	}
+
+	nav.pins {
+		flex: 1;
+		justify-content: center;
+	}
+
+	nav.user {
 	}
 
 	.channel-link {
@@ -153,7 +165,6 @@
 			margin-top: 0;
 		}
 	}
-
 	@media (min-width: 768px) {
 		/* Square buttons when vertical */
 		nav :global(.btn) {

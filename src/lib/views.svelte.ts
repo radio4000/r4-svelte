@@ -84,6 +84,16 @@ export function serializeView(view: View): URLSearchParams {
 	return params
 }
 
+/** Reverse of parseSearchQueryToView: turn a View back into a human-readable query string.
+ *  Only represents channels/tags/search — order/direction/limit/tagsMode stay in view params. */
+export function viewToQuery(view: View): string {
+	const parts: string[] = []
+	if (view.channels?.length) parts.push(...view.channels.map((s) => `@${s}`))
+	if (view.tags?.length) parts.push(...view.tags.map((t) => `#${t}`))
+	if (view.search) parts.push(view.search)
+	return parts.join(' ')
+}
+
 /** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */
 export function processViewTracks(tracks: Track[], view: View): Track[] {
 	let data = tracks
