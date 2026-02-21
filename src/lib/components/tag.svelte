@@ -1,12 +1,30 @@
 <script>
-	/** @type {{href?: string, onclick?: () => void, children: import('svelte').Snippet}} */
-	const {href, onclick, children} = $props()
+	import {appState} from '$lib/app-state.svelte'
+	import {page} from '$app/state'
+
+	/** @type {{href?: string, onclick?: () => void, value?: string, children: import('svelte').Snippet}} */
+	const {href, onclick, value, children} = $props()
+
+	const isPlaying = $derived(
+		Boolean(
+			value &&
+				Object.values(appState.decks).some(
+					(d) => d.playlist_title?.toLowerCase() === value.toLowerCase()
+				)
+		)
+	)
+
+	const isFiltered = $derived.by(() => {
+		if (!value) return false
+		const urlTags = page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? []
+		return urlTags.some((t) => `#${t.toLowerCase()}` === value.toLowerCase())
+	})
 </script>
 
 {#if href}
-	<a {href}>{@render children()}</a>
+	<a {href} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</a>
 {:else}
-	<button type="button" {onclick}>{@render children()}</button>
+	<button type="button" {onclick} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</button>
 {/if}
 
 <style>
@@ -30,6 +48,21 @@
 			background 0.15s,
 			color 0.15s,
 			box-shadow 0.15s;
+	}
+
+	a.playing,
+	button.playing {
+		text-decoration: underline;
+		text-decoration-color: var(--accent-9);
+		text-underline-offset: 0.15em;
+	}
+
+	a.filtered,
+	button.filtered {
+		color: var(--accent-9) !important;
+		text-decoration: underline;
+		text-decoration-color: var(--accent-9);
+		text-underline-offset: 0.15em;
 	}
 
 	a:hover,

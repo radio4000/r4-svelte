@@ -55,9 +55,9 @@
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
 		{#if part.isTag && onTagClick}
-			<Tag onclick={() => onTagClick(part.content)}>{part.content}</Tag>
+			<Tag onclick={() => onTagClick(part.content)} value={part.content}>{part.content}</Tag>
 		{:else}
-			<Tag href={part.href}>{part.content}</Tag>
+			<Tag href={part.href} value={part.isTag ? part.content : undefined}>{part.content}</Tag>
 		{/if}
 	{:else}
 		{part.content}

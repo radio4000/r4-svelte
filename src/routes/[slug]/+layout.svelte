@@ -39,6 +39,9 @@
 	let isListeningToChannel = $derived(
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)
+	let isChannelPlaying = $derived(
+		Boolean(channel?.slug && Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing))
+	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
@@ -150,7 +153,7 @@
 					</a>
 				</div>
 				<div class="info">
-					<h1>
+					<h1 class:active={isChannelPlaying}>
 						{channel.name}
 						{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
 					</h1>
@@ -304,6 +307,11 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		transition: color 0.15s;
+
+		&.active {
+			color: var(--accent-9);
+		}
 	}
 
 	.slug {
