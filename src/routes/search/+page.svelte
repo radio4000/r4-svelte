@@ -50,8 +50,9 @@
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		if (page.url.searchParams.has('q')) return
-		inputSeeded = true
-		inputValue = viewToQuery(parseView(page.url.searchParams))
+		const seeded = viewToQuery(parseView(page.url.searchParams))
+		inputValue = seeded
+		inputSeeded = !!seeded
 	})
 
 	// --- Smart input → resolve to view params → URL ---
