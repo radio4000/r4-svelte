@@ -23,6 +23,7 @@
 		onTagClick?: (tag: string) => void
 		menuAlign?: 'left' | 'right' | 'end'
 		menuValign?: 'top' | 'bottom'
+		onLocate?: () => void
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -39,6 +40,7 @@
 		onTagClick,
 		menuAlign,
 		menuValign,
+		onLocate,
 		children,
 		description
 	}: Props = $props()
@@ -109,7 +111,7 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title">{track.title}</h3>
+			<h3 class="title" class:locatable={Boolean(onLocate)} onclick={onLocate}>{track.title}</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
@@ -189,6 +191,11 @@
 				{/if}
 			</menu>
 			<menu class="nav-vertical">
+				{#if onLocate}
+					<button type="button" role="menuitem" onclick={onLocate}
+						><Icon icon="arrow-down" size={14} />Locate in list</button
+					>
+				{/if}
 				{#if isRealTrack}
 					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
 				{:else if track.url}
@@ -246,6 +253,9 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		&.locatable {
+			cursor: pointer;
+		}
 		:global(a) {
 			text-decoration: none;
 			color: inherit;

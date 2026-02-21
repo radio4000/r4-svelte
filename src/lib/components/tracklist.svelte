@@ -79,7 +79,6 @@
 	// Rebuild month names when locale changes
 	const months = $derived(getLocalizedMonths(getLocale()))
 
-	// Cache key to avoid recomputing when tracks haven't changed
 	/** @type {any} */
 	let virtualList
 
@@ -88,6 +87,7 @@
 		virtualList?.scroll({index, smoothScroll: true, shouldThrowOnBounds: false})
 	}
 
+	// Cache key to avoid recomputing when tracks haven't changed
 	let cacheKey = $derived(`${tracks.length}-${tracks[0]?.id}-${tracks.at(-1)?.id}`)
 
 	/** @type {{key: string, items: FlatItem[], groups: SvelteMap<string, SvelteMap<string, IndexedTrack[]>>}} */
@@ -165,6 +165,7 @@
 	{#if virtual}
 		<div class="virtual-tracklist">
 			<SvelteVirtualList
+				bind:this={virtualList}
 				items={flatItems}
 				defaultEstimatedItemHeight={72}
 				bufferSize={20}

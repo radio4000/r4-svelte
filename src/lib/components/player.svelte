@@ -420,13 +420,7 @@
 		{/if}
 
 		<!-- 4. Channel/track info + deck toggle -->
-		<footer
-			class="header-footer"
-			onclick={() => {
-				appState.active_deck_id = deckId
-				scrollToActive?.()
-			}}
-		>
+		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
@@ -465,6 +459,7 @@
 					canEdit={Boolean(channel && canEditChannel(channel.id))}
 					menuValign="top"
 					menuAlign="end"
+					onLocate={scrollToActive}
 				/>
 			{/if}
 		</footer>
