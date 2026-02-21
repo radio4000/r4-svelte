@@ -69,18 +69,25 @@
 	// All tracks missing YouTube metadata
 	let allTracksMissingMeta = $derived(tracks.filter((t) => !t.youtube_data && !t.playback_error))
 
+	// Selection-aware: fetch for selected tracks if any, otherwise all missing meta
+	let targetTracksMissingMeta = $derived(
+		selectedTracks.length > 0
+			? tracks.filter((t) => selectedTracks.includes(t.id) && !t.youtube_data && !t.playback_error)
+			: allTracksMissingMeta
+	)
+
 	async function fetchAllMeta() {
-		if (fetchingMeta || allTracksMissingMeta.length === 0 || !channel) return
+		if (fetchingMeta || targetTracksMissingMeta.length === 0 || !channel) return
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const mediaIds = /** @type {string[]} */ (allTracksMissingMeta.map((t) => t.media_id).filter(Boolean))
+			const mediaIds = /** @type {string[]} */ (targetTracksMissingMeta.map((t) => t.media_id).filter(Boolean))
 			await pullYouTube(mediaIds, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}
 			})
-			await insertDurationFromMeta(channel, allTracksMissingMeta)
+			await insertDurationFromMeta(channel, targetTracksMissingMeta)
 		} finally {
 			fetchingMeta = false
 			fetchProgress = {current: 0, total: 0}
@@ -348,15 +355,15 @@
 
 			<input type="search" bind:value={search} placeholder="Search..." />
 
-			{#if canEdit && allTracksMissingMeta.length > 0}
+			{#if canEdit && targetTracksMissingMeta.length > 0}
 				<button
 					onclick={fetchAllMeta}
 					disabled={fetchingMeta}
-					title="Fetch YouTube metadata for all {allTracksMissingMeta.length} tracks missing metadata"
+					title="Fetch YouTube metadata for {targetTracksMissingMeta.length} {hasSelection ? 'selected' : ''} tracks"
 				>
 					{fetchingMeta
 						? `Fetching... (${fetchProgress.current}/${fetchProgress.total})`
-						: `Fetch all meta (${allTracksMissingMeta.length})`}
+						: `Fetch meta (${targetTracksMissingMeta.length}${hasSelection ? ' sel' : ''})`}
 				</button>
 			{/if}
 
