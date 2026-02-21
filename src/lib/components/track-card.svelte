@@ -341,4 +341,8 @@
 			padding: 0.2em;
 		}
 	}
+
+	.discogs {
+		font-size: var(--font-3);
+	}
 </style>
