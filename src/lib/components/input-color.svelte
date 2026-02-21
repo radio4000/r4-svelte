@@ -1,11 +1,21 @@
 <script>
+	import {onMount} from 'svelte'
 	import ColorPicker from 'svelte-awesome-color-picker'
 
 	/** @type {{label?: string, value?: string, oninput?: (e: {target: {value: string}}) => void, onchange?: (e: {target: {value: string}}) => void, disabled?: boolean}} */
 	let {label, value = $bindable('#000000'), oninput, onchange, disabled} = $props()
 
+	// ColorPicker fires onInput during init (including oklch→hex conversion).
+	// Suppress those so default values don't get written as user customizations.
+	let ready = $state(false)
+	onMount(() => {
+		setTimeout(() => {
+			ready = true
+		}, 0)
+	})
+
 	const handleInput = (event) => {
-		if (disabled) return
+		if (disabled || !ready) return
 		value = event.hex
 		oninput?.({target: {value: event.hex}})
 		onchange?.({target: {value: event.hex}})

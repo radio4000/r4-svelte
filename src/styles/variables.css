@@ -34,6 +34,7 @@
 	--breakpoint-md: 1024px;
 	--breakpoint-lg: 1280px;
 	--breakpoint-xl: 1640px;
+
 }
 
 :root.light {
