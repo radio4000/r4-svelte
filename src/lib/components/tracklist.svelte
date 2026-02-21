@@ -80,6 +80,14 @@
 	const months = $derived(getLocalizedMonths(getLocale()))
 
 	// Cache key to avoid recomputing when tracks haven't changed
+	/** @type {any} */
+	let virtualList
+
+	/** @param {number} index */
+	export function scrollToItem(index) {
+		virtualList?.scroll({index, smoothScroll: true, shouldThrowOnBounds: false})
+	}
+
 	let cacheKey = $derived(`${tracks.length}-${tracks[0]?.id}-${tracks.at(-1)?.id}`)
 
 	/** @type {{key: string, items: FlatItem[], groups: SvelteMap<string, SvelteMap<string, IndexedTrack[]>>}} */

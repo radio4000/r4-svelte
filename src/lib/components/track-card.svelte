@@ -21,6 +21,8 @@
 		showSlug?: boolean
 		canEdit?: boolean
 		onTagClick?: (tag: string) => void
+		menuAlign?: 'left' | 'right' | 'end'
+		menuValign?: 'top' | 'bottom'
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -35,6 +37,8 @@
 		showSlug = false,
 		canEdit = false,
 		onTagClick,
+		menuAlign,
+		menuValign,
 		children,
 		description
 	}: Props = $props()
@@ -126,7 +130,13 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</div>
-	<PopoverMenu bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu
+		bind:this={menu}
+		btnClass="ghost"
+		onclose={() => (showDeleteConfirm = false)}
+		align={menuAlign}
+		valign={menuValign}
+	>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
@@ -256,6 +266,9 @@
 	h3 + p {
 		line-height: 1.2;
 		color: light-dark(var(--gray-11), var(--gray-10));
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	time {

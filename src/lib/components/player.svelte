@@ -31,6 +31,7 @@
 	import {tracksCollection, channelsCollection, updateTrack} from '$lib/tanstack/collections'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'
 	import {isDbId} from '$lib/utils'
+	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
@@ -38,8 +39,8 @@
 
 	const log = logger.ns('player').seal()
 
-	/** @type {{deckId: number, children?: import('svelte').Snippet}} */
-	let {deckId, children} = $props()
+	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
+	let {deckId, children, scrollToActive} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -419,7 +420,13 @@
 		{/if}
 
 		<!-- 4. Channel/track info + deck toggle -->
-		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
+		<footer
+			class="header-footer"
+			onclick={() => {
+				appState.active_deck_id = deckId
+				scrollToActive?.()
+			}}
+		>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
@@ -451,44 +458,14 @@
 					{/if}
 					<span class="caps btn-leave">Live</span>
 				</div>
-			{:else if displayChannel}
-				{#if displayTrack}
-					{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-					{@const trackHref = isDbId(displayTrack.id)
-						? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
-						: null}
-					<div class="header-info active-track-bg">
-						{#if ytid}
-							{#if trackHref}
-								<a href={trackHref} class="track-artwork"
-									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
-								>
-							{:else}
-								<span class="track-artwork"
-									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></span
-								>
-							{/if}
-						{/if}
-						<div class="info">
-							<h3 class="title">
-								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a>{:else}{displayTrack.title}{/if}
-							</h3>
-							{#if displayTrack.description}
-								<p class="description">{displayTrack.description}</p>
-							{/if}
-						</div>
-					</div>
-				{/if}
 			{:else if displayTrack}
-				{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-				<div class="header-info active-track-bg">
-					{#if ytid}
-						<img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} class="track-artwork" />
-					{/if}
-					<div class="info">
-						<h3 class="title">{displayTrack.title}</h3>
-					</div>
-				</div>
+				<TrackCard
+					track={displayTrack}
+					{deckId}
+					canEdit={Boolean(channel && canEditChannel(channel.id))}
+					menuValign="top"
+					menuAlign="end"
+				/>
 			{/if}
 		</footer>
 

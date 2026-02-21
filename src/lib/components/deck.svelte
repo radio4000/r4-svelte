@@ -25,6 +25,8 @@
 	// Inline deck width from stored value
 	let deckStyle = $derived(deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : '')
 
+	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
+
 	// Resize handle state
 	let resizing = $state(false)
 
@@ -80,9 +82,9 @@
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
-			<Player {deckId}>
+			<Player {deckId} {scrollToActive}>
 				{#if !isListeningToBroadcast}
-					<QueuePanel {deckId} />
+					<QueuePanel {deckId} bind:scrollToActive />
 				{/if}
 			</Player>
 		</div>

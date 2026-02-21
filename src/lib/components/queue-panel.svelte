@@ -12,10 +12,11 @@
 	import Icon from './icon.svelte'
 	import TrackCard from './track-card.svelte'
 	import Tracklist from './tracklist.svelte'
+	import {tick} from 'svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	/** @type {{deckId: number}} */
-	let {deckId} = $props()
+	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
+	let {deckId, scrollToActive = $bindable(undefined)} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -23,24 +24,31 @@
 	let showClearHistoryModal = $state(false)
 	let searchQuery = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
-	/** @type {HTMLElement | undefined} */
-	let scrollContainer = $state()
+	/** @type {any} */
+	let tracklist
 
-	function scrollToActive() {
-		if (!scrollContainer || !deck?.playlist_track) return
-		// Try finding the already-rendered active element
-		const active = scrollContainer.querySelector('article.active')
-		if (active) {
-			active.scrollIntoView({behavior: 'smooth', block: 'center'})
-			return
+	async function doScrollToActive() {
+		if (!deck?.playlist_track) return
+
+		// Switch to queue view if needed — virtual list won't be mounted otherwise
+		if (view !== 'queue') {
+			view = 'queue'
+			await tick()
 		}
-		// Virtual list: estimate position from track index
-		const idx = trackIds.indexOf(deck.playlist_track)
-		if (idx < 0) return
-		const viewport = scrollContainer.querySelector('.virtual-viewport') ?? scrollContainer
-		const itemHeight = 72 // matches defaultEstimatedItemHeight
-		viewport.scrollTo({top: Math.max(0, idx * itemHeight - viewport.clientHeight / 2), behavior: 'smooth'})
+
+		// If the active track is filtered out, clear the search so it appears
+		if (searchQuery && !filteredQueueTracks.some((t) => t.id === deck?.playlist_track)) {
+			searchQuery = ''
+			await tick()
+		}
+
+		const idx = filteredQueueTracks.findIndex((t) => t.id === deck?.playlist_track)
+		if (idx >= 0) tracklist?.scrollToItem(idx)
 	}
+
+	$effect(() => {
+		scrollToActive = doScrollToActive
+	})
 
 	let trackIds = $derived(deck?.playlist_tracks ?? [])
 
@@ -111,41 +119,38 @@
 				{m.nav_history()} ({playHistory.length})
 			</button>
 		</menu>
-		{#if view === 'queue' && trackIds.length > 1}
-			<menu class="queue-actions">
-				<button
-					onclick={() => shuffleRemaining(deckId)}
-					{@attach tooltip({content: m.queue_shuffle_remaining()})}
-					title={m.queue_shuffle_remaining()}
-				>
-					<Icon icon="shuffle" size={16} />
-				</button>
-				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
-					<Icon icon="delete" size={16} />
-				</button>
-			</menu>
-		{:else if view === 'history' && playHistory.length > 0}
-			<menu class="queue-actions">
-				<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.common_clear()})}>
-					<Icon icon="delete" size={16} />
-				</button>
-			</menu>
-		{/if}
 	</header>
 
 	<div class="search-container">
 		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
-		{#if view === 'queue' && deck?.playlist_track}
-			<button onclick={scrollToActive} {@attach tooltip({content: 'Scroll to current track'})}>
-				<Icon icon="arrow-down" size={16} />
+		{#if searchQuery !== ''}
+			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: 'Clear search'})}>
+				<Icon icon="close" size={16} />
+			</button>
+		{/if}
+		{#if view === 'queue' && trackIds.length > 1}
+			<button
+				onclick={() => shuffleRemaining(deckId)}
+				{@attach tooltip({content: m.queue_shuffle_remaining()})}
+				title={m.queue_shuffle_remaining()}
+			>
+				<Icon icon="shuffle" size={16} />
+			</button>
+			<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
+				<Icon icon="delete" size={16} />
+			</button>
+		{:else if view === 'history' && playHistory.length > 0}
+			<button onclick={() => (showClearHistoryModal = true)} {@attach tooltip({content: m.common_clear()})}>
+				<Icon icon="delete" size={16} />
 			</button>
 		{/if}
 	</div>
 
-	<main class="scroll" bind:this={scrollContainer}>
+	<main class="scroll">
 		{#if view === 'queue'}
 			{#if filteredQueueTracks.length > 0}
 				<Tracklist
+					bind:this={tracklist}
 					tracks={filteredQueueTracks}
 					{deckId}
 					virtual={true}
