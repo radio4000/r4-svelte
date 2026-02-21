@@ -55,46 +55,46 @@
 		{#if channel.description}
 			<p class="description">
 				<LinkEntities slug={channel.slug} text={trimWithEllipsis(channel.description)} />
-				{#if channel.track_count}
-					<small>({channel.track_count})</small>
-				{/if}
-				{#if channel.latest_track_at}
-					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
-				{/if}
 			</p>
 		{/if}
 		{#if children}
 			{@render children()}
 		{/if}
 	</div>
-	<PopoverMenu btnClass="ghost" align="right">
-		{#snippet trigger()}
-			<Icon icon="options-horizontal" size={16} />
-		{/snippet}
-		<menu>
-			<button
-				type="button"
-				role="menuitem"
-				onclick={() =>
-					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
-			>
-				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-				{isPlaying ? 'Pause' : 'Play'}
-			</button>
-			{#if isBroadcasting}
-				<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-					<Icon icon="signal" size={16} /> Join broadcast
+	<div class="actions">
+		{#if channel.track_count}<small class="track-count">({channel.track_count})</small>{/if}
+		<div class="meta">
+			{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
+		</div>
+		<ButtonFollow {channel} />
+		<PopoverMenu btnClass="ghost" align="right" valign="top">
+			{#snippet trigger()}
+				<Icon icon="options-horizontal" size={16} />
+			{/snippet}
+			<menu>
+				<button
+					type="button"
+					role="menuitem"
+					onclick={() =>
+						isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+				>
+					<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+					{isPlaying ? 'Pause' : 'Play'}
 				</button>
-			{/if}
-			<button type="button" role="menuitem" onclick={share}>
-				<Icon icon="share" size={16} /> Share
-			</button>
-		</menu>
-		<menu class="nav-vertical">
-			<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
-			<ButtonFollow {channel} />
-		</menu>
-	</PopoverMenu>
+				{#if isBroadcasting}
+					<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
+						<Icon icon="signal" size={16} /> Join broadcast
+					</button>
+				{/if}
+				<button type="button" role="menuitem" onclick={share}>
+					<Icon icon="share" size={16} /> Share
+				</button>
+			</menu>
+			<menu class="nav-vertical">
+				<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
+			</menu>
+		</PopoverMenu>
+	</div>
 </article>
 
 <style>
@@ -127,9 +127,28 @@
 			border-color: var(--accent-9);
 		}
 
-		& > :global(.popover-menu) {
-			align-self: flex-end;
+		.actions {
 			margin-top: auto;
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+		}
+
+		.meta {
+			flex: 1;
+			display: flex;
+			gap: 0.25rem;
+			color: light-dark(var(--gray-10), var(--gray-9));
+			font-size: var(--font-3);
+
+			:global(.list) & {
+				display: none;
+			}
+		}
+
+		.track-count {
+			color: light-dark(var(--gray-10), var(--gray-9));
+			font-size: var(--font-3);
 		}
 
 		:global(.list) & {
