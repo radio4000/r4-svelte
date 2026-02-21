@@ -49,6 +49,19 @@
 				<span class="count">{broadcastCount}</span>
 			{/if}
 		</a>
+
+		{#await preloading then}
+			{#if !userChannel}
+				<a
+					href={resolve('/welcome')}
+					class="btn"
+					class:active={page.route.id === '/welcome'}
+					{@attach tooltip({content: 'Start your radio'})}
+				>
+					<Icon icon="sparkles" />
+				</a>
+			{/if}
+		{/await}
 	</nav>
 
 	<nav class="pins">
@@ -69,6 +82,7 @@
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 				</a>
+			{:else}
 			{/if}
 		{/await}
 		<a

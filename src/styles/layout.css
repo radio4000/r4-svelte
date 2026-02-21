@@ -137,6 +137,7 @@ nav {
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	align-items: center;
 
 	hr {
 		margin: auto 0.4em;
