@@ -1,6 +1,7 @@
 <script>
 	import Icon from '$lib/components/icon.svelte'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
+	import Tag from '$lib/components/tag.svelte'
 
 	let active = $state(false)
 </script>
@@ -91,12 +92,56 @@
 	</section>
 
 	<section>
-		<h2>Tabs (.tabs)</h2>
+		<h2>Tabs (<code>.tabs</code>)</h2>
+		<p><small>Simple buttons</small></p>
 		<nav class="tabs">
 			<button class="active">Tab 1</button>
 			<button>Tab 2</button>
 			<button>Tab 3</button>
 		</nav>
+
+		<p><small>Links with icons (<code>div.tabs &gt; nav &gt; a</code>)</small></p>
+		<div class="tabs">
+			<nav>
+				<a href="#a" class="active"><Icon icon="circle-info" size={16} /> Info</a>
+				<a href="#b"><Icon icon="unordered-list" size={16} /> Tracks</a>
+				<a href="#c"><Icon icon="hash" size={16} /> Tags</a>
+				<a href="#d"><Icon icon="sparkles" size={16} /> Related</a>
+			</nav>
+		</div>
+
+		<p><small>With secondary nav (<code>.track-tabs</code> pattern)</small></p>
+		<div class="tabs" style="border-bottom: 1px solid var(--gray-5);">
+			<nav>
+				<a href="#a" class="active"><Icon icon="circle-info" size={16} /> R5</a>
+				<a href="#b"><Icon icon="play-fill" size={16} /> YouTube</a>
+				<a href="#c"><Icon icon="code-branch" size={16} /> MusicBrainz</a>
+				<a href="#d"><Icon icon="tag" size={16} /> Discogs</a>
+			</nav>
+			<nav style="margin-left: auto;">
+				<a href="#e"><Icon icon="settings" size={16} /> Edit</a>
+			</nav>
+		</div>
+	</section>
+
+	<section>
+		<h2>Tags (<code>&lt;Tag&gt;</code>)</h2>
+		<div class="row">
+			<Tag href="#tag">#dub</Tag>
+			<Tag href="#tag">#reggae</Tag>
+			<Tag href="#tag">#electronic</Tag>
+			<Tag onclick={() => {}}>clickable tag</Tag>
+		</div>
+	</section>
+
+	<section>
+		<h2>Tags menu (<code>.tags-menu</code>)</h2>
+		<menu class="tags-menu">
+			<button type="button">dub (12)</button>
+			<button type="button" class="active">reggae (8)</button>
+			<button type="button">electronic (5)</button>
+			<button type="button">ambient (3)</button>
+		</menu>
 	</section>
 
 	<section>

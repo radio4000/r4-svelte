@@ -4,7 +4,6 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
-- plan-views.md
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - meta-toolbar should be <menu>, not div
 - nav.tabs vs div.track-tabs>nav? clean up markup here
@@ -15,16 +14,9 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - didn't look into why but when i switch between discogs/musicbrainz tabs here my browser blocks for 12 seconds :D https://pg.radio4000.com/oskar/tracks/639c8d7a-e095-49b9-b0a0-cdfdf2dd8af8/discogs
 - media query to switch layout header from side to top is too soon. maybe ~900px instead of 768px breakpoint. and do we need 560+640px breakpoints? one of them maybe enough?
 - remove the tap to select row(s) on /batch-edit. the input checkbox is enough for this feature
-- if i go to /search, write #dub, click queue all, it logs -->
-  api.ts:276 r5.api addToPlaylist: no deck {deckId: 1} addToPlaylist @ api.ts:276 queueSearchResults @ +page.svelte:122 handleClick @ button-feedback.svelte:23
-  it is correct i have no deck, but maybe it could just make what it needs?
-- Expanded list view — taller list rows showing channel tags + latest 3-5 tracks. Not a new view mode; the list view itself expands when there's enough space using container queries (no toggle). Can use `getChannelTags()` from utils.
 - 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
-- Auto live — client-side calculation using track.duration to sync playback across listeners. When a user tunes in, calculate what track should be playing based on durations. Falls back gracefully when durations are missing. TBD: for tracks missing duration, could fetch via `media-now getMedia()` on demand. Low effort.
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
-- Views: Saved views — CRUD + GUI. Use `localStorageCollectionOptions` (same pattern as play-history). Collection stores `{id, name, params}` where `params` is the serialized URL string. GUI: TBD (sidebar? dropdown? page?). A saved view is just a named bookmark — the full recipe stays in the URL.
-  Views: as /mix input — mix crate sources become Views. Tags would query Supabase (real global results instead of local-only filtering). Crate UI (pills, suggestions, avatars) stays separate from the plumbing.
 - OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Needs server-side data (load functions already fetch channel/track).
 - Media Session API — OS-level lock screen / notification controls (play/pause/skip/artwork). Player already has all the hooks; wire up `navigator.mediaSession.metadata` and action handlers.
 - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
