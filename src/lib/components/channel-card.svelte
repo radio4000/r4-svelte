@@ -72,8 +72,14 @@
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
 		<menu>
-			<button type="button" role="menuitem" onclick={() => isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}>
-				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} /> {isPlaying ? 'Pause' : 'Play'}
+			<button
+				type="button"
+				role="menuitem"
+				onclick={() =>
+					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+			>
+				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+				{isPlaying ? 'Pause' : 'Play'}
 			</button>
 			{#if isBroadcasting}
 				<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>

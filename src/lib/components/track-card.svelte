@@ -21,6 +21,9 @@
 		showSlug?: boolean
 		canEdit?: boolean
 		onTagClick?: (tag: string) => void
+		menuAlign?: 'left' | 'right' | 'end'
+		menuValign?: 'top' | 'bottom'
+		onLocate?: () => void
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -35,6 +38,9 @@
 		showSlug = false,
 		canEdit = false,
 		onTagClick,
+		menuAlign,
+		menuValign,
+		onLocate,
 		children,
 		description
 	}: Props = $props()
@@ -105,7 +111,7 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title">{track.title}</h3>
+			<h3 class="title" class:locatable={Boolean(onLocate)} onclick={onLocate}>{track.title}</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
@@ -126,7 +132,13 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
 	</div>
-	<PopoverMenu bind:this={menu} btnClass="ghost" onclose={() => (showDeleteConfirm = false)}>
+	<PopoverMenu
+		bind:this={menu}
+		btnClass="ghost"
+		onclose={() => (showDeleteConfirm = false)}
+		align={menuAlign}
+		valign={menuValign}
+	>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
@@ -179,6 +191,11 @@
 				{/if}
 			</menu>
 			<menu class="nav-vertical">
+				{#if onLocate}
+					<button type="button" role="menuitem" onclick={onLocate}
+						><Icon icon="arrow-down" size={14} />Locate in list</button
+					>
+				{/if}
 				{#if isRealTrack}
 					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
 				{:else if track.url}
@@ -236,6 +253,9 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		&.locatable {
+			cursor: pointer;
+		}
 		:global(a) {
 			text-decoration: none;
 			color: inherit;
@@ -256,6 +276,9 @@
 	h3 + p {
 		line-height: 1.2;
 		color: light-dark(var(--gray-11), var(--gray-10));
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	time {
