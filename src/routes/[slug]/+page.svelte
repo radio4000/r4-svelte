@@ -113,10 +113,7 @@
 		{#if tracksQuery.isReady && previewTracks.length > 0}
 			<section class="track-section">
 				<header>
-					<h3>Latest</h3>
-					<a href="/{slug}/tracks">
-						{allTracks.length > PREVIEW_LIMIT ? `All ${allTracks.length}` : `All`}
-					</a>
+					<h3><a href="/{slug}/tracks">Latest <small>({allTracks.length})</small></a></h3>
 				</header>
 				<Tracklist
 					tracks={previewTracks}
