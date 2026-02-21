@@ -14,7 +14,7 @@
 	button {
 		display: inline;
 		vertical-align: baseline;
-		padding: 0.1em 0.35em;
+		padding: 0.0625em 0.25em;
 		border-radius: 999px;
 		border: none;
 		text-decoration: none;

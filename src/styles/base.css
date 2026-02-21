@@ -26,7 +26,7 @@ body {
 html {
 	font-family: var(--font-family, 'firava', sans-serif);
 	font-size: calc(16px * var(--scaling));
-	line-height: 1.6;
+	line-height: 1.5;
 	font-weight: 400;
 	text-rendering: optimizeLegibility;
 	background: var(--gray-1);
