@@ -1,5 +1,5 @@
 <script>
-	import {untrack} from 'svelte'
+	import {untrack, tick} from 'svelte'
 	import {createAttachmentKey} from 'svelte/attachments'
 
 	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, align?: 'left' | 'right' | 'end', valign?: 'top' | 'bottom', [key: string]: any}} */
@@ -24,9 +24,25 @@
 
 	let buttonEl = $state()
 	let popoverEl = $state()
+	let hasBeenOpened = $state(false)
 
 	export function close() {
 		popoverEl?.hidePopover()
+	}
+
+	function positionPopover(el) {
+		if (!buttonEl) return
+		const rect = buttonEl.getBoundingClientRect()
+		const popoverRect = el.getBoundingClientRect()
+		const isRTL = document.documentElement.dir === 'rtl'
+		const resolvedAlign = align === 'end' ? (isRTL ? 'left' : 'right') : align
+		const left =
+			resolvedAlign === 'right'
+				? Math.max(8, rect.right - popoverRect.width)
+				: Math.min(rect.left, window.innerWidth - popoverRect.width - 8)
+		const top = valign === 'top' ? Math.max(8, rect.top - popoverRect.height - 4) : rect.bottom + 4
+		el.style.top = `${top}px`
+		el.style.left = `${Math.max(8, left)}px`
 	}
 
 	// Position popover below button and optionally close on action click
@@ -34,23 +50,16 @@
 		if (!popoverEl) return
 		const el = untrack(() => popoverEl)
 
-		const handleToggle = (e) => {
+		const handleToggle = async (e) => {
 			if (e.newState === 'closed') {
 				onclose?.()
 				return
 			}
-			if (!buttonEl) return
-			const rect = buttonEl.getBoundingClientRect()
-			const popoverRect = el.getBoundingClientRect()
-			const isRTL = document.documentElement.dir === 'rtl'
-			const resolvedAlign = align === 'end' ? (isRTL ? 'left' : 'right') : align
-			const left =
-				resolvedAlign === 'right'
-					? Math.max(8, rect.right - popoverRect.width)
-					: Math.min(rect.left, window.innerWidth - popoverRect.width - 8)
-			const top = valign === 'top' ? Math.max(8, rect.top - popoverRect.height - 4) : rect.bottom + 4
-			el.style.top = `${top}px`
-			el.style.left = `${Math.max(8, left)}px`
+			if (!hasBeenOpened) {
+				hasBeenOpened = true
+				await tick()
+			}
+			positionPopover(el)
 		}
 
 		const handleClick = (e) => {
@@ -85,7 +94,9 @@
 		{@render trigger?.()}
 	</button>
 	<div popover="auto" {id} bind:this={popoverEl}>
-		{@render children?.()}
+		{#if hasBeenOpened}
+			{@render children?.()}
+		{/if}
 	</div>
 </div>
 
