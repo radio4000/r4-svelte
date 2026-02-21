@@ -189,7 +189,7 @@
 		gap: 0.25rem;
 		flex-shrink: 0;
 
-		.play-btn {
+		:global(.popover-menu) {
 			margin-top: auto;
 		}
 	}
@@ -209,6 +209,9 @@
 		a {
 			text-decoration: none;
 			color: inherit;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 
