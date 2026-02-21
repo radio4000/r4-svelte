@@ -80,7 +80,7 @@
 	const months = $derived(getLocalizedMonths(getLocale()))
 
 	/** @type {any} */
-	let virtualList
+	let virtualList = $state()
 
 	/** @param {number} index */
 	export function scrollToItem(index) {

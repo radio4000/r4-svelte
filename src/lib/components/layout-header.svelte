@@ -107,9 +107,6 @@
 		justify-content: center;
 	}
 
-	nav.user {
-	}
-
 	.channel-link {
 		padding: 0;
 		height: 30px;

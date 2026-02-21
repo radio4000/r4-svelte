@@ -25,7 +25,7 @@
 	let searchQuery = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
 	/** @type {any} */
-	let tracklist
+	let tracklist = $state()
 
 	async function doScrollToActive() {
 		if (!deck?.playlist_track) return
@@ -273,9 +273,6 @@
 		width: 100%;
 	}
 
-	.queue-actions {
-		padding: 0.5rem 0.5rem;
-	}
 
 	.tracks :global(.slug),
 	main :global(.index) {

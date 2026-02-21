@@ -306,8 +306,7 @@
 		text-overflow: ellipsis;
 	}
 
-	.slug,
-	.dates {
+	.slug {
 		color: var(--gray-10);
 	}
 
