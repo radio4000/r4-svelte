@@ -2,6 +2,21 @@
 
 ## February 2026
 
+- #Search Saved views — bookmark any search as a named view and pin favorites for quick access from the header
+- #Channels Channel homepage shows the latest track, description, and a tags/mentions overview
+- #Channels Channel cards display @mentions and #hashtags from descriptions
+- #Channels Fixed channel image upload
+- #Tracks Track metadata tabs (Discogs, MusicBrainz, YouTube, related) are now separate routes with their own URLs
+- #Tracks Denser Discogs release pages with direct "add track" from any release row
+- #Tracks Improved MusicBrainz matching accuracy
+- #Tracks Add-track dialog autofocuses the URL field
+- #Player Deck 1 starts compact by default; refined button placement and track-locate in queue
+- #Broadcast Improved reactivity and fixed stale deck state when listeners disconnect
+- #UI Refreshed tags styling
+- #UI App loader shows the release date of the current build
+- #UI Dialogs no longer close when dragging inside them
+- #UI Fixed theme CSS variables falling out of sync
+- #Perf Inlined loading spinner for faster first paint
 - #Broadcast Auto radio — decks sync playback across listeners using universal time and track durations, with an "auto" badge on active decks
 - #Channels Channels load on demand with server-side queries; server-side shuffle for the random view; new broadcasting filter
 - #Auth Sign-up flow supports OTP code verification alongside magic links; fixed email/password auth errors
