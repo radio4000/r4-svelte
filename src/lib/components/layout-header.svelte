@@ -18,6 +18,9 @@
 	const {preloading} = $props()
 
 	const userChannel = $derived(appState.channel)
+	const isBroadcasting = $derived(
+		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
+	)
 
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
@@ -78,9 +81,11 @@
 				<a
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
-					{@attach tooltip({content: 'Go to your channel'})}
+					class:broadcasting={isBroadcasting}
+					{@attach tooltip({content: isBroadcasting ? 'Broadcasting' : 'Go to your channel'})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
+					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 				</a>
 			{:else}
 			{/if}
@@ -121,10 +126,22 @@
 		justify-content: center;
 	}
 
+	.broadcast-dot {
+		position: absolute;
+		bottom: 2px;
+		right: 2px;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--accent-9);
+		box-shadow: 0 0 0 2px var(--header-bg);
+	}
+
 	.channel-link {
+		position: relative;
 		padding: 0;
 		height: 30px;
-		overflow: hidden;
+		overflow: visible;
 		max-width: 42px;
 		padding: 1px;
 		@media (min-width: 768px) {
