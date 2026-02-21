@@ -11,7 +11,6 @@
 	 * }} */
 	let {track, tracks = [], channel, canEdit = false} = $props()
 
-	let saving = $state(false)
 	let saveError = $state('')
 
 	/** Track has a media/URL we can play */
@@ -20,14 +19,11 @@
 	/** Called when user picks a video from the release for a track that has no URL */
 	async function handleSelectMedia(uri, title) {
 		if (!track || !channel) return
-		saving = true
 		saveError = ''
 		try {
 			await updateTrack(channel, track.id, {url: uri, title: title || track.title})
 		} catch (e) {
 			saveError = /** @type {Error} */ (e).message
-		} finally {
-			saving = false
 		}
 	}
 </script>
