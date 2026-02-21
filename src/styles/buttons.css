@@ -171,11 +171,53 @@ button:has(svg, i),
 button.chip,
 .btn.chip {
 	border-radius: 1rem;
-	background: var(--accent-3);
+	background: var(--accent-4);
 	border-color: var(--accent-6);
 }
 
 button.chip:hover,
 .btn.chip:hover {
-	background: var(--accent-4);
+	background: var(--accent-5);
+}
+
+button.chip.active,
+.btn.chip.active {
+	background: var(--accent-8);
+	border-color: var(--accent-9);
+}
+
+button.chip.active:hover,
+.btn.chip.active:hover {
+	background: var(--accent-9);
+}
+
+.chip-group {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.chip-group .chip {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: 0;
+}
+
+.chip-delete {
+	padding: 0 0.2rem;
+	border-radius: 0 1rem 1rem 0;
+	background: var(--accent-3);
+	border: 1px solid var(--accent-6);
+	border-left: 0;
+	min-width: 0;
+}
+
+.chip.active + .chip-delete {
+	background: var(--accent-8);
+	border-color: var(--accent-9);
+}
+
+.chip-delete:hover,
+.chip.active + .chip-delete:hover {
+	background: var(--color-red);
+	color: white;
 }

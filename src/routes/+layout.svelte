@@ -288,6 +288,14 @@
 		}
 	}
 
+	@media (min-width: 768px) {
+		:global(nav hr) {
+			margin: 0.5em auto;
+			width: 1em;
+			height: 1px;
+		}
+	}
+
 	.loader {
 		height: 100dvh;
 		display: flex;

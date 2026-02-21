@@ -1,6 +1,6 @@
 # Views
 
-Every track list is a query. Views make that query a first-class thing you can name, save, share, and pipe into anything. They power any page that shows a track list — `/search`, `/mix`, and potentially more. Same query primitive, different UI.
+Every track list is a query. Views make that query a first-class thing you can name, save, share, and pipe into anything. They power `/search`, `/_debug/views`, and potentially more. Same query primitive, different UI.
 
 ## View type
 
@@ -34,10 +34,24 @@ Tags always refer to track tags, not channel tags. When channels and tags combin
 
 Two routes expose Views with different URL shapes:
 
-- **`/search?q=@oskar #jazz miles`** — stores the raw human query string. `parseSearchQueryToView` decodes it into a View, then `queryViewTracks` provides reactive cached track results. Channel resolution (`@slug` → channel cards) and FTS channel search run as separate `$effect`s alongside the view tracks query.
+- **`/search?q=@oskar #jazz miles`** — stores the raw human query string. `parseSearchQueryToView` decodes it into a View, then `queryViewTracks` provides reactive cached track results. Channel resolution (`@slug` → channel cards) and FTS channel search run as separate `$effect`s alongside the view tracks query. The search page also accepts raw params (`/search?channels=oskar&tags=jazz`) — the `ViewsBar` switches to this mode when filters are applied directly.
 - **`/_debug/views?channels=oskar&tags=jazz&search=miles`** — stores the already-parsed View as structured params. `parseView` reads it directly. Uses reactive TanStack queries (useLiveQuery / createQuery). Returns tracks only — channels are used as filters, not as results.
 
 Both represent the same View — the `?q=` param is just the human-encoded form. The key difference: `/search` also shows channel cards alongside tracks, while the debug views page shows only tracks.
+
+## Saving and pinning
+
+A **View** is a stateless query recipe (`{channels, tags, order, ...}`). A **SavedView** gives it a name and persists it to localStorage: `{id, name, params, position?, description?, created_at}`. `params` is `serializeView(view).toString()`.
+
+Pinning is a field, not a separate entity. A SavedView with a non-null `position` appears in the sidebar. `pinView(id)` appends to the end, `unpinView(id)` clears the position, `reorderPinnedViews(orderedIds)` updates sort weights. Clicking a pinned view navigates to `/@slug` for single-channel views, `/search?params` for everything else.
+
+The collection uses `localStorageCollectionOptions` (same pattern as play-history).
+
+## ViewsBar
+
+Shared component on `/search` and `/_debug/views`. Props: `view`, `onchange(view)`. Active detection: `serializeView(view).toString() === sv.params`.
+
+Three-state `mode`: **idle** (tabs + filter/display popovers), **adding** (clicked `+`, empty form to build a new view from scratch), **dirty** (changed filters after loading a saved view — shows a summary of active filters with "Save as" for a new view or "Update" to overwrite the base view).
 
 ## Data flow
 
@@ -58,6 +72,10 @@ Stable primitive strings from `page.url.searchParams.get(...)` drive the queries
 
 ## Files
 
-- `src/lib/views.ts` — type, `parseView`, `serializeView`, `processViewTracks`
+- `src/lib/views.svelte.ts` — `View` type, `parseView`, `serializeView`, `queryViewTracks`
 - `src/lib/tanstack/collections/tracks.ts` — `queryKey` + `queryFn` for slug, tags, search
+- `src/lib/tanstack/collections/views.ts` — `SavedView`, `viewsCollection`, CRUD + pin/unpin helpers
+- `src/lib/components/views-bar.svelte` — `ViewsBar` component
+- `src/lib/components/pins-nav.svelte` — renders pinned views in the sidebar
 - `src/routes/_debug/views/+page.svelte` — debug playground
+- `src/routes/settings/pins/+page.svelte` — pin management

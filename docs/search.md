@@ -1,29 +1,52 @@
 # Search
 
-The `/search` page parses `?q=` into a [View](views.md) via `parseSearchQueryToView`, then uses `queryViewTracks` for reactive cached track results. Channel results run as separate queries alongside — slug lookup via `findChannelBySlug`, remote FTS via `searchChannels`, and local fuzzy via `searchChannelsLocal`.
+Type words, see matching channels and tracks. The query syntax, View pipeline, and FTS all serve that loop.
 
 ## Query syntax
 
-`@slug` scopes to channels, `#tag` filters by track tags, bare words become FTS. These combine: `@ko002 #jazz miles` searches for "miles" within ko002's tracks tagged jazz. Multiple mentions work: `@ko002 @oskar house`.
+`@slug` targets a channel. `#tag` filters by track tag. Bare words become full-text search. They combine freely:
 
-The URL is the single source of truth — `searchQuery` derives from `page.url.searchParams`.
+- `miles` — FTS for "miles" across all tracks
+- `@ko002` — all tracks from ko002
+- `#jazz` — all tracks tagged jazz
+- `@ko002 #jazz miles` — tracks from ko002 tagged jazz matching "miles"
+- `@ko002 @oskar house` — tracks from ko002 and oskar matching "house"
 
-## Search sources
+`parseSearchQueryToView` parses a query string into a [View](views.md). The View is what actually fetches data.
 
-FTS lives in `search-fts.js` — `buildFtsFilter` combines websearch and prefix syntax (`jazz house` → `jazz:* & house:*`). `searchChannels` and `searchTracks` hit Supabase with those filters.
+## URL format
 
-`search.js` has the orchestration (`searchAll`) and local fuzzy search via fuzzysort (`searchTracksLocal`, `searchChannelsLocal`). `findChannelBySlug` checks the local collection first, falls back to SDK.
+The URL `?q=@ko002 #jazz miles` is a human-friendly entry point. On arrival, the search page resolves it into canonical view params (`?channels=ko002&tags=jazz&search=miles`) and rewrites the URL. The `?q=` form is never stored or saved — it's a one-way door.
 
-We don't use SDK's own `searchChannels`/`searchTracks` — they only do websearch (no partial-word matching). Our `buildFtsFilter` adds prefix mode for type-as-you-search. The `@slug`, `#tag`, channel-scoped search, and local fuzzy are also app-only.
+One gotcha: `#` is the URL fragment separator. The browser splits `?q=@ko002 #jazz` into query `q=@ko002 ` and fragment `#jazz`. The page recombines `searchParams.get('q')` with `url.hash` before parsing.
 
-The search page doesn't use `searchAll` directly — it composes the pieces itself: `queryViewTracks` for tracks, manual `$effect` for channels.
+View params are the format of record. ViewsBar reads and writes them. Saved views store them. Shared links should use them.
+
+## Results
+
+A search returns **channels** and **tracks** as parallel result sets.
+
+Track results go through the [View pipeline](views.md) — same `queryViewTracks` that powers `/_debug/views`.
+
+Channel results run separately: exact slug lookup (`@ko002` finds the channel card), remote FTS (channels whose name/description matches), and local fuzzy search (channels already in memory). These are not part of the View — they're a search-page feature.
+
+## The search page
+
+Two input paths that write the same URL format:
+
+1. **Smart input** — text field at the top. Debounces, resolves `@`/`#` syntax, writes view params to the URL.
+2. **ViewsBar** — below the input. Saved view tabs, filter/display controls. Reads and writes view params directly.
+
+When ViewsBar changes something, the smart input syncs to reflect the current view. When the smart input resolves a query, ViewsBar picks it up from the URL.
+
+## FTS details
+
+We don't use the SDK's built-in search — it only does websearch-style matching (whole words). `buildFtsFilter` adds prefix matching: `jazz house` becomes `jazz:* & house:*`, giving type-as-you-search behavior.
 
 ## Files
 
-- `src/routes/search/+page.svelte` — page, input, results
+- `src/routes/search/+page.svelte` — resolves `?q=` on arrival, wires up both input paths
 - `src/lib/search-fts.js` — `buildFtsFilter`, `searchChannels`, `searchTracks`
-- `src/lib/search.js` — `searchAll`, `findChannelBySlug`, `searchTracksLocal`, `searchChannelsLocal`
-
-## Related
-
-- [views.md](views.md) — the View pipeline that powers track results
+- `src/lib/search.js` — `searchAll`, `findChannelBySlug`, `fuzzySearch`, `searchChannelsLocal`, `searchTracksLocal`
+- `src/lib/components/search-input.svelte` — the smart input component
+- See also [views.md](views.md) — the View pipeline that powers track results

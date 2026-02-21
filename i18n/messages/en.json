@@ -353,7 +353,7 @@
 	"search_tip_commands": "for commands",
 	"search_tip_header": "Use the search input in the header",
 	"search_tip_intro": "TIP:",
-	"search_tip_slug": "Tip: use @slug to search within a channel.",
+	"search_tip_slug": "Tip: use @slug and #tag to search within a channel.",
 	"search_title": "Search radios and tracks",
 	"search_track_one": "{count} track result",
 	"search_track_other": "{count} track results",

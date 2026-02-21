@@ -4,7 +4,8 @@ export const LOCAL_STORAGE_KEYS = {
 	appStateQueue: 'r5-app-state-queue',
 	trackMeta: 'r5-track-meta',
 	playHistory: 'r5-play-history',
-	spamDecisions: 'r5-spam-decisions'
+	spamDecisions: 'r5-spam-decisions',
+	views: 'r5-views'
 } as const
 
 /** All IndexedDB database names used by R5. */
