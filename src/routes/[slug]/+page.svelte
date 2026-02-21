@@ -194,9 +194,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
-		background: var(--gray-2);
-		border: 1px solid var(--gray-4);
-		border-radius: var(--border-radius);
 	}
 
 	.search-bar {
