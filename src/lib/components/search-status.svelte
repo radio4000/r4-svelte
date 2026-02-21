@@ -26,7 +26,7 @@
 				return `viewing ${channelSlug}`
 			}
 		} else {
-			return `"${trimmed}" • ${channelCount} channel${channelCount === 1 ? '' : 's'}, ${trackCount} track${trackCount === 1 ? '' : 's'}`
+			return `"${trimmed}" • ${channelCount} channel${channelCount === 1 ? '' : 's'}, ${trackCount} track result${trackCount === 1 ? '' : 's'}`
 		}
 	})
 </script>

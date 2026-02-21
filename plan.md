@@ -2,28 +2,9 @@
 
 List of possible improvements. Sorted roughly by priority. Verify before implementing.
 
-## Recently done
-
-- Track detail tabs moved from `?tab=` query params to real nested routes:
-  - `/${slug}/tracks/${tid}`
-  - `/${slug}/tracks/${tid}/youtube`
-  - `/${slug}/tracks/${tid}/musicbrainz`
-  - `/${slug}/tracks/${tid}/discogs`
-  - `/${slug}/tracks/${tid}/related`
-
-## Performance audit — $state proxy & useLiveQuery hotspots
-
-The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-push) eliminated ~140ms of blocking per query for large collections. The pattern — mutating a `$state` array item-by-item instead of replacing it — likely exists elsewhere. An agent should:
-
-1. **Grep for `.push(` on `$state` arrays** — any loop or spread-push into a `$state([])` variable is a candidate. Replace with single assignment.
-2. **Grep for `useLiveQuery` call sites** — each creates a `createLiveQueryCollection`. Check if the caller actually needs a live query or could use a one-off `collection.get()` instead.
-3. **Check `player.svelte`** — has a `useLiveQuery` on `channelsCollection` (~350ms creation per deck). Could use `channelsCollection.get(id)` instead since it only needs a single channel lookup.
-4. **Check `queue-panel.svelte`** — has 2 `useLiveQuery` calls (tracks by IDs, play history). The history one scans the full `playHistoryCollection` every time.
-5. **Profile `@tanstack/svelte-db` `useLiveQuery`** — root layout now uses our custom copy (swapped to fix `state_unsafe_mutation`). Other components still use the official version. Verify it doesn't have the same reset-then-push pattern.
-6. **Count live query accumulation** — navigating back and forth creates new queries without cleaning up old ones (IDs keep incrementing). Check if disposed queries are GC'd or leak.
-
 ## Backlog
 
+- plan-views.md and plan-pins.md
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - meta-toolbar should be <menu>, not div
 - nav.tabs vs div.track-tabs>nav? clean up markup here
@@ -49,6 +30,17 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a track URL that already exists in the channel. Could also surface duplicates in batch-edit (group by URL or media_id).
 - Expand our broadcast schema with a custom JSON field (?) so we can push arbitrary data without updating the schema every time. We could, for example, put the player data of each deck from /mix
+
+## Performance audit — $state proxy & useLiveQuery hotspots
+
+The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-push) eliminated ~140ms of blocking per query for large collections. The pattern — mutating a `$state` array item-by-item instead of replacing it — likely exists elsewhere. An agent should:
+
+1. **Grep for `.push(` on `$state` arrays** — any loop or spread-push into a `$state([])` variable is a candidate. Replace with single assignment.
+2. **Grep for `useLiveQuery` call sites** — each creates a `createLiveQueryCollection`. Check if the caller actually needs a live query or could use a one-off `collection.get()` instead.
+3. **Check `player.svelte`** — has a `useLiveQuery` on `channelsCollection` (~350ms creation per deck). Could use `channelsCollection.get(id)` instead since it only needs a single channel lookup.
+4. **Check `queue-panel.svelte`** — has 2 `useLiveQuery` calls (tracks by IDs, play history). The history one scans the full `playHistoryCollection` every time.
+5. **Profile `@tanstack/svelte-db` `useLiveQuery`** — root layout now uses our custom copy (swapped to fix `state_unsafe_mutation`). Other components still use the official version. Verify it doesn't have the same reset-then-push pattern.
+6. **Count live query accumulation** — navigating back and forth creates new queries without cleaning up old ones (IDs keep incrementing). Check if disposed queries are GC'd or leak.
 
 ## Data & migration
 

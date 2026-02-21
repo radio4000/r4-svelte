@@ -7,6 +7,7 @@
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import Icon from '$lib/components/icon.svelte'
+	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -198,10 +199,10 @@
 		<button
 			class="expand"
 			onclick={() => (deck.compact = false)}
-			aria-label="Expand deck"
-			{@attach tooltip({content: 'Expand deck'})}
+			aria-label="Show panel"
+			{@attach tooltip({content: 'Show panel'})}
 		>
-			<Icon icon="sidebar-fill-right" />
+			<IconDeckPanel />
 		</button>
 	</div>
 </div>
