@@ -305,7 +305,7 @@
 		color: light-dark(var(--gray-11), var(--gray-10));
 		overflow-x: auto;
 		white-space: nowrap;
- 		/* to accomodate tag borders */
+		/* to accomodate tag borders */
 		padding: 2px 1px 2px;
 	}
 

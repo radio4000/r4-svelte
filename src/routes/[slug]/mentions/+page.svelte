@@ -41,6 +41,7 @@
 			if (mentionsRes.error) throw mentionsRes.error
 			if (descriptionRes.error) throw descriptionRes.error
 
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const byId = new Map<string, Track>()
 			for (const track of (mentionsRes.data || []) as Track[]) byId.set(track.id, track)
 			for (const track of (descriptionRes.data || []) as Track[]) byId.set(track.id, track)

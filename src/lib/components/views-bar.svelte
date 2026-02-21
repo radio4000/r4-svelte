@@ -30,29 +30,10 @@
 		mode = currentParams !== lastSavedParams ? 'dirty' : 'idle'
 	})
 
-	// Draft for adding mode + save name for both adding and dirty
-	let draft = $state({
-		name: '',
-		channels: '',
-		tags: '',
-		tagsMode: 'any' as 'any' | 'all',
-		order: 'created' as View['order'],
-		direction: 'desc' as 'asc' | 'desc',
-		limit: '',
-		search: ''
-	})
+	let draftName = $state('')
 
 	function startAdding() {
-		draft = {
-			name: '',
-			channels: '',
-			tags: '',
-			tagsMode: 'any',
-			order: 'created',
-			direction: 'desc',
-			limit: '',
-			search: ''
-		}
+		draftName = ''
 		mode = 'adding'
 	}
 
@@ -71,33 +52,16 @@
 		]
 	}
 
-	function buildViewFromDraft(): View {
-		const v: View = {}
-		const ch = splitList(draft.channels)
-		if (ch.length) v.channels = ch
-		const tg = splitList(draft.tags.replaceAll('#', ''))
-		if (tg.length) v.tags = tg
-		if (draft.tagsMode === 'all') v.tagsMode = 'all'
-		if (draft.order) v.order = draft.order
-		if (draft.direction) v.direction = draft.direction
-		const n = Number(draft.limit)
-		if (n > 0) v.limit = n
-		const s = draft.search.trim()
-		if (s) v.search = s
-		return v
-	}
-
 	function saveNewView() {
-		const name = draft.name.trim()
+		const name = draftName.trim()
 		if (!name) return
-		const v = buildViewFromDraft()
-		createView(name, v)
-		lastSavedParams = serializeView(v).toString()
+		createView(name, view)
+		lastSavedParams = currentParams
 		mode = 'idle'
 	}
 
 	function saveDirtyAsNew() {
-		const name = draft.name.trim()
+		const name = draftName.trim()
 		if (!name) return
 		createView(name, view)
 		lastSavedParams = currentParams
@@ -116,7 +80,7 @@
 		onchange({})
 		lastSavedParams = ''
 		baseViewId = null
-		draft.name = ''
+		draftName = ''
 	}
 
 	function clickView(sv: SavedView) {
@@ -158,95 +122,97 @@
 
 <!-- Row 1: tabs + controls -->
 <nav class="views-bar">
-	<section class="row">
-		{#each savedViews as sv (sv.id)}
-			<span class="chip-group">
-				<button class="chip" class:active={activeViewId === sv.id} onclick={() => clickView(sv)}>
-					{sv.name}
-				</button>
-				<button
-					class="chip-delete"
-					onclick={() => confirm(`Delete "${sv.name}"?`) && deleteView(sv.id)}
-					aria-label="Delete {sv.name}"
-				>
-					<Icon icon="close" size={12} />
-				</button>
-			</span>
-		{/each}
-		<button class="chip" onclick={startAdding} title="Add new view">+</button>
+	<section class="row row-1">
+		<span>
+			{#each savedViews as sv (sv.id)}
+				<span class="chip-group">
+					<button class="chip" class:active={activeViewId === sv.id} onclick={() => clickView(sv)}>
+						{sv.name}
+					</button>
+					<button
+						class="chip-delete"
+						onclick={() => confirm(`Delete "${sv.name}"?`) && deleteView(sv.id)}
+						aria-label="Delete {sv.name}"
+					>
+						<Icon icon="close" size={12} />
+					</button>
+				</span>
+			{/each}
+			{#if currentParams}
+				<button class="chip" onclick={startAdding} title="Add new view">+</button>
+			{/if}
+		</span>
 
-		{#if mode !== 'adding'}
-			<menu class="controls">
-				<li>
-					<PopoverMenu id="views-filter" closeOnClick={false} align="end">
-						{#snippet trigger()}Filters{/snippet}
-						<form class="form" onsubmit={(e) => e.preventDefault()}>
-							<fieldset>
-								<label for="vb-channels">Channels</label>
+		<menu class="controls">
+			<li>
+				<PopoverMenu id="views-filter" closeOnClick={false} align="end">
+					{#snippet trigger()}Filters{/snippet}
+					<form class="form" onsubmit={(e) => e.preventDefault()}>
+						<fieldset>
+							<label for="vb-channels">Channels</label>
+							<input
+								id="vb-channels"
+								type="text"
+								value={view.channels?.join(', ') || ''}
+								onchange={(e) => onchange({...view, channels: splitList(e.currentTarget.value)})}
+								placeholder="oskar, ko002"
+							/>
+						</fieldset>
+						<fieldset>
+							<legend>Tags</legend>
+							<fieldset class="row">
+								<select
+									value={view.tagsMode || 'any'}
+									onchange={(e) => onchange({...view, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+								>
+									<option value="any">any</option>
+									<option value="all">all</option>
+								</select>
 								<input
-									id="vb-channels"
 									type="text"
-									value={view.channels?.join(', ') || ''}
-									onchange={(e) => onchange({...view, channels: splitList(e.currentTarget.value)})}
-									placeholder="oskar, ko002"
+									value={view.tags?.join(', ') || ''}
+									onchange={(e) => onchange({...view, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+									placeholder="ambient, jazz"
 								/>
 							</fieldset>
-							<fieldset>
-								<legend>Tags</legend>
-								<fieldset class="row">
-									<select
-										value={view.tagsMode || 'any'}
-										onchange={(e) => onchange({...view, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
-									>
-										<option value="any">any</option>
-										<option value="all">all</option>
-									</select>
-									<input
-										type="text"
-										value={view.tags?.join(', ') || ''}
-										onchange={(e) => onchange({...view, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
-										placeholder="ambient, jazz"
-									/>
-								</fieldset>
-							</fieldset>
-							<fieldset>
-								<label for="vb-search">Search</label>
-								<input
-									id="vb-search"
-									type="text"
-									value={view.search || ''}
-									onchange={(e) => onchange({...view, search: e.currentTarget.value.trim() || undefined})}
-									placeholder="miles davis"
-								/>
-							</fieldset>
-						</form>
-					</PopoverMenu>
-				</li>
-				<li>
-					<PopoverMenu id="views-display" closeOnClick={false} align="end">
-						{#snippet trigger()}Display{/snippet}
-						<form class="form" onsubmit={(e) => e.preventDefault()}>
-							<fieldset>
-								<legend>Sort</legend>
-								<SortControls bind:order={r1Order} bind:direction={r1Direction} />
-							</fieldset>
-							<fieldset>
-								<label for="vb-limit">Limit</label>
-								<input
-									id="vb-limit"
-									type="number"
-									value={view.limit || ''}
-									onchange={(e) => onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
-									placeholder="20"
-									min="1"
-									max="4000"
-								/>
-							</fieldset>
-						</form>
-					</PopoverMenu>
-				</li>
-			</menu>
-		{/if}
+						</fieldset>
+						<fieldset>
+							<label for="vb-search">Search</label>
+							<input
+								id="vb-search"
+								type="text"
+								value={view.search || ''}
+								onchange={(e) => onchange({...view, search: e.currentTarget.value.trim() || undefined})}
+								placeholder="miles davis"
+							/>
+						</fieldset>
+					</form>
+				</PopoverMenu>
+			</li>
+			<li>
+				<PopoverMenu id="views-display" closeOnClick={false} align="end">
+					{#snippet trigger()}Display{/snippet}
+					<form class="form" onsubmit={(e) => e.preventDefault()}>
+						<fieldset>
+							<legend>Sort</legend>
+							<SortControls bind:order={r1Order} bind:direction={r1Direction} />
+						</fieldset>
+						<fieldset>
+							<label for="vb-limit">Limit</label>
+							<input
+								id="vb-limit"
+								type="number"
+								value={view.limit || ''}
+								onchange={(e) => onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
+								placeholder="20"
+								min="1"
+								max="4000"
+							/>
+						</fieldset>
+					</form>
+				</PopoverMenu>
+			</li>
+		</menu>
 	</section>
 
 	<!-- Row 2: adding mode -->
@@ -254,50 +220,12 @@
 		<section class="row row-2">
 			<input
 				type="text"
-				bind:value={draft.name}
+				bind:value={draftName}
 				placeholder="View name"
 				onkeydown={(e) => e.key === 'Enter' && saveNewView()}
 			/>
-
-			<PopoverMenu id="views-add-filter" closeOnClick={false} align="end">
-				{#snippet trigger()}Filters{/snippet}
-				<form class="form" onsubmit={(e) => e.preventDefault()}>
-					<fieldset>
-						<label for="vb-add-channels">Channels</label>
-						<input id="vb-add-channels" type="text" bind:value={draft.channels} placeholder="oskar, ko002" />
-					</fieldset>
-					<fieldset>
-						<legend>Tags</legend>
-						<fieldset class="row">
-							<select bind:value={draft.tagsMode}>
-								<option value="any">any</option>
-								<option value="all">all</option>
-							</select>
-							<input type="text" bind:value={draft.tags} placeholder="ambient, jazz" />
-						</fieldset>
-					</fieldset>
-					<fieldset>
-						<label for="vb-add-search">Search</label>
-						<input id="vb-add-search" type="text" bind:value={draft.search} placeholder="miles davis" />
-					</fieldset>
-				</form>
-			</PopoverMenu>
-			<PopoverMenu id="views-add-display" closeOnClick={false} align="end">
-				{#snippet trigger()}Display{/snippet}
-				<form class="form" onsubmit={(e) => e.preventDefault()}>
-					<fieldset>
-						<legend>Sort</legend>
-						<SortControls bind:order={draft.order} bind:direction={draft.direction} />
-					</fieldset>
-					<fieldset>
-						<label for="vb-add-limit">Limit</label>
-						<input id="vb-add-limit" type="number" bind:value={draft.limit} placeholder="20" min="1" max="4000" />
-					</fieldset>
-				</form>
-			</PopoverMenu>
-
 			<button type="button" onclick={cancelAdding}>Cancel</button>
-			<button type="button" class="primary" onclick={saveNewView} disabled={!draft.name.trim()}>Save</button>
+			<button type="button" class="primary" onclick={saveNewView} disabled={!draftName.trim()}>Save</button>
 		</section>
 	{/if}
 
@@ -308,12 +236,12 @@
 			<button type="reset" class="ghost" onclick={clearDirty}>Clear</button>
 			<input
 				type="text"
-				bind:value={draft.name}
+				bind:value={draftName}
 				placeholder="Name"
 				size="10"
 				onkeydown={(e) => e.key === 'Enter' && saveDirtyAsNew()}
 			/>
-			<button type="button" onclick={saveDirtyAsNew} disabled={!draft.name.trim()}>Save as</button>
+			<button type="button" onclick={saveDirtyAsNew} disabled={!draftName.trim()}>Save as</button>
 			{#if baseViewName}
 				<button type="button" class="primary" onclick={updateBaseView}>Update "{baseViewName}"</button>
 			{/if}
@@ -328,8 +256,19 @@
 		gap: 0.5rem;
 	}
 
+	.row-1 {
+		flex-wrap: nowrap;
+	}
+	.row-1 > span {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		flex: 1;
+		min-width: 0;
+	}
 	.controls {
 		margin-inline-start: auto;
+		flex-shrink: 0;
 	}
 	.row-2 {
 		align-items: center;
