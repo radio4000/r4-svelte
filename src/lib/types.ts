@@ -34,7 +34,7 @@ export interface Deck {
 	listening_to_channel_id?: string
 	auto_radio?: boolean
 	auto_radio_drifted?: boolean
-	auto_radio_channel_slug?: string
+	view?: import('$lib/views.svelte').View
 	auto_radio_rotation_start?: number
 	listening_drifted?: boolean
 	track_played_at?: string
@@ -50,7 +50,7 @@ export interface AppState {
 	active_deck_id: number
 	theme?: string
 	custom_css_variables: Record<string, string>
-	channels_display: string
+	channels_display: 'grid' | 'list' | 'map' | 'infinite' | 'tuner'
 	channels_filter: string
 	channels_order: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	channels_order_direction: 'asc' | 'desc'

@@ -16,7 +16,8 @@ import {
 } from '$lib/player/queue'
 import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
-import {weeklyShuffle, playbackState} from '$lib/player/auto-radio'
+import {weeklyShuffle, playbackState, toAutoTracks, epochFromTracks, type AutoTrack} from '$lib/player/auto-radio'
+import {processViewTracks, serializeView, viewToQuery, type View} from '$lib/views.svelte'
 
 const log = logger.ns('api').seal()
 
@@ -632,36 +633,101 @@ export function eject(deckId) {
 }
 
 /**
+ * Join auto-radio: deterministic "live radio" playback.
+ * Computes the weekly shuffle and seeks to the current position so all
+ * listeners hear the same track at the same second.
+ * Pass a view to differentiate shuffles (e.g. tag subsets) and set the label.
+ */
+export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View) {
+	const autoTracks = toAutoTracks(tracks)
+	if (!autoTracks.length) return
+
+	// Strip empty fields so callers don't need to guard
+	if (view) {
+		if (!view.tags?.length) delete view.tags
+		if (!view.search) delete view.search
+		if (!view.channels?.length) delete view.channels
+		if (!Object.keys(view).length) view = undefined
+	}
+
+	const rotationStartUnix = epochFromTracks(autoTracks)
+	const viewSeed = view ? serializeView(view).toString() : undefined
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
+	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+	if (!snap) return
+
+	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+	const activeDeckId = appState.active_deck_id
+	const label = view ? viewToQuery(view) : undefined
+	setPlaylist(
+		activeDeckId,
+		shuffled.map((t) => t.id),
+		{title: label}
+	)
+	if (appState.decks[activeDeckId]) {
+		appState.decks[activeDeckId].auto_radio = true
+		appState.decks[activeDeckId].auto_radio_drifted = false
+		appState.decks[activeDeckId].view = view
+		appState.decks[activeDeckId].auto_radio_rotation_start = rotationStartUnix
+	}
+
+	await seekToAutoRadioOffset(activeDeckId, shuffled, totalDuration, rotationStartUnix)
+}
+
+/** Wait for the media player to be ready, then seek to the current auto-radio offset. */
+async function seekToAutoRadioOffset(
+	deckId: number,
+	shuffled: AutoTrack[],
+	totalDuration: number,
+	rotationStartUnix: number
+) {
+	const deadline = performance.now() + 8000
+	while (performance.now() < deadline) {
+		const el = getMediaPlayer(deckId)
+		const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
+		const hasStarted = el && el.currentTime > 0
+		if (hasDuration || hasStarted) {
+			const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+			if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
+			// SoundCloud may process seeks asynchronously and silently drop the first one
+			// while still buffering. Retry once after a short wait with a freshly computed offset.
+			await new Promise((r) => setTimeout(r, 350))
+			const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
+			if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
+			break
+		}
+		await new Promise((r) => setTimeout(r, 150))
+	}
+}
+
+/**
  * Resync the deck to the current auto-radio position.
  * Uses the stored rotation params to recompute the expected track + offset,
  * navigating to the right track if needed, then seeking.
  */
 export async function resyncAutoRadio(deckId: number) {
 	const deck = getDeck(deckId)
-	if (!deck?.auto_radio || !deck.auto_radio_channel_slug || deck.auto_radio_rotation_start == null) return
+	if (!deck?.auto_radio || !deck.view || deck.auto_radio_rotation_start == null) return
 
-	const slug = deck.auto_radio_channel_slug
+	const view = deck.view
+	const slug = view.channels?.[0]
+	if (!slug) return
 	const rotationStartUnix = deck.auto_radio_rotation_start
 
-	const tracksWithDuration = [...tracksCollection.state.values()].filter(
-		(t) => t.slug === slug && t.duration && t.duration > 0
-	)
-	if (!tracksWithDuration.length) return
+	// Re-filter from local collection using the same view as joinAutoRadio
+	const channelTracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const filtered = processViewTracks(channelTracks, view)
+	const autoTracks = toAutoTracks(filtered)
+	if (!autoTracks.length) return
 
-	const autoTracks = tracksWithDuration.map((t) => ({
-		id: t.id,
-		url: t.url ?? '',
-		duration: t.duration ?? 0,
-		title: t.title ?? ''
-	}))
-	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now())
+	const viewSeed = serializeView(view).toString()
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
-		// Re-apply duration-filtered shuffled playlist (playTrack may have overwritten with all channel tracks)
 		setPlaylist(
 			deckId,
 			shuffled.map((t) => t.id)
@@ -674,28 +740,13 @@ export async function resyncAutoRadio(deckId: number) {
 		d.auto_radio = true
 		d.auto_radio_drifted = false
 		d.auto_radio_rotation_start = rotationStartUnix
-		d.auto_radio_channel_slug = slug
+		d.view = view
 	}
 
 	if (isSameTrack) {
 		seekTo(deckId, snap.offsetSeconds)
 	} else {
-		// Wait for media ready, then seek to freshly computed offset
-		const deadline = performance.now() + 8000
-		while (performance.now() < deadline) {
-			const el = getMediaPlayer(deckId)
-			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
-			const hasStarted = el && el.currentTime > 0
-			if (hasDuration || hasStarted) {
-				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (freshSnap) seekTo(deckId, freshSnap.offsetSeconds)
-				await new Promise((r) => setTimeout(r, 350))
-				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (retrySnap) seekTo(deckId, retrySnap.offsetSeconds)
-				break
-			}
-			await new Promise((r) => setTimeout(r, 150))
-		}
+		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 	}
 }
 

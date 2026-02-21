@@ -12,7 +12,7 @@
 	import {relativeDate} from '$lib/dates'
 	import {extractHashtags, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
-	import {addToPlaylist, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	const PREVIEW_LIMIT = 10
@@ -208,6 +208,16 @@
 							<button type="button" onclick={() => queueTagTracks(tracks)} title="Queue #{tag}">
 								<Icon icon="next-fill" size={14} />
 							</button>
+							{#if channel}
+								<button
+									type="button"
+									onclick={() =>
+										slug && joinAutoRadio(appState.active_deck_id, tracks, {channels: [slug], tags: [tag]})}
+									title="Auto radio #{tag}"
+								>
+									<Icon icon="infinite" size={14} />
+								</button>
+							{/if}
 						</menu>
 					</header>
 					<Tracklist

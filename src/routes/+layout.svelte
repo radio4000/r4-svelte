@@ -11,6 +11,7 @@
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import {onMount} from 'svelte'
+	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate} from '$app/navigation'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
@@ -77,7 +78,7 @@
 		}
 	})
 
-	const scrollPositions = new Map()
+	const scrollPositions = new SvelteMap()
 
 	beforeNavigate(({from}) => {
 		if (!from?.url) return

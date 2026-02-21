@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest'
-import {normalizeTracks, weeklyShuffle, playbackState, type AutoRadioTrack} from './auto-radio'
+import {toAutoTracks, weeklyShuffle, playbackState, hashString, epochFromTracks, type AutoTrack} from './auto-radio'
+import type {Track} from '$lib/types'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -7,13 +8,20 @@ import {normalizeTracks, weeklyShuffle, playbackState, type AutoRadioTrack} from
 
 const ROTATION_START = 1_700_000_000 // arbitrary fixed epoch (seconds)
 
-function makeTracks(n: number): AutoRadioTrack[] {
-	return Array.from({length: n}, (_, i) => ({
+function makeTrack(i: number, overrides?: Partial<Track>): Track {
+	return {
 		id: `t${i}`,
 		url: `https://example.com/${i}`,
-		duration: 60 + i, // 60s, 61s, 62s … to avoid uniform durations
-		title: `Track ${i}`
-	}))
+		duration: 60 + i,
+		title: `Track ${i}`,
+		created_at: '2024-01-01T00:00:00Z',
+		updated_at: '2024-01-01T00:00:00Z',
+		...overrides
+	} as Track
+}
+
+function makeTracks(n: number): AutoTrack[] {
+	return Array.from({length: n}, (_, i) => makeTrack(i)) as AutoTrack[]
 }
 
 // A Monday 2024-01-08 12:00:00 UTC (ms)
@@ -26,30 +34,28 @@ const WEEK_A_LATER_MS = new Date('2024-01-10T23:59:59Z').getTime()
 const WEEK_A_TZ_MS = WEEK_A_MS // UTC timestamps are timezone-agnostic
 
 // ---------------------------------------------------------------------------
-// normalizeTracks
+// toAutoTracks
 // ---------------------------------------------------------------------------
 
-describe('normalizeTracks', () => {
+describe('toAutoTracks', () => {
 	it('removes tracks with duration <= 0', () => {
-		const tracks: AutoRadioTrack[] = [
-			{id: 'a', url: 'u', duration: 0},
-			{id: 'b', url: 'u', duration: -5},
-			{id: 'c', url: 'u', duration: 30}
-		]
-		expect(normalizeTracks(tracks).map((t) => t.id)).toEqual(['c'])
+		const tracks = [makeTrack(0, {duration: 0}), makeTrack(1, {duration: -5}), makeTrack(2, {duration: 30})]
+		expect(toAutoTracks(tracks).map((t) => t.id)).toEqual(['t2'])
+	})
+
+	it('removes tracks without duration', () => {
+		const tracks = [makeTrack(0, {duration: undefined}), makeTrack(1, {duration: 30})]
+		expect(toAutoTracks(tracks).map((t) => t.id)).toEqual(['t1'])
 	})
 
 	it('removes tracks with empty url', () => {
-		const tracks: AutoRadioTrack[] = [
-			{id: 'a', url: '', duration: 30},
-			{id: 'b', url: 'https://x.com', duration: 30}
-		]
-		expect(normalizeTracks(tracks).map((t) => t.id)).toEqual(['b'])
+		const tracks = [makeTrack(0, {url: ''}), makeTrack(1, {url: 'https://x.com'})]
+		expect(toAutoTracks(tracks).map((t) => t.id)).toEqual(['t1'])
 	})
 
 	it('preserves track identity (id)', () => {
 		const tracks = makeTracks(5)
-		const out = normalizeTracks(tracks)
+		const out = toAutoTracks(tracks)
 		expect(out.map((t) => t.id)).toEqual(tracks.map((t) => t.id))
 	})
 })
@@ -192,5 +198,84 @@ describe('playbackState', () => {
 		const snap = playbackState(tracks, total, ROTATION_START, nowMs)
 		expect(snap).not.toBeNull()
 		expect(snap?.offsetSeconds).toBeGreaterThanOrEqual(0)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// weeklyShuffle — viewSeed
+// ---------------------------------------------------------------------------
+
+describe('weeklyShuffle — viewSeed', () => {
+	const tracks = makeTracks(10)
+
+	it('same tracks + same viewSeed + same time => same shuffle', () => {
+		const r1 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'house')
+		const r2 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'house')
+		expect(r1.tracks.map((t) => t.id)).toEqual(r2.tracks.map((t) => t.id))
+	})
+
+	it('different viewSeed => different shuffle', () => {
+		const r1 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'house')
+		const r2 = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'techno')
+		expect(r1.tracks.map((t) => t.id)).not.toEqual(r2.tracks.map((t) => t.id))
+	})
+
+	it('no viewSeed => original behavior (different from any viewSeed)', () => {
+		const withoutSeed = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS)
+		const withSeed = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'house')
+		expect(withoutSeed.tracks.map((t) => t.id)).not.toEqual(withSeed.tracks.map((t) => t.id))
+	})
+
+	it('viewSeed does not change track count or total duration', () => {
+		const withoutSeed = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS)
+		const withSeed = weeklyShuffle(tracks, ROTATION_START, WEEK_A_MS, 'ambient')
+		expect(withSeed.tracks.length).toBe(withoutSeed.tracks.length)
+		expect(withSeed.totalDuration).toBe(withoutSeed.totalDuration)
+	})
+})
+
+// ---------------------------------------------------------------------------
+// epochFromTracks
+// ---------------------------------------------------------------------------
+
+describe('epochFromTracks', () => {
+	it('returns 0 for empty array', () => {
+		expect(epochFromTracks([])).toBe(0)
+	})
+
+	it('returns unix seconds of the oldest track', () => {
+		const tracks = [
+			{created_at: '2024-06-15T00:00:00Z'},
+			{created_at: '2023-01-01T00:00:00Z'},
+			{created_at: '2024-12-01T00:00:00Z'}
+		]
+		expect(epochFromTracks(tracks)).toBe(Math.floor(new Date('2023-01-01T00:00:00Z').getTime() / 1000))
+	})
+
+	it('is stable regardless of input order', () => {
+		const tracks = [
+			{created_at: '2024-06-15T00:00:00Z'},
+			{created_at: '2023-01-01T00:00:00Z'},
+			{created_at: '2024-12-01T00:00:00Z'}
+		]
+		expect(epochFromTracks(tracks)).toBe(epochFromTracks(tracks.toReversed()))
+	})
+})
+
+// ---------------------------------------------------------------------------
+// hashString
+// ---------------------------------------------------------------------------
+
+describe('hashString', () => {
+	it('is deterministic', () => {
+		expect(hashString('house')).toBe(hashString('house'))
+	})
+
+	it('different strings => different hashes', () => {
+		expect(hashString('house')).not.toBe(hashString('techno'))
+	})
+
+	it('returns a number', () => {
+		expect(typeof hashString('test')).toBe('number')
 	})
 })

@@ -79,7 +79,7 @@
 			{/if}
 		</dl>
 	{/if}
-	<div class="meta-toolbar">
+	<menu class="meta-toolbar">
 		<button
 			type="button"
 			onclick={() => (showRaw = !showRaw)}
@@ -88,14 +88,13 @@
 		>
 			<Icon icon="code" size={16} />
 		</button>
-	</div>
+	</menu>
 {:else}
 	<p>{m.track_meta_no_musicbrainz()}</p>
 {/if}
 
 <style>
 	.meta-toolbar {
-		display: flex;
 		justify-content: flex-end;
 		margin-top: 0.5rem;
 	}

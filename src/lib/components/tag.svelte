@@ -5,11 +5,13 @@
 	/** @type {{href?: string, onclick?: () => void, value?: string, children: import('svelte').Snippet}} */
 	const {href, onclick, value, children} = $props()
 
+	const splitRe = /\s+/
+
 	const isPlaying = $derived(
 		Boolean(
 			value &&
 			Object.values(appState.decks).some((d) =>
-				d.playlist_title?.toLowerCase().split(/\s+/).includes(value.toLowerCase())
+				d.playlist_title?.toLowerCase().split(splitRe).includes(value.toLowerCase())
 			)
 		)
 	)

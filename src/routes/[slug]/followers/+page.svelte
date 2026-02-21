@@ -10,10 +10,9 @@
 
 	let slug = $derived(page.params.slug)
 
-	/** @type {'grid' | 'list' | 'map' | 'infinite'} */
 	let display = $state(appState.channels_display || 'grid')
-	const validOrders = ['updated', 'created', 'name', 'tracks']
-	/** @type {'updated' | 'created' | 'name' | 'tracks'} */
+	const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle']
+	/** @type {import('$lib/types').AppState['channels_order']} */
 	let order = $state(validOrders.includes(appState.channels_order) ? appState.channels_order : 'updated')
 	/** @type {'asc' | 'desc'} */
 	let direction = $state(appState.channels_order_direction || 'desc')

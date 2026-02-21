@@ -54,7 +54,11 @@
 		{"name": "deck.listening_to_channel_id", "desc": "Channel this deck is listening to."},
 		{"name": "deck.track_played_at", "desc": "Timestamp when track started playing."},
 		{"name": "deck.seeked_at", "desc": "Timestamp of last seek."},
-		{"name": "deck.seek_position", "desc": "Seek position in seconds."}
+		{"name": "deck.seek_position", "desc": "Seek position in seconds."},
+		{"name": "deck.auto_radio", "desc": "Auto-radio active flag."},
+		{"name": "deck.auto_radio_drifted", "desc": "Listener deviated from schedule."},
+		{"name": "deck.auto_radio_channel_slug", "desc": "From view.channels[0], used by resync."},
+		{"name": "deck.auto_radio_rotation_start", "desc": "Epoch from oldest track (unix seconds)."}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -135,6 +139,12 @@
 		{"name": "toggleVideo(deckId)", "desc": "Toggle video player visibility."},
 		{"name": "eject(deckId)", "desc": "Clear deck player state."},
 
+		{
+			"name": "joinAutoRadio(deckId, tracks, view?)",
+			"desc": "Start deterministic live radio. View differentiates shuffles and sets label."
+		},
+		{"name": "resyncAutoRadio(deckId)", "desc": "Resync drifted deck to current auto-radio position."},
+
 		{"name": "toggleTheme()", "desc": "Light/dark mode."},
 		{"name": "getDeck(deckId)", "desc": "Internal: look up deck from appState.decks."},
 		{"name": "maybeBroadcastNotify()", "desc": "Internal: notify broadcast if currently broadcasting."},
@@ -157,6 +167,24 @@
 		{"name": "queueShuffleKeepCurrent(queue, currentId)", "desc": "Shuffle but keep current first."},
 		{"name": "queueRotate(queue, currentId)", "desc": "Rotate queue from current."},
 		{"name": "queueUnique(queue)", "desc": "Remove duplicates."}
+	],
+
+	"src/lib/player/auto-radio.ts": [
+		{"name": "toAutoTracks(tracks)", "desc": "Filter to tracks with duration > 0 and non-empty url."},
+		{
+			"name": "epochFromTracks(tracks)",
+			"desc": "Unix seconds of oldest track's created_at. Stable epoch for shuffle math."
+		},
+		{"name": "hashString(s)", "desc": "DJB2 string hash — fast, deterministic, 32-bit unsigned."},
+		{
+			"name": "weeklyShuffle(tracks, rotationStartUnix, nowMs, viewSeed?)",
+			"desc": "Deterministic weekly shuffle. viewSeed differentiates views."
+		},
+		{
+			"name": "playbackState(tracks, totalDuration, rotationStartUnix, nowMs)",
+			"desc": "Compute track + offset at a given moment."
+		},
+		{"name": "AutoRadio", "desc": "Stateful wrapper: setTracks + tick. Re-shuffles on week rollover."}
 	],
 
 	"src/lib/lab/mix.ts": [

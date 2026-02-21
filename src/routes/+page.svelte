@@ -7,9 +7,10 @@
 
 	const display = $derived(page?.url?.searchParams?.get('display'))
 
+	const validDisplays = /** @type {const} */ (['grid', 'list', 'map', 'infinite', 'tuner'])
 	onMount(() => {
-		if (display && display !== appState.channels_display) {
-			appState.channels_display = display
+		if (display && validDisplays.includes(/** @type {any} */ (display)) && display !== appState.channels_display) {
+			appState.channels_display = /** @type {typeof validDisplays[number]} */ (display)
 		}
 	})
 </script>

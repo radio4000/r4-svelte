@@ -9,24 +9,21 @@
  */
 
 import {shuffleArray} from '$lib/utils'
+import type {Track} from '$lib/types'
 
-export interface AutoRadioTrack {
-	id: string
-	url: string
-	duration: number
-	title?: string
-}
+/** A Track with a guaranteed duration — the subset auto-radio can work with. */
+export type AutoTrack = Track & {duration: number}
 
 export interface PlaybackSnapshot {
 	trackIndex: number
-	currentTrack: AutoRadioTrack
+	currentTrack: AutoTrack
 	offsetSeconds: number
-	nextTrack: AutoRadioTrack
+	nextTrack: AutoTrack
 	secondsUntilNextTrack: number
 }
 
 export interface WeeklyShuffleResult {
-	tracks: AutoRadioTrack[]
+	tracks: AutoTrack[]
 	totalDuration: number
 }
 
@@ -62,28 +59,46 @@ function sundayWeekNumber(nowMs: number): number {
 // Public API
 // ---------------------------------------------------------------------------
 
-/**
- * Validate and normalize tracks — keeps only those with duration > 0
- * and a non-empty url, narrowing nullable duration from DB Track to AutoRadioTrack.
- */
-export function normalizeTracks(tracks: Array<{id: string; url: string; duration: number | null}>): AutoRadioTrack[] {
-	return tracks.filter(
-		(t): t is {id: string; url: string; duration: number} => !!t.duration && t.duration > 0 && !!t.url
-	) as AutoRadioTrack[]
+/** Filter tracks to those with a known duration > 0 and a non-empty url. */
+export function toAutoTracks(tracks: Track[]): AutoTrack[] {
+	return tracks.filter((t): t is AutoTrack => !!t.duration && t.duration > 0 && !!t.url)
+}
+
+/** Derive epoch from oldest track's created_at. Returns unix seconds, or 0 if empty. */
+export function epochFromTracks(tracks: Pick<Track, 'created_at'>[]): number {
+	if (!tracks.length) return 0
+	let oldest = tracks[0].created_at
+	for (let i = 1; i < tracks.length; i++) {
+		if (tracks[i].created_at < oldest) oldest = tracks[i].created_at
+	}
+	return Math.floor(new Date(oldest).getTime() / 1000)
+}
+
+/** DJB2 string hash — fast, deterministic, 32-bit unsigned. */
+export function hashString(s: string): number {
+	let h = 5381
+	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	return h
 }
 
 /**
  * Deterministic weekly shuffle.
  * All clients with the same inputs and the same wall-clock week return the
- * same ordered list.
+ * same ordered list. An optional `viewSeed` differentiates shuffles for
+ * different view filters (e.g. tag subsets) of the same channel.
  */
-export function weeklyShuffle(tracks: AutoRadioTrack[], rotationStartUnix: number, nowMs: number): WeeklyShuffleResult {
+export function weeklyShuffle(
+	tracks: AutoTrack[],
+	rotationStartUnix: number,
+	nowMs: number,
+	viewSeed?: string
+): WeeklyShuffleResult {
 	// Sort by id before shuffling so the result is independent of input order.
 	// Different clients may receive tracks in different collection order (network/cache),
 	// but as long as the track set is identical, the sort ensures the same shuffle.
-	const valid = normalizeTracks(tracks).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+	const valid = toAutoTracks(tracks).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 	const week = sundayWeekNumber(nowMs)
-	const rawSeed = rotationStartUnix + week
+	const rawSeed = rotationStartUnix + week + (viewSeed ? hashString(viewSeed) : 0)
 	const seed = hashSeed(rawSeed)
 	const rand = mulberry32(seed)
 	const shuffled = shuffleArray(valid, rand)
@@ -97,7 +112,7 @@ export function weeklyShuffle(tracks: AutoRadioTrack[], rotationStartUnix: numbe
  * Returns null when the track list is empty or total duration is zero.
  */
 export function playbackState(
-	tracks: AutoRadioTrack[],
+	tracks: AutoTrack[],
 	totalDuration: number,
 	rotationStartUnix: number,
 	nowMs: number
@@ -135,13 +150,10 @@ export function playbackState(
 	}
 }
 
-// ---------------------------------------------------------------------------
-// AutoRadio controller — stateful wrapper for use in a component
-// ---------------------------------------------------------------------------
-
+/** AutoRadio controller — stateful wrapper for use in a component */
 export class AutoRadio {
 	#rotationStartUnix: number
-	#shuffled: AutoRadioTrack[] = []
+	#shuffled: AutoTrack[] = []
 	#totalDuration = 0
 	#week = -1
 
@@ -149,7 +161,7 @@ export class AutoRadio {
 		this.#rotationStartUnix = rotationStartUnix
 	}
 
-	setTracks(tracks: AutoRadioTrack[], nowMs = Date.now()): void {
+	setTracks(tracks: AutoTrack[], nowMs = Date.now()): void {
 		const result = weeklyShuffle(tracks, this.#rotationStartUnix, nowMs)
 		this.#shuffled = result.tracks
 		this.#totalDuration = result.totalDuration

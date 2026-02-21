@@ -41,7 +41,7 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 
 ## Auto-radio
 
-Deterministic "live radio" mode — all listeners with the same track list hear the same track at the same offset at the same wall-clock time, no server sync needed. Weekly shuffle rotates every Sunday 00:00 UTC using a seeded PRNG (`auto-radio.ts`).
+See [auto-radio.md](auto-radio.md).
 
 ## Layout
 

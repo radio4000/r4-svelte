@@ -9,7 +9,7 @@
 	import {searchChannels} from '$lib/search-fts'
 	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
-	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -200,6 +200,13 @@
 					{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
 					<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
 				</ButtonFeedback>
+				<button
+					type="button"
+					onclick={() => joinAutoRadio(appState.active_deck_id, tracks, view)}
+					title="Auto radio this search"
+				>
+					<Icon icon="infinite" size={16} />
+				</button>
 			{/if}
 		</menu>
 

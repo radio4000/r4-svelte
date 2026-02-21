@@ -5,7 +5,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 ## Backlog
 
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
-- meta-toolbar should be <menu>, not div
+ - nav.tabs vs div.track-tabs>nav? clean up markup here
 - on the track+its meta pages the trackdetailcontext could be cleaned up, less repeated types
 - track meta r5 introduces new .tags style (reuse? unify?)
 - on track meta pages the toggle json/raw is below output, meaning it disappears when you tap it. put it above so it doesn't jump
@@ -13,7 +13,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - didn't look into why but when i switch between discogs/musicbrainz tabs here my browser blocks for 12 seconds :D https://pg.radio4000.com/oskar/tracks/639c8d7a-e095-49b9-b0a0-cdfdf2dd8af8/discogs
 - media query to switch layout header from side to top is too soon. maybe ~900px instead of 768px breakpoint. and do we need 560+640px breakpoints? one of them maybe enough?
 - remove the tap to select row(s) on /batch-edit. the input checkbox is enough for this feature
-- 3D globe map view in addition to map view. Use Three.js (already a dependency). Someday/maybe.
+- 3D globe map view in addition to map view. Try with OGL instead of Three.js. Someday/maybe.
 - Test RTL-support
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Needs server-side data (load functions already fetch channel/track).
@@ -21,6 +21,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a track URL that already exists in the channel. Could also surface duplicates in batch-edit (group by URL or media_id).
 - Expand our broadcast schema with a custom JSON field (?) so we can push arbitrary data without updating the schema every time. We could, for example, put the player data of each deck from /mix
+- Auto-radio on tag-filtered tracks — the tracks page (`[slug]/tracks`) already has Play and Queue buttons for filtered results. Add a third infinity-icon button (only when tags are selected) that starts auto-radio from the tag-filtered subset. Flow: `filteredTracks` → `toAutoTracks` → `weeklyShuffle` → `playbackState` → play + seek, same as `joinAutoRadio`. Mix the tag string into the seed so different tags produce different shuffles. Store the active tags in deck state (alongside `auto_radio_channel_slug`) so `resyncAutoRadio` can recompute the same subset.
 
 ## Performance audit — $state proxy & useLiveQuery hotspots
 

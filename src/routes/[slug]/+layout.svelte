@@ -17,8 +17,8 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {weeklyShuffle, playbackState, normalizeTracks} from '$lib/player/auto-radio'
-	import {setPlaylist, playTrack, seekTo, getMediaPlayer} from '$lib/api'
+	import {toAutoTracks} from '$lib/player/auto-radio'
+	import {joinAutoRadio} from '$lib/api'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -51,7 +51,7 @@
 	let isAutoRadioDrifted = $derived(
 		Boolean(
 			channel?.slug &&
-			appState.decks[appState.active_deck_id]?.auto_radio_channel_slug === channel.slug &&
+			appState.decks[appState.active_deck_id]?.view?.channels?.[0] === channel.slug &&
 			appState.decks[appState.active_deck_id]?.auto_radio_drifted
 		)
 	)
@@ -89,54 +89,7 @@
 	// Provide to child routes
 	setTracksQueryCtx(tracksQuery)
 
-	let autoRadioTracks = $derived(normalizeTracks(tracksQuery.data ?? []))
-
-	async function joinAutoRadio() {
-		if (!channel || !autoRadioTracks.length) return
-		const deckId = appState.active_deck_id
-		const rotationStartUnix = Math.floor(new Date(channel.created_at).getTime() / 1000)
-		const {tracks: shuffled, totalDuration} = weeklyShuffle(autoRadioTracks, rotationStartUnix, Date.now())
-		const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-		if (!snap) return
-		// playTrack first — it may create a new deck if none exists. setPlaylist before playTrack
-		// would silently fail when no deck exists, causing playTrack to load all channel tracks instead.
-		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
-		// Capture the actual deck id (playTrack may have auto-created a new one)
-		const activeDeckId = appState.active_deck_id
-		// Replace the playlist with only duration-filtered shuffled tracks, then mark auto-radio.
-		// Must set auto_radio after setPlaylist because setPlaylist clears it.
-		setPlaylist(
-			activeDeckId,
-			shuffled.map((t) => t.id),
-			{title: channel.name}
-		)
-		if (appState.decks[activeDeckId]) {
-			appState.decks[activeDeckId].auto_radio = true
-			appState.decks[activeDeckId].auto_radio_drifted = false
-			appState.decks[activeDeckId].auto_radio_channel_slug = channel.slug
-			appState.decks[activeDeckId].auto_radio_rotation_start = rotationStartUnix
-		}
-		// Seek to current offset once the player is ready — recompute at seek time so the position is fresh.
-		// Also check currentTime > 0 as a fallback for SoundCloud, where duration is cached
-		// asynchronously and may lag behind actual playback start.
-		const deadline = performance.now() + 8000
-		while (performance.now() < deadline) {
-			const el = getMediaPlayer(activeDeckId)
-			const hasDuration = el && Number.isFinite(el.duration) && el.duration > 0
-			const hasStarted = el && el.currentTime > 0
-			if (hasDuration || hasStarted) {
-				const freshSnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (freshSnap) seekTo(activeDeckId, freshSnap.offsetSeconds)
-				// SoundCloud may process seeks asynchronously and silently drop the first one
-				// while still buffering. Retry once after a short wait with a freshly computed offset.
-				await new Promise((r) => setTimeout(r, 350))
-				const retrySnap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
-				if (retrySnap) seekTo(activeDeckId, retrySnap.offsetSeconds)
-				break
-			}
-			await new Promise((r) => setTimeout(r, 150))
-		}
-	}
+	let autoRadioTracks = $derived(toAutoTracks(tracksQuery.data ?? []))
 </script>
 
 <svelte:head>
@@ -190,7 +143,8 @@
 						{#if autoRadioTracks.length > 0}
 							<button
 								type="button"
-								onclick={joinAutoRadio}
+								onclick={() =>
+									channel && joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})}
 								class:active={isAutoRadioDrifted}
 								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 							>

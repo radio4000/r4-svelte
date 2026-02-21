@@ -9,7 +9,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
-	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -132,6 +132,18 @@
 						<small class="filter-count">{filteredTracks.length} selected</small>
 						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
 						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
+						{#if channel}
+							<button
+								type="button"
+								onclick={() =>
+									joinAutoRadio(appState.active_deck_id, filteredTracks, {
+										channels: slug ? [slug] : undefined,
+										tags: selectedTags,
+										search: searchValue
+									})}
+								title="Auto radio this selection"><Icon icon="infinite" size={16} /></button
+							>
+						{/if}
 					{/if}
 				</menu>
 			{/if}
