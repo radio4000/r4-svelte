@@ -99,15 +99,17 @@
 		</div>
 
 		<div class="channel-meta">
-			<p class="dates">
-				<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
-			</p>
-			{#if channel.url}
-				<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
-			{/if}
 			{#if channel.description}
 				<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 			{/if}
+			<div class="meta-row">
+				{#if channel.url}
+					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				{/if}
+				<p class="dates">
+					<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
+				</p>
+			</div>
 		</div>
 
 		{#if tracksQuery.isReady && previewTracks.length > 0}
@@ -208,8 +210,17 @@
 		width: 100%;
 	}
 
+	.meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
 	.dates {
 		color: var(--gray-10);
+		margin-left: auto;
 	}
 
 	.description {
