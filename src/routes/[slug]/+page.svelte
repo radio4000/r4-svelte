@@ -75,12 +75,17 @@
 	const isTagPlaying = (tag: string) => activeDeck?.playlist_title === `#${tag}` && activeDeck?.is_playing
 
 	// Tags from ALL decks' playlists (e.g. "#house #techno" → ["house", "techno"])
-	const deckPlaylistTags = $derived(
-		[...new Set(
-			Object.values(appState.decks)
-				.flatMap((d) => d.playlist_title?.split(' ').filter((t) => t.startsWith('#')).map((t) => t.slice(1)) ?? [])
-		)]
-	)
+	const deckPlaylistTags = $derived([
+		...new Set(
+			Object.values(appState.decks).flatMap(
+				(d) =>
+					d.playlist_title
+						?.split(' ')
+						.filter((t) => t.startsWith('#'))
+						.map((t) => t.slice(1)) ?? []
+			)
+		)
+	])
 	// Tracks from this channel matching any of the current deck's playlist tags
 	const deckTagMatches = $derived(
 		deckPlaylistTags.length && tracksQuery.isReady
@@ -131,7 +136,7 @@
 				<header>
 					<h3>
 						<a href="/{slug}/tracks?tags={encodeURIComponent(deckPlaylistTags.join(','))}">
-							{deckPlaylistTags.map((t) => `#${t}`).join(" ")}
+							{deckPlaylistTags.map((t) => `#${t}`).join(' ')}
 						</a>
 						<small>({deckTagMatches.length})</small>
 					</h3>
@@ -139,7 +144,7 @@
 				<Tracklist
 					tracks={deckTagMatches.slice(0, TAG_PREVIEW_LIMIT)}
 					playlistTracks={deckTagMatches}
-					playlistTitle={deckPlaylistTags.map((t) => `#${t}`).join(" ")}
+					playlistTitle={deckPlaylistTags.map((t) => `#${t}`).join(' ')}
 					{canEdit}
 					grouped={false}
 					virtual={false}
@@ -305,8 +310,6 @@
 	.featured-channels > header h3 {
 		font-size: var(--font-5);
 		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 		color: var(--gray-10);
 	}
 

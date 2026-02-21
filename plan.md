@@ -40,6 +40,8 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 ## In progress
 
+- channel mentions route: add `/@slug/mentions` listing tracks from other channels where `mentions` contains `@slug`
+
 - Discogs UX pass in progress (track Discogs tab + add-track modal)
   - improve release summary density (track/video/in-channel counts + cleaner status hints per row)
   - dedupe duplicate Discogs videos by URI before matching

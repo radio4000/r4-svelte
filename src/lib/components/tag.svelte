@@ -8,9 +8,9 @@
 	const isPlaying = $derived(
 		Boolean(
 			value &&
-				Object.values(appState.decks).some((d) =>
-					d.playlist_title?.toLowerCase().split(/\s+/).includes(value.toLowerCase())
-				)
+			Object.values(appState.decks).some((d) =>
+				d.playlist_title?.toLowerCase().split(/\s+/).includes(value.toLowerCase())
+			)
 		)
 	)
 

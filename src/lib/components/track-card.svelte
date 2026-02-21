@@ -104,7 +104,13 @@
 
 <article class:active class:selected={selected && !active}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="card" ondblclick={dblclick} onmousedown={(e) => { if (e.detail >= 2) e.preventDefault() }}>
+	<div
+		class="card"
+		ondblclick={dblclick}
+		onmousedown={(e) => {
+			if (e.detail >= 2) e.preventDefault()
+		}}
+	>
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
@@ -255,7 +261,9 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		border-radius: var(--border-radius);
-		transition: background 0.15s, color 0.15s;
+		transition:
+			background 0.15s,
+			color 0.15s;
 		&.locatable {
 			cursor: pointer;
 		}

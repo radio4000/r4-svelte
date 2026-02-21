@@ -23,7 +23,10 @@
 		<li>Free and open source. No tracking, no ads. <small>SDK, CLI, API</small></li>
 	</ul>
 
-	<p>In other words.. Make your radio, add some tracks by pasting in YouTube urls. Describe your tracks as you want. Share with friends.</p>
+	<p>
+		In other words.. Make your radio, add some tracks by pasting in YouTube urls. Describe your tracks as you want.
+		Share with friends.
+	</p>
 
 	<menu>
 		{#if appState.user}

@@ -10,6 +10,6 @@ Data flows from the remote database ([radio4000-sdk](radio4000-sdk.md)) through 
 
 [overview](overview.json) lists exported functions, [browser-testing](browser-testing.md) for testing. [/settings](/settings) for appearance and account. Data caches locally for offline use. Auth via email or OAuth. [/mix](mix.md) is an experimental DJ mixer page.
 
-Channels have RSS feeds at `/@slug.rss`, per-channel maps at `/@slug/map`, and data backup at `/@slug/backup`. Tracks have a detail page with tabbed navigation and inline editing.
+Channels have RSS feeds at `/@slug.rss`, per-channel maps at `/@slug/map`, mentions at `/@slug/mentions`, and data backup at `/@slug/backup`. Tracks have a detail page with tabbed navigation and inline editing.
 
 [state](state.md) covers the data architecture, [code-style](code-style.md) has conventions for writing code here.

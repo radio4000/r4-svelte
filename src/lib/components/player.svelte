@@ -306,9 +306,9 @@
 							<small class="deck-title">
 								{#each deck.playlist_title.split(' ') as tag (tag)}
 									{#if tag.startsWith('#')}
-										<Tag
-											href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
-										>{tag}</Tag>
+										<Tag href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
+											>{tag}</Tag
+										>
 									{:else}
 										{tag}
 									{/if}

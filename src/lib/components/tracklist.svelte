@@ -22,6 +22,7 @@
 		canEdit?: boolean,
 		virtual?: boolean,
 		playContext?: boolean,
+		showSlug?: boolean,
 		selectedTrackId?: string | null,
 		onSelectTrack?: (trackId: string | null) => void,
 		onTagClick?: (tag: string) => void
@@ -37,6 +38,7 @@
 		canEdit = false,
 		virtual = false,
 		playContext = false,
+		showSlug = false,
 		selectedTrackId: selectedTrackIdProp = null,
 		onSelectTrack,
 		onTagClick
@@ -191,6 +193,7 @@
 								selected={selectedTrackId === item.track?.id}
 								onPlay={playContext ? playFromList : undefined}
 								{canEdit}
+								{showSlug}
 								{onTagClick}
 							/>
 							{@render footer?.({track: item.track})}
@@ -238,6 +241,7 @@
 										selected={selectedTrackId === track.id}
 										onPlay={playContext ? playFromList : undefined}
 										{canEdit}
+										{showSlug}
 										{onTagClick}
 									/>
 									{@render footer?.({track})}
@@ -280,6 +284,7 @@
 						selected={selectedTrackId === track.id}
 						onPlay={playContext ? playFromList : undefined}
 						{canEdit}
+						{showSlug}
 						{onTagClick}
 					/>
 					{@render footer?.({track})}

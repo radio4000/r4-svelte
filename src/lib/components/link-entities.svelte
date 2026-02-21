@@ -12,7 +12,12 @@
 
 		const parts = []
 		let lastIndex = 0
-		const urlTags = page.url.searchParams.get('tags')?.split(',').filter(Boolean).map((t) => t.toLowerCase()) ?? []
+		const urlTags =
+			page.url.searchParams
+				.get('tags')
+				?.split(',')
+				.filter(Boolean)
+				.map((t) => t.toLowerCase()) ?? []
 
 		text.replace(ENTITY_REGEX, (match, prefix, entity, offset) => {
 			// Add text before the match
@@ -34,9 +39,7 @@
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
 				const tagName = entity.slice(1).toLowerCase()
-				const next = urlTags.includes(tagName)
-					? urlTags.filter((t) => t !== tagName)
-					: [...urlTags, tagName]
+				const next = urlTags.includes(tagName) ? urlTags.filter((t) => t !== tagName) : [...urlTags, tagName]
 				href = next.length
 					? `/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
 					: `/${encodeURIComponent(slug)}/tracks`

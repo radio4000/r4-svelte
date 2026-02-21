@@ -87,8 +87,7 @@
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 				</a>
-			{:else}
-			{/if}
+			{:else}{/if}
 		{/await}
 		<a
 			href={resolve('/settings')}

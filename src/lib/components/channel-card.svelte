@@ -68,7 +68,7 @@
 		</div>
 		<div class="actions">
 			<ButtonFollow {channel} class="ghost" />
-	<PopoverMenu btnClass="ghost" align="right" valign="top">
+			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
 					<Icon icon="options-horizontal" size={16} />
 				{/snippet}
@@ -219,7 +219,9 @@
 
 		article:hover &,
 		article:focus-within & {
-			a { text-decoration: underline; }
+			a {
+				text-decoration: underline;
+			}
 		}
 	}
 
@@ -262,7 +264,12 @@
 	}
 
 	@keyframes live-pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.5; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
 	}
 </style>

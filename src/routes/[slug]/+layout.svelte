@@ -40,7 +40,9 @@
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)
 	let isChannelPlaying = $derived(
-		Boolean(channel?.slug && Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing))
+		Boolean(
+			channel?.slug && Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
+		)
 	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
@@ -224,6 +226,10 @@
 					<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
 						<Icon icon="hash" size={16} />
 						{m.channel_tags_link()}
+					</a>
+					<a href="/{slug}/mentions" class:active={routeId?.startsWith('/[slug]/mentions')}>
+						<Icon icon="user" size={16} />
+						Mentions
 					</a>
 					<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
 						<Icon icon="sparkles" size={16} />
