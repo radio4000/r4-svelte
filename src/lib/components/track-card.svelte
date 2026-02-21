@@ -265,12 +265,19 @@
 			color: var(--gray-1);
 			padding-inline: var(--space-1);
 			border-radius: 2px;
+			width: fit-content;
+			max-width: 100%;
 		}
 	}
 
-	.active,
-	.selected {
+	.active {
 		background: var(--accent-3);
+		border-color: var(--gray-5);
+	}
+
+	.selected {
+		background: var(--gray-2);
+		border-color: var(--accent-7);
 	}
 
 	h3 + p {
@@ -309,6 +316,7 @@
 	article {
 		display: flex;
 		align-items: flex-start;
+		border: 1px solid transparent;
 		:global(.popover-menu) {
 			padding: 0.2em;
 		}
