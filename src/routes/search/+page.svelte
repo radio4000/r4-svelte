@@ -92,11 +92,13 @@
 	const multiDeck = $derived(deckKeys.length > 1)
 	const deckLabel = $derived(multiDeck ? `Deck ${deckKeys.indexOf(String(appState.active_deck_id)) + 1}` : '')
 
-	function playSearchResults() {
+	async function playSearchResults() {
 		if (!tracks.length) return
 		const ids = tracks.map((t) => t.id)
+		await playTrack(appState.active_deck_id, ids[0], null, 'play_search')
+		// Set playlist after playTrack so the search results are the final queue,
+		// even if playTrack auto-created a deck or set channel tracks internally.
 		setPlaylist(appState.active_deck_id, ids, {title: inputValue.trim()})
-		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueSearchResults() {
