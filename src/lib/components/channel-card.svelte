@@ -62,11 +62,22 @@
 				{@render children()}
 			{/if}
 			<div class="meta">
-				{#if channel.track_count}<small>({channel.track_count})</small>{/if}
+				{#if channel.track_count}<small>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small>{/if}
 				{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
 			</div>
 		</div>
 		<div class="actions">
+			<ButtonFollow {channel} class="ghost" />
+			<button
+				type="button"
+				class="ghost play-btn"
+				class:active={isPlaying}
+				onclick={() =>
+					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+				title={isPlaying ? 'Pause' : m.common_play()}
+			>
+				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+			</button>
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
 					<Icon icon="options-horizontal" size={16} />
@@ -94,17 +105,6 @@
 					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
 				</menu>
 			</PopoverMenu>
-			<button
-				type="button"
-				class="ghost"
-				class:active={isPlaying}
-				onclick={() =>
-					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
-				title={isPlaying ? 'Pause' : m.common_play()}
-			>
-				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-			</button>
-			<ButtonFollow {channel} />
 		</div>
 	</div>
 </article>
@@ -179,6 +179,7 @@
 		gap: 0.2rem;
 		min-width: 0;
 		flex: 1;
+		padding: 0.25rem;
 	}
 
 	.actions {
@@ -187,10 +188,15 @@
 		align-items: center;
 		gap: 0.25rem;
 		flex-shrink: 0;
+
+		:global(.popover-menu) {
+			margin-top: auto;
+		}
 	}
 
 	.meta {
 		display: flex;
+		justify-content: space-between;
 		gap: 0.25rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 		font-size: var(--font-3);
@@ -198,6 +204,14 @@
 
 		:global(.list) & {
 			display: none;
+		}
+
+		a {
+			text-decoration: none;
+			color: inherit;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 
@@ -209,6 +223,9 @@
 
 	h3 a {
 		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.slug {
@@ -217,6 +234,9 @@
 		a {
 			text-decoration: none;
 			color: inherit;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 

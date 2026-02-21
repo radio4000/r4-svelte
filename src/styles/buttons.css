@@ -121,6 +121,13 @@ button.ghost,
 	}
 }
 
+button.ghost.active,
+.btn.ghost.active {
+	svg {
+		color: var(--accent-9);
+	}
+}
+
 button[data-loading='true'] {
 	cursor: wait;
 }
