@@ -62,7 +62,7 @@
 				{@render children()}
 			{/if}
 			<div class="meta">
-				{#if channel.track_count}<small><a href="{cardHref}/tracks">{channel.track_count}</a></small>{/if}
+				{#if channel.track_count}<small>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small>{/if}
 				{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
 			</div>
 		</div>
@@ -179,6 +179,7 @@
 		gap: 0.2rem;
 		min-width: 0;
 		flex: 1;
+		padding: 0.25rem;
 	}
 
 	.actions {
@@ -204,6 +205,11 @@
 		:global(.list) & {
 			display: none;
 		}
+
+		a {
+			text-decoration: none;
+			color: inherit;
+		}
 	}
 
 	h3 {
@@ -214,6 +220,9 @@
 
 	h3 a {
 		text-decoration: none;
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.slug {
@@ -222,6 +231,9 @@
 		a {
 			text-decoration: none;
 			color: inherit;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 
