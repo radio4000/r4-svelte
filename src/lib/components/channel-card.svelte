@@ -3,7 +3,7 @@
 	import {relativeDateDetailed} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
 	import {trimWithEllipsis} from '$lib/utils.ts'
-	import {playChannel} from '$lib/api'
+	import {playChannel, togglePlayPause} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast.js'
 	import {broadcastsCollection} from '$lib/tanstack/collections'
 	import ChannelAvatar from './channel-avatar.svelte'
@@ -32,10 +32,12 @@
 	function share() {
 		appState.modal_share = {channel}
 	}
+
+	let articleEl = $state()
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<article class:playing={isPlaying} ondblclick={handleDblClick} tabindex="0">
+<article class:playing={isPlaying} ondblclick={handleDblClick} tabindex="0" bind:this={articleEl}>
 	{#if isBroadcasting}<div class="live-dot"></div>{/if}
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
@@ -70,8 +72,8 @@
 			<Icon icon="options-horizontal" size={16} />
 		{/snippet}
 		<menu>
-			<button type="button" role="menuitem" onclick={() => playChannel(appState.active_deck_id, channel)}>
-				<Icon icon="play-fill" size={16} /> Play
+			<button type="button" role="menuitem" onclick={() => isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}>
+				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} /> {isPlaying ? 'Pause' : 'Play'}
 			</button>
 			{#if isBroadcasting}
 				<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
@@ -117,6 +119,11 @@
 		&.playing {
 			background: var(--accent-3);
 			border-color: var(--accent-9);
+		}
+
+		& > :global(.popover-menu) {
+			align-self: flex-end;
+			margin-top: auto;
 		}
 
 		:global(.list) & {
