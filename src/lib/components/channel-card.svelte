@@ -62,11 +62,22 @@
 				{@render children()}
 			{/if}
 			<div class="meta">
-				{#if channel.track_count}<small>({channel.track_count})</small>{/if}
+				{#if channel.track_count}<small><a href="{cardHref}/tracks">{channel.track_count}</a></small>{/if}
 				{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
 			</div>
 		</div>
 		<div class="actions">
+			<ButtonFollow {channel} class="ghost" />
+			<button
+				type="button"
+				class="ghost play-btn"
+				class:active={isPlaying}
+				onclick={() =>
+					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+				title={isPlaying ? 'Pause' : m.common_play()}
+			>
+				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+			</button>
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
 					<Icon icon="options-horizontal" size={16} />
@@ -94,17 +105,6 @@
 					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
 				</menu>
 			</PopoverMenu>
-			<button
-				type="button"
-				class="ghost"
-				class:active={isPlaying}
-				onclick={() =>
-					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
-				title={isPlaying ? 'Pause' : m.common_play()}
-			>
-				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-			</button>
-			<ButtonFollow {channel} />
 		</div>
 	</div>
 </article>
@@ -187,10 +187,15 @@
 		align-items: center;
 		gap: 0.25rem;
 		flex-shrink: 0;
+
+		.play-btn {
+			margin-top: auto;
+		}
 	}
 
 	.meta {
 		display: flex;
+		justify-content: space-between;
 		gap: 0.25rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 		font-size: var(--font-3);

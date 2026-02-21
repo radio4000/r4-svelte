@@ -13,6 +13,7 @@
 	a,
 	button {
 		display: inline;
+		vertical-align: baseline;
 		padding: 0.1em 0.35em;
 		border-radius: 999px;
 		border: none;
