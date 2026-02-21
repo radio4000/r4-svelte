@@ -11,6 +11,7 @@
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import {onMount} from 'svelte'
+	import {beforeNavigate, afterNavigate} from '$app/navigation'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -73,6 +74,25 @@
 		await setLocale(currentLocale, {reload: false})
 		if (!storedLocale) {
 			appState.language = currentLocale
+		}
+	})
+
+	const scrollPositions = new Map()
+
+	beforeNavigate(({from}) => {
+		if (!from?.url) return
+		const key = from.url.pathname + from.url.search
+		scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
+	})
+
+	afterNavigate(({type, to}) => {
+		const scrollArea = document.querySelector('.scroll-area')
+		if (!scrollArea) return
+		if (type === 'popstate' && to?.url) {
+			const saved = scrollPositions.get(to.url.pathname + to.url.search)
+			scrollArea.scrollTo({top: saved ?? 0})
+		} else {
+			scrollArea.scrollTo({top: 0})
 		}
 	})
 
