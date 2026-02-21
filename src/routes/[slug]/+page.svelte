@@ -12,7 +12,7 @@
 	import {relativeDate} from '$lib/dates'
 	import {extractHashtags, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
-	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	const PREVIEW_LIMIT = 10
@@ -71,10 +71,13 @@
 		goto(`/${slug}/tracks?search=${encodeURIComponent(q)}`)
 	})
 
-	function playTagTracks(tracks: {id: string}[], tag: string) {
+	const activeDeck = $derived(appState.decks[appState.active_deck_id])
+	const isTagPlaying = (tag: string) => activeDeck?.playlist_title === `#${tag}` && activeDeck?.is_playing
+
+	async function playTagTracks(tracks: {id: string}[], tag: string) {
 		const ids = tracks.map((t) => t.id)
+		await playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 		setPlaylist(appState.active_deck_id, ids, {title: `#${tag}`})
-		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueTagTracks(tracks: {id: string}[]) {
@@ -110,10 +113,7 @@
 		{#if tracksQuery.isReady && previewTracks.length > 0}
 			<section class="track-section">
 				<header>
-					<h3>Latest</h3>
-					<a href="/{slug}/tracks">
-						{allTracks.length > PREVIEW_LIMIT ? `All ${allTracks.length}` : `All`}
-					</a>
+					<h3><a href="/{slug}/tracks">Latest <small>({allTracks.length})</small></a></h3>
 				</header>
 				<Tracklist
 					tracks={previewTracks}
@@ -152,17 +152,19 @@
 			{#if tracks.length > 0}
 				<section class="track-section">
 					<header>
-						<h3><a href="/{slug}/tracks?tags={tag}">#{tag}</a></h3>
+						<h3><a href="/{slug}/tracks?tags={tag}">#{tag}</a> <small>({tracks.length})</small></h3>
 						<menu>
-							<button type="button" onclick={() => playTagTracks(tracks, tag)} title="Play #{tag}">
-								<Icon icon="play-fill" size={14} />
+							<button
+								type="button"
+								onclick={() =>
+									isTagPlaying(tag) ? togglePlayPause(appState.active_deck_id) : playTagTracks(tracks, tag)}
+								title={isTagPlaying(tag) ? `Pause #${tag}` : `Play #${tag}`}
+							>
+								<Icon icon={isTagPlaying(tag) ? 'pause' : 'play-fill'} size={14} />
 							</button>
 							<button type="button" onclick={() => queueTagTracks(tracks)} title="Queue #{tag}">
 								<Icon icon="next-fill" size={14} />
 							</button>
-							{#if tracks.length > TAG_PREVIEW_LIMIT}
-								<a href="/{slug}/tracks?tags={tag}">All {tracks.length}</a>
-							{/if}
 						</menu>
 					</header>
 					<Tracklist

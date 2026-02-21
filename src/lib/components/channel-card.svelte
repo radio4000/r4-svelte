@@ -42,59 +42,71 @@
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
 	</figure>
-	<div class="info">
-		<h3>
-			<a href={cardHref} data-sveltekit-preload-data="false">
-				{channel.name}
-				{#if isBroadcasting}
-					<span class="channel-badge">{m.status_live_short()}</span>
-				{/if}
-			</a>
-			<small><a href={cardHref} data-sveltekit-preload-data="false">@{channel.slug}</a></small>
-		</h3>
-		{#if channel.description}
-			<p class="description">
-				<LinkEntities slug={channel.slug} text={trimWithEllipsis(channel.description)} />
-				{#if channel.track_count}
-					<small>({channel.track_count})</small>
-				{/if}
-				{#if channel.latest_track_at}
-					<small>{relativeDateDetailed(channel.latest_track_at)}</small>
-				{/if}
-			</p>
-		{/if}
-		{#if children}
-			{@render children()}
-		{/if}
-	</div>
-	<PopoverMenu btnClass="ghost" align="right">
-		{#snippet trigger()}
-			<Icon icon="options-horizontal" size={16} />
-		{/snippet}
-		<menu>
+	<div class="body">
+		<div class="info">
+			<h3>
+				<a href={cardHref} data-sveltekit-preload-data="false">
+					{channel.name}
+					{#if isBroadcasting}
+						<span class="channel-badge">{m.status_live_short()}</span>
+					{/if}
+				</a>
+			</h3>
+			<small class="slug"><a href={cardHref} data-sveltekit-preload-data="false">@{channel.slug}</a></small>
+			{#if channel.description}
+				<p class="description">
+					<LinkEntities slug={channel.slug} text={trimWithEllipsis(channel.description)} />
+				</p>
+			{/if}
+			{#if children}
+				{@render children()}
+			{/if}
+			<div class="meta">
+				{#if channel.track_count}<small>({channel.track_count})</small>{/if}
+				{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
+			</div>
+		</div>
+		<div class="actions">
+			<PopoverMenu btnClass="ghost" align="right" valign="top">
+				{#snippet trigger()}
+					<Icon icon="options-horizontal" size={16} />
+				{/snippet}
+				<menu>
+					<button
+						type="button"
+						role="menuitem"
+						onclick={() =>
+							isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+					>
+						<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+						{isPlaying ? 'Pause' : 'Play'}
+					</button>
+					{#if isBroadcasting}
+						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
+							<Icon icon="signal" size={16} /> Join broadcast
+						</button>
+					{/if}
+					<button type="button" role="menuitem" onclick={share}>
+						<Icon icon="share" size={16} /> Share
+					</button>
+				</menu>
+				<menu class="nav-vertical">
+					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
+				</menu>
+			</PopoverMenu>
 			<button
 				type="button"
-				role="menuitem"
+				class="ghost"
+				class:active={isPlaying}
 				onclick={() =>
 					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+				title={isPlaying ? 'Pause' : m.common_play()}
 			>
 				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-				{isPlaying ? 'Pause' : 'Play'}
 			</button>
-			{#if isBroadcasting}
-				<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-					<Icon icon="signal" size={16} /> Join broadcast
-				</button>
-			{/if}
-			<button type="button" role="menuitem" onclick={share}>
-				<Icon icon="share" size={16} /> Share
-			</button>
-		</menu>
-		<menu class="nav-vertical">
-			<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
 			<ButtonFollow {channel} />
-		</menu>
-	</PopoverMenu>
+		</div>
+	</div>
 </article>
 
 <style>
@@ -127,15 +139,10 @@
 			border-color: var(--accent-9);
 		}
 
-		& > :global(.popover-menu) {
-			align-self: flex-end;
-			margin-top: auto;
-		}
-
 		:global(.list) & {
 			display: grid;
 			grid-template-columns: 4rem 1fr auto;
-			align-items: start;
+			align-items: center;
 			padding: 0.5rem;
 			gap: 0 0.5rem;
 		}
@@ -151,7 +158,18 @@
 
 		:global(.list) & {
 			grid-column: 1;
-			grid-row: 1 / 3;
+		}
+	}
+
+	.body {
+		display: flex;
+		flex-direction: row;
+		gap: 0.25rem;
+		flex: 1;
+
+		:global(.list) & {
+			grid-column: 2 / -1;
+			align-items: center;
 		}
 	}
 
@@ -160,9 +178,26 @@
 		flex-direction: column;
 		gap: 0.2rem;
 		min-width: 0;
+		flex: 1;
+	}
+
+	.actions {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.meta {
+		display: flex;
+		gap: 0.25rem;
+		color: light-dark(var(--gray-10), var(--gray-9));
+		font-size: var(--font-3);
+		margin-top: auto;
 
 		:global(.list) & {
-			grid-column: 2;
+			display: none;
 		}
 	}
 
@@ -176,9 +211,13 @@
 		text-decoration: none;
 	}
 
-	h3 small {
-		font-size: var(--font-4);
-		font-weight: 400;
+	.slug {
+		font-size: var(--font-3);
+		color: light-dark(var(--gray-10), var(--gray-9));
+		a {
+			text-decoration: none;
+			color: inherit;
+		}
 	}
 
 	h3 a:hover {

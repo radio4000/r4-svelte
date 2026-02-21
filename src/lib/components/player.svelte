@@ -44,6 +44,7 @@
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
+	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
 
 	// Both media player elements
 	let youtubePlayer = $state()
@@ -269,9 +270,11 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
-			<div class="header-id" class:active={isActiveDeck}>
-				<IconR4 />
-			</div>
+			{#if hasMultipleDecks}
+				<div class="header-id" class:active={isActiveDeck}>
+					<IconR4 />
+				</div>
+			{/if}
 			{#if headerChannel}
 				<a class="header-channel" href={resolve(`/${headerChannel.slug}`)}>
 					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
