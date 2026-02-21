@@ -94,6 +94,10 @@
 
 {#if channel}
 	<article>
+		<div class="search-bar">
+			<SearchInput bind:value={searchInput} placeholder="Search tracks..." debounce={300} />
+		</div>
+
 		<div class="channel-meta">
 			<p class="dates">
 				<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
@@ -104,10 +108,6 @@
 			{#if channel.description}
 				<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 			{/if}
-		</div>
-
-		<div class="search-bar">
-			<SearchInput bind:value={searchInput} placeholder="Search tracks..." debounce={300} />
 		</div>
 
 		{#if tracksQuery.isReady && previewTracks.length > 0}
