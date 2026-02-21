@@ -39,7 +39,7 @@ const QUEUE_KEY = LOCAL_STORAGE_KEYS.appStateQueue
 export const defaultAppState: AppState = {
 	id: 1,
 
-	decks: {1: createDefaultDeck(1)},
+	decks: {1: {...createDefaultDeck(1), compact: true}},
 	next_deck_id: 2,
 	active_deck_id: 1,
 
