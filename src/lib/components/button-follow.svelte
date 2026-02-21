@@ -29,7 +29,6 @@
 		onclick={toggle}
 		title={following ? m.button_unfollow() : m.button_follow()}
 		aria-label={following ? m.button_unfollow() : m.button_follow()}
-		class:active={following}
 		{...rest}
 	>
 		<Icon icon={following ? 'favorite-fill' : 'favorite'} />

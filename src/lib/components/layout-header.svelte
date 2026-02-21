@@ -126,8 +126,8 @@
 		position: absolute;
 		top: -7px;
 		right: -5px;
-		background: var(--color-red);
-		color: white;
+		background: var(--accent-9);
+		color: var(--gray-1);
 		border-radius: 50%;
 		font-size: var(--font-1);
 		min-width: 1.2rem;

@@ -38,7 +38,6 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <article class:playing={isPlaying} ondblclick={handleDblClick} tabindex="0" bind:this={articleEl}>
-	{#if isBroadcasting}<div class="live-dot"></div>{/if}
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
 	</figure>
@@ -68,17 +67,7 @@
 		</div>
 		<div class="actions">
 			<ButtonFollow {channel} class="ghost" />
-			<button
-				type="button"
-				class="ghost play-btn"
-				class:active={isPlaying}
-				onclick={() =>
-					isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
-				title={isPlaying ? 'Pause' : m.common_play()}
-			>
-				<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-			</button>
-			<PopoverMenu btnClass="ghost" align="right" valign="top">
+	<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
 					<Icon icon="options-horizontal" size={16} />
 				{/snippet}
@@ -129,14 +118,14 @@
 
 		&:focus,
 		&:focus-within {
-			background: var(--accent-2);
+			background: var(--gray-2);
 			border-color: var(--accent-7);
 			outline: none;
 		}
 
 		&.playing {
 			background: var(--accent-3);
-			border-color: var(--accent-9);
+			border-color: var(--gray-5);
 		}
 
 		:global(.list) & {
@@ -249,16 +238,12 @@
 		overflow-wrap: break-word;
 	}
 
-	.live-dot {
-		position: absolute;
-		top: -1px;
-		left: 1px;
-		z-index: 1;
-		width: var(--font-3);
-		height: var(--font-3);
-		background-color: #00ff00;
-		border: 2px solid white;
-		border-radius: 50%;
-		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+	h3 :global(.channel-badge) {
+		animation: live-pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes live-pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.5; }
 	}
 </style>
