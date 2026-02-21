@@ -1,4 +1,5 @@
 <script>
+	import Tag from '$lib/components/tag.svelte'
 	import {ENTITY_REGEX} from '$lib/utils.ts'
 
 	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void}} */
@@ -54,21 +55,11 @@
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
 		{#if part.isTag && onTagClick}
-			<button class="ghost tag-link" onclick={() => onTagClick(part.content)}>{part.content}</button>
+			<Tag onclick={() => onTagClick(part.content)}>{part.content}</Tag>
 		{:else}
-			<a href={part.href}>{part.content}</a>
+			<Tag href={part.href}>{part.content}</Tag>
 		{/if}
 	{:else}
 		{part.content}
 	{/if}
 {/each}
-
-<style>
-	.tag-link {
-		min-height: 0;
-		padding: 0;
-		font: inherit;
-		color: inherit;
-		text-decoration: underline;
-	}
-</style>

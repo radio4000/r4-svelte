@@ -382,6 +382,7 @@
 	footer p {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.5rem;
 		margin: 2rem 0.5rem 1rem;
 	}

@@ -1,6 +1,7 @@
 <script>
 	import {relativeDate} from '$lib/dates.js'
 	import LinkEntities from '$lib/components/link-entities.svelte'
+	import Tag from '$lib/components/tag.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -46,7 +47,7 @@
 				<dt>{m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
-						<a href="/search?q={encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}">#{tag}</a>
+						<Tag href="/search?q={encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}">#{tag}</Tag>
 					{/each}
 				</dd>
 			{/if}
@@ -55,7 +56,7 @@
 				<dt>mentions</dt>
 				<dd class="mentions">
 					{#each data.mentions as mention (mention)}
-						<a href="/{mention}">@{mention}</a>
+						<Tag href="/{mention}">@{mention}</Tag>
 					{/each}
 				</dd>
 			{/if}
@@ -128,23 +129,5 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem;
-	}
-
-	.tags a,
-	.mentions a,
-	.description :global(a),
-	.description :global(.tag-link) {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.12rem 0.45rem;
-		border: 1px solid var(--gray-5);
-		border-radius: 999px;
-		text-decoration: none;
-	}
-
-	.description :global(a),
-	.description :global(.tag-link) {
-		margin-right: 0.3rem;
-		margin-bottom: 0.25rem;
 	}
 </style>

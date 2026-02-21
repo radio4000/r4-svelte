@@ -227,7 +227,6 @@
 	.description {
 		color: light-dark(var(--gray-11), var(--gray-10));
 		overflow-wrap: break-word;
-		line-height: 1.2;
 	}
 
 	.live-dot {

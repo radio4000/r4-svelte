@@ -194,9 +194,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
-		background: var(--gray-2);
-		border: 1px solid var(--gray-4);
-		border-radius: var(--border-radius);
 	}
 
 	.search-bar {
@@ -218,19 +215,6 @@
 	.description {
 		white-space: pre-line;
 		overflow-wrap: break-word;
-	}
-
-	/* Pill-style links inside the description (tags + mentions from LinkEntities) */
-	.description :global(a),
-	.description :global(.tag-link) {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.12rem 0.45rem;
-		border: 1px solid var(--gray-5);
-		border-radius: 999px;
-		text-decoration: none;
-		margin: 0 0.2rem 0.2rem 0;
-		vertical-align: middle;
 	}
 
 	.url {
