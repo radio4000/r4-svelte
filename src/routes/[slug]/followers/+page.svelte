@@ -1,7 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {eq} from '@tanstack/db'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {channelsCollection, queryClient} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelsView from '$lib/components/channels-view.svelte'

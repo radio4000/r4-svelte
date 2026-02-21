@@ -1,5 +1,5 @@
 <script>
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {inArray} from '@tanstack/db'
 	import {fuzzySearch} from '$lib/search'
 	import {appState} from '$lib/app-state.svelte'

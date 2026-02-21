@@ -40,19 +40,49 @@ function cleanForIDB(client: PersistedClient): PersistedClient {
 	)
 }
 
+let persistCount = 0
+let pendingClient: PersistedClient | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+const DEBOUNCE_MS = 500
+
+/** Flush the latest pending client to IDB. */
+async function flushToIDB() {
+	const client = pendingClient
+	if (!client) return
+	pendingClient = null
+
+	const n = ++persistCount
+	const t0 = performance.now()
+	const clean = cleanForIDB(client)
+	const cleanMs = (performance.now() - t0).toFixed(1)
+	const queries = client.clientState?.queries?.length ?? '?'
+	const sizeKB = (JSON.stringify(clean).length / 1024).toFixed(0)
+	try {
+		await set(IDB_KEYS.queryCache, clean, store)
+		const totalMs = (performance.now() - t0).toFixed(1)
+		log.debug(`persistClient #${n}`, {queries, sizeKB: `${sizeKB}KB`, cleanMs: `${cleanMs}ms`, totalMs: `${totalMs}ms`})
+	} catch (err) {
+		await resetStore(`persistClient: ${err}`)
+		await set(IDB_KEYS.queryCache, clean, store)
+		const totalMs = (performance.now() - t0).toFixed(1)
+		log.warn(`persistClient #${n} (retry)`, {queries, sizeKB: `${sizeKB}KB`, totalMs: `${totalMs}ms`})
+	}
+}
+
 const idbPersister = {
 	persistClient: async (client: PersistedClient) => {
-		const clean = cleanForIDB(client)
-		try {
-			await set(IDB_KEYS.queryCache, clean, store)
-		} catch (err) {
-			await resetStore(`persistClient: ${err}`)
-			await set(IDB_KEYS.queryCache, clean, store)
-		}
+		pendingClient = client
+		if (debounceTimer) clearTimeout(debounceTimer)
+		debounceTimer = setTimeout(flushToIDB, DEBOUNCE_MS)
 	},
 	restoreClient: async () => {
+		const t0 = performance.now()
 		try {
-			return await get<PersistedClient>(IDB_KEYS.queryCache, store)
+			const result = await get<PersistedClient>(IDB_KEYS.queryCache, store)
+			const ms = (performance.now() - t0).toFixed(1)
+			const queries = result?.clientState?.queries?.length ?? 0
+			log.log('restoreClient', {queries, ms: `${ms}ms`})
+			return result
 		} catch (err) {
 			await resetStore(`restoreClient: ${err}`)
 			return undefined
@@ -78,6 +108,7 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	if (key === 'broadcasts') return false
 	if (key === 'tracks-freshness') return false
 	// if (key === 'tracks') return false
+	// if (key === 'channels') return false
 
 	return true
 }

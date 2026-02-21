@@ -60,6 +60,8 @@
 	> li,
 	> div {
 		border-bottom: 1px solid var(--gray-3);
+		/* content-visibility: auto; */
+		/* contain-intrinsic-size: auto 53px; */
 
 		&:hover {
 			background: light-dark(var(--gray-2), var(--gray-2));
