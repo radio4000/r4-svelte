@@ -273,7 +273,6 @@
 		width: 100%;
 	}
 
-
 	.tracks :global(.slug),
 	main :global(.index) {
 		display: none;
