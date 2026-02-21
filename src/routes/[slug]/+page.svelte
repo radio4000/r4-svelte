@@ -240,7 +240,12 @@
 		gap: 0.5rem;
 	}
 
-	.track-section > header h3,
+	.track-section > header h3 {
+		font-size: var(--font-3);
+		font-weight: 600;
+		color: var(--gray-10);
+	}
+
 	.featured-channels > header h3 {
 		font-size: var(--font-3);
 		font-weight: 600;
