@@ -65,6 +65,7 @@
 
 		&:hover {
 			background: light-dark(var(--gray-2), var(--gray-2));
+			--tag-border: var(--accent-6);
 		}
 	}
 
@@ -78,6 +79,7 @@
 
 	&:hover {
 		background: light-dark(var(--gray-2), var(--gray-2));
+		--tag-border: var(--accent-6);
 	}
 
 	&[aria-selected='true'] {

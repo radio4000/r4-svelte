@@ -254,6 +254,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		transition: background 0.15s, color 0.15s;
 		&.locatable {
 			cursor: pointer;
 		}
@@ -273,12 +274,22 @@
 
 	.active {
 		background: var(--accent-3);
-		border-color: var(--gray-5);
+		outline: 1px solid var(--gray-5);
+		outline-offset: -1px;
+		--tag-bg: var(--accent-6);
+		--tag-bg-hover: var(--accent-7);
+		--tag-bg-active: var(--accent-8);
+		--tag-color: var(--accent-12);
 	}
 
 	.selected {
 		background: var(--gray-2);
-		border-color: var(--accent-7);
+		outline: 1px solid var(--accent-7);
+		outline-offset: -1px;
+		--tag-bg: var(--accent-4);
+		--tag-bg-hover: var(--accent-5);
+		--tag-bg-active: var(--accent-6);
+		--tag-color: var(--accent-11);
 	}
 
 	h3 + p {
@@ -317,7 +328,6 @@
 	article {
 		display: flex;
 		align-items: flex-start;
-		border: 1px solid transparent;
 		:global(.popover-menu) {
 			padding: 0.2em;
 		}
