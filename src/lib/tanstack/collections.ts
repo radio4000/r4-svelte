@@ -14,8 +14,6 @@ export {
 	type PlayHistoryEntry
 } from './collections/play-history'
 export {spamDecisionsCollection, type SpamDecision} from './collections/spam-decisions'
-export {viewsCollection, createView, updateView, deleteView, type SavedView} from './collections/views'
-export {pinsCollection, createPin, deletePin, deletePinsByViewId, reorderPins, type Pin} from './collections/pins'
 
 // Synced collections
 export {followsCollection, followChannel, unfollowChannel, loadUserFollows} from './collections/follows'

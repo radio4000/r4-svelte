@@ -12,8 +12,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
-	import {parseSearchQueryToView, parseView, serializeView, queryViewTracks} from '$lib/views.svelte'
-	import ViewsBar from '$lib/components/views-bar.svelte'
+	import {parseSearchQueryToView, queryViewTracks} from '$lib/views.svelte'
 	import {searchChannels} from '$lib/search-fts'
 	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
 	import {channelsCollection} from '$lib/tanstack/collections'
@@ -21,14 +20,7 @@
 
 	const uid = $props.id()
 
-	// Two URL modes: ?q= (human search) vs raw params (?channels=, ?tags=, etc.)
-	const isQMode = $derived(page.url.searchParams.has('q'))
-	const searchQuery = $derived(page.url.searchParams.get('q') || '')
-
-	// View: derived from URL in either mode
-	const view = $derived(isQMode ? parseSearchQueryToView(searchQuery) : parseView(page.url.searchParams))
-
-	// Form input: initialized from URL, synced on navigation
+	// Form input: initialized from URL, synced on navigation (not $effect — avoids URL→form feedback loop)
 	let inputValue = $state(page.url.searchParams.get('q') || '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
@@ -38,10 +30,9 @@
 		inputValue = page.url.searchParams.get('q') || ''
 	})
 
-	// Push debounced input → URL (only when in q-mode or typing)
+	// Push debounced input → URL
 	$effect(() => {
 		const q = debouncedInput.current.trim()
-		if (!q && !isQMode) return // Don't overwrite raw params mode
 		const url = q ? `/search?q=${encodeURIComponent(q)}` : '/search'
 		goto(url, {replaceState: true})
 	})
@@ -53,6 +44,12 @@
 		}
 	}
 
+	// Derive search query from URL (single source of truth)
+	const searchQuery = $derived(page.url.searchParams.get('q') || '')
+
+	// Parse the human query into a View
+	const view = $derived(searchQuery ? parseSearchQueryToView(searchQuery) : {})
+
 	// Reactive track results via View pipeline
 	const viewQuery = queryViewTracks(() => view)
 
@@ -61,11 +58,10 @@
 	let channels = $state([])
 	let channelsLoading = $state(false)
 
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
-
 	$effect(() => {
 		const v = view
-		if (!hasFilter) {
+		const q = searchQuery
+		if (!q || q.trim().length < 2) {
 			channels = []
 			return
 		}
@@ -128,14 +124,6 @@
 			tracks.map((t) => t.id)
 		)
 	}
-
-	function onViewsBarChange(v) {
-		inputValue = '' // Switch from ?q= to raw params mode
-		const params = serializeView(v).toString()
-		goto(params ? `/search?${params}` : '/search', {replaceState: true})
-	}
-
-	const viewsBarView = $derived(parseView(page.url.searchParams))
 </script>
 
 <svelte:head>
@@ -150,15 +138,13 @@
 		</fieldset>
 	</form>
 
-	<ViewsBar view={viewsBarView} onchange={onViewsBarChange} />
-
 	<p>
 		<SearchStatus {searchQuery} channelCount={channels.length} trackCount={tracks.length} />
 	</p>
 
-	{#if hasFilter}
+	{#if searchQuery}
 		{#if !isLoading && channels.length === 0 && tracks.length === 0}
-			<p>{m.search_no_results()} "{searchQuery || serializeView(view)}"</p>
+			<p>{m.search_no_results()} "{searchQuery}"</p>
 			<p>{m.search_tip_slug()}</p>
 		{/if}
 
@@ -212,7 +198,7 @@
 				</ul>
 			</section>
 		{/if}
-	{:else if !hasFilter}
+	{:else if !searchQuery}
 		<p>Search channels and tracks on Radio4000.</p>
 		<p>
 			TIP: find tracks from a channel with <em>@slug [your track query]</em>

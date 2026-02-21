@@ -40,10 +40,6 @@
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}
 		</a>
-		<a href="/settings/pins">
-			<Icon icon="favorite" />
-			Pins
-		</a>
 	</menu>
 
 	<menu class="nav-vertical">
