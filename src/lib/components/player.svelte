@@ -23,6 +23,7 @@
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -315,9 +316,9 @@
 				<button
 					onclick={() => toggleVideo(deckId)}
 					class:active={deck?.hide_video_player}
-					aria-label={deck?.hide_video_player ? m.player_visible() : m.player_hidden()}
+					aria-label={deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 					{@attach tooltip({
-						content: deck?.hide_video_player ? m.player_visible() : m.player_hidden(),
+						content: deck?.hide_video_player ? m.player_hidden() : m.player_visible(),
 						position: 'top'
 					})}
 				>
@@ -327,8 +328,8 @@
 					<button
 						onclick={() => toggleQueuePanel(deckId)}
 						class:active={deck?.hide_queue_panel}
-						aria-label={deck?.hide_queue_panel ? m.queue_visible() : m.queue_hidden()}
-						{@attach tooltip({content: deck?.hide_queue_panel ? m.queue_visible() : m.queue_hidden(), position: 'top'})}
+						aria-label={deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
+						{@attach tooltip({content: deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible(), position: 'top'})}
 					>
 						<Icon icon="unordered-list" />
 					</button>
@@ -491,10 +492,10 @@
 			{/if}
 			<button
 				onclick={() => toggleDeckCompact(deckId)}
-				aria-label="Minimize deck"
-				{@attach tooltip({content: 'Minimize deck', position: 'top'})}
+				aria-label="Compact"
+				{@attach tooltip({content: 'Compact', position: 'top'})}
 			>
-				<Icon icon="sidebar-fill-right" />
+				<IconDeckPanel expanded />
 			</button>
 		</menu>
 	</section>
