@@ -25,6 +25,7 @@
 
 	/** @param {MouseEvent} e */
 	function handleDblClick(e) {
+		e.preventDefault()
 		if (e.target instanceof Element && e.target.closest('a, button')) return
 		playChannel(appState.active_deck_id, channel)
 	}
@@ -107,6 +108,7 @@
 		border: 1px solid transparent;
 		border-radius: var(--border-radius);
 		padding: 0.25rem;
+		user-select: none;
 		transition:
 			background 0.1s,
 			border-color 0.1s;

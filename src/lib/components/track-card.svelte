@@ -59,6 +59,7 @@
 	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
 	const dblclick = (event: MouseEvent) => {
+		event.preventDefault()
 		const target = event.target as HTMLElement
 		// Let time element and hashtag/mention links navigate normally
 		if (target.closest('time')) return
@@ -103,7 +104,7 @@
 
 <article class:active class:selected={selected && !active}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="card" ondblclick={dblclick}>
+	<div class="card" ondblclick={dblclick} onmousedown={(e) => { if (e.detail >= 2) e.preventDefault() }}>
 		{#if ytid && showImage && !appState.hide_track_artwork}<img
 				src={imageSrc}
 				alt={track.title}
