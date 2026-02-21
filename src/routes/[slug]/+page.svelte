@@ -74,12 +74,12 @@
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 	const isTagPlaying = (tag: string) => activeDeck?.playlist_title === `#${tag}` && activeDeck?.is_playing
 
-	// Tags from the active deck's playlist (e.g. "#house #techno" → ["house", "techno"])
+	// Tags from ALL decks' playlists (e.g. "#house #techno" → ["house", "techno"])
 	const deckPlaylistTags = $derived(
-		activeDeck?.playlist_title
-			?.split(' ')
-			.filter((t) => t.startsWith('#'))
-			.map((t) => t.slice(1)) ?? []
+		[...new Set(
+			Object.values(appState.decks)
+				.flatMap((d) => d.playlist_title?.split(' ').filter((t) => t.startsWith('#')).map((t) => t.slice(1)) ?? [])
+		)]
 	)
 	// Tracks from this channel matching any of the current deck's playlist tags
 	const deckTagMatches = $derived(
@@ -131,7 +131,7 @@
 				<header>
 					<h3>
 						<a href="/{slug}/tracks?tags={encodeURIComponent(deckPlaylistTags.join(','))}">
-							{activeDeck?.playlist_title}
+							{deckPlaylistTags.map((t) => `#${t}`).join(" ")}
 						</a>
 						<small>({deckTagMatches.length})</small>
 					</h3>
@@ -139,7 +139,7 @@
 				<Tracklist
 					tracks={deckTagMatches.slice(0, TAG_PREVIEW_LIMIT)}
 					playlistTracks={deckTagMatches}
-					playlistTitle={activeDeck?.playlist_title}
+					playlistTitle={deckPlaylistTags.map((t) => `#${t}`).join(" ")}
 					{canEdit}
 					grouped={false}
 					virtual={false}
