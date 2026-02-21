@@ -43,7 +43,10 @@
 				queryKey: ['channel-followers', channel.id],
 				queryFn: async () => {
 					const {data} = await sdk.channels.readFollowers(channel.id)
-					return data || []
+					if (!data?.length) return []
+					const ids = data.map((c) => c.id)
+					const {data: enriched} = await sdk.supabase.from('channels_with_tracks').select('*').in('id', ids)
+					return enriched || data
 				},
 				staleTime: 5 * 60 * 1000
 			})
