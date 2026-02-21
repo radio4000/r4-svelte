@@ -1,59 +1,51 @@
 <script lang="ts">
 	import {
 		viewsCollection,
-		pinsCollection,
-		createPin,
-		deletePin,
-		reorderPins,
+		pinView,
+		unpinView,
+		reorderPinnedViews,
 		deleteView,
-		type Pin
+		type SavedView
 	} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import Icon from '$lib/components/icon.svelte'
 
 	const viewsQuery = useLiveQuery(viewsCollection)
-	const pinsQuery = useLiveQuery(pinsCollection)
 
 	const savedViews = $derived(viewsQuery.data ?? [])
-	const pins = $derived((pinsQuery.data ?? []).toSorted((a: Pin, b: Pin) => a.position - b.position))
+	const pinned = $derived(
+		savedViews.filter((v) => v.position != null).toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+	)
 
 	/** Unified list: pinned views first (by position), then unpinned (alphabetically). */
 	const sortedViews = $derived(() => {
-		const pinMap = new Map(pins.map((p: Pin, i: number) => [p.view_id, {pin: p, index: i}]))
-		const pinned = pins
-			.map((p: Pin, i: number) => {
-				const sv = savedViews.find((v) => v.id === p.view_id)
-				return sv ? {sv, pin: p, pinIndex: i, isPinned: true as const} : null
-			})
-			.filter((x) => x !== null)
 		const unpinned = savedViews
-			.filter((sv) => !pinMap.has(sv.id))
+			.filter((sv) => sv.position == null)
 			.toSorted((a, b) => a.name.localeCompare(b.name))
-			.map((sv) => ({sv, pin: null, pinIndex: -1, isPinned: false as const}))
-		return [...pinned, ...unpinned]
+			.map((sv) => ({sv, isPinned: false as const, pinIndex: -1}))
+		return [...pinned.map((sv, i) => ({sv, isPinned: true as const, pinIndex: i})), ...unpinned]
 	})
 
-	function togglePin(viewId: string) {
-		const existing = pins.find((p: Pin) => p.view_id === viewId)
-		if (existing) {
-			deletePin(existing.id)
+	function togglePin(sv: SavedView) {
+		if (sv.position != null) {
+			unpinView(sv.id)
 		} else {
-			createPin(viewId)
+			pinView(sv.id)
 		}
 	}
 
 	function moveUp(index: number) {
 		if (index <= 0) return
-		const ids = pins.map((p: Pin) => p.id)
+		const ids = pinned.map((v) => v.id)
 		;[ids[index - 1], ids[index]] = [ids[index], ids[index - 1]]
-		reorderPins(ids)
+		reorderPinnedViews(ids)
 	}
 
 	function moveDown(index: number) {
-		if (index >= pins.length - 1) return
-		const ids = pins.map((p: Pin) => p.id)
+		if (index >= pinned.length - 1) return
+		const ids = pinned.map((v) => v.id)
 		;[ids[index], ids[index + 1]] = [ids[index + 1], ids[index]]
-		reorderPins(ids)
+		reorderPinnedViews(ids)
 	}
 </script>
 
@@ -86,7 +78,7 @@
 						<button
 							class="btn"
 							onclick={() => moveDown(item.pinIndex)}
-							disabled={!item.isPinned || item.pinIndex === pins.length - 1}
+							disabled={!item.isPinned || item.pinIndex === pinned.length - 1}
 							class:invisible={!item.isPinned}
 							aria-label="Move down"
 						>
@@ -101,7 +93,7 @@
 								<Icon icon="delete" size={16} />
 							</button>
 						{/if}
-						<button class="btn" onclick={() => togglePin(item.sv.id)} aria-label={item.isPinned ? 'Unpin' : 'Pin'}>
+						<button class="btn" onclick={() => togglePin(item.sv)} aria-label={item.isPinned ? 'Unpin' : 'Pin'}>
 							<Icon icon={item.isPinned ? 'eye' : 'eye-close'} size={16} />
 						</button>
 					</span>

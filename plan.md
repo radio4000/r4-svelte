@@ -4,7 +4,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
-- plan-views.md and plan-pins.md
+- plan-views.md
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - meta-toolbar should be <menu>, not div
 - nav.tabs vs div.track-tabs>nav? clean up markup here

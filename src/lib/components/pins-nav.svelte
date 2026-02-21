@@ -4,28 +4,25 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {useLiveQuery as useLiveQueryCustom} from '$lib/tanstack/useLiveQuery.svelte'
-	import {pinsCollection, viewsCollection} from '$lib/tanstack/collections'
+	import {viewsCollection} from '$lib/tanstack/collections'
 	import {parseView} from '$lib/views.svelte'
 
-	const pinsQuery = useLiveQueryCustom(pinsCollection)
 	const viewsQuery = useLiveQueryCustom(viewsCollection)
-	const pins = $derived((pinsQuery.data ?? []).toSorted((a, b) => a.position - b.position))
 	const pinnedViews = $derived(
-		pins
-			.map((pin) => {
-				const sv = (viewsQuery.data ?? []).find((v) => v.id === pin.view_id)
-				if (!sv) return null
+		(viewsQuery.data ?? [])
+			.filter((sv) => sv.position != null)
+			.toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+			.map((sv) => {
 				const view = parseView(new URLSearchParams(sv.params))
 				const channels = view.channels || []
 				const isSingleChannel = channels.length === 1 && !view.tags?.length && !view.search
 				const href = isSingleChannel ? resolve(`/${channels[0]}`) : resolve(`/search?${sv.params}`)
-				return {pin, sv, href}
+				return {sv, href}
 			})
-			.filter((x) => x !== null)
 	)
 </script>
 
-{#each pinnedViews as pv (pv.pin.id)}
+{#each pinnedViews as pv (pv.sv.id)}
 	<a href={pv.href} class="btn pin-link" aria-label={pv.sv.name}>
 		{pv.sv.name}
 	</a>
