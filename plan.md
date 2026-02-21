@@ -24,6 +24,16 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 ## Backlog
 
+- make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
+- meta-toolbar should be <menu>, not div
+- nav.tabs vs div.track-tabs>nav? clean up markup here
+- on the track+its meta pages the trackdetailcontext could be cleaned up, less repeated types
+- track meta r5 introduces new .tags style (reuse? unify?)
+- on track meta pages the toggle json/raw is below output, meaning it disappears when you tap it. put it above so it doesn't jump
+- why does <TrackList> have both tracks and playlistTracks props?
+- didn't look into why but when i switch between discogs/musicbrainz tabs here my browser blocks for 12 seconds :D https://pg.radio4000.com/oskar/tracks/639c8d7a-e095-49b9-b0a0-cdfdf2dd8af8/discogs
+- media query to switch layout header from side to top is too soon. maybe ~900px instead of 768px breakpoint. and do we need 560+640px breakpoints? one of them maybe enough?
+- remove the tap to select row(s) on /batch-edit. the input checkbox is enough for this feature
 - if i go to /search, write #dub, click queue all, it logs -->
   api.ts:276 r5.api addToPlaylist: no deck {deckId: 1} addToPlaylist @ api.ts:276 queueSearchResults @ +page.svelte:122 handleClick @ button-feedback.svelte:23
   it is correct i have no deck, but maybe it could just make what it needs?
