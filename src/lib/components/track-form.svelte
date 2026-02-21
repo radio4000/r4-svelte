@@ -22,10 +22,7 @@
 	let error = $state('')
 	let submitting = $state(false)
 	let fetchingTitle = $state(false)
-	let liveDiscogsUrl = $state(/** @type {string} */ (''))
-	$effect(() => {
-		liveDiscogsUrl = initialDiscogsUrl
-	})
+	let liveDiscogsUrl = $derived(initialDiscogsUrl)
 	/** All possible suggestion tags from the loaded discogs resource */
 	let allDiscogsSuggestions = $state(/** @type {string[]} */ ([]))
 

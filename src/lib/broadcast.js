@@ -10,6 +10,8 @@ import {isDbId} from '$lib/utils'
 /** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
 
 const log = logger.ns('broadcast').seal()
+const RE_YT_PARAM = /[?&]v=([^&]+)/
+const RE_YT_SHORT = /youtu\.be\/([^?]+)/
 
 /** Get slug for a channel ID, or short ID if not found */
 function label(channelId) {
@@ -364,8 +366,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 	if (!track) {
 		if (broadcast.track_url) {
 			const uri = broadcast.track_url
-			const ytId =
-				uri.match(/[?&]v=([^&]+)/)?.[1] ?? uri.match(/youtu\.be\/([^?]+)/)?.[1] ?? broadcast.track_media_id ?? null
+			const ytId = uri.match(RE_YT_PARAM)?.[1] ?? uri.match(RE_YT_SHORT)?.[1] ?? broadcast.track_media_id ?? null
 			const now = new Date().toISOString()
 			track = /** @type {import('$lib/types').Track} */ ({
 				id: track_id,

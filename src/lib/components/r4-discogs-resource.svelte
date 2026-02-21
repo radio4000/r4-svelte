@@ -7,6 +7,9 @@
 	import {tracksCollection} from '$lib/tanstack/collections'
 	import {isDbId} from '$lib/utils'
 
+	const RE_YT_PARAM = /[?&]v=([^&]+)/
+	const RE_YT_SHORT = /youtu\.be\/([^?]+)/
+
 	/**
 	 * @typedef {{position: string, type_: string, title: string, duration: string}} DiscogsTracklistItem
 	 * @typedef {{uri: string, title: string, description: string, duration: number, embed: boolean}} DiscogsVideo
@@ -119,7 +122,7 @@
 		if (!videoUri || !channelTracks?.length) return null
 		const exact = channelTracks.find((t) => t.url === videoUri)
 		if (exact) return exact
-		const ytId = videoUri.match(/[?&]v=([^&]+)/)?.[1] ?? videoUri.match(/youtu\.be\/([^?]+)/)?.[1]
+		const ytId = videoUri.match(RE_YT_PARAM)?.[1] ?? videoUri.match(RE_YT_SHORT)?.[1]
 		if (ytId) return channelTracks.find((t) => t.media_id === ytId) ?? null
 		return null
 	}
@@ -133,7 +136,7 @@
 	 */
 	function makeEphemeralTrack(video, title, position) {
 		const uri = video?.uri ?? ''
-		const ytId = uri.match(/[?&]v=([^&]+)/)?.[1] ?? uri.match(/youtu\.be\/([^?]+)/)?.[1]
+		const ytId = uri.match(RE_YT_PARAM)?.[1] ?? uri.match(RE_YT_SHORT)?.[1]
 		const now = new Date().toISOString()
 		const id = uri ? `discogs:${uri}` : `discogs-no-video:${artistsDisplay}:${position}:${title}`
 		return /** @type {import('$lib/types').Track} */ ({
@@ -158,10 +161,11 @@
 	 */
 	const uniqueVideos = $derived.by(() => {
 		if (!resource?.videos?.length) return /** @type {DiscogsVideo[]} */ ([])
-		const seen = new Set()
+		/** @type {Record<string, boolean>} */
+		const seen = {}
 		return resource.videos.filter((video) => {
-			if (!video?.uri || seen.has(video.uri)) return false
-			seen.add(video.uri)
+			if (!video?.uri || seen[video.uri]) return false
+			seen[video.uri] = true
 			return true
 		})
 	})
