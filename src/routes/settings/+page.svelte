@@ -49,16 +49,16 @@
 		</a>
 		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">
 			<Icon icon="message-circle" />
-			{m.nav_chat()} &rarr;
+			{m.nav_chat()}
 		</a>
 		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
 			<Icon icon="html" />
-			Changelog &rarr;
+			Changelog
 		</a>
 		{#if sha}
 			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				Source code {sha} &rarr;
+				Source code {sha}
 			</a>
 		{/if}
 	</menu>

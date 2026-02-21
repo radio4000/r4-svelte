@@ -285,7 +285,6 @@ menu.nav-grouped {
 	:is(a, button) {
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
 		white-space: nowrap;
 		padding: 0.5rem 0.5rem 0.45rem;
 		text-decoration: none;
