@@ -5,7 +5,7 @@
 	--space-2: calc(0.5rem * var(--scaling));
 	--space-3: calc(1rem * var(--scaling));
 	--border-radius: 0.4rem;
-	--media-radius: 0.4rem;
+	--media-radius: var(--border-radius);
 	--track-artwork-size: 2.375rem;
 	--shadow-modal: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
 

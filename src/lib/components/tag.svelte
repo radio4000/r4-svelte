@@ -17,7 +17,7 @@
 		padding: 0.0625em 0.25em;
 		min-height: 0;
 		min-width: 0;
-		border-radius: 999px;
+		border-radius: calc(var(--border-radius) * 999);
 		border: none;
 		text-decoration: none;
 		font: inherit;

@@ -254,6 +254,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		border-radius: var(--border-radius);
 		transition: background 0.15s, color 0.15s;
 		&.locatable {
 			cursor: pointer;
@@ -266,7 +267,6 @@
 			background: var(--accent-9);
 			color: var(--gray-1);
 			padding-inline: var(--space-1);
-			border-radius: 2px;
 			width: fit-content;
 			max-width: 100%;
 		}
@@ -298,6 +298,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		padding-block: 0.1em;
 	}
 
 	time {
