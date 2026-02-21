@@ -45,4 +45,4 @@ Deterministic "live radio" mode — all listeners with the same track list hear 
 
 ## Layout
 
-See [player-ui.md](player-ui.md) for the full component tree, layout flags, and deck anatomy.
+See [decks.md](decks.md) for the full component tree, layout flags, and deck anatomy.

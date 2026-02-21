@@ -1,6 +1,6 @@
 # R5
 
-Web frontend for Radio4000. SvelteKit + Svelte 5, @radio4000/sdk, TanStack DB.
+Web frontend for Radio4000. SvelteKit + Svelte 5, @radio4000/sdk, TanStack DB. For what the concepts mean and how they relate, see [universe](universe.md).
 
 Channels (`/@slug`) are collections of tracks. Tracks (`/@slug/tracks/:id`) are links to music (YouTube, SoundCloud, embeddable URLs).
 

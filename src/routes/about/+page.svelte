@@ -21,10 +21,14 @@
 			Everyone gets one channel. When you like a track, add it. No playlists to organize, no folders to maintain — your
 			personality gives soul to your radio. Discover songs in the context of someone whose taste you enjoy.
 		</p>
-		<p>All the links to music you like, floating around the internet, stored in one place.</p>
 		<p>
-			Use #tags in descriptions to filter however you want. Search your archive instantly. Browse other radios to
-			discover what fellow humans are curating.
+			A track is a pointer with your opinions — a URL, a title, your tags. The music lives out there. Your channel is
+			the context.
+		</p>
+		<p>
+			Use #tags to filter however you want. Search your archive instantly. Save a search as a view. Browse other radios
+			to discover what fellow humans are curating. Broadcast your deck live, or let auto-radio play for everyone at the
+			same time — just the clock.
 		</p>
 		<ul>
 			<li>No native apps, just the web</li>
