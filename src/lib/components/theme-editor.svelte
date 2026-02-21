@@ -46,7 +46,7 @@
 			name: '--gray-dark',
 			label: () => m.theme_color_gray_label(),
 			description: () => m.theme_color_gray_desc(),
-			default: 'oklch(0.67 0.01 0)',
+			default: 'oklch(0.67 0.005 0)',
 			theme: 'dark'
 		}
 	]
@@ -168,7 +168,6 @@
 
 <div class="constrained">
 	<section>
-		<h1>{m.theme_heading()}</h1>
 		<form class="form">
 			<fieldset>
 				<p>Theme</p>
@@ -323,6 +322,11 @@
 		label {
 			order: 2;
 		}
+	}
+
+	label {
+		/* larger than defaults */
+		font-size: var(--font-4);
 	}
 
 	.share-form fieldset {
