@@ -73,10 +73,8 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 
 ### Route-level cleanup
 
-- **Redundant channel-by-slug `useLiveQuery` in ~7 child routes.** `[slug]/+layout.svelte` already queries the channel, but `followers/`, `following/`, `edit/`, `map/`, `batch-edit/`, `delete/`, `tracks/[tid]/delete/` each create their own `useLiveQuery` for the same slug. Should use context from the layout.
 - **`followers/+page.svelte` and `following/+page.svelte` are near-identical.** Lines 1–58 differ only in variable names (`followers`/`following`, `readFollowers`/`readFollowings`). Could be one shared component.
 - **`batch-edit/+page.svelte:31` loads ALL `trackMetaCollection` unfiltered.** Creates a live query over every track-meta row. Could filter by the channel's media_ids or use `collection.state` directly.
-- **`edit/+page.svelte` overengineered lock-then-get.** Lines 16–32 create a `useLiveQuery`, a `$state` for channelId, an `$effect` to lock it once, and a `$derived` to read it back. Could be a single `$derived`.
 - **`history/` and `stats/` duplicate nav buttons.** Both pages have identical `<menu><a href="/stats">...<a href="/history">...</menu>` markup. Extract to a shared component or layout.
 - **`stats/+page.svelte:45` — no `.catch()` on `navigator.storage.estimate()`.** Will silently fail if storage API rejects.
 - **`[slug]/tracks/[tid]/(tabs)/+layout.svelte:43–85` — manual state sync defeats reactivity.** A `detail` state object is created, then an `$effect` copies all derived values into it. Could use `$derived` directly.
@@ -115,6 +113,7 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **Duplicated badge styles in `base.css`.** `.badge` (line 221) and `.channel-badge` (line 88) have nearly identical rules. Merge into one and document in debug/buttons
 
 ### Utils, search & metadata
+
 - **`discogs-core.js:6–8` — in-memory fetch cache grows unbounded.** 5-min TTL but no eviction. Long sessions can accumulate many entries. Could move to db collection with cache
 - **`youtube.js:61–107` — partial batch failure leaves inconsistent state.** If batch 2 fails, batch 1 data is already in `trackMetaCollection`. Return value doesn't reflect partial success.
 - **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width` is UI concern. `channels_display` and `channels_filter` are already on `AppState`, not on `Deck`. Present to user.

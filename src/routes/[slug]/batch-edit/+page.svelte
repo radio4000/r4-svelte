@@ -1,11 +1,10 @@
 <script>
-	import {getTracksQueryCtx} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {eq} from '@tanstack/db'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import {page} from '$app/state'
 	import {fuzzySearch} from '$lib/search'
-	import {channelsCollection, trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
+	import {trackMetaCollection, updateTrack, insertDurationFromMeta} from '$lib/tanstack/collections'
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {canEditChannel} from '$lib/app-state.svelte'
 	import {countStrings} from '$lib/utils'
@@ -17,20 +16,14 @@
 
 	let slug = $derived(page.params.slug)
 
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, slug))
-			.orderBy(({channels}) => channels.created_at, 'desc')
-			.limit(1)
-	)
+	const channelCtx = getChannelCtx()
 
 	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
 	const tracksQuery = getTracksQueryCtx()
 
 	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
 
-	let channel = $derived(channelQuery.data?.[0])
+	let channel = $derived(channelCtx.data)
 	let rawTracks = $derived(tracksQuery.data || [])
 	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [m.media_id, m]) || []))
 	/** @type {import('$lib/types').TrackWithMeta[]} */
@@ -301,7 +294,7 @@
 	<title>{m.batch_edit_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
-{#if channelQuery.isLoading}
+{#if channelCtx.isLoading}
 	<p style="padding: 1rem;">Loading...</p>
 {:else if !channel}
 	<p style="padding: 1rem;">Channel not found</p>

@@ -1,10 +1,10 @@
 <script>
 	import {page} from '$app/state'
-	import {getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, trackMetaCollection} from '$lib/tanstack/collections'
+	import {trackMetaCollection} from '$lib/tanstack/collections'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -13,8 +13,9 @@
 	let {data, children} = $props()
 	const pathname = $derived(page.url.pathname)
 
+	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
-	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === data.slug))
+	const channel = $derived(channelCtx.data)
 	const canEdit = $derived(canEditChannel(channel?.id))
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
 	const isTrackPlaying = $derived(

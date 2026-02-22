@@ -1,35 +1,23 @@
 <script>
 	import {replaceState} from '$app/navigation'
-	import {page} from '$app/state'
-	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {eq} from '@tanstack/db'
+	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, updateChannel} from '$lib/tanstack/collections'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	// Derive slug from URL for reactivity with shallow routing
-	const slug = $derived(page.url.pathname.split('/')[1])
+	const channelCtx = getChannelCtx()
 
-	// Initial query by slug
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, slug))
-			.orderBy(({channels}) => channels.created_at)
-			.limit(1)
-	)
-
-	// Lock to channel ID once found (ID never changes, slug might)
+	// Lock to channel ID from context (ID never changes, slug might during editing)
 	let channelId = $state('')
 	$effect(() => {
-		const found = channelQuery.data?.[0]
+		const found = channelCtx.data
 		if (found?.id && !channelId) channelId = found.id
 	})
 
-	// Once we have the ID, read directly from collection (bypasses stale query)
-	const channel = $derived(channelId ? channelsCollection.get(channelId) : channelQuery.data?.[0])
+	// Read by ID so the form stays stable when the user changes the slug
+	const channel = $derived(channelId ? channelsCollection.get(channelId) : channelCtx.data)
 	const isSignedIn = $derived(!!appState.user)
 	const canEdit = $derived(canEditChannel(channel?.id))
 
