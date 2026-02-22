@@ -657,21 +657,20 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	if (!snap) return
 
 	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
-	const activeDeckId = appState.active_deck_id
 	const label = view ? viewToQuery(view) : undefined
 	setPlaylist(
-		activeDeckId,
+		deckId,
 		shuffled.map((t) => t.id),
 		{title: label}
 	)
-	if (appState.decks[activeDeckId]) {
-		appState.decks[activeDeckId].auto_radio = true
-		appState.decks[activeDeckId].auto_radio_drifted = false
-		appState.decks[activeDeckId].view = view
-		appState.decks[activeDeckId].auto_radio_rotation_start = rotationStartUnix
+	if (appState.decks[deckId]) {
+		appState.decks[deckId].auto_radio = true
+		appState.decks[deckId].auto_radio_drifted = false
+		appState.decks[deckId].view = view
+		appState.decks[deckId].auto_radio_rotation_start = rotationStartUnix
 	}
 
-	await seekToAutoRadioOffset(activeDeckId, shuffled, totalDuration, rotationStartUnix)
+	await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 }
 
 /** Wait for the media player to be ready, then seek to the current auto-radio offset. */

@@ -15,7 +15,7 @@
 	let username = $state('')
 
 	onMount(() => {
-		username = `user-${Math.random().toString(36).substr(2, 9)}`
+		username = `user-${Math.random().toString(36).slice(2, 11)}`
 
 		channel = sdk.supabase.channel('global-chat')
 

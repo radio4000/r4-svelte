@@ -155,10 +155,11 @@
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 
-		// Update track duration if missing (only for owned channels)
+		// Update track duration if missing (only for owned channels, once per track)
 		if (track && channel && canEditChannel(channel.id) && !track.duration && mediaElement?.duration) {
 			const duration = Math.round(mediaElement.duration)
-			if (duration > 0) {
+			const existing = tracksCollection.state.get(track.id)
+			if (duration > 0 && !existing?.duration) {
 				updateTrack(channel, track.id, {duration})
 			}
 		}

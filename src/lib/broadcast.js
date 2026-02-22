@@ -680,7 +680,7 @@ async function applyBroadcastState(channelId, decks) {
 		}
 		const trackChanged = deck.playlist_track !== state.track_id || deck.listening_to_channel_id !== channelId
 		if (trackChanged) {
-			playBroadcastTrack(deckId, {
+			void playBroadcastTrack(deckId, {
 				channel_id: channelId,
 				track_id: state.track_id,
 				track_played_at: state.track_played_at,

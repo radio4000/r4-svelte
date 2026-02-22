@@ -5,12 +5,18 @@
 	let online = $state(navigator.onLine)
 
 	$effect(() => {
-		window.addEventListener('offline', () => {
+		const goOffline = () => {
 			online = false
-		})
-		window.addEventListener('online', () => {
+		}
+		const goOnline = () => {
 			online = true
-		})
+		}
+		window.addEventListener('offline', goOffline)
+		window.addEventListener('online', goOnline)
+		return () => {
+			window.removeEventListener('offline', goOffline)
+			window.removeEventListener('online', goOnline)
+		}
 	})
 </script>
 

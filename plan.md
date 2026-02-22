@@ -18,10 +18,10 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - We parse track.description inside TrackCard for links with LinkEntities, consider DB trigger or something to avoid computing this over and over
 - OpenGraph share previews — proper `<meta>` tags on channel/track pages so links preview nicely in social/chat apps. Needs server-side data (load functions already fetch channel/track).
 - Media Session API — OS-level lock screen / notification controls (play/pause/skip/artwork). Player already has all the hooks; wire up `navigator.mediaSession.metadata` and action handlers.
-- Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority. 
+- Views: channel page (`/@slug`) — could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a track URL that already exists in the channel. Could also surface duplicates in batch-edit (group by URL or media_id).
 - Mark musicbrainz/discogs metadata as wrong — auto-matching has high error rate. Alternative: show "unverified" badge.
-- Local file player for mp3/m4a 
+- Local file player for mp3/m4a
 
 ## Performance audit — $state proxy & useLiveQuery hotspots
 
@@ -64,14 +64,15 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 Findings from a codebase scan. Roughly sorted by impact. Needs explanation to and confirmation from user.
 
-### Bugs
+### ~~Bugs~~ ✓
 
-- **`internet-indicator.svelte` — event listener leak.** `$effect` adds `window.addEventListener('offline'/'online')` but never returns a cleanup function. Every re-run of the effect adds more listeners. Fix: return `() => { window.removeEventListener(...) }`.
-- **Missing `.catch()` on fire-and-forget promises.** `ensure-track.svelte:18` (`sdk.tracks.readTrack().then(...)` — no catch), `search/+page.svelte:143` (`Promise.all(promises).then(...)` — no catch, so `channelsLoading` never resets on error), `[slug]/+page.svelte:58` (`Promise.all(slugs.map(findChannelBySlug)).then(...)` — no catch). All should have `.catch()` or use `await` with try/catch.
-- **`live-chat.svelte` uses deprecated `substr`.** Line 18: `.substr(2, 9)` → should be `.slice(2, 11)` or `.substring(2, 11)`.
-- **`joinAutoRadio` race condition — uses wrong deck ID.** `api.ts:659–674`: after `await playTrack(deckId, ...)` it reads `appState.active_deck_id` instead of using the original `deckId`. If the user switches decks during the await, playlist and auto-radio state get applied to the wrong deck. Fix: use `deckId` throughout instead of re-reading `active_deck_id`.
-- **`broadcast.js:683` — fire-and-forget async without `void`.** `playBroadcastTrack()` called without `await` or `void`, so unhandled rejections escape. Line 725 correctly uses `void seekWhenReady()` — inconsistent.
-- **`player.svelte:158–164` — track duration update fires on every play.** `updateTrack(channel, track.id, {duration})` is called each time the user plays a track with missing duration, even if it was already written. Could debounce or check if already set.
+All fixed in `svpsvxwr`:
+- ~~`internet-indicator.svelte` — event listener leak~~ → cleanup function added
+- ~~Missing `.catch()` on fire-and-forget promises~~ → added `.catch()` to `ensure-track`, `search/+page`, `[slug]/+page`
+- ~~`live-chat.svelte` deprecated `substr`~~ → replaced with `.slice(2, 11)`
+- ~~`joinAutoRadio` race condition — wrong deck ID~~ → uses `deckId` throughout instead of re-reading `active_deck_id`
+- ~~`broadcast.js:683` fire-and-forget without `void`~~ → added `void`
+- ~~`player.svelte` duration update fires on every play~~ → guards with `tracksCollection.state.get()` check
 
 ### Player & audio edge cases (investigate)
 
@@ -108,11 +109,11 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **`broadcasts.js:118–134` — subscription + event listener never cleaned up.** Realtime subscription has no unsubscribe. `visibilitychange` listener added at module load, never removed.
 - **`ensureTracksLoaded` race condition** (`tracks.ts:297`). Between checking `existing.length` and calling `startSyncImmediate()`, parallel callers can pass the check and trigger duplicate fetches.
 - **`views.ts:26–36` — `createView()` doesn't await insert.** Returns before `viewsCollection.insert()` completes. If component unmounts during insert, data is lost.
-- **`reorderPinnedViews()` updates views in a loop** (`views.ts:84`). Calls `updateView()` per item instead of `writeBatch()`. Could batch. 
+- **`reorderPinnedViews()` updates views in a loop** (`views.ts:84`). Calls `updateView()` per item instead of `writeBatch()`. Could batch.
 - **`query-cache-persistence.ts:46` — debounce timer not flushed on unmount.** Pending persist data can be lost if the page closes before the timer fires. Should flush on `beforeunload`.
 - **`query-cache-persistence.ts:101–114` — hardcoded query exclusions without docs.** `'todos-cached'` looks like a leftover from a demo. `'channels'` with `'shuffle'` excluded with no comment. Document inline comments why we did/do this. User knows
 - **`queue-panel.svelte:66` — history query scans entire `playHistoryCollection`** without filter or limit. Already noted in plan performance audit, now confirmed.
-- **`inArray(tracks.id, [''])` in `views.svelte.ts:141`** — returns empty "return no results" by querying for `id === ''`. Works but fragile; a `.limit(0)` would be clearer intent. 
+- **`inArray(tracks.id, [''])` in `views.svelte.ts:141`** — returns empty "return no results" by querying for `id === ''`. Works but fragile; a `.limit(0)` would be clearer intent.
 
 ### Accessibility
 
@@ -134,7 +135,7 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **`keyboard.js:52–53` — calling `initializeKeyboardShortcuts()` multiple times adds duplicate listeners.** Should guard or return/reuse cleanup function.
 - **`focus.ts:78` — `previous?.focus()` in trap destroy could fail** if the previously focused element was removed from DOM during the trap's lifetime.
 - **`dates.js:2` — `'en-DE'` locale hardcoded** in `formatDate()`. Produces German-style dates for English text. Intentional? Document or make configurable. Not intentional. Should respect user.
-- **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width`, `channels_display`, `channels_filter` are UI concerns living alongside data fields. Consider splitting. really, it is deck_width now.  channel_display and filter don't belong on deck, how are they used here? present me
+- **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width`, `channels_display`, `channels_filter` are UI concerns living alongside data fields. Consider splitting. really, it is deck_width now. channel_display and filter don't belong on deck, how are they used here? present me
 - **No rate limiting in any metadata fetcher.** YouTube, MusicBrainz, Discogs all make HTTP requests without backoff. Risk of IP blocks or 429 errors.
 
 ### Minor inconsistencies

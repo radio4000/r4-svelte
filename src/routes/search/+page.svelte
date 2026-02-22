@@ -140,17 +140,21 @@
 		}
 		channelsLoading = true
 		let stale = false
-		Promise.all(promises).then((results) => {
-			if (stale) return
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
-			const seen = new Set()
-			channels = results.flat().filter((c) => {
-				if (seen.has(c.id)) return false
-				seen.add(c.id)
-				return true
+		Promise.all(promises)
+			.then((results) => {
+				if (stale) return
+				// eslint-disable-next-line svelte/prefer-svelte-reactivity
+				const seen = new Set()
+				channels = results.flat().filter((c) => {
+					if (seen.has(c.id)) return false
+					seen.add(c.id)
+					return true
+				})
+				channelsLoading = false
 			})
-			channelsLoading = false
-		})
+			.catch(() => {
+				if (!stale) channelsLoading = false
+			})
 		return () => {
 			stale = true
 		}

@@ -55,10 +55,12 @@
 			return
 		}
 		let stale = false
-		Promise.all(slugs.map(findChannelBySlug)).then((results) => {
-			if (stale) return
-			mentionedChannels = results.filter((c) => c !== undefined) as import('$lib/types').Channel[]
-		})
+		Promise.all(slugs.map(findChannelBySlug))
+			.then((results) => {
+				if (stale) return
+				mentionedChannels = results.filter((c) => c !== undefined) as import('$lib/types').Channel[]
+			})
+			.catch(() => {})
 		return () => {
 			stale = true
 		}

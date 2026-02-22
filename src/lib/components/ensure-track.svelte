@@ -15,12 +15,15 @@
 		fetchedTrack = null
 		if (!tid) return
 		if (tracksCollection.state.has(tid)) return
-		sdk.tracks.readTrack(tid).then(({data}) => {
-			if (data) {
-				tracksCollection.utils.writeUpsert(data)
-				fetchedTrack = data
-			}
-		})
+		sdk.tracks
+			.readTrack(tid)
+			.then(({data}) => {
+				if (data) {
+					tracksCollection.utils.writeUpsert(data)
+					fetchedTrack = data
+				}
+			})
+			.catch(() => {})
 	})
 </script>
 
