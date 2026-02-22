@@ -2,38 +2,26 @@
 	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
-	import {deriveChannelCanvasState} from '$lib/components/channel-canvas-state.js'
+	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
-	import {channelAvatarUrl, extractHashtags, extractMentions} from '$lib/utils.ts'
+	import {channelAvatarUrl} from '$lib/utils.ts'
 
 	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 120))
 	const deckCanvasState = $derived.by(() =>
-		deriveChannelCanvasState({
+		deriveChannelActivityState({
 			decks: appState.decks,
 			tracksState: tracksCollection.state,
 			channelsState: channelsCollection.state
 		})
 	)
 	const media = $derived(
-		channels.map((c) => {
-			const tags = extractHashtags(c.description || '')
-			return {
+		channels.map((c) =>
+			toChannelCardMedia(c, deckCanvasState, {
 				url: channelAvatarUrl(/** @type {string} */ (c.image)),
 				width: 250,
-				height: 250,
-				slug: c.slug,
-				id: c.id,
-				name: c.name,
-				description: c.description || '',
-				tags,
-				mentions: extractMentions(c.description || ''),
-				activeTags: deckCanvasState.activeTags,
-				activeMentions: deckCanvasState.activeMentions,
-				hasActiveTagMatch: tags.some((tag) => deckCanvasState.activeTags.includes(tag)),
-				isActive: deckCanvasState.activeChannelIds.includes(c.id),
-				channel: c
-			}
-		})
+				height: 250
+			})
+		)
 	)
 
 	const activeIds = $derived(deckCanvasState.activeChannelIds)

@@ -9,7 +9,7 @@ import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
-/** @typedef {import('@radio4000/sdk').BroadcastDeckState} BroadcastDeckState */
+/** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
 
 const log = logger.ns('broadcast').seal()
 const RE_YT_PARAM = /[?&]v=([^&]+)/

@@ -1,4 +1,4 @@
-import type {Channel as SDKChannel, Track as SDKTrack, Broadcast as SDKBroadcast} from '@radio4000/sdk'
+import type {Channel as SDKChannel, Track as SDKTrack, Database} from '@radio4000/sdk'
 
 // Extends Channel with specific fields we use in this app (not persisted)
 export interface Channel extends SDKChannel {
@@ -97,9 +97,26 @@ interface User {
 
 export type KeyBindingsConfig = Record<string, string>
 
-export type {Broadcast, BroadcastDeckState} from '@radio4000/sdk'
+export interface BroadcastDeckState {
+	index?: number
+	track_id?: string | null
+	track_played_at?: string | null
+	is_playing?: boolean
+	seeked_at?: string | null
+	seek_position?: number | null
+	volume?: number
+	muted?: boolean
+	speed?: number
+	track_url?: string | null
+	track_title?: string | null
+	track_media_id?: string | null
+}
 
-export interface BroadcastWithChannel extends SDKBroadcast {
+export type Broadcast = Database['public']['Tables']['broadcast']['Row'] & {
+	decks?: BroadcastDeckState[] | null
+}
+
+export interface BroadcastWithChannel extends Broadcast {
 	channels: Channel
 }
 

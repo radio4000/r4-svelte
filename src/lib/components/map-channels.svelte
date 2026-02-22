@@ -4,9 +4,15 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 	import {appState} from '$lib/app-state.svelte'
-	import {broadcastsCollection, followsCollection} from '$lib/tanstack/collections'
+	import {
+		broadcastsCollection,
+		followsCollection,
+		channelsCollection,
+		tracksCollection
+	} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {SvelteMap} from 'svelte/reactivity'
+	import {deriveChannelActivityState} from './channel-ui-state.js'
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
@@ -22,31 +28,31 @@
 	let map = null
 	let markersLayer = null
 	let mountedPopups = []
-	let selectedSlug = $state(openSlug)
+	let selectedSlug = $state(/** @type {string | null} */ (null))
 	/** @type {Map<string, L.CircleMarker>} */
 	let markerByChannelId = new SvelteMap()
 	/** @type {Map<string, L.CircleMarker>} */
 	let markerBySlug = new SvelteMap()
 	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const favoriteIds = $derived(new Set((followsQuery.data ?? []).map((f) => f.id)))
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const broadcastingIds = $derived(
-		new Set((broadcastsQuery.data ?? []).map((b) => b?.channel_id ?? b?.channels?.id ?? b?.id).filter(Boolean))
-	)
-	const playingSlugs = $derived(
-		new Set(
-			Object.values(appState.decks)
-				.filter((d) => d.is_playing && d.playlist_slug)
-				.map((d) => d.playlist_slug)
-		)
-	)
-	const inDeckSlugs = $derived(
-		new Set(
-			Object.values(appState.decks)
-				.map((d) => d.playlist_slug)
-				.filter(Boolean)
-		)
-	)
+	const activityState = $derived.by(() => {
+		void followsQuery.data
+		void followsCollection.state.size
+		void broadcastsCollection.state.size
+		void tracksCollection.state.size
+		void channelsCollection.state.size
+		return deriveChannelActivityState({
+			decks: appState.decks,
+			tracksState: tracksCollection.state,
+			channelsState: channelsCollection.state,
+			followsState: followsCollection.state,
+			broadcastRows: broadcastsQuery.data ?? []
+		})
+	})
+	const favoriteIds = $derived(activityState.favoriteChannelIds)
+	const broadcastingIds = $derived(activityState.broadcastingChannelIds)
+	const playingSlugs = $derived(activityState.playingChannelSlugs)
+	const inDeckSlugs = $derived(activityState.inDeckChannelSlugs)
 
 	function resolveCssColor(variableName, fallback = '#888') {
 		const div = document.createElement('div')
@@ -197,6 +203,12 @@
 	})
 
 	$effect(() => {
+		if (openSlug === undefined) return
+		if (openSlug === selectedSlug) return
+		selectedSlug = openSlug
+	})
+
+	$effect(() => {
 		void selectedSlug
 		void favoriteIds
 		void broadcastingIds
@@ -207,7 +219,7 @@
 	})
 
 	$effect(() => {
-		const slug = selectedSlug || openSlug
+		const slug = selectedSlug
 		if (!slug) return
 		const marker = markerBySlug.get(slug)
 		if (!marker) return
