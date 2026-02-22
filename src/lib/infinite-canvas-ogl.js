@@ -499,9 +499,9 @@ export class InfiniteCanvasOGL {
 				uCornerRadius: {value: this.cornerRadius},
 				uCameraZ: {value: INITIAL_CAMERA_Z}
 			},
-			transparent: true,
+			transparent: false,
 			depthTest: true,
-			depthWrite: false
+			depthWrite: true
 		})
 
 		this.infoProgram = new Program(this.gl, {
@@ -706,13 +706,13 @@ export class InfiniteCanvasOGL {
 	}
 
 	getCardVisual(styleKey) {
-		if (styleKey === 'favorite') return {color: this.favoriteCardColor, alpha: 0.96}
-		if (styleKey === 'active') return {color: this.activeCardColor, alpha: 0.98}
-		if (styleKey === 'hover') return {color: this.selectedCardColor, alpha: 0.98}
-		if (styleKey === 'playing') return {color: this.playingCardColor, alpha: 0.99}
-		if (styleKey === 'live') return {color: this.liveCardColor, alpha: 0.99}
-		if (styleKey === 'selected') return {color: this.selectedCardColor, alpha: 0.98}
-		return {color: this.defaultCardColor, alpha: 0.95}
+		if (styleKey === 'favorite') return {color: this.favoriteCardColor, alpha: 1}
+		if (styleKey === 'active') return {color: this.activeCardColor, alpha: 1}
+		if (styleKey === 'hover') return {color: this.selectedCardColor, alpha: 1}
+		if (styleKey === 'playing') return {color: this.playingCardColor, alpha: 1}
+		if (styleKey === 'live') return {color: this.liveCardColor, alpha: 1}
+		if (styleKey === 'selected') return {color: this.selectedCardColor, alpha: 1}
+		return {color: this.defaultCardColor, alpha: 1}
 	}
 
 	getBorderVisual(styleKey) {
@@ -742,9 +742,9 @@ export class InfiniteCanvasOGL {
 				uStrokeThickness: {value: border.thickness},
 				uStrokeAlpha: {value: border.alpha}
 			},
-			transparent: true,
+			transparent: false,
 			depthTest: true,
-			depthWrite: false,
+			depthWrite: true,
 			cullFace: null
 		})
 		this.backgroundProgramCache.set(key, program)
@@ -779,7 +779,7 @@ export class InfiniteCanvasOGL {
 			fragment: colorFragmentShader,
 			uniforms: {
 				uColor: {value: color},
-				uAlpha: {value: 0.98},
+				uAlpha: {value: 0.3},
 				uCornerRadius: {value: this.cornerRadius},
 				uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
 				uStrokeThickness: {value: 0.0},
