@@ -5,6 +5,7 @@ import {
 	type PersistedClient
 } from '@tanstack/query-persist-client-core'
 import {get, set, del, createStore} from 'idb-keyval'
+import {browser} from '$app/environment'
 import {queryClient} from './collections'
 import {IDB_DATABASES, IDB_KEYS} from '$lib/storage-keys'
 import {logger} from '$lib/logger'
@@ -69,6 +70,16 @@ async function flushToIDB() {
 	}
 }
 
+// Flush pending data on page close so debounced writes aren't lost
+if (browser) {
+	window.addEventListener('beforeunload', () => {
+		if (pendingClient) {
+			if (debounceTimer) clearTimeout(debounceTimer)
+			flushToIDB()
+		}
+	})
+}
+
 const idbPersister = {
 	persistClient: async (client: PersistedClient) => {
 		pendingClient = client
@@ -103,12 +114,12 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	if (query.state.status !== 'success') return false
 
 	const key = query.queryKey?.[0]
-	if (key === 'todos-cached') return false
+	// Shuffled channel queries are random — restoring stale order is misleading
 	if (key === 'channels' && query.queryKey.includes('shuffle')) return false
+	// Broadcast state is ephemeral (realtime), stale data causes ghost sessions
 	if (key === 'broadcasts') return false
+	// Freshness checks must always hit the server
 	if (key === 'tracks-freshness') return false
-	// if (key === 'tracks') return false
-	// if (key === 'channels') return false
 
 	return true
 }

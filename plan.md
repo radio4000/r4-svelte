@@ -81,7 +81,6 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 
 ### Duplicated code worth extracting
 
-- **`formatDuration` × 3 + inline × 1.** Identical function in `track-meta-r5.svelte:11`, `track-meta-youtube.svelte:9` (both take seconds), near-identical `formatLength` in `track-meta-musicbrainz.svelte:8` (takes ms). Plus inline `Math.floor(duration/60):padStart` in `batch-edit/track-row.svelte:103`. Extract to `dates.ts`.
 - **Media element listener binding pattern × 2.** `player.svelte:246–267` and `deck-compact-bar.svelte:60–99` both do: addEventListener for timeupdate/durationchange/loadedmetadata, seed initial values, return cleanup. `deck-compact-bar` adds a rAF polling loop on top. Could share a helper like `bindMediaProgress(el, onTime, onDuration)`. These two components are in general very similar. Could they share any primitives (components)? abstractions.
 - **Raw/formatted toggle × 3.** All three `track-meta-*.svelte` components repeat `let showRaw = $state(false)` + toggle button with identical aria-label logic. Could be a shared snippet or wrapper component.
 - **Metadata upsert pattern × 3.** `metadata/youtube.js`, `metadata/musicbrainz.js`, `metadata/discogs.js` all repeat the same get-or-insert + update logic on `trackMetaCollection`. Extract to `upsertTrackMeta(mediaId, field, data)`. tanstack db collections also have some writeUpsert? is that it?
@@ -89,17 +88,13 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **Filter extraction from `parseLoadSubsetOptions` × 12.** Both `collections/tracks.ts` and `collections/channels.ts` repeat `.filters.find((f) => f.field[0] === '...' && f.operator === '...')?.value` many times. A helper like `getFilter(options, field, op)` would clean this up. Only do if we have a good, clear abstraction. Maybe tanstack has one already in node_modules. else we can do it.
 - **Modal dialog `$effect` pattern × 4.** `track-add-dialog`, `track-edit-dialog`, `share-dialog`, `shortcuts-dialog` all repeat the same `$effect(() => { if (appState.modal_X) { open(...); appState.modal_X = null } })`. Could be a shared helper. lib/modal.svelte ? not sure. modal vs dialog naming as well?
 - **Filter tracks by slug × 3.** `api.ts:234`, `api.ts:281`, `collections/tracks.ts:297` all do `[...tracksCollection.state.values()].filter((t) => t?.slug === slug)`. Extract to a helper. Not sure. It's already pretty clean. Does a filter.
-- **`sortByNewest` exists but isn't reused.** Defined in `api.ts:35` but `stats/+page.svelte:117` and `track-related.svelte:12` inline the same `.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))` instead of importing it.
+- **`sortByNewest` exists but isn't reused everywhere.** Exported from `api.ts`, reused in `track-related.svelte`. `stats/+page.svelte` sorts by `started_at` (different field) so can't reuse directly.
 
 ### State & data layer
 
-- **`app-state.svelte.ts` queue persistence bug.** STATE_KEY write (line 169) skips listening decks (`if (deck.listening_to_channel_id) continue`), but QUEUE_KEY write (line 180–185) iterates all decks — so listening decks get their queue persisted and restored to wrong decks on reload. This is important one to verify.
-- **`broadcasts.js:118–134` — subscription + event listener never cleaned up.** Realtime subscription has no unsubscribe. `visibilitychange` listener added at module load, never removed.
 - **`ensureTracksLoaded` race condition** (`tracks.ts:297`). Between checking `existing.length` and calling `startSyncImmediate()`, parallel callers can pass the check and trigger duplicate fetches.
-- **`views.ts:26–36` — `createView()` doesn't await insert.** Returns before `viewsCollection.insert()` completes. If component unmounts during insert, data is lost.
+- **`createView()` insert is synchronous** — localStorage collection, not async. No bug here (was a false alarm in code review).
 - **`reorderPinnedViews()` updates views in a loop** (`views.ts:84`). Calls `updateView()` per item instead of `writeBatch()`. Could batch.
-- **`query-cache-persistence.ts:46` — debounce timer not flushed on unmount.** Pending persist data can be lost if the page closes before the timer fires. Should flush on `beforeunload`.
-- **`query-cache-persistence.ts:101–114` — hardcoded query exclusions without docs.** `'todos-cached'` looks like a leftover from a demo. `'channels'` with `'shuffle'` excluded with no comment. Document inline comments why we did/do this. User knows
 - **`queue-panel.svelte:66` — history query scans entire `playHistoryCollection`** without filter or limit. Already noted in plan performance audit, now confirmed.
 - **`inArray(tracks.id, [''])` in `views.svelte.ts:141`** — returns empty "return no results" by querying for `id === ''`. Works but fragile; a `.limit(0)` would be clearer intent.
 
