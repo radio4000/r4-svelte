@@ -219,7 +219,9 @@ const EXIT_DURATION = 500
 const ENTRANCE_STAGGER = 80
 const EXIT_STAGGER = 40
 const IMAGE_INSET = 0.88
+const IMAGE_Z_OFFSET = 0.32
 const MAX_CHUNKS_PER_FRAME = 4
+const SINGLE_SCENE_KEY = '__single__'
 
 export class InfiniteCanvasOGL {
 	constructor(container, config = {}) {
@@ -262,6 +264,15 @@ export class InfiniteCanvasOGL {
 		this.onClick = config.onClick
 		this.onNavigate = config.onNavigate
 		this.backgroundColor = config.backgroundColor ?? null
+		this.sceneMode = config.sceneMode === 'single' ? 'single' : 'infinite'
+		this.disableNavigation = config.disableNavigation ?? this.sceneMode === 'single'
+		this.enableCardTilt = config.enableCardTilt ?? this.sceneMode === 'single'
+		this.singleCardSize = Number.isFinite(config.singleCardSize) ? Number(config.singleCardSize) : 18
+		this.tiltAmount = Number.isFinite(config.tiltAmount) ? Number(config.tiltAmount) : 2.8
+		this.singleSceneConstrainMovement = config.singleSceneConstrainMovement ?? true
+		this.singleSceneMaxXY = Number.isFinite(config.singleSceneMaxXY) ? Number(config.singleSceneMaxXY) : null
+		this.minCameraZ = Number.isFinite(config.minCameraZ) ? Number(config.minCameraZ) : 1
+		this.maxCameraZ = Number.isFinite(config.maxCameraZ) ? Number(config.maxCameraZ) : 500
 
 		this.velocity = vec3()
 		this.targetVel = vec3()
@@ -290,6 +301,7 @@ export class InfiniteCanvasOGL {
 		this.hoveredItem = null
 		this.hoveredId = null
 		this.infoHoverTarget = null
+		this.singlePointer = vec2()
 
 		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
 		this._rayNear = new Vec3()
@@ -785,6 +797,7 @@ export class InfiniteCanvasOGL {
 		canvas.style.cursor = 'default'
 
 		canvas.addEventListener('mousedown', (e) => {
+			if (this.disableNavigation) return
 			this.isDragging = true
 			this.dragDistance = 0
 			this.lastMouse = {x: e.clientX, y: e.clientY}
@@ -793,11 +806,15 @@ export class InfiniteCanvasOGL {
 		})
 
 		window.addEventListener('mouseup', (e) => {
-			if (this.isDragging && this.dragDistance < 5 && this.onClick) {
+			if (!this.disableNavigation && this.isDragging && this.dragDistance < 5 && this.onClick) {
 				this.handleClick(e)
 			}
 			this.isDragging = false
 			canvas.style.cursor = 'default'
+		})
+		canvas.addEventListener('click', (e) => {
+			if (!this.disableNavigation) return
+			this.handleClick(e)
 		})
 
 		window.addEventListener('mousemove', (e) => {
@@ -805,12 +822,26 @@ export class InfiniteCanvasOGL {
 				x: (e.clientX / window.innerWidth) * 2 - 1,
 				y: -(e.clientY / window.innerHeight) * 2 + 1
 			}
-			if (this.isDragging) {
+			if (this.enableCardTilt) {
+				const rect = canvas.getBoundingClientRect()
+				this.singlePointer.x = ((e.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1
+				this.singlePointer.y = -(((e.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1)
+			}
+			if (!this.disableNavigation && this.isDragging) {
 				const dx = e.clientX - this.lastMouse.x
 				const dy = e.clientY - this.lastMouse.y
 				this.dragDistance += Math.abs(dx) + Math.abs(dy)
-				this.targetVel.x -= dx * 0.025
-				this.targetVel.y += dy * 0.025
+				if (this.sceneMode === 'single' && this.singleSceneConstrainMovement) {
+					this.basePos.x -= dx * 0.07
+					this.basePos.y += dy * 0.07
+					this.targetVel.x = 0
+					this.targetVel.y = 0
+					this.velocity.x = 0
+					this.velocity.y = 0
+				} else {
+					this.targetVel.x -= dx * 0.025
+					this.targetVel.y += dy * 0.025
+				}
 				this.lastMouse = {x: e.clientX, y: e.clientY}
 			}
 			this.updateTooltip(e)
@@ -818,6 +849,8 @@ export class InfiniteCanvasOGL {
 
 		canvas.addEventListener('mouseleave', () => {
 			this.mouse = {x: 0, y: 0}
+			this.singlePointer.x = 0
+			this.singlePointer.y = 0
 			this.isDragging = false
 			canvas.style.cursor = 'default'
 		})
@@ -825,14 +858,17 @@ export class InfiniteCanvasOGL {
 		canvas.addEventListener(
 			'wheel',
 			(e) => {
+				if (this.disableNavigation) return
 				e.preventDefault()
 				this.scrollAccum += e.deltaY * 0.006
 			},
 			{passive: false}
 		)
 
-		window.addEventListener('keydown', (e) => this.handleKey(e.key, true))
-		window.addEventListener('keyup', (e) => this.handleKey(e.key, false))
+		if (!this.disableNavigation) {
+			window.addEventListener('keydown', (e) => this.handleKey(e.key, true))
+			window.addEventListener('keyup', (e) => this.handleKey(e.key, false))
+		}
 
 		this.resizeObserver = new ResizeObserver(() => this.resize())
 		this.resizeObserver.observe(this.container)
@@ -853,6 +889,7 @@ export class InfiniteCanvasOGL {
 		canvas.addEventListener(
 			'touchstart',
 			(e) => {
+				if (this.disableNavigation) return
 				e.preventDefault()
 				lastTouches = [...e.touches]
 				lastTouchDist = getTouchDistance(lastTouches)
@@ -867,6 +904,7 @@ export class InfiniteCanvasOGL {
 		canvas.addEventListener(
 			'touchmove',
 			(e) => {
+				if (this.disableNavigation) return
 				e.preventDefault()
 				const touches = [...e.touches]
 				if (touches.length === 1 && lastTouches.length >= 1) {
@@ -888,6 +926,7 @@ export class InfiniteCanvasOGL {
 		canvas.addEventListener(
 			'touchend',
 			(e) => {
+				if (this.disableNavigation) return
 				if (touchStartPos && touchDragDistance < 10 && this.onClick) {
 					this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
 				}
@@ -1598,6 +1637,72 @@ export class InfiniteCanvasOGL {
 		}
 	}
 
+	createCardMeshes(group, plane, mediaItem, birthTime) {
+		if (!this.gl) return
+		const cardStyle = this.getCardStyle(mediaItem)
+		const mesh = new Mesh(this.gl, {
+			geometry: this.planeGeometry ?? undefined,
+			program: this.getBackgroundProgram(cardStyle, this.getMeshBorderStyles(mediaItem)?.[0] ?? 'default')
+		})
+		mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
+		mesh.scale.set(0.01, 0.01, 0.01)
+		// @ts-expect-error - adding custom property
+		mesh.userData = {
+			isBorder: false,
+			isBackground: true,
+			mediaItem,
+			cardStyle,
+			birthTime,
+			targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
+			closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z},
+			closedScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
+			bodyTarget: {x: plane.position.x, y: plane.position.y, sx: plane.scale.x, sy: plane.scale.y, open: false},
+			bodyStyle: cardStyle
+		}
+		mesh.setParent(group)
+
+		if (!mediaItem?.url) return
+		const texture = this.getTexture(mediaItem.url)
+		const sharedProgram = /** @type {Program} */ (this.texturedProgram)
+		const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
+		imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + IMAGE_Z_OFFSET)
+		imgMesh.scale.set(0.01, 0.01, 0.01)
+		imgMesh.onBeforeRender(() => {
+			sharedProgram.uniforms.tMap.value = texture
+		})
+		// @ts-expect-error - adding custom property
+		imgMesh.userData = {
+			isBorder: false,
+			mediaItem,
+			birthTime,
+			texture,
+			targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1},
+			backgroundMesh: mesh
+		}
+		imgMesh.setParent(group)
+		this.clearLegacyBorderMeshes(mesh)
+		this.updateMeshTagBadge(imgMesh, group)
+		this.updateMeshLiveBadge(imgMesh, group)
+		const infoStyle = this.getInfoStyle(mediaItem)
+		this.updateMeshInfo(imgMesh, infoStyle, group)
+	}
+
+	createSingleScene() {
+		if (this.chunks.has(SINGLE_SCENE_KEY) || !this.gl || !this.scene) return
+		const group = new Transform()
+		// @ts-expect-error - adding custom property
+		group.userData = {single: true}
+		group.setParent(this.scene)
+		const mediaItem = this.media.length > 0 ? this.media[0] : null
+		const plane = {
+			position: {x: 0, y: 0, z: 0},
+			scale: {x: this.singleCardSize, y: this.singleCardSize, z: 1}
+		}
+		this.createCardMeshes(group, plane, mediaItem, performance.now())
+		this.chunks.set(SINGLE_SCENE_KEY, group)
+		this.animatingChunks.add(SINGLE_SCENE_KEY)
+	}
+
 	createChunk(cx, cy, cz) {
 		const key = `${cx},${cy},${cz}`
 		if (this.chunks.has(key)) return
@@ -1614,57 +1719,7 @@ export class InfiniteCanvasOGL {
 			const plane = planes[i]
 			const birthTime = now + i * ENTRANCE_STAGGER
 			const mediaItem = this.media.length > 0 ? this.media[plane.mediaIndex % this.media.length] : null
-
-			// Color background quad
-			const cardStyle = this.getCardStyle(mediaItem)
-			const mesh = new Mesh(this.gl, {
-				geometry: this.planeGeometry ?? undefined,
-				program: this.getBackgroundProgram(cardStyle, this.getMeshBorderStyles(mediaItem)?.[0] ?? 'default')
-			})
-			mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
-			mesh.scale.set(0.01, 0.01, 0.01)
-			// @ts-expect-error - adding custom property
-			mesh.userData = {
-				isBorder: false,
-				isBackground: true,
-				mediaItem,
-				cardStyle,
-				birthTime,
-				targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
-				closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z},
-				closedScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
-				bodyTarget: {x: plane.position.x, y: plane.position.y, sx: plane.scale.x, sy: plane.scale.y, open: false},
-				bodyStyle: cardStyle
-			}
-			mesh.setParent(group)
-
-			// Textured image quad on top
-			if (mediaItem?.url) {
-				const texture = this.getTexture(mediaItem.url)
-				const sharedProgram = /** @type {Program} */ (this.texturedProgram)
-				const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
-				imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + 0.15)
-				imgMesh.scale.set(0.01, 0.01, 0.01)
-				// Swap texture on the shared program right before this mesh draws
-				imgMesh.onBeforeRender(() => {
-					sharedProgram.uniforms.tMap.value = texture
-				})
-				// @ts-expect-error - adding custom property
-				imgMesh.userData = {
-					isBorder: false,
-					mediaItem,
-					birthTime,
-					texture,
-					targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1},
-					backgroundMesh: mesh
-				}
-				imgMesh.setParent(group)
-				this.clearLegacyBorderMeshes(mesh)
-				this.updateMeshTagBadge(imgMesh, group)
-				this.updateMeshLiveBadge(imgMesh, group)
-				const infoStyle = this.getInfoStyle(mediaItem)
-				this.updateMeshInfo(imgMesh, infoStyle, group)
-			}
+			this.createCardMeshes(group, plane, mediaItem, birthTime)
 		}
 
 		this.chunks.set(key, group)
@@ -1698,6 +1753,15 @@ export class InfiniteCanvasOGL {
 	}
 
 	updateChunks(force = false) {
+		if (this.sceneMode === 'single') {
+			if (!this.chunks.has(SINGLE_SCENE_KEY) || force) {
+				if (this.chunks.has(SINGLE_SCENE_KEY)) this.removeChunk(SINGLE_SCENE_KEY)
+				this.createSingleScene()
+			}
+			this.chunkQueue = []
+			return
+		}
+
 		const cx = Math.floor(this.basePos.x / CHUNK_SIZE)
 		const cy = Math.floor(this.basePos.y / CHUNK_SIZE)
 		const cz = Math.floor(this.basePos.z / CHUNK_SIZE)
@@ -1734,33 +1798,74 @@ export class InfiniteCanvasOGL {
 	animate() {
 		if (this.disposed || !this.camera || !this.renderer) return
 
-		if (this.keys.forward) this.targetVel.z -= KEYBOARD_SPEED
-		if (this.keys.backward) this.targetVel.z += KEYBOARD_SPEED
-		if (this.keys.left) this.targetVel.x -= KEYBOARD_SPEED
-		if (this.keys.right) this.targetVel.x += KEYBOARD_SPEED
-		if (this.keys.down) this.targetVel.y -= KEYBOARD_SPEED
-		if (this.keys.up) this.targetVel.y += KEYBOARD_SPEED
+		if (!this.disableNavigation) {
+			if (this.keys.forward) this.targetVel.z -= KEYBOARD_SPEED
+			if (this.keys.backward) this.targetVel.z += KEYBOARD_SPEED
+			if (this.keys.left) this.targetVel.x -= KEYBOARD_SPEED
+			if (this.keys.right) this.targetVel.x += KEYBOARD_SPEED
+			if (this.keys.down) this.targetVel.y -= KEYBOARD_SPEED
+			if (this.keys.up) this.targetVel.y += KEYBOARD_SPEED
 
-		const isZooming = Math.abs(this.velocity.z) > 0.05
-		const driftAmount = 8.0 * clamp(this.basePos.z / 50, 0.3, 2.0)
-		const driftLerp = isZooming ? 0.2 : 0.12
+			const isZooming = Math.abs(this.velocity.z) > 0.05
+			const driftAmount = 8.0 * clamp(this.basePos.z / 50, 0.3, 2.0)
+			const driftLerp = isZooming ? 0.2 : 0.12
+			if (!this.isDragging) {
+				this.drift.x = lerp(this.drift.x, this.mouse.x * driftAmount, driftLerp)
+				this.drift.y = lerp(this.drift.y, this.mouse.y * driftAmount, driftLerp)
+			}
 
-		if (!this.isDragging) {
-			this.drift.x = lerp(this.drift.x, this.mouse.x * driftAmount, driftLerp)
-			this.drift.y = lerp(this.drift.y, this.mouse.y * driftAmount, driftLerp)
+			this.targetVel.z += this.scrollAccum
+			this.scrollAccum *= 0.8
+
+			for (const axis of ['x', 'y', 'z']) {
+				this.targetVel[axis] = clamp(this.targetVel[axis], -MAX_VELOCITY, MAX_VELOCITY)
+				this.velocity[axis] = lerp(this.velocity[axis], this.targetVel[axis], VELOCITY_LERP)
+				this.basePos[axis] += this.velocity[axis]
+				this.targetVel[axis] *= VELOCITY_DECAY
+			}
+			this.basePos.z = clamp(this.basePos.z, this.minCameraZ, this.maxCameraZ)
+			if (this.sceneMode === 'single' && this.singleSceneMaxXY != null) {
+				this.basePos.x = clamp(this.basePos.x, -this.singleSceneMaxXY, this.singleSceneMaxXY)
+				this.basePos.y = clamp(this.basePos.y, -this.singleSceneMaxXY, this.singleSceneMaxXY)
+			}
+			if (this.sceneMode === 'single' && this.singleSceneConstrainMovement) {
+				const maxXY = Math.max(this.singleCardSize * 0.85, 10)
+				this.basePos.x = clamp(this.basePos.x, -maxXY, maxXY)
+				this.basePos.y = clamp(this.basePos.y, -maxXY, maxXY)
+				this.drift.x = clamp(this.drift.x, -maxXY * 0.8, maxXY * 0.8)
+				this.drift.y = clamp(this.drift.y, -maxXY * 0.8, maxXY * 0.8)
+				if (Math.abs(this.basePos.x) >= maxXY) {
+					this.velocity.x = 0
+					this.targetVel.x = 0
+				}
+				if (Math.abs(this.basePos.y) >= maxXY) {
+					this.velocity.y = 0
+					this.targetVel.y = 0
+				}
+			}
+			if (this.basePos.z === this.minCameraZ || this.basePos.z === this.maxCameraZ) {
+				this.velocity.z = 0
+				this.targetVel.z = 0
+				this.scrollAccum = 0
+			}
+			this.camera.position.set(this.basePos.x + this.drift.x, this.basePos.y + this.drift.y, this.basePos.z)
+			if (this.sceneMode === 'single' && this.singleSceneConstrainMovement && typeof this.camera.lookAt === 'function')
+				this.camera.lookAt([0, 0, 0])
+		} else {
+			const tiltX = this.enableCardTilt ? this.singlePointer.x * this.tiltAmount : 0
+			const tiltY = this.enableCardTilt ? this.singlePointer.y * this.tiltAmount : 0
+			this.camera.position.x = lerp(this.camera.position.x, tiltX, 0.08)
+			this.camera.position.y = lerp(this.camera.position.y, tiltY, 0.08)
+			this.camera.position.z = lerp(
+				this.camera.position.z,
+				clamp(INITIAL_CAMERA_Z, this.minCameraZ, this.maxCameraZ),
+				0.08
+			)
+			if (typeof this.camera.lookAt === 'function') this.camera.lookAt([0, 0, 0])
+			this.basePos.x = this.camera.position.x
+			this.basePos.y = this.camera.position.y
+			this.basePos.z = this.camera.position.z
 		}
-
-		this.targetVel.z += this.scrollAccum
-		this.scrollAccum *= 0.8
-
-		for (const axis of ['x', 'y', 'z']) {
-			this.targetVel[axis] = clamp(this.targetVel[axis], -MAX_VELOCITY, MAX_VELOCITY)
-			this.velocity[axis] = lerp(this.velocity[axis], this.targetVel[axis], VELOCITY_LERP)
-			this.basePos[axis] += this.velocity[axis]
-			this.targetVel[axis] *= VELOCITY_DECAY
-		}
-
-		this.camera.position.set(this.basePos.x + this.drift.x, this.basePos.y + this.drift.y, this.basePos.z)
 
 		// Update depth fade uniform for shaders
 		const camZ = this.basePos.z

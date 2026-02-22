@@ -1,37 +1,23 @@
 <script>
 	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
+	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
 	import {untrack} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
-	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
 
-	/**
-	 * @typedef {object} MediaItem
-	 * @prop {string} url
-	 * @prop {number} [width]
-	 * @prop {number} [height]
-	 * @prop {string} [slug]
-	 * @prop {string} [id]
-	 * @prop {string} [title]
-	 * @prop {string} [description]
-	 * @prop {string} [channel_slug]
-	 * @prop {{slug?: string}} [channel]
-	 * @prop {boolean} [isFavorite]
-	 * @prop {boolean} [isLive]
-	 * @prop {boolean} [isPlaying]
-	 * @prop {string[]} [tags]
-	 * @prop {string[]} [mentions]
-	 * @prop {string[]} [activeTags]
-	 * @prop {string[]} [activeMentions]
-	 * @prop {boolean} [isActive]
-	 */
-
-	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, onclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
 		activeIds = [],
 		selectedId = null,
 		hoveredId = null,
+		cardSize = 18,
+		allowNavigation = false,
+		enableCardTilt = true,
+		singleSceneConstrainMovement = true,
+		singleSceneMaxXY = undefined,
+		minCameraZ = 1,
+		maxCameraZ = 500,
 		backgroundColor = null,
 		onclick,
 		onnavigate
@@ -53,6 +39,14 @@
 			activeIds: untrack(() => activeIds),
 			selectedId: untrack(() => selectedId),
 			...themeConfig,
+			sceneMode: 'single',
+			disableNavigation: !allowNavigation,
+			enableCardTilt,
+			singleSceneConstrainMovement,
+			singleSceneMaxXY,
+			singleCardSize: cardSize,
+			minCameraZ,
+			maxCameraZ,
 			backgroundColor,
 			onClick: onclick,
 			onNavigate: onnavigate
@@ -87,12 +81,6 @@
 
 <div class="canvas-wrapper">
 	<div class="canvas-container" bind:this={container}></div>
-
-	<aside class="controls-hint">
-		<div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move</div>
-		<div><kbd>Q</kbd><kbd>E</kbd> up/down · <kbd>scroll</kbd> zoom</div>
-		<div>Drag to pan · Click to play</div>
-	</aside>
 </div>
 
 <style>
@@ -114,15 +102,5 @@
 		inset: 0;
 		width: 100% !important;
 		height: 100% !important;
-	}
-
-	.controls-hint {
-		position: absolute;
-		bottom: var(--space-2);
-		right: var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		font-size: var(--font-2);
-		pointer-events: none;
-		text-align: right;
 	}
 </style>

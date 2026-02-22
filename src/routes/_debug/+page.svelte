@@ -3,6 +3,7 @@
 		{href: 'appstate', title: 'appState', desc: 'Inspect and mutate live app state'},
 		{href: 'async-test', title: 'Async', desc: 'Async patterns and loading states'},
 		{href: 'buttons', title: 'Buttons', desc: 'clickity click clack'},
+		{href: '3d', title: '3D', desc: '3D channel scenes and state matrix'},
 		{href: 'cards', title: 'Cards', desc: 'Track and channel card variants'},
 		{href: 'canvas', title: 'Canvas', desc: 'Canvas rendering experiments'},
 		{href: 'decks', title: 'Decks', desc: 'Deck tracklist playground'},
