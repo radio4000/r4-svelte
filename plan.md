@@ -103,16 +103,12 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **Click handlers on non-interactive elements.** `player.svelte:282` (`<header onclick>`), `player.svelte:458` (`<footer onclick>`), `cover-flip.svelte:74` (`<div onclick>`), `track-card.svelte:121` (`<h3 onclick>`), `r4-discogs-resource.svelte` (`<li onclick>`), `draggable-panel.svelte:98` (`<header onmousedown>`). These need `<button>`, or `role="button"` + `tabindex="0"` + keyboard handler.
 - **`channel-card.svelte:41` — `tabindex="0"` on `<article>` without `role` or `aria-label`.** The `svelte-ignore a11y_no_noninteractive_tabindex` comment suppresses the warning rather than fixing it.
 
-### CSS & styles
-
-- **Duplicated badge styles in `base.css`.** `.badge` (line 221) and `.channel-badge` (line 88) have nearly identical rules. Merge into one and document in debug/buttons
-
 ### Utils, search & metadata
 
 - **`discogs-core.js:6–8` — in-memory fetch cache grows unbounded.** 5-min TTL but no eviction. Long sessions can accumulate many entries. Could move to db collection with cache
 - **`youtube.js:61–107` — partial batch failure leaves inconsistent state.** If batch 2 fails, batch 1 data is already in `trackMetaCollection`. Return value doesn't reflect partial success.
 - **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width` is UI concern. `channels_display` and `channels_filter` are already on `AppState`, not on `Deck`. Present to user.
-- **No rate limiting in any metadata fetcher.** YouTube, MusicBrainz, Discogs all make HTTP requests without backoff. Risk of IP blocks or 429 errors.
+- **No rate limiting in any metadata fetcher.** YouTube, MusicBrainz, Discogs all make HTTP requests without backoff. Risk of IP blocks or 429 errors. This is okay for now. As long as we handle rate limiting and surface the error.
 
 ### Minor inconsistencies
 

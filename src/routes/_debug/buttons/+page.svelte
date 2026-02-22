@@ -145,6 +145,17 @@
 	</section>
 
 	<section>
+		<h2>Badges (<code>.channel-badge</code>)</h2>
+		<div class="row">
+			<span class="channel-badge">Live</span>
+			<span class="channel-badge">Badge</span>
+			<button class="channel-badge">Button badge</button>
+			<button class="channel-badge drifted">Drifted</button>
+			<span class="channel-badge" style:background="var(--color-red)" style:color="white">3</span>
+		</div>
+	</section>
+
+	<section>
 		<h2>Sizes comparison</h2>
 		<div class="row">
 			<button style="font-size: var(--font-2)">Small</button>

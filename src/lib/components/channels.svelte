@@ -224,7 +224,7 @@
 					onclick={() => setFilter('broadcasting')}
 					{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
 					>{m.channels_filter_option_broadcasting()}{#if broadcastsCollection.state.size}
-						<span class="badge" style:background="var(--color-red)" style:color="white"
+						<span class="channel-badge" style:background="var(--color-red)" style:color="white"
 							>{broadcastsCollection.state.size}</span
 						>{/if}</button
 				>
