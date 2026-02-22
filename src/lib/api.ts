@@ -32,7 +32,7 @@ function maybeBroadcastNotify() {
 }
 
 /** Sort tracks by created_at descending (newest first) */
-const sortByNewest = (a: {created_at: string}, b: {created_at: string}) =>
+export const sortByNewest = (a: {created_at: string}, b: {created_at: string}) =>
 	new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 
 const userInitiatedPlayMap = new Map<number, boolean>()

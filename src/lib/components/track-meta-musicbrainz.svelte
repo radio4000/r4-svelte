@@ -1,17 +1,10 @@
 <script>
+	import {formatDurationMs} from '$lib/dates.js'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data, track} = $props()
 	let showRaw = $state(false)
-
-	function formatLength(ms) {
-		if (!ms) return ''
-		const seconds = Math.floor(ms / 1000)
-		const mins = Math.floor(seconds / 60)
-		const secs = seconds % 60
-		return `${mins}:${secs.toString().padStart(2, '0')}`
-	}
 
 	const recording = $derived(data?.recording)
 	const firstRelease = $derived(recording?.releases?.[0])
@@ -43,7 +36,7 @@
 
 			{#if recording?.length}
 				<dt>{m.track_meta_length()}</dt>
-				<dd>{formatLength(recording.length)}</dd>
+				<dd>{formatDurationMs(recording.length)}</dd>
 			{/if}
 
 			{#if recording?.['first-release-date']}

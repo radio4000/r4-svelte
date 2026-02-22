@@ -1,3 +1,19 @@
+/** Format seconds to "m:ss" (e.g. 185 → "3:05")
+ * @param {number | null | undefined} seconds */
+export function formatDuration(seconds) {
+	if (!seconds) return ''
+	const mins = Math.floor(seconds / 60)
+	const secs = seconds % 60
+	return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+/** Format milliseconds to "m:ss"
+ * @param {number | null | undefined} ms */
+export function formatDurationMs(ms) {
+	if (!ms) return ''
+	return formatDuration(Math.floor(ms / 1000))
+}
+
 /** @param {Date} date */
 export function formatDate(date) {
 	return new Intl.DateTimeFormat().format(date)

@@ -1,5 +1,6 @@
 <script>
 	import {tracksCollection} from '$lib/tanstack/collections'
+	import {sortByNewest} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	let {track} = $props()
@@ -9,7 +10,7 @@
 		if (!track?.media_id) return []
 		return [...tracksCollection.state.values()]
 			.filter((t) => t.id !== track.id && t.media_id === track.media_id)
-			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+			.sort(sortByNewest)
 	})
 </script>
 

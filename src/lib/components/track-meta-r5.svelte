@@ -1,5 +1,5 @@
 <script>
-	import {relativeDate} from '$lib/dates.js'
+	import {relativeDate, formatDuration} from '$lib/dates.js'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -7,13 +7,6 @@
 
 	let {data} = $props()
 	let showRaw = $state(false)
-
-	function formatDuration(seconds) {
-		if (!seconds) return ''
-		const mins = Math.floor(seconds / 60)
-		const secs = seconds % 60
-		return `${mins}:${secs.toString().padStart(2, '0')}`
-	}
 </script>
 
 {#if data}

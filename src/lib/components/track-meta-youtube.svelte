@@ -1,17 +1,10 @@
 <script>
-	import {relativeDateDetailed} from '$lib/dates.js'
+	import {relativeDateDetailed, formatDuration} from '$lib/dates.js'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
 	let showRaw = $state(false)
-
-	function formatDuration(seconds) {
-		if (!seconds) return ''
-		const mins = Math.floor(seconds / 60)
-		const secs = seconds % 60
-		return `${mins}:${secs.toString().padStart(2, '0')}`
-	}
 </script>
 
 {#if data}

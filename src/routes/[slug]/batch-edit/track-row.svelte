@@ -1,5 +1,6 @@
 <script>
 	import InlineEditCell from './inline-edit-cell.svelte'
+	import {formatDuration} from '$lib/dates.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const EDITABLE_FIELDS = ['url', 'title', 'description', 'discogs_url']
@@ -100,7 +101,7 @@
 			/>
 		</div>{/if}
 	{#if !hiddenColumns.includes('duration')}<div class="col-duration">
-			{#if track.duration}{Math.floor(track.duration / 60)}:{String(track.duration % 60).padStart(2, '0')}{/if}
+			{#if track.duration}{formatDuration(track.duration)}{/if}
 		</div>{/if}
 	{#if !hiddenColumns.includes('meta')}<div class="col-meta">
 			{#if track.youtube_data}<span class="meta-indicator yt" title="YouTube metadata">Y</span>{/if}
