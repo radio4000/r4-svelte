@@ -2338,6 +2338,40 @@ export class InfiniteCanvasOGL {
 		this.updateChunks(true)
 	}
 
+	resetView() {
+		this.isDragging = false
+		this.forcePanMode = false
+		this.isSingleCardRotating = false
+		this.dragDistance = 0
+		this.singleCardRotateDistance = 0
+		this.scrollAccum = 0
+		this.targetVel.x = 0
+		this.targetVel.y = 0
+		this.targetVel.z = 0
+		this.velocity.x = 0
+		this.velocity.y = 0
+		this.velocity.z = 0
+		this.drift.x = 0
+		this.drift.y = 0
+
+		if (this.sceneMode === 'single') {
+			this.singleCardRotation.x = 0
+			this.singleCardRotation.y = 0
+			this.singleCardRotationTarget.x = 0
+			this.singleCardRotationTarget.y = 0
+			const singleGroup = this.chunks.get(SINGLE_SCENE_KEY)
+			if (singleGroup) singleGroup.rotation.set(0, 0, 0)
+			return
+		}
+
+		this.basePos.x = 0
+		this.basePos.y = 0
+		this.basePos.z = INITIAL_CAMERA_Z
+		if (this.camera) this.camera.position.set(0, 0, INITIAL_CAMERA_Z)
+		this.lastChunkKey = ''
+		this.updateChunks(true)
+	}
+
 	dispose() {
 		this.disposed = true
 		if (this.animationId) cancelAnimationFrame(this.animationId)

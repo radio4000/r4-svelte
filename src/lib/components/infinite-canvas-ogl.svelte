@@ -47,6 +47,11 @@
 	let canvas
 	let showControlsModal = $state(false)
 
+	function openControls() {
+		canvas?.resetView()
+		showControlsModal = true
+	}
+
 	$effect(() => {
 		if (!container) return
 		void appState.theme
@@ -95,7 +100,7 @@
 <div class="canvas-wrapper">
 	<div class="canvas-container" bind:this={container}></div>
 
-	<button class="controls-info-btn" type="button" onclick={() => (showControlsModal = true)} title="3D controls">
+	<button class="controls-info-btn" type="button" onclick={openControls} title="3D controls">
 		<Icon icon="circle-info" size={16} />
 	</button>
 
