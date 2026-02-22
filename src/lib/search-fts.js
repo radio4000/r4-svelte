@@ -8,7 +8,7 @@ import {sdk} from '@radio4000/sdk'
 const RE_WEBSEARCH = /\bor\b|^-|\s-|"/
 const RE_SPLIT_WORDS = /\s+/
 const RE_NON_WORD = /[^\p{L}\p{N}]/gu
-const RE_FILTER_CHARS = /[,()]/g
+const RE_FILTER_CHARS = /[,()&|!*"]/g
 const RE_MULTI_SPACE = /\s+/g
 
 /** Detect websearch operators that would break prefix syntax */

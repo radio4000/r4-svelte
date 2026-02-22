@@ -74,8 +74,8 @@ export function trap(node: HTMLElement, {reset_focus = true}: {reset_focus?: boo
 	return {
 		destroy: () => {
 			node.removeEventListener('keydown', handle_keydown)
-			if (reset_focus) {
-				previous?.focus({preventScroll: true})
+			if (reset_focus && previous?.isConnected) {
+				previous.focus({preventScroll: true})
 			}
 		}
 	}

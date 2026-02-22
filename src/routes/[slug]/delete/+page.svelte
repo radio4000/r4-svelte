@@ -1,21 +1,11 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {eq} from '@tanstack/db'
+	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, deleteChannel} from '$lib/tanstack/collections'
+	import {deleteChannel} from '$lib/tanstack/collections'
 
-	let {data} = $props()
-
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, data.slug))
-			.orderBy(({channels}) => channels.id)
-			.limit(1)
-	)
-
-	const channel = $derived(channelQuery.data?.[0])
+	const channelCtx = getChannelCtx()
+	const channel = $derived(channelCtx.data)
 	const isSignedIn = $derived(!!appState.user)
 	const canDelete = $derived(canEditChannel(channel?.id))
 

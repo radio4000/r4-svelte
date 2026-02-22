@@ -5,7 +5,7 @@ import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray, isDbId} from '$lib/utils.ts'
+import {shuffleArray, isDbId} from '$lib/utils'
 import {
 	queueInsertManyAfter,
 	queueNext,

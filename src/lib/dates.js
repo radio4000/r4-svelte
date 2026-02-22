@@ -1,6 +1,6 @@
 /** @param {Date} date */
 export function formatDate(date) {
-	return new Intl.DateTimeFormat('en-DE').format(date)
+	return new Intl.DateTimeFormat().format(date)
 }
 
 /** @param {string | null | undefined} dateString */

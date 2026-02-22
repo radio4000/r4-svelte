@@ -1,5 +1,5 @@
 <script>
-	import {generateFrequency} from '$lib/utils.ts'
+	import {generateFrequency} from '$lib/utils'
 	import {playChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from './channel-card.svelte'

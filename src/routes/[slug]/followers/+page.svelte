@@ -1,14 +1,10 @@
 <script>
-	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
-	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
-	import {channelsCollection, queryClient} from '$lib/tanstack/collections'
+	import {getChannelCtx} from '$lib/contexts'
+	import {queryClient} from '$lib/tanstack/collections'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'
-
-	let slug = $derived(page.params.slug)
 
 	let display = $state(appState.channels_display || 'grid')
 	const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle']
@@ -24,14 +20,8 @@
 		appState.channels_order_direction = direction
 	})
 
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({channels: channelsCollection})
-			.where(({channels}) => eq(channels.slug, slug))
-			.orderBy(({channels}) => channels.created_at, 'desc')
-			.limit(1)
-	)
-	let channel = $derived(channelQuery.data?.[0])
+	const channelCtx = getChannelCtx()
+	let channel = $derived(channelCtx.data)
 
 	let followers = $state([])
 	let loading = $state(true)

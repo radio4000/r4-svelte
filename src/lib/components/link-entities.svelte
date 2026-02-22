@@ -1,6 +1,6 @@
 <script>
 	import Tag from '$lib/components/tag.svelte'
-	import {ENTITY_REGEX} from '$lib/utils.ts'
+	import {ENTITY_REGEX} from '$lib/utils'
 	import {page} from '$app/state'
 
 	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void}} */

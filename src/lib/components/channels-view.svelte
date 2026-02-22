@@ -3,7 +3,7 @@
 	import {page} from '$app/state'
 	import {shufflePlayChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {channelAvatarUrl} from '$lib/utils.ts'
+	import {channelAvatarUrl} from '$lib/utils'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'

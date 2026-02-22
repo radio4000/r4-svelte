@@ -2,7 +2,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {relativeDateDetailed} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
-	import {trimWithEllipsis} from '$lib/utils.ts'
+	import {trimWithEllipsis} from '$lib/utils'
 	import {playChannel, togglePlayPause} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast.js'
 	import {broadcastsCollection} from '$lib/tanstack/collections'

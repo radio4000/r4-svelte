@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {setTracksQueryCtx} from '$lib/contexts'
+	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
@@ -87,6 +87,17 @@
 	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
 
 	// Provide to child routes
+	setChannelCtx({
+		get data() {
+			return channel
+		},
+		get isReady() {
+			return channelBySlugQuery.isReady
+		},
+		get isLoading() {
+			return channelBySlugQuery.isLoading
+		}
+	})
 	setTracksQueryCtx(tracksQuery)
 
 	let autoRadioTracks = $derived(toAutoTracks(tracksQuery.data ?? []))

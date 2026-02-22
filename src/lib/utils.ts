@@ -33,17 +33,6 @@ export function trimWithEllipsis(text?: string | null, maxLength: number = 267) 
 	return !text || text.length <= maxLength ? text || '' : `${text.substring(0, maxLength)}…`
 }
 
-const RE_MENTION = /@\w+/g
-
-export function parseSearchTokens(query) {
-	const mentions = query.match(RE_MENTION) || []
-	const cleanQuery = query.replace(RE_MENTION, '').trim()
-	return {
-		text: cleanQuery,
-		mentions: mentions.map((m) => m.slice(1)) // remove @
-	}
-}
-
 /** Fisher-Yates shuffle. Pass a custom `rand` for deterministic (seeded) shuffles. */
 export function shuffleArray<T>(arr: Array<T>, rand: () => number = Math.random): Array<T> {
 	const array = arr.slice()
@@ -145,7 +134,7 @@ export async function generateFrequency(channelName: string, channelSlug: string
 export function timeAgo(dateString: string): string {
 	const now = Date.now()
 	const startTime = new Date(dateString).getTime()
-	const durationMs = now - startTime
+	const durationMs = Math.max(0, now - startTime)
 
 	if (durationMs < 60000) return 'just started'
 	if (durationMs < 3600000) return `${Math.floor(durationMs / 60000)}m ago`

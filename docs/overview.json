@@ -288,7 +288,6 @@
 		{"name": "delayRandom(min, max)", "desc": "Random delay in range."},
 		{"name": "delayWithJitter(base, jitter?)", "desc": "Delay with jitter."},
 
-		{"name": "parseSearchTokens(query)", "desc": "Tokenize search query."},
 		{"name": "parseEntities(text)", "desc": "Extract #tags and @mentions."},
 		{"name": "extractHashtags(text)", "desc": "Extract hashtags only."},
 		{"name": "extractMentions(text)", "desc": "Extract mentions only."},

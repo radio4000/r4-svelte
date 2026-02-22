@@ -3,7 +3,7 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
-	import {channelAvatarUrl} from '$lib/utils.ts'
+	import {channelAvatarUrl} from '$lib/utils'
 	import {broadcastsCollection, channelsCollection, tracksCollection, queryClient} from '$lib/tanstack/collections'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/tanstack/collections/channels'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'

@@ -64,16 +64,6 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 Findings from a codebase scan. Roughly sorted by impact. Needs explanation to and confirmation from user.
 
-### ~~Bugs~~ ✓
-
-All fixed in `svpsvxwr`:
-- ~~`internet-indicator.svelte` — event listener leak~~ → cleanup function added
-- ~~Missing `.catch()` on fire-and-forget promises~~ → added `.catch()` to `ensure-track`, `search/+page`, `[slug]/+page`
-- ~~`live-chat.svelte` deprecated `substr`~~ → replaced with `.slice(2, 11)`
-- ~~`joinAutoRadio` race condition — wrong deck ID~~ → uses `deckId` throughout instead of re-reading `active_deck_id`
-- ~~`broadcast.js:683` fire-and-forget without `void`~~ → added `void`
-- ~~`player.svelte` duration update fires on every play~~ → guards with `tracksCollection.state.get()` check
-
 ### Player & audio edge cases (investigate)
 
 - **`seekWhenReady` job cancellation race** (`broadcast.js:292–324`). Between the final `seekJobSeqByDeck` check and the `play(deckId)` call, a new job could start. The old job's `play()` still fires.
@@ -125,23 +115,14 @@ All fixed in `svpsvxwr`:
 - **Duplicated badge styles in `base.css`.** `.badge` (line 221) and `.channel-badge` (line 88) have nearly identical rules. Merge into one and document in debug/buttons
 
 ### Utils, search & metadata
-
-- **`utils.ts` — `parseSearchTokens()` is exported but never used.** Dead code, safe to remove.
-- **`utils.ts:145` — `timeAgo()` doesn't handle future dates.** Negative `durationMs` still returns `'just started'`. Guard with `Math.max(0, durationMs)` or return a "future" label. and should be in lib/dates?
-- **`discogs-core.js:61` — `.replace(' ', '-')` only replaces the first space.** Should be `.replace(/ /g, '-')` or `.replaceAll(' ', '-')`.
 - **`discogs-core.js:6–8` — in-memory fetch cache grows unbounded.** 5-min TTL but no eviction. Long sessions can accumulate many entries. Could move to db collection with cache
-- **`search-fts.js:8–12` — incomplete PostgREST sanitization.** `RE_FILTER_CHARS` strips `,()` but not `&|!*"` which can break queries.
 - **`youtube.js:61–107` — partial batch failure leaves inconsistent state.** If batch 2 fails, batch 1 data is already in `trackMetaCollection`. Return value doesn't reflect partial success.
-- **`keyboard.js:52–53` — calling `initializeKeyboardShortcuts()` multiple times adds duplicate listeners.** Should guard or return/reuse cleanup function.
-- **`focus.ts:78` — `previous?.focus()` in trap destroy could fail** if the previously focused element was removed from DOM during the trap's lifetime.
-- **`dates.js:2` — `'en-DE'` locale hardcoded** in `formatDate()`. Produces German-style dates for English text. Intentional? Document or make configurable. Not intentional. Should respect user.
-- **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width`, `channels_display`, `channels_filter` are UI concerns living alongside data fields. Consider splitting. really, it is deck_width now. channel_display and filter don't belong on deck, how are they used here? present me
+- **`types.ts` — `Deck` type mixes UI state and data.** `queue_panel_width` is UI concern. `channels_display` and `channels_filter` are already on `AppState`, not on `Deck`. Present to user.
 - **No rate limiting in any metadata fetcher.** YouTube, MusicBrainz, Discogs all make HTTP requests without backoff. Risk of IP blocks or 429 errors.
 
 ### Minor inconsistencies
 
 - **Mixed `useLiveQuery` imports.** 14 files import from `@tanstack/svelte-db`, 11 from the custom `$lib/tanstack/useLiveQuery.svelte`. The custom version fixes `state_unsafe_mutation`. Already tracked in "Needs research" below but the file count is now concrete: `layout-header`, `player`, `button-follow`, `history/+page`, `broadcasts/+page`, `[slug]/edit`, `auth/+page`, `[slug]/map`, `[slug]/batch-edit`, `[slug]/trackids`, `[slug]/delete`, `[slug]/tracks/[tid]/(tabs)/+layout`, plus 2 debug pages. Consider a way that we can easily switch between the two globally + per page.
-- **Import path with/without `.ts` extension.** 6 files import `from '$lib/utils.ts'` while the rest use `from '$lib/utils'`. Cosmetic, but inconsistent. Consistent please
 
 ## Needs research
 

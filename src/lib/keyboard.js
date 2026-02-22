@@ -14,7 +14,10 @@ export const DEFAULT_KEY_BINDINGS = {
 	'Shift+Slash': 'showShortcutsHelp'
 }
 
+let activeCleanup = null
+
 export function initializeKeyboardShortcuts() {
+	if (activeCleanup) activeCleanup()
 	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
 	const bindings = {}
 
@@ -50,5 +53,9 @@ export function initializeKeyboardShortcuts() {
 
 	const handler = createKeybindingsHandler(bindings)
 	window.addEventListener('keydown', handler)
-	return () => window.removeEventListener('keydown', handler)
+	activeCleanup = () => {
+		window.removeEventListener('keydown', handler)
+		activeCleanup = null
+	}
+	return activeCleanup
 }
