@@ -398,7 +398,7 @@ export function resolveChannelInfoClickTarget(params) {
 					const uw = measure.measureText(updatedLabel).width
 					const ux = CHANNEL_INFO_CANVAS.width - 32 - uw
 					if (x >= ux && x <= CHANNEL_INFO_CANVAS.width - 32 && y >= metaY && y <= metaY + 36) {
-						return {href: `/${encodeURIComponent(slug)}`, type: 'channel', token: null}
+						return {href: `/${encodeURIComponent(slug)}/image`, type: 'channel', token: null}
 					}
 				}
 			}
