@@ -1,7 +1,8 @@
 <script>
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {analyzeChannel} from './spam-detector.js'
-	import {channelsCollection, spamDecisionsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 
 	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))

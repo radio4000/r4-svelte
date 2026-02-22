@@ -6,7 +6,7 @@
 	import MixCrossfader from '$lib/components/mix-crossfader.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import {mix, mixAll} from '$lib/lab/mix'
-	import {ensureTracksLoaded} from '$lib/tanstack/collections'
+	import {ensureTracksLoaded} from '$lib/collections/tracks'
 
 	const MAX_DECKS = 8
 

@@ -1,6 +1,7 @@
 <script>
 	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {channelAvatarUrl} from '$lib/utils'
 	import {shufflePlayChannel, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'

@@ -14,7 +14,8 @@ import {
 	queueShuffleKeepCurrent,
 	queueRotate
 } from '$lib/player/queue'
-import {tracksCollection, addPlayHistoryEntry, endPlayHistoryEntry, ensureTracksLoaded} from '$lib/tanstack/collections'
+import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {weeklyShuffle, playbackState, toAutoTracks, epochFromTracks, type AutoTrack} from '$lib/player/auto-radio'
 import {processViewTracks, serializeView, viewToQuery, type View} from '$lib/views.svelte'

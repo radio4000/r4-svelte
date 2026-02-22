@@ -3,14 +3,8 @@
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {
-		tracksCollection,
-		addTrack,
-		updateTrack,
-		deleteTrack,
-		queryClient,
-		ensureTracksLoaded
-	} from '$lib/tanstack/collections'
+	import {tracksCollection, addTrack, updateTrack, deleteTrack, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')

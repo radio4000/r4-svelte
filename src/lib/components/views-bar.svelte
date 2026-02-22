@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {serializeView, parseView, type View} from '$lib/views.svelte'
-	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/collections/views'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import Icon from '$lib/components/icon.svelte'

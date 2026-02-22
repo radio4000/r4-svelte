@@ -3,7 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {checkUser} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {loadUserFollows} from '$lib/tanstack/collections'
+	import {loadUserFollows} from '$lib/collections/follows'
 
 	let unsubscribe = null
 

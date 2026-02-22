@@ -2,7 +2,7 @@
 	import {replaceState} from '$app/navigation'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, updateChannel} from '$lib/tanstack/collections'
+	import {channelsCollection, updateChannel} from '$lib/collections/channels'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
 	import * as m from '$lib/paraglide/messages'

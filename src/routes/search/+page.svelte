@@ -8,7 +8,7 @@
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {searchChannels} from '$lib/search-fts'
 	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'

@@ -1,6 +1,6 @@
 <script>
 	import {createQuery, queryOptions} from '@tanstack/svelte-query'
-	import {queryClient} from '$lib/tanstack/collections/query-client'
+	import {queryClient} from '$lib/collections/query-client'
 	import {browser} from '$app/environment'
 	import {demoCollection, demoState, fakeAPI, SHARED_IDS} from './demo-state.svelte'
 	import {useLiveQuery, eq} from '@tanstack/svelte-db'

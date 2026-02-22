@@ -4,7 +4,7 @@
 	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
 	import {setPlaylist, playTrack, playNext} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {isDbId} from '$lib/utils'
 
 	const RE_YT_PARAM = /[?&]v=([^&]+)/

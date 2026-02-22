@@ -3,7 +3,9 @@ import {playTrack, play, seekTo, setUserInitiatedPlay, getMediaPlayer} from '$li
 import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
-import {broadcastsCollection, channelsCollection, tracksCollection, ensureTracksLoaded} from '$lib/tanstack/collections'
+import {broadcastsCollection} from '$lib/collections/broadcasts'
+import {channelsCollection} from '$lib/collections/channels'
+import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */

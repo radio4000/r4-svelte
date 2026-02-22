@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {createQuery} from '@tanstack/svelte-query'
 	import {sdk} from '@radio4000/sdk'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import Tracklist from '$lib/components/tracklist.svelte'

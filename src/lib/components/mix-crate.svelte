@@ -15,7 +15,7 @@
 	})
 	import {pickRandomN, getChannelTags} from '$lib/utils'
 	import {searchChannels} from '$lib/search-fts'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {mixAll} from '$lib/lab/mix'
 	import ChannelAvatar from './channel-avatar.svelte'
 

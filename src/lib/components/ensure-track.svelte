@@ -1,5 +1,5 @@
 <script>
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
 

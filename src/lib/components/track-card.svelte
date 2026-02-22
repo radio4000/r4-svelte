@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
 	import {playTrack, playNext, playTrackInNewDeck} from '$lib/api'
-	import {deleteTrack, channelsCollection} from '$lib/tanstack/collections'
+	import {deleteTrack} from '$lib/collections/tracks'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track, Channel} from '$lib/types'
 	import Icon from './icon.svelte'

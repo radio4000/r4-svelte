@@ -1,7 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx} from '$lib/contexts'
-	import {queryClient} from '$lib/tanstack/collections'
+	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'

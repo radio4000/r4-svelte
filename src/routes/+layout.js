@@ -2,18 +2,15 @@ import {browser} from '$app/environment'
 import {validateListeningState} from '$lib/broadcast.js'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
-import {
-	queryClient,
-	tracksCollection,
-	trackMetaCollection,
-	channelsCollection,
-	spamDecisionsCollection,
-	broadcastsCollection,
-	followsCollection,
-	ensureTracksLoaded
-} from '$lib/tanstack/collections'
-import {cacheReady} from '$lib/tanstack/query-cache-persistence'
-import {collectionsHydrated} from '$lib/tanstack/collection-persistence'
+import {queryClient} from '$lib/collections/query-client'
+import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+import {trackMetaCollection} from '$lib/collections/track-meta'
+import {channelsCollection} from '$lib/collections/channels'
+import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
+import {broadcastsCollection} from '$lib/collections/broadcasts'
+import {followsCollection} from '$lib/collections/follows'
+import {cacheReady} from '$lib/query-cache-persistence'
+import {collectionsHydrated} from '$lib/collection-persistence'
 import {appState} from '$lib/app-state.svelte'
 import * as api from '$lib/api'
 import * as queue from '$lib/player/queue'

@@ -14,7 +14,7 @@
 
 <script>
 	import '$lib/youtube-video-custom-element.js'
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import Icon from './icon.svelte'
 
 	/** @type {{deck: DeckState, effectiveVolume?: number, queue?: string[]}} */

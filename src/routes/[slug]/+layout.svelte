@@ -2,15 +2,12 @@
 	import {page} from '$app/state'
 	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {
-		tracksCollection,
-		channelsCollection,
-		broadcastsCollection,
-		checkTracksFreshness
-	} from '$lib/tanstack/collections'
+	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'

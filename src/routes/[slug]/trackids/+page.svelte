@@ -2,7 +2,8 @@
 	import {page} from '$app/state'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelQuery = useLiveQuery((q) =>

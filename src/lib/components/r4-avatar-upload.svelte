@@ -1,6 +1,6 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {updateChannel} from '$lib/tanstack/collections'
+	import {updateChannel} from '$lib/collections/channels'
 
 	/** @type {{slug: string, channelId: string, onupload?: (data: unknown) => void}} */
 	let {slug, channelId, onupload} = $props()

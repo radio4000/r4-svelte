@@ -6,8 +6,8 @@
 		reorderPinnedViews,
 		deleteView,
 		type SavedView
-	} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	} from '$lib/collections/views'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import Icon from '$lib/components/icon.svelte'
 
 	const viewsQuery = useLiveQuery(viewsCollection)

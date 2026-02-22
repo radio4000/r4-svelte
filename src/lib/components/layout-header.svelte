@@ -11,7 +11,7 @@
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {broadcastsCollection} from '$lib/tanstack/collections'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import PinsNav from '$lib/components/pins-nav.svelte'
 	import * as m from '$lib/paraglide/messages'
 

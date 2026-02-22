@@ -1,5 +1,5 @@
 import {logger} from '$lib/logger'
-import {trackMetaCollection} from '$lib/tanstack/collections'
+import {trackMetaCollection} from '$lib/collections/track-meta'
 import {parseTitle} from 'media-now/parse-title'
 
 const log = logger.ns('metadata/musicbrainz').seal()

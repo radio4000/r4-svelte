@@ -3,14 +3,12 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale} from '$lib/paraglide/runtime'
-	import {
-		playHistoryCollection,
-		channelsCollection,
-		trackMetaCollection,
-		followsCollection,
-		queryClient
-	} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {trackMetaCollection} from '$lib/collections/track-meta'
+	import {followsCollection} from '$lib/collections/follows'
+	import {queryClient} from '$lib/collections/query-client'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 
 	// Reactive reads — updates live as you play tracks, follow channels, etc.
 	const playsQuery = useLiveQuery((q) => q.from({p: playHistoryCollection}))

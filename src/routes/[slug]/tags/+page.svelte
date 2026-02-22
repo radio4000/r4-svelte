@@ -3,7 +3,7 @@
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import * as m from '$lib/paraglide/messages'

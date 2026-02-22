@@ -1,5 +1,5 @@
 <script>
-	import {tracksCollection} from '$lib/tanstack/collections'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {sortByNewest} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 

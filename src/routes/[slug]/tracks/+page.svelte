@@ -3,7 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Icon from '$lib/components/icon.svelte'

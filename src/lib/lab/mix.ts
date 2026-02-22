@@ -9,7 +9,7 @@
  *     .take(50)
  */
 
-import {tracksCollection} from '$lib/tanstack/collections'
+import {tracksCollection} from '$lib/collections/tracks'
 import {queueUnique} from '$lib/player/queue'
 import {shuffleArray} from '$lib/utils'
 

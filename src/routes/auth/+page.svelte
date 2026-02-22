@@ -7,7 +7,7 @@
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import * as m from '$lib/paraglide/messages'
 
 	const redirect = page.url.searchParams.get('redirect')

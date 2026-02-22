@@ -11,7 +11,8 @@
 	 */
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {channelsCollection, queryClient} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {queryClient} from '$lib/collections/query-client'
 
 	const query = useLiveQuery((q) =>
 		q

@@ -3,7 +3,8 @@
 	import {huntDiscogs, pullDiscogs} from '$lib/metadata/discogs'
 	import {pullMusicBrainz} from '$lib/metadata/musicbrainz'
 	import {pullYouTubeSingle} from '$lib/metadata/youtube'
-	import {trackMetaCollection, updateTrack} from '$lib/tanstack/collections'
+	import {trackMetaCollection} from '$lib/collections/track-meta'
+	import {updateTrack} from '$lib/collections/tracks'
 	import * as m from '$lib/paraglide/messages'
 
 	const log = logger.ns('track-meta').seal()

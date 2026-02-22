@@ -1,7 +1,8 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'

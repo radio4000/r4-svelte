@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {deleteChannel} from '$lib/tanstack/collections'
+	import {deleteChannel} from '$lib/collections/channels'
 
 	const channelCtx = getChannelCtx()
 	const channel = $derived(channelCtx.data)

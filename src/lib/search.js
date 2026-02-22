@@ -1,7 +1,7 @@
 import fuzzysort from 'fuzzysort'
 import {sdk} from '@radio4000/sdk'
 import {searchChannels, searchTracks} from '$lib/search-fts'
-import {channelsCollection} from '$lib/tanstack/collections'
+import {channelsCollection} from '$lib/collections/channels'
 import {parseSearchQueryToView} from '$lib/views.svelte'
 
 const RE_WHITESPACE = /\s+/

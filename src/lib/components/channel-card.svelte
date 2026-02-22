@@ -5,7 +5,7 @@
 	import {trimWithEllipsis} from '$lib/utils'
 	import {playChannel, togglePlayPause} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast.js'
-	import {broadcastsCollection} from '$lib/tanstack/collections'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import ChannelAvatar from './channel-avatar.svelte'
 	import LinkEntities from './link-entities.svelte'
 	import ButtonFollow from './button-follow.svelte'

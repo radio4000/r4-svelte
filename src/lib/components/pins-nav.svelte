@@ -3,8 +3,8 @@
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {useLiveQuery as useLiveQueryCustom} from '$lib/tanstack/useLiveQuery.svelte'
-	import {viewsCollection} from '$lib/tanstack/collections'
+	import {useLiveQuery as useLiveQueryCustom} from '$lib/useLiveQuery.svelte'
+	import {viewsCollection} from '$lib/collections/views'
 	import {parseView} from '$lib/views.svelte'
 
 	const viewsQuery = useLiveQueryCustom(viewsCollection)

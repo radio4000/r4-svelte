@@ -1,6 +1,6 @@
 import {mapChunked} from '$lib/async'
 import {logger} from '$lib/logger'
-import {trackMetaCollection} from '$lib/tanstack/collections'
+import {trackMetaCollection} from '$lib/collections/track-meta'
 
 const log = logger.ns('metadata/youtube').seal()
 

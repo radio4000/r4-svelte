@@ -1,6 +1,6 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import Dialog from '$lib/components/dialog.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
 	import * as m from '$lib/paraglide/messages'

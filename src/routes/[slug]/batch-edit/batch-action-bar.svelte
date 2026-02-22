@@ -1,5 +1,6 @@
 <script>
-	import {batchUpdateTracksUniform, deleteTrackMeta, insertDurationFromMeta} from '$lib/tanstack/collections'
+	import {batchUpdateTracksUniform, insertDurationFromMeta} from '$lib/collections/tracks'
+	import {deleteTrackMeta} from '$lib/collections/track-meta'
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {getChannelTags} from '$lib/utils'

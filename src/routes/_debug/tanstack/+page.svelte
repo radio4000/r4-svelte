@@ -1,10 +1,13 @@
 <script lang="ts">
 	import Menu from './menu.svelte'
 	import {resetLocalData} from '$lib/api'
-	import {queryClient, tracksCollection, channelsCollection, followsCollection} from '$lib/tanstack/collections'
-	import {trackMetaCollection} from '$lib/tanstack/collections/track-meta'
-	import {playHistoryCollection} from '$lib/tanstack/collections/play-history'
-	import {cacheReady} from '$lib/tanstack/query-cache-persistence'
+	import {queryClient} from '$lib/collections/query-client'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {followsCollection} from '$lib/collections/follows'
+	import {trackMetaCollection} from '$lib/collections/track-meta'
+	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {cacheReady} from '$lib/query-cache-persistence'
 	import {browser} from '$app/environment'
 
 	let tick = $state(0)

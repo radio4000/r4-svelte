@@ -1,5 +1,6 @@
 <script lang="ts">
-	import {tracksCollection, ensureTracksLoaded, queryClient} from '$lib/tanstack/collections'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {queryClient} from '$lib/collections/query-client'
 	import QueryTest from './query-test.svelte'
 
 	let slug = $state('200ok')

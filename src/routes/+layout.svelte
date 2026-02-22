@@ -20,7 +20,7 @@
 	import {getLocale, setLocale, locales, isLocale} from '$lib/paraglide/runtime'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
-	import {queryClient} from '$lib/tanstack/collections'
+	import {queryClient} from '$lib/collections/query-client'
 
 	const log = logger.ns('layout').seal()
 

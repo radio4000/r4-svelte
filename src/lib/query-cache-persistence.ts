@@ -6,7 +6,7 @@ import {
 } from '@tanstack/query-persist-client-core'
 import {get, set, del, createStore} from 'idb-keyval'
 import {browser} from '$app/environment'
-import {queryClient} from './collections'
+import {queryClient} from './collections/query-client'
 import {IDB_DATABASES, IDB_KEYS} from '$lib/storage-keys'
 import {logger} from '$lib/logger'
 

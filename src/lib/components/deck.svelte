@@ -1,7 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/tanstack/collections'
+	import {playHistoryCollection} from '$lib/collections/play-history'
 	import Player from '$lib/components/player.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 

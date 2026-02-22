@@ -1,5 +1,5 @@
 <script>
-	import {updateTrack} from '$lib/tanstack/collections/tracks'
+	import {updateTrack} from '$lib/collections/tracks'
 	import R4DiscogsResource from './r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
 

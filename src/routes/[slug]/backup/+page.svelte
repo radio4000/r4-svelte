@@ -1,7 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import Icon from '$lib/components/icon.svelte'
 
 	const slug = $derived(page.params.slug)

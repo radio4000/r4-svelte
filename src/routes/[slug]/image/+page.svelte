@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {channelsCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {channelAvatarUrl} from '$lib/utils'
 
 	let slug = $derived(page.params.slug)

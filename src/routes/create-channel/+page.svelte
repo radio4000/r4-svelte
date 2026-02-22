@@ -1,7 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
-	import {createChannel} from '$lib/tanstack/collections'
+	import {createChannel} from '$lib/collections/channels'
 	import {slugify} from '$lib/utils'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 

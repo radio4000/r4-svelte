@@ -2,7 +2,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {startBroadcast, stopBroadcast} from '$lib/broadcast'
 	import {getMediaPlayer} from '$lib/api'
-	import {broadcastsCollection} from '$lib/tanstack/collections'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 

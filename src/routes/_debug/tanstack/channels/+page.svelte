@@ -2,7 +2,7 @@
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
-	import {channelsCollection, createChannel, updateChannel, deleteChannel} from '$lib/tanstack/collections'
+	import {channelsCollection, createChannel, updateChannel, deleteChannel} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')

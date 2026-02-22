@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/noExplicitAny: matches @tanstack/svelte-db signature which uses `any`
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Instrumented copy of @tanstack/svelte-db useLiveQuery
 //
 // it adds measurement with performance.now()
@@ -45,15 +47,12 @@ export function useLiveQuery<TContext extends Context>(
 	config: LiveQueryCollectionConfig<TContext>,
 	deps?: Array<() => unknown>
 ): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext>>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches @tanstack/svelte-db signature
 export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & NonSingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, Array<TResult>>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches @tanstack/svelte-db signature
 export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & SingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- implementation overload
 export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
 	const id = ++queryCounter
 	const t0 = performance.now()
@@ -112,7 +111,6 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	})
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic collection values
 	let internalData: any[] = $state([])
 	let status = $state('disabled')
 

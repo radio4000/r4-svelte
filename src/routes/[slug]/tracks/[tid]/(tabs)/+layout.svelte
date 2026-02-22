@@ -4,7 +4,7 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {trackMetaCollection} from '$lib/tanstack/collections'
+	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import TrackMeta from '$lib/components/track-meta.svelte'
 	import Icon from '$lib/components/icon.svelte'
