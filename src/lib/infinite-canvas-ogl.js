@@ -1,6 +1,11 @@
 /**
  * WebGL infinite canvas with chunk-based rendering using OGL
  * Parallel implementation for bundle size and performance comparison
+ *
+ * Reference / inspiration:
+ * "Infinite Canvas: Building a Seamless Pan-Anywhere Image Space"
+ * by Edoardo Lunardi, Codrops (Tympanus), January 7, 2026
+ * https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/
  */
 import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
 import {
@@ -329,10 +334,13 @@ export class InfiniteCanvasOGL {
 		this._rayResult = new Vec3()
 		this._vpMatrix = new Float32Array(16)
 		this._vpInverse = new Float32Array(16)
+		this._invWorldMatrix = new Float32Array(16)
 		this._planeNormal = new Vec3(0, 0, 1)
 		this._toPlane = new Vec3()
 		this._hitPoint = new Vec3()
 		this._localPoint = new Vec3()
+		this._rayLocalOrigin = new Vec3()
+		this._rayLocalDir = new Vec3()
 
 		this.init()
 		this.createTooltip()
@@ -893,7 +901,15 @@ export class InfiniteCanvasOGL {
 				if (!mediaItem && hit?.mesh?.userData?.isInfo) {
 					mediaItem = hit.mesh.userData?.mainMesh?.userData?.mediaItem
 				}
-				if (mediaItem) {
+				let clickedInfoTarget = false
+				if (mediaItem && hit?.mesh?.userData?.isInfo) {
+					const halfW = hit.mesh.scale.x * 0.5
+					const halfH = hit.mesh.scale.y * 0.5
+					const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
+					const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
+					clickedInfoTarget = !!resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+				}
+				if (mediaItem && !clickedInfoTarget) {
 					startedSingleRotate = true
 					this.isSingleCardRotating = true
 					this.singleCardRotateDistance = 0
@@ -964,7 +980,7 @@ export class InfiniteCanvasOGL {
 				this.singleCardRotateDistance += Math.abs(dx) + Math.abs(dy)
 				const s = this.singleSceneCardRotateSensitivity
 				this.singleCardRotationTarget.y += dx * s
-				this.singleCardRotationTarget.x = clamp(this.singleCardRotationTarget.x + dy * s, -1.2, 1.2)
+				this.singleCardRotationTarget.x += dy * s
 				this.lastMouse = {x: e.clientX, y: e.clientY}
 				if (this.tooltip) this.tooltip.style.opacity = '0'
 				return
@@ -1109,13 +1125,14 @@ export class InfiniteCanvasOGL {
 
 	/**
 	 * @param {any} mediaItem
-	 * @param {{href?: string, type: 'channel'|'tag'|'mention'|'tracks', token?: string | null} | null} [target]
+	 * @param {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null} [target]
 	 */
 	formatHoverLabel(mediaItem, target = null) {
 		const base = mediaItem?.slug ? `@${mediaItem.slug}` : ''
 		if (!target) return base
 		if (target.type === 'channel') return base
 		if (target.type === 'tracks') return `${base}/tracks`
+		if (target.type === 'rotate') return `${base} rotate`
 		if (target.type === 'tag' && target.token) return `${base} ${target.token}`
 		if (target.type === 'mention' && target.token) return target.token
 		return base
@@ -1135,7 +1152,7 @@ export class InfiniteCanvasOGL {
 			if (!mediaItem && intersected.userData?.isInfo) {
 				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
 			}
-			/** @type {{href?: string, type: 'channel'|'tag'|'mention'|'tracks', token?: string | null} | null} */
+			/** @type {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null} */
 			let linkTarget = null
 			if (mediaItem && mediaItem !== this.hoveredItem) {
 				this.hoveredItem = mediaItem
@@ -1216,14 +1233,14 @@ export class InfiniteCanvasOGL {
 
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
-					if (
-						!mesh.visible ||
-						mesh.userData.isBorder ||
-						mesh.userData.isTagBadge ||
-						mesh.userData.isLiveBadge ||
-						mesh.userData.isBezelBack
-					)
-						continue
+				if (
+					!mesh.visible ||
+					mesh.userData.isBorder ||
+					mesh.userData.isTagBadge ||
+					mesh.userData.isLiveBadge ||
+					mesh.userData.isBezelBack
+				)
+					continue
 
 				const intersection = this.rayPlaneIntersection(ray, mesh)
 				if (intersection && intersection.distance < closestDist) {
@@ -1262,6 +1279,29 @@ export class InfiniteCanvasOGL {
 		out.x = (m[0] * x + m[4] * y + m[8] * z + m[12]) * w
 		out.y = (m[1] * x + m[5] * y + m[9] * z + m[13]) * w
 		out.z = (m[2] * x + m[6] * y + m[10] * z + m[14]) * w
+	}
+
+	transformPointWith(m, v, out) {
+		const x = v.x
+		const y = v.y
+		const z = v.z
+		const w = 1.0 / (m[3] * x + m[7] * y + m[11] * z + m[15])
+		out.x = (m[0] * x + m[4] * y + m[8] * z + m[12]) * w
+		out.y = (m[1] * x + m[5] * y + m[9] * z + m[13]) * w
+		out.z = (m[2] * x + m[6] * y + m[10] * z + m[14]) * w
+	}
+
+	transformDirectionWith(m, v, out) {
+		const x = v.x
+		const y = v.y
+		const z = v.z
+		out.x = m[0] * x + m[4] * y + m[8] * z
+		out.y = m[1] * x + m[5] * y + m[9] * z
+		out.z = m[2] * x + m[6] * y + m[10] * z
+		const len = Math.hypot(out.x, out.y, out.z) || 1
+		out.x /= len
+		out.y /= len
+		out.z /= len
 	}
 
 	multiplyMatrices(out, a, b) {
@@ -1375,28 +1415,36 @@ export class InfiniteCanvasOGL {
 	}
 
 	rayPlaneIntersection(ray, mesh) {
-		const n = this._planeNormal
-		const denom = ray.direction.dot(n)
+		const worldMatrix = mesh.worldMatrix
+		if (!worldMatrix) return null
+		this.invertMatrix(this._invWorldMatrix, worldMatrix)
+		this.transformPointWith(this._invWorldMatrix, ray.origin, this._rayLocalOrigin)
+		this.transformDirectionWith(this._invWorldMatrix, ray.direction, this._rayLocalDir)
+		const denom = this._rayLocalDir.z
 		if (Math.abs(denom) < 0.0001) return null
-
-		const worldPos = mesh.position
-		this._toPlane.sub(worldPos, ray.origin)
-		const t = this._toPlane.dot(n) / denom
+		const t = -this._rayLocalOrigin.z / denom
 		if (t < 0) return null
 
-		// Check if hit point is within plane bounds
 		const lp = this._localPoint
-		lp.x = ray.origin.x + ray.direction.x * t - worldPos.x
-		lp.y = ray.origin.y + ray.direction.y * t - worldPos.y
+		lp.x = this._rayLocalOrigin.x + this._rayLocalDir.x * t
+		lp.y = this._rayLocalOrigin.y + this._rayLocalDir.y * t
+		lp.z = 0
 
-		const halfWidth = mesh.scale.x * 0.5
-		const halfHeight = mesh.scale.y * 0.5
+		const halfLocalWidth = 0.5
+		const halfLocalHeight = 0.5
+		if (Math.abs(lp.x) > halfLocalWidth || Math.abs(lp.y) > halfLocalHeight) return null
 
-		if (Math.abs(lp.x) <= halfWidth && Math.abs(lp.y) <= halfHeight) {
-			return {distance: t, localX: lp.x, localY: lp.y}
-		}
+		// Return local coordinates in scaled mesh-space to preserve existing info-panel mapping.
+		const localX = lp.x * mesh.scale.x
+		const localY = lp.y * mesh.scale.y
 
-		return null
+		// Compute world-space hit distance for stable closest-hit sorting.
+		this.transformPointWith(worldMatrix, lp, this._hitPoint)
+		const dx = this._hitPoint.x - ray.origin.x
+		const dy = this._hitPoint.y - ray.origin.y
+		const dz = this._hitPoint.z - ray.origin.z
+		const distance = Math.hypot(dx, dy, dz)
+		return {distance, localX, localY}
 	}
 
 	handleKey(key, down) {
@@ -1488,7 +1536,7 @@ export class InfiniteCanvasOGL {
 			this.infoHoverTarget?.id === mediaItem.id
 				? `${this.infoHoverTarget.type}:${this.infoHoverTarget.token ?? ''}`
 				: ''
-		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.isPlaying ? 1 : 0}:${this.activeIds.has(mediaItem.id) ? 1 : 0}:${(mediaItem.activeTags || []).join(',')}:${(mediaItem.activeMentions || []).join(',')}:${hover}`
+		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.isPlaying ? 1 : 0}:${this.activeIds.has(mediaItem.id) ? 1 : 0}:${(mediaItem.activeTags || []).join(',')}:${(mediaItem.activeMentions || []).join(',')}:${mediaItem.canToggleRotate ? 1 : 0}:${mediaItem.isRotateEnabled ? 1 : 0}:${hover}`
 		if (this.infoTextureCache.has(key)) return this.infoTextureCache.get(key)
 		const canvas = buildChannelInfoCanvas({
 			mediaItem,
@@ -1647,17 +1695,17 @@ export class InfiniteCanvasOGL {
 				open: true
 			}
 			bg.userData.bodyStyle = style === 'active' ? 'active' : 'default'
-				if (bg.userData.bezelBack?.userData) {
-					const bezelScale = this.getBezelBackScale()
-					bg.userData.bezelBack.userData.bodyTarget = {
-						x: bgClosedPos?.x ?? mesh.position.x,
-						y: centerY,
-						sx: bodyWidth * bezelScale,
-						sy: totalHeight * bezelScale,
-						open: true
-					}
-					bg.userData.bezelBack.userData.bodyStyle = style === 'active' ? 'active' : 'default'
+			if (bg.userData.bezelBack?.userData) {
+				const bezelScale = this.getBezelBackScale()
+				bg.userData.bezelBack.userData.bodyTarget = {
+					x: bgClosedPos?.x ?? mesh.position.x,
+					y: centerY,
+					sx: bodyWidth * bezelScale,
+					sy: totalHeight * bezelScale,
+					open: true
 				}
+				bg.userData.bezelBack.userData.bodyStyle = style === 'active' ? 'active' : 'default'
+			}
 
 			if (!mesh.userData.info && this.gl) {
 				const infoProgram = this.infoProgram
@@ -1700,17 +1748,17 @@ export class InfiniteCanvasOGL {
 				sy: bgClosedScale?.y ?? bg.scale.y,
 				open: false
 			}
-				bg.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
-				if (bg.userData.bezelBack?.userData) {
-					const bezelScale = this.getBezelBackScale()
-					bg.userData.bezelBack.userData.bodyTarget = {
-						x: bgClosedPos?.x ?? bg.position.x,
-						y: bgClosedPos?.y ?? bg.position.y,
-						sx: (bgClosedScale?.x ?? bg.scale.x) * bezelScale,
-						sy: (bgClosedScale?.y ?? bg.scale.y) * bezelScale,
-						open: false
-					}
-					bg.userData.bezelBack.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
+			bg.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
+			if (bg.userData.bezelBack?.userData) {
+				const bezelScale = this.getBezelBackScale()
+				bg.userData.bezelBack.userData.bodyTarget = {
+					x: bgClosedPos?.x ?? bg.position.x,
+					y: bgClosedPos?.y ?? bg.position.y,
+					sx: (bgClosedScale?.x ?? bg.scale.x) * bezelScale,
+					sy: (bgClosedScale?.y ?? bg.scale.y) * bezelScale,
+					open: false
+				}
+				bg.userData.bezelBack.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
 			}
 			if (mesh.userData.info) {
 				mesh.userData.info.setParent(null)
@@ -2073,7 +2121,10 @@ export class InfiniteCanvasOGL {
 					this.targetVel.y = 0
 				}
 			}
-			if ((this.minCameraZ != null && this.basePos.z <= this.minCameraZ) || (this.maxCameraZ != null && this.basePos.z >= this.maxCameraZ)) {
+			if (
+				(this.minCameraZ != null && this.basePos.z <= this.minCameraZ) ||
+				(this.maxCameraZ != null && this.basePos.z >= this.maxCameraZ)
+			) {
 				this.velocity.z = 0
 				this.targetVel.z = 0
 				this.scrollAccum = 0
