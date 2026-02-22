@@ -11,15 +11,21 @@
 	 * @prop {string} [slug]
 	 * @prop {string} [id]
 	 * @prop {string} [title]
+	 * @prop {string} [description]
 	 * @prop {string} [channel_slug]
 	 * @prop {{slug?: string}} [channel]
 	 * @prop {boolean} [isFavorite]
 	 * @prop {boolean} [isLive]
+	 * @prop {boolean} [isPlaying]
+	 * @prop {string[]} [tags]
+	 * @prop {string[]} [mentions]
+	 * @prop {string[]} [activeTags]
+	 * @prop {string[]} [activeMentions]
 	 * @prop {boolean} [isActive]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, selectedId?: string | null, backgroundColor?: string|null, onclick?: (item: MediaItem) => void}} */
-	let {media = [], activeId, selectedId = null, backgroundColor = null, onclick} = $props()
+	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
+	let {media = [], activeId, activeIds = [], selectedId = null, backgroundColor = null, onclick, onnavigate} = $props()
 
 	/** @type {HTMLDivElement} */
 	let container
@@ -59,50 +65,72 @@
 		void appState.theme
 		void appState.custom_css_variables
 		const liveBorderColor = getThemeColor('--accent-9')
-		const activeBorderColor = getThemeColor('--gray-5')
+		const hoverBorderColor = getThemeColor('--gray-5')
+		const activeBorderColor = hoverBorderColor
 		const favoriteBorderColor = getThemeColor('--accent-8')
 		const selectedBorderColor = getThemeColor('--accent-7')
 		const defaultCardColor = getThemeColor('--gray-1')
 		const selectedCardColor = getThemeColor('--gray-2')
 		const favoriteCardColor = getThemeColor('--accent-2')
-		const activeCardColor = getThemeColor('--accent-9')
+		const playingCardColor = getThemeColor('--accent-3')
+		const activeCardColor = getThemeColor('--accent-4')
 		const liveCardColor = getThemeColor('--accent-2')
 		const infoBgColor = getThemeColor('--gray-1')
 		const infoTextColor = getThemeColor('--gray-12')
 		const infoMutedColor = getThemeColor('--gray-10')
+		const tagBgColor = getThemeColor('--accent-4')
+		const tagTextColor = getThemeColor('--accent-11')
+		const tagHoverBgColor = getThemeColor('--accent-5')
+		const tagHoverBorderColor = getThemeColor('--gray-6')
+		const tagActiveBgColor = getThemeColor('--accent-9')
+		const tagActiveTextColor = getThemeColor('--gray-1')
+		const tagActiveBorderColor = getThemeColor('--accent-9')
 		const infoBorderColor = getThemeColor('--gray-5')
 		const activeInfoTextColor = getThemeColor('--gray-1')
 		const activeInfoMutedColor = getThemeColor('--gray-2')
 		const liveBadgeBgColor = getThemeColor('--accent-9')
 		const liveBadgeTextColor = getThemeColor('--gray-1')
+		const tagBadgeColor = getThemeColor('--accent-9')
 		const mediaRadiusPx = getMediaRadiusPx()
 		const roundArtworks = mediaRadiusPx > 0.01
 		const cornerRadius = roundArtworks ? 0.12 : 0
 		canvas = new InfiniteCanvasOGL(container, {
 			media: untrack(() => media),
 			activeId: untrack(() => activeId),
+			activeIds: untrack(() => activeIds),
 			selectedId: untrack(() => selectedId),
 			liveBorderColor,
 			activeBorderColor,
+			hoverBorderColor,
 			favoriteBorderColor,
 			selectedBorderColor,
 			defaultCardColor,
 			selectedCardColor,
 			favoriteCardColor,
+			playingCardColor,
 			activeCardColor,
 			liveCardColor,
 			infoBgColor,
 			infoTextColor,
 			infoMutedColor,
+			tagBgColor,
+			tagTextColor,
+			tagHoverBgColor,
+			tagHoverBorderColor,
+			tagActiveBgColor,
+			tagActiveTextColor,
+			tagActiveBorderColor,
 			infoBorderColor,
 			activeInfoTextColor,
 			activeInfoMutedColor,
 			liveBadgeBgColor,
 			liveBadgeTextColor,
+			tagBadgeColor,
 			roundArtworks,
 			cornerRadius,
 			backgroundColor,
-			onClick: onclick
+			onClick: onclick,
+			onNavigate: onnavigate
 		})
 		return () => canvas?.dispose()
 	})
@@ -114,6 +142,11 @@
 	$effect(() => {
 		if (!canvas) return
 		canvas.setActiveId(activeId ?? null)
+	})
+
+	$effect(() => {
+		if (!canvas) return
+		canvas.setActiveIds(activeIds)
 	})
 
 	$effect(() => {
@@ -162,5 +195,4 @@
 		pointer-events: none;
 		text-align: right;
 	}
-
 </style>

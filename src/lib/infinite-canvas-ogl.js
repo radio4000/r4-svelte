@@ -3,7 +3,12 @@
  * Parallel implementation for bundle size and performance comparison
  */
 import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
-import {resolveChannelCardStates, buildChannelInfoCanvas} from '$lib/3d/channel-card-3d.js'
+import {
+	resolveChannelCardStates,
+	buildChannelInfoCanvas,
+	resolveChannelInfoClickTarget,
+	CHANNEL_INFO_CANVAS
+} from '$lib/3d/channel-card-3d.js'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2
@@ -51,10 +56,13 @@ const vec2 = (x = 0, y = 0) => ({x, y})
 
 const colorVertexShader = `
 	attribute vec3 position;
+	attribute vec2 uv;
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
+	varying vec2 vUv;
 	varying float vDepthFade;
 	void main() {
+		vUv = uv;
 		vDepthFade = 1.0;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
@@ -64,9 +72,39 @@ const colorFragmentShader = `
 	precision highp float;
 	uniform vec3 uColor;
 	uniform float uAlpha;
+	uniform float uCornerRadius;
+	uniform vec3 uStrokeColor;
+	uniform float uStrokeThickness;
+	uniform float uStrokeAlpha;
+	varying vec2 vUv;
 	varying float vDepthFade;
+
+	float roundedRectSDF(vec2 p, vec2 b, float r) {
+		vec2 q = abs(p) - b + vec2(r);
+		return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+	}
 	void main() {
 		if (vDepthFade < 0.01) discard;
+		float radius = clamp(uCornerRadius, 0.0, 0.49);
+		float strokeT = clamp(uStrokeThickness, 0.0, 0.2);
+		// Keep AA constant to avoid WebGL derivative extension requirements.
+		float aa = 0.0035;
+		if (radius > 0.0) {
+			vec2 p = vUv - vec2(0.5);
+			float outer = roundedRectSDF(p, vec2(0.5), radius);
+			if (outer > 0.0) discard;
+			vec4 fill = vec4(uColor, uAlpha * vDepthFade);
+			if (strokeT <= 0.0001 || uStrokeAlpha <= 0.001) {
+				gl_FragColor = fill;
+				return;
+			}
+			float innerR = max(radius - strokeT, 0.0);
+			float inner = roundedRectSDF(p, vec2(0.5 - strokeT), innerR);
+			float strokeMask = smoothstep(aa, -aa, outer) - smoothstep(aa, -aa, inner);
+			vec4 stroke = vec4(uStrokeColor, uStrokeAlpha * vDepthFade * strokeMask);
+			gl_FragColor = mix(fill, stroke, stroke.a);
+			return;
+		}
 		gl_FragColor = vec4(uColor, uAlpha * vDepthFade);
 	}
 `
@@ -155,13 +193,24 @@ const borderFragmentShader = `
 
 	void main() {
 		vec2 p = vUv - vec2(0.5);
+		float aa = fwidth(p.x) + fwidth(p.y);
 		float t = clamp(uThickness, 0.001, 0.2);
-		float distCircle = abs(length(p) - 0.5);
 		float r = clamp(uCornerRadius, 0.0, 0.49);
-		float distSquare = abs(roundedRectSDF(p, vec2(0.5), r));
-		float dist = mix(distCircle, distSquare, step(0.5, uShape));
-		if (dist > t) discard;
-		gl_FragColor = vec4(uColor, uAlpha);
+
+		// Rounded-rect ring: outer mask minus inner mask.
+		float outer = roundedRectSDF(p, vec2(0.5), r);
+		float innerR = max(r - t, 0.0);
+		float inner = roundedRectSDF(p, vec2(0.5 - t), innerR);
+		float maskRounded = smoothstep(aa, -aa, outer) - smoothstep(aa, -aa, inner);
+
+		// Circle fallback ring (kept for uShape compatibility).
+		float outerC = length(p) - 0.5;
+		float innerC = length(p) - max(0.5 - t, 0.0);
+		float maskCircle = smoothstep(aa, -aa, outerC) - smoothstep(aa, -aa, innerC);
+
+		float mask = mix(maskCircle, maskRounded, step(0.5, uShape));
+		if (mask <= 0.001) discard;
+		gl_FragColor = vec4(uColor, uAlpha * mask);
 	}
 `
 
@@ -177,27 +226,41 @@ export class InfiniteCanvasOGL {
 		this.container = container
 		this.media = config.media || []
 		this.activeId = config.activeId
+		this.activeIds = new Set(
+			Array.isArray(config.activeIds) ? config.activeIds.filter(Boolean) : config.activeId ? [config.activeId] : []
+		)
 		this.selectedId = config.selectedId ?? null
 		this.liveBorderColor = config.liveBorderColor || '#ff0000'
 		this.activeBorderColor = config.activeBorderColor || '#888'
+		this.hoverBorderColor = config.hoverBorderColor || this.activeBorderColor
 		this.favoriteBorderColor = config.favoriteBorderColor || '#ff0000'
 		this.selectedBorderColor = config.selectedBorderColor || '#ffffff'
 		this.defaultCardColor = config.defaultCardColor || '#ddd'
 		this.selectedCardColor = config.selectedCardColor || this.defaultCardColor
 		this.favoriteCardColor = config.favoriteCardColor || '#eee'
 		this.activeCardColor = config.activeCardColor || '#eee'
+		this.playingCardColor = config.playingCardColor || this.activeCardColor
 		this.liveCardColor = config.liveCardColor || this.activeCardColor
 		this.infoBgColor = config.infoBgColor || '#111'
 		this.infoTextColor = config.infoTextColor || '#fff'
 		this.infoMutedColor = config.infoMutedColor || '#bbb'
+		this.tagBgColor = config.tagBgColor || '#ddd'
+		this.tagTextColor = config.tagTextColor || this.infoTextColor
+		this.tagHoverBgColor = config.tagHoverBgColor || this.tagBgColor
+		this.tagHoverBorderColor = config.tagHoverBorderColor || this.hoverBorderColor
+		this.tagActiveBgColor = config.tagActiveBgColor || this.activeCardColor
+		this.tagActiveTextColor = config.tagActiveTextColor || this.infoTextColor
+		this.tagActiveBorderColor = config.tagActiveBorderColor || this.activeBorderColor
 		this.infoBorderColor = config.infoBorderColor || '#666'
 		this.activeInfoTextColor = config.activeInfoTextColor || this.infoTextColor
 		this.activeInfoMutedColor = config.activeInfoMutedColor || this.infoMutedColor
 		this.liveBadgeBgColor = config.liveBadgeBgColor || this.liveBorderColor
 		this.liveBadgeTextColor = config.liveBadgeTextColor || '#fff'
+		this.tagBadgeColor = config.tagBadgeColor || this.liveBadgeBgColor
 		this.roundArtworks = config.roundArtworks ?? true
 		this.cornerRadius = config.cornerRadius ?? 0.12
 		this.onClick = config.onClick
+		this.onNavigate = config.onNavigate
 		this.backgroundColor = config.backgroundColor ?? null
 
 		this.velocity = vec3()
@@ -220,9 +283,13 @@ export class InfiniteCanvasOGL {
 		this.planeCache = new Map()
 		this.textureCache = new Map()
 		this.infoTextureCache = new Map()
+		this.backgroundProgramCache = new Map()
+		this.tagBadgeTexture = null
+		this.liveBadgeTexture = null
 		this.disposed = false
 		this.hoveredItem = null
 		this.hoveredId = null
+		this.infoHoverTarget = null
 
 		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
 		this._rayNear = new Vec3()
@@ -288,7 +355,14 @@ export class InfiniteCanvasOGL {
 			default: new Program(this.gl, {
 				vertex: colorVertexShader,
 				fragment: colorFragmentShader,
-				uniforms: {uColor: {value: this.parseColor(this.defaultCardColor)}, uAlpha: {value: 0.95}},
+				uniforms: {
+					uColor: {value: this.parseColor(this.defaultCardColor)},
+					uAlpha: {value: 0.95},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
@@ -296,7 +370,14 @@ export class InfiniteCanvasOGL {
 			favorite: new Program(this.gl, {
 				vertex: colorVertexShader,
 				fragment: colorFragmentShader,
-				uniforms: {uColor: {value: this.parseColor(this.favoriteCardColor)}, uAlpha: {value: 0.96}},
+				uniforms: {
+					uColor: {value: this.parseColor(this.favoriteCardColor)},
+					uAlpha: {value: 0.96},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
@@ -304,7 +385,44 @@ export class InfiniteCanvasOGL {
 			active: new Program(this.gl, {
 				vertex: colorVertexShader,
 				fragment: colorFragmentShader,
-				uniforms: {uColor: {value: this.parseColor(this.activeCardColor)}, uAlpha: {value: 0.98}},
+				uniforms: {
+					uColor: {value: this.parseColor(this.activeCardColor)},
+					uAlpha: {value: 0.98},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			hover: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.selectedCardColor)},
+					uAlpha: {value: 0.98},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			playing: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.playingCardColor)},
+					uAlpha: {value: 0.99},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
@@ -312,7 +430,14 @@ export class InfiniteCanvasOGL {
 			live: new Program(this.gl, {
 				vertex: colorVertexShader,
 				fragment: colorFragmentShader,
-				uniforms: {uColor: {value: this.parseColor(this.liveCardColor)}, uAlpha: {value: 0.99}},
+				uniforms: {
+					uColor: {value: this.parseColor(this.liveCardColor)},
+					uAlpha: {value: 0.99},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
@@ -320,7 +445,14 @@ export class InfiniteCanvasOGL {
 			selected: new Program(this.gl, {
 				vertex: colorVertexShader,
 				fragment: colorFragmentShader,
-				uniforms: {uColor: {value: this.parseColor(this.selectedCardColor)}, uAlpha: {value: 0.98}},
+				uniforms: {
+					uColor: {value: this.parseColor(this.selectedCardColor)},
+					uAlpha: {value: 0.98},
+					uCornerRadius: {value: this.cornerRadius},
+					uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
+					uStrokeThickness: {value: 0.0},
+					uStrokeAlpha: {value: 0.0}
+				},
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
@@ -355,13 +487,27 @@ export class InfiniteCanvasOGL {
 
 		// Border programs per item state
 		this.borderPrograms = {
+			default: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.activeBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.013},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.38}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
 			active: new Program(this.gl, {
 				vertex: borderVertexShader,
 				fragment: borderFragmentShader,
 				uniforms: {
 					uColor: {value: this.parseColor(this.activeBorderColor)},
 					uShape: {value: 1},
-					uThickness: {value: 0.02},
+					uThickness: {value: 0.016},
 					uCornerRadius: {value: this.cornerRadius},
 					uAlpha: {value: 1}
 				},
@@ -375,7 +521,7 @@ export class InfiniteCanvasOGL {
 				uniforms: {
 					uColor: {value: this.parseColor(this.favoriteBorderColor)},
 					uShape: {value: 1},
-					uThickness: {value: 0.018},
+					uThickness: {value: 0.015},
 					uCornerRadius: {value: this.cornerRadius},
 					uAlpha: {value: 1}
 				},
@@ -389,7 +535,7 @@ export class InfiniteCanvasOGL {
 				uniforms: {
 					uColor: {value: this.parseColor(this.liveBorderColor)},
 					uShape: {value: 1},
-					uThickness: {value: 0.03},
+					uThickness: {value: 0.019},
 					uCornerRadius: {value: this.cornerRadius},
 					uAlpha: {value: 1}
 				},
@@ -403,7 +549,21 @@ export class InfiniteCanvasOGL {
 				uniforms: {
 					uColor: {value: this.parseColor(this.selectedBorderColor)},
 					uShape: {value: 1},
-					uThickness: {value: 0.026},
+					uThickness: {value: 0.017},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 1}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			hover: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.hoverBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.014},
 					uCornerRadius: {value: this.cornerRadius},
 					uAlpha: {value: 1}
 				},
@@ -470,6 +630,20 @@ export class InfiniteCanvasOGL {
 				transparent: true,
 				depthTest: true,
 				depthWrite: false
+			}),
+			hover: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.hoverBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.028},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.28}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
 			})
 		}
 
@@ -489,17 +663,133 @@ export class InfiniteCanvasOGL {
 		return [r, g, b]
 	}
 
+	getCardVisual(styleKey) {
+		if (styleKey === 'favorite') return {color: this.favoriteCardColor, alpha: 0.96}
+		if (styleKey === 'active') return {color: this.activeCardColor, alpha: 0.98}
+		if (styleKey === 'hover') return {color: this.selectedCardColor, alpha: 0.98}
+		if (styleKey === 'playing') return {color: this.playingCardColor, alpha: 0.99}
+		if (styleKey === 'live') return {color: this.liveCardColor, alpha: 0.99}
+		if (styleKey === 'selected') return {color: this.selectedCardColor, alpha: 0.98}
+		return {color: this.defaultCardColor, alpha: 0.95}
+	}
+
+	getBorderVisual(styleKey) {
+		if (styleKey === 'active') return {color: this.activeBorderColor, thickness: 0.016, alpha: 1}
+		if (styleKey === 'favorite') return {color: this.favoriteBorderColor, thickness: 0.015, alpha: 1}
+		if (styleKey === 'live') return {color: this.liveBorderColor, thickness: 0.019, alpha: 1}
+		if (styleKey === 'selected') return {color: this.selectedBorderColor, thickness: 0.017, alpha: 1}
+		if (styleKey === 'hover') return {color: this.hoverBorderColor, thickness: 0.014, alpha: 1}
+		return {color: this.activeBorderColor, thickness: 0.0, alpha: 0.0}
+	}
+
+	getBackgroundProgram(cardStyle = 'default', borderStyle = 'default') {
+		const key = `${cardStyle}:${borderStyle}`
+		const existing = this.backgroundProgramCache.get(key)
+		if (existing) return existing
+		if (!this.gl) return this.colorPrograms?.default
+		const card = this.getCardVisual(cardStyle)
+		const border = this.getBorderVisual(borderStyle)
+		const program = new Program(this.gl, {
+			vertex: colorVertexShader,
+			fragment: colorFragmentShader,
+			uniforms: {
+				uColor: {value: this.parseColor(card.color)},
+				uAlpha: {value: card.alpha},
+				uCornerRadius: {value: this.cornerRadius},
+				uStrokeColor: {value: this.parseColor(border.color)},
+				uStrokeThickness: {value: border.thickness},
+				uStrokeAlpha: {value: border.alpha}
+			},
+			transparent: true,
+			depthTest: true,
+			depthWrite: false
+		})
+		this.backgroundProgramCache.set(key, program)
+		return program
+	}
+
+	clearLegacyBorderMeshes(mesh) {
+		const layers = mesh?.userData?.borderLayers
+		if (layers?.size) for (const [, layer] of layers) layer.setParent(null)
+		delete mesh.userData.borderLayers
+
+		const backLayers = mesh?.userData?.borderBackLayers
+		if (backLayers?.size) for (const [, layer] of backLayers) layer.setParent(null)
+		delete mesh.userData.borderBackLayers
+
+		if (mesh?.userData?.border) {
+			mesh.userData.border.setParent(null)
+			delete mesh.userData.border
+		}
+		if (mesh?.userData?.borderBack) {
+			mesh.userData.borderBack.setParent(null)
+			delete mesh.userData.borderBack
+		}
+	}
+
+	getTagBadgeTexture() {
+		if (!this.gl) return null
+		if (this.tagBadgeTexture) return this.tagBadgeTexture
+		const canvas = document.createElement('canvas')
+		canvas.width = 96
+		canvas.height = 96
+		const ctx = /** @type {CanvasRenderingContext2D | null} */ (canvas.getContext('2d'))
+		if (!ctx) return null
+		ctx.clearRect(0, 0, canvas.width, canvas.height)
+		ctx.fillStyle = this.tagBadgeColor
+		ctx.font = '700 86px sans-serif'
+		ctx.textAlign = 'center'
+		ctx.textBaseline = 'middle'
+		ctx.fillText('#', canvas.width * 0.5, canvas.height * 0.55)
+		this.tagBadgeTexture = new Texture(this.gl, {
+			image: canvas,
+			generateMipmaps: false,
+			minFilter: this.gl.LINEAR,
+			magFilter: this.gl.LINEAR
+		})
+		return this.tagBadgeTexture
+	}
+
+	getLiveBadgeTexture() {
+		if (!this.gl) return null
+		if (this.liveBadgeTexture) return this.liveBadgeTexture
+		const canvas = document.createElement('canvas')
+		canvas.width = 96
+		canvas.height = 96
+		const ctx = /** @type {CanvasRenderingContext2D | null} */ (canvas.getContext('2d'))
+		if (!ctx) return null
+		ctx.clearRect(0, 0, canvas.width, canvas.height)
+		const cx = canvas.width * 0.5
+		const cy = canvas.height * 0.5
+		const r = canvas.width * 0.26
+		ctx.fillStyle = this.liveBadgeBgColor
+		ctx.beginPath()
+		ctx.arc(cx, cy, r, 0, Math.PI * 2)
+		ctx.fill()
+		ctx.fillStyle = 'rgba(255,255,255,0.9)'
+		ctx.beginPath()
+		ctx.arc(cx - r * 0.22, cy - r * 0.22, r * 0.36, 0, Math.PI * 2)
+		ctx.fill()
+		this.liveBadgeTexture = new Texture(this.gl, {
+			image: canvas,
+			generateMipmaps: false,
+			minFilter: this.gl.LINEAR,
+			magFilter: this.gl.LINEAR
+		})
+		return this.liveBadgeTexture
+	}
+
 	bindEvents() {
 		if (!this.gl?.canvas) return
 		const canvas = this.gl.canvas
-		canvas.style.cursor = 'grab'
+		canvas.style.cursor = 'default'
 
 		canvas.addEventListener('mousedown', (e) => {
 			this.isDragging = true
 			this.dragDistance = 0
 			this.lastMouse = {x: e.clientX, y: e.clientY}
 			this.mouseDownPos = {x: e.clientX, y: e.clientY}
-			canvas.style.cursor = 'grabbing'
+			canvas.style.cursor = 'default'
 		})
 
 		window.addEventListener('mouseup', (e) => {
@@ -507,7 +797,7 @@ export class InfiniteCanvasOGL {
 				this.handleClick(e)
 			}
 			this.isDragging = false
-			canvas.style.cursor = 'grab'
+			canvas.style.cursor = 'default'
 		})
 
 		window.addEventListener('mousemove', (e) => {
@@ -529,7 +819,7 @@ export class InfiniteCanvasOGL {
 		canvas.addEventListener('mouseleave', () => {
 			this.mouse = {x: 0, y: 0}
 			this.isDragging = false
-			canvas.style.cursor = 'grab'
+			canvas.style.cursor = 'default'
 		})
 
 		canvas.addEventListener(
@@ -631,6 +921,20 @@ export class InfiniteCanvasOGL {
 		this.container.appendChild(this.tooltip)
 	}
 
+	/**
+	 * @param {any} mediaItem
+	 * @param {{href?: string, type: 'channel'|'tag'|'mention'|'tracks', token?: string | null} | null} [target]
+	 */
+	formatHoverLabel(mediaItem, target = null) {
+		const base = mediaItem?.slug ? `@${mediaItem.slug}` : ''
+		if (!target) return base
+		if (target.type === 'channel') return base
+		if (target.type === 'tracks') return `${base}/tracks`
+		if (target.type === 'tag' && target.token) return `${base} ${target.token}`
+		if (target.type === 'mention' && target.token) return target.token
+		return base
+	}
+
 	updateTooltip(e) {
 		if (!this.tooltip || !this.gl?.canvas) return
 		if (this.isDragging) {
@@ -638,35 +942,75 @@ export class InfiniteCanvasOGL {
 			return
 		}
 
-		const intersected = this.raycast(e)
-		if (intersected) {
-			const mediaItem = intersected.userData.mediaItem
+		const hit = this.raycast(e)
+		if (hit) {
+			const intersected = hit.mesh
+			let mediaItem = intersected.userData.mediaItem
+			if (!mediaItem && intersected.userData?.isInfo) {
+				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
+			}
+			/** @type {{href?: string, type: 'channel'|'tag'|'mention'|'tracks', token?: string | null} | null} */
+			let linkTarget = null
 			if (mediaItem && mediaItem !== this.hoveredItem) {
 				this.hoveredItem = mediaItem
 				this.setHoveredId(mediaItem.id ?? null)
-				const name = mediaItem.name || mediaItem.title || mediaItem.slug || ''
-				const statuses = []
-				if (mediaItem.isLive) statuses.push('LIVE')
-				if (mediaItem.isFavorite) statuses.push('FAVORITE')
-				this.tooltip.textContent = statuses.length ? `${name} · ${statuses.join(' · ')}` : name
 			}
 			const rect = this.gl.canvas.getBoundingClientRect()
 			this.tooltip.style.opacity = '1'
 			this.tooltip.style.left = `${e.clientX - rect.left + 12}px`
 			this.tooltip.style.top = `${e.clientY - rect.top + 12}px`
-			this.gl.canvas.style.cursor = 'pointer'
+			if (intersected.userData?.isInfo && mediaItem) {
+				const halfW = intersected.scale.x * 0.5
+				const halfH = intersected.scale.y * 0.5
+				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
+				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
+				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+				linkTarget = target
+				this.setInfoHoverTarget(target ? {id: mediaItem.id, type: target.type, token: target.token ?? null} : null)
+				this.gl.canvas.style.cursor = target ? 'pointer' : 'default'
+			} else {
+				this.setInfoHoverTarget(null)
+				this.gl.canvas.style.cursor = 'default'
+			}
+			if (mediaItem) {
+				const isOpen = !!this.getInfoStyle(mediaItem)
+				if (isOpen && !linkTarget) {
+					this.tooltip.style.opacity = '0'
+				} else {
+					this.tooltip.style.opacity = '1'
+					this.tooltip.textContent = this.formatHoverLabel(mediaItem, linkTarget)
+				}
+			}
 		} else {
 			this.tooltip.style.opacity = '0'
 			this.hoveredItem = null
 			this.setHoveredId(null)
-			this.gl.canvas.style.cursor = this.isDragging ? 'grabbing' : 'grab'
+			this.setInfoHoverTarget(null)
+			this.gl.canvas.style.cursor = 'default'
 		}
 	}
 
 	handleClick(e) {
-		const intersected = this.raycast(e)
-		if (intersected) {
-			const mediaItem = intersected.userData.mediaItem
+		const hit = this.raycast(e)
+		if (hit) {
+			const intersected = hit.mesh
+			let mediaItem = intersected.userData.mediaItem
+			if (!mediaItem && intersected.userData?.isInfo) {
+				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
+			}
+			if (intersected.userData?.isInfo && mediaItem) {
+				const halfW = intersected.scale.x * 0.5
+				const halfH = intersected.scale.y * 0.5
+				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
+				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
+				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+				if (target) {
+					if (this.onNavigate) {
+						this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
+						return
+					}
+				}
+			}
 			if (mediaItem) this.onClick(mediaItem)
 		}
 	}
@@ -686,12 +1030,12 @@ export class InfiniteCanvasOGL {
 
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
-				if (!mesh.visible || mesh.userData.isBorder) continue
+				if (!mesh.visible || mesh.userData.isBorder || mesh.userData.isTagBadge || mesh.userData.isLiveBadge) continue
 
 				const intersection = this.rayPlaneIntersection(ray, mesh)
 				if (intersection && intersection.distance < closestDist) {
 					closestDist = intersection.distance
-					closest = mesh
+					closest = {mesh, ...intersection}
 				}
 			}
 		}
@@ -856,7 +1200,7 @@ export class InfiniteCanvasOGL {
 		const halfHeight = mesh.scale.y * 0.5
 
 		if (Math.abs(lp.x) <= halfWidth && Math.abs(lp.y) <= halfHeight) {
-			return {distance: t}
+			return {distance: t, localX: lp.x, localY: lp.y}
 		}
 
 		return null
@@ -947,19 +1291,33 @@ export class InfiniteCanvasOGL {
 
 	getInfoTexture(mediaItem, style = 'selected') {
 		if (!this.gl || !mediaItem?.id) return null
-		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.id === this.activeId ? 1 : 0}`
+		const hover =
+			this.infoHoverTarget?.id === mediaItem.id
+				? `${this.infoHoverTarget.type}:${this.infoHoverTarget.token ?? ''}`
+				: ''
+		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.isPlaying ? 1 : 0}:${this.activeIds.has(mediaItem.id) ? 1 : 0}:${(mediaItem.activeTags || []).join(',')}:${(mediaItem.activeMentions || []).join(',')}:${hover}`
 		if (this.infoTextureCache.has(key)) return this.infoTextureCache.get(key)
 		const canvas = buildChannelInfoCanvas({
 			mediaItem,
 			style: /** @type {'active' | 'selected'} */ (style),
 			activeId: this.activeId,
+			hoverTarget: this.infoHoverTarget?.id === mediaItem.id ? this.infoHoverTarget : null,
 			colors: {
 				infoBgColor: this.infoBgColor,
 				infoTextColor: this.infoTextColor,
 				infoMutedColor: this.infoMutedColor,
-					selectedBorderColor: this.selectedBorderColor,
-					selectedCardColor: this.selectedCardColor,
-					activeBorderColor: this.activeBorderColor,
+				tagBgColor: this.tagBgColor,
+				tagTextColor: this.tagTextColor,
+				tagHoverBgColor: this.tagHoverBgColor,
+				tagHoverBorderColor: this.tagHoverBorderColor,
+				tagActiveBgColor: this.tagActiveBgColor,
+				tagActiveTextColor: this.tagActiveTextColor,
+				tagActiveBorderColor: this.tagActiveBorderColor,
+				selectedBorderColor: this.selectedBorderColor,
+				hoverBorderColor: this.hoverBorderColor,
+				selectedCardColor: this.selectedCardColor,
+				playingCardColor: this.playingCardColor,
+				activeBorderColor: this.activeBorderColor,
 				activeCardColor: this.activeCardColor,
 				activeInfoTextColor: this.activeInfoTextColor,
 				activeInfoMutedColor: this.activeInfoMutedColor,
@@ -982,6 +1340,16 @@ export class InfiniteCanvasOGL {
 	setActiveId(id) {
 		if (this.activeId === id) return
 		this.activeId = id
+		this.activeIds = new Set(id ? [id] : [])
+		this.refreshAllBorders()
+	}
+
+	setActiveIds(ids) {
+		const next = new Set(Array.isArray(ids) ? ids.filter(Boolean) : [])
+		const same = next.size === this.activeIds.size && [...next].every((id) => this.activeIds.has(id))
+		if (same) return
+		this.activeIds = next
+		this.activeId = next.values().next().value ?? null
 		this.refreshAllBorders()
 	}
 
@@ -994,6 +1362,7 @@ export class InfiniteCanvasOGL {
 	getMeshBorderStyles(mediaItem) {
 		return resolveChannelCardStates(mediaItem, {
 			activeId: this.activeId,
+			activeIds: [...this.activeIds],
 			selectedId: this.selectedId,
 			hoveredId: this.hoveredId
 		}).borderStyles
@@ -1002,6 +1371,7 @@ export class InfiniteCanvasOGL {
 	getCardStyle(mediaItem) {
 		return resolveChannelCardStates(mediaItem, {
 			activeId: this.activeId,
+			activeIds: [...this.activeIds],
 			selectedId: this.selectedId,
 			hoveredId: this.hoveredId
 		}).cardStyle
@@ -1010,6 +1380,7 @@ export class InfiniteCanvasOGL {
 	getInfoStyle(mediaItem) {
 		return resolveChannelCardStates(mediaItem, {
 			activeId: this.activeId,
+			activeIds: [...this.activeIds],
 			selectedId: this.selectedId,
 			hoveredId: this.hoveredId
 		}).infoStyle
@@ -1018,6 +1389,18 @@ export class InfiniteCanvasOGL {
 	setSelectedId(id) {
 		if (this.selectedId === id) return
 		this.selectedId = id
+		this.refreshAllBorders()
+	}
+
+	setInfoHoverTarget(target) {
+		const prev = this.infoHoverTarget
+		const same =
+			(prev?.id ?? null) === (target?.id ?? null) &&
+			(prev?.type ?? null) === (target?.type ?? null) &&
+			(prev?.token ?? null) === (target?.token ?? null)
+		if (same) return
+		this.infoHoverTarget = target
+		this.infoTextureCache.clear()
 		this.refreshAllBorders()
 	}
 
@@ -1031,78 +1414,66 @@ export class InfiniteCanvasOGL {
 				if (!ud.mediaItem) continue
 				if (ud.isBackground) {
 					const styleKey = this.getCardStyle(ud.mediaItem)
-					mesh.program = this.colorPrograms?.[styleKey] ?? this.colorPrograms?.default
+					const borderStyle = this.getMeshBorderStyles(ud.mediaItem)?.[0] ?? 'default'
+					mesh.program = this.getBackgroundProgram(styleKey, borderStyle)
+					this.clearLegacyBorderMeshes(mesh)
 					continue
 				}
+				this.updateMeshTagBadge(mesh, group)
+				this.updateMeshLiveBadge(mesh, group)
 				const infoStyle = this.getInfoStyle(ud.mediaItem)
-				this.updateMeshBorder(mesh, this.getMeshBorderStyles(ud.mediaItem), group)
 				this.updateMeshInfo(mesh, infoStyle, group)
 			}
 		}
 	}
 
 	updateMeshInfo(mesh, style, group) {
+		const bg = mesh.userData.backgroundMesh
+		if (!bg?.userData) return
+		const bgClosedPos = bg.userData.closedPosition
+		const bgClosedScale = bg.userData.closedScale
 		if (style) {
 			const ts = mesh.userData.targetScale
 			const infoScaleY = ts.y * 0.5
 			const gap = ts.y * 0.01
 			const infoY = mesh.position.y - ts.y * 0.5 - infoScaleY * 0.5 - gap
-			const cardStyle = style === 'active' ? 'active' : 'selected'
-
-			// Backplate behind image + text to unify them into one card in 3D space.
-			if (!mesh.userData.infoBack && this.gl) {
-				const unified = new Mesh(this.gl, {
-					geometry: this.planeGeometry ?? undefined,
-					program: this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
-				})
-				const padX = ts.x * 0.06
-				const padTop = ts.y * 0.06
-				const padBottom = infoScaleY * 0.2
-				const totalHeight = ts.y + gap + infoScaleY + padTop + padBottom
-				const centerY = mesh.position.y - (gap + infoScaleY) * 0.5 + (padTop - padBottom) * 0.5
-				unified.position.set(mesh.position.x, centerY, mesh.position.z - 0.08)
-				unified.scale.set(ts.x + padX, totalHeight, 1)
-				// @ts-expect-error custom field
-				unified.userData = {
-					isInfoBack: true,
-					mainMesh: mesh,
-					style,
-					base: {x: ts.x + padX, y: totalHeight}
-				}
-				unified.setParent(group)
-				mesh.userData.infoBack = unified
-			} else if (mesh.userData.infoBack) {
-				const padX = ts.x * 0.06
-				const padTop = ts.y * 0.06
-				const padBottom = infoScaleY * 0.2
-				const totalHeight = ts.y + gap + infoScaleY + padTop + padBottom
-				const centerY = mesh.position.y - (gap + infoScaleY) * 0.5 + (padTop - padBottom) * 0.5
-				mesh.userData.infoBack.position.set(mesh.position.x, centerY, mesh.position.z - 0.08)
-				mesh.userData.infoBack.scale.set(ts.x + padX, totalHeight, 1)
-				mesh.userData.infoBack.program = this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
-				mesh.userData.infoBack.userData.style = style
+			// Background surface becomes the unified body and expands to include info.
+			const bodyWidth = bgClosedScale?.x ?? ts.x
+			const totalHeight = (bgClosedScale?.y ?? ts.y) + gap + infoScaleY
+			const centerY = (bgClosedPos?.y ?? mesh.position.y) - (gap + infoScaleY) * 0.5
+			bg.userData.bodyTarget = {
+				x: bgClosedPos?.x ?? mesh.position.x,
+				y: centerY,
+				sx: bodyWidth,
+				sy: totalHeight,
+				open: true
 			}
+			bg.userData.bodyStyle = style === 'active' ? 'active' : 'default'
 
 			if (!mesh.userData.info && this.gl) {
+				const infoProgram = this.infoProgram
+				if (!infoProgram) return
 				const info = new Mesh(this.gl, {
 					geometry: this.planeGeometry ?? undefined,
-					program: this.infoProgram ?? undefined
+					program: infoProgram
 				})
 				// Keep text panel attached to artwork and equal width.
 				info.position.set(mesh.position.x, infoY, mesh.position.z + 0.17)
 				info.scale.set(ts.x, infoScaleY, 1)
 				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
 				info.onBeforeRender(() => {
-					/** @type {Program} */ (this.infoProgram).uniforms.tMap.value = texture
+					infoProgram.uniforms.tMap.value = texture
 				})
 				// @ts-expect-error custom field
 				info.userData = {isInfo: true, mainMesh: mesh, style}
 				info.setParent(group)
 				mesh.userData.info = info
 			} else if (mesh.userData.info?.userData?.style !== style) {
+				const infoProgram = this.infoProgram
+				if (!infoProgram) return
 				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
 				mesh.userData.info.onBeforeRender(() => {
-					/** @type {Program} */ (this.infoProgram).uniforms.tMap.value = texture
+					infoProgram.uniforms.tMap.value = texture
 				})
 				mesh.userData.info.userData.style = style
 				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + 0.17)
@@ -1112,111 +1483,102 @@ export class InfiniteCanvasOGL {
 				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
 			}
 		} else {
+			bg.userData.bodyTarget = {
+				x: bgClosedPos?.x ?? bg.position.x,
+				y: bgClosedPos?.y ?? bg.position.y,
+				sx: bgClosedScale?.x ?? bg.scale.x,
+				sy: bgClosedScale?.y ?? bg.scale.y,
+				open: false
+			}
+			bg.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
 			if (mesh.userData.info) {
 				mesh.userData.info.setParent(null)
 				delete mesh.userData.info
 			}
-			if (mesh.userData.infoBack) {
-				mesh.userData.infoBack.setParent(null)
-				delete mesh.userData.infoBack
-			}
 		}
 	}
 
-	updateMeshBorder(mesh, styleKeys, group) {
-		const styles = styleKeys?.length ? styleKeys : []
-		const existingFront = mesh.userData.borderLayers || new Map()
-		const existingBack = mesh.userData.borderBackLayers || new Map()
-		const styleSet = new Set(styles)
+	updateMeshTagBadge(mesh, group) {
+		if (!mesh?.userData?.mediaItem) return
 		const ts = mesh.userData.targetScale
-		const base = Math.max(ts.x, ts.y)
-
-		// Legacy single-border fields cleanup
-		if (mesh.userData.border) {
-			mesh.userData.border.setParent(null)
-			delete mesh.userData.border
-		}
-		if (mesh.userData.borderBack) {
-			mesh.userData.borderBack.setParent(null)
-			delete mesh.userData.borderBack
-		}
-
-		for (const [styleKey, layer] of existingFront) {
-			if (styleSet.has(styleKey)) continue
-			layer.setParent(null)
-			existingFront.delete(styleKey)
-		}
-		for (const [styleKey, layer] of existingBack) {
-			if (styleSet.has(styleKey)) continue
-			layer.setParent(null)
-			existingBack.delete(styleKey)
-		}
-
-		for (let i = 0; i < styles.length; i++) {
-			const styleKey = styles[i]
-			const frontProgram = this.borderPrograms?.[styleKey]
-			const backProgram = this.borderBackPrograms?.[styleKey]
-			if (!frontProgram || !this.gl) continue
-
-			const layerOffset = i * 0.026
-			const styleMul = styleKey === 'selected' ? 1.05 : styleKey === 'live' ? 1.08 : styleKey === 'active' ? 1.04 : 1.02
-			const frontScale = base * (styleMul + layerOffset)
-			const backScale = frontScale * 1.055
-
-			let front = existingFront.get(styleKey)
-			if (!front) {
-				front = new Mesh(this.gl, {
-					geometry: this.borderGeometry ?? undefined,
-					program: frontProgram
-				})
-				front.setParent(group)
-				existingFront.set(styleKey, front)
+		if (!ts) return
+		const show = !!mesh.userData.mediaItem.hasActiveTagMatch
+		if (!show) {
+			if (mesh.userData.tagBadge) {
+				mesh.userData.tagBadge.setParent(null)
+				delete mesh.userData.tagBadge
 			}
-			front.program = frontProgram
-			front.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.1 - i * 0.012)
-			front.scale.set(frontScale, frontScale, frontScale)
-			front.userData = {
-				isBorder: true,
-				mainMesh: mesh,
-				isRotating: styleKey === 'live',
-				styleKey,
-				baseScale: frontScale
-			}
+			return
+		}
+		if (!this.gl || !this.infoProgram) return
+		const infoProgram = this.infoProgram
+		let badge = mesh.userData.tagBadge
+		if (!badge) {
+			badge = new Mesh(this.gl, {
+				geometry: this.planeGeometry ?? undefined,
+				program: infoProgram
+			})
+			badge.userData = {isTagBadge: true, mainMesh: mesh}
+			badge.setParent(group)
+			mesh.userData.tagBadge = badge
+		}
+		const texture = this.getTagBadgeTexture()
+		if (!texture) return
+		badge.onBeforeRender(() => {
+			infoProgram.uniforms.tMap.value = texture
+		})
+		const badgeSize = Math.max(ts.x, ts.y) * 0.16
+		badge.scale.set(badgeSize, badgeSize, 1)
+		badge.position.set(mesh.position.x, mesh.position.y + ts.y * 0.58, mesh.position.z + 0.19)
+	}
 
-			if (backProgram) {
-				let back = existingBack.get(styleKey)
-				if (!back) {
-					back = new Mesh(this.gl, {
-						geometry: this.borderGeometry ?? undefined,
-						program: backProgram
-					})
-					back.setParent(group)
-					existingBack.set(styleKey, back)
-				}
-				back.program = backProgram
-				back.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.25 - i * 0.02)
-				back.scale.set(backScale, backScale, backScale)
-				back.userData = {
-					isBorder: true,
-					mainMesh: mesh,
-					isRotating: false,
-					styleKey,
-					baseScale: backScale,
-					isDepthLayer: true
-				}
+	updateMeshLiveBadge(mesh, group) {
+		if (!mesh?.userData?.mediaItem) return
+		const ts = mesh.userData.targetScale
+		if (!ts) return
+		const show = !!mesh.userData.mediaItem.isLive
+		if (!show) {
+			if (mesh.userData.liveBadge) {
+				mesh.userData.liveBadge.setParent(null)
+				delete mesh.userData.liveBadge
 			}
+			return
 		}
+		if (!this.gl || !this.infoProgram) return
+		const infoProgram = this.infoProgram
+		let badge = mesh.userData.liveBadge
+		if (!badge) {
+			badge = new Mesh(this.gl, {
+				geometry: this.planeGeometry ?? undefined,
+				program: infoProgram
+			})
+			badge.userData = {isLiveBadge: true, mainMesh: mesh}
+			badge.setParent(group)
+			mesh.userData.liveBadge = badge
+		}
+		const texture = this.getLiveBadgeTexture()
+		if (!texture) return
+		badge.onBeforeRender(() => {
+			infoProgram.uniforms.tMap.value = texture
+		})
+		this.layoutLiveBadge(mesh, badge)
+	}
 
-		if (existingFront.size > 0) {
-			mesh.userData.borderLayers = existingFront
-		} else {
-			delete mesh.userData.borderLayers
-		}
-		if (existingBack.size > 0) {
-			mesh.userData.borderBackLayers = existingBack
-		} else {
-			delete mesh.userData.borderBackLayers
-		}
+	layoutLiveBadge(mesh, badge) {
+		const anchor = mesh?.userData?.backgroundMesh || mesh
+		if (!anchor?.scale || !anchor?.position) return
+		const badgeSize = Math.max(anchor.scale.x, anchor.scale.y) * 0.14
+		const inset = badgeSize * 0.18
+		badge.scale.set(badgeSize, badgeSize, 1)
+		badge.position.set(
+			anchor.position.x + anchor.scale.x * 0.5 - inset,
+			anchor.position.y + anchor.scale.y * 0.5 - inset,
+			mesh.position.z + 0.2
+		)
+	}
+
+	updateMeshBorder(mesh, styleKeys, group) {
+		this.clearLegacyBorderMeshes(mesh)
 	}
 
 	queueChunk(cx, cy, cz) {
@@ -1257,19 +1619,23 @@ export class InfiniteCanvasOGL {
 			const cardStyle = this.getCardStyle(mediaItem)
 			const mesh = new Mesh(this.gl, {
 				geometry: this.planeGeometry ?? undefined,
-				program: this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
+				program: this.getBackgroundProgram(cardStyle, this.getMeshBorderStyles(mediaItem)?.[0] ?? 'default')
 			})
 			mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
 			mesh.scale.set(0.01, 0.01, 0.01)
-				// @ts-expect-error - adding custom property
-				mesh.userData = {
-					isBorder: false,
-					isBackground: true,
-					mediaItem,
-					cardStyle,
-					birthTime,
-					targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z}
-				}
+			// @ts-expect-error - adding custom property
+			mesh.userData = {
+				isBorder: false,
+				isBackground: true,
+				mediaItem,
+				cardStyle,
+				birthTime,
+				targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
+				closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z},
+				closedScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z},
+				bodyTarget: {x: plane.position.x, y: plane.position.y, sx: plane.scale.x, sy: plane.scale.y, open: false},
+				bodyStyle: cardStyle
+			}
 			mesh.setParent(group)
 
 			// Textured image quad on top
@@ -1289,12 +1655,14 @@ export class InfiniteCanvasOGL {
 					mediaItem,
 					birthTime,
 					texture,
-					targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1}
+					targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1},
+					backgroundMesh: mesh
 				}
 				imgMesh.setParent(group)
-
+				this.clearLegacyBorderMeshes(mesh)
+				this.updateMeshTagBadge(imgMesh, group)
+				this.updateMeshLiveBadge(imgMesh, group)
 				const infoStyle = this.getInfoStyle(mediaItem)
-				this.updateMeshBorder(imgMesh, this.getMeshBorderStyles(mediaItem), group)
 				this.updateMeshInfo(imgMesh, infoStyle, group)
 			}
 		}
@@ -1405,6 +1773,7 @@ export class InfiniteCanvasOGL {
 		this.animateExits()
 		this.updateVisibility()
 		this.rotateBorders()
+		this.animateCardBodies()
 		this.renderer.render({scene: this.scene, camera: this.camera})
 
 		this.animationId = requestAnimationFrame(() => this.animate())
@@ -1487,11 +1856,15 @@ export class InfiniteCanvasOGL {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
-				if (ud.isInfoBack) {
+				if (ud.isInfo) {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
-				if (ud.isInfo) {
+				if (ud.isTagBadge) {
+					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
+					continue
+				}
+				if (ud.isLiveBadge) {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
@@ -1504,26 +1877,57 @@ export class InfiniteCanvasOGL {
 	}
 
 	rotateBorders() {
-		const now = performance.now()
+		// Border is drawn as stroke on background shader.
+	}
+
+	animateCardBodies() {
+		const t = 0.18
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
-				if (mesh.userData?.isRotating) {
-					const baseScale = mesh.userData.baseScale ?? mesh.scale.x
-					const pulse = 1 + Math.sin(now * 0.008) * 0.035
-					const s = baseScale * pulse
-					mesh.scale.set(s, s, s)
-				}
+				const ud = mesh.userData
+				if (ud?.liveBadge) this.layoutLiveBadge(mesh, ud.liveBadge)
+				if (!ud?.isBackground || !ud.bodyTarget) continue
+				const target = ud.bodyTarget
+				const styleKey = ud.bodyStyle || 'default'
+				const borderStyle = this.getMeshBorderStyles(ud.mediaItem)?.[0] ?? 'default'
+				mesh.program = this.getBackgroundProgram(styleKey, borderStyle)
+				mesh.position.x = lerp(mesh.position.x, target.x, t)
+				mesh.position.y = lerp(mesh.position.y, target.y, t)
+				mesh.scale.x = lerp(mesh.scale.x, target.sx, t)
+				mesh.scale.y = lerp(mesh.scale.y, target.sy, t)
 			}
 		}
 	}
 
 	setMedia(media) {
-		this.media = media
+		const next = media || []
+		const sameOrder =
+			this.media.length === next.length &&
+			this.media.every((item, index) => item?.id && next[index]?.id && item.id === next[index].id)
+
+		this.media = next
+		if (sameOrder) {
+			// Fast path: update media metadata in-place without rebuilding chunks.
+			const byId = new Map(this.media.map((item) => [item.id, item]))
+			for (const group of this.chunks.values()) {
+				for (const mesh of group.children) {
+					const ud = mesh.userData
+					if (!ud?.mediaItem?.id) continue
+					const replacement = byId.get(ud.mediaItem.id)
+					if (replacement) ud.mediaItem = replacement
+				}
+			}
+			this.infoTextureCache.clear()
+			this.refreshAllBorders()
+			return
+		}
+
 		for (const key of this.chunks.keys()) this.removeChunk(key)
 		for (const [, group] of this.exitingChunks) {
 			group.setParent(null)
 		}
 		this.exitingChunks.clear()
+		this.infoTextureCache.clear()
 		this.updateChunks(true)
 	}
 
@@ -1545,6 +1949,11 @@ export class InfiniteCanvasOGL {
 			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
 		}
 		this.infoTextureCache.clear()
+		if (this.tagBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.tagBadgeTexture.texture)
+		this.tagBadgeTexture = null
+		if (this.liveBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.liveBadgeTexture.texture)
+		this.liveBadgeTexture = null
+		this.backgroundProgramCache.clear()
 		this.texturedProgram = null
 		this.infoProgram = null
 		this.colorPrograms = null

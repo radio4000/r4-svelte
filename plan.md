@@ -41,6 +41,8 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 - channel mentions route: add `/@slug/mentions` listing tracks from other channels where `mentions` contains `@slug`
 - Extract reusable 3D channel-card module (`src/lib/3d/channel-card-3d.js`) from infinite canvas so future 3D views can reuse state resolution and card texture rendering.
+- 3D channel cards: implemented state parity with grid cards in infinite canvas (`playing`, `selected`, `hover`, `default`) plus combined overlays (`favorite`, `active`, `live`) and info panel tags/mentions with deck-active highlighting.
+  - deck-driven active tags/mentions sync: derive from all decks (`playlist_title`, `view.tags`, current `playlist_track` tags) and propagate to 3D card chips + top `#` badge with multi-deck support.
 
 - Discogs UX pass in progress (track Discogs tab + add-track modal)
   - improve release summary density (track/video/in-channel counts + cleaner status hints per row)

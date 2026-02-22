@@ -31,11 +31,7 @@
 	const favoriteIds = $derived(new Set((followsQuery.data ?? []).map((f) => f.id)))
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
 	const broadcastingIds = $derived(
-		new Set(
-			(broadcastsQuery.data ?? [])
-				.map((b) => b?.channel_id ?? b?.channels?.id ?? b?.id)
-				.filter(Boolean)
-		)
+		new Set((broadcastsQuery.data ?? []).map((b) => b?.channel_id ?? b?.channels?.id ?? b?.id).filter(Boolean))
 	)
 	const playingSlugs = $derived(
 		new Set(
@@ -169,7 +165,12 @@
 					popup.append(status)
 				}
 
-				const marker = L.circleMarker([c.latitude, c.longitude], untrack(() => getMarkerStyle(c))).bindPopup(popup).addTo(markersLayer)
+				const marker = L.circleMarker(
+					[c.latitude, c.longitude],
+					untrack(() => getMarkerStyle(c))
+				)
+					.bindPopup(popup)
+					.addTo(markersLayer)
 				marker.on('popupopen', () => {
 					selectedSlug = c.slug
 					refreshMarkerStyles()
