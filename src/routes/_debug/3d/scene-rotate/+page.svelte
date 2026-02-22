@@ -5,6 +5,7 @@
 
 	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 30))
 	let selectedChannelId = $state('')
+	let rotateEnabled = $state(false)
 
 	const channel = $derived.by(() => {
 		if (!channels.length) return null
@@ -32,9 +33,21 @@
 			activeMentions: [],
 			hasActiveTagMatch: tags.length > 0,
 			isActive: true,
+			canToggleRotate: true,
+			isRotateEnabled: rotateEnabled,
 			channel
 		}
 	})
+
+	/**
+	 * @param {string} _href
+	 * @param {any} _item
+	 * @param {'channel'|'tag'|'mention'|'tracks'|'rotate'} kind
+	 */
+	function handleNavigate(_href, _item, kind) {
+		if (kind !== 'rotate') return
+		rotateEnabled = !rotateEnabled
+	}
 </script>
 
 <svelte:head>
@@ -76,10 +89,11 @@
 				enableCardTilt={false}
 				singleSceneConstrainMovement={false}
 				singleSceneMaxXY={18}
-				singleSceneCardDragRotate={true}
+				singleSceneCardDragRotate={rotateEnabled}
 				singleSceneMouseDrift={false}
 				minCameraZ={26}
 				maxCameraZ={70}
+				onnavigate={handleNavigate}
 			/>
 		</section>
 	{/if}
