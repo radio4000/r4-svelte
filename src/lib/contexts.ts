@@ -18,9 +18,9 @@ export const [getTracksQueryCtx, setTracksQueryCtx] = createContext<{
 }>()
 
 /** Track detail state shared by [slug]/tracks/[tid] tab routes */
-export const [getTrackDetailCtx, setTrackDetailCtx] = createContext<{
+export type TrackDetailCtx = {
 	track: Track | undefined
-	channel: import('$lib/types').Channel | undefined
+	channel: Channel | undefined
 	canEdit: boolean
 	meta:
 		| {
@@ -35,4 +35,6 @@ export const [getTrackDetailCtx, setTrackDetailCtx] = createContext<{
 	hasYoutubeInfo: boolean
 	hasMusicbrainzInfo: boolean
 	hasDiscogsInfo: boolean
-}>()
+}
+
+export const [getTrackDetailCtx, setTrackDetailCtx] = createContext<TrackDetailCtx>()

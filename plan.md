@@ -71,32 +71,12 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 - **Ephemeral broadcast tracks have `slug: null`** (`broadcast.js:360–435`). If a broadcaster sends a non-DB track without `track_url`, the listener can't look it up.
 - **`applyBroadcastState` rebuilds `managedIds` inside loop** (`broadcast.js:607–631`). O(n²) for number of decks — fine now but may matter with more decks.
 
-### Route-level cleanup
-
-- **`followers/+page.svelte` and `following/+page.svelte` are near-identical.** Lines 1–58 differ only in variable names (`followers`/`following`, `readFollowers`/`readFollowings`). Could be one shared component.
-- **`batch-edit/+page.svelte:31` loads ALL `trackMetaCollection` unfiltered.** Creates a live query over every track-meta row. Could filter by the channel's media_ids or use `collection.state` directly.
-- **`history/` and `stats/` duplicate nav buttons.** Both pages have identical `<menu><a href="/stats">...<a href="/history">...</menu>` markup. Extract to a shared component or layout.
-- **`stats/+page.svelte:45` — no `.catch()` on `navigator.storage.estimate()`.** Will silently fail if storage API rejects.
-- **`[slug]/tracks/[tid]/(tabs)/+layout.svelte:43–85` — manual state sync defeats reactivity.** A `detail` state object is created, then an `$effect` copies all derived values into it. Could use `$derived` directly.
-
 ### Duplicated code worth extracting
 
-- **Media element listener binding pattern × 2.** `player.svelte:246–267` and `deck-compact-bar.svelte:60–99` both do: addEventListener for timeupdate/durationchange/loadedmetadata, seed initial values, return cleanup. `deck-compact-bar` adds a rAF polling loop on top. Could share a helper like `bindMediaProgress(el, onTime, onDuration)`. These two components are in general very similar. Could they share any primitives (components)? abstractions.
-- **Raw/formatted toggle × 3.** All three `track-meta-*.svelte` components repeat `let showRaw = $state(false)` + toggle button with identical aria-label logic. Could be a shared snippet or wrapper component.
 - **Metadata upsert pattern × 3.** `metadata/youtube.js`, `metadata/musicbrainz.js`, `metadata/discogs.js` all repeat the same get-or-insert + update logic on `trackMetaCollection`. Extract to `upsertTrackMeta(mediaId, field, data)`. tanstack db collections also have some writeUpsert? is that it?
-- **`writeBatch` + `writeUpsert` loop × 5.** Appears in `collections/channels.ts`, `collections/tracks.ts`, `views.svelte.ts`. Extract to `batchUpsert(collection, items)`.
-- **Filter extraction from `parseLoadSubsetOptions` × 12.** Both `collections/tracks.ts` and `collections/channels.ts` repeat `.filters.find((f) => f.field[0] === '...' && f.operator === '...')?.value` many times. A helper like `getFilter(options, field, op)` would clean this up. Only do if we have a good, clear abstraction. Maybe tanstack has one already in node_modules. else we can do it.
-- **Modal dialog `$effect` pattern × 4.** `track-add-dialog`, `track-edit-dialog`, `share-dialog`, `shortcuts-dialog` all repeat the same `$effect(() => { if (appState.modal_X) { open(...); appState.modal_X = null } })`. Could be a shared helper. lib/modal.svelte ? not sure. modal vs dialog naming as well?
-- **Filter tracks by slug × 3.** `api.ts:234`, `api.ts:281`, `collections/tracks.ts:297` all do `[...tracksCollection.state.values()].filter((t) => t?.slug === slug)`. Extract to a helper. Not sure. It's already pretty clean. Does a filter.
-- **`sortByNewest` exists but isn't reused everywhere.** Exported from `api.ts`, reused in `track-related.svelte`. `stats/+page.svelte` sorts by `started_at` (different field) so can't reuse directly.
+- **Generalize `sortByNewest`.** Currently sorts by `created_at` only. Multiple places sort by different date fields (`started_at`, `updated_at`). Extract a reusable `sortByDate(field, dir)` or make `sortByNewest` accept a field parameter.
 
 ### State & data layer
-
-- **`ensureTracksLoaded` race condition** (`tracks.ts:297`). Between checking `existing.length` and calling `startSyncImmediate()`, parallel callers can pass the check and trigger duplicate fetches.
-- **`createView()` insert is synchronous** — localStorage collection, not async. No bug here (was a false alarm in code review).
-- **`reorderPinnedViews()` updates views in a loop** (`views.ts:84`). Calls `updateView()` per item instead of `writeBatch()`. Could batch.
-- **`queue-panel.svelte:66` — history query scans entire `playHistoryCollection`** without filter or limit. Already noted in plan performance audit, now confirmed.
-- **`inArray(tracks.id, [''])` in `views.svelte.ts:141`** — returns empty "return no results" by querying for `id === ''`. Works but fragile; a `.limit(0)` would be clearer intent.
 
 ### Accessibility
 

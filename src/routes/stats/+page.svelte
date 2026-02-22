@@ -43,9 +43,12 @@
 	/** @type {{usage?: number, quota?: number} | null} */
 	let storageEstimate = $state(null)
 	$effect(() => {
-		navigator.storage?.estimate?.().then((est) => {
-			storageEstimate = est
-		})
+		navigator.storage
+			?.estimate?.()
+			.then((est) => {
+				storageEstimate = est
+			})
+			.catch(() => {})
 	})
 
 	/** @param {number} bytes */

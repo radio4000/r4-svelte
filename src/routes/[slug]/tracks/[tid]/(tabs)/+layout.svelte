@@ -42,24 +42,7 @@
 	)
 
 	const detail = $state(
-		/** @type {{
-			track: import('$lib/types').Track | undefined,
-			channel: import('$lib/types').Channel | undefined,
-			canEdit: boolean,
-			meta:
-				| {
-						media_id?: string,
-						youtube_data?: {[key: string]: unknown},
-						musicbrainz_data?: object,
-						discogs_data?: object
-				  }
-				| undefined,
-			tracks: import('$lib/types').Track[],
-			relatedTracks: import('$lib/types').Track[],
-			hasYoutubeInfo: boolean,
-			hasMusicbrainzInfo: boolean,
-			hasDiscogsInfo: boolean
-		}} */ ({
+		/** @type {import('$lib/contexts').TrackDetailCtx} */ ({
 			track: undefined,
 			channel: undefined,
 			canEdit: false,
@@ -74,15 +57,17 @@
 	setTrackDetailCtx(detail)
 
 	$effect(() => {
-		detail.track = track
-		detail.channel = channel
-		detail.canEdit = canEdit
-		detail.meta = meta
-		detail.tracks = tracksQuery.data ?? []
-		detail.relatedTracks = relatedTracks
-		detail.hasYoutubeInfo = hasYoutubeInfo
-		detail.hasMusicbrainzInfo = hasMusicbrainzInfo
-		detail.hasDiscogsInfo = hasDiscogsInfo
+		Object.assign(detail, {
+			track,
+			channel,
+			canEdit,
+			meta,
+			tracks: tracksQuery.data ?? [],
+			relatedTracks,
+			hasYoutubeInfo,
+			hasMusicbrainzInfo,
+			hasDiscogsInfo
+		})
 	})
 </script>
 

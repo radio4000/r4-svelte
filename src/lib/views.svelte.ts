@@ -136,6 +136,7 @@ export function queryViewTracks(getView: () => View) {
 
 	const channelQuery = useLiveQuery((q) => {
 		const channels = channelsKey ? channelsKey.split(',') : []
+		// No channels selected — return empty result (no rows have id === '')
 		if (!channels.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
 		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, channels))
 	})

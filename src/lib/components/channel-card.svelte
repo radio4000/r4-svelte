@@ -179,28 +179,27 @@
 	.info {
 		display: flex;
 		flex-direction: column;
-		gap: 0.2rem;
 		min-width: 0;
 		flex: 1;
-		padding: 0.25rem;
+		padding: 0.2rem;
 	}
 
 	.actions {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.2rem;
 		flex-shrink: 0;
 
 		:global(.popover-menu) {
-			margin-top: auto;
+			/*margin-top: auto;*/
 		}
 	}
 
 	.meta {
 		display: flex;
 		justify-content: space-between;
-		gap: 0.25rem;
+		gap: 0.2rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 		font-size: var(--font-3);
 		margin-top: auto;
@@ -235,12 +234,11 @@
 		text-decoration: none;
 		&:hover {
 			text-decoration: underline;
+			color: var(--accent-9);
 		}
 	}
 
 	.slug {
-		font-size: var(--font-3);
-		color: light-dark(var(--gray-10), var(--gray-9));
 		a {
 			text-decoration: none;
 			color: inherit;
@@ -248,10 +246,6 @@
 				text-decoration: underline;
 			}
 		}
-	}
-
-	h3 a:hover {
-		color: var(--accent-9);
 	}
 
 	.description {

@@ -26,16 +26,18 @@
 	<a href={pv.href} class="btn pin-link" aria-label={pv.sv.name}>
 		{pv.sv.name}
 	</a>
+{:else}
+	{#if appState.user}
+		<a
+			href={resolve('/settings/pins')}
+			class="btn ghost pin-link pin-add"
+			{@attach tooltip({content: 'Pin views to sidebar'})}
+			aria-label="Pin views"
+		>
+			<Icon icon="pin" size={16} />
+		</a>
+	{/if}
 {/each}
-<a
-	href={resolve('/settings/pins')}
-	class="btn ghost pin-link pin-add"
-	{@attach tooltip({content: 'Pin views to sidebar'})}
-	aria-label="Pin views"
->
-	<Icon icon="pin" size={16} />
-</a>
-{#if appState.user}{/if}
 
 <style>
 	.pin-add:not(:hover) {
