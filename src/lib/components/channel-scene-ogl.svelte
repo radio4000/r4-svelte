@@ -6,7 +6,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 
-	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, onclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, cardDepthScale?: number, cardSizeScale?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, singleSceneCardDragRotate?: boolean, singleSceneMouseDrift?: boolean, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, onclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
@@ -14,10 +14,14 @@
 		selectedId = null,
 		hoveredId = null,
 		cardSize = 18,
+		cardDepthScale = 1,
+		cardSizeScale = 1,
 		allowNavigation = false,
 		enableCardTilt = true,
 		singleSceneConstrainMovement = true,
 		singleSceneMaxXY = undefined,
+		singleSceneCardDragRotate = false,
+		singleSceneMouseDrift = true,
 		minCameraZ = 1,
 		maxCameraZ = 500,
 		backgroundColor = null,
@@ -47,6 +51,10 @@
 			enableCardTilt,
 			singleSceneConstrainMovement,
 			singleSceneMaxXY,
+			singleSceneCardDragRotate,
+			singleSceneMouseDrift,
+			cardDepthScale,
+			cardSizeScale,
 			singleCardSize: cardSize,
 			minCameraZ,
 			maxCameraZ,

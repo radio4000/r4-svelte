@@ -7,6 +7,7 @@
 		<a href="/_debug">&larr;</a>
 		<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 		<a href="/_debug/3d/scene-single">scene-single</a>
+		<a href="/_debug/3d/scene-rotate">scene-rotate</a>
 		<a href="/_debug/3d/card-states">card-states</a>
 	</menu>
 

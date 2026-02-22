@@ -5,8 +5,6 @@
 
 	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 30))
 	let selectedChannelId = $state('')
-	let selectedOpen = $state(true)
-	let active = $state(true)
 
 	const channel = $derived.by(() => {
 		if (!channels.length) return null
@@ -33,14 +31,14 @@
 			activeTags: tags.slice(0, 1),
 			activeMentions: [],
 			hasActiveTagMatch: tags.length > 0,
-			isActive: active,
+			isActive: true,
 			channel
 		}
 	})
 </script>
 
 <svelte:head>
-	<title>Debug 3D Single</title>
+	<title>Debug 3D Rotate</title>
 </svelte:head>
 
 <article class="fill-height">
@@ -61,8 +59,7 @@
 					{/each}
 				</select>
 			</label>
-			<label><input type="checkbox" bind:checked={selectedOpen} /> open</label>
-			<label><input type="checkbox" bind:checked={active} /> active</label>
+			<p>Click and drag the card to rotate it around its center.</p>
 		</div>
 	</header>
 
@@ -70,9 +67,19 @@
 		<section class="scene">
 			<ChannelScene
 				media={[mediaItem]}
-				activeId={active ? channel.id : undefined}
-				activeIds={active ? [channel.id] : []}
-				selectedId={selectedOpen ? channel.id : null}
+				activeId={channel.id}
+				activeIds={[channel.id]}
+				selectedId={channel.id}
+				cardSize={25}
+				cardDepthScale={2}
+				allowNavigation={true}
+				enableCardTilt={false}
+				singleSceneConstrainMovement={false}
+				singleSceneMaxXY={18}
+				singleSceneCardDragRotate={true}
+				singleSceneMouseDrift={false}
+				minCameraZ={26}
+				maxCameraZ={70}
 			/>
 		</section>
 	{/if}

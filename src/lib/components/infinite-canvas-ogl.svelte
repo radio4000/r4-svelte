@@ -27,13 +27,15 @@
 	 * @prop {boolean} [isActive]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
 		activeIds = [],
 		selectedId = null,
 		hoveredId = null,
+		cardDepthScale = 1,
+		cardSizeScale = 1,
 		backgroundColor = null,
 		onclick,
 		onnavigate
@@ -55,6 +57,8 @@
 			activeId: untrack(() => activeId),
 			activeIds: untrack(() => activeIds),
 			selectedId: untrack(() => selectedId),
+			cardDepthScale,
+			cardSizeScale,
 			...themeConfig,
 			backgroundColor,
 			onClick: onclick,

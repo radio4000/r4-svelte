@@ -114,6 +114,7 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
+			<a href="/_debug/3d/scene-rotate">scene-rotate</a>
 			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
 		<p>Visual matrix for 3D card states including active tag and mention states.</p>
