@@ -1,5 +1,36 @@
 export const BORDER_LAYER_ORDER = ['favorite', 'active', 'hover', 'selected', 'live']
 export const CHANNEL_INFO_CANVAS = {width: 1024, height: 440}
+import {formatDate} from '$lib/dates.js'
+
+/**
+ * @param {any} mediaItem
+ * @param {any} colors
+ */
+function getCornerMarkers(mediaItem, colors) {
+	const markers = []
+	if (mediaItem?.isFavorite) {
+		markers.push({kind: 'favorite', shape: 'diamond', color: colors.favoriteBorderColor, size: 22})
+	}
+	return markers
+}
+
+/**
+ * @param {any} mediaItem
+ */
+function getTrackTotal(mediaItem) {
+	if (Number.isFinite(mediaItem?.channel?.track_count)) return mediaItem.channel.track_count
+	if (Number.isFinite(mediaItem?.track_count)) return mediaItem.track_count
+	return null
+}
+
+/**
+ * @param {any} mediaItem
+ */
+function getUpdatedLabel(mediaItem) {
+	const latest = mediaItem?.channel?.latest_track_at
+	if (!latest) return ''
+	return formatDate(latest)
+}
 
 /**
  * Resolve visual state for a 3D channel card from IDs + flags.
@@ -61,7 +92,7 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
  *   mediaItem: any,
  *   style: 'active' | 'selected',
  *   activeId?: string | null,
- *   hoverTarget?: {id?: string, type: 'channel'|'tag'|'mention'|'tracks', token?: string | null} | null,
+ *   hoverTarget?: {id?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null,
  *   colors: {
  *     infoBgColor: string,
  *     infoTextColor: string,
@@ -113,11 +144,7 @@ export function buildChannelInfoCanvas(params) {
 	)
 	const trackTotal = Number.isFinite(channel.track_count) ? channel.track_count : null
 	const totalLabel = trackTotal != null ? `(${trackTotal})` : ''
-	let updatedLabel = ''
-	if (channel.latest_track_at) {
-		const d = new Date(channel.latest_track_at)
-		if (!Number.isNaN(d.getTime())) updatedLabel = `updated ${d.toLocaleDateString()}`
-	}
+	const updatedLabel = getUpdatedLabel(mediaItem)
 
 	const canvas = document.createElement('canvas')
 	canvas.width = CHANNEL_INFO_CANVAS.width
@@ -257,9 +284,27 @@ export function buildChannelInfoCanvas(params) {
 	ctx.textBaseline = 'top'
 	const titleText = name.slice(0, 46)
 	ctx.fillText(titleText, 32, 26)
+	const titleWidth = ctx.measureText(titleText).width
+	if (hoverTarget?.type === 'channel' && hoverTarget?.token === 'title') {
+		ctx.beginPath()
+		ctx.strokeStyle = panelText
+		ctx.lineWidth = 2
+		ctx.moveTo(32, 82)
+		ctx.lineTo(32 + titleWidth, 82)
+		ctx.stroke()
+	}
 	ctx.font = '400 34px sans-serif'
 	ctx.fillStyle = panelText
 	ctx.fillText(slug, 32, 96)
+	const slugWidth = ctx.measureText(slug).width
+	if (hoverTarget?.type === 'channel' && hoverTarget?.token === 'slug') {
+		ctx.beginPath()
+		ctx.strokeStyle = panelText
+		ctx.lineWidth = 2
+		ctx.moveTo(32, 132)
+		ctx.lineTo(32 + slugWidth, 132)
+		ctx.stroke()
+	}
 	if (description) {
 		ctx.font = '400 28px sans-serif'
 		ctx.fillStyle = panelMuted
@@ -300,19 +345,46 @@ export function buildChannelInfoCanvas(params) {
 	)
 
 	const metaY = canvas.height - 42
+	const metaCenterY = metaY + 16
+	let totalLabelWidth = 0
 	if (totalLabel) {
 		ctx.font = '400 30px sans-serif'
 		ctx.fillStyle = panelMuted
 		ctx.fillText(totalLabel, 32, metaY)
+		totalLabelWidth = ctx.measureText(totalLabel).width
 		if (hoverTarget?.type === 'tracks') {
-			const tw = ctx.measureText(totalLabel).width
 			ctx.beginPath()
 			ctx.strokeStyle = panelText
 			ctx.lineWidth = 2
 			ctx.moveTo(32, metaY + 32)
-			ctx.lineTo(32 + tw, metaY + 32)
+			ctx.lineTo(32 + totalLabelWidth, metaY + 32)
 			ctx.stroke()
 		}
+	}
+	if (mediaItem?.canToggleRotate) {
+		const enabled = !!mediaItem?.isRotateEnabled
+		const isHoverRotate = hoverTarget?.type === 'rotate'
+		const rotateSize = 22
+		const rotateCenterX = 32 + (totalLabelWidth || 0) + 26
+		const rotateColor = enabled
+			? colors.tagActiveBgColor
+			: isHoverRotate
+				? panelText
+				: panelMuted
+		ctx.save()
+		ctx.translate(rotateCenterX, metaCenterY)
+		if (enabled) {
+			ctx.rotate(Math.PI / 4)
+			const s = rotateSize * 0.5
+			drawRect(-s * 0.9, -s * 0.9, s * 1.8, s * 1.8, 4, rotateColor)
+		} else {
+			ctx.beginPath()
+			ctx.strokeStyle = rotateColor
+			ctx.lineWidth = 4
+			ctx.arc(0, 0, rotateSize * 0.5, 0, Math.PI * 2)
+			ctx.stroke()
+		}
+		ctx.restore()
 	}
 	if (updatedLabel) {
 		ctx.font = '400 30px sans-serif'
@@ -329,8 +401,7 @@ export function buildChannelInfoCanvas(params) {
 		}
 	}
 
-	const markers = []
-	if (mediaItem.isFavorite) markers.push({shape: 'diamond', color: colors.favoriteBorderColor, size: 22})
+	const markers = getCornerMarkers(mediaItem, colors)
 
 	let mx = canvas.width - 44
 	const my = 44
@@ -367,48 +438,76 @@ export function buildChannelInfoCanvas(params) {
 /**
  * Resolve click intent on the open info panel texture.
  * @param {{mediaItem: any, x: number, y: number}} params
- * @returns {{href?: string, type: 'channel'|'tag'|'mention'|'tracks', token: string | null} | null}
+ * @returns {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token: string | null} | null}
  */
 export function resolveChannelInfoClickTarget(params) {
 	const {mediaItem, x, y} = params
 	const slug = mediaItem?.slug
 	if (!slug) return null
 	if (x < 0 || y < 0 || x > CHANNEL_INFO_CANVAS.width || y > CHANNEL_INFO_CANVAS.height) return null
+	const measure = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
+	if (!measure) return null
+	measure.font = '400 30px sans-serif'
+	const trackTotal = getTrackTotal(mediaItem)
+	const totalLabel = trackTotal != null ? `(${trackTotal})` : ''
+	const totalWidth = totalLabel ? measure.measureText(totalLabel).width : 0
+	const metaY = CHANNEL_INFO_CANVAS.height - 42
+	const rotateSize = 22
+	const rotateCenterX = 32 + (totalWidth || 0) + 26
+	const rotateCenterY = metaY + 16
+	measure.font = '700 52px sans-serif'
+	const titleText = String(mediaItem?.name || mediaItem?.title || mediaItem?.slug || '').slice(0, 46)
+	const titleWidth = measure.measureText(titleText).width
+	if (x >= 32 && x <= 32 + titleWidth && y >= 26 && y <= 86) {
+		return {href: `/${encodeURIComponent(slug)}`, type: 'channel', token: 'title'}
+	}
+	measure.font = '400 34px sans-serif'
+	const slugLabel = mediaItem?.slug ? `@${mediaItem.slug}` : ''
+	const slugWidth = measure.measureText(slugLabel).width
+	if (x >= 32 && x <= 32 + slugWidth && y >= 96 && y <= 136) {
+		return {href: `/${encodeURIComponent(slug)}`, type: 'channel', token: 'slug'}
+	}
+	if (mediaItem?.canToggleRotate) {
+		const half = rotateSize * 0.5
+		if (
+			x >= rotateCenterX - half - 4 &&
+			x <= rotateCenterX + half + 4 &&
+			y >= rotateCenterY - half - 4 &&
+			y <= rotateCenterY + half + 4
+		) {
+			return {type: 'rotate', token: 'toggle'}
+		}
+	}
 
-	const trackTotal = Number.isFinite(mediaItem?.channel?.track_count)
-		? mediaItem.channel.track_count
-		: Number.isFinite(mediaItem?.track_count)
-			? mediaItem.track_count
-			: null
+	const markers = getCornerMarkers(mediaItem, {
+		favoriteBorderColor: '#ffb800'
+	})
+	let mx = CHANNEL_INFO_CANVAS.width - 44
+	const my = 44
+	for (const marker of markers) {
+		const half = marker.size * 0.5
+		if (x >= mx - half - 4 && x <= mx + half + 4 && y >= my - half - 4 && y <= my + half + 4) {
+			if (marker.kind === 'favorite') return null
+		}
+		mx -= marker.size + 14
+	}
+
 	if (trackTotal != null) {
-		const label = `(${trackTotal})`
-		const measure = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
-		if (measure) {
-			measure.font = '400 30px sans-serif'
-			const w = measure.measureText(label).width
-			const metaY = CHANNEL_INFO_CANVAS.height - 42
-			if (x >= 32 && x <= 32 + w && y >= metaY && y <= metaY + 36) {
-				return {href: `/${encodeURIComponent(slug)}/tracks`, type: 'tracks', token: null}
-			}
-			const updated = mediaItem?.channel?.latest_track_at
-			if (updated) {
-				const d = new Date(updated)
-				if (!Number.isNaN(d.getTime())) {
-					const updatedLabel = `updated ${d.toLocaleDateString()}`
-					const uw = measure.measureText(updatedLabel).width
-					const ux = CHANNEL_INFO_CANVAS.width - 32 - uw
-					if (x >= ux && x <= CHANNEL_INFO_CANVAS.width - 32 && y >= metaY && y <= metaY + 36) {
-						return {href: `/${encodeURIComponent(slug)}/image`, type: 'channel', token: null}
-					}
-				}
+		if (x >= 32 && x <= 32 + totalWidth && y >= metaY && y <= metaY + 36) {
+			return {href: `/${encodeURIComponent(slug)}/tracks`, type: 'tracks', token: null}
+		}
+		const updatedLabel = getUpdatedLabel(mediaItem)
+		if (updatedLabel) {
+			const uw = measure.measureText(updatedLabel).width
+			const ux = CHANNEL_INFO_CANVAS.width - 32 - uw
+			if (x >= ux && x <= CHANNEL_INFO_CANVAS.width - 32 && y >= metaY && y <= metaY + 36) {
+				return {href: `/${encodeURIComponent(slug)}/image`, type: 'channel', token: null}
 			}
 		}
 	}
 
 	const tags = Array.isArray(mediaItem?.tags) ? mediaItem.tags : []
 	const mentions = Array.isArray(mediaItem?.mentions) ? mediaItem.mentions : []
-	const measure = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
-	if (!measure) return null
 	measure.font = '600 24px sans-serif'
 
 	/**
