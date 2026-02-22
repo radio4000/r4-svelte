@@ -3,6 +3,8 @@
 	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
 	import {untrack} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
+	import Icon from '$lib/components/icon.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 
 	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, onclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks', token?: string | null) => void | Promise<void>}} */
 	let {
@@ -27,6 +29,7 @@
 	let container
 	/** @type {InfiniteCanvasOGL} */
 	let canvas
+	let showControlsModal = $state(false)
 
 	$effect(() => {
 		if (!container) return
@@ -81,6 +84,33 @@
 
 <div class="canvas-wrapper">
 	<div class="canvas-container" bind:this={container}></div>
+
+	<button class="controls-info-btn" type="button" onclick={() => (showControlsModal = true)} title="3D controls">
+		<Icon icon="circle-info" size={16} />
+	</button>
+
+	<Dialog bind:showModal={showControlsModal}>
+		{#snippet header()}
+			<h2>3D Controls</h2>
+		{/snippet}
+		<div class="controls-modal-content">
+			<div class="controls-row">
+				<Icon icon="hand-pointer" size={16} />
+				<div>Drag to pan · Tap/click cards to interact</div>
+			</div>
+			<div class="controls-row">
+				<Icon icon="mouse" size={16} />
+				<div><kbd>scroll</kbd> zoom</div>
+			</div>
+			<div class="controls-row">
+				<Icon icon="keyboard" size={16} />
+				<div>
+					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move ·
+					<kbd>Q</kbd><kbd>E</kbd> up/down
+				</div>
+			</div>
+		</div>
+	</Dialog>
 </div>
 
 <style>
@@ -102,5 +132,26 @@
 		inset: 0;
 		width: 100% !important;
 		height: 100% !important;
+	}
+
+	.controls-info-btn {
+		position: absolute;
+		bottom: var(--space-2);
+		right: var(--space-2);
+		padding: var(--space-2);
+		font-size: var(--font-2);
+		z-index: 2;
+	}
+
+	.controls-modal-content {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	.controls-row {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: start;
+		gap: var(--space-2);
 	}
 </style>

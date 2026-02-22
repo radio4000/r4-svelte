@@ -3,6 +3,8 @@
 	import {untrack} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
+	import Icon from '$lib/components/icon.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 
 	/**
 	 * @typedef {object} MediaItem
@@ -41,6 +43,7 @@
 	let container
 	/** @type {InfiniteCanvasOGL} */
 	let canvas
+	let showControlsModal = $state(false)
 
 	$effect(() => {
 		if (!container) return
@@ -88,11 +91,32 @@
 <div class="canvas-wrapper">
 	<div class="canvas-container" bind:this={container}></div>
 
-	<aside class="controls-hint">
-		<div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move</div>
-		<div><kbd>Q</kbd><kbd>E</kbd> up/down · <kbd>scroll</kbd> zoom</div>
-		<div>Drag to pan · Click to play</div>
-	</aside>
+	<button class="controls-info-btn" type="button" onclick={() => (showControlsModal = true)} title="3D controls">
+		<Icon icon="circle-info" size={16} />
+	</button>
+
+	<Dialog bind:showModal={showControlsModal}>
+		{#snippet header()}
+			<h2>3D Controls</h2>
+		{/snippet}
+		<div class="controls-modal-content">
+			<div class="controls-row">
+				<Icon icon="hand-pointer" size={16} />
+				<div>Drag to pan · Tap/click cards to interact</div>
+			</div>
+			<div class="controls-row">
+				<Icon icon="mouse" size={16} />
+				<div><kbd>scroll</kbd> zoom</div>
+			</div>
+			<div class="controls-row">
+				<Icon icon="keyboard" size={16} />
+				<div>
+					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move ·
+					<kbd>Q</kbd><kbd>E</kbd> up/down
+				</div>
+			</div>
+		</div>
+	</Dialog>
 </div>
 
 <style>
@@ -116,13 +140,24 @@
 		height: 100% !important;
 	}
 
-	.controls-hint {
+	.controls-info-btn {
 		position: absolute;
 		bottom: var(--space-2);
 		right: var(--space-2);
-		padding: var(--space-2) var(--space-3);
+		padding: var(--space-2);
 		font-size: var(--font-2);
-		pointer-events: none;
-		text-align: right;
+		z-index: 2;
+	}
+
+	.controls-modal-content {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	.controls-row {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		align-items: start;
+		gap: var(--space-2);
 	}
 </style>
