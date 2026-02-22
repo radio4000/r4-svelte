@@ -271,8 +271,8 @@ export class InfiniteCanvasOGL {
 		this.tiltAmount = Number.isFinite(config.tiltAmount) ? Number(config.tiltAmount) : 2.8
 		this.singleSceneConstrainMovement = config.singleSceneConstrainMovement ?? true
 		this.singleSceneMaxXY = Number.isFinite(config.singleSceneMaxXY) ? Number(config.singleSceneMaxXY) : null
-		this.minCameraZ = Number.isFinite(config.minCameraZ) ? Number(config.minCameraZ) : 1
-		this.maxCameraZ = Number.isFinite(config.maxCameraZ) ? Number(config.maxCameraZ) : 500
+		this.minCameraZ = Number.isFinite(config.minCameraZ) ? Number(config.minCameraZ) : null
+		this.maxCameraZ = Number.isFinite(config.maxCameraZ) ? Number(config.maxCameraZ) : null
 
 		this.velocity = vec3()
 		this.targetVel = vec3()
@@ -302,6 +302,7 @@ export class InfiniteCanvasOGL {
 		this.hoveredId = null
 		this.infoHoverTarget = null
 		this.singlePointer = vec2()
+		this.cleanupFns = []
 
 		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
 		this._rayNear = new Vec3()
@@ -795,29 +796,36 @@ export class InfiniteCanvasOGL {
 		if (!this.gl?.canvas) return
 		const canvas = this.gl.canvas
 		canvas.style.cursor = 'default'
+		const listen = (target, event, handler, options) => {
+			target.addEventListener(event, handler, options)
+			this.cleanupFns.push(() => target.removeEventListener(event, handler, options))
+		}
 
-		canvas.addEventListener('mousedown', (e) => {
+		const onMouseDown = (e) => {
 			if (this.disableNavigation) return
 			this.isDragging = true
 			this.dragDistance = 0
 			this.lastMouse = {x: e.clientX, y: e.clientY}
 			this.mouseDownPos = {x: e.clientX, y: e.clientY}
 			canvas.style.cursor = 'default'
-		})
+		}
+		listen(canvas, 'mousedown', onMouseDown)
 
-		window.addEventListener('mouseup', (e) => {
+		const onMouseUp = (e) => {
 			if (!this.disableNavigation && this.isDragging && this.dragDistance < 5 && this.onClick) {
 				this.handleClick(e)
 			}
 			this.isDragging = false
 			canvas.style.cursor = 'default'
-		})
-		canvas.addEventListener('click', (e) => {
+		}
+		listen(window, 'mouseup', onMouseUp)
+		const onCanvasClick = (e) => {
 			if (!this.disableNavigation) return
 			this.handleClick(e)
-		})
+		}
+		listen(canvas, 'click', onCanvasClick)
 
-		window.addEventListener('mousemove', (e) => {
+		const onMouseMove = (e) => {
 			this.mouse = {
 				x: (e.clientX / window.innerWidth) * 2 - 1,
 				y: -(e.clientY / window.innerHeight) * 2 + 1
@@ -845,29 +853,30 @@ export class InfiniteCanvasOGL {
 				this.lastMouse = {x: e.clientX, y: e.clientY}
 			}
 			this.updateTooltip(e)
-		})
+		}
+		listen(window, 'mousemove', onMouseMove)
 
-		canvas.addEventListener('mouseleave', () => {
+		const onMouseLeave = () => {
 			this.mouse = {x: 0, y: 0}
 			this.singlePointer.x = 0
 			this.singlePointer.y = 0
 			this.isDragging = false
 			canvas.style.cursor = 'default'
-		})
+		}
+		listen(canvas, 'mouseleave', onMouseLeave)
 
-		canvas.addEventListener(
-			'wheel',
-			(e) => {
-				if (this.disableNavigation) return
-				e.preventDefault()
-				this.scrollAccum += e.deltaY * 0.006
-			},
-			{passive: false}
-		)
+		const onWheel = (e) => {
+			if (this.disableNavigation) return
+			e.preventDefault()
+			this.scrollAccum += e.deltaY * 0.006
+		}
+		listen(canvas, 'wheel', onWheel, {passive: false})
 
 		if (!this.disableNavigation) {
-			window.addEventListener('keydown', (e) => this.handleKey(e.key, true))
-			window.addEventListener('keyup', (e) => this.handleKey(e.key, false))
+			const onKeyDown = (e) => this.handleKey(e.key, true)
+			const onKeyUp = (e) => this.handleKey(e.key, false)
+			listen(window, 'keydown', onKeyDown)
+			listen(window, 'keyup', onKeyUp)
 		}
 
 		this.resizeObserver = new ResizeObserver(() => this.resize())
@@ -886,56 +895,45 @@ export class InfiniteCanvasOGL {
 			return Math.sqrt(dx * dx + dy * dy)
 		}
 
-		canvas.addEventListener(
-			'touchstart',
-			(e) => {
-				if (this.disableNavigation) return
-				e.preventDefault()
-				lastTouches = [...e.touches]
-				lastTouchDist = getTouchDistance(lastTouches)
-				if (e.touches.length === 1) {
-					touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY}
-					touchDragDistance = 0
-				}
-			},
-			{passive: false}
-		)
-
-		canvas.addEventListener(
-			'touchmove',
-			(e) => {
-				if (this.disableNavigation) return
-				e.preventDefault()
-				const touches = [...e.touches]
-				if (touches.length === 1 && lastTouches.length >= 1) {
-					const dx = touches[0].clientX - lastTouches[0].clientX
-					const dy = touches[0].clientY - lastTouches[0].clientY
-					touchDragDistance += Math.abs(dx) + Math.abs(dy)
-					this.targetVel.x -= dx * 0.02
-					this.targetVel.y += dy * 0.02
-				} else if (touches.length === 2 && lastTouchDist > 0) {
-					const dist = getTouchDistance(touches)
-					this.scrollAccum += (lastTouchDist - dist) * 0.006
-					lastTouchDist = dist
-				}
-				lastTouches = touches
-			},
-			{passive: false}
-		)
-
-		canvas.addEventListener(
-			'touchend',
-			(e) => {
-				if (this.disableNavigation) return
-				if (touchStartPos && touchDragDistance < 10 && this.onClick) {
-					this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
-				}
-				touchStartPos = null
-				lastTouches = [...e.touches]
-				lastTouchDist = getTouchDistance(lastTouches)
-			},
-			{passive: false}
-		)
+		const onTouchStart = (e) => {
+			if (this.disableNavigation) return
+			e.preventDefault()
+			lastTouches = [...e.touches]
+			lastTouchDist = getTouchDistance(lastTouches)
+			if (e.touches.length === 1) {
+				touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY}
+				touchDragDistance = 0
+			}
+		}
+		const onTouchMove = (e) => {
+			if (this.disableNavigation) return
+			e.preventDefault()
+			const touches = [...e.touches]
+			if (touches.length === 1 && lastTouches.length >= 1) {
+				const dx = touches[0].clientX - lastTouches[0].clientX
+				const dy = touches[0].clientY - lastTouches[0].clientY
+				touchDragDistance += Math.abs(dx) + Math.abs(dy)
+				this.targetVel.x -= dx * 0.02
+				this.targetVel.y += dy * 0.02
+			} else if (touches.length === 2 && lastTouchDist > 0) {
+				const dist = getTouchDistance(touches)
+				this.scrollAccum += (lastTouchDist - dist) * 0.006
+				lastTouchDist = dist
+			}
+			lastTouches = touches
+		}
+		const onTouchEnd = (e) => {
+			if (this.disableNavigation) return
+			if (touchStartPos && touchDragDistance < 10 && this.onClick) {
+				this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
+			}
+			touchStartPos = null
+			lastTouches = [...e.touches]
+			lastTouchDist = getTouchDistance(lastTouches)
+		}
+		listen(canvas, 'touchstart', onTouchStart, {passive: false})
+		listen(canvas, 'touchmove', onTouchMove, {passive: false})
+		listen(canvas, 'touchend', onTouchEnd, {passive: false})
 	}
 
 	createTooltip() {
@@ -1823,7 +1821,11 @@ export class InfiniteCanvasOGL {
 				this.basePos[axis] += this.velocity[axis]
 				this.targetVel[axis] *= VELOCITY_DECAY
 			}
-			this.basePos.z = clamp(this.basePos.z, this.minCameraZ, this.maxCameraZ)
+			if (this.minCameraZ != null || this.maxCameraZ != null) {
+				const minZ = this.minCameraZ ?? -Infinity
+				const maxZ = this.maxCameraZ ?? Infinity
+				this.basePos.z = clamp(this.basePos.z, minZ, maxZ)
+			}
 			if (this.sceneMode === 'single' && this.singleSceneMaxXY != null) {
 				this.basePos.x = clamp(this.basePos.x, -this.singleSceneMaxXY, this.singleSceneMaxXY)
 				this.basePos.y = clamp(this.basePos.y, -this.singleSceneMaxXY, this.singleSceneMaxXY)
@@ -1843,7 +1845,7 @@ export class InfiniteCanvasOGL {
 					this.targetVel.y = 0
 				}
 			}
-			if (this.basePos.z === this.minCameraZ || this.basePos.z === this.maxCameraZ) {
+			if ((this.minCameraZ != null && this.basePos.z <= this.minCameraZ) || (this.maxCameraZ != null && this.basePos.z >= this.maxCameraZ)) {
 				this.velocity.z = 0
 				this.targetVel.z = 0
 				this.scrollAccum = 0
@@ -1856,11 +1858,11 @@ export class InfiniteCanvasOGL {
 			const tiltY = this.enableCardTilt ? this.singlePointer.y * this.tiltAmount : 0
 			this.camera.position.x = lerp(this.camera.position.x, tiltX, 0.08)
 			this.camera.position.y = lerp(this.camera.position.y, tiltY, 0.08)
-			this.camera.position.z = lerp(
-				this.camera.position.z,
-				clamp(INITIAL_CAMERA_Z, this.minCameraZ, this.maxCameraZ),
-				0.08
-			)
+			const targetZ =
+				this.minCameraZ != null || this.maxCameraZ != null
+					? clamp(INITIAL_CAMERA_Z, this.minCameraZ ?? -Infinity, this.maxCameraZ ?? Infinity)
+					: INITIAL_CAMERA_Z
+			this.camera.position.z = lerp(this.camera.position.z, targetZ, 0.08)
 			if (typeof this.camera.lookAt === 'function') this.camera.lookAt([0, 0, 0])
 			this.basePos.x = this.camera.position.x
 			this.basePos.y = this.camera.position.y
@@ -2040,6 +2042,8 @@ export class InfiniteCanvasOGL {
 		this.disposed = true
 		if (this.animationId) cancelAnimationFrame(this.animationId)
 		this.resizeObserver?.disconnect()
+		for (const fn of this.cleanupFns) fn()
+		this.cleanupFns = []
 
 		for (const key of this.chunks.keys()) this.removeChunk(key)
 		for (const [, group] of this.exitingChunks) {

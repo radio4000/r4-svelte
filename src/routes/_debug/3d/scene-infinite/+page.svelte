@@ -38,10 +38,24 @@
 
 	const activeIds = $derived(deckCanvasState.activeChannelIds)
 	const activeId = $derived(activeIds[0])
+	let selectedId = $state(/** @type {string | null} */ (null))
+	let lastClickId = $state(/** @type {string | null} */ (null))
+	let lastClickAt = $state(0)
+	const DOUBLE_CLICK_MS = 320
 
 	async function handleClick(item) {
 		if (!item?.slug || !item?.id) return
-		await shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		const now = performance.now()
+		const isDoubleClick = lastClickId === item.id && now - lastClickAt <= DOUBLE_CLICK_MS
+		selectedId = item.id
+		if (isDoubleClick) {
+			lastClickId = null
+			lastClickAt = 0
+			await shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+			return
+		}
+		lastClickId = item.id
+		lastClickAt = now
 	}
 </script>
 
@@ -60,7 +74,7 @@
 		<p>Infinite scene with shared 3D channel cards.</p>
 	</header>
 	<section class="scene">
-		<InfiniteCanvas {media} {activeId} {activeIds} onclick={handleClick} />
+		<InfiniteCanvas {media} {activeId} {activeIds} {selectedId} onclick={handleClick} />
 	</section>
 </article>
 
