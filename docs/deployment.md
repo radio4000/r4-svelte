@@ -4,7 +4,7 @@ After running `bun run build` you have everything inside the `./dist` folder to 
 
 For this repository, Cloudflare is configured to deploy for us:
 
-- pushes to main go to https://pg.radio4000.com
+- pushes to main go to https://beta.radio4000.com
 - pull requests (non-draft) get their own, unique URL
 
 Run `bun run check` to format and lint the entire code base.

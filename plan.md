@@ -10,8 +10,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 - track meta r5 introduces new .tags style (reuse? unify?)
 - on track meta pages the toggle json/raw is below output, meaning it disappears when you tap it. put it above so it doesn't jump
 - why does <TrackList> have both tracks and playlistTracks props?
-- didn't look into why but when i switch between discogs/musicbrainz tabs here my browser blocks for 12 seconds :D https://pg.radio4000.com/oskar/tracks/639c8d7a-e095-49b9-b0a0-cdfdf2dd8af8/discogs
-- media query to switch layout header from side to top is too soon. maybe ~900px instead of 768px breakpoint. and do we need 560+640px breakpoints? one of them maybe enough?
+- didn't look into why but when i switch between discogs/musicbrainz tabs here my browser blocks for 12 seconds :D /oskar/tracks/639c8d7a-e095-49b9-b0a0-cdfdf2dd8af8/discogs
 - remove the tap to select row(s) on /batch-edit. the input checkbox is enough for this feature
 - 3D globe map view in addition to map view. Try with OGL instead of Three.js. Someday/maybe.
 - Test RTL-support

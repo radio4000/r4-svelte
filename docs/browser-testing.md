@@ -11,4 +11,4 @@ The core workflow is:
 
 Run `agent-browser --help` for all commands.
 
-Our app usually runs on http://localhost:5173 (dev) or http://pg.radio4000.com (prod).
+Our app usually runs on http://localhost:5173 (dev) or http://beta.radio4000.com (prod).
