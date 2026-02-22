@@ -31,12 +31,15 @@
 	}
 
 	let sortedChannels = $derived(
-		channels.toSorted((a, b) => {
-			const av = sortKey[order](a)
-			const bv = sortKey[order](b)
-			const cmp = av < bv ? -1 : av > bv ? 1 : 0
-			return direction === 'asc' ? cmp : -cmp
-		})
+		order === 'shuffle'
+			? channels.toSorted(() => Math.random() - 0.5)
+			: channels.toSorted((a, b) => {
+					const by = sortKey[order] ?? sortKey.updated
+					const av = by(a)
+					const bv = by(b)
+					const cmp = av < bv ? -1 : av > bv ? 1 : 0
+					return direction === 'asc' ? cmp : -cmp
+				})
 	)
 
 	const canvasMedia = $derived(

@@ -127,17 +127,19 @@
 
 	.broadcast-dot {
 		position: absolute;
-		bottom: 2px;
-		right: 2px;
-		width: 8px;
-		height: 8px;
+		top: -7px;
+		right: -5px;
+		width: 0.65rem;
+		height: 0.65rem;
 		border-radius: 50%;
 		background: var(--accent-9);
-		box-shadow: 0 0 0 2px var(--header-bg);
+	}
+
+	.btn:has(.broadcast-dot) {
+		position: relative;
 	}
 
 	.channel-link {
-		position: relative;
 		padding: 0;
 		height: 30px;
 		overflow: visible;

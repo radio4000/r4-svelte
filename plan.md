@@ -40,6 +40,7 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 ## In progress
 
 - channel mentions route: add `/@slug/mentions` listing tracks from other channels where `mentions` contains `@slug`
+- Extract reusable 3D channel-card module (`src/lib/3d/channel-card-3d.js`) from infinite canvas so future 3D views can reuse state resolution and card texture rendering.
 
 - Discogs UX pass in progress (track Discogs tab + add-track modal)
   - improve release summary density (track/video/in-channel counts + cleaner status hints per row)

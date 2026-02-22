@@ -1,6 +1,7 @@
 <script>
 	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
 	import {untrack} from 'svelte'
+	import {appState} from '$lib/app-state.svelte'
 
 	/**
 	 * @typedef {object} MediaItem
@@ -12,10 +13,13 @@
 	 * @prop {string} [title]
 	 * @prop {string} [channel_slug]
 	 * @prop {{slug?: string}} [channel]
+	 * @prop {boolean} [isFavorite]
+	 * @prop {boolean} [isLive]
+	 * @prop {boolean} [isActive]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, backgroundColor?: string|null, onclick?: (item: MediaItem) => void}} */
-	let {media = [], activeId, backgroundColor = null, onclick} = $props()
+	/** @type {{media?: MediaItem[], activeId?: string, selectedId?: string | null, backgroundColor?: string|null, onclick?: (item: MediaItem) => void}} */
+	let {media = [], activeId, selectedId = null, backgroundColor = null, onclick} = $props()
 
 	/** @type {HTMLDivElement} */
 	let container
@@ -38,13 +42,65 @@
 		return color
 	}
 
+	function getMediaRadiusPx() {
+		if (typeof document === 'undefined') return 0
+		const div = document.createElement('div')
+		div.style.borderRadius = 'var(--media-radius)'
+		div.style.visibility = 'hidden'
+		div.style.position = 'absolute'
+		document.body.appendChild(div)
+		const px = parseFloat(getComputedStyle(div).borderTopLeftRadius || '0')
+		document.body.removeChild(div)
+		return Number.isFinite(px) ? px : 0
+	}
+
 	$effect(() => {
 		if (!container) return
-		const accentColor = getThemeColor('--accent-9')
+		void appState.theme
+		void appState.custom_css_variables
+		const liveBorderColor = getThemeColor('--accent-9')
+		const activeBorderColor = getThemeColor('--gray-5')
+		const favoriteBorderColor = getThemeColor('--accent-8')
+		const selectedBorderColor = getThemeColor('--accent-7')
+		const defaultCardColor = getThemeColor('--gray-1')
+		const selectedCardColor = getThemeColor('--gray-2')
+		const favoriteCardColor = getThemeColor('--accent-2')
+		const activeCardColor = getThemeColor('--accent-9')
+		const liveCardColor = getThemeColor('--accent-2')
+		const infoBgColor = getThemeColor('--gray-1')
+		const infoTextColor = getThemeColor('--gray-12')
+		const infoMutedColor = getThemeColor('--gray-10')
+		const infoBorderColor = getThemeColor('--gray-5')
+		const activeInfoTextColor = getThemeColor('--gray-1')
+		const activeInfoMutedColor = getThemeColor('--gray-2')
+		const liveBadgeBgColor = getThemeColor('--accent-9')
+		const liveBadgeTextColor = getThemeColor('--gray-1')
+		const mediaRadiusPx = getMediaRadiusPx()
+		const roundArtworks = mediaRadiusPx > 0.01
+		const cornerRadius = roundArtworks ? 0.12 : 0
 		canvas = new InfiniteCanvasOGL(container, {
 			media: untrack(() => media),
 			activeId: untrack(() => activeId),
-			accentColor,
+			selectedId: untrack(() => selectedId),
+			liveBorderColor,
+			activeBorderColor,
+			favoriteBorderColor,
+			selectedBorderColor,
+			defaultCardColor,
+			selectedCardColor,
+			favoriteCardColor,
+			activeCardColor,
+			liveCardColor,
+			infoBgColor,
+			infoTextColor,
+			infoMutedColor,
+			infoBorderColor,
+			activeInfoTextColor,
+			activeInfoMutedColor,
+			liveBadgeBgColor,
+			liveBadgeTextColor,
+			roundArtworks,
+			cornerRadius,
 			backgroundColor,
 			onClick: onclick
 		})
@@ -56,7 +112,13 @@
 	})
 
 	$effect(() => {
-		if (canvas && activeId) canvas.setActiveId(activeId)
+		if (!canvas) return
+		canvas.setActiveId(activeId ?? null)
+	})
+
+	$effect(() => {
+		if (!canvas) return
+		canvas.setSelectedId(selectedId)
 	})
 </script>
 
@@ -100,4 +162,5 @@
 		pointer-events: none;
 		text-align: right;
 	}
+
 </style>

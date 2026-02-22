@@ -2,7 +2,8 @@
  * WebGL infinite canvas with chunk-based rendering using OGL
  * Parallel implementation for bundle size and performance comparison
  */
-import {Renderer, Camera, Transform, Mesh, Plane, Torus, Program, Texture, Vec3} from 'ogl'
+import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
+import {resolveChannelCardStates, buildChannelInfoCanvas} from '$lib/3d/channel-card-3d.js'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2
@@ -48,34 +49,25 @@ const CHUNK_OFFSETS = (() => {
 const vec3 = (x = 0, y = 0, z = 0) => ({x, y, z})
 const vec2 = (x = 0, y = 0) => ({x, y})
 
-// Vertex shader for colored quads — derives color from world position
 const colorVertexShader = `
 	attribute vec3 position;
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
-	uniform mat4 modelMatrix;
-	uniform float uCameraZ;
-	varying vec3 vWorldPos;
 	varying float vDepthFade;
 	void main() {
-		vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
-		float dist = abs(vWorldPos.z - uCameraZ);
-		vDepthFade = 1.0 - smoothstep(140.0, 260.0, dist);
+		vDepthFade = 1.0;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
 
 const colorFragmentShader = `
 	precision highp float;
-	varying vec3 vWorldPos;
+	uniform vec3 uColor;
+	uniform float uAlpha;
 	varying float vDepthFade;
 	void main() {
 		if (vDepthFade < 0.01) discard;
-		vec3 col;
-		col.r = 0.4 + 0.4 * sin(vWorldPos.x * 0.05 + 1.0);
-		col.g = 0.4 + 0.4 * sin(vWorldPos.y * 0.05 + 2.0);
-		col.b = 0.4 + 0.4 * sin(vWorldPos.x * 0.03 + vWorldPos.y * 0.03 + 4.0);
-		gl_FragColor = vec4(col, vDepthFade);
+		gl_FragColor = vec4(uColor, uAlpha * vDepthFade);
 	}
 `
 
@@ -100,6 +92,31 @@ const texturedVertexShader = `
 const texturedFragmentShader = `
 	precision highp float;
 	uniform sampler2D tMap;
+	uniform float uCornerRadius;
+	varying vec2 vUv;
+	varying float vDepthFade;
+
+	float roundedRectSDF(vec2 p, vec2 b, float r) {
+		vec2 q = abs(p) - b + vec2(r);
+		return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+	}
+	void main() {
+		if (vDepthFade < 0.01) discard;
+		float radius = clamp(uCornerRadius, 0.0, 0.49);
+		if (radius > 0.0) {
+			vec2 p = vUv - vec2(0.5);
+			float d = roundedRectSDF(p, vec2(0.5), radius);
+			if (d > 0.0) discard;
+		}
+		vec4 color = texture2D(tMap, vUv);
+		if (color.a < 0.01) discard;
+		gl_FragColor = vec4(color.rgb, color.a * vDepthFade);
+	}
+`
+
+const infoFragmentShader = `
+	precision highp float;
+	uniform sampler2D tMap;
 	varying vec2 vUv;
 	varying float vDepthFade;
 	void main() {
@@ -112,9 +129,12 @@ const texturedFragmentShader = `
 
 const borderVertexShader = `
 	attribute vec3 position;
+	attribute vec2 uv;
 	uniform mat4 modelViewMatrix;
 	uniform mat4 projectionMatrix;
+	varying vec2 vUv;
 	void main() {
+		vUv = uv;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
@@ -122,8 +142,26 @@ const borderVertexShader = `
 const borderFragmentShader = `
 	precision highp float;
 	uniform vec3 uColor;
+	uniform float uShape;
+	uniform float uThickness;
+	uniform float uCornerRadius;
+	uniform float uAlpha;
+	varying vec2 vUv;
+
+	float roundedRectSDF(vec2 p, vec2 b, float r) {
+		vec2 q = abs(p) - b + vec2(r);
+		return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+	}
+
 	void main() {
-		gl_FragColor = vec4(uColor, 1.0);
+		vec2 p = vUv - vec2(0.5);
+		float t = clamp(uThickness, 0.001, 0.2);
+		float distCircle = abs(length(p) - 0.5);
+		float r = clamp(uCornerRadius, 0.0, 0.49);
+		float distSquare = abs(roundedRectSDF(p, vec2(0.5), r));
+		float dist = mix(distCircle, distSquare, step(0.5, uShape));
+		if (dist > t) discard;
+		gl_FragColor = vec4(uColor, uAlpha);
 	}
 `
 
@@ -131,7 +169,7 @@ const ENTRANCE_DURATION = 900
 const EXIT_DURATION = 500
 const ENTRANCE_STAGGER = 80
 const EXIT_STAGGER = 40
-const IMAGE_INSET = 0.94
+const IMAGE_INSET = 0.88
 const MAX_CHUNKS_PER_FRAME = 4
 
 export class InfiniteCanvasOGL {
@@ -139,7 +177,26 @@ export class InfiniteCanvasOGL {
 		this.container = container
 		this.media = config.media || []
 		this.activeId = config.activeId
-		this.accentColor = config.accentColor || '#ff0000'
+		this.selectedId = config.selectedId ?? null
+		this.liveBorderColor = config.liveBorderColor || '#ff0000'
+		this.activeBorderColor = config.activeBorderColor || '#888'
+		this.favoriteBorderColor = config.favoriteBorderColor || '#ff0000'
+		this.selectedBorderColor = config.selectedBorderColor || '#ffffff'
+		this.defaultCardColor = config.defaultCardColor || '#ddd'
+		this.selectedCardColor = config.selectedCardColor || this.defaultCardColor
+		this.favoriteCardColor = config.favoriteCardColor || '#eee'
+		this.activeCardColor = config.activeCardColor || '#eee'
+		this.liveCardColor = config.liveCardColor || this.activeCardColor
+		this.infoBgColor = config.infoBgColor || '#111'
+		this.infoTextColor = config.infoTextColor || '#fff'
+		this.infoMutedColor = config.infoMutedColor || '#bbb'
+		this.infoBorderColor = config.infoBorderColor || '#666'
+		this.activeInfoTextColor = config.activeInfoTextColor || this.infoTextColor
+		this.activeInfoMutedColor = config.activeInfoMutedColor || this.infoMutedColor
+		this.liveBadgeBgColor = config.liveBadgeBgColor || this.liveBorderColor
+		this.liveBadgeTextColor = config.liveBadgeTextColor || '#fff'
+		this.roundArtworks = config.roundArtworks ?? true
+		this.cornerRadius = config.cornerRadius ?? 0.12
 		this.onClick = config.onClick
 		this.backgroundColor = config.backgroundColor ?? null
 
@@ -162,8 +219,10 @@ export class InfiniteCanvasOGL {
 		this.exitingChunks = new Map()
 		this.planeCache = new Map()
 		this.textureCache = new Map()
+		this.infoTextureCache = new Map()
 		this.disposed = false
 		this.hoveredItem = null
+		this.hoveredId = null
 
 		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
 		this._rayNear = new Vec3()
@@ -216,7 +275,7 @@ export class InfiniteCanvasOGL {
 
 		// Create shared geometries
 		this.planeGeometry = new Plane(this.gl, {width: 1, height: 1})
-		this.torusGeometry = new Torus(this.gl, {radius: 0.75, tube: 0.015, radialSegments: 8, tubularSegments: 64})
+		this.borderGeometry = new Plane(this.gl, {width: 1, height: 1})
 
 		// 1x1 canvas placeholder avoids "Alpha-premult and y-flip deprecated" warnings
 		// that fire when OGL uploads a typed-array default texture
@@ -224,20 +283,67 @@ export class InfiniteCanvasOGL {
 		this._placeholder.width = 1
 		this._placeholder.height = 1
 
-		// Shared program for colored quads (no media) — compiled once
-		this.colorProgram = new Program(this.gl, {
-			vertex: colorVertexShader,
-			fragment: colorFragmentShader,
-			uniforms: {uCameraZ: {value: INITIAL_CAMERA_Z}},
-			transparent: true,
-			depthTest: true,
-			depthWrite: false
-		})
+		// Shared programs for "card" backgrounds by state
+		this.colorPrograms = {
+			default: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {uColor: {value: this.parseColor(this.defaultCardColor)}, uAlpha: {value: 0.95}},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			favorite: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {uColor: {value: this.parseColor(this.favoriteCardColor)}, uAlpha: {value: 0.96}},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			active: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {uColor: {value: this.parseColor(this.activeCardColor)}, uAlpha: {value: 0.98}},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			live: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {uColor: {value: this.parseColor(this.liveCardColor)}, uAlpha: {value: 0.99}},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			selected: new Program(this.gl, {
+				vertex: colorVertexShader,
+				fragment: colorFragmentShader,
+				uniforms: {uColor: {value: this.parseColor(this.selectedCardColor)}, uAlpha: {value: 0.98}},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			})
+		}
 
 		// Shared program for textured quads — compiled once, texture swapped per-mesh
 		this.texturedProgram = new Program(this.gl, {
 			vertex: texturedVertexShader,
 			fragment: texturedFragmentShader,
+			uniforms: {
+				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
+				uCornerRadius: {value: this.cornerRadius},
+				uCameraZ: {value: INITIAL_CAMERA_Z}
+			},
+			transparent: true,
+			depthTest: true,
+			depthWrite: false
+		})
+
+		this.infoProgram = new Program(this.gl, {
+			vertex: texturedVertexShader,
+			fragment: infoFragmentShader,
 			uniforms: {
 				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
 				uCameraZ: {value: INITIAL_CAMERA_Z}
@@ -247,16 +353,125 @@ export class InfiniteCanvasOGL {
 			depthWrite: false
 		})
 
-		// Border program for rotating torus around active items
-		const accentRGB = this.parseColor(this.accentColor)
-		this.borderProgram = new Program(this.gl, {
-			vertex: borderVertexShader,
-			fragment: borderFragmentShader,
-			uniforms: {uColor: {value: accentRGB}},
-			transparent: false,
-			depthTest: true,
-			depthWrite: true
-		})
+		// Border programs per item state
+		this.borderPrograms = {
+			active: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.activeBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.02},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 1}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			favorite: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.favoriteBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.018},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 1}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			live: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.liveBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.03},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 1}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			selected: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.selectedBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.026},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 1}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			})
+		}
+
+		// Subtle depth layer behind the primary border for visual "volume"
+		this.borderBackPrograms = {
+			active: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.activeBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.032},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.34}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			favorite: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.favoriteBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.03},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.3}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			live: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.liveBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.042},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.38}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			}),
+			selected: new Program(this.gl, {
+				vertex: borderVertexShader,
+				fragment: borderFragmentShader,
+				uniforms: {
+					uColor: {value: this.parseColor(this.selectedBorderColor)},
+					uShape: {value: 1},
+					uThickness: {value: 0.036},
+					uCornerRadius: {value: this.cornerRadius},
+					uAlpha: {value: 0.36}
+				},
+				transparent: true,
+				depthTest: true,
+				depthWrite: false
+			})
+		}
 
 		this.bindEvents()
 		this.updateChunks(true)
@@ -399,8 +614,9 @@ export class InfiniteCanvasOGL {
 		Object.assign(this.tooltip.style, {
 			position: 'absolute',
 			padding: '6px 10px',
-			background: 'rgba(0, 0, 0, 0.85)',
-			color: '#fff',
+			background: 'var(--gray-1)',
+			color: 'var(--gray-12)',
+			border: '1px solid var(--gray-5)',
 			fontSize: '13px',
 			borderRadius: '4px',
 			pointerEvents: 'none',
@@ -427,8 +643,12 @@ export class InfiniteCanvasOGL {
 			const mediaItem = intersected.userData.mediaItem
 			if (mediaItem && mediaItem !== this.hoveredItem) {
 				this.hoveredItem = mediaItem
+				this.setHoveredId(mediaItem.id ?? null)
 				const name = mediaItem.name || mediaItem.title || mediaItem.slug || ''
-				this.tooltip.textContent = name
+				const statuses = []
+				if (mediaItem.isLive) statuses.push('LIVE')
+				if (mediaItem.isFavorite) statuses.push('FAVORITE')
+				this.tooltip.textContent = statuses.length ? `${name} · ${statuses.join(' · ')}` : name
 			}
 			const rect = this.gl.canvas.getBoundingClientRect()
 			this.tooltip.style.opacity = '1'
@@ -438,6 +658,7 @@ export class InfiniteCanvasOGL {
 		} else {
 			this.tooltip.style.opacity = '0'
 			this.hoveredItem = null
+			this.setHoveredId(null)
 			this.gl.canvas.style.cursor = this.isDragging ? 'grabbing' : 'grab'
 		}
 	}
@@ -724,40 +945,277 @@ export class InfiniteCanvasOGL {
 		return texture
 	}
 
+	getInfoTexture(mediaItem, style = 'selected') {
+		if (!this.gl || !mediaItem?.id) return null
+		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.id === this.activeId ? 1 : 0}`
+		if (this.infoTextureCache.has(key)) return this.infoTextureCache.get(key)
+		const canvas = buildChannelInfoCanvas({
+			mediaItem,
+			style: /** @type {'active' | 'selected'} */ (style),
+			activeId: this.activeId,
+			colors: {
+				infoBgColor: this.infoBgColor,
+				infoTextColor: this.infoTextColor,
+				infoMutedColor: this.infoMutedColor,
+					selectedBorderColor: this.selectedBorderColor,
+					selectedCardColor: this.selectedCardColor,
+					activeBorderColor: this.activeBorderColor,
+				activeCardColor: this.activeCardColor,
+				activeInfoTextColor: this.activeInfoTextColor,
+				activeInfoMutedColor: this.activeInfoMutedColor,
+				liveBadgeBgColor: this.liveBadgeBgColor,
+				liveBadgeTextColor: this.liveBadgeTextColor,
+				favoriteBorderColor: this.favoriteBorderColor
+			}
+		})
+
+		const texture = new Texture(this.gl, {
+			image: canvas,
+			generateMipmaps: false,
+			minFilter: this.gl.LINEAR,
+			magFilter: this.gl.LINEAR
+		})
+		this.infoTextureCache.set(key, texture)
+		return texture
+	}
+
 	setActiveId(id) {
 		if (this.activeId === id) return
 		this.activeId = id
+		this.refreshAllBorders()
+	}
+
+	setHoveredId(id) {
+		if (this.hoveredId === id) return
+		this.hoveredId = id
+		this.refreshAllBorders()
+	}
+
+	getMeshBorderStyles(mediaItem) {
+		return resolveChannelCardStates(mediaItem, {
+			activeId: this.activeId,
+			selectedId: this.selectedId,
+			hoveredId: this.hoveredId
+		}).borderStyles
+	}
+
+	getCardStyle(mediaItem) {
+		return resolveChannelCardStates(mediaItem, {
+			activeId: this.activeId,
+			selectedId: this.selectedId,
+			hoveredId: this.hoveredId
+		}).cardStyle
+	}
+
+	getInfoStyle(mediaItem) {
+		return resolveChannelCardStates(mediaItem, {
+			activeId: this.activeId,
+			selectedId: this.selectedId,
+			hoveredId: this.hoveredId
+		}).infoStyle
+	}
+
+	setSelectedId(id) {
+		if (this.selectedId === id) return
+		this.selectedId = id
+		this.refreshAllBorders()
+	}
+
+	refreshAllBorders() {
 		for (const group of this.chunks.values()) {
 			// Snapshot children to avoid mutation during iteration
 			const children = [...group.children]
 			for (const mesh of children) {
 				const ud = mesh.userData
-				if (!ud || ud.isBorder || ud.isBackground) continue
+				if (!ud || ud.isBorder) continue
 				if (!ud.mediaItem) continue
-				this.updateMeshBorder(mesh, ud.mediaItem.id === id, group)
+				if (ud.isBackground) {
+					const styleKey = this.getCardStyle(ud.mediaItem)
+					mesh.program = this.colorPrograms?.[styleKey] ?? this.colorPrograms?.default
+					continue
+				}
+				const infoStyle = this.getInfoStyle(ud.mediaItem)
+				this.updateMeshBorder(mesh, this.getMeshBorderStyles(ud.mediaItem), group)
+				this.updateMeshInfo(mesh, infoStyle, group)
 			}
 		}
 	}
 
-	updateMeshBorder(mesh, isActive, group) {
-		if (isActive) {
-			if (!mesh.userData.border && this.gl) {
-				const ts = mesh.userData.targetScale
-				const maxScale = Math.max(ts.x, ts.y)
-				const border = new Mesh(this.gl, {
-					geometry: this.torusGeometry ?? undefined,
-					program: this.borderProgram ?? undefined
+	updateMeshInfo(mesh, style, group) {
+		if (style) {
+			const ts = mesh.userData.targetScale
+			const infoScaleY = ts.y * 0.5
+			const gap = ts.y * 0.01
+			const infoY = mesh.position.y - ts.y * 0.5 - infoScaleY * 0.5 - gap
+			const cardStyle = style === 'active' ? 'active' : 'selected'
+
+			// Backplate behind image + text to unify them into one card in 3D space.
+			if (!mesh.userData.infoBack && this.gl) {
+				const unified = new Mesh(this.gl, {
+					geometry: this.planeGeometry ?? undefined,
+					program: this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
 				})
-				border.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.1)
-				border.scale.set(maxScale, maxScale, maxScale)
-				// @ts-expect-error - adding custom property
-				border.userData = {isBorder: true, mainMesh: mesh, isRotating: true}
-				border.setParent(group)
-				mesh.userData.border = border
+				const padX = ts.x * 0.06
+				const padTop = ts.y * 0.06
+				const padBottom = infoScaleY * 0.2
+				const totalHeight = ts.y + gap + infoScaleY + padTop + padBottom
+				const centerY = mesh.position.y - (gap + infoScaleY) * 0.5 + (padTop - padBottom) * 0.5
+				unified.position.set(mesh.position.x, centerY, mesh.position.z - 0.08)
+				unified.scale.set(ts.x + padX, totalHeight, 1)
+				// @ts-expect-error custom field
+				unified.userData = {
+					isInfoBack: true,
+					mainMesh: mesh,
+					style,
+					base: {x: ts.x + padX, y: totalHeight}
+				}
+				unified.setParent(group)
+				mesh.userData.infoBack = unified
+			} else if (mesh.userData.infoBack) {
+				const padX = ts.x * 0.06
+				const padTop = ts.y * 0.06
+				const padBottom = infoScaleY * 0.2
+				const totalHeight = ts.y + gap + infoScaleY + padTop + padBottom
+				const centerY = mesh.position.y - (gap + infoScaleY) * 0.5 + (padTop - padBottom) * 0.5
+				mesh.userData.infoBack.position.set(mesh.position.x, centerY, mesh.position.z - 0.08)
+				mesh.userData.infoBack.scale.set(ts.x + padX, totalHeight, 1)
+				mesh.userData.infoBack.program = this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
+				mesh.userData.infoBack.userData.style = style
 			}
-		} else if (mesh.userData.border) {
+
+			if (!mesh.userData.info && this.gl) {
+				const info = new Mesh(this.gl, {
+					geometry: this.planeGeometry ?? undefined,
+					program: this.infoProgram ?? undefined
+				})
+				// Keep text panel attached to artwork and equal width.
+				info.position.set(mesh.position.x, infoY, mesh.position.z + 0.17)
+				info.scale.set(ts.x, infoScaleY, 1)
+				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
+				info.onBeforeRender(() => {
+					/** @type {Program} */ (this.infoProgram).uniforms.tMap.value = texture
+				})
+				// @ts-expect-error custom field
+				info.userData = {isInfo: true, mainMesh: mesh, style}
+				info.setParent(group)
+				mesh.userData.info = info
+			} else if (mesh.userData.info?.userData?.style !== style) {
+				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
+				mesh.userData.info.onBeforeRender(() => {
+					/** @type {Program} */ (this.infoProgram).uniforms.tMap.value = texture
+				})
+				mesh.userData.info.userData.style = style
+				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + 0.17)
+				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
+			} else if (mesh.userData.info) {
+				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + 0.17)
+				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
+			}
+		} else {
+			if (mesh.userData.info) {
+				mesh.userData.info.setParent(null)
+				delete mesh.userData.info
+			}
+			if (mesh.userData.infoBack) {
+				mesh.userData.infoBack.setParent(null)
+				delete mesh.userData.infoBack
+			}
+		}
+	}
+
+	updateMeshBorder(mesh, styleKeys, group) {
+		const styles = styleKeys?.length ? styleKeys : []
+		const existingFront = mesh.userData.borderLayers || new Map()
+		const existingBack = mesh.userData.borderBackLayers || new Map()
+		const styleSet = new Set(styles)
+		const ts = mesh.userData.targetScale
+		const base = Math.max(ts.x, ts.y)
+
+		// Legacy single-border fields cleanup
+		if (mesh.userData.border) {
 			mesh.userData.border.setParent(null)
 			delete mesh.userData.border
+		}
+		if (mesh.userData.borderBack) {
+			mesh.userData.borderBack.setParent(null)
+			delete mesh.userData.borderBack
+		}
+
+		for (const [styleKey, layer] of existingFront) {
+			if (styleSet.has(styleKey)) continue
+			layer.setParent(null)
+			existingFront.delete(styleKey)
+		}
+		for (const [styleKey, layer] of existingBack) {
+			if (styleSet.has(styleKey)) continue
+			layer.setParent(null)
+			existingBack.delete(styleKey)
+		}
+
+		for (let i = 0; i < styles.length; i++) {
+			const styleKey = styles[i]
+			const frontProgram = this.borderPrograms?.[styleKey]
+			const backProgram = this.borderBackPrograms?.[styleKey]
+			if (!frontProgram || !this.gl) continue
+
+			const layerOffset = i * 0.026
+			const styleMul = styleKey === 'selected' ? 1.05 : styleKey === 'live' ? 1.08 : styleKey === 'active' ? 1.04 : 1.02
+			const frontScale = base * (styleMul + layerOffset)
+			const backScale = frontScale * 1.055
+
+			let front = existingFront.get(styleKey)
+			if (!front) {
+				front = new Mesh(this.gl, {
+					geometry: this.borderGeometry ?? undefined,
+					program: frontProgram
+				})
+				front.setParent(group)
+				existingFront.set(styleKey, front)
+			}
+			front.program = frontProgram
+			front.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.1 - i * 0.012)
+			front.scale.set(frontScale, frontScale, frontScale)
+			front.userData = {
+				isBorder: true,
+				mainMesh: mesh,
+				isRotating: styleKey === 'live',
+				styleKey,
+				baseScale: frontScale
+			}
+
+			if (backProgram) {
+				let back = existingBack.get(styleKey)
+				if (!back) {
+					back = new Mesh(this.gl, {
+						geometry: this.borderGeometry ?? undefined,
+						program: backProgram
+					})
+					back.setParent(group)
+					existingBack.set(styleKey, back)
+				}
+				back.program = backProgram
+				back.position.set(mesh.position.x, mesh.position.y, mesh.position.z - 0.25 - i * 0.02)
+				back.scale.set(backScale, backScale, backScale)
+				back.userData = {
+					isBorder: true,
+					mainMesh: mesh,
+					isRotating: false,
+					styleKey,
+					baseScale: backScale,
+					isDepthLayer: true
+				}
+			}
+		}
+
+		if (existingFront.size > 0) {
+			mesh.userData.borderLayers = existingFront
+		} else {
+			delete mesh.userData.borderLayers
+		}
+		if (existingBack.size > 0) {
+			mesh.userData.borderBackLayers = existingBack
+		} else {
+			delete mesh.userData.borderBackLayers
 		}
 	}
 
@@ -796,17 +1254,22 @@ export class InfiniteCanvasOGL {
 			const mediaItem = this.media.length > 0 ? this.media[plane.mediaIndex % this.media.length] : null
 
 			// Color background quad
-			const mesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: this.colorProgram})
+			const cardStyle = this.getCardStyle(mediaItem)
+			const mesh = new Mesh(this.gl, {
+				geometry: this.planeGeometry ?? undefined,
+				program: this.colorPrograms?.[cardStyle] ?? this.colorPrograms?.default
+			})
 			mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
 			mesh.scale.set(0.01, 0.01, 0.01)
-			// @ts-expect-error - adding custom property
-			mesh.userData = {
-				isBorder: false,
-				isBackground: true,
-				mediaItem,
-				birthTime,
-				targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z}
-			}
+				// @ts-expect-error - adding custom property
+				mesh.userData = {
+					isBorder: false,
+					isBackground: true,
+					mediaItem,
+					cardStyle,
+					birthTime,
+					targetScale: {x: plane.scale.x, y: plane.scale.y, z: plane.scale.z}
+				}
 			mesh.setParent(group)
 
 			// Textured image quad on top
@@ -830,10 +1293,9 @@ export class InfiniteCanvasOGL {
 				}
 				imgMesh.setParent(group)
 
-				// Add rotating torus if this is the active channel
-				if (mediaItem.id === this.activeId) {
-					this.updateMeshBorder(imgMesh, true, group)
-				}
+				const infoStyle = this.getInfoStyle(mediaItem)
+				this.updateMeshBorder(imgMesh, this.getMeshBorderStyles(mediaItem), group)
+				this.updateMeshInfo(imgMesh, infoStyle, group)
 			}
 		}
 
@@ -934,8 +1396,8 @@ export class InfiniteCanvasOGL {
 
 		// Update depth fade uniform for shaders
 		const camZ = this.basePos.z
-		if (this.colorProgram) this.colorProgram.uniforms.uCameraZ.value = camZ
 		if (this.texturedProgram) this.texturedProgram.uniforms.uCameraZ.value = camZ
+		if (this.infoProgram) this.infoProgram.uniforms.uCameraZ.value = camZ
 
 		this.updateChunks()
 		this.processChunkQueue()
@@ -1025,6 +1487,14 @@ export class InfiniteCanvasOGL {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
+				if (ud.isInfoBack) {
+					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
+					continue
+				}
+				if (ud.isInfo) {
+					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
+					continue
+				}
 				// Don't cull meshes still animating entrance/exit
 				if (ud.birthTime || ud.exitTime) continue
 				const absDepth = Math.abs(mesh.position.z - camZ)
@@ -1034,11 +1504,14 @@ export class InfiniteCanvasOGL {
 	}
 
 	rotateBorders() {
+		const now = performance.now()
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
 				if (mesh.userData?.isRotating) {
-					mesh.rotation.x += 0.02
-					mesh.rotation.y += 0.03
+					const baseScale = mesh.userData.baseScale ?? mesh.scale.x
+					const pulse = 1 + Math.sin(now * 0.008) * 0.035
+					const s = baseScale * pulse
+					mesh.scale.set(s, s, s)
 				}
 			}
 		}
@@ -1068,11 +1541,18 @@ export class InfiniteCanvasOGL {
 			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
 		}
 		this.textureCache.clear()
+		for (const texture of this.infoTextureCache.values()) {
+			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
+		}
+		this.infoTextureCache.clear()
 		this.texturedProgram = null
-		this.borderProgram = null
+		this.infoProgram = null
+		this.colorPrograms = null
+		this.borderPrograms = null
+		this.borderBackPrograms = null
 		this.planeCache.clear()
 		this.planeGeometry = null
-		this.torusGeometry = null
+		this.borderGeometry = null
 		if (this.gl) this.container.removeChild(this.gl.canvas)
 		this.tooltip?.remove()
 	}
