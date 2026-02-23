@@ -28,7 +28,7 @@ function normalizeTag(value) {
 /**
  * @param {{
  *   decks: Record<string, any>,
- *   tracksState: Map<string, any>,
+ *   tracksState?: Map<string, any>,
  *   channelsState: Map<string, any>,
  *   followsState?: Map<string, any> | null,
  *   broadcastRows?: any[] | null
@@ -89,12 +89,10 @@ export function deriveChannelActivityState(params) {
 		if (slug) inDeckChannelSlugs.add(slug)
 		if (slug && deck?.is_playing) playingChannelSlugs.add(slug)
 
+		// Active tags come only from deck state (playlist title + selected view tags),
+		// not from current track tags, to keep UI synchronization deterministic.
 		const trackId = deck?.playlist_track || deck?.playlist_tracks?.[0]
-		const track = trackId ? tracksState.get(trackId) : null
-		for (const tag of Array.isArray(track?.tags) ? track.tags : []) {
-			const normalized = normalizeTag(tag)
-			if (normalized) activeTags.add(normalized)
-		}
+		const track = trackId ? tracksState?.get(trackId) : null
 		if (!slug) slug = String(track?.slug || '').toLowerCase()
 		if (!slug) continue
 

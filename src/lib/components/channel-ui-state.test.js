@@ -34,7 +34,7 @@ describe('deriveChannelActivityState', () => {
 
 		expect(state.activeChannelIds).toEqual(expect.arrayContaining(['c1', 'c2']))
 		expect(state.activeMentions).toEqual(expect.arrayContaining(['@alpha', '@beta']))
-		expect(state.activeTags).toEqual(expect.arrayContaining(['#house', '#dub', '#techno']))
+		expect(state.activeTags).toEqual(expect.arrayContaining(['#house', '#dub']))
 		expect(state.playingChannelSlugs.has('alpha')).toBe(true)
 		expect(state.favoriteChannelIds.has('c1')).toBe(true)
 		expect(state.broadcastingChannelIds.has('c2')).toBe(true)

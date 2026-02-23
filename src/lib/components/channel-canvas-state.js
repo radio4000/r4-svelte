@@ -8,7 +8,7 @@ import {deriveChannelActivityState} from './channel-ui-state.js'
  *
  * @param {{
  *   decks: Record<string, any>,
- *   tracksState: Map<string, any>,
+ *   tracksState?: Map<string, any>,
  *   channelsState: Map<string, any>
  * }} params
  */

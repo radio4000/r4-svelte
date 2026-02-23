@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest'
 import {deriveChannelCanvasState} from './channel-canvas-state.js'
 
 describe('deriveChannelCanvasState', () => {
-	it('merges active tags from playlist title, view tags and current track tags across decks', () => {
+	it('merges active tags from playlist title and view tags across decks', () => {
 		const result = deriveChannelCanvasState({
 			decks: {
 				1: {
@@ -27,9 +27,7 @@ describe('deriveChannelCanvasState', () => {
 			])
 		})
 
-		expect(result.activeTags).toEqual(
-			expect.arrayContaining(['#house', '#techno', '#dub', '#breaks', '#acid', '#dnb', '#jazz', '#latin'])
-		)
+		expect(result.activeTags).toEqual(expect.arrayContaining(['#house', '#techno', '#dub', '#breaks', '#jazz']))
 		expect(result.activeChannelIds).toEqual(expect.arrayContaining(['ch1', 'ch2']))
 		expect(result.activeMentions).toEqual(expect.arrayContaining(['@alpha', '@beta']))
 	})
@@ -45,6 +43,6 @@ describe('deriveChannelCanvasState', () => {
 			tracksState: new Map([['t1', {id: 't1', slug: 'gamma', tags: ['﹟Soul,']}]]),
 			channelsState: new Map([['ch3', {id: 'ch3', slug: 'gamma'}]])
 		})
-		expect(result.activeTags).toEqual(expect.arrayContaining(['#funk', '#disco', '#soul']))
+		expect(result.activeTags).toEqual(expect.arrayContaining(['#funk', '#disco']))
 	})
 })
