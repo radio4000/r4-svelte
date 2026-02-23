@@ -10,6 +10,7 @@
 	let hovered = $state(false)
 	let broadcasting = $state(false)
 	let rotateEnabled = $state(true)
+	let matchingTags = $state(true)
 
 	const channel = $derived.by(() => {
 		if (!channels.length) return null
@@ -23,6 +24,8 @@
 	const mediaItem = $derived.by(() => {
 		if (!channel?.image) return null
 		const tags = extractHashtags(channel.description || '')
+		const demoActiveTags = matchingTags ? ['#jazz', '#soul'] : tags.slice(0, 1)
+		const activeTags = active ? demoActiveTags : []
 		return {
 			url: channelAvatarUrl(channel.image),
 			width: 250,
@@ -33,9 +36,9 @@
 			description: channel.description || '',
 			tags,
 			mentions: extractMentions(channel.description || ''),
-			activeTags: tags.slice(0, 1),
+			activeTags,
 			activeMentions: [],
-			hasActiveTagMatch: tags.length > 0,
+			hasActiveTagMatch: activeTags.length > 0,
 			isActive: active,
 			isLive: broadcasting,
 			channel
@@ -69,6 +72,7 @@
 			<label><input type="checkbox" bind:checked={hovered} /> hover</label>
 			<label><input type="checkbox" bind:checked={broadcasting} /> broadcasting</label>
 			<label><input type="checkbox" bind:checked={rotateEnabled} /> rotate</label>
+			<label><input type="checkbox" bind:checked={matchingTags} /> matching-tags-demo</label>
 		</div>
 	</header>
 

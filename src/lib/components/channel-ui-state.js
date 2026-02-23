@@ -125,6 +125,7 @@ export function toChannelCardMedia(channel, state, base) {
 	const mentions = extractMentions(channel?.description || '')
 	const normalizedSlug = String(channel?.slug || '').toLowerCase()
 	const normalizedTags = tags.map((tag) => normalizeTag(tag)).filter(Boolean)
+	const matchingActiveTags = normalizedTags.filter((tag) => state.activeTags.includes(tag))
 	return {
 		url: base.url,
 		width: base.width ?? 250,
@@ -135,9 +136,9 @@ export function toChannelCardMedia(channel, state, base) {
 		description: channel.description || '',
 		tags,
 		mentions,
-		activeTags: state.activeTags,
+		activeTags: matchingActiveTags,
 		activeMentions: state.activeMentions,
-		hasActiveTagMatch: normalizedTags.some((tag) => state.activeTags.includes(tag)),
+		hasActiveTagMatch: matchingActiveTags.length > 0,
 		isActive: state.activeChannelIds.includes(channel.id),
 		isPlaying: state.playingChannelSlugs.has(normalizedSlug),
 		isFavorite: state.favoriteChannelIds.has(channel.id),

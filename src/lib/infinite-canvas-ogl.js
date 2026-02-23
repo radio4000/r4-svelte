@@ -162,13 +162,17 @@ const infoFragmentShader = `
 	precision highp float;
 	uniform sampler2D tMap;
 	uniform float uOpacity;
+	uniform float uReveal;
 	varying vec2 vUv;
 	varying float vDepthFade;
 	void main() {
 		if (vDepthFade < 0.01) discard;
 		vec4 color = texture2D(tMap, vUv);
 		if (color.a < 0.01) discard;
-		gl_FragColor = vec4(color.rgb, color.a * vDepthFade * uOpacity);
+		float reveal = clamp(uReveal, 0.0, 1.0);
+		float yFromTop = 1.0 - vUv.y;
+		float revealMask = smoothstep(0.0, 0.08, reveal - yFromTop);
+		gl_FragColor = vec4(color.rgb, color.a * vDepthFade * uOpacity * revealMask);
 	}
 `
 
@@ -312,7 +316,7 @@ export class InfiniteCanvasOGL {
 		this.textureCache = new Map()
 		this.infoTextureCache = new Map()
 		this.backgroundProgramCache = new Map()
-		this.tagBadgeTexture = null
+		this.tagBadgeTextureCache = new Map()
 		this.liveBadgeTexture = null
 		this.disposed = false
 		this.hoveredItem = null
@@ -523,7 +527,8 @@ export class InfiniteCanvasOGL {
 			uniforms: {
 				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
 				uCameraZ: {value: INITIAL_CAMERA_Z},
-				uOpacity: {value: 1}
+				uOpacity: {value: 1},
+				uReveal: {value: 1}
 			},
 			transparent: true,
 			depthTest: true,
@@ -535,7 +540,8 @@ export class InfiniteCanvasOGL {
 			uniforms: {
 				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
 				uCameraZ: {value: INITIAL_CAMERA_Z},
-				uOpacity: {value: 1}
+				uOpacity: {value: 1},
+				uReveal: {value: 1}
 			},
 			transparent: true,
 			depthTest: true,
@@ -845,27 +851,44 @@ export class InfiniteCanvasOGL {
 		}
 	}
 
-	getTagBadgeTexture() {
+	getTagBadgeTexture(activeTags = []) {
 		if (!this.gl) return null
-		if (this.tagBadgeTexture) return this.tagBadgeTexture
+		const tags = Array.isArray(activeTags)
+			? activeTags
+					.map((value) => String(value || '').trim().toLowerCase())
+					.filter(Boolean)
+					.map((value) => (value.startsWith('#') ? value : `#${value}`))
+			: []
+		const matchCount = tags.length
+		if (!matchCount) return null
+		const label = matchCount > 1 ? `#${matchCount}` : '#'
+		const key = label
+		const cached = this.tagBadgeTextureCache.get(key)
+		if (cached) return cached
 		const canvas = document.createElement('canvas')
-		canvas.width = 96
-		canvas.height = 96
+		canvas.width = 180
+		canvas.height = 92
 		const ctx = /** @type {CanvasRenderingContext2D | null} */ (canvas.getContext('2d'))
 		if (!ctx) return null
 		ctx.clearRect(0, 0, canvas.width, canvas.height)
 		ctx.fillStyle = this.tagBadgeColor
-		ctx.font = '700 86px sans-serif'
+		ctx.font = '700 68px sans-serif'
 		ctx.textAlign = 'center'
 		ctx.textBaseline = 'middle'
-		ctx.fillText('#', canvas.width * 0.5, canvas.height * 0.55)
-		this.tagBadgeTexture = new Texture(this.gl, {
+		ctx.fillText(label, canvas.width * 0.5, canvas.height * 0.54)
+		const texture = new Texture(this.gl, {
 			image: canvas,
 			generateMipmaps: false,
 			minFilter: this.gl.LINEAR,
 			magFilter: this.gl.LINEAR
 		})
-		return this.tagBadgeTexture
+		const result = {
+			texture,
+			aspect: canvas.width / canvas.height,
+			matchCount
+		}
+		this.tagBadgeTextureCache.set(key, result)
+		return result
 	}
 
 	getLiveBadgeTexture() {
@@ -1769,9 +1792,9 @@ export class InfiniteCanvasOGL {
 			infoMesh.userData.progressTween = this.trackGsapTween(
 				gsap.to(infoMesh.userData, {
 					progress: toValue,
-					duration: 0.24,
+					duration: 0.38,
 					delay,
-					ease: 'power2.out',
+					ease: 'power3.out',
 					overwrite: true,
 					onComplete: () => {
 						infoMesh.userData.progressTween = null
@@ -1800,7 +1823,9 @@ export class InfiniteCanvasOGL {
 							/** @type {any} */ (infoMesh).userData?.texture || this.getInfoTexture(mesh.userData.mediaItem, style)
 						infoProgram.uniforms.tMap.value = currentTexture
 						const p = Number(/** @type {any} */ (infoMesh).userData?.progress ?? 1)
-						infoProgram.uniforms.uOpacity.value = Math.max(0, Math.min(1, p))
+						const clamped = Math.max(0, Math.min(1, p))
+						infoProgram.uniforms.uOpacity.value = clamped
+						infoProgram.uniforms.uReveal.value = clamped
 					})
 					if (infoMesh.userData) infoMesh.userData.beforeRenderBound = true
 				}
@@ -1920,7 +1945,9 @@ export class InfiniteCanvasOGL {
 		if (!mesh?.userData?.mediaItem) return
 		const ts = mesh.userData.targetScale
 		if (!ts) return
-		const show = !!mesh.userData.mediaItem.hasActiveTagMatch
+		const mediaItem = mesh.userData.mediaItem
+		const activeTags = Array.isArray(mediaItem.activeTags) ? mediaItem.activeTags : []
+		const show = activeTags.length > 0 || !!mesh.userData.mediaItem.hasActiveTagMatch
 		if (!show) {
 			if (mesh.userData.tagBadge) {
 				mesh.userData.tagBadge.setParent(null)
@@ -1941,15 +1968,20 @@ export class InfiniteCanvasOGL {
 			mesh.userData.tagBadge = badge
 		}
 		badge.renderOrder = 40
-		const texture = this.getTagBadgeTexture()
-		if (!texture) return
+		const tagTexture = this.getTagBadgeTexture(activeTags)
+		if (!tagTexture) return
 		badge.onBeforeRender(() => {
-			badgeProgram.uniforms.tMap.value = texture
+			badgeProgram.uniforms.tMap.value = tagTexture.texture
 			badgeProgram.uniforms.uOpacity.value = 1
+			badgeProgram.uniforms.uReveal.value = 1
 		})
-		const badgeSize = Math.max(ts.x, ts.y) * 0.16
-		badge.scale.set(badgeSize, badgeSize, 1)
-		badge.position.set(mesh.position.x, mesh.position.y + ts.y * 0.58, mesh.position.z + 0.19)
+		const badgeHeight = Math.max(ts.x, ts.y) * 0.14
+		const badgeWidth = badgeHeight * tagTexture.aspect
+		const maxWidth = ts.x * 0.42
+		const width = Math.min(badgeWidth, maxWidth)
+		const height = width / Math.max(tagTexture.aspect, 0.01)
+		badge.scale.set(width, height, 1)
+		badge.position.set(mesh.position.x - ts.x * 0.35, mesh.position.y + ts.y * 0.56, mesh.position.z + 0.19)
 	}
 
 	updateMeshLiveBadge(mesh, group) {
@@ -1982,6 +2014,7 @@ export class InfiniteCanvasOGL {
 		badge.onBeforeRender(() => {
 			badgeProgram.uniforms.tMap.value = texture
 			badgeProgram.uniforms.uOpacity.value = 1
+			badgeProgram.uniforms.uReveal.value = 1
 		})
 		this.layoutLiveBadge(mesh, badge)
 	}
@@ -2724,8 +2757,10 @@ export class InfiniteCanvasOGL {
 			}
 		}
 		this._gsapTweens.clear()
-		if (this.tagBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.tagBadgeTexture.texture)
-		this.tagBadgeTexture = null
+		for (const entry of this.tagBadgeTextureCache.values()) {
+			if (entry?.texture?.texture && this.gl) this.gl.deleteTexture(entry.texture.texture)
+		}
+		this.tagBadgeTextureCache.clear()
 		if (this.liveBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.liveBadgeTexture.texture)
 		this.liveBadgeTexture = null
 		this.backgroundProgramCache.clear()
