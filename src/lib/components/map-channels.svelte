@@ -250,16 +250,11 @@
 		width: 12rem;
 	}
 
-	:global(.map-popup h3) {
-		font-size: var(--font-3);
-	}
-
-	:global(.map-popup p) {
-		font-size: var(--font-2);
-	}
-
-	:global(.map-popup article h3 + p) {
-		display: none;
+	/* Keep ChannelCard link/theme colors in Leaflet popups.
+	   Leaflet defaults (.leaflet-container a) otherwise force blue links. */
+	:global(.leaflet-container .map-popup article a:link),
+	:global(.leaflet-container .map-popup article a:visited) {
+		color: inherit;
 	}
 
 	:global(.map-popup-status) {
