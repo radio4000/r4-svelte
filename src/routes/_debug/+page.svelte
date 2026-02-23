@@ -10,6 +10,7 @@
 		{href: 'keyboard-list-navigation', title: 'Listbox nav', desc: 'Keyboard-driven list navigation'},
 		{href: 'livequery-perf', title: 'Live query', desc: 'TanStack live query benchmarks'},
 		{href: 'media-chrome', title: 'Player chrome', desc: 'Media player UI components'},
+		{href: 'map', title: 'Map', desc: 'Global and single-channel map routes'},
 		{href: 'spam-angel', title: 'Spam', desc: 'Spam detection tools'},
 		{href: 'tanstack', title: 'Tanstack', desc: 'TanStack DB collections and queries'},
 		{href: 'tooltips', title: 'Tooltips', desc: 'Tooltip positioning and behavior'},
