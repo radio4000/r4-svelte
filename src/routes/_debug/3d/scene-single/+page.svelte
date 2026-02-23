@@ -1,9 +1,17 @@
 <script>
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
+	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {channelAvatarUrl, extractHashtags, extractMentions} from '$lib/utils.ts'
 
-	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 30))
+	const fallbackDataUrl = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 250"><rect width="250" height="250" rx="26" fill="#101318"/><circle cx="125" cy="110" r="54" fill="#4e6df5"/><rect x="56" y="180" width="138" height="20" rx="10" fill="#e2e8f0"/></svg>')}`
+	const channelsQuery = useLiveQuery((q) =>
+		q
+			.from({ch: channelsCollection})
+			.orderBy(({ch}) => ch.created_at, 'desc')
+			.limit(120)
+	)
+	const channels = $derived((channelsQuery.data ?? []).filter((c) => c && c.slug).slice(0, 60))
 	let selectedChannelId = $state('')
 	let selected = $state(true)
 	let active = $state(true)
@@ -22,12 +30,12 @@
 	})
 
 	const mediaItem = $derived.by(() => {
-		if (!channel?.image) return null
+		if (!channel) return null
 		const tags = extractHashtags(channel.description || '')
 		const demoActiveTags = matchingTags ? ['#jazz', '#soul'] : tags.slice(0, 1)
 		const activeTags = active ? demoActiveTags : []
 		return {
-			url: channelAvatarUrl(channel.image),
+			url: channel.image ? channelAvatarUrl(channel.image) : fallbackDataUrl,
 			width: 250,
 			height: 250,
 			slug: channel.slug,
