@@ -5,11 +5,12 @@ import {formatDate} from '$lib/dates.js'
 /**
  * @param {any} mediaItem
  * @param {any} colors
+ * @param {string} [textColor]
  */
-function getCornerMarkers(mediaItem, colors) {
+function getCornerMarkers(mediaItem, colors, textColor = colors.infoTextColor) {
 	const markers = []
 	if (mediaItem?.isFavorite) {
-		markers.push({kind: 'favorite', shape: 'diamond', color: colors.favoriteBorderColor, size: 22})
+		markers.push({kind: 'favorite', shape: 'text', text: '★', color: textColor, size: 22})
 	}
 	return markers
 }
@@ -27,7 +28,7 @@ function getTrackTotal(mediaItem) {
  * @param {any} mediaItem
  */
 function getUpdatedLabel(mediaItem) {
-	const latest = mediaItem?.channel?.latest_track_at
+	const latest = mediaItem?.channel?.latest_track_at || mediaItem?.channel?.updated_at || mediaItem?.updated_at
 	if (!latest) return ''
 	return formatDate(latest)
 }
@@ -246,18 +247,20 @@ export function buildChannelInfoCanvas(params) {
 		return y + rowHeight * (row + 1)
 	}
 
-	const contrastProbe = /** @type {CanvasRenderingContext2D | null} */ (
-		document.createElement('canvas').getContext('2d')
-	)
+	const contrastProbeCanvas = document.createElement('canvas')
+	contrastProbeCanvas.width = 1
+	contrastProbeCanvas.height = 1
+	const contrastProbe = /** @type {CanvasRenderingContext2D | null} */ (contrastProbeCanvas.getContext('2d'))
 	const parseCssColor = (input) => {
 		if (!contrastProbe) return null
-		contrastProbe.fillStyle = '#000000'
+		contrastProbe.clearRect(0, 0, 1, 1)
+		contrastProbe.fillStyle = '#000'
 		contrastProbe.fillStyle = input
-		const normalized = String(contrastProbe.fillStyle)
-		if (!normalized.startsWith('#') || normalized.length !== 7) return null
-		const r = parseInt(normalized.slice(1, 3), 16)
-		const g = parseInt(normalized.slice(3, 5), 16)
-		const b = parseInt(normalized.slice(5, 7), 16)
+		contrastProbe.fillRect(0, 0, 1, 1)
+		const data = contrastProbe.getImageData(0, 0, 1, 1).data
+		const r = data[0]
+		const g = data[1]
+		const b = data[2]
 		return {r, g, b}
 	}
 	const pickReadableText = (bgColor) => {
@@ -269,15 +272,14 @@ export function buildChannelInfoCanvas(params) {
 	}
 
 	const isActiveStyle = style === 'active'
-	const isEmphasisStyle = isActiveStyle || mediaItem.isPlaying
 	const panelBg = mediaItem.isPlaying
 		? colors.playingCardColor
 		: isActiveStyle
 			? colors.activeCardColor
 			: colors.infoBgColor
 	const readable = pickReadableText(panelBg)
-	const panelText = isEmphasisStyle ? readable.text : colors.infoTextColor
-	const panelMuted = isEmphasisStyle ? readable.muted : colors.infoMutedColor
+	const panelText = readable.text
+	const panelMuted = readable.muted
 
 	ctx.fillStyle = panelText
 	ctx.font = '700 52px sans-serif'
@@ -349,7 +351,7 @@ export function buildChannelInfoCanvas(params) {
 	let totalLabelWidth = 0
 	if (totalLabel) {
 		ctx.font = '400 30px sans-serif'
-		ctx.fillStyle = panelMuted
+		ctx.fillStyle = panelText
 		ctx.fillText(totalLabel, 32, metaY)
 		totalLabelWidth = ctx.measureText(totalLabel).width
 		if (hoverTarget?.type === 'tracks') {
@@ -366,11 +368,7 @@ export function buildChannelInfoCanvas(params) {
 		const isHoverRotate = hoverTarget?.type === 'rotate'
 		const rotateSize = 22
 		const rotateCenterX = 32 + (totalLabelWidth || 0) + 26
-		const rotateColor = enabled
-			? colors.tagActiveBgColor
-			: isHoverRotate
-				? panelText
-				: panelMuted
+		const rotateColor = enabled ? colors.tagActiveBgColor : isHoverRotate ? panelText : panelMuted
 		ctx.save()
 		ctx.translate(rotateCenterX, metaCenterY)
 		if (enabled) {
@@ -388,7 +386,7 @@ export function buildChannelInfoCanvas(params) {
 	}
 	if (updatedLabel) {
 		ctx.font = '400 30px sans-serif'
-		ctx.fillStyle = panelMuted
+		ctx.fillStyle = panelText
 		const uw = ctx.measureText(updatedLabel).width
 		ctx.fillText(updatedLabel, canvas.width - 32 - uw, metaY)
 		if (hoverTarget?.type === 'tracks') {
@@ -401,7 +399,7 @@ export function buildChannelInfoCanvas(params) {
 		}
 	}
 
-	const markers = getCornerMarkers(mediaItem, colors)
+	const markers = getCornerMarkers(mediaItem, colors, panelText)
 
 	let mx = canvas.width - 44
 	const my = 44
@@ -427,6 +425,12 @@ export function buildChannelInfoCanvas(params) {
 			const s = marker.size * 0.5
 			ctx.rotate(Math.PI / 4)
 			drawRect(-s * 0.9, -s * 0.9, s * 1.8, s * 1.8, 4, marker.color)
+		} else if (marker.shape === 'text') {
+			ctx.fillStyle = marker.color
+			ctx.font = '700 32px sans-serif'
+			ctx.textAlign = 'center'
+			ctx.textBaseline = 'middle'
+			ctx.fillText(marker.text || '★', 0, 1)
 		}
 		ctx.restore()
 		mx -= marker.size + 14

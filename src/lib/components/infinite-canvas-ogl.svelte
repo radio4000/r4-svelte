@@ -48,7 +48,7 @@
 	let showControlsModal = $state(false)
 
 	function openControls() {
-		canvas?.resetView()
+		canvas?.resetView({duration: 0.7, rebuildScene: true})
 		showControlsModal = true
 	}
 

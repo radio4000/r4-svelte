@@ -8,6 +8,7 @@
  * https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/
  */
 import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
+import {gsap} from '$lib/animations'
 import {
 	resolveChannelCardStates,
 	buildChannelInfoCanvas,
@@ -160,13 +161,14 @@ const texturedFragmentShader = `
 const infoFragmentShader = `
 	precision highp float;
 	uniform sampler2D tMap;
+	uniform float uOpacity;
 	varying vec2 vUv;
 	varying float vDepthFade;
 	void main() {
 		if (vDepthFade < 0.01) discard;
 		vec4 color = texture2D(tMap, vUv);
 		if (color.a < 0.01) discard;
-		gl_FragColor = vec4(color.rgb, color.a * vDepthFade);
+		gl_FragColor = vec4(color.rgb, color.a * vDepthFade * uOpacity);
 	}
 `
 
@@ -225,7 +227,6 @@ const ENTRANCE_STAGGER = 80
 const EXIT_STAGGER = 40
 const IMAGE_INSET = 0.88
 const IMAGE_Z_OFFSET = 0.56
-const INFO_Z_OFFSET = 0.3
 const BEZEL_BACK_Z_OFFSET = -0.26
 const BEZEL_BACK_SCALE = 1.05
 const MAX_CHUNKS_PER_FRAME = 4
@@ -325,7 +326,11 @@ export class InfiniteCanvasOGL {
 		this.ctrlPanPressed = false
 		this.forcePanMode = false
 		this.skipClickOnce = false
+		this.lastClickMediaId = null
+		this.lastClickAt = 0
+		this.doubleClickMs = 320
 		this.cleanupFns = []
+		this._gsapTweens = new Set()
 
 		// Pre-allocated raycast buffers (avoid per-frame GC pressure)
 		this._rayNear = new Vec3()
@@ -517,7 +522,20 @@ export class InfiniteCanvasOGL {
 			fragment: infoFragmentShader,
 			uniforms: {
 				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
-				uCameraZ: {value: INITIAL_CAMERA_Z}
+				uCameraZ: {value: INITIAL_CAMERA_Z},
+				uOpacity: {value: 1}
+			},
+			transparent: true,
+			depthTest: true,
+			depthWrite: false
+		})
+		this.badgeProgram = new Program(this.gl, {
+			vertex: texturedVertexShader,
+			fragment: infoFragmentShader,
+			uniforms: {
+				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
+				uCameraZ: {value: INITIAL_CAMERA_Z},
+				uOpacity: {value: 1}
 			},
 			transparent: true,
 			depthTest: true,
@@ -764,7 +782,8 @@ export class InfiniteCanvasOGL {
 	}
 
 	getInfoZOffset() {
-		return INFO_Z_OFFSET * this.cardDepthScale
+		// Keep info panel slightly in front of artwork to avoid depth conflicts.
+		return (IMAGE_Z_OFFSET + 0.1) * this.cardDepthScale
 	}
 
 	getBezelBackZOffset() {
@@ -781,13 +800,18 @@ export class InfiniteCanvasOGL {
 		if (existing) return existing
 		if (!this.gl) return this.colorPrograms?.default
 		const card = this.getCardVisual(cardStyle)
-		const color = this.parseColor(card.color).map((v) => clamp(v * 0.72, 0, 1))
+		const base = this.parseColor(card.color)
+		const luminance = 0.2126 * base[0] + 0.7152 * base[1] + 0.0722 * base[2]
+		// In light themes, keep bezel closer to card color; in darker themes keep stronger depth.
+		const shade = luminance > 0.6 ? 0.9 : 0.72
+		const alpha = luminance > 0.6 ? 0.18 : 0.3
+		const color = base.map((v) => clamp(v * shade, 0, 1))
 		const program = new Program(this.gl, {
 			vertex: colorVertexShader,
 			fragment: colorFragmentShader,
 			uniforms: {
 				uColor: {value: color},
-				uAlpha: {value: 0.3},
+				uAlpha: {value: alpha},
 				uCornerRadius: {value: this.cornerRadius},
 				uStrokeColor: {value: this.parseColor(this.activeBorderColor)},
 				uStrokeThickness: {value: 0.0},
@@ -1201,6 +1225,11 @@ export class InfiniteCanvasOGL {
 			if (!mediaItem && intersected.userData?.isInfo) {
 				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
 			}
+			const now = performance.now()
+			if (mediaItem?.id) {
+				this.lastClickMediaId = mediaItem.id
+				this.lastClickAt = now
+			}
 			if (intersected.userData?.isInfo && mediaItem) {
 				const halfW = intersected.scale.x * 0.5
 				const halfH = intersected.scale.y * 0.5
@@ -1208,13 +1237,19 @@ export class InfiniteCanvasOGL {
 				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
 				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
 				if (target) {
+					// Route channel-target clicks through onClick so scene-level single/double click
+					// behavior stays consistent (single select, double play).
+					if (target.type === 'channel' && this.onClick) {
+						if (this.onClick) this.onClick(mediaItem)
+						return
+					}
 					if (this.onNavigate) {
 						this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
 						return
 					}
 				}
 			}
-			if (mediaItem) this.onClick(mediaItem)
+			if (mediaItem && this.onClick) this.onClick(mediaItem)
 		}
 	}
 
@@ -1530,13 +1565,17 @@ export class InfiniteCanvasOGL {
 		return texture
 	}
 
+	/**
+	 * @param {any} mediaItem
+	 * @param {'active'|'selected'} [style]
+	 */
 	getInfoTexture(mediaItem, style = 'selected') {
 		if (!this.gl || !mediaItem?.id) return null
 		const hover =
 			this.infoHoverTarget?.id === mediaItem.id
 				? `${this.infoHoverTarget.type}:${this.infoHoverTarget.token ?? ''}`
 				: ''
-		const key = `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.isPlaying ? 1 : 0}:${this.activeIds.has(mediaItem.id) ? 1 : 0}:${(mediaItem.activeTags || []).join(',')}:${(mediaItem.activeMentions || []).join(',')}:${mediaItem.canToggleRotate ? 1 : 0}:${mediaItem.isRotateEnabled ? 1 : 0}:${hover}`
+		const key = this.getInfoTextureKey(mediaItem, /** @type {'active'|'selected'} */ (style), hover)
 		if (this.infoTextureCache.has(key)) return this.infoTextureCache.get(key)
 		const canvas = buildChannelInfoCanvas({
 			mediaItem,
@@ -1576,6 +1615,21 @@ export class InfiniteCanvasOGL {
 		})
 		this.infoTextureCache.set(key, texture)
 		return texture
+	}
+
+	/**
+	 * @param {any} mediaItem
+	 * @param {'active'|'selected'} [style]
+	 * @param {string | null | undefined} [hover]
+	 */
+	getInfoTextureKey(mediaItem, style = 'selected', hover = null) {
+		if (!mediaItem?.id) return ''
+		const hoverKey =
+			hover ??
+			(this.infoHoverTarget?.id === mediaItem.id
+				? `${this.infoHoverTarget.type}:${this.infoHoverTarget.token ?? ''}`
+				: '')
+		return `info:${mediaItem.id}:${style}:${mediaItem.isLive ? 1 : 0}:${mediaItem.isFavorite ? 1 : 0}:${mediaItem.isPlaying ? 1 : 0}:${this.activeIds.has(mediaItem.id) ? 1 : 0}:${(mediaItem.activeTags || []).join(',')}:${(mediaItem.activeMentions || []).join(',')}:${mediaItem.canToggleRotate ? 1 : 0}:${mediaItem.isRotateEnabled ? 1 : 0}:${hoverKey}`
 	}
 
 	setActiveId(id) {
@@ -1678,32 +1732,106 @@ export class InfiniteCanvasOGL {
 		if (!bg?.userData) return
 		const bgClosedPos = bg.userData.closedPosition
 		const bgClosedScale = bg.userData.closedScale
+		const animateBodyTarget = (ud, next) => {
+			if (!ud) return
+			if (!ud.bodyTarget) {
+				ud.bodyTarget = {...next}
+				return
+			}
+			const changed =
+				Math.abs((ud.bodyTarget.x ?? 0) - next.x) > 0.001 ||
+				Math.abs((ud.bodyTarget.y ?? 0) - next.y) > 0.001 ||
+				Math.abs((ud.bodyTarget.sx ?? 0) - next.sx) > 0.001 ||
+				Math.abs((ud.bodyTarget.sy ?? 0) - next.sy) > 0.001 ||
+				ud.bodyTarget.open !== next.open
+			if (!changed) return
+			ud.bodyTarget.open = next.open
+			this.killGsapTween(ud, 'bodyTargetTween')
+			ud.bodyTargetTween = this.trackGsapTween(
+				gsap.to(ud.bodyTarget, {
+					x: next.x,
+					y: next.y,
+					sx: next.sx,
+					sy: next.sy,
+					duration: 0.28,
+					ease: 'power2.out',
+					overwrite: true,
+					onComplete: () => {
+						ud.bodyTargetTween = null
+					}
+				})
+			)
+		}
+		const animateInfoProgress = (infoMesh, toValue, delay = 0) => {
+			if (!infoMesh?.userData) return
+			if (typeof infoMesh.userData.progress !== 'number') infoMesh.userData.progress = toValue
+			this.killGsapTween(infoMesh.userData, 'progressTween')
+			infoMesh.userData.progressTween = this.trackGsapTween(
+				gsap.to(infoMesh.userData, {
+					progress: toValue,
+					duration: 0.24,
+					delay,
+					ease: 'power2.out',
+					overwrite: true,
+					onComplete: () => {
+						infoMesh.userData.progressTween = null
+						infoMesh.userData.progress = toValue
+					}
+				})
+			)
+		}
 		if (style) {
+			const infoHoverKey =
+				this.infoHoverTarget?.id === mesh.userData.mediaItem?.id
+					? `${this.infoHoverTarget.type}:${this.infoHoverTarget.token ?? ''}`
+					: ''
+			const infoTextureKey = this.getInfoTextureKey(mesh.userData.mediaItem, style, infoHoverKey)
+			const bindInfoTexture = (infoMesh) => {
+				const infoProgram = this.infoProgram
+				if (!infoMesh || !infoProgram) return
+				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
+				if (infoMesh.userData) {
+					infoMesh.userData.texture = texture
+					infoMesh.userData.textureKey = infoTextureKey
+				}
+				if (!infoMesh.userData?.beforeRenderBound) {
+					infoMesh.onBeforeRender(() => {
+						const currentTexture =
+							/** @type {any} */ (infoMesh).userData?.texture || this.getInfoTexture(mesh.userData.mediaItem, style)
+						infoProgram.uniforms.tMap.value = currentTexture
+						const p = Number(/** @type {any} */ (infoMesh).userData?.progress ?? 1)
+						infoProgram.uniforms.uOpacity.value = Math.max(0, Math.min(1, p))
+					})
+					if (infoMesh.userData) infoMesh.userData.beforeRenderBound = true
+				}
+			}
 			const ts = mesh.userData.targetScale
 			const infoScaleY = ts.y * 0.5
 			const gap = ts.y * 0.01
+			const openLift = (gap + infoScaleY) * 0.5
+			mesh.userData.liftTarget = openLift
 			const infoY = mesh.position.y - ts.y * 0.5 - infoScaleY * 0.5 - gap
 			// Background surface becomes the unified body and expands to include info.
 			const bodyWidth = bgClosedScale?.x ?? ts.x
 			const totalHeight = (bgClosedScale?.y ?? ts.y) + gap + infoScaleY
-			const centerY = (bgClosedPos?.y ?? mesh.position.y) - (gap + infoScaleY) * 0.5
-			bg.userData.bodyTarget = {
+			const centerY = (bgClosedPos?.y ?? mesh.position.y) - (gap + infoScaleY) * 0.5 + openLift
+			animateBodyTarget(bg.userData, {
 				x: bgClosedPos?.x ?? mesh.position.x,
 				y: centerY,
 				sx: bodyWidth,
 				sy: totalHeight,
 				open: true
-			}
+			})
 			bg.userData.bodyStyle = style === 'active' ? 'active' : 'default'
 			if (bg.userData.bezelBack?.userData) {
 				const bezelScale = this.getBezelBackScale()
-				bg.userData.bezelBack.userData.bodyTarget = {
+				animateBodyTarget(bg.userData.bezelBack.userData, {
 					x: bgClosedPos?.x ?? mesh.position.x,
 					y: centerY,
 					sx: bodyWidth * bezelScale,
 					sy: totalHeight * bezelScale,
 					open: true
-				}
+				})
 				bg.userData.bezelBack.userData.bodyStyle = style === 'active' ? 'active' : 'default'
 			}
 
@@ -1718,51 +1846,72 @@ export class InfiniteCanvasOGL {
 				// Keep text panel attached to artwork and equal width.
 				info.position.set(mesh.position.x, infoY, mesh.position.z + this.getInfoZOffset())
 				info.scale.set(ts.x, infoScaleY, 1)
-				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
-				info.onBeforeRender(() => {
-					infoProgram.uniforms.tMap.value = texture
-				})
 				// @ts-expect-error custom field
-				info.userData = {isInfo: true, mainMesh: mesh, style}
+				info.userData = {
+					isInfo: true,
+					mainMesh: mesh,
+					style,
+					progress: 0,
+					textureKey: infoTextureKey,
+					texture: null,
+					beforeRenderBound: false
+				}
+				bindInfoTexture(info)
 				info.setParent(group)
 				mesh.userData.info = info
+				animateInfoProgress(info, 1, 0.04)
 			} else if (mesh.userData.info?.userData?.style !== style) {
-				const infoProgram = this.infoProgram
-				if (!infoProgram) return
-				const texture = this.getInfoTexture(mesh.userData.mediaItem, style)
-				mesh.userData.info.onBeforeRender(() => {
-					infoProgram.uniforms.tMap.value = texture
-				})
 				mesh.userData.info.userData.style = style
+				bindInfoTexture(mesh.userData.info)
 				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + this.getInfoZOffset())
 				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
+				animateInfoProgress(mesh.userData.info, 1, 0.06)
 			} else if (mesh.userData.info) {
+				if (mesh.userData.info.userData?.textureKey !== infoTextureKey) {
+					bindInfoTexture(mesh.userData.info)
+				}
 				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + this.getInfoZOffset())
 				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
+				if ((mesh.userData.info.userData?.progress ?? 1) < 1) animateInfoProgress(mesh.userData.info, 1, 0)
 			}
 		} else {
-			bg.userData.bodyTarget = {
+			mesh.userData.liftTarget = 0
+			animateBodyTarget(bg.userData, {
 				x: bgClosedPos?.x ?? bg.position.x,
 				y: bgClosedPos?.y ?? bg.position.y,
 				sx: bgClosedScale?.x ?? bg.scale.x,
 				sy: bgClosedScale?.y ?? bg.scale.y,
 				open: false
-			}
+			})
 			bg.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
 			if (bg.userData.bezelBack?.userData) {
 				const bezelScale = this.getBezelBackScale()
-				bg.userData.bezelBack.userData.bodyTarget = {
+				animateBodyTarget(bg.userData.bezelBack.userData, {
 					x: bgClosedPos?.x ?? bg.position.x,
 					y: bgClosedPos?.y ?? bg.position.y,
 					sx: (bgClosedScale?.x ?? bg.scale.x) * bezelScale,
 					sy: (bgClosedScale?.y ?? bg.scale.y) * bezelScale,
 					open: false
-				}
+				})
 				bg.userData.bezelBack.userData.bodyStyle = this.getCardStyle(bg.userData.mediaItem)
 			}
 			if (mesh.userData.info) {
-				mesh.userData.info.setParent(null)
-				delete mesh.userData.info
+				const info = mesh.userData.info
+				const clearInfo = () => {
+					if (mesh.userData.info !== info) return
+					info.setParent(null)
+					delete mesh.userData.info
+				}
+				this.killGsapTween(info.userData, 'progressTween')
+				info.userData.progressTween = this.trackGsapTween(
+					gsap.to(info.userData, {
+						progress: 0,
+						duration: 0.16,
+						ease: 'power2.out',
+						overwrite: true,
+						onComplete: clearInfo
+					})
+				)
 			}
 		}
 	}
@@ -1779,13 +1928,13 @@ export class InfiniteCanvasOGL {
 			}
 			return
 		}
-		if (!this.gl || !this.infoProgram) return
-		const infoProgram = this.infoProgram
+		if (!this.gl || !this.badgeProgram) return
+		const badgeProgram = this.badgeProgram
 		let badge = mesh.userData.tagBadge
 		if (!badge) {
 			badge = new Mesh(this.gl, {
 				geometry: this.planeGeometry ?? undefined,
-				program: infoProgram
+				program: badgeProgram
 			})
 			badge.userData = {isTagBadge: true, mainMesh: mesh}
 			badge.setParent(group)
@@ -1795,7 +1944,8 @@ export class InfiniteCanvasOGL {
 		const texture = this.getTagBadgeTexture()
 		if (!texture) return
 		badge.onBeforeRender(() => {
-			infoProgram.uniforms.tMap.value = texture
+			badgeProgram.uniforms.tMap.value = texture
+			badgeProgram.uniforms.uOpacity.value = 1
 		})
 		const badgeSize = Math.max(ts.x, ts.y) * 0.16
 		badge.scale.set(badgeSize, badgeSize, 1)
@@ -1814,13 +1964,13 @@ export class InfiniteCanvasOGL {
 			}
 			return
 		}
-		if (!this.gl || !this.infoProgram) return
-		const infoProgram = this.infoProgram
+		if (!this.gl || !this.badgeProgram) return
+		const badgeProgram = this.badgeProgram
 		let badge = mesh.userData.liveBadge
 		if (!badge) {
 			badge = new Mesh(this.gl, {
 				geometry: this.planeGeometry ?? undefined,
-				program: infoProgram
+				program: badgeProgram
 			})
 			badge.userData = {isLiveBadge: true, mainMesh: mesh}
 			badge.setParent(group)
@@ -1830,7 +1980,8 @@ export class InfiniteCanvasOGL {
 		const texture = this.getLiveBadgeTexture()
 		if (!texture) return
 		badge.onBeforeRender(() => {
-			infoProgram.uniforms.tMap.value = texture
+			badgeProgram.uniforms.tMap.value = texture
+			badgeProgram.uniforms.uOpacity.value = 1
 		})
 		this.layoutLiveBadge(mesh, badge)
 	}
@@ -1848,7 +1999,7 @@ export class InfiniteCanvasOGL {
 		)
 	}
 
-	updateMeshBorder(mesh, styleKeys, group) {
+	updateMeshBorder(mesh, _styleKeys, _group) {
 		this.clearLegacyBorderMeshes(mesh)
 	}
 
@@ -1871,6 +2022,7 @@ export class InfiniteCanvasOGL {
 
 	createCardMeshes(group, plane, mediaItem, birthTime) {
 		if (!this.gl) return
+		const mediaKey = this.getMediaKey(mediaItem)
 		const sizeScale = this.cardSizeScale
 		const scaledW = plane.scale.x * sizeScale
 		const scaledH = plane.scale.y * sizeScale
@@ -1887,6 +2039,7 @@ export class InfiniteCanvasOGL {
 			isBorder: false,
 			isBackground: true,
 			mediaItem,
+			mediaKey,
 			cardStyle,
 			birthTime,
 			targetScale: {x: scaledW, y: scaledH, z: plane.scale.z},
@@ -1910,6 +2063,7 @@ export class InfiniteCanvasOGL {
 				isBezelBack: true,
 				mainMesh: mesh,
 				mediaItem,
+				mediaKey,
 				cardStyle,
 				birthTime,
 				targetScale: {x: scaledW * bezelScale, y: scaledH * bezelScale, z: plane.scale.z},
@@ -1947,8 +2101,11 @@ export class InfiniteCanvasOGL {
 		imgMesh.userData = {
 			isBorder: false,
 			mediaItem,
+			mediaKey,
 			birthTime,
 			texture,
+			closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z + this.getImageZOffset()},
+			liftTarget: 0,
 			targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1},
 			backgroundMesh: mesh
 		}
@@ -2152,6 +2309,7 @@ export class InfiniteCanvasOGL {
 		const camZ = this.basePos.z
 		if (this.texturedProgram) this.texturedProgram.uniforms.uCameraZ.value = camZ
 		if (this.infoProgram) this.infoProgram.uniforms.uCameraZ.value = camZ
+		if (this.badgeProgram) this.badgeProgram.uniforms.uCameraZ.value = camZ
 
 		if (this.sceneMode === 'single') {
 			this.singleCardRotation.x = lerp(this.singleCardRotation.x, this.singleCardRotationTarget.x, 0.15)
@@ -2277,11 +2435,33 @@ export class InfiniteCanvasOGL {
 		// Border is drawn as stroke on background shader.
 	}
 
+	getMediaKey(mediaItem) {
+		if (!mediaItem) return ''
+		if (mediaItem.id) return `id:${mediaItem.id}`
+		if (mediaItem.slug) return `slug:${mediaItem.slug}`
+		if (mediaItem.url) return `url:${mediaItem.url}`
+		return ''
+	}
+
 	animateCardBodies() {
 		const t = 0.18
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
 				const ud = mesh.userData
+				if (ud?.backgroundMesh && ud.closedPosition) {
+					const lift = Number(ud.liftTarget || 0)
+					mesh.position.y = lerp(mesh.position.y, ud.closedPosition.y + lift, t)
+					if (ud.info && ud.targetScale) {
+						const infoScaleY = ud.targetScale.y * 0.5
+						const gap = ud.targetScale.y * 0.01
+						const progress = Number(ud.info.userData?.progress ?? 1)
+						const clamped = Math.max(0, Math.min(1, progress))
+						const revealOffset = (1 - clamped) * (infoScaleY * 0.26)
+						const infoY = mesh.position.y - ud.targetScale.y * 0.5 - infoScaleY * 0.5 - gap - revealOffset
+						ud.info.position.y = lerp(ud.info.position.y, infoY, t)
+						ud.info.scale.y = lerp(ud.info.scale.y, Math.max(infoScaleY * (0.35 + clamped * 0.65), 0.001), t)
+					}
+				}
 				if (ud?.liveBadge) this.layoutLiveBadge(mesh, ud.liveBadge)
 				if (ud?.isBezelBack && ud.bodyTarget) {
 					const target = ud.bodyTarget
@@ -2308,20 +2488,26 @@ export class InfiniteCanvasOGL {
 
 	setMedia(media) {
 		const next = media || []
+		const prevKeys = this.media.map((item) => this.getMediaKey(item))
+		const nextKeys = next.map((item) => this.getMediaKey(item))
 		const sameOrder =
-			this.media.length === next.length &&
-			this.media.every((item, index) => item?.id && next[index]?.id && item.id === next[index].id)
+			prevKeys.length === nextKeys.length && prevKeys.every((key, index) => key && key === nextKeys[index])
 
 		this.media = next
 		if (sameOrder) {
 			// Fast path: update media metadata in-place without rebuilding chunks.
-			const byId = new Map(this.media.map((item) => [item.id, item]))
+			const byKey = new Map(this.media.map((item) => [this.getMediaKey(item), item]))
 			for (const group of this.chunks.values()) {
 				for (const mesh of group.children) {
 					const ud = mesh.userData
-					if (!ud?.mediaItem?.id) continue
-					const replacement = byId.get(ud.mediaItem.id)
-					if (replacement) ud.mediaItem = replacement
+					if (!ud?.mediaItem) continue
+					const key = ud.mediaKey || this.getMediaKey(ud.mediaItem)
+					if (!key) continue
+					const replacement = byKey.get(key)
+					if (replacement) {
+						ud.mediaItem = replacement
+						ud.mediaKey = key
+					}
 				}
 			}
 			this.infoTextureCache.clear()
@@ -2338,7 +2524,12 @@ export class InfiniteCanvasOGL {
 		this.updateChunks(true)
 	}
 
-	resetView() {
+	/**
+	 * @param {{duration?: number, rebuildScene?: boolean}} [options]
+	 */
+	resetView(options = {}) {
+		const duration = Number.isFinite(options.duration) ? Number(options.duration) : 0.7
+		const rebuildScene = options.rebuildScene ?? true
 		this.isDragging = false
 		this.forcePanMode = false
 		this.isSingleCardRotating = false
@@ -2353,23 +2544,156 @@ export class InfiniteCanvasOGL {
 		this.velocity.z = 0
 		this.drift.x = 0
 		this.drift.y = 0
+		this.hoveredItem = null
+		this.setHoveredId(null)
+		this.setInfoHoverTarget(null)
 
 		if (this.sceneMode === 'single') {
+			const singleGroup = this.chunks.get(SINGLE_SCENE_KEY)
+			if (singleGroup) singleGroup.rotation.set(0, 0, 0)
 			this.singleCardRotation.x = 0
 			this.singleCardRotation.y = 0
 			this.singleCardRotationTarget.x = 0
 			this.singleCardRotationTarget.y = 0
-			const singleGroup = this.chunks.get(SINGLE_SCENE_KEY)
-			if (singleGroup) singleGroup.rotation.set(0, 0, 0)
+
+			if (singleGroup) {
+				for (const mesh of singleGroup.children) {
+					const ud = mesh.userData
+					if (!ud) continue
+					if (ud.backgroundMesh) ud.liftTarget = 0
+					if (ud.info) {
+						const info = ud.info
+						this.killGsapTween(info?.userData, 'progressTween')
+						info.setParent(null)
+						delete ud.info
+					}
+					if (ud.isBackground && ud.closedPosition && ud.closedScale && ud.bodyTarget) {
+						ud.bodyTarget.x = ud.closedPosition.x
+						ud.bodyTarget.y = ud.closedPosition.y
+						ud.bodyTarget.sx = ud.closedScale.x
+						ud.bodyTarget.sy = ud.closedScale.y
+						ud.bodyTarget.open = false
+					}
+					if (ud.isBezelBack && ud.closedPosition && ud.closedScale && ud.bodyTarget) {
+						ud.bodyTarget.x = ud.closedPosition.x
+						ud.bodyTarget.y = ud.closedPosition.y
+						ud.bodyTarget.sx = ud.closedScale.x
+						ud.bodyTarget.sy = ud.closedScale.y
+						ud.bodyTarget.open = false
+					}
+				}
+			}
+			this.refreshAllBorders()
+
+			this.killGsapTween(this.singleCardRotation, 'resetTween')
+			this.killGsapTween(this.singleCardRotationTarget, 'resetTween')
+			this.singleCardRotation.resetTween = this.trackGsapTween(
+				gsap.to(this.singleCardRotation, {
+					x: 0,
+					y: 0,
+					duration,
+					ease: 'power2.out',
+					overwrite: true,
+					onComplete: () => {
+						this.singleCardRotation.x = 0
+						this.singleCardRotation.y = 0
+						if (singleGroup) singleGroup.rotation.set(0, 0, 0)
+						this.singleCardRotation.resetTween = null
+					}
+				})
+			)
+			this.singleCardRotationTarget.resetTween = this.trackGsapTween(
+				gsap.to(this.singleCardRotationTarget, {
+					x: 0,
+					y: 0,
+					duration,
+					ease: 'power2.out',
+					overwrite: true,
+					onComplete: () => {
+						this.singleCardRotationTarget.x = 0
+						this.singleCardRotationTarget.y = 0
+						this.singleCardRotationTarget.resetTween = null
+					}
+				})
+			)
+			const targetZ =
+				this.minCameraZ != null || this.maxCameraZ != null
+					? clamp(INITIAL_CAMERA_Z, this.minCameraZ ?? -Infinity, this.maxCameraZ ?? Infinity)
+					: INITIAL_CAMERA_Z
+			this.killGsapTween(this.basePos, 'resetTween')
+			this.basePos.resetTween = this.trackGsapTween(
+				gsap.to(this.basePos, {
+					x: 0,
+					y: 0,
+					z: targetZ,
+					duration,
+					ease: 'power2.out',
+					overwrite: true,
+					onComplete: () => {
+						this.basePos.x = 0
+						this.basePos.y = 0
+						this.basePos.z = targetZ
+						if (this.camera) this.camera.position.set(0, 0, targetZ)
+						this.basePos.resetTween = null
+					}
+				})
+			)
+			if (this.camera) {
+				if (typeof this.camera.lookAt === 'function') this.camera.lookAt([0, 0, 0])
+			}
+			if (singleGroup) singleGroup.rotation.set(this.singleCardRotation.x, this.singleCardRotation.y, 0)
 			return
 		}
 
-		this.basePos.x = 0
-		this.basePos.y = 0
-		this.basePos.z = INITIAL_CAMERA_Z
-		if (this.camera) this.camera.position.set(0, 0, INITIAL_CAMERA_Z)
+		if (rebuildScene) {
+			for (const key of this.chunks.keys()) this.removeChunk(key)
+			for (const [, group] of this.exitingChunks) {
+				group.setParent(null)
+			}
+			this.exitingChunks.clear()
+			this.chunkQueue = []
+			this.lastChunkKey = ''
+			this.lastChunkUpdate = 0
+			this.updateChunks(true)
+		}
+
+		this.killGsapTween(this.basePos, 'resetTween')
+		this.basePos.resetTween = this.trackGsapTween(
+			gsap.to(this.basePos, {
+				x: 0,
+				y: 0,
+				z: INITIAL_CAMERA_Z,
+				duration,
+				ease: 'power2.out',
+				overwrite: true,
+				onComplete: () => {
+					this.basePos.x = 0
+					this.basePos.y = 0
+					this.basePos.z = INITIAL_CAMERA_Z
+					if (this.camera) this.camera.position.set(0, 0, INITIAL_CAMERA_Z)
+					this.basePos.resetTween = null
+				}
+			})
+		)
 		this.lastChunkKey = ''
 		this.updateChunks(true)
+	}
+
+	trackGsapTween(tween) {
+		this._gsapTweens.add(tween)
+		return tween
+	}
+
+	killGsapTween(owner, key) {
+		const tween = owner?.[key]
+		if (!tween) return
+		try {
+			tween.kill()
+		} catch {
+			// ignore
+		}
+		this._gsapTweens.delete(tween)
+		owner[key] = null
 	}
 
 	dispose() {
@@ -2392,6 +2716,14 @@ export class InfiniteCanvasOGL {
 			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
 		}
 		this.infoTextureCache.clear()
+		for (const tween of this._gsapTweens) {
+			try {
+				tween.kill()
+			} catch {
+				// ignore
+			}
+		}
+		this._gsapTweens.clear()
 		if (this.tagBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.tagBadgeTexture.texture)
 		this.tagBadgeTexture = null
 		if (this.liveBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.liveBadgeTexture.texture)
@@ -2399,6 +2731,7 @@ export class InfiniteCanvasOGL {
 		this.backgroundProgramCache.clear()
 		this.texturedProgram = null
 		this.infoProgram = null
+		this.badgeProgram = null
 		this.colorPrograms = null
 		this.borderPrograms = null
 		this.borderBackPrograms = null
