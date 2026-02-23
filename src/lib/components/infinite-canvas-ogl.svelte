@@ -27,7 +27,7 @@
 	 * @prop {boolean} [isActive]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, ondoubleclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
@@ -38,6 +38,7 @@
 		cardSizeScale = 1,
 		backgroundColor = null,
 		onclick,
+		ondoubleclick,
 		onnavigate
 	} = $props()
 
@@ -67,6 +68,7 @@
 			...themeConfig,
 			backgroundColor,
 			onClick: onclick,
+			onDoubleClick: ondoubleclick,
 			onNavigate: onnavigate
 		})
 		return () => canvas?.dispose()

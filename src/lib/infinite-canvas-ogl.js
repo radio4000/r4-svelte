@@ -276,6 +276,7 @@ export class InfiniteCanvasOGL {
 		this.cornerRadius = config.cornerRadius ?? 0.12
 		this.useRoundedBezel = this.roundArtworks && this.cornerRadius > 0.001
 		this.onClick = config.onClick
+		this.onDoubleClick = config.onDoubleClick
 		this.onNavigate = config.onNavigate
 		this.backgroundColor = config.backgroundColor ?? null
 		this.sceneMode = config.sceneMode === 'single' ? 'single' : 'infinite'
@@ -330,9 +331,6 @@ export class InfiniteCanvasOGL {
 		this.ctrlPanPressed = false
 		this.forcePanMode = false
 		this.skipClickOnce = false
-		this.lastClickMediaId = null
-		this.lastClickAt = 0
-		this.doubleClickMs = 320
 		this.cleanupFns = []
 		this._gsapTweens = new Set()
 
@@ -855,7 +853,11 @@ export class InfiniteCanvasOGL {
 		if (!this.gl) return null
 		const tags = Array.isArray(activeTags)
 			? activeTags
-					.map((value) => String(value || '').trim().toLowerCase())
+					.map((value) =>
+						String(value || '')
+							.trim()
+							.toLowerCase()
+					)
 					.filter(Boolean)
 					.map((value) => (value.startsWith('#') ? value : `#${value}`))
 			: []
@@ -1005,6 +1007,11 @@ export class InfiniteCanvasOGL {
 			this.handleClick(e)
 		}
 		listen(canvas, 'click', onCanvasClick)
+		const onCanvasDoubleClick = (e) => {
+			if (this.ctrlPanPressed) return
+			this.handleDoubleClick(e)
+		}
+		listen(canvas, 'dblclick', onCanvasDoubleClick)
 
 		const onMouseMove = (e) => {
 			this.mouse = {
@@ -1214,7 +1221,7 @@ export class InfiniteCanvasOGL {
 			this.tooltip.style.opacity = '1'
 			this.tooltip.style.left = `${e.clientX - rect.left + 12}px`
 			this.tooltip.style.top = `${e.clientY - rect.top + 12}px`
-			if (intersected.userData?.isInfo && mediaItem) {
+			if (intersected.userData?.isInfo && mediaItem && hit.frontFacing) {
 				const halfW = intersected.scale.x * 0.5
 				const halfH = intersected.scale.y * 0.5
 				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
@@ -1253,12 +1260,7 @@ export class InfiniteCanvasOGL {
 			if (!mediaItem && intersected.userData?.isInfo) {
 				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
 			}
-			const now = performance.now()
-			if (mediaItem?.id) {
-				this.lastClickMediaId = mediaItem.id
-				this.lastClickAt = now
-			}
-			if (intersected.userData?.isInfo && mediaItem) {
+			if (intersected.userData?.isInfo && mediaItem && hit.frontFacing) {
 				const halfW = intersected.scale.x * 0.5
 				const halfH = intersected.scale.y * 0.5
 				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
@@ -1267,11 +1269,7 @@ export class InfiniteCanvasOGL {
 				if (target) {
 					// Route channel-target clicks through onClick so scene-level single/double click
 					// behavior stays consistent (single select, double play).
-					if (
-						target.type === 'channel' &&
-						(target.token === 'title' || target.token === 'slug') &&
-						this.onClick
-					) {
+					if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
 						if (this.onClick) this.onClick(mediaItem)
 						return
 					}
@@ -1283,6 +1281,27 @@ export class InfiniteCanvasOGL {
 			}
 			if (mediaItem && this.onClick) this.onClick(mediaItem)
 		}
+	}
+
+	handleDoubleClick(e) {
+		if (!this.onDoubleClick) return
+		const hit = this.raycast(e)
+		if (!hit) return
+		const intersected = hit.mesh
+		let mediaItem = intersected.userData.mediaItem
+		if (!mediaItem && intersected.userData?.isInfo) {
+			mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
+		}
+		if (!mediaItem) return
+		if (intersected.userData?.isInfo && hit.frontFacing) {
+			const halfW = intersected.scale.x * 0.5
+			const halfH = intersected.scale.y * 0.5
+			const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
+			const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
+			const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+			if (target) return
+		}
+		this.onDoubleClick(mediaItem)
 	}
 
 	raycast(e) {
@@ -1511,7 +1530,8 @@ export class InfiniteCanvasOGL {
 		const dy = this._hitPoint.y - ray.origin.y
 		const dz = this._hitPoint.z - ray.origin.z
 		const distance = Math.hypot(dx, dy, dz)
-		return {distance, localX, localY}
+		const frontFacing = denom < 0
+		return {distance, localX, localY, frontFacing}
 	}
 
 	handleKey(key, down) {
