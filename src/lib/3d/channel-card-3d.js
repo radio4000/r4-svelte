@@ -8,11 +8,16 @@ import {formatDate} from '$lib/dates.js'
  * @param {string} [textColor]
  */
 function getCornerMarkers(mediaItem, colors, textColor = colors.infoTextColor) {
-	const markers = []
-	if (mediaItem?.isFavorite) {
-		markers.push({kind: 'favorite', shape: 'text', text: '★', color: textColor, size: 22})
-	}
-	return markers
+	return [
+		{
+			kind: 'favorite',
+			shape: 'text',
+			text: mediaItem?.isFavorite ? '★' : '☆',
+			color: textColor,
+			size: 22,
+			active: !!mediaItem?.isFavorite
+		}
+	]
 }
 
 /**
@@ -93,7 +98,7 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
  *   mediaItem: any,
  *   style: 'active' | 'selected',
  *   activeId?: string | null,
- *   hoverTarget?: {id?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null,
+ *   hoverTarget?: {id?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null} | null,
  *   colors: {
  *     infoBgColor: string,
  *     infoTextColor: string,
@@ -115,7 +120,8 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
  *     activeInfoMutedColor: string,
  *     liveBadgeBgColor: string,
  *     liveBadgeTextColor: string,
- *     favoriteBorderColor: string
+ *     favoriteBorderColor: string,
+ *     favoriteCornerRadius?: number
  *   }
  * }} params
  */
@@ -389,7 +395,7 @@ export function buildChannelInfoCanvas(params) {
 		ctx.fillStyle = panelText
 		const uw = ctx.measureText(updatedLabel).width
 		ctx.fillText(updatedLabel, canvas.width - 32 - uw, metaY)
-		if (hoverTarget?.type === 'tracks') {
+		if (hoverTarget?.type === 'channel' && hoverTarget?.token === 'updated') {
 			ctx.beginPath()
 			ctx.strokeStyle = panelText
 			ctx.lineWidth = 2
@@ -426,6 +432,37 @@ export function buildChannelInfoCanvas(params) {
 			ctx.rotate(Math.PI / 4)
 			drawRect(-s * 0.9, -s * 0.9, s * 1.8, s * 1.8, 4, marker.color)
 		} else if (marker.shape === 'text') {
+			if (marker.kind === 'favorite') {
+				const isHoverFavorite = hoverTarget?.type === 'favorite'
+				const borderAlpha = isHoverFavorite ? 1 : 0
+				if (borderAlpha > 0) {
+					const side = marker.size * 1.34
+					const radius = Math.max(0, Number(colors.favoriteCornerRadius || 0))
+					const x = -side * 0.5
+					const y = -side * 0.5
+					ctx.beginPath()
+					if (radius > 0.001) {
+						const r = Math.min(radius, side * 0.35)
+						ctx.moveTo(x + r, y)
+						ctx.lineTo(x + side - r, y)
+						ctx.quadraticCurveTo(x + side, y, x + side, y + r)
+						ctx.lineTo(x + side, y + side - r)
+						ctx.quadraticCurveTo(x + side, y + side, x + side - r, y + side)
+						ctx.lineTo(x + r, y + side)
+						ctx.quadraticCurveTo(x, y + side, x, y + side - r)
+						ctx.lineTo(x, y + r)
+						ctx.quadraticCurveTo(x, y, x + r, y)
+						ctx.closePath()
+					} else {
+						ctx.rect(x, y, side, side)
+					}
+					ctx.strokeStyle = panelText
+					ctx.globalAlpha = borderAlpha
+					ctx.lineWidth = 2
+					ctx.stroke()
+					ctx.globalAlpha = 1
+				}
+			}
 			ctx.fillStyle = marker.color
 			ctx.font = '700 32px sans-serif'
 			ctx.textAlign = 'center'
@@ -442,7 +479,7 @@ export function buildChannelInfoCanvas(params) {
 /**
  * Resolve click intent on the open info panel texture.
  * @param {{mediaItem: any, x: number, y: number}} params
- * @returns {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token: string | null} | null}
+ * @returns {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token: string | null} | null}
  */
 export function resolveChannelInfoClickTarget(params) {
 	const {mediaItem, x, y} = params
@@ -491,7 +528,7 @@ export function resolveChannelInfoClickTarget(params) {
 	for (const marker of markers) {
 		const half = marker.size * 0.5
 		if (x >= mx - half - 4 && x <= mx + half + 4 && y >= my - half - 4 && y <= my + half + 4) {
-			if (marker.kind === 'favorite') return null
+			if (marker.kind === 'favorite') return {type: 'favorite', token: marker.active ? '1' : '0'}
 		}
 		mx -= marker.size + 14
 	}
@@ -500,13 +537,13 @@ export function resolveChannelInfoClickTarget(params) {
 		if (x >= 32 && x <= 32 + totalWidth && y >= metaY && y <= metaY + 36) {
 			return {href: `/${encodeURIComponent(slug)}/tracks`, type: 'tracks', token: null}
 		}
-		const updatedLabel = getUpdatedLabel(mediaItem)
-		if (updatedLabel) {
-			const uw = measure.measureText(updatedLabel).width
-			const ux = CHANNEL_INFO_CANVAS.width - 32 - uw
-			if (x >= ux && x <= CHANNEL_INFO_CANVAS.width - 32 && y >= metaY && y <= metaY + 36) {
-				return {href: `/${encodeURIComponent(slug)}/image`, type: 'channel', token: null}
-			}
+	}
+	const updatedLabel = getUpdatedLabel(mediaItem)
+	if (updatedLabel) {
+		const uw = measure.measureText(updatedLabel).width
+		const ux = CHANNEL_INFO_CANVAS.width - 32 - uw
+		if (x >= ux && x <= CHANNEL_INFO_CANVAS.width - 32 && y >= metaY && y <= metaY + 36) {
+			return {href: `/${encodeURIComponent(slug)}/image`, type: 'channel', token: 'updated'}
 		}
 	}
 

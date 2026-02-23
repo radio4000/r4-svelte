@@ -861,7 +861,7 @@ export class InfiniteCanvasOGL {
 			: []
 		const matchCount = tags.length
 		if (!matchCount) return null
-		const label = matchCount > 1 ? `#${matchCount}` : '#'
+		const label = matchCount > 1 ? `${matchCount}#` : '#'
 		const key = label
 		const cached = this.tagBadgeTextureCache.get(key)
 		if (cached) return cached
@@ -1172,15 +1172,20 @@ export class InfiniteCanvasOGL {
 
 	/**
 	 * @param {any} mediaItem
-	 * @param {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null} [target]
+	 * @param {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null} | null} [target]
 	 */
 	formatHoverLabel(mediaItem, target = null) {
 		const base = mediaItem?.slug ? `@${mediaItem.slug}` : ''
+		const channelLabel = `${String(mediaItem?.name || mediaItem?.title || '').trim()} ${base}`.trim()
 		if (!target) return base
-		if (target.type === 'channel') return base
-		if (target.type === 'tracks') return `${base}/tracks`
+		if (target.type === 'channel') {
+			if (target.token === 'title' || target.token === 'slug') return channelLabel
+			return base
+		}
+		if (target.type === 'tracks') return `tracks${base}`
 		if (target.type === 'rotate') return `${base} rotate`
-		if (target.type === 'tag' && target.token) return `${base} ${target.token}`
+		if (target.type === 'favorite') return `${base} favorite`
+		if (target.type === 'tag' && target.token) return `${target.token}${base}`
 		if (target.type === 'mention' && target.token) return target.token
 		return base
 	}
@@ -1199,7 +1204,7 @@ export class InfiniteCanvasOGL {
 			if (!mediaItem && intersected.userData?.isInfo) {
 				mediaItem = intersected.userData?.mainMesh?.userData?.mediaItem
 			}
-			/** @type {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate', token?: string | null} | null} */
+			/** @type {{href?: string, type: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null} | null} */
 			let linkTarget = null
 			if (mediaItem && mediaItem !== this.hoveredItem) {
 				this.hoveredItem = mediaItem
@@ -1262,7 +1267,11 @@ export class InfiniteCanvasOGL {
 				if (target) {
 					// Route channel-target clicks through onClick so scene-level single/double click
 					// behavior stays consistent (single select, double play).
-					if (target.type === 'channel' && this.onClick) {
+					if (
+						target.type === 'channel' &&
+						(target.token === 'title' || target.token === 'slug') &&
+						this.onClick
+					) {
 						if (this.onClick) this.onClick(mediaItem)
 						return
 					}
@@ -1626,7 +1635,8 @@ export class InfiniteCanvasOGL {
 				activeInfoMutedColor: this.activeInfoMutedColor,
 				liveBadgeBgColor: this.liveBadgeBgColor,
 				liveBadgeTextColor: this.liveBadgeTextColor,
-				favoriteBorderColor: this.favoriteBorderColor
+				favoriteBorderColor: this.favoriteBorderColor,
+				favoriteCornerRadius: this.roundArtworks ? Math.max(4, this.cornerRadius * 84) : 0
 			}
 		})
 
@@ -1742,6 +1752,9 @@ export class InfiniteCanvasOGL {
 					this.clearLegacyBorderMeshes(mesh)
 					continue
 				}
+				// Only the channel image mesh (which has backgroundMesh) should own badges/info.
+				// Bezel-back or other helper meshes can also carry mediaItem but must not duplicate overlays.
+				if (!ud.backgroundMesh) continue
 				this.updateMeshTagBadge(mesh, group)
 				this.updateMeshLiveBadge(mesh, group)
 				const infoStyle = this.getInfoStyle(ud.mediaItem)
@@ -1981,7 +1994,7 @@ export class InfiniteCanvasOGL {
 		const width = Math.min(badgeWidth, maxWidth)
 		const height = width / Math.max(tagTexture.aspect, 0.01)
 		badge.scale.set(width, height, 1)
-		badge.position.set(mesh.position.x - ts.x * 0.35, mesh.position.y + ts.y * 0.56, mesh.position.z + 0.19)
+		this.layoutTagBadge(mesh, badge)
 	}
 
 	updateMeshLiveBadge(mesh, group) {
@@ -2023,11 +2036,23 @@ export class InfiniteCanvasOGL {
 		const anchor = mesh?.userData?.backgroundMesh || mesh
 		if (!anchor?.scale || !anchor?.position) return
 		const badgeSize = Math.max(anchor.scale.x, anchor.scale.y) * 0.14
-		const inset = badgeSize * 0.18
+		const out = badgeSize * 0.18
 		badge.scale.set(badgeSize, badgeSize, 1)
 		badge.position.set(
-			anchor.position.x + anchor.scale.x * 0.5 - inset,
-			anchor.position.y + anchor.scale.y * 0.5 - inset,
+			anchor.position.x + anchor.scale.x * 0.5 + out,
+			anchor.position.y + anchor.scale.y * 0.5 + out,
+			mesh.position.z + 0.2
+		)
+	}
+
+	layoutTagBadge(mesh, badge) {
+		const anchor = mesh?.userData?.backgroundMesh || mesh
+		if (!anchor?.scale || !anchor?.position || !badge?.scale) return
+		const outX = badge.scale.x * 0.16
+		const outY = badge.scale.y * 0.16
+		badge.position.set(
+			anchor.position.x - anchor.scale.x * 0.5 - outX + badge.scale.x * 0.5,
+			anchor.position.y + anchor.scale.y * 0.5 + outY - badge.scale.y * 0.5,
 			mesh.position.z + 0.2
 		)
 	}
@@ -2495,6 +2520,7 @@ export class InfiniteCanvasOGL {
 						ud.info.scale.y = lerp(ud.info.scale.y, Math.max(infoScaleY * (0.35 + clamped * 0.65), 0.001), t)
 					}
 				}
+				if (ud?.tagBadge) this.layoutTagBadge(mesh, ud.tagBadge)
 				if (ud?.liveBadge) this.layoutLiveBadge(mesh, ud.liveBadge)
 				if (ud?.isBezelBack && ud.bodyTarget) {
 					const target = ud.bodyTarget
