@@ -23,7 +23,6 @@
 				longitude={channel.longitude}
 				zoom={15}
 				syncUrl={true}
-				openSlug={channel.slug}
 				linkToMap="global"
 			/>
 		</div>
