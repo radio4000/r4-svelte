@@ -39,7 +39,6 @@
 			zoomControl: false,
 			attributionControl: false,
 			doubleClickZoom: false,
-			closePopupOnClick: false,
 			worldCopyJump: false,
 			maxBounds: worldBounds,
 			maxBoundsViscosity: 1.0

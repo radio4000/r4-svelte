@@ -31,7 +31,6 @@
 	let popupNavigationInFlight = false
 	let lastAutoOpenedToken = null
 	let autoOpenRetryTimer = null
-	let suppressMapClickCloseUntil = 0
 	let stickyPopupSlug = null
 	let stickyPopupUntil = 0
 	let deferredMarkerRefreshTimer = null
@@ -146,19 +145,6 @@
 	function handleReady(m) {
 		map = m
 		markersLayer = L.layerGroup().addTo(map)
-		map.on('click', (event) => {
-			if (Date.now() < suppressMapClickCloseUntil) return
-			const target = event?.originalEvent?.target
-			if (
-				target instanceof Element &&
-				(target.closest('.leaflet-popup') || target.closest('.leaflet-interactive') || target.closest('.leaflet-control'))
-			) {
-				return
-			}
-			stickyPopupSlug = null
-			stickyPopupUntil = 0
-			map?.closePopup()
-		})
 		updateMarkers()
 	}
 
@@ -211,7 +197,6 @@
 		if (marker && channel) {
 			const targetZoom = Math.max(map.getZoom(), map.getMinZoom())
 			map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
-			suppressMapClickCloseUntil = Date.now() + 450
 			requestAnimationFrame(() => {
 				if (!map) return
 				if (markerBySlug.get(normalizedSlug) !== marker) {
@@ -318,7 +303,6 @@
 				if (event.detail === 2) {
 					// Double-clicking card body plays channel; keep popup sticky through deck state updates.
 					keepPopupOpenUntil = Date.now() + 3000
-					suppressMapClickCloseUntil = keepPopupOpenUntil
 					stickyPopupSlug = normalizeSlug(c.slug)
 					stickyPopupUntil = keepPopupOpenUntil
 				}
@@ -362,7 +346,7 @@
 				bubblingMouseEvents: false,
 				interactive: true
 			})
-				.bindPopup(popup, {autoPan: false, closeOnClick: false, autoClose: true})
+				.bindPopup(popup, {autoPan: false, autoClose: true})
 				.addTo(markersLayer)
 			applyMarkerClasses(marker, c)
 			marker.on('click', () => marker.openPopup())
