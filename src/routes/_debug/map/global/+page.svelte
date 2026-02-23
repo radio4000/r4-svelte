@@ -18,21 +18,51 @@
 	<title>Debug Map Global</title>
 </svelte:head>
 
-<article class="fill-height">
-	<menu class="nav-grouped">
-		<a href="/_debug/map">&larr;</a>
-		<a href="/_debug/map/global" aria-current="page">global</a>
-		<a href="/_debug/map/single">single</a>
-	</menu>
+<article class="page">
+	<header class="toolbar">
+		<menu class="nav-grouped">
+			<a href="/_debug/map">&larr;</a>
+			<a href="/_debug/map/global" aria-current="page">global</a>
+			<a href="/_debug/map/single">single</a>
+		</menu>
+		{#if channelsQuery.isLoading}
+			<p>Loading channels…</p>
+		{:else if !channelsWithLocation.length}
+			<p>No channels with location found.</p>
+		{:else}
+			<p>{channelsWithLocation.length} channels with location.</p>
+		{/if}
+	</header>
 
-	{#if channelsQuery.isLoading}
-		<p>Loading channels…</p>
-	{:else if !channelsWithLocation.length}
-		<p>No channels with location found.</p>
-	{:else}
-		<p>{channelsWithLocation.length} channels with location.</p>
-		<div class="fill-height">
+	<section class="map-area">
+		{#if !channelsQuery.isLoading && channelsWithLocation.length}
 			<MapChannels channels={channelsWithLocation} {openSlug} syncUrl={true} />
-		</div>
-	{/if}
+		{/if}
+	</section>
 </article>
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		min-height: 0;
+	}
+
+	.toolbar {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		flex-shrink: 0;
+	}
+
+	.toolbar p {
+		margin: 0;
+	}
+
+	.map-area {
+		flex: 1;
+		min-height: 0;
+	}
+</style>
