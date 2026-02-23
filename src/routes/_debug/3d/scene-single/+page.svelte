@@ -5,8 +5,11 @@
 
 	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 30))
 	let selectedChannelId = $state('')
-	let selectedOpen = $state(true)
+	let selected = $state(true)
 	let active = $state(true)
+	let hovered = $state(false)
+	let broadcasting = $state(false)
+	let rotateEnabled = $state(true)
 
 	const channel = $derived.by(() => {
 		if (!channels.length) return null
@@ -34,6 +37,7 @@
 			activeMentions: [],
 			hasActiveTagMatch: tags.length > 0,
 			isActive: active,
+			isLive: broadcasting,
 			channel
 		}
 	})
@@ -49,7 +53,6 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
-			<a href="/_debug/3d/scene-rotate">scene-rotate</a>
 			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
 		<div class="row">
@@ -61,8 +64,11 @@
 					{/each}
 				</select>
 			</label>
-			<label><input type="checkbox" bind:checked={selectedOpen} /> open</label>
+			<label><input type="checkbox" bind:checked={selected} /> selected</label>
 			<label><input type="checkbox" bind:checked={active} /> active</label>
+			<label><input type="checkbox" bind:checked={hovered} /> hover</label>
+			<label><input type="checkbox" bind:checked={broadcasting} /> broadcasting</label>
+			<label><input type="checkbox" bind:checked={rotateEnabled} /> rotate</label>
 		</div>
 	</header>
 
@@ -72,7 +78,16 @@
 				media={[mediaItem]}
 				activeId={active ? channel.id : undefined}
 				activeIds={active ? [channel.id] : []}
-				selectedId={selectedOpen ? channel.id : null}
+				selectedId={selected ? channel.id : null}
+				hoveredId={hovered ? channel.id : null}
+				allowNavigation={true}
+				enableCardTilt={false}
+				singleSceneConstrainMovement={false}
+				singleSceneMaxXY={18}
+				singleSceneCardDragRotate={rotateEnabled}
+				singleSceneMouseDrift={false}
+				minCameraZ={26}
+				maxCameraZ={70}
 			/>
 		</section>
 	{/if}

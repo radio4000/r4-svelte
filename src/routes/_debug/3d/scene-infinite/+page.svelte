@@ -57,7 +57,6 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
-			<a href="/_debug/3d/scene-rotate">scene-rotate</a>
 			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
 		<p>Infinite scene with shared 3D channel cards.</p>

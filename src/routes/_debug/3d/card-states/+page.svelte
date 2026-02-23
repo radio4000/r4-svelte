@@ -3,30 +3,34 @@
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {channelAvatarUrl, extractHashtags, extractMentions} from '$lib/utils.ts'
 
-	const channel = $derived([...channelsCollection.state.values()].find((c) => c.image))
+	const fallbackDataUrl = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 250"><rect width="250" height="250" rx="26" fill="#101318"/><circle cx="125" cy="110" r="54" fill="#4e6df5"/><rect x="56" y="180" width="138" height="20" rx="10" fill="#e2e8f0"/></svg>')}`
+	const channel = $derived.by(() => {
+		const values = [...channelsCollection.state.values()]
+		return values.find((c) => c.image) || values[0] || null
+	})
 	const tags = $derived(extractHashtags(channel?.description || ''))
 	const mentions = $derived(extractMentions(channel?.description || ''))
 	const sampleTag = $derived(tags[0] || '#sample')
 	const sampleMention = $derived(mentions[0] || '@radio4000')
 
 	const baseItem = $derived.by(() => {
-		if (!channel?.image) return null
 		return {
-			url: channelAvatarUrl(channel.image),
+			url: channel?.image ? channelAvatarUrl(channel.image) : fallbackDataUrl,
 			width: 250,
 			height: 250,
-			slug: channel.slug,
-			id: channel.id,
-			name: channel.name,
-			description: channel.description || '',
+			slug: channel?.slug || 'debug-3d',
+			id: channel?.id || 'debug-3d',
+			name: channel?.name || 'Debug 3D',
+			description: channel?.description || '',
 			tags,
 			mentions,
-			channel
+			channel: channel || {track_count: 42, updated_at: new Date().toISOString()}
 		}
 	})
 
 	const states = $derived.by(() => {
-		if (!baseItem || !channel) return []
+		if (!baseItem) return []
+		const channelId = baseItem.id
 		return [
 			{
 				id: 'default',
@@ -36,29 +40,29 @@
 			{
 				id: 'hover',
 				label: 'hover',
-				hoveredId: channel.id,
+				hoveredId: channelId,
 				media: [{...baseItem, activeTags: [], activeMentions: [], hasActiveTagMatch: false}]
 			},
 			{
 				id: 'selected',
 				label: 'selected',
-				selectedId: channel.id,
+				selectedId: channelId,
 				media: [{...baseItem, activeTags: [], activeMentions: [], hasActiveTagMatch: false}]
 			},
 			{
 				id: 'active',
 				label: 'active',
-				activeIds: [channel.id],
-				activeId: channel.id,
-				selectedId: channel.id,
+				activeIds: [channelId],
+				activeId: channelId,
+				selectedId: channelId,
 				media: [{...baseItem, isActive: true, activeTags: [], activeMentions: [], hasActiveTagMatch: false}]
 			},
 			{
 				id: 'active-tag',
 				label: 'active + tag',
-				activeIds: [channel.id],
-				activeId: channel.id,
-				selectedId: channel.id,
+				activeIds: [channelId],
+				activeId: channelId,
+				selectedId: channelId,
 				media: [
 					{
 						...baseItem,
@@ -72,9 +76,9 @@
 			{
 				id: 'active-mention',
 				label: 'active mention',
-				activeIds: [channel.id],
-				activeId: channel.id,
-				selectedId: channel.id,
+				activeIds: [channelId],
+				activeId: channelId,
+				selectedId: channelId,
 				media: [
 					{
 						...baseItem,
@@ -88,16 +92,16 @@
 			{
 				id: 'playing',
 				label: 'playing',
-				activeIds: [channel.id],
-				activeId: channel.id,
-				selectedId: channel.id,
+				activeIds: [channelId],
+				activeId: channelId,
+				selectedId: channelId,
 				media: [{...baseItem, isPlaying: true, isActive: true, activeTags: [], activeMentions: []}]
 			},
 			{
 				id: 'live-favorite',
 				label: 'live + favorite',
-				activeIds: [channel.id],
-				activeId: channel.id,
+				activeIds: [channelId],
+				activeId: channelId,
 				media: [{...baseItem, isLive: true, isFavorite: true, activeTags: [], activeMentions: []}]
 			}
 		]
@@ -114,7 +118,6 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
-			<a href="/_debug/3d/scene-rotate">scene-rotate</a>
 			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
 		<p>Visual matrix for 3D card states including active tag and mention states.</p>
