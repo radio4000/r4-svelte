@@ -27,13 +27,15 @@
 	 * @prop {boolean} [isActive]
 	 */
 
-	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, ondoubleclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, focusSlug?: string | null, focusKey?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, ondoubleclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
 		activeIds = [],
 		selectedId = null,
 		hoveredId = null,
+		focusSlug = null,
+		focusKey = null,
 		cardDepthScale = 1,
 		cardSizeScale = 1,
 		backgroundColor = null,
@@ -46,6 +48,7 @@
 	let container
 	/** @type {InfiniteCanvasOGL} */
 	let canvas
+	let lastFocusToken = $state('')
 	let showControlsModal = $state(false)
 
 	function openControls() {
@@ -96,6 +99,16 @@
 	$effect(() => {
 		if (!canvas) return
 		canvas.setHoveredId(hoveredId ?? null)
+	})
+
+	$effect(() => {
+		if (!canvas) return
+		const slug = String(focusSlug || '').trim().toLowerCase()
+		if (!slug) return
+		const token = `${focusKey ?? ''}|${slug}|${media.length}`
+		if (token === lastFocusToken) return
+		lastFocusToken = token
+		canvas.focusBySlug(slug, {duration: 0.6})
 	})
 </script>
 

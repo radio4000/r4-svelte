@@ -1740,6 +1740,73 @@ export class InfiniteCanvasOGL {
 		this.refreshAllBorders()
 	}
 
+	/**
+	 * Move camera to center a media item by slug.
+	 * Picks the nearest deterministic plane occurrence around current camera chunk.
+	 * @param {string | null | undefined} slug
+	 * @param {{duration?: number, searchRadius?: number}} [options]
+	 */
+	focusBySlug(slug, options = {}) {
+		const normalizedSlug = String(slug || '').trim().toLowerCase()
+		if (!normalizedSlug || !this.media?.length) return false
+		const mediaIndex = this.media.findIndex((item) => String(item?.slug || '').trim().toLowerCase() === normalizedSlug)
+		if (mediaIndex < 0) return false
+		const mediaItem = this.media[mediaIndex]
+		if (mediaItem?.id) this.setSelectedId(mediaItem.id)
+
+		const searchRadius = Number.isFinite(options.searchRadius) ? Number(options.searchRadius) : 10
+		const duration = Number.isFinite(options.duration) ? Number(options.duration) : 0.55
+		const cx0 = Math.floor(this.basePos.x / CHUNK_SIZE)
+		const cy0 = Math.floor(this.basePos.y / CHUNK_SIZE)
+		const cz0 = Math.floor(this.basePos.z / CHUNK_SIZE)
+		/** @type {{x:number, y:number} | null} */
+		let target = null
+		for (let radius = 0; radius <= searchRadius && !target; radius++) {
+			for (let dx = -radius; dx <= radius && !target; dx++) {
+				for (let dy = -radius; dy <= radius && !target; dy++) {
+					for (let dz = -1; dz <= 1 && !target; dz++) {
+						const cx = cx0 + dx
+						const cy = cy0 + dy
+						const cz = cz0 + dz
+						const planes = this.generateChunkPlanes(cx, cy, cz)
+						for (const plane of planes) {
+							if (plane.mediaIndex % this.media.length !== mediaIndex) continue
+							target = {x: plane.position.x, y: plane.position.y}
+							break
+						}
+					}
+				}
+			}
+		}
+		if (!target) return false
+
+		this.targetVel.x = 0
+		this.targetVel.y = 0
+		this.velocity.x = 0
+		this.velocity.y = 0
+		this.drift.x = 0
+		this.drift.y = 0
+
+		this.killGsapTween(this.basePos, 'focusTween')
+		this.basePos.focusTween = this.trackGsapTween(
+			gsap.to(this.basePos, {
+				x: target.x,
+				y: target.y,
+				duration,
+				ease: 'power2.out',
+				overwrite: true,
+				onComplete: () => {
+					this.basePos.x = target.x
+					this.basePos.y = target.y
+					this.basePos.focusTween = null
+				}
+			})
+		)
+		this.lastChunkKey = ''
+		this.updateChunks(true)
+		return true
+	}
+
 	setInfoHoverTarget(target) {
 		const prev = this.infoHoverTarget
 		const same =
