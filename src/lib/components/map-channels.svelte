@@ -32,6 +32,9 @@
 	let lastAutoOpenedToken = null
 	let autoOpenRetryTimer = null
 	let suppressMapClickCloseUntil = 0
+	let stickyPopupSlug = null
+	let stickyPopupUntil = 0
+	let deferredMarkerRefreshTimer = null
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
 	/** @type {Map<string, L.CircleMarker>} */
@@ -152,6 +155,8 @@
 			) {
 				return
 			}
+			stickyPopupSlug = null
+			stickyPopupUntil = 0
 			map?.closePopup()
 		})
 		updateMarkers()
@@ -180,6 +185,13 @@
 		if (autoOpenRetryTimer) {
 			clearTimeout(autoOpenRetryTimer)
 			autoOpenRetryTimer = null
+		}
+	}
+
+	function clearDeferredMarkerRefresh() {
+		if (deferredMarkerRefreshTimer) {
+			clearTimeout(deferredMarkerRefreshTimer)
+			deferredMarkerRefreshTimer = null
 		}
 	}
 
@@ -254,6 +266,8 @@
 
 	function updateMarkers() {
 		if (!markersLayer) return
+		const shouldRestoreSticky = Date.now() < stickyPopupUntil
+		const restoreSlug = shouldRestoreSticky ? stickyPopupSlug : null
 		for (const cleanup of popupCleanupFns) cleanup()
 		popupCleanupFns = []
 		markerByChannelId.clear()
@@ -267,6 +281,7 @@
 			L.DomEvent.disableScrollPropagation(popup)
 			const cardRoot = document.createElement('div')
 			let mountedCard = null
+			let keepPopupOpenUntil = 0
 			const onPopupClick = (event) => {
 				const target =
 					event.target instanceof Element
@@ -277,38 +292,38 @@
 				if (!target) return
 				if (target.closest('.leaflet-popup-close-button')) return
 				const link = target.closest('a[href]')
-				if (!(link instanceof HTMLAnchorElement)) return
-				const href = link.getAttribute('href')
-				if (!href) return
-				if (href.startsWith('#')) return
-				event.preventDefault()
-				event.stopPropagation()
-				if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
-				// Never let popup links unload the app while audio is playing.
-				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
-				if (popupNavigationInFlight) return
-				popupNavigationInFlight = true
-				setTimeout(() => {
-					popupNavigationInFlight = false
-				}, 450)
-				void goto(href, {keepFocus: true})
-			}
-			const onPopupDblClick = (event) => {
-				const target =
-					event.target instanceof Element
-						? event.target
-						: event.target instanceof Node
-							? event.target.parentElement
-							: null
-				if (!target) return
-				const link = target.closest('a[href]')
-				if (!(link instanceof HTMLAnchorElement)) return
-				event.preventDefault()
-				event.stopPropagation()
-				if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+				if (link instanceof HTMLAnchorElement) {
+					if (event.detail > 1) {
+						event.preventDefault()
+						event.stopPropagation()
+						if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+						return
+					}
+					const href = link.getAttribute('href')
+					if (!href) return
+					if (href.startsWith('#')) return
+					event.preventDefault()
+					event.stopPropagation()
+					if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+					// Never let popup links unload the app while audio is playing.
+					if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
+					if (popupNavigationInFlight) return
+					popupNavigationInFlight = true
+					setTimeout(() => {
+						popupNavigationInFlight = false
+					}, 450)
+					void goto(href, {keepFocus: true})
+					return
+				}
+				if (event.detail === 2) {
+					// Double-clicking card body plays channel; keep popup sticky through deck state updates.
+					keepPopupOpenUntil = Date.now() + 3000
+					suppressMapClickCloseUntil = keepPopupOpenUntil
+					stickyPopupSlug = normalizeSlug(c.slug)
+					stickyPopupUntil = keepPopupOpenUntil
+				}
 			}
 			popup.addEventListener('click', onPopupClick, true)
-			popup.addEventListener('dblclick', onPopupDblClick, true)
 			const renderPopup = () => {
 				if (mountedCard) return
 				const currentChannel = getLatestChannel(c)
@@ -328,7 +343,6 @@
 			}
 			const cleanupPopup = () => {
 				popup.removeEventListener('click', onPopupClick, true)
-				popup.removeEventListener('dblclick', onPopupDblClick, true)
 				if (mountedCard) {
 					try {
 						void unmount(mountedCard)
@@ -352,15 +366,48 @@
 				.addTo(markersLayer)
 			applyMarkerClasses(marker, c)
 			marker.on('click', () => marker.openPopup())
+			marker.on('popupopen', () => {
+				stickyPopupSlug = normalizeSlug(c.slug)
+			})
+			marker.on('popupclose', () => {
+				if (Date.now() >= keepPopupOpenUntil) return
+				requestAnimationFrame(() => {
+					try {
+						marker.openPopup()
+					} catch {
+						// ignore marker teardown races
+					}
+				})
+			})
 			markerByChannelId.set(c.id, marker)
 			markerBySlug.set(normalizeSlug(c.slug), marker)
 		}
 		maybeAutoOpenSlug(openSlug, openRequestKey)
+		if (restoreSlug) {
+			requestAnimationFrame(() => {
+				const marker = markerBySlug.get(restoreSlug)
+				if (!marker) return
+				try {
+					marker.openPopup()
+				} catch {
+					// ignore marker teardown races
+				}
+			})
+		}
 	}
 
 	$effect(() => {
 		void markerDataKey
 		void linkToMap
+		if (Date.now() < stickyPopupUntil && markerByChannelId.size) {
+			clearDeferredMarkerRefresh()
+			const delay = Math.max(0, stickyPopupUntil - Date.now()) + 20
+			deferredMarkerRefreshTimer = setTimeout(() => {
+				deferredMarkerRefreshTimer = null
+				updateMarkers()
+			}, delay)
+			return
+		}
 		updateMarkers()
 	})
 
@@ -384,6 +431,7 @@
 
 	onDestroy(() => {
 		clearAutoOpenRetry()
+		clearDeferredMarkerRefresh()
 		for (const cleanup of popupCleanupFns) cleanup()
 		popupCleanupFns = []
 		for (const marker of markerByChannelId.values()) marker.off()
