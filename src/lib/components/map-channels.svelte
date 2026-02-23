@@ -28,9 +28,10 @@
 
 	let map = null
 	let markersLayer = null
-	let selectedSlug = $state(/** @type {string | null} */ (null))
 	let popupNavigationInFlight = false
 	let lastAutoOpenedToken = null
+	let autoOpenRetryTimer = null
+	let suppressMapClickCloseUntil = 0
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
 	/** @type {Map<string, L.CircleMarker>} */
@@ -85,6 +86,7 @@
 			.sort()
 			.join('|')
 	)
+	const normalizeSlug = (value) => String(value || '').trim().toLowerCase()
 
 	function getLatestChannel(channel) {
 		return channelsCollection.state.get(channel.id) || channel
@@ -107,8 +109,7 @@
 		favoriteStroke: resolveCssColor('--accent-9'),
 		favoriteFill: resolveCssColor('--accent-6'),
 		activeStroke: resolveCssColor('--accent-11'),
-		activeFill: resolveCssColor('--accent-9'),
-		selectedStroke: resolveCssColor('--gray-12')
+		activeFill: resolveCssColor('--accent-9')
 	}))
 
 	function getChannelState(channel) {
@@ -118,8 +119,7 @@
 		const isPlaying = playingSlugs.has(current.slug)
 		const isInDeck = inDeckSlugs.has(current.slug)
 		const isActive = isBroadcasting || isPlaying || isInDeck
-		const isSelected = selectedSlug === current.slug
-		return {isFavorite, isBroadcasting, isPlaying, isInDeck, isActive, isSelected}
+		return {isFavorite, isBroadcasting, isPlaying, isInDeck, isActive}
 	}
 
 	function getMarkerStyle(channel) {
@@ -131,15 +131,6 @@
 				: palette.normalStroke
 		const fill = state.isActive ? palette.activeFill : state.isFavorite ? palette.favoriteFill : palette.normalFill
 		const radius = state.isActive ? 8 : state.isFavorite ? 7 : 6
-		if (state.isSelected) {
-			return {
-				radius: radius + 1,
-				color: palette.selectedStroke,
-				weight: 3,
-				fillColor: fill,
-				fillOpacity: 1
-			}
-		}
 		return {
 			radius,
 			color: stroke,
@@ -152,6 +143,17 @@
 	function handleReady(m) {
 		map = m
 		markersLayer = L.layerGroup().addTo(map)
+		map.on('click', (event) => {
+			if (Date.now() < suppressMapClickCloseUntil) return
+			const target = event?.originalEvent?.target
+			if (
+				target instanceof Element &&
+				(target.closest('.leaflet-popup') || target.closest('.leaflet-interactive') || target.closest('.leaflet-control'))
+			) {
+				return
+			}
+			map?.closePopup()
+		})
 		updateMarkers()
 	}
 
@@ -172,27 +174,82 @@
 		el.classList.add('map-pin')
 		el.classList.toggle('map-pin--broadcasting', state.isBroadcasting)
 		el.classList.toggle('map-pin--active', state.isActive)
-		el.classList.toggle('map-pin--selected', state.isSelected)
+	}
+
+	function clearAutoOpenRetry() {
+		if (autoOpenRetryTimer) {
+			clearTimeout(autoOpenRetryTimer)
+			autoOpenRetryTimer = null
+		}
 	}
 
 	/**
-	 * Auto-open a slug once (per slug value), then let user interactions drive selection.
+	 * Auto-open a slug once (per request token), retrying briefly while map markers settle.
 	 * @param {string | null | undefined} slug
 	 * @param {string | null | undefined} requestKey
+	 * @param {number} [attempt]
 	 */
-	function maybeAutoOpenSlug(slug, requestKey) {
-		if (!slug || !map) return
-		const token = `${requestKey ?? ''}|${slug}`
+	function maybeAutoOpenSlug(slug, requestKey, attempt = 0) {
+		const normalizedSlug = normalizeSlug(slug)
+		if (!normalizedSlug || !map) return
+		const token = `${requestKey ?? ''}|${normalizedSlug}`
 		if (token === lastAutoOpenedToken) return
-		const marker = markerBySlug.get(slug)
-		if (!marker) return
-		const channel = mapChannels.find((c) => c.slug === slug)
-		if (!channel) return
-		if (selectedSlug !== slug) selectedSlug = slug
-		const targetZoom = map.getMinZoom()
-		map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
-		marker.openPopup()
-		lastAutoOpenedToken = token
+		const marker = markerBySlug.get(normalizedSlug)
+		const channel = mapChannels.find((c) => normalizeSlug(c.slug) === normalizedSlug)
+		if (marker && channel) {
+			const targetZoom = Math.max(map.getZoom(), map.getMinZoom())
+			map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
+			suppressMapClickCloseUntil = Date.now() + 450
+			requestAnimationFrame(() => {
+				if (!map) return
+				if (markerBySlug.get(normalizedSlug) !== marker) {
+					if (attempt >= 40) return
+					clearAutoOpenRetry()
+					autoOpenRetryTimer = setTimeout(() => {
+						autoOpenRetryTimer = null
+						maybeAutoOpenSlug(slug, requestKey, attempt + 1)
+					}, 120)
+					return
+				}
+				const latlng = marker.getLatLng?.()
+				const hasLatLng = Number.isFinite(latlng?.lat) && Number.isFinite(latlng?.lng)
+				if (hasLatLng) {
+					try {
+						marker.openPopup()
+					} catch {
+						// Marker/popup may be in teardown; retry below.
+					}
+					if (!marker.isPopupOpen?.()) {
+						const popup = marker.getPopup?.()
+						if (popup) {
+							try {
+								map.openPopup(popup, latlng)
+							} catch {
+								// ignore; retry below
+							}
+						}
+					}
+				}
+				if (marker.isPopupOpen?.()) {
+					lastAutoOpenedToken = token
+					clearAutoOpenRetry()
+					return
+				}
+				if (attempt >= 40) return
+				clearAutoOpenRetry()
+				autoOpenRetryTimer = setTimeout(() => {
+					autoOpenRetryTimer = null
+					maybeAutoOpenSlug(slug, requestKey, attempt + 1)
+				}, 120)
+			})
+			return
+		}
+		if (attempt >= 40) return
+		clearAutoOpenRetry()
+		autoOpenRetryTimer = setTimeout(() => {
+			autoOpenRetryTimer = null
+			maybeAutoOpenSlug(slug, requestKey, attempt + 1)
+		}, 120)
 	}
 
 	function updateMarkers() {
@@ -206,15 +263,24 @@
 		for (const c of mapChannels) {
 			const popup = document.createElement('div')
 			popup.className = 'map-popup'
+			L.DomEvent.disableClickPropagation(popup)
+			L.DomEvent.disableScrollPropagation(popup)
 			const cardRoot = document.createElement('div')
 			let mountedCard = null
 			const onPopupClick = (event) => {
-				const target = event.target
-				if (!(target instanceof Element)) return
+				const target =
+					event.target instanceof Element
+						? event.target
+						: event.target instanceof Node
+							? event.target.parentElement
+							: null
+				if (!target) return
+				if (target.closest('.leaflet-popup-close-button')) return
 				const link = target.closest('a[href]')
 				if (!(link instanceof HTMLAnchorElement)) return
 				const href = link.getAttribute('href')
 				if (!href) return
+				if (href.startsWith('#')) return
 				event.preventDefault()
 				event.stopPropagation()
 				if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
@@ -227,7 +293,22 @@
 				}, 450)
 				void goto(href, {keepFocus: true})
 			}
+			const onPopupDblClick = (event) => {
+				const target =
+					event.target instanceof Element
+						? event.target
+						: event.target instanceof Node
+							? event.target.parentElement
+							: null
+				if (!target) return
+				const link = target.closest('a[href]')
+				if (!(link instanceof HTMLAnchorElement)) return
+				event.preventDefault()
+				event.stopPropagation()
+				if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+			}
 			popup.addEventListener('click', onPopupClick, true)
+			popup.addEventListener('dblclick', onPopupDblClick, true)
 			const renderPopup = () => {
 				if (mountedCard) return
 				const currentChannel = getLatestChannel(c)
@@ -240,13 +321,14 @@
 						href: `/${currentChannel.slug}`,
 						updatedAtHref:
 							linkToMap === 'global'
-								? `/?display=map&slug=${encodeURIComponent(currentChannel.slug)}`
+								? `/?display=map&slug=${encodeURIComponent(currentChannel.slug)}&zoom=4`
 								: `/${currentChannel.slug}/map`
 					}
 				})
 			}
 			const cleanupPopup = () => {
 				popup.removeEventListener('click', onPopupClick, true)
+				popup.removeEventListener('dblclick', onPopupDblClick, true)
 				if (mountedCard) {
 					try {
 						void unmount(mountedCard)
@@ -266,21 +348,12 @@
 				bubblingMouseEvents: false,
 				interactive: true
 			})
-				.bindPopup(popup, {autoPan: false})
+				.bindPopup(popup, {autoPan: false, closeOnClick: false, autoClose: true})
 				.addTo(markersLayer)
 			applyMarkerClasses(marker, c)
-			marker.on('click', (event) => {
-				// Keep pin click behavior deterministic: one click opens popup.
-				// Prevent map-level click handlers/close-on-click from stealing this interaction.
-				if (event?.originalEvent) {
-					event.originalEvent.preventDefault()
-					event.originalEvent.stopPropagation()
-				}
-				if (selectedSlug !== c.slug) selectedSlug = c.slug
-				marker.openPopup()
-			})
+			marker.on('click', () => marker.openPopup())
 			markerByChannelId.set(c.id, marker)
-			markerBySlug.set(c.slug, marker)
+			markerBySlug.set(normalizeSlug(c.slug), marker)
 		}
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 	}
@@ -292,7 +365,6 @@
 	})
 
 	$effect(() => {
-		void selectedSlug
 		void favoriteIds
 		void broadcastingIds
 		void playingSlugs
@@ -304,12 +376,14 @@
 	$effect(() => {
 		if (!openSlug) {
 			lastAutoOpenedToken = null
+			clearAutoOpenRetry()
 			return
 		}
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 	})
 
 	onDestroy(() => {
+		clearAutoOpenRetry()
 		for (const cleanup of popupCleanupFns) cleanup()
 		popupCleanupFns = []
 		for (const marker of markerByChannelId.values()) marker.off()
@@ -365,8 +439,7 @@
 		}
 		45% {
 			stroke-width: 4;
-			filter:
-				drop-shadow(0 0 6px var(--accent-9))
+			filter: drop-shadow(0 0 6px var(--accent-9))
 				drop-shadow(0 0 12px color-mix(in oklab, var(--accent-9) 55%, transparent));
 		}
 		100% {
