@@ -11,7 +11,6 @@
 		tracksCollection
 	} from '$lib/tanstack/collections'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
-	import {SvelteMap} from 'svelte/reactivity'
 	import {deriveChannelActivityState} from './channel-ui-state.js'
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, linkToMap?: boolean | 'global'}} */
@@ -27,25 +26,31 @@
 
 	let map = null
 	let markersLayer = null
-	let mountedPopups = []
+	/** @type {Array<() => void>} */
+	let popupCleanupFns = []
 	let selectedSlug = $state(/** @type {string | null} */ (null))
 	/** @type {Map<string, L.CircleMarker>} */
-	let markerByChannelId = new SvelteMap()
+	let markerByChannelId = new Map()
 	/** @type {Map<string, L.CircleMarker>} */
-	let markerBySlug = new SvelteMap()
+	let markerBySlug = new Map()
 	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
 	const activityState = $derived.by(() => {
-		void followsQuery.data
-		void followsCollection.state.size
+		const followsRows = followsQuery.data ?? []
 		void broadcastsCollection.state.size
 		void tracksCollection.state.size
 		void channelsCollection.state.size
+		const followsState = new Map(
+			followsRows
+				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
+				.filter((row) => typeof row.id === 'string')
+				.map((row) => [row.id, row])
+		)
 		return deriveChannelActivityState({
 			decks: appState.decks,
 			tracksState: tracksCollection.state,
 			channelsState: channelsCollection.state,
-			followsState: followsCollection.state,
+			followsState,
 			broadcastRows: broadcastsQuery.data ?? []
 		})
 	})
@@ -53,6 +58,26 @@
 	const broadcastingIds = $derived(activityState.broadcastingChannelIds)
 	const playingSlugs = $derived(activityState.playingChannelSlugs)
 	const inDeckSlugs = $derived(activityState.inDeckChannelSlugs)
+	const mapChannels = $derived(
+		channels.filter(
+			(channel) =>
+				channel &&
+				typeof channel.id === 'string' &&
+				typeof channel.slug === 'string' &&
+				Number.isFinite(channel.latitude) &&
+				Number.isFinite(channel.longitude)
+		)
+	)
+	const markerDataKey = $derived(
+		mapChannels
+			.map((channel) => `${channel.id}:${channel.slug}:${channel.latitude}:${channel.longitude}`)
+			.sort()
+			.join('|')
+	)
+
+	function getLatestChannel(channel) {
+		return channelsCollection.state.get(channel.id) || channel
+	}
 
 	function resolveCssColor(variableName, fallback = '#888') {
 		const div = document.createElement('div')
@@ -76,12 +101,13 @@
 	}))
 
 	function getChannelState(channel) {
-		const isFavorite = favoriteIds.has(channel.id)
-		const isBroadcasting = broadcastingIds.has(channel.id)
-		const isPlaying = playingSlugs.has(channel.slug)
-		const isInDeck = inDeckSlugs.has(channel.slug)
+		const current = getLatestChannel(channel)
+		const isFavorite = favoriteIds.has(current.id)
+		const isBroadcasting = broadcastingIds.has(current.id)
+		const isPlaying = playingSlugs.has(current.slug)
+		const isInDeck = inDeckSlugs.has(current.slug)
 		const isActive = isBroadcasting || isPlaying || isInDeck
-		const isSelected = selectedSlug === channel.slug
+		const isSelected = selectedSlug === current.slug
 		return {isFavorite, isBroadcasting, isPlaying, isInDeck, isActive, isSelected}
 	}
 
@@ -112,14 +138,6 @@
 		}
 	}
 
-	function getStatusLabels(channel) {
-		const labels = []
-		if (favoriteIds.has(channel.id)) labels.push({key: 'favorite', text: 'Favorite'})
-		if (broadcastingIds.has(channel.id)) labels.push({key: 'live', text: 'Live'})
-		if (playingSlugs.has(channel.slug)) labels.push({key: 'playing', text: 'Playing'})
-		return labels
-	}
-
 	function handleReady(m) {
 		map = m
 		markersLayer = L.layerGroup().addTo(map)
@@ -127,7 +145,7 @@
 	}
 
 	function refreshMarkerStyles() {
-		for (const channel of channels) {
+		for (const channel of mapChannels) {
 			const marker = markerByChannelId.get(channel.id)
 			if (!marker) continue
 			marker.setStyle(getMarkerStyle(channel))
@@ -136,68 +154,86 @@
 
 	function updateMarkers() {
 		if (!markersLayer) return
-		for (const mounted of mountedPopups) {
-			void unmount(mounted)
-		}
-		mountedPopups = []
+		for (const cleanup of popupCleanupFns) cleanup()
+		popupCleanupFns = []
 		markerByChannelId.clear()
 		markerBySlug.clear()
 		markersLayer.clearLayers()
 
-		for (const c of channels) {
-			if (c.latitude && c.longitude) {
-				const mapHref =
-					linkToMap === 'global'
-						? `/?display=map&slug=${c.slug}&longitude=${c.longitude}&latitude=${c.latitude}&zoom=15`
-						: linkToMap
-							? `/${c.slug}/map`
-							: null
-				const popup = document.createElement('div')
-				popup.className = 'map-popup'
-				const cardRoot = document.createElement('div')
+		for (const c of mapChannels) {
+			const popup = document.createElement('div')
+			popup.className = 'map-popup'
+			const cardRoot = document.createElement('div')
+			let mountedCard = null
+			const renderPopup = () => {
+				if (mountedCard) return
+				const currentChannel = getLatestChannel(c)
+				popup.replaceChildren()
 				popup.append(cardRoot)
-				const card = mount(ChannelCard, {
+				mountedCard = mount(ChannelCard, {
 					target: cardRoot,
-					props: {channel: c, href: mapHref ?? undefined}
+					props: {
+						channel: currentChannel,
+						href: `/${currentChannel.slug}`,
+						updatedAtHref: `/${currentChannel.slug}/map`
+					}
 				})
-				mountedPopups.push(card)
-				const labels = untrack(() => getStatusLabels(c))
-				if (labels.length) {
-					const status = document.createElement('p')
-					status.className = 'map-popup-status'
-					status.innerHTML = labels
-						.map((label) => `<span class="map-badge map-badge--${label.key}">${label.text}</span>`)
-						.join(' ')
-					popup.append(status)
+				// Popup content lives outside the normal Svelte tree (Leaflet-managed DOM).
+				// Use hard navigation for links inside popup cards to avoid client-router
+				// reconcile races during teardown.
+				for (const link of popup.querySelectorAll('a[href]')) {
+					link.addEventListener('click', (event) => {
+						if (!(event.currentTarget instanceof HTMLAnchorElement)) return
+						const href = event.currentTarget.getAttribute('href')
+						if (!href) return
+						if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
+						event.preventDefault()
+						location.assign(href)
+					})
 				}
-
-				const marker = L.circleMarker(
-					[c.latitude, c.longitude],
-					untrack(() => getMarkerStyle(c))
-				)
-					.bindPopup(popup)
-					.addTo(markersLayer)
-				marker.on('popupopen', () => {
-					selectedSlug = c.slug
-					refreshMarkerStyles()
-				})
-				marker.on('popupclose', () => {
-					if (selectedSlug === c.slug) selectedSlug = null
-					refreshMarkerStyles()
-				})
-				markerByChannelId.set(c.id, marker)
-				markerBySlug.set(c.slug, marker)
-
-				if (openSlug && c.slug === openSlug) {
-					marker.openPopup()
+			}
+			const cleanupPopup = () => {
+				if (mountedCard) {
+					try {
+						void unmount(mountedCard)
+					} catch {
+						// Ignore cleanup races from external popup DOM teardown.
+					}
+					mountedCard = null
 				}
+				popup.replaceChildren()
+			}
+			popupCleanupFns.push(cleanupPopup)
+
+			const marker = L.circleMarker(
+				[c.latitude, c.longitude],
+				untrack(() => getMarkerStyle(c))
+			)
+				.bindPopup(popup)
+				.addTo(markersLayer)
+			marker.on('click', () => {
+				renderPopup()
+			})
+			marker.on('popupopen', () => {
+				renderPopup()
+				selectedSlug = c.slug
+				refreshMarkerStyles()
+			})
+			marker.on('popupclose', () => {
+				if (selectedSlug === c.slug) selectedSlug = null
+				refreshMarkerStyles()
+			})
+			markerByChannelId.set(c.id, marker)
+			markerBySlug.set(c.slug, marker)
+
+			if (openSlug && c.slug === openSlug) {
+				marker.openPopup()
 			}
 		}
 	}
 
 	$effect(() => {
-		void channels
-		void openSlug
+		void markerDataKey
 		void linkToMap
 		updateMarkers()
 	})
@@ -227,10 +263,8 @@
 	})
 
 	onDestroy(() => {
-		for (const mounted of mountedPopups) {
-			void unmount(mounted)
-		}
-		mountedPopups = []
+		for (const cleanup of popupCleanupFns) cleanup()
+		popupCleanupFns = []
 	})
 </script>
 
@@ -247,7 +281,15 @@
 	}
 
 	:global(.map-popup) {
-		width: 12rem;
+		width: 14.5rem;
+	}
+
+	:global(.leaflet-popup-content-wrapper) {
+		padding: 0;
+	}
+
+	:global(.leaflet-popup-content) {
+		margin: 0;
 	}
 
 	/* Keep ChannelCard link/theme colors in Leaflet popups.
@@ -255,43 +297,6 @@
 	:global(.leaflet-container .map-popup article a:link),
 	:global(.leaflet-container .map-popup article a:visited) {
 		color: inherit;
-	}
-
-	:global(.map-popup-status) {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		padding: 0 0.25rem 0.25rem;
-		margin: 0;
-	}
-
-	:global(.map-badge) {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.1rem 0.35rem;
-		border-radius: 999px;
-		background: var(--gray-4);
-		color: var(--gray-12);
-		font-size: var(--font-1);
-		line-height: 1.2;
-	}
-
-	:global(.map-badge--favorite) {
-		background: var(--accent-4);
-		color: var(--accent-11);
-		border: 1px solid var(--accent-7);
-	}
-
-	:global(.map-badge--live) {
-		background: var(--gray-3);
-		color: var(--accent-11);
-		border: 1px solid var(--accent-8);
-	}
-
-	:global(.map-badge--playing) {
-		background: var(--accent-5);
-		color: var(--accent-11);
-		border: 1px solid var(--accent-8);
 	}
 
 	:global(.leaflet-popup-content-wrapper),
