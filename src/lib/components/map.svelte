@@ -19,14 +19,6 @@
 		return document.documentElement.classList.contains('dark')
 	}
 
-	function isRtl(node) {
-		const localDir = getComputedStyle(node).direction
-		if (localDir) return localDir.toLowerCase() === 'rtl'
-		const dir = document.documentElement.getAttribute('dir')
-		if (dir) return dir.toLowerCase() === 'rtl'
-		return getComputedStyle(document.documentElement).direction === 'rtl'
-	}
-
 	function createTileLayer() {
 		const tile = isDarkTheme() ? TILES.dark : TILES.light
 		return L.tileLayer(tile.url, {
@@ -36,28 +28,23 @@
 	}
 
 	function setup(node) {
+		let disposed = false
 		const params = new URLSearchParams(location.search)
 		const lat = latitude ?? (syncUrl ? Number(params.get('latitude')) || 20 : 20)
 		const lng = longitude ?? (syncUrl ? Number(params.get('longitude')) || 0 : 0)
 		const z = zoom ?? (syncUrl ? Number(params.get('zoom')) || 2 : 2)
 
-		const worldBounds = L.latLngBounds(
-			L.latLng(-85.05112878, -180),
-			L.latLng(85.05112878, 180)
-		)
+		const worldBounds = L.latLngBounds(L.latLng(-85.05112878, -180), L.latLng(85.05112878, 180))
 		const map = L.map(node, {
 			zoomControl: false,
 			attributionControl: false,
-			zoomAnimation: false,
-			fadeAnimation: false,
-			markerZoomAnimation: false,
+			doubleClickZoom: false,
 			worldCopyJump: false,
 			maxBounds: worldBounds,
 			maxBoundsViscosity: 1.0
 		}).setView([lat, lng], z)
-		const controlPosition = () => (isRtl(node) ? 'bottomleft' : 'bottomright')
-		const zoomControl = L.control.zoom({position: controlPosition()}).addTo(map)
-		const attributionControl = L.control.attribution({position: controlPosition()}).addTo(map)
+		L.control.zoom({position: 'bottomright'}).addTo(map)
+		L.control.attribution({position: 'bottomright'}).addTo(map)
 		map.setMaxBounds(worldBounds)
 		const worldMinZoom = map.getBoundsZoom(worldBounds, true)
 		map.setMinZoom(worldMinZoom)
@@ -70,11 +57,13 @@
 			map.on('click', (e) => onclick({lat: e.latlng.lat, lng: e.latlng.lng}))
 		}
 
+		let debounce
 		if (syncUrl) {
-			let debounce
 			map.on('moveend', () => {
 				clearTimeout(debounce)
 				debounce = setTimeout(() => {
+					if (disposed) return
+					if (!map || !map._loaded || !map._mapPane) return
 					const {lat, lng} = map.getCenter()
 					const z = map.getZoom()
 					const url = new URL(location.href)
@@ -100,15 +89,20 @@
 			map.removeLayer(tileLayer)
 			next.addTo(map)
 			tileLayer = next
-			const nextPosition = controlPosition()
-			zoomControl.setPosition(nextPosition)
-			attributionControl.setPosition(nextPosition)
 			map.panInsideBounds(worldBounds, {animate: false})
 		})
-		observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class', 'dir']})
+		observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
 
 		return () => {
+			disposed = true
 			observer.disconnect()
+			clearTimeout(debounce)
+			try {
+				map.stop()
+				map.off()
+			} catch {
+				// ignore
+			}
 			map.remove()
 		}
 	}
@@ -146,13 +140,18 @@
 		border-color: light-dark(var(--gray-5), var(--gray-6));
 	}
 
-	/* RTL fallback: ensure controls/credits are pinned to bottom-left. */
-	:global([dir='rtl']) .map :global(.leaflet-bottom.leaflet-right) {
-		right: auto;
-		left: 0;
+	/* Keep zoom controls above credits in bottom-right corner. */
+	.map :global(.leaflet-bottom.leaflet-right) {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
 	}
 
-	:global([dir='rtl']) .map :global(.leaflet-bottom.leaflet-left) {
-		left: 0;
+	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-zoom) {
+		order: 1;
+	}
+
+	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-attribution) {
+		order: 2;
 	}
 </style>

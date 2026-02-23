@@ -1,6 +1,7 @@
 <script>
+	import {goto} from '$app/navigation'
 	import L from 'leaflet'
-	import {mount, unmount, onDestroy, untrack} from 'svelte'
+	import {mount, onDestroy, unmount, untrack} from 'svelte'
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 	import {appState} from '$lib/app-state.svelte'
@@ -13,7 +14,7 @@
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {deriveChannelActivityState} from './channel-ui-state.js'
 
-	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, linkToMap?: boolean | 'global'}} */
+	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
 		channels = [],
 		latitude = null,
@@ -21,14 +22,17 @@
 		zoom = null,
 		syncUrl = true,
 		openSlug = null,
+		openRequestKey = null,
 		linkToMap = true
 	} = $props()
 
 	let map = null
 	let markersLayer = null
+	let selectedSlug = $state(/** @type {string | null} */ (null))
+	let popupNavigationInFlight = false
+	let lastAutoOpenedToken = null
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
-	let selectedSlug = $state(/** @type {string | null} */ (null))
 	/** @type {Map<string, L.CircleMarker>} */
 	let markerByChannelId = new Map()
 	/** @type {Map<string, L.CircleMarker>} */
@@ -58,16 +62,23 @@
 	const broadcastingIds = $derived(activityState.broadcastingChannelIds)
 	const playingSlugs = $derived(activityState.playingChannelSlugs)
 	const inDeckSlugs = $derived(activityState.inDeckChannelSlugs)
-	const mapChannels = $derived(
-		channels.filter(
-			(channel) =>
-				channel &&
-				typeof channel.id === 'string' &&
-				typeof channel.slug === 'string' &&
-				Number.isFinite(channel.latitude) &&
-				Number.isFinite(channel.longitude)
-		)
-	)
+	const mapChannels = $derived.by(() => {
+		const byId = new Map()
+		for (const channel of channels) {
+			const lat = Number(channel?.latitude)
+			const lng = Number(channel?.longitude)
+			if (
+				!channel ||
+				typeof channel.id !== 'string' ||
+				typeof channel.slug !== 'string' ||
+				!Number.isFinite(lat) ||
+				!Number.isFinite(lng)
+			)
+				continue
+			if (!byId.has(channel.id)) byId.set(channel.id, {...channel, latitude: lat, longitude: lng})
+		}
+		return [...byId.values()]
+	})
 	const markerDataKey = $derived(
 		mapChannels
 			.map((channel) => `${channel.id}:${channel.slug}:${channel.latitude}:${channel.longitude}`)
@@ -149,7 +160,39 @@
 			const marker = markerByChannelId.get(channel.id)
 			if (!marker) continue
 			marker.setStyle(getMarkerStyle(channel))
+			applyMarkerClasses(marker, channel)
 		}
+	}
+
+	/** @param {L.CircleMarker} marker @param {any} channel */
+	function applyMarkerClasses(marker, channel) {
+		const state = getChannelState(channel)
+		const el = marker.getElement?.() || marker._path
+		if (!el) return
+		el.classList.add('map-pin')
+		el.classList.toggle('map-pin--broadcasting', state.isBroadcasting)
+		el.classList.toggle('map-pin--active', state.isActive)
+		el.classList.toggle('map-pin--selected', state.isSelected)
+	}
+
+	/**
+	 * Auto-open a slug once (per slug value), then let user interactions drive selection.
+	 * @param {string | null | undefined} slug
+	 * @param {string | null | undefined} requestKey
+	 */
+	function maybeAutoOpenSlug(slug, requestKey) {
+		if (!slug || !map) return
+		const token = `${requestKey ?? ''}|${slug}`
+		if (token === lastAutoOpenedToken) return
+		const marker = markerBySlug.get(slug)
+		if (!marker) return
+		const channel = mapChannels.find((c) => c.slug === slug)
+		if (!channel) return
+		if (selectedSlug !== slug) selectedSlug = slug
+		const targetZoom = map.getMinZoom()
+		map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
+		marker.openPopup()
+		lastAutoOpenedToken = token
 	}
 
 	function updateMarkers() {
@@ -165,6 +208,26 @@
 			popup.className = 'map-popup'
 			const cardRoot = document.createElement('div')
 			let mountedCard = null
+			const onPopupClick = (event) => {
+				const target = event.target
+				if (!(target instanceof Element)) return
+				const link = target.closest('a[href]')
+				if (!(link instanceof HTMLAnchorElement)) return
+				const href = link.getAttribute('href')
+				if (!href) return
+				event.preventDefault()
+				event.stopPropagation()
+				if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+				// Never let popup links unload the app while audio is playing.
+				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
+				if (popupNavigationInFlight) return
+				popupNavigationInFlight = true
+				setTimeout(() => {
+					popupNavigationInFlight = false
+				}, 450)
+				void goto(href, {keepFocus: true})
+			}
+			popup.addEventListener('click', onPopupClick, true)
 			const renderPopup = () => {
 				if (mountedCard) return
 				const currentChannel = getLatestChannel(c)
@@ -175,73 +238,57 @@
 					props: {
 						channel: currentChannel,
 						href: `/${currentChannel.slug}`,
-						updatedAtHref: `/${currentChannel.slug}/map`
+						updatedAtHref:
+							linkToMap === 'global'
+								? `/?display=map&slug=${encodeURIComponent(currentChannel.slug)}`
+								: `/${currentChannel.slug}/map`
 					}
 				})
-				// Popup content lives outside the normal Svelte tree (Leaflet-managed DOM).
-				// Use hard navigation for links inside popup cards to avoid client-router
-				// reconcile races during teardown.
-				for (const link of popup.querySelectorAll('a[href]')) {
-					link.addEventListener('click', (event) => {
-						if (!(event.currentTarget instanceof HTMLAnchorElement)) return
-						const href = event.currentTarget.getAttribute('href')
-						if (!href) return
-						if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
-						event.preventDefault()
-						location.assign(href)
-					})
-				}
 			}
 			const cleanupPopup = () => {
+				popup.removeEventListener('click', onPopupClick, true)
 				if (mountedCard) {
 					try {
 						void unmount(mountedCard)
 					} catch {
-						// Ignore cleanup races from external popup DOM teardown.
+						// Ignore Leaflet teardown races.
 					}
 					mountedCard = null
 				}
 				popup.replaceChildren()
 			}
 			popupCleanupFns.push(cleanupPopup)
+			renderPopup()
 
-			const marker = L.circleMarker(
-				[c.latitude, c.longitude],
-				untrack(() => getMarkerStyle(c))
-			)
-				.bindPopup(popup)
+			const marker = L.circleMarker([c.latitude, c.longitude], {
+				...untrack(() => getMarkerStyle(c)),
+				className: 'map-pin',
+				bubblingMouseEvents: false,
+				interactive: true
+			})
+				.bindPopup(popup, {autoPan: false})
 				.addTo(markersLayer)
-			marker.on('click', () => {
-				renderPopup()
-			})
-			marker.on('popupopen', () => {
-				renderPopup()
-				selectedSlug = c.slug
-				refreshMarkerStyles()
-			})
-			marker.on('popupclose', () => {
-				if (selectedSlug === c.slug) selectedSlug = null
-				refreshMarkerStyles()
+			applyMarkerClasses(marker, c)
+			marker.on('click', (event) => {
+				// Keep pin click behavior deterministic: one click opens popup.
+				// Prevent map-level click handlers/close-on-click from stealing this interaction.
+				if (event?.originalEvent) {
+					event.originalEvent.preventDefault()
+					event.originalEvent.stopPropagation()
+				}
+				if (selectedSlug !== c.slug) selectedSlug = c.slug
+				marker.openPopup()
 			})
 			markerByChannelId.set(c.id, marker)
 			markerBySlug.set(c.slug, marker)
-
-			if (openSlug && c.slug === openSlug) {
-				marker.openPopup()
-			}
 		}
+		maybeAutoOpenSlug(openSlug, openRequestKey)
 	}
 
 	$effect(() => {
 		void markerDataKey
 		void linkToMap
 		updateMarkers()
-	})
-
-	$effect(() => {
-		if (openSlug === undefined) return
-		if (openSlug === selectedSlug) return
-		selectedSlug = openSlug
 	})
 
 	$effect(() => {
@@ -255,16 +302,17 @@
 	})
 
 	$effect(() => {
-		const slug = selectedSlug
-		if (!slug) return
-		const marker = markerBySlug.get(slug)
-		if (!marker) return
-		if (!marker.isPopupOpen()) marker.openPopup()
+		if (!openSlug) {
+			lastAutoOpenedToken = null
+			return
+		}
+		maybeAutoOpenSlug(openSlug, openRequestKey)
 	})
 
 	onDestroy(() => {
 		for (const cleanup of popupCleanupFns) cleanup()
 		popupCleanupFns = []
+		for (const marker of markerByChannelId.values()) marker.off()
 	})
 </script>
 
@@ -304,5 +352,57 @@
 		background: var(--gray-1);
 		color: var(--gray-12);
 		box-shadow: var(--shadow-modal);
+	}
+
+	:global(.leaflet-interactive.map-pin--broadcasting) {
+		animation: map-pin-broadcast-wave 1.8s ease-out infinite;
+	}
+
+	@keyframes map-pin-broadcast-wave {
+		0% {
+			stroke-width: 2;
+			filter: drop-shadow(0 0 0 var(--accent-9));
+		}
+		45% {
+			stroke-width: 4;
+			filter:
+				drop-shadow(0 0 6px var(--accent-9))
+				drop-shadow(0 0 12px color-mix(in oklab, var(--accent-9) 55%, transparent));
+		}
+		100% {
+			stroke-width: 2;
+			filter: drop-shadow(0 0 0 transparent);
+		}
+	}
+
+	/* Make Leaflet close anchor look like an icon-only R4 button. */
+	:global(.leaflet-container .leaflet-popup-close-button) {
+		top: var(--space-1);
+		right: var(--space-1);
+		width: 1.75rem;
+		height: 1.75rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border: 1px solid transparent;
+		border-radius: var(--border-radius);
+		background: var(--gray-2);
+		color: var(--gray-12);
+		font-size: 1rem;
+		line-height: 1;
+		text-decoration: none;
+		transition:
+			background 0.1s,
+			border-color 0.1s,
+			color 0.1s;
+	}
+
+	:global(.leaflet-container .leaflet-popup-close-button:hover),
+	:global(.leaflet-container .leaflet-popup-close-button:focus-visible) {
+		background: var(--gray-3);
+		border-color: var(--gray-6);
+		color: var(--accent-11);
+		outline: none;
 	}
 </style>
