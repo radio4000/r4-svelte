@@ -29,11 +29,11 @@
 	let map = null
 	let markersLayer = null
 	let popupNavigationInFlight = false
+	let pendingPopupLinkNavigationTimer = null
 	let lastAutoOpenedToken = null
 	let autoOpenRetryTimer = null
 	let stickyPopupSlug = null
 	let stickyPopupUntil = 0
-	let deferredMarkerRefreshTimer = null
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
 	/** @type {Map<string, L.CircleMarker>} */
@@ -177,10 +177,10 @@
 		}
 	}
 
-	function clearDeferredMarkerRefresh() {
-		if (deferredMarkerRefreshTimer) {
-			clearTimeout(deferredMarkerRefreshTimer)
-			deferredMarkerRefreshTimer = null
+	function clearPendingPopupLinkNavigation() {
+		if (pendingPopupLinkNavigationTimer) {
+			clearTimeout(pendingPopupLinkNavigationTimer)
+			pendingPopupLinkNavigationTimer = null
 		}
 	}
 
@@ -281,26 +281,31 @@
 				if (target.closest('.leaflet-popup-close-button')) return
 				const link = target.closest('a[href]')
 				if (link instanceof HTMLAnchorElement) {
+					event.preventDefault()
+					event.stopPropagation()
+					if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
 					if (event.detail > 1) {
-						event.preventDefault()
-						event.stopPropagation()
-						if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
+						clearPendingPopupLinkNavigation()
 						return
 					}
 					const href = link.getAttribute('href')
 					if (!href) return
 					if (href.startsWith('#')) return
-					event.preventDefault()
-					event.stopPropagation()
-					if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation()
 					// Never let popup links unload the app while audio is playing.
 					if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
 					if (popupNavigationInFlight) return
-					popupNavigationInFlight = true
-					setTimeout(() => {
-						popupNavigationInFlight = false
-					}, 450)
-					void goto(href, {keepFocus: true})
+					clearPendingPopupLinkNavigation()
+					// Delay single-click navigation so double-click-to-play on link areas
+					// can cancel the navigation on the second click.
+					pendingPopupLinkNavigationTimer = setTimeout(() => {
+						pendingPopupLinkNavigationTimer = null
+						if (popupNavigationInFlight) return
+						popupNavigationInFlight = true
+						setTimeout(() => {
+							popupNavigationInFlight = false
+						}, 450)
+						void goto(href, {keepFocus: true})
+					}, 280)
 					return
 				}
 				if (event.detail === 2) {
@@ -386,15 +391,6 @@
 	$effect(() => {
 		void markerDataKey
 		void linkToMap
-		if (Date.now() < stickyPopupUntil && markerByChannelId.size) {
-			clearDeferredMarkerRefresh()
-			const delay = Math.max(0, stickyPopupUntil - Date.now()) + 20
-			deferredMarkerRefreshTimer = setTimeout(() => {
-				deferredMarkerRefreshTimer = null
-				updateMarkers()
-			}, delay)
-			return
-		}
 		updateMarkers()
 	})
 
@@ -418,7 +414,7 @@
 
 	onDestroy(() => {
 		clearAutoOpenRetry()
-		clearDeferredMarkerRefresh()
+		clearPendingPopupLinkNavigation()
 		for (const cleanup of popupCleanupFns) cleanup()
 		popupCleanupFns = []
 		for (const marker of markerByChannelId.values()) marker.off()
