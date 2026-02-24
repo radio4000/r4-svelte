@@ -25,6 +25,15 @@
 
 	let following = $state([])
 	let loading = $state(true)
+	const normalizeChannels = (rows) => {
+		if (!Array.isArray(rows)) return []
+		const deduped = new Map()
+		for (const row of rows) {
+			if (!row || typeof row.id !== 'string') continue
+			if (!deduped.has(row.id)) deduped.set(row.id, row)
+		}
+		return [...deduped.values()]
+	}
 
 	$effect(() => {
 		if (!channel?.id) return
@@ -42,7 +51,11 @@
 				staleTime: 5 * 60 * 1000
 			})
 			.then((data) => {
-				following = data
+				following = normalizeChannels(data)
+				loading = false
+			})
+			.catch(() => {
+				following = []
 				loading = false
 			})
 	})
