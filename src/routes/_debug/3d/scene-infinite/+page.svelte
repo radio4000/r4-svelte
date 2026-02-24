@@ -58,14 +58,13 @@
 				selectedId = null
 			}
 		}
-		const nextGui = new GUI({title: '3D Infinite Debug'})
+		const nextGui = new GUI({title: '3D Infinite Debug', autoPlace: false, container: sceneEl})
 		nextGui.domElement.style.position = 'absolute'
 		nextGui.domElement.style.top = '0.5rem'
 		nextGui.domElement.style.right = '0.5rem'
 		nextGui.domElement.style.left = 'auto'
 		nextGui.domElement.style.bottom = 'auto'
 		nextGui.domElement.style.zIndex = '4'
-		sceneEl.appendChild(nextGui.domElement)
 		const controllers = []
 		controllers.push(
 			nextGui

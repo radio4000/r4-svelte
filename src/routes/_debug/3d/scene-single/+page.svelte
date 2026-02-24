@@ -52,14 +52,13 @@
 			matchingTags: matchingTagCount,
 			rotate: rotateEnabled
 		}
-		const nextGui = new GUI({title: '3D Single Debug'})
+		const nextGui = new GUI({title: '3D Single Debug', autoPlace: false, container: sceneEl})
 		nextGui.domElement.style.position = 'absolute'
 		nextGui.domElement.style.top = '0.5rem'
 		nextGui.domElement.style.right = '0.5rem'
 		nextGui.domElement.style.left = 'auto'
 		nextGui.domElement.style.bottom = 'auto'
 		nextGui.domElement.style.zIndex = '4'
-		sceneEl.appendChild(nextGui.domElement)
 		const controllers = []
 		controllers.push(
 			nextGui
@@ -70,7 +69,12 @@
 		controllers.push(nextGui.add(params, 'selected').onChange((value) => (selected = !!value)))
 		controllers.push(nextGui.add(params, 'active').onChange((value) => (active = !!value)))
 		controllers.push(nextGui.add(params, 'favorite').onChange((value) => (favorite = !!value)))
-		controllers.push(nextGui.add(params, 'live').name('broadcasting').onChange((value) => (broadcasting = !!value)))
+		controllers.push(
+			nextGui
+				.add(params, 'live')
+				.name('broadcasting')
+				.onChange((value) => (broadcasting = !!value))
+		)
 		controllers.push(nextGui.add(params, 'hover').onChange((value) => (hovered = !!value)))
 		controllers.push(
 			nextGui
