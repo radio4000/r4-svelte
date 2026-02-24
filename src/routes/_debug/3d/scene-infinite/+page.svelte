@@ -1,5 +1,6 @@
 <script>
 	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
+	import {onMount} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
 	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
@@ -30,6 +31,53 @@
 	let lastClickId = $state(/** @type {string | null} */ (null))
 	let lastClickAt = $state(0)
 	const DOUBLE_CLICK_MS = 320
+	let gui = null
+	let guiChannelsKey = $state('')
+	let guiControllers = $state([])
+	let sceneEl = $state()
+
+	function handleNavigate(href) {
+		if (!href) return
+		window.location.assign(href)
+	}
+
+	async function rebuildGui() {
+		if (typeof window === 'undefined' || !channels.length || !sceneEl) return
+		const channelsKey = channels.map((c) => c.id).join('|')
+		if (gui && channelsKey === guiChannelsKey) return
+		if (gui) {
+			gui.destroy()
+			gui = null
+			guiControllers = []
+		}
+		const {GUI} = await import('lil-gui')
+		const channelOptions = Object.fromEntries([['(none)', ''], ...channels.map((c) => [`@${c.slug}`, c.id])])
+		const params = {
+			selected: selectedId || '',
+			clearSelection() {
+				selectedId = null
+			}
+		}
+		const nextGui = new GUI({title: '3D Infinite Debug'})
+		nextGui.domElement.style.position = 'absolute'
+		nextGui.domElement.style.top = '0.5rem'
+		nextGui.domElement.style.right = '0.5rem'
+		nextGui.domElement.style.left = 'auto'
+		nextGui.domElement.style.bottom = 'auto'
+		nextGui.domElement.style.zIndex = '4'
+		sceneEl.appendChild(nextGui.domElement)
+		const controllers = []
+		controllers.push(
+			nextGui
+				.add(params, 'selected', channelOptions)
+				.name('selected channel')
+				.onChange((value) => (selectedId = value ? String(value) : null))
+		)
+		controllers.push(nextGui.add(params, 'clearSelection').name('clear selection'))
+		gui = nextGui
+		guiControllers = controllers
+		guiChannelsKey = channelsKey
+	}
 
 	async function handleClick(item) {
 		if (!item?.slug || !item?.id) return
@@ -45,6 +93,24 @@
 		lastClickId = item.id
 		lastClickAt = now
 	}
+
+	$effect(() => {
+		void channels.length
+		void rebuildGui()
+	})
+
+	$effect(() => {
+		if (!guiControllers.length) return
+		for (const controller of guiControllers) controller.updateDisplay()
+	})
+
+	onMount(() => {
+		return () => {
+			if (gui) gui.destroy()
+			gui = null
+			guiControllers = []
+		}
+	})
 </script>
 
 <svelte:head>
@@ -57,12 +123,11 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
-			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
 		<p>Infinite scene with shared 3D channel cards.</p>
 	</header>
-	<section class="scene">
-		<InfiniteCanvas {media} {activeId} {activeIds} {selectedId} onclick={handleClick} />
+	<section class="scene" bind:this={sceneEl}>
+		<InfiniteCanvas {media} {activeId} {activeIds} {selectedId} onclick={handleClick} onnavigate={handleNavigate} />
 	</section>
 </article>
 
@@ -74,5 +139,6 @@
 	.scene {
 		flex: 1;
 		min-height: 0;
+		position: relative;
 	}
 </style>

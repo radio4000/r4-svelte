@@ -1,5 +1,6 @@
 <script>
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
+	import {onMount} from 'svelte'
 	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
 	import {channelsCollection} from '$lib/tanstack/collections'
 	import {channelAvatarUrl, extractHashtags, extractMentions} from '$lib/utils.ts'
@@ -18,8 +19,70 @@
 	let favorite = $state(false)
 	let hovered = $state(false)
 	let broadcasting = $state(false)
+	let matchingTagCount = $state(0)
 	let rotateEnabled = $state(true)
-	let matchingTags = $state(true)
+	let gui = null
+	let guiChannelsKey = $state('')
+	let guiControllers = $state([])
+	let sceneEl = $state()
+
+	function handleNavigate(href) {
+		if (!href) return
+		window.location.assign(href)
+	}
+
+	async function rebuildGui() {
+		if (typeof window === 'undefined' || !channels.length || !sceneEl) return
+		const channelsKey = channels.map((c) => c.id).join('|')
+		if (gui && channelsKey === guiChannelsKey) return
+		if (gui) {
+			gui.destroy()
+			gui = null
+			guiControllers = []
+		}
+		const {GUI} = await import('lil-gui')
+		const channelOptions = Object.fromEntries(channels.map((c) => [`@${c.slug}`, c.id]))
+		const params = {
+			channel: selectedChannelId || channels[0]?.id || '',
+			selected,
+			active,
+			favorite,
+			live: broadcasting,
+			hover: hovered,
+			matchingTags: matchingTagCount,
+			rotate: rotateEnabled
+		}
+		const nextGui = new GUI({title: '3D Single Debug'})
+		nextGui.domElement.style.position = 'absolute'
+		nextGui.domElement.style.top = '0.5rem'
+		nextGui.domElement.style.right = '0.5rem'
+		nextGui.domElement.style.left = 'auto'
+		nextGui.domElement.style.bottom = 'auto'
+		nextGui.domElement.style.zIndex = '4'
+		sceneEl.appendChild(nextGui.domElement)
+		const controllers = []
+		controllers.push(
+			nextGui
+				.add(params, 'channel', channelOptions)
+				.name('channel')
+				.onChange((value) => (selectedChannelId = String(value || '')))
+		)
+		controllers.push(nextGui.add(params, 'selected').onChange((value) => (selected = !!value)))
+		controllers.push(nextGui.add(params, 'active').onChange((value) => (active = !!value)))
+		controllers.push(nextGui.add(params, 'favorite').onChange((value) => (favorite = !!value)))
+		controllers.push(nextGui.add(params, 'live').name('broadcasting').onChange((value) => (broadcasting = !!value)))
+		controllers.push(nextGui.add(params, 'hover').onChange((value) => (hovered = !!value)))
+		controllers.push(
+			nextGui
+				.add(params, 'matchingTags', 0, 10, 1)
+				.name('matching tags')
+				.onChange((value) => (matchingTagCount = Number(value) || 0))
+		)
+		controllers.push(nextGui.add(params, 'rotate').onChange((value) => (rotateEnabled = !!value)))
+		gui = nextGui
+		guiControllers = controllers
+		guiChannelsKey = channelsKey
+	}
 
 	const channel = $derived.by(() => {
 		if (!channels.length) return null
@@ -30,11 +93,30 @@
 		if (!selectedChannelId && channels[0]?.id) selectedChannelId = channels[0].id
 	})
 
+	$effect(() => {
+		void channels.length
+		void rebuildGui()
+	})
+
+	$effect(() => {
+		if (!guiControllers.length) return
+		for (const controller of guiControllers) controller.updateDisplay()
+	})
+
+	onMount(() => {
+		return () => {
+			if (gui) gui.destroy()
+			gui = null
+			guiControllers = []
+		}
+	})
+
 	const mediaItem = $derived.by(() => {
 		if (!channel) return null
 		const tags = extractHashtags(channel.description || '')
-		const demoActiveTags = matchingTags ? ['#jazz', '#soul'] : tags.slice(0, 1)
-		const activeTags = active ? demoActiveTags : []
+		const count = Math.max(0, Math.min(10, Number(matchingTagCount) || 0))
+		const tagPool = [...new Set([...tags, ...Array.from({length: 10}, (_, i) => `#match${i + 1}`)])]
+		const activeTags = tagPool.slice(0, count)
 		return {
 			url: channel.image ? channelAvatarUrl(channel.image) : fallbackDataUrl,
 			width: 250,
@@ -66,38 +148,11 @@
 			<a href="/_debug/3d">&larr;</a>
 			<a href="/_debug/3d/scene-infinite">scene-infinite</a>
 			<a href="/_debug/3d/scene-single">scene-single</a>
-			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
-		<form class="row controls">
-			<label>
-				Channel
-				<select bind:value={selectedChannelId}>
-					{#each channels as c (c.id)}
-						<option value={c.id}>@{c.slug}</option>
-					{/each}
-				</select>
-			</label>
-			<fieldset>
-				<legend>Focus</legend>
-				<label><input type="checkbox" bind:checked={selected} /> selected</label>
-				<label><input type="checkbox" bind:checked={hovered} /> hover</label>
-			</fieldset>
-			<fieldset>
-				<legend>Status</legend>
-				<label><input type="checkbox" bind:checked={active} /> active</label>
-				<label><input type="checkbox" bind:checked={favorite} /> favorite</label>
-				<label><input type="checkbox" bind:checked={broadcasting} /> live/broadcasting</label>
-			</fieldset>
-			<fieldset>
-				<legend>Interaction</legend>
-				<label><input type="checkbox" bind:checked={rotateEnabled} /> rotate</label>
-				<label><input type="checkbox" bind:checked={matchingTags} /> matching-tags-demo</label>
-			</fieldset>
-		</form>
 	</header>
 
 	{#if mediaItem && channel}
-		<section class="scene">
+		<section class="scene" bind:this={sceneEl}>
 			<ChannelScene
 				media={[mediaItem]}
 				activeId={active ? channel.id : undefined}
@@ -112,6 +167,7 @@
 				singleSceneMouseDrift={false}
 				minCameraZ={26}
 				maxCameraZ={70}
+				onnavigate={handleNavigate}
 			/>
 		</section>
 	{/if}
@@ -125,19 +181,6 @@
 	.scene {
 		flex: 1;
 		min-height: 0;
-	}
-	select {
-		min-width: 12rem;
-	}
-	.controls {
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		align-items: center;
-	}
-	fieldset {
-		display: inline-flex;
-		gap: 0.5rem;
-		align-items: center;
-		flex-wrap: wrap;
+		position: relative;
 	}
 </style>
