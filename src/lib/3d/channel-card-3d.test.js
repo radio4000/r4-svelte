@@ -32,4 +32,11 @@ describe('resolveChannelCardStates', () => {
 		expect(state.cardStyle).toBe('playing')
 		expect(state.infoStyle).toBe('active')
 	})
+
+	it('live state does not change border or card style', () => {
+		const state = resolveChannelCardStates({id: 'ch1', isLive: true}, {})
+		expect(state.isLive).toBe(true)
+		expect(state.cardStyle).toBe('default')
+		expect(state.borderStyles).toEqual(['default'])
+	})
 })

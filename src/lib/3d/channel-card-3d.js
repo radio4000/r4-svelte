@@ -1,4 +1,4 @@
-export const BORDER_LAYER_ORDER = ['favorite', 'active', 'hover', 'selected', 'live']
+export const BORDER_LAYER_ORDER = ['favorite', 'active', 'hover', 'selected']
 export const CHANNEL_INFO_CANVAS = {width: 1024, height: 440}
 import {formatDate} from '$lib/dates.js'
 
@@ -69,10 +69,10 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
 	const isLive = !!mediaItem.isLive
 
 	// Keep one dominant border style at a time for a cleaner, unified composition.
+	// Live state is represented by the 3D sphere badge only; it should not alter card border/fill.
 	let dominantBorderStyle = 'default'
 	if (isSelected) dominantBorderStyle = 'selected'
 	else if (isActive) dominantBorderStyle = 'active'
-	else if (isLive) dominantBorderStyle = 'live'
 	else if (isFavorite) dominantBorderStyle = 'favorite'
 	else if (isHovered) dominantBorderStyle = 'hover'
 
@@ -82,7 +82,6 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
 	if (isPlaying) cardStyle = 'playing'
 	else if (isActive) cardStyle = 'active'
 	else if (isSelected) cardStyle = 'hover'
-	else if (isLive) cardStyle = 'live'
 	else if (isHovered) cardStyle = 'hover'
 
 	let infoStyle = null
