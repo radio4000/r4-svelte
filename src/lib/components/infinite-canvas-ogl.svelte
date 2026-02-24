@@ -141,6 +141,17 @@
 					<kbd>Q</kbd><kbd>E</kbd> up/down
 				</div>
 			</div>
+			<div class="controls-row">
+				<Icon icon="circle-info" size={16} />
+				<div>
+					Infinite mode based on a tutorial from
+					<a
+						href="https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/"
+						target="_blank"
+						rel="noopener noreferrer">Edoardo Lunardi on Codrops</a
+					>.
+				</div>
+			</div>
 		</div>
 	</Dialog>
 </div>
