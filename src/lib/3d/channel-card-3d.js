@@ -71,9 +71,9 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
 	// Keep one dominant border style at a time for a cleaner, unified composition.
 	// Live state is represented by the 3D sphere badge only; it should not alter card border/fill.
 	let dominantBorderStyle = 'default'
-	if (isSelected) dominantBorderStyle = 'selected'
+	if (isFavorite) dominantBorderStyle = 'favorite'
+	else if (isSelected) dominantBorderStyle = 'selected'
 	else if (isActive) dominantBorderStyle = 'active'
-	else if (isFavorite) dominantBorderStyle = 'favorite'
 	else if (isHovered) dominantBorderStyle = 'hover'
 
 	const borderStyles = [dominantBorderStyle]

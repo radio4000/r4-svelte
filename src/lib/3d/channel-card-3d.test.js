@@ -27,6 +27,13 @@ describe('resolveChannelCardStates', () => {
 		expect(state.borderStyles).toEqual(['selected'])
 	})
 
+	it('favorite border remains dominant when card is selected/open', () => {
+		const state = resolveChannelCardStates({id: 'ch1', isFavorite: true}, {selectedId: 'ch1'})
+		expect(state.isFavorite).toBe(true)
+		expect(state.isSelected).toBe(true)
+		expect(state.borderStyles).toEqual(['favorite'])
+	})
+
 	it('playing card style dominates visual card fill', () => {
 		const state = resolveChannelCardStates({id: 'ch1', isPlaying: true}, {activeIds: ['ch1']})
 		expect(state.cardStyle).toBe('playing')
