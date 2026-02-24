@@ -15,6 +15,7 @@
 	let selectedChannelId = $state('')
 	let selected = $state(true)
 	let active = $state(true)
+	let favorite = $state(false)
 	let hovered = $state(false)
 	let broadcasting = $state(false)
 	let rotateEnabled = $state(true)
@@ -48,6 +49,7 @@
 			activeMentions: [],
 			hasActiveTagMatch: activeTags.length > 0,
 			isActive: active,
+			isFavorite: favorite,
 			isLive: broadcasting,
 			channel
 		}
@@ -66,7 +68,7 @@
 			<a href="/_debug/3d/scene-single">scene-single</a>
 			<a href="/_debug/3d/card-states">card-states</a>
 		</menu>
-		<div class="row">
+		<form class="row controls">
 			<label>
 				Channel
 				<select bind:value={selectedChannelId}>
@@ -75,13 +77,23 @@
 					{/each}
 				</select>
 			</label>
-			<label><input type="checkbox" bind:checked={selected} /> selected</label>
-			<label><input type="checkbox" bind:checked={active} /> active</label>
-			<label><input type="checkbox" bind:checked={hovered} /> hover</label>
-			<label><input type="checkbox" bind:checked={broadcasting} /> broadcasting</label>
-			<label><input type="checkbox" bind:checked={rotateEnabled} /> rotate</label>
-			<label><input type="checkbox" bind:checked={matchingTags} /> matching-tags-demo</label>
-		</div>
+			<fieldset>
+				<legend>Focus</legend>
+				<label><input type="checkbox" bind:checked={selected} /> selected</label>
+				<label><input type="checkbox" bind:checked={hovered} /> hover</label>
+			</fieldset>
+			<fieldset>
+				<legend>Status</legend>
+				<label><input type="checkbox" bind:checked={active} /> active</label>
+				<label><input type="checkbox" bind:checked={favorite} /> favorite</label>
+				<label><input type="checkbox" bind:checked={broadcasting} /> live/broadcasting</label>
+			</fieldset>
+			<fieldset>
+				<legend>Interaction</legend>
+				<label><input type="checkbox" bind:checked={rotateEnabled} /> rotate</label>
+				<label><input type="checkbox" bind:checked={matchingTags} /> matching-tags-demo</label>
+			</fieldset>
+		</form>
 	</header>
 
 	{#if mediaItem && channel}
@@ -116,5 +128,16 @@
 	}
 	select {
 		min-width: 12rem;
+	}
+	.controls {
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+	}
+	fieldset {
+		display: inline-flex;
+		gap: 0.5rem;
+		align-items: center;
+		flex-wrap: wrap;
 	}
 </style>
