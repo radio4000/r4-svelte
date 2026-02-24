@@ -53,6 +53,12 @@ export function getChannelSceneThemeConfig() {
 		activeInfoMutedColor: getCssColor('--gray-2'),
 		liveBadgeBgColor: getCssColor('--accent-9'),
 		liveBadgeTextColor: getCssColor('--gray-1'),
+		liveSphereColor: getCssColor('--accent-9'),
+		liveSphereSpecColor: getCssColor('--gray-1'),
+		liveSphereEmissiveStrength: 0.28,
+		liveSpherePulseAmount: 0.045,
+		liveSpherePulseSpeed: 1.8,
+		liveSphereSizeRatio: 0.14,
 		tagBadgeColor: getCssColor('--accent-9'),
 		roundArtworks,
 		cornerRadius: roundArtworks ? 0.12 : 0

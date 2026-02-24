@@ -7,7 +7,7 @@
  * by Edoardo Lunardi, Codrops (Tympanus), January 7, 2026
  * https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/
  */
-import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3} from 'ogl'
+import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3, Sphere} from 'ogl'
 import {gsap} from '$lib/animations'
 import {
 	resolveChannelCardStates,
@@ -225,6 +225,53 @@ const borderFragmentShader = `
 	}
 `
 
+const liveSphereVertexShader = `
+	attribute vec3 position;
+	attribute vec3 normal;
+	uniform mat4 modelViewMatrix;
+	uniform mat4 projectionMatrix;
+	uniform mat4 modelMatrix;
+	uniform mat3 normalMatrix;
+	uniform float uCameraZ;
+	varying vec3 vNormal;
+	varying vec3 vWorldPos;
+	varying float vDepthFade;
+	void main() {
+		vec4 worldPos = modelMatrix * vec4(position, 1.0);
+		vWorldPos = worldPos.xyz;
+		vNormal = normalize(normalMatrix * normal);
+		float dist = abs(worldPos.z - uCameraZ);
+		vDepthFade = 1.0 - smoothstep(140.0, 260.0, dist);
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
+`
+
+const liveSphereFragmentShader = `
+	precision highp float;
+	uniform vec3 uColor;
+	uniform vec3 uSpecColor;
+	uniform vec3 uCameraPos;
+	uniform float uPulse;
+	uniform float uEmissiveStrength;
+	varying vec3 vNormal;
+	varying vec3 vWorldPos;
+	varying float vDepthFade;
+	void main() {
+		if (vDepthFade < 0.01) discard;
+		vec3 n = normalize(vNormal);
+		vec3 l = normalize(vec3(-0.32, 0.74, 0.58));
+		vec3 v = normalize(uCameraPos - vWorldPos);
+		float diffuse = max(dot(n, l), 0.0);
+		float spec = pow(max(dot(reflect(-l, n), v), 0.0), 24.0);
+		float fresnel = pow(1.0 - max(dot(n, v), 0.0), 2.6);
+		float glow = uEmissiveStrength * (0.72 + 0.28 * uPulse);
+		vec3 lit = uColor * (0.42 + diffuse * 0.58 + glow);
+		vec3 rim = uColor * fresnel * 0.42;
+		vec3 highlight = uSpecColor * spec * 0.78;
+		gl_FragColor = vec4(lit + rim + highlight, 1.0);
+	}
+`
+
 const ENTRANCE_DURATION = 900
 const EXIT_DURATION = 500
 const ENTRANCE_STAGGER = 80
@@ -272,6 +319,16 @@ export class InfiniteCanvasOGL {
 		this.liveBadgeBgColor = config.liveBadgeBgColor || this.liveBorderColor
 		this.liveBadgeTextColor = config.liveBadgeTextColor || '#fff'
 		this.tagBadgeColor = config.tagBadgeColor || this.liveBadgeBgColor
+		this.liveSphereColor = config.liveSphereColor || this.liveBadgeBgColor
+		this.liveSphereSpecColor = config.liveSphereSpecColor || '#ffffff'
+		this.liveSphereEmissiveStrength = Number.isFinite(config.liveSphereEmissiveStrength)
+			? Number(config.liveSphereEmissiveStrength)
+			: 0.28
+		this.liveSpherePulseAmount = Number.isFinite(config.liveSpherePulseAmount)
+			? Number(config.liveSpherePulseAmount)
+			: 0.045
+		this.liveSpherePulseSpeed = Number.isFinite(config.liveSpherePulseSpeed) ? Number(config.liveSpherePulseSpeed) : 1.8
+		this.liveSphereSizeRatio = Number.isFinite(config.liveSphereSizeRatio) ? Number(config.liveSphereSizeRatio) : 0.14
 		this.roundArtworks = config.roundArtworks ?? true
 		this.cornerRadius = config.cornerRadius ?? 0.12
 		this.useRoundedBezel = this.roundArtworks && this.cornerRadius > 0.001
@@ -318,7 +375,6 @@ export class InfiniteCanvasOGL {
 		this.infoTextureCache = new Map()
 		this.backgroundProgramCache = new Map()
 		this.tagBadgeTextureCache = new Map()
-		this.liveBadgeTexture = null
 		this.disposed = false
 		this.hoveredItem = null
 		this.hoveredId = null
@@ -389,6 +445,7 @@ export class InfiniteCanvasOGL {
 		// Create shared geometries
 		this.planeGeometry = new Plane(this.gl, {width: 1, height: 1})
 		this.borderGeometry = new Plane(this.gl, {width: 1, height: 1})
+		this.liveSphereGeometry = new Sphere(this.gl, {radius: 0.5, widthSegments: 16, heightSegments: 12})
 
 		// 1x1 canvas placeholder avoids "Alpha-premult and y-flip deprecated" warnings
 		// that fire when OGL uploads a typed-array default texture
@@ -544,6 +601,21 @@ export class InfiniteCanvasOGL {
 			transparent: true,
 			depthTest: true,
 			depthWrite: false
+		})
+		this.liveSphereProgram = new Program(this.gl, {
+			vertex: liveSphereVertexShader,
+			fragment: liveSphereFragmentShader,
+			uniforms: {
+				uColor: {value: this.parseColor(this.liveSphereColor)},
+				uSpecColor: {value: this.parseColor(this.liveSphereSpecColor)},
+				uCameraPos: {value: [0, 0, INITIAL_CAMERA_Z]},
+				uCameraZ: {value: INITIAL_CAMERA_Z},
+				uPulse: {value: 1},
+				uEmissiveStrength: {value: this.liveSphereEmissiveStrength}
+			},
+			transparent: false,
+			depthTest: true,
+			depthWrite: true
 		})
 
 		// Border programs per item state
@@ -891,35 +963,6 @@ export class InfiniteCanvasOGL {
 		}
 		this.tagBadgeTextureCache.set(key, result)
 		return result
-	}
-
-	getLiveBadgeTexture() {
-		if (!this.gl) return null
-		if (this.liveBadgeTexture) return this.liveBadgeTexture
-		const canvas = document.createElement('canvas')
-		canvas.width = 96
-		canvas.height = 96
-		const ctx = /** @type {CanvasRenderingContext2D | null} */ (canvas.getContext('2d'))
-		if (!ctx) return null
-		ctx.clearRect(0, 0, canvas.width, canvas.height)
-		const cx = canvas.width * 0.5
-		const cy = canvas.height * 0.5
-		const r = canvas.width * 0.26
-		ctx.fillStyle = this.liveBadgeBgColor
-		ctx.beginPath()
-		ctx.arc(cx, cy, r, 0, Math.PI * 2)
-		ctx.fill()
-		ctx.fillStyle = 'rgba(255,255,255,0.9)'
-		ctx.beginPath()
-		ctx.arc(cx - r * 0.22, cy - r * 0.22, r * 0.36, 0, Math.PI * 2)
-		ctx.fill()
-		this.liveBadgeTexture = new Texture(this.gl, {
-			image: canvas,
-			generateMipmaps: false,
-			minFilter: this.gl.LINEAR,
-			magFilter: this.gl.LINEAR
-		})
-		return this.liveBadgeTexture
 	}
 
 	bindEvents() {
@@ -1323,7 +1366,7 @@ export class InfiniteCanvasOGL {
 					!mesh.visible ||
 					mesh.userData.isBorder ||
 					mesh.userData.isTagBadge ||
-					mesh.userData.isLiveBadge ||
+					mesh.userData.isLiveSphere ||
 					mesh.userData.isBezelBack
 				)
 					continue
@@ -1747,9 +1790,16 @@ export class InfiniteCanvasOGL {
 	 * @param {{duration?: number, searchRadius?: number}} [options]
 	 */
 	focusBySlug(slug, options = {}) {
-		const normalizedSlug = String(slug || '').trim().toLowerCase()
+		const normalizedSlug = String(slug || '')
+			.trim()
+			.toLowerCase()
 		if (!normalizedSlug || !this.media?.length) return false
-		const mediaIndex = this.media.findIndex((item) => String(item?.slug || '').trim().toLowerCase() === normalizedSlug)
+		const mediaIndex = this.media.findIndex(
+			(item) =>
+				String(item?.slug || '')
+					.trim()
+					.toLowerCase() === normalizedSlug
+		)
 		if (mediaIndex < 0) return false
 		const mediaItem = this.media[mediaIndex]
 		if (mediaItem?.id) this.setSelectedId(mediaItem.id)
@@ -1843,7 +1893,7 @@ export class InfiniteCanvasOGL {
 				// Bezel-back or other helper meshes can also carry mediaItem but must not duplicate overlays.
 				if (!ud.backgroundMesh) continue
 				this.updateMeshTagBadge(mesh, group)
-				this.updateMeshLiveBadge(mesh, group)
+				this.updateMeshLiveSphere(mesh, group)
 				const infoStyle = this.getInfoStyle(ud.mediaItem)
 				this.updateMeshInfo(mesh, infoStyle, group)
 			}
@@ -2084,62 +2134,63 @@ export class InfiniteCanvasOGL {
 		this.layoutTagBadge(mesh, badge)
 	}
 
-	updateMeshLiveBadge(mesh, group) {
+	updateMeshLiveSphere(mesh, group) {
 		if (!mesh?.userData?.mediaItem) return
 		const ts = mesh.userData.targetScale
 		if (!ts) return
 		const show = !!mesh.userData.mediaItem.isLive
 		if (!show) {
-			if (mesh.userData.liveBadge) {
-				mesh.userData.liveBadge.setParent(null)
-				delete mesh.userData.liveBadge
+			if (mesh.userData.liveSphere) {
+				mesh.userData.liveSphere.setParent(null)
+				delete mesh.userData.liveSphere
 			}
 			return
 		}
-		if (!this.gl || !this.badgeProgram) return
-		const badgeProgram = this.badgeProgram
-		let badge = mesh.userData.liveBadge
-		if (!badge) {
-			badge = new Mesh(this.gl, {
-				geometry: this.planeGeometry ?? undefined,
-				program: badgeProgram
+		if (!this.gl || !this.liveSphereProgram || !this.liveSphereGeometry) return
+		let sphere = mesh.userData.liveSphere
+		if (!sphere) {
+			sphere = new Mesh(this.gl, {
+				geometry: this.liveSphereGeometry,
+				program: this.liveSphereProgram
 			})
-			badge.userData = {isLiveBadge: true, mainMesh: mesh}
-			badge.setParent(group)
-			mesh.userData.liveBadge = badge
+			sphere.userData = {
+				isLiveSphere: true,
+				mainMesh: mesh,
+				pulsePhase:
+					seededRandom(hashString(mesh.userData.mediaItem?.id || mesh.userData.mediaItem?.slug || 'live')) *
+					Math.PI *
+					2,
+				baseScale: 0
+			}
+			sphere.setParent(group)
+			mesh.userData.liveSphere = sphere
 		}
-		badge.renderOrder = 50
-		const texture = this.getLiveBadgeTexture()
-		if (!texture) return
-		badge.onBeforeRender(() => {
-			badgeProgram.uniforms.tMap.value = texture
-			badgeProgram.uniforms.uOpacity.value = 1
-			badgeProgram.uniforms.uReveal.value = 1
-		})
-		this.layoutLiveBadge(mesh, badge)
+		sphere.renderOrder = 50
+		this.layoutLiveSphere(mesh, sphere)
 	}
 
-	layoutLiveBadge(mesh, badge) {
+	layoutLiveSphere(mesh, sphere) {
 		const anchor = mesh?.userData?.backgroundMesh || mesh
 		if (!anchor?.scale || !anchor?.position) return
-		const badgeSize = Math.max(anchor.scale.x, anchor.scale.y) * 0.14
-		const out = badgeSize * 0.18
-		badge.scale.set(badgeSize, badgeSize, 1)
-		badge.position.set(
+		const sphereSize = Math.max(anchor.scale.x, anchor.scale.y) * this.liveSphereSizeRatio
+		const out = sphereSize * 0.18
+		const ud = sphere.userData || {}
+		ud.baseScale = sphereSize
+		sphere.userData = ud
+		sphere.position.set(
 			anchor.position.x + anchor.scale.x * 0.5 + out,
 			anchor.position.y + anchor.scale.y * 0.5 + out,
-			mesh.position.z + 0.2
+			mesh.position.z + 0.3
 		)
 	}
 
 	layoutTagBadge(mesh, badge) {
 		const anchor = mesh?.userData?.backgroundMesh || mesh
 		if (!anchor?.scale || !anchor?.position || !badge?.scale) return
-		const outX = badge.scale.x * 0.16
-		const outY = badge.scale.y * 0.16
+		const out = Math.max(badge.scale.x, badge.scale.y) * 0.18
 		badge.position.set(
-			anchor.position.x - anchor.scale.x * 0.5 - outX + badge.scale.x * 0.5,
-			anchor.position.y + anchor.scale.y * 0.5 + outY - badge.scale.y * 0.5,
+			anchor.position.x - anchor.scale.x * 0.5 - out,
+			anchor.position.y + anchor.scale.y * 0.5 + out,
 			mesh.position.z + 0.2
 		)
 	}
@@ -2257,7 +2308,7 @@ export class InfiniteCanvasOGL {
 		imgMesh.setParent(group)
 		this.clearLegacyBorderMeshes(mesh)
 		this.updateMeshTagBadge(imgMesh, group)
-		this.updateMeshLiveBadge(imgMesh, group)
+		this.updateMeshLiveSphere(imgMesh, group)
 		const infoStyle = this.getInfoStyle(mediaItem)
 		this.updateMeshInfo(imgMesh, infoStyle, group)
 	}
@@ -2455,6 +2506,13 @@ export class InfiniteCanvasOGL {
 		if (this.texturedProgram) this.texturedProgram.uniforms.uCameraZ.value = camZ
 		if (this.infoProgram) this.infoProgram.uniforms.uCameraZ.value = camZ
 		if (this.badgeProgram) this.badgeProgram.uniforms.uCameraZ.value = camZ
+		if (this.liveSphereProgram) {
+			this.liveSphereProgram.uniforms.uCameraZ.value = camZ
+			const cameraPos = this.liveSphereProgram.uniforms.uCameraPos.value
+			cameraPos[0] = this.camera.position.x
+			cameraPos[1] = this.camera.position.y
+			cameraPos[2] = this.camera.position.z
+		}
 
 		if (this.sceneMode === 'single') {
 			this.singleCardRotation.x = lerp(this.singleCardRotation.x, this.singleCardRotationTarget.x, 0.15)
@@ -2469,7 +2527,7 @@ export class InfiniteCanvasOGL {
 		this.animateExits()
 		this.updateVisibility()
 		this.rotateBorders()
-		this.animateCardBodies()
+		this.animateCardBodies(performance.now())
 		this.renderer.render({scene: this.scene, camera: this.camera})
 
 		this.animationId = requestAnimationFrame(() => this.animate())
@@ -2560,7 +2618,7 @@ export class InfiniteCanvasOGL {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
-				if (ud.isLiveBadge) {
+				if (ud.isLiveSphere) {
 					if (ud.mainMesh) mesh.visible = ud.mainMesh.visible
 					continue
 				}
@@ -2588,8 +2646,10 @@ export class InfiniteCanvasOGL {
 		return ''
 	}
 
-	animateCardBodies() {
+	animateCardBodies(now) {
 		const t = 0.18
+		const pulseEnabled = this.liveSpherePulseAmount > 0.0001
+		const pulseSpeed = this.liveSpherePulseSpeed
 		for (const group of this.chunks.values()) {
 			for (const mesh of group.children) {
 				const ud = mesh.userData
@@ -2608,7 +2668,18 @@ export class InfiniteCanvasOGL {
 					}
 				}
 				if (ud?.tagBadge) this.layoutTagBadge(mesh, ud.tagBadge)
-				if (ud?.liveBadge) this.layoutLiveBadge(mesh, ud.liveBadge)
+				if (ud?.liveSphere) {
+					this.layoutLiveSphere(mesh, ud.liveSphere)
+					const sphere = ud.liveSphere
+					const sphereUd = sphere.userData || {}
+					const baseScale = Number(sphereUd.baseScale || 0)
+					const pulse = pulseEnabled
+						? 1 + this.liveSpherePulseAmount * Math.sin(now * 0.001 * pulseSpeed + (sphereUd.pulsePhase || 0))
+						: 1
+					const finalScale = Math.max(baseScale * pulse, 0.0001)
+					sphere.scale.set(finalScale, finalScale, finalScale)
+					if (this.liveSphereProgram) this.liveSphereProgram.uniforms.uPulse.value = pulse
+				}
 				if (ud?.isBezelBack && ud.bodyTarget) {
 					const target = ud.bodyTarget
 					const styleKey = ud.bodyStyle || 'default'
@@ -2874,18 +2945,18 @@ export class InfiniteCanvasOGL {
 			if (entry?.texture?.texture && this.gl) this.gl.deleteTexture(entry.texture.texture)
 		}
 		this.tagBadgeTextureCache.clear()
-		if (this.liveBadgeTexture?.texture && this.gl) this.gl.deleteTexture(this.liveBadgeTexture.texture)
-		this.liveBadgeTexture = null
 		this.backgroundProgramCache.clear()
 		this.texturedProgram = null
 		this.infoProgram = null
 		this.badgeProgram = null
+		this.liveSphereProgram = null
 		this.colorPrograms = null
 		this.borderPrograms = null
 		this.borderBackPrograms = null
 		this.planeCache.clear()
 		this.planeGeometry = null
 		this.borderGeometry = null
+		this.liveSphereGeometry = null
 		if (this.gl) this.container.removeChild(this.gl.canvas)
 		this.tooltip?.remove()
 	}
