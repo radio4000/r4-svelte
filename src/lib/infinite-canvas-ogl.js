@@ -1309,20 +1309,18 @@ export class InfiniteCanvasOGL {
 				const halfH = intersected.scale.y * 0.5
 				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
 				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
-				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
-				if (target) {
-					// Route channel-target clicks through onClick so scene-level single/double click
-					// behavior stays consistent (single select, double play).
-					if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
-						if (this.onClick) this.onClick(mediaItem)
-						return
-					}
-					if (this.onNavigate) {
-						this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
-						return
+					const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+					if (target) {
+						if (this.onNavigate) {
+							this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
+							return
+						}
+						if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
+							this.onClick(mediaItem)
+							return
+						}
 					}
 				}
-			}
 			if (mediaItem && this.onClick) this.onClick(mediaItem)
 		}
 	}
