@@ -204,7 +204,8 @@ const borderFragmentShader = `
 
 	void main() {
 		vec2 p = vUv - vec2(0.5);
-		float aa = fwidth(p.x) + fwidth(p.y);
+		// Keep AA constant to avoid derivative extension requirements on WebGL1.
+		float aa = 0.0035;
 		float t = clamp(uThickness, 0.001, 0.2);
 		float r = clamp(uCornerRadius, 0.0, 0.49);
 
