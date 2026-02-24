@@ -103,7 +103,9 @@
 
 	$effect(() => {
 		if (!canvas) return
-		const slug = String(focusSlug || '').trim().toLowerCase()
+		const slug = String(focusSlug || '')
+			.trim()
+			.toLowerCase()
 		if (!slug) return
 		const token = `${focusKey ?? ''}|${slug}|${media.length}`
 		if (token === lastFocusToken) return

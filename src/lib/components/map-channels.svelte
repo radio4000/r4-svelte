@@ -88,7 +88,10 @@
 			.sort()
 			.join('|')
 	)
-	const normalizeSlug = (value) => String(value || '').trim().toLowerCase()
+	const normalizeSlug = (value) =>
+		String(value || '')
+			.trim()
+			.toLowerCase()
 
 	function getLatestChannel(channel) {
 		return channelsCollection.state.get(channel.id) || channel
