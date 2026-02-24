@@ -7,7 +7,7 @@
 	import * as m from '$lib/paraglide/messages'
 
 	let display = $state(appState.channels_display || 'grid')
-	const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle']
+	const validOrders = ['updated', 'created', 'name', 'tracks']
 	/** @type {import('$lib/types').AppState['channels_order']} */
 	let order = $state(validOrders.includes(appState.channels_order) ? appState.channels_order : 'updated')
 	/** @type {'asc' | 'desc'} */

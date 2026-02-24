@@ -40,8 +40,13 @@ export async function followChannel(channelId: string) {
 	followsCollection.utils.writeInsert({id: channelId})
 	const {error} = await sdk.channels.followChannel(userChannelId, channelId)
 	if (error) {
-		log.warn('follow failed', {channelId, error})
-		followsCollection.utils.writeDelete(channelId)
+		// 23505 = unique_violation — already following, keep optimistic insert
+		if (error.code === '23505') {
+			log.info('already following', {channelId})
+		} else {
+			log.warn('follow failed', {channelId, error})
+			followsCollection.utils.writeDelete(channelId)
+		}
 	}
 }
 

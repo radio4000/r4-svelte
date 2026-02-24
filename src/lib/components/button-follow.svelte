@@ -1,5 +1,6 @@
 <script>
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {eq} from '@tanstack/svelte-db'
 	import {followsCollection, followChannel, unfollowChannel} from '$lib/collections/follows'
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
