@@ -1,4 +1,5 @@
 <script>
+	import {goto} from '$app/navigation'
 	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
 	import {untrack} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
@@ -56,6 +57,14 @@
 		showControlsModal = true
 	}
 
+	async function handleNavigate(href, item, kind, token) {
+		if (onnavigate) {
+			await onnavigate(href, item, kind, token)
+			return
+		}
+		if (href) await goto(href)
+	}
+
 	$effect(() => {
 		if (!container) return
 		void appState.theme
@@ -72,7 +81,7 @@
 			backgroundColor,
 			onClick: onclick,
 			onDoubleClick: ondoubleclick,
-			onNavigate: onnavigate
+			onNavigate: handleNavigate
 		})
 		return () => canvas?.dispose()
 	})

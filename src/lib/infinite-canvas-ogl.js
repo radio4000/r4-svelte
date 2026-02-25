@@ -798,14 +798,18 @@ export class InfiniteCanvasOGL {
 	}
 
 	parseColor(color) {
-		// Use a 2d canvas to normalize any CSS color (hex, rgb, oklch, etc.) to #rrggbb
-		const ctx = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
+		// Robustly normalize computed CSS colors (rgb/rgba/oklch/hex) to RGB floats.
+		// Some browsers return non-hex strings for advanced color functions.
+		const canvas = document.createElement('canvas')
+		canvas.width = 1
+		canvas.height = 1
+		const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'))
+		ctx.clearRect(0, 0, 1, 1)
+		ctx.fillStyle = '#000'
 		ctx.fillStyle = color
-		const hex = /** @type {string} */ (ctx.fillStyle) // always normalizes to #rrggbb
-		const r = parseInt(hex.slice(1, 3), 16) / 255
-		const g = parseInt(hex.slice(3, 5), 16) / 255
-		const b = parseInt(hex.slice(5, 7), 16) / 255
-		return [r, g, b]
+		ctx.fillRect(0, 0, 1, 1)
+		const data = ctx.getImageData(0, 0, 1, 1).data
+		return [data[0] / 255, data[1] / 255, data[2] / 255]
 	}
 
 	getCardVisual(styleKey) {
@@ -978,6 +982,11 @@ export class InfiniteCanvasOGL {
 
 		const onMouseDown = (e) => {
 			if (isCtrlPan(e)) {
+				// Ctrl-pan should never rotate the single card.
+				this.isSingleCardRotating = false
+				this.singleCardRotateDistance = 0
+				this.singleCardRotationTarget.x = this.singleCardRotation.x
+				this.singleCardRotationTarget.y = this.singleCardRotation.y
 				this.isDragging = true
 				this.forcePanMode = true
 				this.skipClickOnce = true
@@ -1118,6 +1127,11 @@ export class InfiniteCanvasOGL {
 		const onWheel = (e) => {
 			if (this.disableNavigation) return
 			e.preventDefault()
+			if (this.sceneMode === 'single') {
+				// Wheel should zoom only; keep card rotation unchanged.
+				this.singleCardRotationTarget.x = this.singleCardRotation.x
+				this.singleCardRotationTarget.y = this.singleCardRotation.y
+			}
 			this.scrollAccum += e.deltaY * 0.006
 		}
 		listen(canvas, 'wheel', onWheel, {passive: false})
@@ -1309,18 +1323,18 @@ export class InfiniteCanvasOGL {
 				const halfH = intersected.scale.y * 0.5
 				const px = ((hit.localX + halfW) / (halfW * 2)) * CHANNEL_INFO_CANVAS.width
 				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
-					const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
-					if (target) {
-						if (this.onNavigate) {
-							this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
-							return
-						}
-						if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
-							this.onClick(mediaItem)
-							return
-						}
+				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
+				if (target) {
+					if (this.onNavigate) {
+						this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
+						return
+					}
+					if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
+						this.onClick(mediaItem)
+						return
 					}
 				}
+			}
 			if (mediaItem && this.onClick) this.onClick(mediaItem)
 		}
 	}
