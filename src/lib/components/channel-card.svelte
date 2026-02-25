@@ -12,8 +12,8 @@
 	import PopoverMenu from './popover-menu.svelte'
 	import Icon from './icon.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel, href?: string, children?: import('svelte').Snippet}}*/
-	let {channel, href, children} = $props()
+	/** @type {{channel: import('$lib/types').Channel, href?: string, updatedAtHref?: string, children?: import('svelte').Snippet}}*/
+	let {channel, href, updatedAtHref, children} = $props()
 
 	const cardHref = $derived(href ?? `/${channel.slug}`)
 
@@ -63,7 +63,15 @@
 			{/if}
 			<div class="meta">
 				{#if channel.track_count}<small>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small>{/if}
-				{#if channel.latest_track_at}<small>{relativeDateDetailed(channel.latest_track_at)}</small>{/if}
+				{#if channel.latest_track_at}
+					<small>
+						{#if updatedAtHref}
+							<a href={updatedAtHref}>{relativeDateDetailed(channel.latest_track_at)}</a>
+						{:else}
+							{relativeDateDetailed(channel.latest_track_at)}
+						{/if}
+					</small>
+				{/if}
 			</div>
 		</div>
 		<div class="actions">
@@ -190,10 +198,6 @@
 		align-items: center;
 		gap: 0.2rem;
 		flex-shrink: 0;
-
-		:global(.popover-menu) {
-			/*margin-top: auto;*/
-		}
 	}
 
 	.meta {

@@ -337,6 +337,32 @@
 		{"name": "SyncStatus", "desc": "Shows offline queue pending transactions."}
 	],
 
+	"src/lib/3d/channel-card-3d.js": [
+		{
+			"name": "resolveChannelCardStates(mediaItem, {activeId, selectedId, hoveredId})",
+			"desc": "Resolve combined visual state for 3D channel cards."
+		},
+		{
+			"name": "buildChannelInfoCanvas({mediaItem, style, activeId, colors})",
+			"desc": "Render the 2D info-card texture used by 3D channel cards."
+		}
+	],
+
+	"src/lib/components/channel-token-playback.js": [
+		{
+			"name": "playChannelTokenInDeck(item, kind, token, deckId)",
+			"desc": "Play tracks in a channel matching a clicked 3D tag or mention token."
+		},
+		{
+			"name": "filterTracksByToken(tracks, kind, token)",
+			"desc": "Filter and order channel tracks for a tag/mention token."
+		},
+		{
+			"name": "toggleChannelFavorite(item)",
+			"desc": "Toggle follow/unfollow state from 3D card favorite interactions."
+		}
+	],
+
 	"@radio4000/sdk": [
 		{"name": "sdk.supabase", "desc": "Direct Supabase client access."},
 
