@@ -1,16 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
 	import L from 'leaflet'
+	import {SvelteMap} from 'svelte/reactivity'
 	import {mount, onDestroy, unmount, untrack} from 'svelte'
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
-	import {appState} from '$lib/app-state.svelte'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {followsCollection} from '$lib/collections/follows'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {deriveChannelActivityState} from './channel-ui-state.js'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
@@ -34,37 +31,16 @@
 	let stickyPopupUntil = 0
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
-	/** @type {Map<string, L.CircleMarker>} */
-	let markerByChannelId = new Map()
-	/** @type {Map<string, L.CircleMarker>} */
-	let markerBySlug = new Map()
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const activityState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void broadcastsCollection.state.size
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const favoriteIds = $derived(activityState.favoriteChannelIds)
-	const broadcastingIds = $derived(activityState.broadcastingChannelIds)
-	const playingSlugs = $derived(activityState.playingChannelSlugs)
-	const inDeckSlugs = $derived(activityState.inDeckChannelSlugs)
+	/** @type {SvelteMap<string, L.CircleMarker>} */
+	let markerByChannelId = new SvelteMap()
+	/** @type {SvelteMap<string, L.CircleMarker>} */
+	let markerBySlug = new SvelteMap()
+	const favoriteIds = $derived(channelActivity.favoriteChannelIds)
+	const broadcastingIds = $derived(channelActivity.broadcastingChannelIds)
+	const playingSlugs = $derived(channelActivity.playingChannelSlugs)
+	const inDeckSlugs = $derived(channelActivity.inDeckChannelSlugs)
 	const mapChannels = $derived.by(() => {
-		const byId = new Map()
+		const byId = new SvelteMap()
 		for (const channel of channels) {
 			const lat = Number(channel?.latitude)
 			const lng = Number(channel?.longitude)
@@ -86,11 +62,6 @@
 			.sort()
 			.join('|')
 	)
-	const normalizeSlug = (value) =>
-		String(value || '')
-			.trim()
-			.toLowerCase()
-
 	function getLatestChannel(channel) {
 		return channelsCollection.state.get(channel.id) || channel
 	}
@@ -209,18 +180,17 @@
 	 * @param {number} [attempt]
 	 */
 	function maybeAutoOpenSlug(slug, requestKey, attempt = 0) {
-		const normalizedSlug = normalizeSlug(slug)
-		if (!normalizedSlug || !map) return
-		const token = `${requestKey ?? ''}|${normalizedSlug}`
+		if (!slug || !map) return
+		const token = `${requestKey ?? ''}|${slug}`
 		if (token === lastAutoOpenedToken) return
-		const marker = markerBySlug.get(normalizedSlug)
-		const channel = mapChannels.find((c) => normalizeSlug(c.slug) === normalizedSlug)
+		const marker = markerBySlug.get(slug)
+		const channel = mapChannels.find((c) => c.slug === slug)
 		if (marker && channel) {
 			const targetZoom = Math.max(map.getZoom(), map.getMinZoom())
 			map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
 			requestAnimationFrame(() => {
 				if (!map) return
-				if (markerBySlug.get(normalizedSlug) !== marker) {
+				if (markerBySlug.get(slug) !== marker) {
 					if (attempt >= 40) return
 					clearAutoOpenRetry()
 					autoOpenRetryTimer = setTimeout(() => {
@@ -301,7 +271,7 @@
 				if (clickedButton) {
 					// Keep popup open through reactive updates (favorite toggle, menu actions, etc.).
 					keepPopupOpenUntil = Date.now() + 3000
-					stickyPopupSlug = normalizeSlug(c.slug)
+					stickyPopupSlug = c.slug
 					stickyPopupUntil = keepPopupOpenUntil
 				}
 				const link = target.closest('a[href]')
@@ -336,7 +306,7 @@
 				if (event.detail === 2) {
 					// Double-clicking card body plays channel; keep popup sticky through deck state updates.
 					keepPopupOpenUntil = Date.now() + 3000
-					stickyPopupSlug = normalizeSlug(c.slug)
+					stickyPopupSlug = c.slug
 					stickyPopupUntil = keepPopupOpenUntil
 				}
 			}
@@ -384,7 +354,7 @@
 			applyMarkerClasses(marker, c)
 			marker.on('click', () => marker.openPopup())
 			marker.on('popupopen', () => {
-				stickyPopupSlug = normalizeSlug(c.slug)
+				stickyPopupSlug = c.slug
 			})
 			marker.on('popupclose', () => {
 				if (Date.now() >= keepPopupOpenUntil) return
@@ -397,7 +367,7 @@
 				})
 			})
 			markerByChannelId.set(c.id, marker)
-			markerBySlug.set(normalizeSlug(c.slug), marker)
+			markerBySlug.set(c.slug, marker)
 		}
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 		if (restoreSlug) {

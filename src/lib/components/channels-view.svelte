@@ -1,15 +1,15 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {shufflePlayChannel} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {channelAvatarUrl} from '$lib/utils'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -28,27 +28,7 @@
 	} = $props()
 
 	const openSlug = $derived(syncToUrl ? page.url.searchParams.get('slug') : null)
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const deckCanvasState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const activeIds = $derived(deckCanvasState.activeChannelIds)
+	const activeIds = $derived(channelActivity.activeChannelIds)
 	const activeId = $derived(activeIds[0] ?? undefined)
 
 	const sortKey = {
@@ -70,17 +50,7 @@
 				})
 	)
 
-	const canvasMedia = $derived(
-		sortedChannels.map((c) =>
-			toChannelCardMedia(c, deckCanvasState, {
-				url: c.image
-					? channelAvatarUrl(c.image)
-					: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-				width: 250,
-				height: 250
-			})
-		)
-	)
+	const canvasMedia = $derived(sortedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 
 	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
 
@@ -91,13 +61,7 @@
 	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		selectedCanvasChannelId = item.id
-	}
-
-	function handleCanvasDoubleClick(item) {
-		if (!item?.slug || !item?.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'infinite'} value */
@@ -113,20 +77,6 @@
 			}
 			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 		}
-	}
-
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		infinite: () => m.channels_view_label_infinite()
 	}
 </script>
 

@@ -1,66 +1,24 @@
+<script module>
+	const RE_LEADING_HASH = /^#/
+	const RE_LEADING_AT = /^@/
+</script>
+
 <script>
 	import {goto} from '$app/navigation'
-	import {page} from '$app/state'
-	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {followsCollection} from '$lib/collections/follows'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {channelAvatarUrl} from '$lib/utils.ts'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
 
-	let slug = $derived(page.params.slug)
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({ch: channelsCollection})
-			.where(({ch}) => eq(ch.slug, slug))
-			.orderBy(({ch}) => ch.created_at, 'desc')
-			.limit(1)
-	)
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const channelTracksQuery = useLiveQuery((q) =>
-		q
-			.from({t: tracksCollection})
-			.where(({t}) => eq(t.slug, slug))
-			.orderBy(({t}) => t.created_at, 'desc')
-			.limit(4000)
-	)
-	let channel = $derived(channelQuery.data?.[0] ?? null)
-	let channelTracks = $derived(channelTracksQuery.data ?? [])
+	const channelCtx = getChannelCtx()
+	const tracksQuery = getTracksQueryCtx()
+	let channel = $derived(channelCtx.data ?? null)
+	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
-	const deckCanvasState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const mediaItem = $derived.by(() => {
-		if (!channel) return null
-		return toChannelCardMedia(channel, deckCanvasState, {
-			url: channel.image
-				? channelAvatarUrl(channel.image)
-				: `https://placehold.co/250?text=${encodeURIComponent(channel.name?.[0] || '?')}`,
-			width: 250,
-			height: 250
-		})
-	})
+	const mediaItem = $derived(channel ? toChannelCardMedia(channel, channelActivity) : null)
 
 	function handleSceneClick(item) {
 		if (!item?.id) return
@@ -76,35 +34,22 @@
 		return true
 	}
 
-	function normalizeTag(value) {
-		return String(value || '')
-			.trim()
-			.toLowerCase()
-			.replace(/^[#﹟＃]/, '')
-	}
-
-	function normalizeMention(value) {
-		return String(value || '')
-			.trim()
-			.toLowerCase()
-			.replace(/^@/, '')
-	}
+	/** Strip leading `#` to get a bare tag for comparison against track.tags */
+	const stripHash = (v) => String(v || '').replace(RE_LEADING_HASH, '')
+	/** Strip leading `@` to get a bare mention for comparison against track.mentions */
+	const stripAt = (v) => String(v || '').replace(RE_LEADING_AT, '')
 
 	function playByTagToken(token) {
-		const tag = normalizeTag(token)
+		const tag = stripHash(token)
 		if (!tag) return false
-		const matches = channelTracks.filter((track) =>
-			(track?.tags || []).some((entry) => normalizeTag(entry) === tag)
-		)
+		const matches = channelTracks.filter((track) => (track?.tags || []).some((entry) => stripHash(entry) === tag))
 		return playTracks(matches, `#${tag}`)
 	}
 
 	function playByMentionToken(token) {
-		const mention = normalizeMention(token)
+		const mention = stripAt(token)
 		if (!mention) return false
-		const matches = channelTracks.filter((track) =>
-			(track?.mentions || []).some((entry) => normalizeMention(entry) === mention)
-		)
+		const matches = channelTracks.filter((track) => (track?.mentions || []).some((entry) => stripAt(entry) === mention))
 		return playTracks(matches, `@${mention}`)
 	}
 

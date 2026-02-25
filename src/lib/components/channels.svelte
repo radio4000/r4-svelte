@@ -2,16 +2,20 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {shufflePlayChannel} from '$lib/api'
-	import {channelAvatarUrl} from '$lib/utils'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
-	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
@@ -22,20 +26,6 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const {display: initialDisplay} = $props()
-
-	const activeChannelId = $derived.by(() => {
-		// Check all decks for listening_to_channel_id or active playlist_track
-		for (const deck of Object.values(appState.decks)) {
-			if (deck.listening_to_channel_id) return deck.listening_to_channel_id
-			const trackId = deck.playlist_track
-			if (!trackId) continue
-			const track = tracksCollection.state.get(trackId)
-			if (!track?.slug) continue
-			const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-			if (channel?.id) return channel.id
-		}
-		return undefined
-	})
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
@@ -55,29 +45,11 @@
 
 	// Reactive broadcast IDs for the broadcasting filter
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
 	const broadcastIds = $derived(
 		(broadcastsQuery.data ?? []).map((b) => /** @type {{channel_id: string}} */ (b).channel_id)
 	)
-	const deckCanvasState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const activeChannelIds = $derived(deckCanvasState.activeChannelIds)
+	const activeChannelIds = $derived(channelActivity.activeChannelIds)
+	const activeChannelId = $derived(activeChannelIds[0] ?? undefined)
 
 	/** @type {Record<string, string>} Sort key → DB column name (or 'shuffle' for random view) */
 	const sortColumns = {
@@ -168,17 +140,7 @@
 
 	const orderedChannels = $derived(channels)
 
-	const canvasMedia = $derived(
-		orderedChannels.map((c) =>
-			toChannelCardMedia(c, deckCanvasState, {
-				url: c.image
-					? channelAvatarUrl(c.image)
-					: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-				width: 250,
-				height: 250
-			})
-		)
-	)
+	const canvasMedia = $derived(orderedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 
 	const openSlug = $derived(page.url.searchParams.get('slug'))
 	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
@@ -190,13 +152,7 @@
 	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		selectedCanvasChannelId = item.id
-	}
-
-	function handleCanvasDoubleClick(item) {
-		if (!item?.slug || !item?.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
@@ -216,22 +172,6 @@
 
 	function setFilter(value) {
 		appState.channels_filter = value
-	}
-
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		tuner: 'radio',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		tuner: () => m.channels_view_label_tuner(),
-		infinite: () => m.channels_view_label_infinite()
 	}
 
 	const filterLabelMap = {
