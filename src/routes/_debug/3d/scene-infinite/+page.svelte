@@ -4,9 +4,9 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {channelActivity} from '$lib/channel-activity.svelte'
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
 	import {channelAvatarUrl} from '$lib/utils.ts'
 
 	const channelsQuery = useLiveQuery((q) =>
@@ -16,16 +16,9 @@
 			.limit(120)
 	)
 	const channels = $derived((channelsQuery.data ?? []).filter((c) => c?.image))
-	const deckCanvasState = $derived.by(() =>
-		deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state
-		})
-	)
 	const media = $derived(
 		channels.map((c) =>
-			toChannelCardMedia(c, deckCanvasState, {
+			toChannelCardMedia(c, channelActivity, {
 				url: channelAvatarUrl(/** @type {string} */ (c.image)),
 				width: 250,
 				height: 250
@@ -33,7 +26,7 @@
 		)
 	)
 
-	const activeIds = $derived(deckCanvasState.activeChannelIds)
+	const activeIds = $derived(channelActivity.activeChannelIds)
 	const activeId = $derived(activeIds[0])
 	let selectedId = $state(/** @type {string | null} */ (null))
 	let lastClickId = $state(/** @type {string | null} */ (null))

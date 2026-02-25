@@ -7,6 +7,7 @@ Skipping 3D/OGL internals. Focused on data loading, state derivation, normalizat
 ## 1. `channel-ui-state.js` shouldn't exist — it's global derived state
 
 `deriveChannelActivityState` is a pure function whose inputs are **all global singletons**:
+
 - `appState.decks` — global `$state`
 - `tracksCollection.state` — global `$state` Map
 - `channelsCollection.state` — global `$state` Map
@@ -18,13 +19,13 @@ Yet 4 components each independently create 2 `useLiveQuery` calls (just mirrorin
 ```js
 // e.g. in app-state-derived.svelte.ts, or in app-state.svelte.ts
 export const channelActivity = $derived.by(() => ({
-    ...deriveChannelActivityState({
-        decks: appState.decks,
-        tracksState: tracksCollection.state,
-        channelsState: channelsCollection.state,
-        followsState: followsCollection.state,
-        broadcastRows: [...broadcastsCollection.state.values()]
-    })
+	...deriveChannelActivityState({
+		decks: appState.decks,
+		tracksState: tracksCollection.state,
+		channelsState: channelsCollection.state,
+		followsState: followsCollection.state,
+		broadcastRows: [...broadcastsCollection.state.values()]
+	})
 }))
 ```
 
@@ -34,16 +35,16 @@ That deletes `channel-ui-state.js`, `channel-canvas-state.js` (thin wrapper, pos
 
 ## 2. `deckCanvasState` derivation copy-pasted 4 times
 
-*Falls out of #1.*
+_Falls out of #1._
 
 The same ~18-line block appears verbatim in:
 
-| File | Lines |
-|------|-------|
+| File                                      | Lines |
+| ----------------------------------------- | ----- |
 | `src/lib/components/channels-view.svelte` | 31–50 |
-| `src/lib/components/channels.svelte` | 57–79 |
-| `src/lib/components/map-channels.svelte` | 41–61 |
-| `src/routes/[slug]/image/+page.svelte` | 24–53 |
+| `src/lib/components/channels.svelte`      | 57–79 |
+| `src/lib/components/map-channels.svelte`  | 41–61 |
+| `src/routes/[slug]/image/+page.svelte`    | 24–53 |
 
 Each instance creates **2 live queries** (follows + broadcasts) and builds the same `followsState` Map the same way. That's 8 independent subscriptions to the same 2 collections doing identical work.
 
@@ -52,22 +53,22 @@ Each instance creates **2 live queries** (follows + broadcasts) and builds the s
 const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
 const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
 const deckCanvasState = $derived.by(() => {
-    const followsRows = followsQuery.data ?? []
-    void tracksCollection.state.size
-    void channelsCollection.state.size
-    const followsState = new Map(
-        followsRows
-            .map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-            .filter((row) => typeof row.id === 'string')
-            .map((row) => [row.id, row])
-    )
-    return deriveChannelActivityState({
-        decks: appState.decks,
-        tracksState: tracksCollection.state,
-        channelsState: channelsCollection.state,
-        followsState,
-        broadcastRows: broadcastsQuery.data ?? []
-    })
+	const followsRows = followsQuery.data ?? []
+	void tracksCollection.state.size
+	void channelsCollection.state.size
+	const followsState = new Map(
+		followsRows
+			.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
+			.filter((row) => typeof row.id === 'string')
+			.map((row) => [row.id, row])
+	)
+	return deriveChannelActivityState({
+		decks: appState.decks,
+		tracksState: tracksCollection.state,
+		channelsState: channelsCollection.state,
+		followsState,
+		broadcastRows: broadcastsQuery.data ?? []
+	})
 })
 ```
 
@@ -75,7 +76,7 @@ const deckCanvasState = $derived.by(() => {
 
 ## 3. `void collection.state.size` — reactivity hack, used inconsistently
 
-*Falls out of #1.*
+_Falls out of #1._
 
 `void tracksCollection.state.size` forces Svelte 5 to track `$state(Map).size` so `$derived` re-evaluates on add/remove. Appears in the `deckCanvasState` derivation (4 files) plus `player.svelte`, `deck-compact-bar.svelte`, `broadcast-controls.svelte`.
 
@@ -94,6 +95,7 @@ Every other `[slug]/*` child uses `getChannelCtx()` + `getTracksQueryCtx()` from
 ## 5. Normalization functions — most are unnecessary
 
 **The inputs are already normalized upstream:**
+
 - `extractHashtags()` (utils.ts:75) → lowercase, `#`-prefixed
 - `extractMentions()` (utils.ts:92) → lowercase, `@`-prefixed
 - DB slugs → lowercase, trimmed
@@ -104,11 +106,13 @@ Every other `[slug]/*` child uses `getChannelCtx()` + `getTracksQueryCtx()` from
 
 ```js
 function normalizeTag(value) {
-    const token = String(value || '').trim().toLowerCase()
-        .replace(/^[﹟＃]/, '#')    // fullwidth hash → ASCII hash
-        .replace(/[.,;:!?]+$/g, '') // strip trailing punctuation
-    if (!token) return ''
-    return token.startsWith('#') ? token : `#${token}`
+	const token = String(value || '')
+		.trim()
+		.toLowerCase()
+		.replace(/^[﹟＃]/, '#') // fullwidth hash → ASCII hash
+		.replace(/[.,;:!?]+$/g, '') // strip trailing punctuation
+	if (!token) return ''
+	return token.startsWith('#') ? token : `#${token}`
 }
 ```
 
@@ -118,7 +122,10 @@ Fullwidth hash branch is dead (`extractHashtags` filters those out before they g
 
 ```js
 function normalizeTag(value) {
-    return String(value || '').trim().toLowerCase().replace(/^[#﹟＃]/, '')
+	return String(value || '')
+		.trim()
+		.toLowerCase()
+		.replace(/^[#﹟＃]/, '')
 }
 ```
 
@@ -127,7 +134,10 @@ Strips `#` for comparing against bare `track.tags`. Called on already-lowercase 
 ### `normalizeSlug` in `map-channels.svelte:89–92` — not needed
 
 ```js
-const normalizeSlug = (value) => String(value || '').trim().toLowerCase()
+const normalizeSlug = (value) =>
+	String(value || '')
+		.trim()
+		.toLowerCase()
 ```
 
 DB slugs are already lowercase and trimmed. Same pattern inlined 5× in `channel-ui-state.js`.
@@ -136,7 +146,10 @@ DB slugs are already lowercase and trimmed. Same pattern inlined 5× in `channel
 
 ```js
 function normalizeMention(value) {
-    return String(value || '').trim().toLowerCase().replace(/^@/, '')
+	return String(value || '')
+		.trim()
+		.toLowerCase()
+		.replace(/^@/, '')
 }
 ```
 
@@ -160,27 +173,28 @@ Dedupes by `id` after enrichment join (which can return dupes). Copy-pasted iden
 
 ### Verdict
 
-| Function | Needed? | Action |
-|----------|---------|--------|
-| `normalizeTag` (channel-ui-state.js) | Barely — only adds `#` to view tags | Replace with `'#' + tag` inline |
-| `normalizeTag` (image page) | Barely — only strips `#` | Replace with `.replace(/^#/, '')` or `.slice(1)` inline |
-| `normalizeSlug` (map-channels) | No — slugs are already lowercase | Delete, use raw slugs |
-| Inline slug normalization (channel-ui-state.js ×5) | No | Delete, use raw slugs |
-| `normalizeMention` (image page) | No — mentions are already lowercase | Delete, use `.slice(1)` if stripping `@` |
-| `normalizeBroadcastRow` | No — single data shape, and invents a camelCase `trackPlayedAt` alias that nothing produces | Delete, use `row.track_played_at` / `row.channels` directly |
-| `normalizeChannels` (×2) | Yes but duplicated | Extract to shared util |
+| Function                                           | Needed?                                                                                     | Action                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `normalizeTag` (channel-ui-state.js)               | Barely — only adds `#` to view tags                                                         | Replace with `'#' + tag` inline                             |
+| `normalizeTag` (image page)                        | Barely — only strips `#`                                                                    | Replace with `.replace(/^#/, '')` or `.slice(1)` inline     |
+| `normalizeSlug` (map-channels)                     | No — slugs are already lowercase                                                            | Delete, use raw slugs                                       |
+| Inline slug normalization (channel-ui-state.js ×5) | No                                                                                          | Delete, use raw slugs                                       |
+| `normalizeMention` (image page)                    | No — mentions are already lowercase                                                         | Delete, use `.slice(1)` if stripping `@`                    |
+| `normalizeBroadcastRow`                            | No — single data shape, and invents a camelCase `trackPlayedAt` alias that nothing produces | Delete, use `row.track_played_at` / `row.channels` directly |
+| `normalizeChannels` (×2)                           | Yes but duplicated                                                                          | Extract to shared util                                      |
 
 ---
 
 ## 6. `activeChannelId` computed twice in `channels.svelte`
 
 Lines 26–38 manually iterate decks to find the active channel ID:
+
 ```js
 const activeChannelId = $derived.by(() => {
-    for (const deck of Object.values(appState.decks)) {
-        if (deck.listening_to_channel_id) return deck.listening_to_channel_id
-        // ... manual lookup
-    }
+	for (const deck of Object.values(appState.decks)) {
+		if (deck.listening_to_channel_id) return deck.listening_to_channel_id
+		// ... manual lookup
+	}
 })
 ```
 
@@ -194,12 +208,23 @@ But `deckCanvasState` (lines 62–79) already produces `activeChannelIds` from `
 
 ```js
 return {
-    url: base.url, width: base.width ?? 250, height: base.height ?? 250,
-    slug: channel.slug, id: channel.id, name: channel.name,
-    description: channel.description || '',
-    tags, mentions, activeTags, activeMentions, hasActiveTagMatch,
-    isActive, isPlaying, isFavorite, isLive,
-    channel   // ← the whole channel object, again
+	url: base.url,
+	width: base.width ?? 250,
+	height: base.height ?? 250,
+	slug: channel.slug,
+	id: channel.id,
+	name: channel.name,
+	description: channel.description || '',
+	tags,
+	mentions,
+	activeTags,
+	activeMentions,
+	hasActiveTagMatch,
+	isActive,
+	isPlaying,
+	isFavorite,
+	isLive,
+	channel // ← the whole channel object, again
 }
 ```
 
@@ -215,20 +240,18 @@ If activity state is global (#1), the 3D renderer can take `channel[]` + look up
 
 The same `toChannelCardMedia` call with identical placeholder URL:
 
-| File | Lines |
-|------|-------|
-| `channels-view.svelte` | 73–83 |
-| `channels.svelte` | 171–181 |
-| `[slug]/image/+page.svelte` | 54–63 |
+| File                        | Lines   |
+| --------------------------- | ------- |
+| `channels-view.svelte`      | 73–83   |
+| `channels.svelte`           | 171–181 |
+| `[slug]/image/+page.svelte` | 54–63   |
 
 ```js
 // Identical in all 3:
 toChannelCardMedia(c, deckCanvasState, {
-    url: c.image
-        ? channelAvatarUrl(c.image)
-        : `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-    width: 250,
-    height: 250
+	url: c.image ? channelAvatarUrl(c.image) : `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
+	width: 250,
+	height: 250
 })
 ```
 
@@ -241,38 +264,42 @@ toChannelCardMedia(c, deckCanvasState, {
 `src/lib/types.ts:100–113` redefines `BroadcastDeckState` instead of extending the SDK's version.
 
 **SDK version** (`@radio4000/sdk`):
+
 ```ts
 export interface BroadcastDeckState {
-    index: number;         // required
-    track_id: string | null;
-    is_playing: boolean;   // required
-    // ... all fields required
+	index: number // required
+	track_id: string | null
+	is_playing: boolean // required
+	// ... all fields required
 }
 ```
 
 **App version** (`src/lib/types.ts`):
+
 ```ts
 export interface BroadcastDeckState {
-    index?: number;        // optional
-    track_id?: string | null;
-    is_playing?: boolean;  // optional
-    // ... all fields optional
-    // extra fields not in SDK:
-    track_url?: string | null;
-    track_title?: string | null;
-    track_media_id?: string | null;
+	index?: number // optional
+	track_id?: string | null
+	is_playing?: boolean // optional
+	// ... all fields optional
+	// extra fields not in SDK:
+	track_url?: string | null
+	track_title?: string | null
+	track_media_id?: string | null
 }
 ```
 
 The app version makes all fields optional (handles partial deck state) and adds three extra fields for ephemeral/non-DB tracks. Extend instead of redeclare:
+
 ```ts
 import type {BroadcastDeckState as SDKBroadcastDeckState} from '@radio4000/sdk'
 export interface BroadcastDeckState extends Partial<SDKBroadcastDeckState> {
-    track_url?: string | null
-    track_title?: string | null
-    track_media_id?: string | null
+	track_url?: string | null
+	track_title?: string | null
+	track_media_id?: string | null
 }
 ```
+
 Or add the extra fields to the SDK type upstream.
 
 ---
@@ -294,6 +321,7 @@ Extract a shared component or `loadChannelRelations(channelId, direction)` helpe
 ## 12. `viewIconMap` / `viewLabelMap` duplicated
 
 Nearly identical maps in:
+
 - `channels-view.svelte:118–130`
 - `channels.svelte:221–235` (adds `tuner`)
 
@@ -303,18 +331,18 @@ Nearly identical maps in:
 
 ## Summary table
 
-| # | What | Files | Fix |
-|---|------|-------|-----|
-| 1 | `channel-ui-state.js` + `channel-canvas-state.js` | 5+ files | One global `$derived` near appState |
-| 2 | `deckCanvasState` + 2 live queries ×4 | 4 files | Falls out of #1 |
-| 3 | `void collection.state.size` hacks | 6 files | Falls out of #1 |
-| 4 | Image page ignores parent context | 1 file | Use `getChannelCtx()` + `getTracksQueryCtx()` |
-| 5 | `normalizeTag` ×2, `normalizeSlug`, `normalizeMention`, `normalizeBroadcastRow` | 3 files | Delete — inputs already normalized upstream |
-| 5 | `normalizeChannels` | 2 files | Extract to shared util |
-| 6 | `activeChannelId` double-computed | channels.svelte | Use `deckCanvasState.activeChannelIds[0]` |
-| 7 | `toChannelCardMedia` DTO | 3 files | Remove if activity state is global (#1) |
-| 8 | `canvasMedia` placeholder URL | 3 files | Default in `toChannelCardMedia` |
-| 9 | `BroadcastDeckState` type | types.ts vs SDK | Extend SDK type |
-| 10 | Followers/Following pages | 2 files | Shared component or loader |
-| 11 | Canvas click/dblclick handlers | 2 files | Shared or consolidate |
-| 12 | `viewIconMap` / `viewLabelMap` | 2 files | Shared const |
+| #   | What                                                                            | Files           | Fix                                           |
+| --- | ------------------------------------------------------------------------------- | --------------- | --------------------------------------------- |
+| 1   | `channel-ui-state.js` + `channel-canvas-state.js`                               | 5+ files        | One global `$derived` near appState           |
+| 2   | `deckCanvasState` + 2 live queries ×4                                           | 4 files         | Falls out of #1                               |
+| 3   | `void collection.state.size` hacks                                              | 6 files         | Falls out of #1                               |
+| 4   | Image page ignores parent context                                               | 1 file          | Use `getChannelCtx()` + `getTracksQueryCtx()` |
+| 5   | `normalizeTag` ×2, `normalizeSlug`, `normalizeMention`, `normalizeBroadcastRow` | 3 files         | Delete — inputs already normalized upstream   |
+| 5   | `normalizeChannels`                                                             | 2 files         | Extract to shared util                        |
+| 6   | `activeChannelId` double-computed                                               | channels.svelte | Use `deckCanvasState.activeChannelIds[0]`     |
+| 7   | `toChannelCardMedia` DTO                                                        | 3 files         | Remove if activity state is global (#1)       |
+| 8   | `canvasMedia` placeholder URL                                                   | 3 files         | Default in `toChannelCardMedia`               |
+| 9   | `BroadcastDeckState` type                                                       | types.ts vs SDK | Extend SDK type                               |
+| 10  | Followers/Following pages                                                       | 2 files         | Shared component or loader                    |
+| 11  | Canvas click/dblclick handlers                                                  | 2 files         | Shared or consolidate                         |
+| 12  | `viewIconMap` / `viewLabelMap`                                                  | 2 files         | Shared const                                  |

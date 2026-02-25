@@ -76,7 +76,9 @@ export function deriveChannelActivityState(params) {
 			if (normalized) activeTags.add(normalized)
 		}
 		for (const mention of extractMentions(String(deck?.playlist_title || ''))) {
-			const normalized = String(mention || '').trim().toLowerCase()
+			const normalized = String(mention || '')
+				.trim()
+				.toLowerCase()
 			if (normalized.startsWith('@') && normalized.length > 1) explicitActiveMentions.add(normalized)
 		}
 		for (const tag of Array.isArray(deck?.view?.tags) ? deck.view.tags : []) {
@@ -107,7 +109,9 @@ export function deriveChannelActivityState(params) {
 		if (ch?.id) activeChannelIds.add(ch.id)
 	}
 
-	const activeMentions = [...new Set([...Array.from(activeChannelSlugs, (slug) => `@${slug}`), ...explicitActiveMentions])]
+	const activeMentions = [
+		...new Set([...Array.from(activeChannelSlugs, (slug) => `@${slug}`), ...explicitActiveMentions])
+	]
 	return {
 		activeChannelIds: [...activeChannelIds],
 		activeChannelSlugs: [...activeChannelSlugs],

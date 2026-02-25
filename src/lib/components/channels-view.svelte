@@ -4,12 +4,8 @@
 	import {shufflePlayChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelAvatarUrl} from '$lib/utils'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {channelActivity} from '$lib/channel-activity.svelte'
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -28,27 +24,7 @@
 	} = $props()
 
 	const openSlug = $derived(syncToUrl ? page.url.searchParams.get('slug') : null)
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const deckCanvasState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const activeIds = $derived(deckCanvasState.activeChannelIds)
+	const activeIds = $derived(channelActivity.activeChannelIds)
 	const activeId = $derived(activeIds[0] ?? undefined)
 
 	const sortKey = {
@@ -72,7 +48,7 @@
 
 	const canvasMedia = $derived(
 		sortedChannels.map((c) =>
-			toChannelCardMedia(c, deckCanvasState, {
+			toChannelCardMedia(c, channelActivity, {
 				url: c.image
 					? channelAvatarUrl(c.image)
 					: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,

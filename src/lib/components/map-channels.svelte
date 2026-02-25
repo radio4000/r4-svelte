@@ -4,13 +4,8 @@
 	import {mount, onDestroy, unmount, untrack} from 'svelte'
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
-	import {appState} from '$lib/app-state.svelte'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {followsCollection} from '$lib/collections/follows'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {deriveChannelActivityState} from './channel-ui-state.js'
+	import {channelActivity} from '$lib/channel-activity.svelte'
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
@@ -38,31 +33,10 @@
 	let markerByChannelId = new Map()
 	/** @type {Map<string, L.CircleMarker>} */
 	let markerBySlug = new Map()
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
-	const activityState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void broadcastsCollection.state.size
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
-	const favoriteIds = $derived(activityState.favoriteChannelIds)
-	const broadcastingIds = $derived(activityState.broadcastingChannelIds)
-	const playingSlugs = $derived(activityState.playingChannelSlugs)
-	const inDeckSlugs = $derived(activityState.inDeckChannelSlugs)
+	const favoriteIds = $derived(channelActivity.favoriteChannelIds)
+	const broadcastingIds = $derived(channelActivity.broadcastingChannelIds)
+	const playingSlugs = $derived(channelActivity.playingChannelSlugs)
+	const inDeckSlugs = $derived(channelActivity.inDeckChannelSlugs)
 	const mapChannels = $derived.by(() => {
 		const byId = new Map()
 		for (const channel of channels) {

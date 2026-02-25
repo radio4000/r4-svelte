@@ -7,10 +7,9 @@
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {followsCollection} from '$lib/collections/follows'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelAvatarUrl} from '$lib/utils.ts'
-	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {channelActivity} from '$lib/channel-activity.svelte'
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
 
 	let slug = $derived(page.params.slug)
@@ -21,8 +20,6 @@
 			.orderBy(({ch}) => ch.created_at, 'desc')
 			.limit(1)
 	)
-	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
-	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
 	const channelTracksQuery = useLiveQuery((q) =>
 		q
 			.from({t: tracksCollection})
@@ -33,27 +30,9 @@
 	let channel = $derived(channelQuery.data?.[0] ?? null)
 	let channelTracks = $derived(channelTracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
-	const deckCanvasState = $derived.by(() => {
-		const followsRows = followsQuery.data ?? []
-		void tracksCollection.state.size
-		void channelsCollection.state.size
-		const followsState = new Map(
-			followsRows
-				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
-				.filter((row) => typeof row.id === 'string')
-				.map((row) => [row.id, row])
-		)
-		return deriveChannelActivityState({
-			decks: appState.decks,
-			tracksState: tracksCollection.state,
-			channelsState: channelsCollection.state,
-			followsState,
-			broadcastRows: broadcastsQuery.data ?? []
-		})
-	})
 	const mediaItem = $derived.by(() => {
 		if (!channel) return null
-		return toChannelCardMedia(channel, deckCanvasState, {
+		return toChannelCardMedia(channel, channelActivity, {
 			url: channel.image
 				? channelAvatarUrl(channel.image)
 				: `https://placehold.co/250?text=${encodeURIComponent(channel.name?.[0] || '?')}`,
@@ -93,9 +72,7 @@
 	function playByTagToken(token) {
 		const tag = normalizeTag(token)
 		if (!tag) return false
-		const matches = channelTracks.filter((track) =>
-			(track?.tags || []).some((entry) => normalizeTag(entry) === tag)
-		)
+		const matches = channelTracks.filter((track) => (track?.tags || []).some((entry) => normalizeTag(entry) === tag))
 		return playTracks(matches, `#${tag}`)
 	}
 
