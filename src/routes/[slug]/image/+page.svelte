@@ -1,34 +1,17 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {page} from '$app/state'
-	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
 	import {channelAvatarUrl} from '$lib/utils.ts'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
 
-	let slug = $derived(page.params.slug)
-	const channelQuery = useLiveQuery((q) =>
-		q
-			.from({ch: channelsCollection})
-			.where(({ch}) => eq(ch.slug, slug))
-			.orderBy(({ch}) => ch.created_at, 'desc')
-			.limit(1)
-	)
-	const channelTracksQuery = useLiveQuery((q) =>
-		q
-			.from({t: tracksCollection})
-			.where(({t}) => eq(t.slug, slug))
-			.orderBy(({t}) => t.created_at, 'desc')
-			.limit(4000)
-	)
-	let channel = $derived(channelQuery.data?.[0] ?? null)
-	let channelTracks = $derived(channelTracksQuery.data ?? [])
+	const channelCtx = getChannelCtx()
+	const tracksQuery = getTracksQueryCtx()
+	let channel = $derived(channelCtx.data ?? null)
+	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
 	const mediaItem = $derived.by(() => {
 		if (!channel) return null
