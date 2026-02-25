@@ -150,11 +150,31 @@
 	}
 
 	function refreshMarkerStyles() {
+		let openSlug = null
+		for (const [slug, marker] of markerBySlug) {
+			if (marker.isPopupOpen?.()) {
+				openSlug = slug
+				break
+			}
+		}
+
 		for (const channel of mapChannels) {
 			const marker = markerByChannelId.get(channel.id)
 			if (!marker) continue
 			marker.setStyle(getMarkerStyle(channel))
 			applyMarkerClasses(marker, channel)
+		}
+
+		if (openSlug) {
+			requestAnimationFrame(() => {
+				const marker = markerBySlug.get(openSlug)
+				if (!marker || marker.isPopupOpen?.()) return
+				try {
+					marker.openPopup()
+				} catch {
+					// ignore marker teardown races
+				}
+			})
 		}
 	}
 
@@ -277,6 +297,13 @@
 							: null
 				if (!target) return
 				if (target.closest('.leaflet-popup-close-button')) return
+				const clickedButton = target.closest('button, [role="button"]')
+				if (clickedButton) {
+					// Keep popup open through reactive updates (favorite toggle, menu actions, etc.).
+					keepPopupOpenUntil = Date.now() + 3000
+					stickyPopupSlug = normalizeSlug(c.slug)
+					stickyPopupUntil = keepPopupOpenUntil
+				}
 				const link = target.closest('a[href]')
 				if (link instanceof HTMLAnchorElement) {
 					event.preventDefault()
