@@ -1,10 +1,14 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
-	import {viewIconMap, viewLabelMap, handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -73,7 +77,6 @@
 			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 		}
 	}
-
 </script>
 
 <div class={`layout layout--${display} fill-height`}>

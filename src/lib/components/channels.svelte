@@ -9,7 +9,12 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
-	import {viewIconMap, viewLabelMap, handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'

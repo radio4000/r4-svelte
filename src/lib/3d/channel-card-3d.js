@@ -2,6 +2,11 @@ export const BORDER_LAYER_ORDER = ['favorite', 'active', 'hover', 'selected']
 export const CHANNEL_INFO_CANVAS = {width: 1024, height: 440}
 import {formatDate} from '$lib/dates.js'
 
+const RE_FULLWIDTH_HASH = /^[﹟＃]/
+const RE_TRAILING_PUNCT = /[.,;:!?]+$/g
+const RE_WHITESPACE = /\s+/g
+const RE_TRAILING_PUNCT_DASH = /[.,;:!?-]*$/
+
 /**
  * @param {any} mediaItem
  * @param {any} colors
@@ -131,13 +136,13 @@ export function buildChannelInfoCanvas(params) {
 		String(value || '')
 			.trim()
 			.toLowerCase()
-			.replace(/^[﹟＃]/, '#')
-			.replace(/[.,;:!?]+$/g, '')
+			.replace(RE_FULLWIDTH_HASH, '#')
+			.replace(RE_TRAILING_PUNCT, '')
 	const channel = mediaItem.channel || {}
 	const name = mediaItem.name || mediaItem.title || mediaItem.slug || ''
 	const slug = mediaItem.slug ? `@${mediaItem.slug}` : ''
 	const description = String(channel.description || mediaItem.description || '')
-		.replace(/\s+/g, ' ')
+		.replace(RE_WHITESPACE, ' ')
 		.trim()
 	const tags = Array.isArray(mediaItem.tags) ? mediaItem.tags : []
 	const mentions = Array.isArray(mediaItem.mentions) ? mediaItem.mentions : []
@@ -210,7 +215,7 @@ export function buildChannelInfoCanvas(params) {
 			const consumed = lines.join(' ').split(' ').length
 			if (consumed < words.length) {
 				const last = lines.at(-1) || ''
-				lines[lines.length - 1] = `${last.replace(/[.,;:!?-]*$/, '')}...`
+				lines[lines.length - 1] = `${last.replace(RE_TRAILING_PUNCT_DASH, '')}...`
 			}
 		}
 		for (let i = 0; i < lines.length; i++) {

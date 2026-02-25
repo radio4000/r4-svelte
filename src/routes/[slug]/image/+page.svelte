@@ -1,3 +1,8 @@
+<script module>
+	const RE_LEADING_HASH = /^#/
+	const RE_LEADING_AT = /^@/
+</script>
+
 <script>
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
@@ -29,9 +34,9 @@
 	}
 
 	/** Strip leading `#` to get a bare tag for comparison against track.tags */
-	const stripHash = (v) => String(v || '').replace(/^#/, '')
+	const stripHash = (v) => String(v || '').replace(RE_LEADING_HASH, '')
 	/** Strip leading `@` to get a bare mention for comparison against track.mentions */
-	const stripAt = (v) => String(v || '').replace(/^@/, '')
+	const stripAt = (v) => String(v || '').replace(RE_LEADING_AT, '')
 
 	function playByTagToken(token) {
 		const tag = stripHash(token)
@@ -43,9 +48,7 @@
 	function playByMentionToken(token) {
 		const mention = stripAt(token)
 		if (!mention) return false
-		const matches = channelTracks.filter((track) =>
-			(track?.mentions || []).some((entry) => stripAt(entry) === mention)
-		)
+		const matches = channelTracks.filter((track) => (track?.mentions || []).some((entry) => stripAt(entry) === mention))
 		return playTracks(matches, `@${mention}`)
 	}
 

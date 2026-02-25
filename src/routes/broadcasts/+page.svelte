@@ -12,9 +12,7 @@
 	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
 	const broadcasts = useLiveQuery(broadcastsCollection)
-	const activeBroadcasts = $derived(
-		(broadcasts.data ?? []).filter((row) => row.channel_id && row.channels)
-	)
+	const activeBroadcasts = $derived((broadcasts.data ?? []).filter((row) => row.channel_id && row.channels))
 	const loading = $derived(broadcasts.isLoading)
 	const loadingError = $derived(broadcasts.isError ? 'Failed to load broadcasts' : null)
 

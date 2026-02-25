@@ -1,6 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import L from 'leaflet'
+	import {SvelteMap} from 'svelte/reactivity'
 	import {mount, onDestroy, unmount, untrack} from 'svelte'
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
@@ -29,16 +30,16 @@
 	let stickyPopupUntil = 0
 	/** @type {Array<() => void>} */
 	let popupCleanupFns = []
-	/** @type {Map<string, L.CircleMarker>} */
-	let markerByChannelId = new Map()
-	/** @type {Map<string, L.CircleMarker>} */
-	let markerBySlug = new Map()
+	/** @type {SvelteMap<string, L.CircleMarker>} */
+	let markerByChannelId = new SvelteMap()
+	/** @type {SvelteMap<string, L.CircleMarker>} */
+	let markerBySlug = new SvelteMap()
 	const favoriteIds = $derived(channelActivity.favoriteChannelIds)
 	const broadcastingIds = $derived(channelActivity.broadcastingChannelIds)
 	const playingSlugs = $derived(channelActivity.playingChannelSlugs)
 	const inDeckSlugs = $derived(channelActivity.inDeckChannelSlugs)
 	const mapChannels = $derived.by(() => {
-		const byId = new Map()
+		const byId = new SvelteMap()
 		for (const channel of channels) {
 			const lat = Number(channel?.latitude)
 			const lng = Number(channel?.longitude)
