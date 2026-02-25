@@ -198,10 +198,6 @@
 		align-items: center;
 		gap: 0.2rem;
 		flex-shrink: 0;
-
-		:global(.popover-menu) {
-			/*margin-top: auto;*/
-		}
 	}
 
 	.meta {

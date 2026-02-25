@@ -114,6 +114,7 @@ export async function playTrack(
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
 		deck = addDeck()
+		deck.compact = true
 		deckId = deck.id
 		appState.active_deck_id = deckId
 		log.log('play_track_created_deck', {deckId})

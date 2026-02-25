@@ -134,6 +134,7 @@ export async function joinBroadcast(deckId, channelId) {
 			await applyBroadcastState(channelId, data.decks)
 		} else if (data?.track_id) {
 			const deck = addDeck()
+			deck.compact = true
 			deck.listening_to_channel_id = channelId
 			deck.hide_queue_panel = true
 			await playBroadcastTrack(deck.id, data)
