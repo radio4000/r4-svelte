@@ -1,28 +1,9 @@
-import {extractHashtags, extractMentions} from '$lib/utils.ts'
+import {extractHashtags, extractMentions, channelAvatarUrl} from '$lib/utils.ts'
 
-/**
- * Normalize broadcast rows from mixed query shapes.
- * @param {any} row
- */
-export function normalizeBroadcastRow(row) {
-	const channel = row?.channels ?? row?.channel ?? null
-	const channelId = row?.channel_id ?? channel?.id ?? row?.id ?? null
-	const trackPlayedAt = row?.track_played_at ?? row?.trackPlayedAt ?? null
-	const decks = Array.isArray(row?.decks) ? row.decks : []
-	return {channelId, channel, trackPlayedAt, decks, raw: row}
-}
-
-/**
- * @param {unknown} value
- */
-function normalizeTag(value) {
-	const token = String(value || '')
-		.trim()
-		.toLowerCase()
-		.replace(/^[﹟＃]/, '#')
-		.replace(/[.,;:!?]+$/g, '')
-	if (!token) return ''
-	return token.startsWith('#') ? token : `#${token}`
+/** Prefix a bare tag with `#` (view tags come without it). */
+function prefixTag(value) {
+	const tag = String(value || '')
+	return tag.startsWith('#') ? tag : `#${tag}`
 }
 
 /**
@@ -66,22 +47,20 @@ export function deriveChannelActivityState(params) {
 		if (id) favoriteChannelIds.add(id)
 	}
 	for (const row of broadcastRows ?? []) {
-		const normalized = normalizeBroadcastRow(row)
-		if (normalized.channelId) broadcastingChannelIds.add(normalized.channelId)
+		if (row?.channel_id) broadcastingChannelIds.add(row.channel_id)
 	}
 
 	for (const deck of Object.values(decks || {})) {
 		for (const tag of extractHashtags(String(deck?.playlist_title || ''))) {
-			const normalized = normalizeTag(tag)
-			if (normalized) activeTags.add(normalized)
+			const prefixed = prefixTag(tag)
+			if (prefixed) activeTags.add(prefixed)
 		}
 		for (const mention of extractMentions(String(deck?.playlist_title || ''))) {
-			const normalized = String(mention || '').trim().toLowerCase()
-			if (normalized.startsWith('@') && normalized.length > 1) explicitActiveMentions.add(normalized)
+			if (mention.startsWith('@') && mention.length > 1) explicitActiveMentions.add(mention)
 		}
 		for (const tag of Array.isArray(deck?.view?.tags) ? deck.view.tags : []) {
-			const normalized = normalizeTag(tag)
-			if (normalized) activeTags.add(normalized)
+			const prefixed = prefixTag(tag)
+			if (prefixed) activeTags.add(prefixed)
 		}
 
 		const listeningId = deck?.listening_to_channel_id
@@ -107,7 +86,9 @@ export function deriveChannelActivityState(params) {
 		if (ch?.id) activeChannelIds.add(ch.id)
 	}
 
-	const activeMentions = [...new Set([...Array.from(activeChannelSlugs, (slug) => `@${slug}`), ...explicitActiveMentions])]
+	const activeMentions = [
+		...new Set([...Array.from(activeChannelSlugs, (slug) => `@${slug}`), ...explicitActiveMentions])
+	]
 	return {
 		activeChannelIds: [...activeChannelIds],
 		activeChannelSlugs: [...activeChannelSlugs],
@@ -122,20 +103,26 @@ export function deriveChannelActivityState(params) {
 
 /**
  * Build consistent channel-card media item payload for 2D/3D UIs.
+ * When `base` is omitted, derives image URL from `channel.image` via `channelAvatarUrl`
+ * with a placeholder fallback.
  * @param {any} channel
  * @param {ReturnType<typeof deriveChannelActivityState>} state
- * @param {{url: string, width?: number, height?: number}} base
+ * @param {{url: string, width?: number, height?: number}} [base]
  */
 export function toChannelCardMedia(channel, state, base) {
+	const url =
+		base?.url ??
+		(channel.image
+			? channelAvatarUrl(channel.image)
+			: `https://placehold.co/250?text=${encodeURIComponent(channel.name?.[0] || '?')}`)
 	const tags = extractHashtags(channel?.description || '')
 	const mentions = extractMentions(channel?.description || '')
-	const normalizedSlug = String(channel?.slug || '').toLowerCase()
-	const normalizedTags = tags.map((tag) => normalizeTag(tag)).filter(Boolean)
+	const normalizedTags = tags.map((tag) => prefixTag(tag)).filter(Boolean)
 	const matchingActiveTags = normalizedTags.filter((tag) => state.activeTags.includes(tag))
 	return {
-		url: base.url,
-		width: base.width ?? 250,
-		height: base.height ?? 250,
+		url,
+		width: base?.width ?? 250,
+		height: base?.height ?? 250,
 		slug: channel.slug,
 		id: channel.id,
 		name: channel.name,
@@ -146,7 +133,7 @@ export function toChannelCardMedia(channel, state, base) {
 		activeMentions: state.activeMentions,
 		hasActiveTagMatch: matchingActiveTags.length > 0,
 		isActive: state.activeChannelIds.includes(channel.id),
-		isPlaying: state.playingChannelSlugs.has(normalizedSlug),
+		isPlaying: state.playingChannelSlugs.has(channel.slug),
 		isFavorite: state.favoriteChannelIds.has(channel.id),
 		isLive: state.broadcastingChannelIds.has(channel.id),
 		channel

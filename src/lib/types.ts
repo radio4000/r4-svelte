@@ -97,16 +97,7 @@ interface User {
 
 export type KeyBindingsConfig = Record<string, string>
 
-export interface BroadcastDeckState {
-	index?: number
-	track_id?: string | null
-	track_played_at?: string | null
-	is_playing?: boolean
-	seeked_at?: string | null
-	seek_position?: number | null
-	volume?: number
-	muted?: boolean
-	speed?: number
+export interface BroadcastDeckState extends Partial<import('@radio4000/sdk').BroadcastDeckState> {
 	track_url?: string | null
 	track_title?: string | null
 	track_media_id?: string | null

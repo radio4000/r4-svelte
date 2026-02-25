@@ -2208,7 +2208,7 @@ export class InfiniteCanvasOGL {
 		)
 	}
 
-	updateMeshBorder(mesh, _styleKeys, _group) {
+	updateMeshBorder(mesh) {
 		this.clearLegacyBorderMeshes(mesh)
 	}
 
