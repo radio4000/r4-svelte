@@ -32,7 +32,7 @@
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
-	let filter = $derived(appState.channels_filter || '10+')
+	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+')
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 

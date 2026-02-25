@@ -77,11 +77,14 @@ class Spinner extends HTMLElement {
 
 		if (fps) {
 			const step = () => {
-				setTimeout(() => {
-					this.innerHTML = spinner[i]
-					i = (i + 1) % spinner.length
-					this.timer = requestAnimationFrame(step)
-				}, 1000 / Number(fps))
+				setTimeout(
+					() => {
+						this.innerHTML = spinner[i]
+						i = (i + 1) % spinner.length
+						this.timer = requestAnimationFrame(step)
+					},
+					1000 / Number(fps)
+				)
 			}
 			this.timer = requestAnimationFrame(step)
 		} else {
