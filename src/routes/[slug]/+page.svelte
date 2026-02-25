@@ -220,7 +220,7 @@
 											slug && joinAutoRadio(appState.active_deck_id, autoTagTracks, {channels: [slug], tags: [tag]})}
 										title="Auto radio #{tag}"
 									>
-										<Icon icon="infinite" size={14} />
+										<Icon icon="signal" size={14} />
 									</button>
 								{/if}
 							{/if}

@@ -144,7 +144,7 @@
 										tags: selectedTags,
 										search: searchValue
 									})}
-								title="Auto radio this selection"><Icon icon="infinite" size={16} /></button
+								title="Auto radio this selection"><Icon icon="signal" size={16} /></button
 							>
 						{/if}
 					{/if}

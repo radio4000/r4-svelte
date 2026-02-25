@@ -47,7 +47,7 @@
 			aria-label={m.nav_broadcasts()}
 			{@attach tooltip({content: m.nav_broadcasts()})}
 		>
-			<Icon icon="signal" />
+			<Icon icon="cell-signal" />
 			{#if broadcastCount > 0}
 				<span class="count">{broadcastCount}</span>
 			{/if}

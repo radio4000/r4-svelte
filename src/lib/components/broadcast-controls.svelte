@@ -71,12 +71,12 @@
 	<div>
 		{#if isBroadcasting}
 			<button class="active" onclick={() => stopBroadcasting()}>
-				<Icon icon="signal" strokeWidth={1.7} />
+				<Icon icon="cell-signal" strokeWidth={1.7} />
 				{m.broadcast_stop_button()}
 			</button>
 		{:else if canStartBroadcast}
 			<button onclick={start}>
-				<Icon icon="signal" strokeWidth={1.7}></Icon>
+				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 				{m.broadcast_start_button()}
 			</button>
 		{/if}
@@ -88,7 +88,7 @@
 	</div>
 {:else}
 	<a class="btn" href="/auth">
-		<Icon icon="signal" strokeWidth={1.7}></Icon>
+		<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 		{m.broadcast_login_prompt()}
 	</a>
 {/if}

@@ -215,7 +215,7 @@
 						onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
 						title="Auto radio this search"
 					>
-						<Icon icon="infinite" size={16} />
+						<Icon icon="signal" size={16} />
 					</button>
 				{/if}
 			{/if}

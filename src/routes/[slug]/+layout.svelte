@@ -144,7 +144,7 @@
 									else joinBroadcast(appState.active_deck_id, channel.id)
 								}}
 							>
-								<Icon icon="signal" />
+								<Icon icon="cell-signal" />
 							</button>
 						</span>
 					{/if}
@@ -158,7 +158,7 @@
 								class:active={isAutoRadioDrifted}
 								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 							>
-								<Icon icon="infinite" />
+								<Icon icon="signal" />
 							</button>
 						{/if}
 					</span>

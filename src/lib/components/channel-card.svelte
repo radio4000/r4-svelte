@@ -92,7 +92,7 @@
 					</button>
 					{#if isBroadcasting}
 						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-							<Icon icon="signal" size={16} /> Join broadcast
+							<Icon icon="cell-signal" size={16} /> Join broadcast
 						</button>
 					{/if}
 					<button type="button" role="menuitem" onclick={share}>
