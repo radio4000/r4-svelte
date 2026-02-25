@@ -42,7 +42,10 @@ The infinity button appears on:
 
 ## Drift
 
-When a listener seeks, skips, or picks a different track, the deck is marked `auto_radio_drifted`. The "Auto" badge in the player turns into a resync button — tap it to jump back to the scheduled position (`resyncAutoRadio` in `api.ts`). Natural track endings and `play_channel` do not count as drift.
+When a listener seeks, skips, or picks a different track, the deck is marked `auto_radio_drifted`. Seeking drift is detected against the expected schedule (current track + offset at now), so join/resync seeks that land on the scheduled position do not count as drift. The custom range slider also marks drift immediately. The "Auto" badge in the player turns into a resync button — tap it to jump back to the scheduled position (`resyncAutoRadio` in `api.ts`). Natural track endings and `play_channel` do not count as drift.
+
+On channel pages, the Auto button reflects channel-level state across all open decks: active when any deck is in auto for that channel, and showing a reload icon when any of those decks is drifted.
+Across search/channel/filter entry points, Auto buttons now show active/drifted only when the stored auto view matches that exact view (for example, a specific `#tag` mode highlights only that tag's Auto button).
 
 Note: `resyncAutoRadio` currently re-fetches the full channel's tracks by slug. It does not yet re-apply view filters, so resyncing a tag-filtered auto-radio will use the full channel instead. Fixing this requires storing the view on the deck (deferred).
 

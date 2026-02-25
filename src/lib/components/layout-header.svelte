@@ -13,6 +13,7 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import PinsNav from '$lib/components/pins-nav.svelte'
+	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	const {preloading} = $props()
@@ -21,6 +22,25 @@
 	const isBroadcasting = $derived(
 		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
+	const userChannelAutoDecks = $derived.by(() => {
+		if (!userChannel?.slug) return []
+		return Object.values(appState.decks).filter((d) => d.auto_radio && d.view?.channels?.[0] === userChannel.slug)
+	})
+	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
+	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	const userChannelResyncDeckId = $derived.by(() => {
+		if (!userChannel?.slug || !userChannelHasAutoDrifted) return undefined
+		const activeDeck = appState.decks[appState.active_deck_id]
+		if (
+			activeDeck?.id &&
+			activeDeck.auto_radio &&
+			activeDeck.auto_radio_drifted &&
+			activeDeck.view?.channels?.[0] === userChannel.slug
+		) {
+			return activeDeck.id
+		}
+		return userChannelAutoDecks.find((d) => d.auto_radio_drifted)?.id
+	})
 
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
@@ -82,11 +102,25 @@
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
+					class:active={userChannelHasAuto}
 					{@attach tooltip({content: isBroadcasting ? 'Broadcasting' : 'Go to your channel'})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 				</a>
+				{#if userChannelHasAuto}
+					<span class="channel-badge" class:drifted={userChannelHasAutoDrifted}>Auto</span>
+				{/if}
+				{#if userChannelHasAutoDrifted && userChannelResyncDeckId}
+					<button
+						type="button"
+						class="btn resync-link"
+						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+						{@attach tooltip({content: m.auto_radio_resync()})}
+					>
+						<Icon icon="signal" />
+					</button>
+				{/if}
 			{:else}{/if}
 		{/await}
 		<a

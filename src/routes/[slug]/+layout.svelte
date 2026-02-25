@@ -16,6 +16,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {joinAutoRadio} from '$lib/api'
+	import {getAutoDecksForView} from '$lib/views.svelte'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -44,14 +45,10 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
-	// True when the active deck is playing this channel's auto-radio but has drifted off schedule
-	let isAutoRadioDrifted = $derived(
-		Boolean(
-			channel?.slug &&
-			appState.decks[appState.active_deck_id]?.view?.channels?.[0] === channel.slug &&
-			appState.decks[appState.active_deck_id]?.auto_radio_drifted
-		)
-	)
+	let fullChannelAutoView = $derived(channel?.slug ? {channels: [channel.slug]} : undefined)
+	let channelAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), fullChannelAutoView))
+	let hasChannelAuto = $derived(channelAutoDecks.length > 0)
+	let hasChannelAutoDrifted = $derived(channelAutoDecks.some((d) => d.auto_radio_drifted))
 
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
@@ -127,38 +124,40 @@
 					</p>
 				</div>
 				<menu class="channel-actions">
-					{#if canEdit}
-						<span>
+					<span>
+						{#if canShowAutoRadio}
+							<button
+								type="button"
+								onclick={() =>
+									channel && joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})}
+								class:active={hasChannelAuto}
+								class:drifted={hasChannelAutoDrifted}
+								title={hasChannelAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+							>
+								<Icon icon="signal" />
+							</button>
+						{/if}
+						<ButtonPlay {channel} trackId={tid} />
+					</span>
+					<span>
+						{#if canEdit}
 							<BroadcastControls
 								deckId={appState.active_deck_id}
 								channelId={channel.id}
 								isLiveOverride={isChannelLive}
+								compact
 							/>
-						</span>
-					{:else if channel.id && isChannelLive}
-						<span>
+						{:else if channel.id && isChannelLive}
 							<button
 								type="button"
 								onclick={() => {
 									if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
 									else joinBroadcast(appState.active_deck_id, channel.id)
 								}}
+								title={m.nav_broadcasts()}
+								aria-label={m.nav_broadcasts()}
 							>
 								<Icon icon="cell-signal" />
-							</button>
-						</span>
-					{/if}
-					<span>
-						<ButtonPlay {channel} trackId={tid} />
-						{#if canShowAutoRadio}
-							<button
-								type="button"
-								onclick={() =>
-									channel && joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})}
-								class:active={isAutoRadioDrifted}
-								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-							>
-								<Icon icon="signal" />
 							</button>
 						{/if}
 					</span>

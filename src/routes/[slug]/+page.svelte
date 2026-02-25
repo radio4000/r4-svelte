@@ -14,6 +14,7 @@
 	import {findChannelBySlug} from '$lib/search'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
+	import {getAutoDecksForView} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const PREVIEW_LIMIT = 10
@@ -75,7 +76,17 @@
 	})
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
-	const isTagPlaying = (tag: string) => activeDeck?.playlist_title === `#${tag}` && activeDeck?.is_playing
+	const isTagPlaying = (tag: string) => {
+		if (!activeDeck?.is_playing) return false
+		const titleTags =
+			activeDeck.playlist_title
+				?.split(' ')
+				.filter((t) => t.startsWith('#'))
+				.map((t) => t.slice(1)) ?? []
+		if (titleTags.includes(tag)) return true
+		if (!slug) return false
+		return getAutoDecksForView([activeDeck], {channels: [slug], tags: [tag]}).length > 0
+	}
 
 	// Tags from ALL decks' playlists (e.g. "#house #techno" → ["house", "techno"])
 	const deckPlaylistTags = $derived([
@@ -213,12 +224,17 @@
 							</button>
 							{#if channel}
 								{@const autoTagTracks = toAutoTracks(tracks)}
+								{@const autoTagView = slug ? {channels: [slug], tags: [tag]} : undefined}
+								{@const autoTagDecks = getAutoDecksForView(Object.values(appState.decks), autoTagView)}
+								{@const isAutoTagActive = autoTagDecks.length > 0}
+								{@const isAutoTagDrifted = autoTagDecks.some((d) => d.auto_radio_drifted)}
 								{#if hasAutoRadioCoverage(tracks)}
 									<button
 										type="button"
-										onclick={() =>
-											slug && joinAutoRadio(appState.active_deck_id, autoTagTracks, {channels: [slug], tags: [tag]})}
-										title="Auto radio #{tag}"
+										class:active={isAutoTagActive}
+										class:drifted={isAutoTagDrifted}
+										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
+										title={isAutoTagDrifted ? m.auto_radio_resync() : `Auto radio #${tag}`}
 									>
 										<Icon icon="signal" size={14} />
 									</button>

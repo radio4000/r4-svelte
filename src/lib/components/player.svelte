@@ -19,6 +19,7 @@
 		resyncAutoRadio
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
+	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
 	import {joinBroadcast, leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -41,6 +42,7 @@
 	/** @typedef {import('$lib/types').Channel} Channel */
 
 	const log = logger.ns('player').seal()
+	const AUTO_RADIO_SEEK_DRIFT_TOLERANCE_SECONDS = 2.5
 
 	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
 	let {deckId, children, scrollToActive} = $props()
@@ -223,10 +225,29 @@
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
-	function handleSeeked() {
+	function handleSeeked(event) {
 		if (!deck || !mediaElement) return
+		const currentSeekPosition = mediaElement.currentTime ?? 0
 		deck.seeked_at = new Date().toISOString()
-		deck.seek_position = mediaElement.currentTime ?? 0
+		deck.seek_position = currentSeekPosition
+		if (deck.auto_radio && deck.auto_radio_rotation_start != null) {
+			const playlistTracks = deck.playlist_tracks.map((id) => tracksCollection.state.get(id)).filter(Boolean)
+			const expectedTracks = toAutoTracks(/** @type {import('$lib/types').Track[]} */ (playlistTracks))
+			const totalDuration = expectedTracks.reduce((sum, t) => sum + t.duration, 0)
+			const snap = playbackState(expectedTracks, totalDuration, deck.auto_radio_rotation_start, Date.now())
+			if (!snap) {
+				deck.auto_radio_drifted = true
+			} else {
+				const isWrongTrack = deck.playlist_track !== snap.currentTrack.id
+				const offsetDelta = Math.abs(currentSeekPosition - snap.offsetSeconds)
+				if (isWrongTrack || offsetDelta > AUTO_RADIO_SEEK_DRIFT_TOLERANCE_SECONDS) {
+					deck.auto_radio_drifted = true
+				}
+			}
+		}
+		if (event?.isTrusted && deck.listening_to_channel_id) {
+			deck.listening_drifted = true
+		}
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}

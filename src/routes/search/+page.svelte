@@ -2,7 +2,14 @@
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
-	import {parseSearchQueryToView, parseView, serializeView, viewToQuery, queryViewTracks} from '$lib/views.svelte'
+	import {
+		parseSearchQueryToView,
+		parseView,
+		serializeView,
+		viewToQuery,
+		queryViewTracks,
+		getAutoDecksForView
+	} from '$lib/views.svelte'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -116,6 +123,9 @@
 	const tracksLoading = $derived(viewQuery.loading)
 	const autoRadioTracks = $derived(toAutoTracks(tracks))
 	const canShowAutoRadio = $derived(hasAutoRadioCoverage(tracks))
+	const searchAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), view))
+	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
+	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
 
 	// --- Channel results (parallel, outside View) ---
 	/** @type {import('$lib/types.ts').Channel[]} */
@@ -213,7 +223,9 @@
 					<button
 						type="button"
 						onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
-						title="Auto radio this search"
+						class:active={isSearchAutoActive}
+						class:drifted={isSearchAutoDrifted}
+						title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
 					>
 						<Icon icon="signal" size={16} />
 					</button>

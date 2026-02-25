@@ -12,7 +12,7 @@
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
-	import {processViewTracks, type View} from '$lib/views.svelte'
+	import {processViewTracks, getAutoDecksForView, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
@@ -56,6 +56,14 @@
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
 	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
+	let filteredAutoView = $derived.by(() => ({
+		channels: slug ? [slug] : undefined,
+		tags: selectedTags.length ? selectedTags : undefined,
+		search: searchValue.trim() || undefined
+	}))
+	let filteredAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), filteredAutoView))
+	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
+	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
 		if (search) return search
@@ -138,13 +146,11 @@
 						{#if channel && canShowFilteredAutoRadio}
 							<button
 								type="button"
-								onclick={() =>
-									joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, {
-										channels: slug ? [slug] : undefined,
-										tags: selectedTags,
-										search: searchValue
-									})}
-								title="Auto radio this selection"><Icon icon="signal" size={16} /></button
+								class:active={isFilteredAutoActive}
+								class:drifted={isFilteredAutoDrifted}
+								onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+								title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
+								><Icon icon="signal" size={16} /></button
 							>
 						{/if}
 					{/if}

@@ -225,6 +225,12 @@
 		{"name": "parseView(params)", "desc": "Parse URLSearchParams into a View."},
 		{"name": "parseSearchQueryToView(input)", "desc": "Parse human query (@slug #tag text) into a View."},
 		{"name": "serializeView(view)", "desc": "Serialize View to URLSearchParams."},
+		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
+		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."},
+		{
+			"name": "getAutoDecksForView(decks, view?)",
+			"desc": "Return auto-radio decks whose stored view matches the given view identity."
+		},
 		{"name": "viewToQuery(view)", "desc": "Reverse of parseSearchQueryToView: View to human query string."},
 		{
 			"name": "processViewTracks(tracks, view)",

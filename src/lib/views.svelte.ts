@@ -6,7 +6,7 @@ import {inArray} from '@tanstack/db'
 import {tracksCollection} from '$lib/collections/tracks'
 import {searchTracks} from '$lib/search-fts'
 import {sdk} from '@radio4000/sdk'
-import type {Track} from '$lib/types'
+import type {Deck, Track} from '$lib/types'
 
 export type View = {
 	channels?: string[]
@@ -82,6 +82,33 @@ export function serializeView(view: View): URLSearchParams {
 	if (view.limit) params.set('limit', String(view.limit))
 	if (view.search) params.set('search', view.search)
 	return params
+}
+
+/** Remove empty fields so two semantically equivalent views compare equal. */
+export function normalizeView(view?: View): View | undefined {
+	if (!view) return undefined
+	const normalized: View = {}
+	if (view.channels?.length) normalized.channels = view.channels
+	if (view.tags?.length) normalized.tags = view.tags
+	if (view.tagsMode === 'all') normalized.tagsMode = 'all'
+	if (view.order) normalized.order = view.order
+	if (view.direction) normalized.direction = view.direction
+	if (view.limit) normalized.limit = view.limit
+	const search = view.search?.trim()
+	if (search) normalized.search = search
+	return Object.keys(normalized).length ? normalized : undefined
+}
+
+/** Canonical string key for comparing two Views. */
+export function viewKey(view?: View): string {
+	const normalized = normalizeView(view)
+	return normalized ? serializeView(normalized).toString() : ''
+}
+
+/** Auto-radio decks matching a specific View identity. */
+export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
+	const key = viewKey(view)
+	return decks.filter((d) => d.auto_radio && viewKey(d.view) === key)
 }
 
 /** Reverse of parseSearchQueryToView: turn a View back into a human-readable query string.
