@@ -203,3 +203,12 @@ export function countStrings(strings: string[]): Array<{value: string; count: nu
 export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{value: string; count: number}> {
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }
+
+/** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */
+export function dedupeById<T extends {id: string | null}>(rows: T[]): T[] {
+	const seen = new Map<string, T>()
+	for (const row of rows) {
+		if (row?.id && !seen.has(row.id)) seen.set(row.id, row)
+	}
+	return [...seen.values()]
+}

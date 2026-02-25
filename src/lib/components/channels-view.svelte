@@ -1,9 +1,15 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {shufflePlayChannel} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {channelAvatarUrl} from '$lib/utils'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -22,6 +28,8 @@
 	} = $props()
 
 	const openSlug = $derived(syncToUrl ? page.url.searchParams.get('slug') : null)
+	const activeIds = $derived(channelActivity.activeChannelIds)
+	const activeId = $derived(activeIds[0] ?? undefined)
 
 	const sortKey = {
 		updated: (c) => c.latest_track_at || c.updated_at || '',
@@ -31,30 +39,29 @@
 	}
 
 	let sortedChannels = $derived(
-		channels.toSorted((a, b) => {
-			const av = sortKey[order](a)
-			const bv = sortKey[order](b)
-			const cmp = av < bv ? -1 : av > bv ? 1 : 0
-			return direction === 'asc' ? cmp : -cmp
-		})
+		order === 'shuffle'
+			? channels.toSorted(() => Math.random() - 0.5)
+			: channels.toSorted((a, b) => {
+					const by = sortKey[order] ?? sortKey.updated
+					const av = by(a)
+					const bv = by(b)
+					const cmp = av < bv ? -1 : av > bv ? 1 : 0
+					return direction === 'asc' ? cmp : -cmp
+				})
 	)
 
-	const canvasMedia = $derived(
-		sortedChannels.map((c) => ({
-			url: c.image
-				? channelAvatarUrl(c.image)
-				: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-			width: 250,
-			height: 250,
-			slug: c.slug,
-			id: c.id,
-			name: c.name
-		}))
-	)
+	const canvasMedia = $derived(sortedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
+
+	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
+
+	$effect(() => {
+		if (!openSlug || !sortedChannels.length) return
+		const match = sortedChannels.find((c) => c.slug === openSlug)
+		if (match?.id) selectedCanvasChannelId = match.id
+	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'infinite'} value */
@@ -70,20 +77,6 @@
 			}
 			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 		}
-	}
-
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		infinite: () => m.channels_view_label_infinite()
 	}
 </script>
 
@@ -137,7 +130,16 @@
 		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas-ogl.svelte')).default}
-		<InfiniteCanvas media={canvasMedia} onclick={handleCanvasClick} />
+		<InfiniteCanvas
+			media={canvasMedia}
+			{activeId}
+			{activeIds}
+			selectedId={selectedCanvasChannelId}
+			focusSlug={openSlug}
+			focusKey={openSlug}
+			onclick={handleCanvasClick}
+			ondoubleclick={handleCanvasDoubleClick}
+		/>
 	{:else}
 		<ol class={display}>
 			{#each sortedChannels as channel (channel.id)}

@@ -2,14 +2,20 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {shufflePlayChannel} from '$lib/api'
-	import {channelAvatarUrl} from '$lib/utils'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	const channelActivity = $derived(getChannelActivity())
+	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {
+		viewIconMap,
+		viewLabelMap,
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
@@ -20,20 +26,6 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const {display: initialDisplay} = $props()
-
-	const activeChannelId = $derived.by(() => {
-		// Check all decks for listening_to_channel_id or active playlist_track
-		for (const deck of Object.values(appState.decks)) {
-			if (deck.listening_to_channel_id) return deck.listening_to_channel_id
-			const trackId = deck.playlist_track
-			if (!trackId) continue
-			const track = tracksCollection.state.get(trackId)
-			if (!track?.slug) continue
-			const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
-			if (channel?.id) return channel.id
-		}
-		return undefined
-	})
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
@@ -56,6 +48,8 @@
 	const broadcastIds = $derived(
 		(broadcastsQuery.data ?? []).map((b) => /** @type {{channel_id: string}} */ (b).channel_id)
 	)
+	const activeChannelIds = $derived(channelActivity.activeChannelIds)
+	const activeChannelId = $derived(activeChannelIds[0] ?? undefined)
 
 	/** @type {Record<string, string>} Sort key → DB column name (or 'shuffle' for random view) */
 	const sortColumns = {
@@ -146,24 +140,19 @@
 
 	const orderedChannels = $derived(channels)
 
-	const canvasMedia = $derived(
-		orderedChannels.map((c) => ({
-			url: c.image
-				? channelAvatarUrl(c.image)
-				: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-			width: 250,
-			height: 250,
-			slug: c.slug,
-			id: c.id,
-			name: c.name
-		}))
-	)
+	const canvasMedia = $derived(orderedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 
 	const openSlug = $derived(page.url.searchParams.get('slug'))
+	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
+
+	$effect(() => {
+		if (!openSlug || !orderedChannels.length) return
+		const match = orderedChannels.find((c) => c.slug === openSlug)
+		if (match?.id) selectedCanvasChannelId = match.id
+	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
@@ -183,22 +172,6 @@
 
 	function setFilter(value) {
 		appState.channels_filter = value
-	}
-
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		tuner: 'radio',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		tuner: () => m.channels_view_label_tuner(),
-		infinite: () => m.channels_view_label_infinite()
 	}
 
 	const filterLabelMap = {
@@ -322,7 +295,16 @@
 		<SpectrumScanner {channels} />
 	{:else if display === 'infinite'}
 		{#await import('./infinite-canvas-ogl.svelte') then InfiniteCanvas}
-			<InfiniteCanvas.default media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
+			<InfiniteCanvas.default
+				media={canvasMedia}
+				activeId={activeChannelId}
+				activeIds={activeChannelIds}
+				selectedId={selectedCanvasChannelId}
+				focusSlug={openSlug}
+				focusKey={openSlug}
+				onclick={handleCanvasClick}
+				ondoubleclick={handleCanvasDoubleClick}
+			/>
 		{/await}
 	{:else}
 		<ol class={display}>

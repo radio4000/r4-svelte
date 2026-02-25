@@ -21,17 +21,35 @@
 
 	function createTileLayer() {
 		const tile = isDarkTheme() ? TILES.dark : TILES.light
-		return L.tileLayer(tile.url, {attribution: tile.attribution})
+		return L.tileLayer(tile.url, {
+			attribution: tile.attribution,
+			noWrap: true
+		})
 	}
 
 	function setup(node) {
+		let disposed = false
 		const params = new URLSearchParams(location.search)
 		const lat = latitude ?? (syncUrl ? Number(params.get('latitude')) || 20 : 20)
 		const lng = longitude ?? (syncUrl ? Number(params.get('longitude')) || 0 : 0)
 		const z = zoom ?? (syncUrl ? Number(params.get('zoom')) || 2 : 2)
 
-		const map = L.map(node, {zoomControl: false}).setView([lat, lng], z)
+		const worldBounds = L.latLngBounds(L.latLng(-85.05112878, -180), L.latLng(85.05112878, 180))
+		const map = L.map(node, {
+			zoomControl: false,
+			attributionControl: false,
+			doubleClickZoom: false,
+			worldCopyJump: false,
+			maxBounds: worldBounds,
+			maxBoundsViscosity: 1.0
+		}).setView([lat, lng], z)
 		L.control.zoom({position: 'bottomright'}).addTo(map)
+		L.control.attribution({position: 'bottomright'}).addTo(map)
+		map.setMaxBounds(worldBounds)
+		const worldMinZoom = map.getBoundsZoom(worldBounds, true)
+		map.setMinZoom(worldMinZoom)
+		if (map.getZoom() < worldMinZoom) map.setZoom(worldMinZoom, {animate: false})
+		map.panInsideBounds(worldBounds, {animate: false})
 
 		let tileLayer = createTileLayer().addTo(map)
 
@@ -39,11 +57,13 @@
 			map.on('click', (e) => onclick({lat: e.latlng.lat, lng: e.latlng.lng}))
 		}
 
+		let debounce
 		if (syncUrl) {
-			let debounce
 			map.on('moveend', () => {
 				clearTimeout(debounce)
 				debounce = setTimeout(() => {
+					if (disposed) return
+					if (!map || !map._loaded || !map._mapPane) return
 					const {lat, lng} = map.getCenter()
 					const z = map.getZoom()
 					const url = new URL(location.href)
@@ -55,6 +75,13 @@
 			})
 		}
 
+		map.on('resize', () => {
+			const nextWorldMinZoom = map.getBoundsZoom(worldBounds, true)
+			map.setMinZoom(nextWorldMinZoom)
+			if (map.getZoom() < nextWorldMinZoom) map.setZoom(nextWorldMinZoom, {animate: false})
+			map.panInsideBounds(worldBounds, {animate: false})
+		})
+
 		onready?.(map)
 
 		const observer = new MutationObserver(() => {
@@ -62,11 +89,20 @@
 			map.removeLayer(tileLayer)
 			next.addTo(map)
 			tileLayer = next
+			map.panInsideBounds(worldBounds, {animate: false})
 		})
 		observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
 
 		return () => {
+			disposed = true
 			observer.disconnect()
+			clearTimeout(debounce)
+			try {
+				map.stop()
+				map.off()
+			} catch {
+				// ignore
+			}
 			map.remove()
 		}
 	}
@@ -102,5 +138,20 @@
 		background: light-dark(var(--gray-1), var(--gray-3));
 		color: light-dark(var(--gray-12), var(--gray-11));
 		border-color: light-dark(var(--gray-5), var(--gray-6));
+	}
+
+	/* Keep zoom controls above credits in bottom-right corner. */
+	.map :global(.leaflet-bottom.leaflet-right) {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-zoom) {
+		order: 1;
+	}
+
+	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-attribution) {
+		order: 2;
 	}
 </style>

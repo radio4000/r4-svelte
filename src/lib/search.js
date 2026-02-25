@@ -30,10 +30,20 @@ export function parseMentionQuery(query) {
  * @returns {Promise<import('$lib/types').Channel | undefined>}
  */
 export async function findChannelBySlug(slug) {
-	const local = [...channelsCollection.state.values()].find((c) => c.slug === slug)
-	if (local) return local
-	const {data} = await sdk.channels.readChannel(slug)
-	return data ?? undefined
+	const normalizedSlug = String(slug || '')
+		.trim()
+		.toLowerCase()
+	if (!normalizedSlug) return undefined
+	const local = [...channelsCollection.state.values()].find(
+		(c) =>
+			String(c?.slug || '')
+				.trim()
+				.toLowerCase() === normalizedSlug
+	)
+	const localHasLocation = Number.isFinite(Number(local?.latitude)) && Number.isFinite(Number(local?.longitude))
+	if (local && localHasLocation) return local
+	const {data} = await sdk.channels.readChannel(normalizedSlug)
+	return data ?? local ?? undefined
 }
 
 /**

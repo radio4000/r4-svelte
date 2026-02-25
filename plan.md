@@ -4,6 +4,8 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
+- Consolidate `channels.svelte` and `channels-view.svelte` — both implement their own filter/sort/display state independently, duplicating ~60% of code (canvas state, display modes, sort controls, click handlers). Should unify into one component powered by the Views abstraction (`docs/views.md`). `channels-view.svelte` is only used by followers/following pages. Likely split: one component owns data/filter/sort/display-choosing, the other is a pure render component that receives sorted channels + display mode and renders the right view (grid/list/map/tuner/infinite).
+
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - nav.tabs vs div.track-tabs>nav? clean up markup here
 - on the track+its meta pages the trackdetailcontext could be cleaned up, less repeated types
@@ -40,6 +42,12 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 ## In progress
 
 - channel mentions route: add `/@slug/mentions` listing tracks from other channels where `mentions` contains `@slug`
+- Extract reusable 3D channel-card module (`src/lib/3d/channel-card-3d.js`) from infinite canvas so future 3D views can reuse state resolution and card texture rendering.
+- 3D channel cards: implemented state parity with grid cards in infinite canvas (`playing`, `selected`, `hover`, `default`) plus combined overlays (`favorite`, `active`, `live`) and info panel tags/mentions with deck-active highlighting.
+  - live state badge upgraded from flat quad texture to shader-lit 3D sphere mesh (top-right) with subtle pulse animation for better depth/readability.
+  - deck-driven active tags/mentions sync: derive from all decks (`playlist_title`, `view.tags`, current `playlist_track` tags) and propagate to 3D card chips + top `#` badge with multi-deck support.
+  - Single-channel 3D scene: replace `/:slug/image` with one active/open 3D channel card (no world movement, pointer tilt) and add debug routes under `/_debug/3d` (`scene-infinite`, `scene-single`, `card-states`).
+  - shared channel UI state adapter added (`src/lib/components/channel-ui-state.js`) and wired into infinite scene, channel image scene, channels views, map markers, broadcasts normalization, and channel page deck-tag matching so active/favorite/live/tag state is derived uniformly across surfaces.
 
 - Discogs UX pass in progress (track Discogs tab + add-track modal)
   - improve release summary density (track/video/in-channel counts + cleaner status hints per row)

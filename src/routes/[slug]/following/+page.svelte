@@ -3,6 +3,7 @@
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
+	import {dedupeById} from '$lib/utils'
 	import ChannelsView from '$lib/components/channels-view.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -13,7 +14,6 @@
 	/** @type {'asc' | 'desc'} */
 	let direction = $state(appState.channels_order_direction || 'desc')
 
-	// Sync to appState when settings change
 	$effect(() => {
 		appState.channels_display = display
 		appState.channels_order = order
@@ -37,12 +37,16 @@
 					if (!data?.length) return []
 					const ids = data.map((c) => c.id)
 					const {data: enriched} = await sdk.supabase.from('channels_with_tracks').select('*').in('id', ids)
-					return enriched || data
+					return dedupeById(/** @type {any[]} */ (enriched || data))
 				},
 				staleTime: 5 * 60 * 1000
 			})
 			.then((data) => {
 				following = data
+				loading = false
+			})
+			.catch(() => {
+				following = []
 				loading = false
 			})
 	})

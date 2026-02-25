@@ -11,9 +11,8 @@
 	import {SvelteMap} from 'svelte/reactivity'
 	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
-
 	const broadcasts = useLiveQuery(broadcastsCollection)
-	const activeBroadcasts = $derived(broadcasts.data ?? [])
+	const activeBroadcasts = $derived((broadcasts.data ?? []).filter((row) => row.channel_id && row.channels))
 	const loading = $derived(broadcasts.isLoading)
 	const loadingError = $derived(broadcasts.isError ? 'Failed to load broadcasts' : null)
 
@@ -91,7 +90,7 @@
 						<span class="channel-badge">{isOwnChannel ? m.broadcasts_you_are_live() : m.broadcasts_live()}</span>
 						{#if !isOwnChannel}
 							{m.broadcasts_since()}
-							{timeAgo(broadcast.track_played_at)}
+							{broadcast.track_played_at ? timeAgo(broadcast.track_played_at) : '...'}
 						{/if}
 						{#if primaryLabel}
 							<em>{primaryLabel}</em> via

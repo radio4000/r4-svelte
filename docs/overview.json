@@ -337,6 +337,17 @@
 		{"name": "SyncStatus", "desc": "Shows offline queue pending transactions."}
 	],
 
+	"src/lib/3d/channel-card-3d.js": [
+		{
+			"name": "resolveChannelCardStates(mediaItem, {activeId, selectedId, hoveredId})",
+			"desc": "Resolve combined visual state for 3D channel cards."
+		},
+		{
+			"name": "buildChannelInfoCanvas({mediaItem, style, activeId, colors})",
+			"desc": "Render the 2D info-card texture used by 3D channel cards."
+		}
+	],
+
 	"@radio4000/sdk": [
 		{"name": "sdk.supabase", "desc": "Direct Supabase client access."},
 

@@ -1,44 +1,30 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
+	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
 	import {untrack} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
-	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 
-	/**
-	 * @typedef {object} MediaItem
-	 * @prop {string} url
-	 * @prop {number} [width]
-	 * @prop {number} [height]
-	 * @prop {string} [slug]
-	 * @prop {string} [id]
-	 * @prop {string} [title]
-	 * @prop {string} [description]
-	 * @prop {string} [channel_slug]
-	 * @prop {{slug?: string}} [channel]
-	 * @prop {boolean} [isFavorite]
-	 * @prop {boolean} [isLive]
-	 * @prop {boolean} [isPlaying]
-	 * @prop {string[]} [tags]
-	 * @prop {string[]} [mentions]
-	 * @prop {string[]} [activeTags]
-	 * @prop {string[]} [activeMentions]
-	 * @prop {boolean} [isActive]
-	 */
-
-	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, focusSlug?: string | null, focusKey?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, ondoubleclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
+	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, cardDepthScale?: number, cardSizeScale?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, singleSceneCardDragRotate?: boolean, singleSceneMouseDrift?: boolean, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, onclick?: (item: any) => void, ondoubleclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
 	let {
 		media = [],
 		activeId,
 		activeIds = [],
 		selectedId = null,
 		hoveredId = null,
-		focusSlug = null,
-		focusKey = null,
+		cardSize = 18,
 		cardDepthScale = 1,
 		cardSizeScale = 1,
+		allowNavigation = false,
+		enableCardTilt = true,
+		singleSceneConstrainMovement = true,
+		singleSceneMaxXY = undefined,
+		singleSceneCardDragRotate = false,
+		singleSceneMouseDrift = true,
+		minCameraZ = 1,
+		maxCameraZ = 500,
 		backgroundColor = null,
 		onclick,
 		ondoubleclick,
@@ -49,7 +35,6 @@
 	let container
 	/** @type {InfiniteCanvasOGL} */
 	let canvas
-	let lastFocusToken = $state('')
 	let showControlsModal = $state(false)
 
 	function openControls() {
@@ -75,9 +60,19 @@
 			activeId: untrack(() => activeId),
 			activeIds: untrack(() => activeIds),
 			selectedId: untrack(() => selectedId),
+			...themeConfig,
+			sceneMode: 'single',
+			disableNavigation: !allowNavigation,
+			enableCardTilt,
+			singleSceneConstrainMovement,
+			singleSceneMaxXY,
+			singleSceneCardDragRotate,
+			singleSceneMouseDrift,
 			cardDepthScale,
 			cardSizeScale,
-			...themeConfig,
+			singleCardSize: cardSize,
+			minCameraZ,
+			maxCameraZ,
 			backgroundColor,
 			onClick: onclick,
 			onDoubleClick: ondoubleclick,
@@ -109,18 +104,6 @@
 		if (!canvas) return
 		canvas.setHoveredId(hoveredId ?? null)
 	})
-
-	$effect(() => {
-		if (!canvas) return
-		const slug = String(focusSlug || '')
-			.trim()
-			.toLowerCase()
-		if (!slug) return
-		const token = `${focusKey ?? ''}|${slug}|${media.length}`
-		if (token === lastFocusToken) return
-		lastFocusToken = token
-		canvas.focusBySlug(slug, {duration: 0.6})
-	})
 </script>
 
 <div class="canvas-wrapper">
@@ -148,17 +131,6 @@
 				<div>
 					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move ·
 					<kbd>Q</kbd><kbd>E</kbd> up/down
-				</div>
-			</div>
-			<div class="controls-row">
-				<Icon icon="circle-info" size={16} />
-				<div>
-					Infinite mode based on a tutorial from
-					<a
-						href="https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/"
-						target="_blank"
-						rel="noopener noreferrer">Edoardo Lunardi on Codrops</a
-					>.
 				</div>
 			</div>
 		</div>
