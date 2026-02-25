@@ -14,9 +14,12 @@ export function formatDurationMs(ms) {
 	return formatDuration(Math.floor(ms / 1000))
 }
 
-/** @param {Date} date */
+/** @param {Date | string | number | null | undefined} date */
 export function formatDate(date) {
-	return new Intl.DateTimeFormat().format(date)
+	if (date == null) return ''
+	const value = date instanceof Date ? date : new Date(date)
+	if (!Number.isFinite(value.getTime())) return ''
+	return new Intl.DateTimeFormat().format(value)
 }
 
 /** @param {string | null | undefined} dateString */
