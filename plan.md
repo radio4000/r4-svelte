@@ -41,7 +41,6 @@ The `syncDataFromCollection` fix (assign `[...values()]` instead of reset-then-p
 
 ## In progress
 
-- channel mentions route: add `/@slug/mentions` listing tracks from other channels where `mentions` contains `@slug`
 - Extract reusable 3D channel-card module (`src/lib/3d/channel-card-3d.js`) from infinite canvas so future 3D views can reuse state resolution and card texture rendering.
 - 3D channel cards: implemented state parity with grid cards in infinite canvas (`playing`, `selected`, `hover`, `default`) plus combined overlays (`favorite`, `active`, `live`) and info panel tags/mentions with deck-active highlighting.
   - live state badge upgraded from flat quad texture to shader-lit 3D sphere mesh (top-right) with subtle pulse animation for better depth/readability.

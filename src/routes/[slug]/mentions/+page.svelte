@@ -3,6 +3,7 @@
 	import {createQuery} from '@tanstack/svelte-query'
 	import {sdk} from '@radio4000/sdk'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {appState} from '$lib/app-state.svelte'
 	import {addToPlaylist, playTrack, setPlaylist} from '$lib/api'
 	import Tracklist from '$lib/components/tracklist.svelte'
@@ -46,11 +47,17 @@
 			for (const track of (mentionsRes.data || []) as Track[]) byId.set(track.id, track)
 			for (const track of (descriptionRes.data || []) as Track[]) byId.set(track.id, track)
 
-			return [...byId.values()].toSorted((a, b) => {
+			const mergedTracks = [...byId.values()].toSorted((a, b) => {
 				const aDate = a.updated_at || a.created_at || ''
 				const bDate = b.updated_at || b.created_at || ''
 				return aDate < bDate ? 1 : aDate > bDate ? -1 : 0
 			})
+
+			tracksCollection.utils.writeBatch(() => {
+				for (const track of mergedTracks) tracksCollection.utils.writeUpsert(track)
+			})
+
+			return mergedTracks
 		},
 		enabled: !!slug,
 		staleTime: 5 * 60 * 1000
