@@ -3,7 +3,6 @@
 	import {page} from '$app/state'
 	import {shufflePlayChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {channelAvatarUrl} from '$lib/utils'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import ChannelCard from './channel-card.svelte'
@@ -46,17 +45,7 @@
 				})
 	)
 
-	const canvasMedia = $derived(
-		sortedChannels.map((c) =>
-			toChannelCardMedia(c, channelActivity, {
-				url: c.image
-					? channelAvatarUrl(c.image)
-					: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-				width: 250,
-				height: 250
-			})
-		)
-	)
+	const canvasMedia = $derived(sortedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 
 	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
 

@@ -1,4 +1,4 @@
-import {extractHashtags, extractMentions} from '$lib/utils.ts'
+import {extractHashtags, extractMentions, channelAvatarUrl} from '$lib/utils.ts'
 
 /** Prefix a bare tag with `#` (view tags come without it). */
 function prefixTag(value) {
@@ -103,20 +103,26 @@ export function deriveChannelActivityState(params) {
 
 /**
  * Build consistent channel-card media item payload for 2D/3D UIs.
+ * When `base` is omitted, derives image URL from `channel.image` via `channelAvatarUrl`
+ * with a placeholder fallback.
  * @param {any} channel
  * @param {ReturnType<typeof deriveChannelActivityState>} state
- * @param {{url: string, width?: number, height?: number}} base
+ * @param {{url: string, width?: number, height?: number}} [base]
  */
 export function toChannelCardMedia(channel, state, base) {
+	const url =
+		base?.url ??
+		(channel.image
+			? channelAvatarUrl(channel.image)
+			: `https://placehold.co/250?text=${encodeURIComponent(channel.name?.[0] || '?')}`)
 	const tags = extractHashtags(channel?.description || '')
 	const mentions = extractMentions(channel?.description || '')
-	const normalizedSlug = String(channel?.slug || '').toLowerCase()
 	const normalizedTags = tags.map((tag) => prefixTag(tag)).filter(Boolean)
 	const matchingActiveTags = normalizedTags.filter((tag) => state.activeTags.includes(tag))
 	return {
-		url: base.url,
-		width: base.width ?? 250,
-		height: base.height ?? 250,
+		url,
+		width: base?.width ?? 250,
+		height: base?.height ?? 250,
 		slug: channel.slug,
 		id: channel.id,
 		name: channel.name,
@@ -127,7 +133,7 @@ export function toChannelCardMedia(channel, state, base) {
 		activeMentions: state.activeMentions,
 		hasActiveTagMatch: matchingActiveTags.length > 0,
 		isActive: state.activeChannelIds.includes(channel.id),
-		isPlaying: state.playingChannelSlugs.has(normalizedSlug),
+		isPlaying: state.playingChannelSlugs.has(channel.slug),
 		isFavorite: state.favoriteChannelIds.has(channel.id),
 		isLive: state.broadcastingChannelIds.has(channel.id),
 		channel

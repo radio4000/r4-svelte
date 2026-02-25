@@ -2,7 +2,6 @@
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
-	import {channelAvatarUrl} from '$lib/utils.ts'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
@@ -13,16 +12,7 @@
 	let channel = $derived(channelCtx.data ?? null)
 	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
-	const mediaItem = $derived.by(() => {
-		if (!channel) return null
-		return toChannelCardMedia(channel, channelActivity, {
-			url: channel.image
-				? channelAvatarUrl(channel.image)
-				: `https://placehold.co/250?text=${encodeURIComponent(channel.name?.[0] || '?')}`,
-			width: 250,
-			height: 250
-		})
-	})
+	const mediaItem = $derived(channel ? toChannelCardMedia(channel, channelActivity) : null)
 
 	function handleSceneClick(item) {
 		if (!item?.id) return
