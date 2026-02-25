@@ -1,6 +1,7 @@
 <script>
 	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
 	import {onMount} from 'svelte'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
 	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
@@ -8,7 +9,13 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {channelAvatarUrl} from '$lib/utils.ts'
 
-	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 120))
+	const channelsQuery = useLiveQuery((q) =>
+		q
+			.from({ch: channelsCollection})
+			.orderBy(({ch}) => ch.created_at, 'desc')
+			.limit(120)
+	)
+	const channels = $derived((channelsQuery.data ?? []).filter((c) => c?.image))
 	const deckCanvasState = $derived.by(() =>
 		deriveChannelActivityState({
 			decks: appState.decks,

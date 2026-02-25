@@ -6,10 +6,12 @@
 	import {channelAvatarUrl} from '$lib/utils'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {followsCollection} from '$lib/collections/follows'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
@@ -53,9 +55,29 @@
 
 	// Reactive broadcast IDs for the broadcasting filter
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
+	const followsQuery = useLiveQuery((q) => q.from({follows: followsCollection}))
 	const broadcastIds = $derived(
 		(broadcastsQuery.data ?? []).map((b) => /** @type {{channel_id: string}} */ (b).channel_id)
 	)
+	const deckCanvasState = $derived.by(() => {
+		const followsRows = followsQuery.data ?? []
+		void tracksCollection.state.size
+		void channelsCollection.state.size
+		const followsState = new Map(
+			followsRows
+				.map((row) => ({id: typeof row === 'string' ? row : row?.id}))
+				.filter((row) => typeof row.id === 'string')
+				.map((row) => [row.id, row])
+		)
+		return deriveChannelActivityState({
+			decks: appState.decks,
+			tracksState: tracksCollection.state,
+			channelsState: channelsCollection.state,
+			followsState,
+			broadcastRows: broadcastsQuery.data ?? []
+		})
+	})
+	const activeChannelIds = $derived(deckCanvasState.activeChannelIds)
 
 	/** @type {Record<string, string>} Sort key → DB column name (or 'shuffle' for random view) */
 	const sortColumns = {
@@ -147,22 +169,33 @@
 	const orderedChannels = $derived(channels)
 
 	const canvasMedia = $derived(
-		orderedChannels.map((c) => ({
-			url: c.image
-				? channelAvatarUrl(c.image)
-				: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
-			width: 250,
-			height: 250,
-			slug: c.slug,
-			id: c.id,
-			name: c.name
-		}))
+		orderedChannels.map((c) =>
+			toChannelCardMedia(c, deckCanvasState, {
+				url: c.image
+					? channelAvatarUrl(c.image)
+					: `https://placehold.co/250?text=${encodeURIComponent(c.name?.[0] || '?')}`,
+				width: 250,
+				height: 250
+			})
+		)
 	)
 
 	const openSlug = $derived(page.url.searchParams.get('slug'))
+	let selectedCanvasChannelId = $state(/** @type {string | null} */ (null))
+
+	$effect(() => {
+		if (!openSlug || !orderedChannels.length) return
+		const match = orderedChannels.find((c) => c.slug === openSlug)
+		if (match?.id) selectedCanvasChannelId = match.id
+	})
 
 	function handleCanvasClick(item) {
 		if (!item.slug || !item.id) return
+		selectedCanvasChannelId = item.id
+	}
+
+	function handleCanvasDoubleClick(item) {
+		if (!item?.slug || !item?.id) return
 		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
 	}
 
@@ -322,7 +355,16 @@
 		<SpectrumScanner {channels} />
 	{:else if display === 'infinite'}
 		{#await import('./infinite-canvas-ogl.svelte') then InfiniteCanvas}
-			<InfiniteCanvas.default media={canvasMedia} activeId={activeChannelId} onclick={handleCanvasClick} />
+			<InfiniteCanvas.default
+				media={canvasMedia}
+				activeId={activeChannelId}
+				activeIds={activeChannelIds}
+				selectedId={selectedCanvasChannelId}
+				focusSlug={openSlug}
+				focusKey={openSlug}
+				onclick={handleCanvasClick}
+				ondoubleclick={handleCanvasDoubleClick}
+			/>
 		{/await}
 	{:else}
 		<ol class={display}>
