@@ -1,10 +1,10 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {shufflePlayChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {viewIconMap, viewLabelMap, handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -56,13 +56,7 @@
 	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		selectedCanvasChannelId = item.id
-	}
-
-	function handleCanvasDoubleClick(item) {
-		if (!item?.slug || !item?.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'infinite'} value */
@@ -80,19 +74,6 @@
 		}
 	}
 
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		infinite: () => m.channels_view_label_infinite()
-	}
 </script>
 
 <div class={`layout layout--${display} fill-height`}>

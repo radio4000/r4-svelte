@@ -2,7 +2,6 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {shufflePlayChannel} from '$lib/api'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
@@ -10,6 +9,7 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {channelActivity} from '$lib/channel-activity.svelte'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
+	import {viewIconMap, viewLabelMap, handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
@@ -146,13 +146,7 @@
 	})
 
 	function handleCanvasClick(item) {
-		if (!item.slug || !item.id) return
-		selectedCanvasChannelId = item.id
-	}
-
-	function handleCanvasDoubleClick(item) {
-		if (!item?.slug || !item?.id) return
-		shufflePlayChannel(appState.active_deck_id, {id: item.id, slug: item.slug})
+		onCanvasClick(item, (id) => (selectedCanvasChannelId = id))
 	}
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
@@ -172,22 +166,6 @@
 
 	function setFilter(value) {
 		appState.channels_filter = value
-	}
-
-	const viewIconMap = {
-		grid: 'grid',
-		list: 'unordered-list',
-		map: 'map',
-		tuner: 'radio',
-		infinite: 'infinite'
-	}
-
-	const viewLabelMap = {
-		grid: () => m.channels_view_label_grid(),
-		list: () => m.channels_view_label_list(),
-		map: () => m.channels_view_label_map(),
-		tuner: () => m.channels_view_label_tuner(),
-		infinite: () => m.channels_view_label_infinite()
 	}
 
 	const filterLabelMap = {
