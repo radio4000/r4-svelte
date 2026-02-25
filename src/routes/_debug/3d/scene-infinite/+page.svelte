@@ -4,7 +4,8 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {shufflePlayChannel} from '$lib/api'
 	import {deriveChannelActivityState, toChannelCardMedia} from '$lib/components/channel-ui-state.js'
-	import {channelsCollection, tracksCollection} from '$lib/tanstack/collections'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {channelAvatarUrl} from '$lib/utils.ts'
 
 	const channels = $derived([...channelsCollection.state.values()].filter((c) => c.image).slice(0, 120))

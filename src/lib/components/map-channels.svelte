@@ -5,13 +5,11 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 	import {appState} from '$lib/app-state.svelte'
-	import {
-		broadcastsCollection,
-		followsCollection,
-		channelsCollection,
-		tracksCollection
-	} from '$lib/tanstack/collections'
-	import {useLiveQuery} from '$lib/tanstack/useLiveQuery.svelte'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {followsCollection} from '$lib/collections/follows'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {deriveChannelActivityState} from './channel-ui-state.js'
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
