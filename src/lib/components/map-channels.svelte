@@ -60,11 +60,6 @@
 			.sort()
 			.join('|')
 	)
-	const normalizeSlug = (value) =>
-		String(value || '')
-			.trim()
-			.toLowerCase()
-
 	function getLatestChannel(channel) {
 		return channelsCollection.state.get(channel.id) || channel
 	}
@@ -183,18 +178,17 @@
 	 * @param {number} [attempt]
 	 */
 	function maybeAutoOpenSlug(slug, requestKey, attempt = 0) {
-		const normalizedSlug = normalizeSlug(slug)
-		if (!normalizedSlug || !map) return
-		const token = `${requestKey ?? ''}|${normalizedSlug}`
+		if (!slug || !map) return
+		const token = `${requestKey ?? ''}|${slug}`
 		if (token === lastAutoOpenedToken) return
-		const marker = markerBySlug.get(normalizedSlug)
-		const channel = mapChannels.find((c) => normalizeSlug(c.slug) === normalizedSlug)
+		const marker = markerBySlug.get(slug)
+		const channel = mapChannels.find((c) => c.slug === slug)
 		if (marker && channel) {
 			const targetZoom = Math.max(map.getZoom(), map.getMinZoom())
 			map.setView([channel.latitude, channel.longitude], targetZoom, {animate: false})
 			requestAnimationFrame(() => {
 				if (!map) return
-				if (markerBySlug.get(normalizedSlug) !== marker) {
+				if (markerBySlug.get(slug) !== marker) {
 					if (attempt >= 40) return
 					clearAutoOpenRetry()
 					autoOpenRetryTimer = setTimeout(() => {
@@ -310,7 +304,7 @@
 				if (event.detail === 2) {
 					// Double-clicking card body plays channel; keep popup sticky through deck state updates.
 					keepPopupOpenUntil = Date.now() + 3000
-					stickyPopupSlug = normalizeSlug(c.slug)
+					stickyPopupSlug = c.slug
 					stickyPopupUntil = keepPopupOpenUntil
 				}
 			}
@@ -358,7 +352,7 @@
 			applyMarkerClasses(marker, c)
 			marker.on('click', () => marker.openPopup())
 			marker.on('popupopen', () => {
-				stickyPopupSlug = normalizeSlug(c.slug)
+				stickyPopupSlug = c.slug
 			})
 			marker.on('popupclose', () => {
 				if (Date.now() >= keepPopupOpenUntil) return
@@ -371,7 +365,7 @@
 				})
 			})
 			markerByChannelId.set(c.id, marker)
-			markerBySlug.set(normalizeSlug(c.slug), marker)
+			markerBySlug.set(c.slug, marker)
 		}
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 		if (restoreSlug) {

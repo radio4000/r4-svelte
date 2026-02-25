@@ -11,11 +11,9 @@
 	import {SvelteMap} from 'svelte/reactivity'
 	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
-	import {normalizeBroadcastRow} from '$lib/components/channel-ui-state.js'
-
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const activeBroadcasts = $derived(
-		(broadcasts.data ?? []).map((row) => normalizeBroadcastRow(row)).filter((row) => row.channelId && row.channel)
+		(broadcasts.data ?? []).filter((row) => row.channel_id && row.channels)
 	)
 	const loading = $derived(broadcasts.isLoading)
 	const loadingError = $derived(broadcasts.isError ? 'Failed to load broadcasts' : null)
@@ -24,7 +22,7 @@
 	const stateChannels = new SvelteMap()
 
 	$effect(() => {
-		const channelIds = new Set(activeBroadcasts.map((b) => b.channelId))
+		const channelIds = new Set(activeBroadcasts.map((b) => b.channel_id))
 
 		for (const id of channelIds) {
 			if (stateChannels.has(id)) continue
@@ -82,30 +80,30 @@
 	</header>
 
 	<section class="list">
-		{#each activeBroadcasts as broadcast (broadcast.channelId)}
-			{@const joined = Object.values(appState.decks).some((d) => d.listening_to_channel_id === broadcast.channelId)}
-			{@const isOwnChannel = broadcast.channelId === appState.channels?.[0]}
+		{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+			{@const joined = Object.values(appState.decks).some((d) => d.listening_to_channel_id === broadcast.channel_id)}
+			{@const isOwnChannel = broadcast.channel_id === appState.channels?.[0]}
 			{@const primaryTrackId =
-				deckStatesByChannel.get(broadcast.channelId)?.[0]?.track_id ?? broadcast.decks?.[0]?.track_id}
+				deckStatesByChannel.get(broadcast.channel_id)?.[0]?.track_id ?? broadcast.decks?.[0]?.track_id}
 			{@const primaryLabel = getTrackLabel(primaryTrackId)}
 			<div class:active={joined}>
-				<ChannelCard channel={broadcast.channel}>
+				<ChannelCard channel={broadcast.channels}>
 					<p>
 						<span class="channel-badge">{isOwnChannel ? m.broadcasts_you_are_live() : m.broadcasts_live()}</span>
 						{#if !isOwnChannel}
 							{m.broadcasts_since()}
-							{broadcast.trackPlayedAt ? timeAgo(broadcast.trackPlayedAt) : '...'}
+							{broadcast.track_played_at ? timeAgo(broadcast.track_played_at) : '...'}
 						{/if}
 						{#if primaryLabel}
 							<em>{primaryLabel}</em> via
-							<a href="/{broadcast.channel.slug}">@{broadcast.channel.slug}</a>
+							<a href="/{broadcast.channels.slug}">@{broadcast.channels.slug}</a>
 						{:else}
 							<em>...</em>
 						{/if}
 					</p>
-					{#if deckStatesByChannel.get(broadcast.channelId)?.length}
+					{#if deckStatesByChannel.get(broadcast.channel_id)?.length}
 						<ul class="list">
-							{#each deckStatesByChannel.get(broadcast.channelId) as deckState, i (i)}
+							{#each deckStatesByChannel.get(broadcast.channel_id) as deckState, i (i)}
 								{@const label = getTrackLabel(deckState?.track_id)}
 								<li>
 									Deck {i + 1}:
@@ -128,7 +126,7 @@
 									if (joined) {
 										leaveBroadcast(appState.active_deck_id)
 									} else {
-										joinBroadcast(appState.active_deck_id, broadcast.channelId)
+										joinBroadcast(appState.active_deck_id, broadcast.channel_id)
 									}
 								}}
 							>

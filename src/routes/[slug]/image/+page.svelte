@@ -38,32 +38,23 @@
 		return true
 	}
 
-	function normalizeTag(value) {
-		return String(value || '')
-			.trim()
-			.toLowerCase()
-			.replace(/^[#﹟＃]/, '')
-	}
-
-	function normalizeMention(value) {
-		return String(value || '')
-			.trim()
-			.toLowerCase()
-			.replace(/^@/, '')
-	}
+	/** Strip leading `#` to get a bare tag for comparison against track.tags */
+	const stripHash = (v) => String(v || '').replace(/^#/, '')
+	/** Strip leading `@` to get a bare mention for comparison against track.mentions */
+	const stripAt = (v) => String(v || '').replace(/^@/, '')
 
 	function playByTagToken(token) {
-		const tag = normalizeTag(token)
+		const tag = stripHash(token)
 		if (!tag) return false
-		const matches = channelTracks.filter((track) => (track?.tags || []).some((entry) => normalizeTag(entry) === tag))
+		const matches = channelTracks.filter((track) => (track?.tags || []).some((entry) => stripHash(entry) === tag))
 		return playTracks(matches, `#${tag}`)
 	}
 
 	function playByMentionToken(token) {
-		const mention = normalizeMention(token)
+		const mention = stripAt(token)
 		if (!mention) return false
 		const matches = channelTracks.filter((track) =>
-			(track?.mentions || []).some((entry) => normalizeMention(entry) === mention)
+			(track?.mentions || []).some((entry) => stripAt(entry) === mention)
 		)
 		return playTracks(matches, `@${mention}`)
 	}
