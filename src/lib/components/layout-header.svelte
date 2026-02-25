@@ -179,6 +179,7 @@
 
 	/* Active indicator: left bar on desktop instead of background fill */
 	nav :global(.btn.active) {
+		color: var(--accent-9);
 		box-shadow:
 			lch(0 0 0 / 0.06) 0px 4px 4px -1px,
 			lch(0 0 0 / 0.12) 0px 1px 1px 0px,
