@@ -110,8 +110,8 @@
 		margin: 0;
 		padding: 0.2rem;
 		min-width: 10rem;
-		background: var(--gray-2);
-		border: 1px solid var(--gray-6);
+		background: var(--color-interface-elevated);
+		border: 1px solid var(--color-interface-border);
 		border-radius: var(--border-radius);
 		box-shadow: var(--shadow-modal);
 	}

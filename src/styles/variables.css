@@ -23,10 +23,15 @@
 	--font-8: 1.5rem;
 	--font-9: 2.25rem;
 
-	/* and you can control the background of each panel individually as well */
-	--header-bg: var(--gray-1);
+	/* interface surface colors (neutral backgrounds, not accent-derived) */
+	--color-interface: color-mix(in oklch, var(--gray-1) 50%, var(--gray-2) 50%);
+	--color-interface-elevated: var(--gray-2);
+	--color-interface-border: var(--gray-6);
+
+	/* panel backgrounds */
+	--header-bg: var(--color-interface);
 	--aside-bg: var(--gray-1);
-	--footer-bg: var(--gray-1);
+	--footer-bg: var(--color-interface);
 
 	/* breakpoints */
 	--breakpoint-xs: 520px;

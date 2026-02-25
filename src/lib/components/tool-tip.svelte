@@ -58,8 +58,9 @@
 		margin: 0;
 		padding: 0.2rem 0.5rem;
 		font-size: var(--font-3);
-		border: 1px solid var(--gray-7);
-		background: var(--accent-1);
+		color: var(--gray-12);
+		border: 1px solid var(--color-interface-border);
+		background: var(--color-interface-elevated);
 		border-radius: var(--border-radius);
 		max-width: 200px;
 		pointer-events: none;

@@ -73,14 +73,14 @@
 		max-width: 640px;
 		margin: auto;
 		flex: 1;
-		background: var(--gray-3);
+		background: var(--color-interface-elevated);
 		box-shadow:
 			lch(0 0 0 / 0.15) 0px 4px 40px,
 			lch(0 0 0 / 0.188) 0px 3px 20px,
 			lch(0 0 0 / 0.188) 0px 3px 12px,
 			lch(0 0 0 / 0.188) 0px 2px 8px,
 			lch(0 0 0 / 0.188) 0px 1px 1px;
-		border: 1px solid var(--gray-12);
+		border: 1px solid var(--color-interface-border);
 		border-radius: var(--border-radius);
 		padding: 1em;
 		transform-origin: 50% 50% 0px;
