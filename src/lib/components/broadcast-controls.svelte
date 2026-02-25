@@ -6,8 +6,8 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	/** @type {{deckId?: number, channelId?: string, isLiveOverride?: boolean}} */
-	let {deckId = 1, channelId, isLiveOverride} = $props()
+	/** @type {{deckId?: number, channelId?: string, isLiveOverride?: boolean, compact?: boolean}} */
+	let {deckId = 1, channelId, isLiveOverride, compact = false} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -70,14 +70,24 @@
 {#if userChannelId}
 	<div>
 		{#if isBroadcasting}
-			<button class="active" onclick={() => stopBroadcasting()}>
+			<button
+				class="active"
+				class:compact
+				onclick={() => stopBroadcasting()}
+				title={m.broadcast_stop_button()}
+				aria-label={m.broadcast_stop_button()}
+			>
 				<Icon icon="cell-signal" strokeWidth={1.7} />
-				{m.broadcast_stop_button()}
+				{#if !compact}{m.broadcast_stop_button()}{/if}
 			</button>
 		{:else if canStartBroadcast}
-			<button onclick={start}>
+			<button onclick={start} class:compact title={m.broadcast_start_button()} aria-label={m.broadcast_start_button()}>
 				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
-				{m.broadcast_start_button()}
+				{#if !compact}{m.broadcast_start_button()}{/if}
+			</button>
+		{:else if compact}
+			<button disabled class:compact title={m.broadcast_requires_track()} aria-label={m.broadcast_requires_track()}>
+				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 			</button>
 		{/if}
 		{#if error}
@@ -87,13 +97,18 @@
 		{/if}
 	</div>
 {:else}
-	<a class="btn" href="/auth">
+	<a class="btn" href="/auth" class:compact title={m.broadcast_login_prompt()}>
 		<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
-		{m.broadcast_login_prompt()}
+		{#if !compact}{m.broadcast_login_prompt()}{/if}
 	</a>
 {/if}
 
 <style>
+	.compact {
+		padding-inline: 0.4rem;
+		min-width: 2rem;
+	}
+
 	[role='alert'] {
 		color: var(--red-3);
 		margin-block: var(--space-2);
