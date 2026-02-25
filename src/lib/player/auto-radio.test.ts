@@ -1,5 +1,13 @@
 import {describe, expect, it} from 'vitest'
-import {toAutoTracks, weeklyShuffle, playbackState, hashString, epochFromTracks, type AutoTrack} from './auto-radio'
+import {
+	toAutoTracks,
+	hasAutoRadioCoverage,
+	weeklyShuffle,
+	playbackState,
+	hashString,
+	epochFromTracks,
+	type AutoTrack
+} from './auto-radio'
 import type {Track} from '$lib/types'
 
 // ---------------------------------------------------------------------------
@@ -57,6 +65,22 @@ describe('toAutoTracks', () => {
 		const tracks = makeTracks(5)
 		const out = toAutoTracks(tracks)
 		expect(out.map((t) => t.id)).toEqual(tracks.map((t) => t.id))
+	})
+})
+
+describe('hasAutoRadioCoverage', () => {
+	it('returns false for empty track lists', () => {
+		expect(hasAutoRadioCoverage([])).toBe(false)
+	})
+
+	it('returns true at exactly 50% coverage', () => {
+		const tracks = [makeTrack(0, {duration: 0}), makeTrack(1, {duration: 30})]
+		expect(hasAutoRadioCoverage(tracks)).toBe(true)
+	})
+
+	it('returns false below 50% coverage', () => {
+		const tracks = [makeTrack(0, {duration: 0}), makeTrack(1, {duration: 0}), makeTrack(2, {duration: 30})]
+		expect(hasAutoRadioCoverage(tracks)).toBe(false)
 	})
 })
 

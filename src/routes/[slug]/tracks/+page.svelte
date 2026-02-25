@@ -10,6 +10,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
+	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -53,6 +54,8 @@
 		})
 	)
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
+	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
 		if (search) return search
@@ -132,11 +135,11 @@
 						<small class="filter-count">{filteredTracks.length} selected</small>
 						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
 						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
-						{#if channel}
+						{#if channel && canShowFilteredAutoRadio}
 							<button
 								type="button"
 								onclick={() =>
-									joinAutoRadio(appState.active_deck_id, filteredTracks, {
+									joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, {
 										channels: slug ? [slug] : undefined,
 										tags: selectedTags,
 										search: searchValue

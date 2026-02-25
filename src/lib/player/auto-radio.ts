@@ -64,6 +64,19 @@ export function toAutoTracks(tracks: Track[]): AutoTrack[] {
 	return tracks.filter((t): t is AutoTrack => !!t.duration && t.duration > 0 && !!t.url)
 }
 
+/** Default minimum share of tracks that need duration metadata to enable auto-radio UI actions. */
+export const AUTO_RADIO_DURATION_COVERAGE_THRESHOLD = 0.5
+
+/**
+ * Whether a track list has enough duration coverage for auto-radio actions.
+ * Returns false for empty lists.
+ */
+export function hasAutoRadioCoverage(tracks: Track[], threshold = AUTO_RADIO_DURATION_COVERAGE_THRESHOLD): boolean {
+	if (!tracks.length) return false
+	const clampedThreshold = Math.min(1, Math.max(0, threshold))
+	return toAutoTracks(tracks).length / tracks.length >= clampedThreshold
+}
+
 /** Derive epoch from oldest track's created_at. Returns unix seconds, or 0 if empty. */
 export function epochFromTracks(tracks: Pick<Track, 'created_at'>[]): number {
 	if (!tracks.length) return 0

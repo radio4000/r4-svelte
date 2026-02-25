@@ -16,6 +16,7 @@
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
+	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
@@ -113,6 +114,8 @@
 	const viewQuery = queryViewTracks(() => view)
 	const tracks = $derived(viewQuery.tracks)
 	const tracksLoading = $derived(viewQuery.loading)
+	const autoRadioTracks = $derived(toAutoTracks(tracks))
+	const canShowAutoRadio = $derived(hasAutoRadioCoverage(tracks))
 
 	// --- Channel results (parallel, outside View) ---
 	/** @type {import('$lib/types.ts').Channel[]} */
@@ -206,13 +209,15 @@
 					{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
 					<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
 				</ButtonFeedback>
-				<button
-					type="button"
-					onclick={() => joinAutoRadio(appState.active_deck_id, tracks, view)}
-					title="Auto radio this search"
-				>
-					<Icon icon="infinite" size={16} />
-				</button>
+				{#if canShowAutoRadio}
+					<button
+						type="button"
+						onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
+						title="Auto radio this search"
+					>
+						<Icon icon="infinite" size={16} />
+					</button>
+				{/if}
 			{/if}
 		</menu>
 

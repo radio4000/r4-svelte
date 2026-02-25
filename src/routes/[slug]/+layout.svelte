@@ -14,7 +14,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {toAutoTracks} from '$lib/player/auto-radio'
+	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {joinAutoRadio} from '$lib/api'
 
 	let {children} = $props()
@@ -97,7 +97,9 @@
 	})
 	setTracksQueryCtx(tracksQuery)
 
-	let autoRadioTracks = $derived(toAutoTracks(tracksQuery.data ?? []))
+	let allChannelTracks = $derived(tracksQuery.data ?? [])
+	let autoRadioTracks = $derived(toAutoTracks(allChannelTracks))
+	let canShowAutoRadio = $derived(hasAutoRadioCoverage(allChannelTracks))
 </script>
 
 <svelte:head>
@@ -148,7 +150,7 @@
 					{/if}
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
-						{#if autoRadioTracks.length > 0}
+						{#if canShowAutoRadio}
 							<button
 								type="button"
 								onclick={() =>

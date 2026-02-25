@@ -13,6 +13,7 @@
 	import {extractHashtags, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
+	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import * as m from '$lib/paraglide/messages'
 
 	const PREVIEW_LIMIT = 10
@@ -211,14 +212,17 @@
 								<Icon icon="next-fill" size={14} />
 							</button>
 							{#if channel}
-								<button
-									type="button"
-									onclick={() =>
-										slug && joinAutoRadio(appState.active_deck_id, tracks, {channels: [slug], tags: [tag]})}
-									title="Auto radio #{tag}"
-								>
-									<Icon icon="infinite" size={14} />
-								</button>
+								{@const autoTagTracks = toAutoTracks(tracks)}
+								{#if hasAutoRadioCoverage(tracks)}
+									<button
+										type="button"
+										onclick={() =>
+											slug && joinAutoRadio(appState.active_deck_id, autoTagTracks, {channels: [slug], tags: [tag]})}
+										title="Auto radio #{tag}"
+									>
+										<Icon icon="infinite" size={14} />
+									</button>
+								{/if}
 							{/if}
 						</menu>
 					</header>
