@@ -142,6 +142,11 @@ a.btn {
 	text-decoration: none;
 }
 
+a.btn:link,
+a.btn:visited {
+	color: var(--button-color, var(--gray-12));
+}
+
 button.danger,
 .btn.danger {
 	background: var(--color-red);
