@@ -77,15 +77,15 @@
 	}
 
 	.volume :global(media-mute-button) {
-		--media-control-background: transparent;
-		--media-control-hover-background: transparent;
+		--media-control-background: var(--button-bg, var(--gray-1));
+		--media-control-hover-background: var(--button-bg, var(--gray-1));
 		--media-icon-color: currentColor;
 		--media-icon-color-hover: currentColor;
-		color: var(--text, var(--gray-12));
+		color: var(--button-color, var(--gray-12));
 	}
 
 	.volume :global(media-mute-button.active) {
-		color: var(--accent-10);
+		color: var(--accent-9);
 		border-color: var(--accent-9);
 		background-color: var(--accent-3);
 	}
