@@ -8,6 +8,8 @@
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import Icon from '$lib/components/icon.svelte'
+	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
+	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
@@ -44,6 +46,33 @@
 	let displayTrack = $derived(track ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
 	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
+	let broadcasterChannel = $derived.by(() => {
+		const channelId = deck?.listening_to_channel_id
+		if (!channelId) return undefined
+		void channelsCollection.state.size
+		return channelsCollection.state.get(channelId)
+	})
+	let headerChannel = $derived(deck?.listening_to_channel_id ? broadcasterChannel : displayChannel)
+	let headerSlug = $derived(headerChannel?.slug ?? displaySlug)
+	let headerTitle = $derived(headerChannel?.name ?? (headerSlug ? `@${headerSlug}` : '@unknown'))
+	let headerState = $derived.by(() =>
+		buildDeckChannelHeaderState({
+			title: headerTitle,
+			slug: headerSlug,
+			playlistTitle: deck?.playlist_title,
+			listening: Boolean(deck?.listening_to_channel_id),
+			listeningWhoSlug: broadcasterChannel?.slug,
+			listeningWhomTrackSlug: displayTrack?.slug,
+			listeningWhomFallbackSlug: deck?.playlist_slug ?? displaySlug,
+			tagBaseSlug: broadcasterChannel?.slug ?? headerSlug,
+			toHref: (path) => resolve(/** @type {any} */ (path))
+		})
+	)
+	let trackHref = $derived.by(() => {
+		const targetSlug = displayTrack?.slug ?? displaySlug
+		if (!displayTrack || !targetSlug) return undefined
+		return resolve(`/${targetSlug}/tracks/${displayTrack.id}`)
+	})
 	let provider = $derived(
 		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
 	)
@@ -120,58 +149,43 @@
 		</div>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
-		{#if displayChannel}
-			<a class="avatar" href={resolve(`/${displayChannel.slug}`)}>
-				<ChannelAvatar id={displayChannel.image} alt={displayChannel.name} />
+		{#if headerChannel}
+			<a class="avatar" href={headerState.slugHref}>
+				<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 			</a>
 		{/if}
 		{#if imageSrc && displayTrack && displaySlug}
-			<a class="artwork" href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>
+			<a class="artwork" href={trackHref}>
 				<img src={imageSrc} alt={displayTrack.title} />
 			</a>
 		{/if}
 		<div class="info">
-			<h3 class="title">
-				{#if displayChannel}
-					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
-				{:else if displaySlug}
-					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
-				{:else if displayTrack}
-					<span>@unknown</span>
-				{/if}
-				{#if deck?.broadcasting_channel_id}
-					<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
-						<Icon icon="cell-signal" size={14} />
-					</span>
-				{/if}
-			</h3>
-			{#if deck?.listening_to_channel_id || deck?.auto_radio}
-				<p class="status-row">
-					{#if deck?.listening_to_channel_id}
-						<button
-							class="channel-badge"
-							class:synced={!deck?.listening_drifted}
-							class:drifted={deck?.listening_drifted}
-							onclick={() => deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
-							>Live</button
-						>
-					{/if}
-					{#if deck?.auto_radio}
-						<button
-							class="auto-btn"
-							class:ghost={!deck?.auto_radio_drifted}
-							onclick={() => resyncAutoRadio(deckId)}
-							title={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
-						>
-							<Icon icon="infinite" size={14} />
-						</button>
-					{/if}
-				</p>
-			{/if}
+			<DeckChannelHeader
+				title={headerState.title}
+				titleHref={headerState.slugHref}
+				slug={headerState.slug}
+				slugHref={headerState.slugHref}
+				isPlaying={Boolean(deck?.is_playing)}
+				isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
+				tags={headerState.tags}
+				showAutoButton={Boolean(deck?.auto_radio)}
+				autoGhost={!deck?.auto_radio_drifted}
+				autoTitle={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+				onAutoClick={() => resyncAutoRadio(deckId)}
+				listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
+				listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
+				listeningWhomSlug={deck?.listening_to_channel_id ? headerState.listeningWhomSlug : undefined}
+				listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
+				showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
+				broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
+				broadcastSyncTitle={deck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
+				onBroadcastSyncClick={() =>
+					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
+			/>
 			{#if displayTrack}
 				<p class="description">
-					{#if displaySlug}
-						<a href={resolve(`/${displaySlug}/tracks/${displayTrack.id}`)}>{displayTrack.title}</a>
+					{#if trackHref}
+						<a href={trackHref}>{displayTrack.title}</a>
 					{:else}
 						<span>{displayTrack.title}</span>
 					{/if}
@@ -303,23 +317,6 @@
 		line-height: 1.2;
 	}
 
-	.title {
-		font-size: var(--font-4);
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		min-width: 0;
-	}
-
-	.title :global(a),
-	.title > span:not(.channel-badge) {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		min-width: 0;
-	}
-
 	.description {
 		margin: 0;
 		overflow: hidden;
@@ -327,30 +324,11 @@
 		white-space: nowrap;
 	}
 
-	.title a,
 	.description a {
 		color: inherit;
 		text-decoration: none;
 	}
 
-	.auto-btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding-inline: 0.35rem;
-		min-height: 1.35rem;
-		align-self: center;
-	}
-
-	.status-row {
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.3rem;
-	}
-
-	.title a:visited,
 	.description a:visited {
 		color: inherit;
 	}
