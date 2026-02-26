@@ -48,13 +48,19 @@
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 	// Any auto deck playing this channel, regardless of tag/search filter
 	let anyChannelAutoDecks = $derived.by(() =>
-		Object.values(appState.decks).filter((d) => d.auto_radio && d.view?.channels?.[0] === channel?.slug)
+		Object.values(appState.decks).filter(
+			(d) => d.auto_radio && (d.view?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
+		)
 	)
 	let anyChannelAutoActive = $derived(anyChannelAutoDecks.length > 0)
 	let anyChannelAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
 	let channelAutoResyncId = $derived.by(() => {
 		const active = appState.decks[appState.active_deck_id]
-		if (active?.auto_radio && active?.view?.channels?.[0] === channel?.slug) return active.id
+		if (
+			active?.auto_radio &&
+			(active?.view?.channels?.[0] === channel?.slug || active?.playlist_slug === channel?.slug)
+		)
+			return active.id
 		return anyChannelAutoDecks[0]?.id
 	})
 	let channelPlayingDeck = $derived.by(() => {
