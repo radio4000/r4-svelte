@@ -29,7 +29,7 @@ Steps:
 2. Derives epoch from oldest track (`epochFromTracks`)
 3. Computes weekly shuffle (with view seed if provided)
 4. Starts the scheduled track via `playTrack`
-5. Sets playlist label from `viewToQuery(view)` (e.g. `@ko002 #jazz`)
+5. Sets playlist first (label from `viewToQuery(view)`, e.g. `@ko002 #jazz`)
 6. Marks deck as `auto_radio` and stores rotation params
 7. Seeks to the computed offset once the player is ready
 
@@ -42,20 +42,28 @@ The infinity button appears on:
 
 ## Drift
 
-When a listener seeks, skips, or picks a different track, the deck is marked `auto_radio_drifted`. Seeking drift is detected against the expected schedule (current track + offset at now), so join/resync seeks that land on the scheduled position do not count as drift. The custom range slider also marks drift immediately. The "Auto" badge in the player turns into a resync button — tap it to jump back to the scheduled position (`resyncAutoRadio` in `api.ts`). Natural track endings and `play_channel` do not count as drift.
+Drift is computed continuously in `player.svelte` while playing:
 
-On channel pages, the Auto button reflects channel-level state across all open decks: active when any deck is in auto for that channel, and showing a reload icon when any of those decks is drifted.
-Across search/channel/filter entry points, Auto buttons now show active/drifted only when the stored auto view matches that exact view (for example, a specific `#tag` mode highlights only that tag's Auto button).
+- Auto-radio drift: compare current playback (`deck.playlist_track` + `currentTime`) to the expected schedule snapshot from `playbackState(...)`.
+- Broadcast drift: compare current playback to `calculateSeekTime(...)` from `broadcast.js`.
+- Both use a `2s` tolerance.
 
-Note: `resyncAutoRadio` currently re-fetches the full channel's tracks by slug. It does not yet re-apply view filters, so resyncing a tag-filtered auto-radio will use the full channel instead. Fixing this requires storing the view on the deck (deferred).
+Range seek and other UI controls do not directly set `auto_radio_drifted` anymore.
+
+The Auto button uses the same `infinite` icon in both states:
+
+- synced: ghost button style
+- drifted: normal button style
+
+`resyncAutoRadio` now re-applies the stored view (`processViewTracks`) before recomputing the deterministic shuffle, so filtered/tag/search auto-radio resyncs correctly.
 
 ## Deck state
 
-Auto-radio adds four fields to `Deck`:
+Auto-radio uses these `Deck` fields:
 
 - `auto_radio` — active flag
 - `auto_radio_drifted` — listener deviated from schedule
-- `auto_radio_channel_slug` — from `view.channels?.[0]`, used by resync
+- `view` — stored view identity/filters used for matching and resync
 - `auto_radio_rotation_start` — epoch from oldest track (unix seconds)
 
 `setPlaylist` clears `auto_radio`, so the flags are always set _after_ the playlist call.
@@ -64,7 +72,9 @@ Auto-radio adds four fields to `Deck`:
 
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
-- `api.ts` — `joinAutoRadio`, `resyncAutoRadio`, drift detection in `playTrack`
+- `api.ts` — `joinAutoRadio`, `resyncAutoRadio`
+- `components/player.svelte` — computed drift detection + auto/live status UI
+- `broadcast.js` — `calculateSeekTime` (speed-aware expected position for listeners)
 - `[slug]/+layout.svelte` — full-channel join button
 - `[slug]/+page.svelte` — per-tag join buttons
 - `[slug]/tracks/+page.svelte` — filtered results join button
