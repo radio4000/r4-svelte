@@ -83,4 +83,18 @@
 		box-shadow: 0 0 0 1px var(--gray-7);
 		text-decoration: underline;
 	}
+
+	a.playing:hover,
+	button.playing:hover {
+		background: var(--accent-10);
+		color: var(--gray-1);
+		box-shadow: 0 0 0 1px var(--accent-11);
+	}
+
+	a.filtered:hover,
+	button.filtered:hover {
+		background: var(--accent-4);
+		color: var(--accent-11);
+		box-shadow: 0 0 0 1px var(--accent-9);
+	}
 </style>
