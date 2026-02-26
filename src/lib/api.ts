@@ -731,6 +731,7 @@ export async function resyncAutoRadio(deckId: number) {
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
+		d.auto_radio_drifted = false
 		d.auto_radio_rotation_start = rotationStartUnix
 		d.view = view
 		if (label) d.playlist_title = label
