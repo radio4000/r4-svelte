@@ -8,7 +8,7 @@ export const viewIconMap = {
 	list: 'unordered-list',
 	map: 'map',
 	tuner: 'radio',
-	infinite: 'infinite'
+	infinite: 'box-3d'
 }
 
 /** Shared label map for channel display mode switcher. */

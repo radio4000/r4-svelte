@@ -117,7 +117,7 @@
 					onclick={() => setDisplay('infinite')}
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
 				>
-					<Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small>
+					<Icon icon="box-3d" /><small>{m.channels_view_label_infinite()}</small>
 				</button>
 			</menu>
 			<SortControls bind:order bind:direction />
