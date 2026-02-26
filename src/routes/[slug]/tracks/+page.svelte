@@ -128,31 +128,30 @@
 					<SortControls bind:order bind:direction />
 				</PopoverMenu>
 			</menu>
-			{#if isFiltering}
-				{#if selectedTags.length > 0}
-					<menu class="row filter-tags">
-						{#each selectedTags as tag (tag)}
-							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
-								{tag} ×
-							</button>
-						{/each}
-					</menu>
-				{/if}
+			{#if isFiltering && selectedTags.length > 0}
+				<menu class="row filter-tags">
+					{#each selectedTags as tag (tag)}
+						<button type="button" class="chip" onclick={() => toggleTag(tag)}>
+							{tag} ×
+						</button>
+					{/each}
+				</menu>
+			{/if}
+			{#if visibleTracks.length > 0}
 				<menu class="row filter-actions">
-					{#if filteredTracks.length > 0}
-						<small class="filter-count">{filteredTracks.length} selected</small>
-						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
-						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
-						{#if channel && canShowFilteredAutoRadio}
-							<button
-								type="button"
-								class:active={isFilteredAutoActive}
-								class:drifted={isFilteredAutoDrifted}
-								onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
-								title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
-								><Icon icon="signal" size={16} /></button
-							>
-						{/if}
+					<small class="filter-count"
+						>{isFiltering ? `${filteredTracks.length} selected` : `${allTracks.length} tracks`}</small
+					>
+					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
+					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
+					{#if channel && canShowFilteredAutoRadio}
+						<button
+							type="button"
+							class:ghost={isFilteredAutoActive && !isFilteredAutoDrifted}
+							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+							title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
+							><Icon icon="infinite" size={16} /></button
+						>
 					{/if}
 				</menu>
 			{/if}

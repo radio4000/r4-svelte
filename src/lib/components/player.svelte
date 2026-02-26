@@ -20,7 +20,13 @@
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
-	import {joinBroadcast, leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
+	import {
+		joinBroadcast,
+		leaveBroadcast,
+		getBroadcastingChannelId,
+		notifyBroadcastState,
+		calculateSeekTime
+	} from '$lib/broadcast.js'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -42,7 +48,7 @@
 	/** @typedef {import('$lib/types').Channel} Channel */
 
 	const log = logger.ns('player').seal()
-	const AUTO_RADIO_SEEK_DRIFT_TOLERANCE_SECONDS = 2.5
+	const DRIFT_TOLERANCE_SECONDS = 2
 
 	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
 	let {deckId, children, scrollToActive} = $props()
@@ -105,6 +111,15 @@
 	let canPlayFromQueue = $derived(canPlay(activeQueue, track?.id))
 	let canPrevFromQueue = $derived(canPrev(activeQueue, track?.id))
 	let canNextFromQueue = $derived(canNext(activeQueue, track?.id))
+
+	// Track list for drift detection — recomputes only when playlist order changes
+	const syncAutoTracks = $derived.by(() =>
+		toAutoTracks(
+			/** @type {import('$lib/types').Track[]} */
+			((deck?.playlist_tracks ?? []).map((id) => tracksCollection.state.get(id)).filter(Boolean))
+		)
+	)
+	const syncTotalDuration = $derived(syncAutoTracks.reduce((sum, t) => sum + t.duration, 0))
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
@@ -225,29 +240,10 @@
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
-	function handleSeeked(event) {
+	function handleSeeked() {
 		if (!deck || !mediaElement) return
-		const currentSeekPosition = mediaElement.currentTime ?? 0
 		deck.seeked_at = new Date().toISOString()
-		deck.seek_position = currentSeekPosition
-		if (deck.auto_radio && deck.auto_radio_rotation_start != null) {
-			const playlistTracks = deck.playlist_tracks.map((id) => tracksCollection.state.get(id)).filter(Boolean)
-			const expectedTracks = toAutoTracks(/** @type {import('$lib/types').Track[]} */ (playlistTracks))
-			const totalDuration = expectedTracks.reduce((sum, t) => sum + t.duration, 0)
-			const snap = playbackState(expectedTracks, totalDuration, deck.auto_radio_rotation_start, Date.now())
-			if (!snap) {
-				deck.auto_radio_drifted = true
-			} else {
-				const isWrongTrack = deck.playlist_track !== snap.currentTrack.id
-				const offsetDelta = Math.abs(currentSeekPosition - snap.offsetSeconds)
-				if (isWrongTrack || offsetDelta > AUTO_RADIO_SEEK_DRIFT_TOLERANCE_SECONDS) {
-					deck.auto_radio_drifted = true
-				}
-			}
-		}
-		if (event?.isTrusted && deck.listening_to_channel_id) {
-			deck.listening_drifted = true
-		}
+		deck.seek_position = mediaElement.currentTime ?? 0
 		const broadcastingChannelId = getBroadcastingChannelId()
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
@@ -297,6 +293,36 @@
 			el.playbackRate = speed
 		}
 	})
+
+	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)
+	$effect(() => {
+		if (!deck?.auto_radio || deck.auto_radio_rotation_start == null) return
+		const t = mediaCurrentTime
+		// Skip while the initial seek is still landing (position hasn't left 0 yet)
+		if (t < DRIFT_TOLERANCE_SECONDS) return
+		const snap = playbackState(syncAutoTracks, syncTotalDuration, deck.auto_radio_rotation_start, Date.now())
+		const drifted =
+			!snap ||
+			deck.playlist_track !== snap.currentTrack.id ||
+			Math.abs(t - snap.offsetSeconds) > DRIFT_TOLERANCE_SECONDS
+		untrack(() => {
+			if (deck) deck.auto_radio_drifted = drifted
+		})
+	})
+
+	// Broadcast drift — O(1) arithmetic per tick
+	$effect(() => {
+		if (!deck?.listening_to_channel_id) return
+		const t = mediaCurrentTime
+		const tr = track
+		if (!tr) return
+		const expected = calculateSeekTime(deck, tr)
+		if (expected == null) return
+		const drifted = Math.abs(t - expected) > DRIFT_TOLERANCE_SECONDS
+		untrack(() => {
+			if (deck) deck.listening_drifted = drifted
+		})
+	})
 </script>
 
 <div class="player">
@@ -315,46 +341,64 @@
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</a>
 					<div class="header-channel-text">
-						<a
-							class="title"
-							href={resolve(
-								playlistTagsParam
-									? `/${headerChannel.slug}/tracks?tags=${encodeURIComponent(playlistTagsParam)}`
-									: `/${headerChannel.slug}`
-							)}
-						>
-							{headerChannel.name}
-						</a>
-						{#if deck?.playlist_title}
-							<small class="deck-title">
-								{#each deck.playlist_title.split(' ') as tag (tag)}
-									{#if tag.startsWith('#')}
-										<Tag href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
-											>{tag}</Tag
-										>
-									{:else}
-										{tag}
+							<div class="title-row">
+								<a
+									class="title"
+									href={resolve(
+										playlistTagsParam
+											? `/${headerChannel.slug}/tracks?tags=${encodeURIComponent(playlistTagsParam)}`
+											: `/${headerChannel.slug}`
+									)}
+								>
+									{headerChannel.name}
+								</a>
+								{#if deck?.broadcasting_channel_id}
+									<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+										<Icon icon="cell-signal" size={14} />
+									</span>
+								{/if}
+							</div>
+									{#if deck?.playlist_title || deck?.auto_radio}
+										<small class="deck-title">
+										{#if deck?.playlist_title}
+										{#each deck.playlist_title.split(' ') as tag (tag)}
+											{#if tag.startsWith('#')}
+												<Tag href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
+													>{tag}</Tag
+												>
+											{:else}
+												{tag}
+											{/if}
+										{/each}
 									{/if}
-								{/each}
-							</small>
-						{/if}
-					</div>
+											{#if deck?.auto_radio}
+												<button
+													class="auto-btn"
+												class:ghost={!deck?.auto_radio_drifted}
+											onclick={() => resyncAutoRadio(deckId)}
+											title={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+										>
+													<Icon icon="infinite" size={14} />
+												</button>
+											{/if}
+										</small>
+									{/if}
+								{#if isListeningToBroadcast}
+									<div class="header-status">
+										{#if isListeningToBroadcast}
+										<button
+											class="channel-badge"
+											class:synced={!deck?.listening_drifted}
+										class:drifted={deck?.listening_drifted}
+										onclick={() => {
+											if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
+										}}>Live</button
+									>
+								{/if}
+								</div>
+							{/if}
+						</div>
 				</div>
-				{#if deck?.broadcasting_channel_id}
-					<span class="channel-badge">Broadcasting</span>
-				{:else if isListeningToBroadcast}
-					<button
-						class="channel-badge"
-						class:drifted={deck?.listening_drifted}
-						onclick={() => {
-							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
-						}}>Live</button
-					>
-				{:else if deck?.auto_radio}
-					<button class="channel-badge" class:drifted={deck?.auto_radio_drifted} onclick={() => resyncAutoRadio(deckId)}
-						>Auto</button
-					>
-				{/if}
 			{/if}
 			<menu class="layout-controls top-layout-controls">
 				<button
@@ -465,8 +509,6 @@
 						if (deck) {
 							deck.seeked_at = new Date().toISOString()
 							deck.seek_position = val
-							if (deck.auto_radio) deck.auto_radio_drifted = true
-							if (deck.listening_to_channel_id) deck.listening_drifted = true
 						}
 						const broadcastingChannelId = getBroadcastingChannelId()
 						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
@@ -648,13 +690,42 @@
 		color: inherit;
 	}
 
+	.title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		min-width: 0;
+	}
+
+	.title-row .title {
+		min-width: 0;
+	}
+
 	.deck-title {
 		display: flex;
+		align-items: center;
 		flex-wrap: wrap;
 		gap: 0.2em;
 		max-width: 100%;
 		overflow: hidden;
 		font-size: var(--font-2);
+	}
+
+	.auto-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 0.35rem;
+		min-height: 1.35rem;
+		align-self: center;
+	}
+
+	.header-status {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.3rem;
+		margin-top: 0.15rem;
 	}
 
 	.header-id {

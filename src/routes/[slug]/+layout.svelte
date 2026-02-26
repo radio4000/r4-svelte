@@ -15,8 +15,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import {joinAutoRadio} from '$lib/api'
-	import {getAutoDecksForView} from '$lib/views.svelte'
+	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -45,10 +44,17 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
-	let fullChannelAutoView = $derived(channel?.slug ? {channels: [channel.slug]} : undefined)
-	let channelAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), fullChannelAutoView))
-	let hasChannelAuto = $derived(channelAutoDecks.length > 0)
-	let hasChannelAutoDrifted = $derived(channelAutoDecks.some((d) => d.auto_radio_drifted))
+	// Any auto deck playing this channel, regardless of tag/search filter
+	let anyChannelAutoDecks = $derived.by(() =>
+		Object.values(appState.decks).filter((d) => d.auto_radio && d.view?.channels?.[0] === channel?.slug)
+	)
+	let anyChannelAutoActive = $derived(anyChannelAutoDecks.length > 0)
+	let anyChannelAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	let channelAutoResyncId = $derived.by(() => {
+		const active = appState.decks[appState.active_deck_id]
+		if (active?.auto_radio && active?.view?.channels?.[0] === channel?.slug) return active.id
+		return anyChannelAutoDecks[0]?.id
+	})
 
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
@@ -114,31 +120,20 @@
 						<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
 					</a>
 				</div>
-				<div class="info">
-					<h1 class:active={isChannelPlaying}>
-						{channel.name}
-						{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
-					</h1>
-					<p class="slug">
-						<small><a href="/{slug}">@{slug}</a></small>
-					</p>
-				</div>
+					<div class="info">
+						<h1 class:active={isChannelPlaying}>
+							<span class="channel-title-text">{channel.name}</span>
+							{#if canEdit && isChannelLive}
+								<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+									<Icon icon="cell-signal" size={14} />
+								</span>
+							{/if}
+						</h1>
+						<p class="slug">
+							<small><a href="/{slug}">@{slug}</a></small>
+						</p>
+					</div>
 				<menu class="channel-actions">
-					<span>
-						{#if canShowAutoRadio}
-							<button
-								type="button"
-								onclick={() =>
-									channel && joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})}
-								class:active={hasChannelAuto}
-								class:drifted={hasChannelAutoDrifted}
-								title={hasChannelAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-							>
-								<Icon icon="signal" />
-							</button>
-						{/if}
-						<ButtonPlay {channel} trackId={tid} />
-					</span>
 					<span>
 						{#if canEdit}
 							<BroadcastControls
@@ -161,6 +156,25 @@
 							</button>
 						{/if}
 					</span>
+						<span>
+							<ButtonPlay {channel} trackId={tid} />
+							{#if canShowAutoRadio}
+							<button
+								type="button"
+								onclick={() => {
+									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
+									else if (channel) joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})
+								}}
+								class:ghost={anyChannelAutoActive && !anyChannelAutoDrifted}
+								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+							>
+									<Icon icon="infinite" />
+								</button>
+							{/if}
+							{#if isChannelLive && !canEdit}
+								<span class="channel-badge">Live</span>
+							{/if}
+						</span>
 					<span>
 						{#if hasChannel}
 							<ButtonFollow {channel} />
@@ -270,17 +284,23 @@
 	}
 
 	h1 {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
 		font-size: clamp(var(--font-5), 4vw, var(--font-7));
 		line-height: 1.1;
 		margin: 0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		transition: color 0.15s;
 
 		&.active {
 			color: var(--accent-9);
 		}
+	}
+
+	.channel-title-text {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.slug {

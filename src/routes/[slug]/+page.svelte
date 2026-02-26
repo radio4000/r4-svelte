@@ -231,12 +231,11 @@
 								{#if hasAutoRadioCoverage(tracks)}
 									<button
 										type="button"
-										class:active={isAutoTagActive}
-										class:drifted={isAutoTagDrifted}
+										class:ghost={isAutoTagActive && !isAutoTagDrifted}
 										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
 										title={isAutoTagDrifted ? m.auto_radio_resync() : `Auto radio #${tag}`}
 									>
-										<Icon icon="signal" size={14} />
+										<Icon icon="infinite" size={14} />
 									</button>
 								{/if}
 							{/if}

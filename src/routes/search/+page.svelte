@@ -223,11 +223,10 @@
 					<button
 						type="button"
 						onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
-						class:active={isSearchAutoActive}
-						class:drifted={isSearchAutoDrifted}
+						class:ghost={isSearchAutoActive && !isSearchAutoDrifted}
 						title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
 					>
-						<Icon icon="signal" size={16} />
+						<Icon icon="infinite" size={16} />
 					</button>
 				{/if}
 			{/if}

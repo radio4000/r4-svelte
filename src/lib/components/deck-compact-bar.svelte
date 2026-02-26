@@ -113,8 +113,6 @@
 					const val = Number(e.currentTarget.value)
 					const mediaElement = getMediaPlayer(deckId)
 					if (mediaElement) mediaElement.currentTime = val
-					if (deck?.auto_radio) deck.auto_radio_drifted = true
-					if (deck?.listening_to_channel_id) deck.listening_drifted = true
 				}}
 				class="progress-range"
 				disabled={!Number.isFinite(mediaDuration)}
@@ -133,31 +131,43 @@
 			</a>
 		{/if}
 		<div class="info">
-			<h3 class="title">
-				{#if displayChannel}
-					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+				<h3 class="title">
+					{#if displayChannel}
+						<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+					{:else if displaySlug}
+						<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
+					{:else if displayTrack}
+						<span>@unknown</span>
+					{/if}
 					{#if deck?.broadcasting_channel_id}
-						<span class="channel-badge">Broadcasting</span>
-					{:else if deck?.listening_to_channel_id}
-						<button
-							class="channel-badge"
+						<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+							<Icon icon="cell-signal" size={14} />
+						</span>
+					{/if}
+				</h3>
+				{#if deck?.listening_to_channel_id || deck?.auto_radio}
+					<p class="status-row">
+						{#if deck?.listening_to_channel_id}
+							<button
+								class="channel-badge"
+								class:synced={!deck?.listening_drifted}
 							class:drifted={deck?.listening_drifted}
 							onclick={() => deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
 							>Live</button
 						>
-					{:else if deck?.auto_radio}
-						<button
-							class="channel-badge"
-							class:drifted={deck?.auto_radio_drifted}
-							onclick={() => resyncAutoRadio(deckId)}>Auto</button
-						>
 					{/if}
-				{:else if displaySlug}
-					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
-				{:else if displayTrack}
-					<span>@unknown</span>
-				{/if}
-			</h3>
+					{#if deck?.auto_radio}
+						<button
+							class="auto-btn"
+							class:ghost={!deck?.auto_radio_drifted}
+							onclick={() => resyncAutoRadio(deckId)}
+							title={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+						>
+							<Icon icon="infinite" size={14} />
+						</button>
+					{/if}
+				</p>
+			{/if}
 			{#if displayTrack}
 				<p class="description">
 					{#if displaySlug}
@@ -296,9 +306,18 @@
 	.title {
 		font-size: var(--font-4);
 		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.title :global(a),
+	.title > span:not(.channel-badge) {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		min-width: 0;
 	}
 
 	.description {
@@ -312,6 +331,23 @@
 	.description a {
 		color: inherit;
 		text-decoration: none;
+	}
+
+	.auto-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 0.35rem;
+		min-height: 1.35rem;
+		align-self: center;
+	}
+
+	.status-row {
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.3rem;
 	}
 
 	.title a:visited,
