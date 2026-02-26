@@ -120,19 +120,19 @@
 						<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
 					</a>
 				</div>
-					<div class="info">
-						<h1 class:active={isChannelPlaying}>
-							<span class="channel-title-text">{channel.name}</span>
-							{#if canEdit && isChannelLive}
-								<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
-									<Icon icon="cell-signal" size={14} />
-								</span>
-							{/if}
-						</h1>
-						<p class="slug">
-							<small><a href="/{slug}">@{slug}</a></small>
-						</p>
-					</div>
+				<div class="info">
+					<h1 class:active={isChannelPlaying}>
+						<span class="channel-title-text">{channel.name}</span>
+						{#if canEdit && isChannelLive}
+							<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+								<Icon icon="cell-signal" size={14} />
+							</span>
+						{/if}
+					</h1>
+					<p class="slug">
+						<small><a href="/{slug}">@{slug}</a></small>
+					</p>
+				</div>
 				<menu class="channel-actions">
 					<span>
 						{#if canEdit}
@@ -156,9 +156,9 @@
 							</button>
 						{/if}
 					</span>
-						<span>
-							<ButtonPlay {channel} trackId={tid} />
-							{#if canShowAutoRadio}
+					<span>
+						<ButtonPlay {channel} trackId={tid} />
+						{#if canShowAutoRadio}
 							<button
 								type="button"
 								onclick={() => {
@@ -168,13 +168,13 @@
 								class:ghost={anyChannelAutoActive && !anyChannelAutoDrifted}
 								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
 							>
-									<Icon icon="infinite" />
-								</button>
-							{/if}
-							{#if isChannelLive && !canEdit}
-								<span class="channel-badge">Live</span>
-							{/if}
-						</span>
+								<Icon icon="infinite" />
+							</button>
+						{/if}
+						{#if isChannelLive && !canEdit}
+							<span class="channel-badge">Live</span>
+						{/if}
+					</span>
 					<span>
 						{#if hasChannel}
 							<ButtonFollow {channel} />

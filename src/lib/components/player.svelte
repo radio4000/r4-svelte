@@ -341,63 +341,63 @@
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</a>
 					<div class="header-channel-text">
-							<div class="title-row">
-								<a
-									class="title"
-									href={resolve(
-										playlistTagsParam
-											? `/${headerChannel.slug}/tracks?tags=${encodeURIComponent(playlistTagsParam)}`
-											: `/${headerChannel.slug}`
-									)}
-								>
-									{headerChannel.name}
-								</a>
-								{#if deck?.broadcasting_channel_id}
-									<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
-										<Icon icon="cell-signal" size={14} />
-									</span>
+						<div class="title-row">
+							<a
+								class="title"
+								href={resolve(
+									playlistTagsParam
+										? `/${headerChannel.slug}/tracks?tags=${encodeURIComponent(playlistTagsParam)}`
+										: `/${headerChannel.slug}`
+								)}
+							>
+								{headerChannel.name}
+							</a>
+							{#if deck?.broadcasting_channel_id}
+								<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+									<Icon icon="cell-signal" size={14} />
+								</span>
+							{/if}
+						</div>
+						{#if deck?.playlist_title || deck?.auto_radio}
+							<small class="deck-title">
+								{#if deck?.playlist_title}
+									{#each deck.playlist_title.split(' ') as tag (tag)}
+										{#if tag.startsWith('#')}
+											<Tag href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
+												>{tag}</Tag
+											>
+										{:else}
+											{tag}
+										{/if}
+									{/each}
 								{/if}
-							</div>
-									{#if deck?.playlist_title || deck?.auto_radio}
-										<small class="deck-title">
-										{#if deck?.playlist_title}
-										{#each deck.playlist_title.split(' ') as tag (tag)}
-											{#if tag.startsWith('#')}
-												<Tag href={resolve(`/${headerChannel.slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}`)}
-													>{tag}</Tag
-												>
-											{:else}
-												{tag}
-											{/if}
-										{/each}
-									{/if}
-											{#if deck?.auto_radio}
-												<button
-													class="auto-btn"
-												class:ghost={!deck?.auto_radio_drifted}
-											onclick={() => resyncAutoRadio(deckId)}
-											title={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
-										>
-													<Icon icon="infinite" size={14} />
-												</button>
-											{/if}
-										</small>
-									{/if}
+								{#if deck?.auto_radio}
+									<button
+										class="auto-btn"
+										class:ghost={!deck?.auto_radio_drifted}
+										onclick={() => resyncAutoRadio(deckId)}
+										title={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+									>
+										<Icon icon="infinite" size={14} />
+									</button>
+								{/if}
+							</small>
+						{/if}
+						{#if isListeningToBroadcast}
+							<div class="header-status">
 								{#if isListeningToBroadcast}
-									<div class="header-status">
-										{#if isListeningToBroadcast}
-										<button
-											class="channel-badge"
-											class:synced={!deck?.listening_drifted}
+									<button
+										class="channel-badge"
+										class:synced={!deck?.listening_drifted}
 										class:drifted={deck?.listening_drifted}
 										onclick={() => {
 											if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
 										}}>Live</button
 									>
 								{/if}
-								</div>
-							{/if}
-						</div>
+							</div>
+						{/if}
+					</div>
 				</div>
 			{/if}
 			<menu class="layout-controls top-layout-controls">

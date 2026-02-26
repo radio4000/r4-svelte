@@ -94,15 +94,15 @@
 
 	<nav class="user">
 		{#await preloading then}
-				{#if userChannelHasAuto}
-					<button
-						type="button"
-						class="btn resync-link"
-						class:ghost={!userChannelHasAutoDrifted}
-						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-						{@attach tooltip({content: m.auto_radio_resync()})}
-					>
-						<Icon icon="infinite" />
+			{#if userChannelHasAuto}
+				<button
+					type="button"
+					class="btn resync-link"
+					class:ghost={!userChannelHasAutoDrifted}
+					onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					{@attach tooltip({content: m.auto_radio_resync()})}
+				>
+					<Icon icon="infinite" />
 				</button>
 			{/if}
 			<AddTrackDialog />

@@ -131,26 +131,26 @@
 			</a>
 		{/if}
 		<div class="info">
-				<h3 class="title">
-					{#if displayChannel}
-						<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
-					{:else if displaySlug}
-						<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
-					{:else if displayTrack}
-						<span>@unknown</span>
-					{/if}
-					{#if deck?.broadcasting_channel_id}
-						<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
-							<Icon icon="cell-signal" size={14} />
-						</span>
-					{/if}
-				</h3>
-				{#if deck?.listening_to_channel_id || deck?.auto_radio}
-					<p class="status-row">
-						{#if deck?.listening_to_channel_id}
-							<button
-								class="channel-badge"
-								class:synced={!deck?.listening_drifted}
+			<h3 class="title">
+				{#if displayChannel}
+					<a href={resolve(`/${displayChannel.slug}`)}>{displayChannel.name}</a>
+				{:else if displaySlug}
+					<a href={resolve(`/${displaySlug}`)}>@{displaySlug}</a>
+				{:else if displayTrack}
+					<span>@unknown</span>
+				{/if}
+				{#if deck?.broadcasting_channel_id}
+					<span class="channel-badge" title="Broadcasting" aria-label="Broadcasting">
+						<Icon icon="cell-signal" size={14} />
+					</span>
+				{/if}
+			</h3>
+			{#if deck?.listening_to_channel_id || deck?.auto_radio}
+				<p class="status-row">
+					{#if deck?.listening_to_channel_id}
+						<button
+							class="channel-badge"
+							class:synced={!deck?.listening_drifted}
 							class:drifted={deck?.listening_drifted}
 							onclick={() => deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
 							>Live</button
