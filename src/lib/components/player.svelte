@@ -20,13 +20,8 @@
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
-	import {
-		joinBroadcast,
-		leaveBroadcast,
-		getBroadcastingChannelId,
-		notifyBroadcastState,
-		calculateSeekTime
-	} from '$lib/broadcast.js'
+	import {joinBroadcast, leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
+	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -40,7 +35,8 @@
 	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, updateTrack} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {eq} from '@tanstack/svelte-db'
 	import {isDbId} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -49,7 +45,6 @@
 	/** @typedef {import('$lib/types').Channel} Channel */
 
 	const log = logger.ns('player').seal()
-	const DRIFT_TOLERANCE_SECONDS = 2
 
 	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
 	let {deckId, children, scrollToActive} = $props()
@@ -305,7 +300,9 @@
 	$effect(() => {
 		if (!deck?.auto_radio || deck.auto_radio_rotation_start == null) return
 		const t = mediaCurrentTime
-		// Skip while the initial seek is still landing (position hasn't left 0 yet)
+		// Skip while the initial seek is still landing. joinAutoRadio/resyncAutoRadio
+		// set auto_radio_drifted=false immediately; this guard prevents a false-positive
+		// drifted flip before the media element has moved off 0.
 		if (t < DRIFT_TOLERANCE_SECONDS) return
 		const snap = playbackState(syncAutoTracks, syncTotalDuration, deck.auto_radio_rotation_start, Date.now())
 		const drifted =
