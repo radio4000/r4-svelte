@@ -715,13 +715,15 @@ export async function resyncAutoRadio(deckId: number) {
 	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
+	const label = viewToQuery(view) || undefined
 
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 		setPlaylist(
 			deckId,
-			shuffled.map((t) => t.id)
+			shuffled.map((t) => t.id),
+			{title: label, slug}
 		)
 	}
 
@@ -731,6 +733,7 @@ export async function resyncAutoRadio(deckId: number) {
 		d.auto_radio = true
 		d.auto_radio_rotation_start = rotationStartUnix
 		d.view = view
+		if (label) d.playlist_title = label
 	}
 
 	if (isSameTrack) {
