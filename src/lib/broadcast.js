@@ -7,8 +7,8 @@ import {broadcastsCollection} from '$lib/collections/broadcasts'
 import {channelsCollection} from '$lib/collections/channels'
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
-export {calculateSeekTime} from '$lib/player/broadcast-utils'
-import {calculateSeekTime} from '$lib/player/broadcast-utils'
+import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
+export {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
@@ -68,8 +68,6 @@ const broadcastTableListeners = new Map()
 const broadcastStateSeqByChannel = new Map()
 const lastReceivedStateSeqByChannel = new Map()
 const seekJobSeqByDeck = new Map()
-
-const DRIFT_TOLERANCE_SECONDS = 2
 
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {

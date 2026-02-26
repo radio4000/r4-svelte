@@ -6,6 +6,9 @@
 /** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
 /** @typedef {import('$lib/types').Track} Track */
 
+/** Shared drift tolerance used by both broadcast and auto-radio drift effects. */
+export const DRIFT_TOLERANCE_SECONDS = 2
+
 /**
  * Calculate expected playback position for a broadcast listener.
  * Accounts for playback speed, seek position, and time elapsed.
