@@ -7,6 +7,8 @@ import {broadcastsCollection} from '$lib/collections/broadcasts'
 import {channelsCollection} from '$lib/collections/channels'
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
+export {calculateSeekTime} from '$lib/player/broadcast-utils'
+import {calculateSeekTime} from '$lib/player/broadcast-utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
@@ -250,31 +252,6 @@ function stopBroadcastSync(deckId) {
 		broadcastChannels.delete(deckId)
 	}
 	seekJobSeqByDeck.delete(deckId)
-}
-
-/**
- * Calculate elapsed seconds from track_played_at, accounting for playback speed.
- * @param {Partial<BroadcastDeckState> & {track_played_at?: string | null}} broadcast
- * @param {import('$lib/types').Track} track
- * @returns {number|undefined}
- */
-export function calculateSeekTime(broadcast, track) {
-	const speed = broadcast.speed ?? 1
-	if (broadcast.seek_position != null) {
-		if (broadcast.seeked_at) {
-			const elapsed = (Date.now() - new Date(broadcast.seeked_at).getTime()) / 1000
-			if (elapsed < 0) return undefined
-			const base = broadcast.is_playing ? broadcast.seek_position + elapsed * speed : broadcast.seek_position
-			if (track.duration && base >= track.duration) return undefined
-			return Math.round(base)
-		}
-		return Math.round(broadcast.seek_position)
-	}
-	if (!broadcast.track_played_at) return undefined
-	const elapsed = (Date.now() - new Date(broadcast.track_played_at).getTime()) / 1000
-	if (elapsed < 0) return undefined
-	if (track.duration && elapsed * speed >= track.duration) return undefined
-	return Math.round(elapsed * speed)
 }
 
 function nextSeekJobId(deckId) {
