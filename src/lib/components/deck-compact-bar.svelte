@@ -1,6 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
@@ -10,6 +10,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
+	import TrackCard from '$lib/components/track-card.svelte'
 	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
@@ -68,16 +69,10 @@
 			toHref: (path) => resolve(/** @type {any} */ (path))
 		})
 	)
-	let trackHref = $derived.by(() => {
-		const targetSlug = displayTrack?.slug ?? displaySlug
-		if (!displayTrack || !targetSlug) return undefined
-		return resolve(`/${targetSlug}/tracks/${displayTrack.id}`)
-	})
+	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
 	let provider = $derived(
 		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
 	)
-	let ytid = $derived(!displayTrack || appState.hide_track_artwork ? null : displayTrack.media_id)
-	let imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
 
 	let activeQueue = $derived(getActiveQueue(deck))
 	let canPlayFromQueue = $derived(canPlay(activeQueue, track?.id))
@@ -149,48 +144,41 @@
 		</div>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
-		{#if headerChannel}
-			<a class="avatar" href={headerState.slugHref}>
-				<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-			</a>
+		{#if displayTrack}
+			<div class="track-panel">
+				<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+			</div>
 		{/if}
-		{#if imageSrc && displayTrack && displaySlug}
-			<a class="artwork" href={trackHref}>
-				<img src={imageSrc} alt={displayTrack.title} />
-			</a>
-		{/if}
-		<div class="info">
-			<DeckChannelHeader
-				title={headerState.title}
-				titleHref={headerState.slugHref}
-				slug={headerState.slug}
-				slugHref={headerState.slugHref}
-				isPlaying={Boolean(deck?.is_playing)}
-				isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
-				tags={headerState.tags}
-				showAutoButton={Boolean(deck?.auto_radio)}
-				autoGhost={!deck?.auto_radio_drifted}
-				autoTitle={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
-				onAutoClick={() => resyncAutoRadio(deckId)}
-				listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
-				listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
-				listeningWhomSlug={deck?.listening_to_channel_id ? headerState.listeningWhomSlug : undefined}
-				listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
-				showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
-				broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
-				broadcastSyncTitle={deck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
-				onBroadcastSyncClick={() =>
-					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
-			/>
-			{#if displayTrack}
-				<p class="description">
-					{#if trackHref}
-						<a href={trackHref}>{displayTrack.title}</a>
-					{:else}
-						<span>{displayTrack.title}</span>
-					{/if}
-				</p>
+		<div class="channel-panel">
+			{#if headerChannel}
+				<a class="avatar" href={headerState.slugHref}>
+					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+				</a>
 			{/if}
+			<div class="channel-info">
+				<DeckChannelHeader
+					title={headerState.title}
+					titleHref={headerState.slugHref}
+					slug={headerState.slug}
+					slugHref={headerState.slugHref}
+					isPlaying={Boolean(deck?.is_playing)}
+					isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
+					tags={headerState.tags}
+					showAutoButton={Boolean(deck?.auto_radio)}
+					autoGhost={!deck?.auto_radio_drifted}
+					autoTitle={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+					onAutoClick={() => resyncAutoRadio(deckId)}
+					listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
+					listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
+					listeningWhomSlug={deck?.listening_to_channel_id ? headerState.listeningWhomSlug : undefined}
+					listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
+					showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
+					broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
+					broadcastSyncTitle={deck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
+					onBroadcastSyncClick={() =>
+						deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
+				/>
+			</div>
 		</div>
 	</div>
 	<div class="row-controls">
@@ -277,11 +265,19 @@
 
 	.header-info {
 		display: flex;
-		align-items: center;
+		align-items: stretch;
 		gap: 0.5rem;
 		min-width: 0;
-		flex: 1 1 auto;
+		flex: 1 1 42rem;
 		order: 2;
+	}
+
+	.channel-panel {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 14rem;
+		flex: 0 1 24rem;
 	}
 
 	.avatar {
@@ -290,25 +286,11 @@
 		flex-shrink: 0;
 	}
 
-	.artwork {
-		width: 32px;
-		height: 32px;
-		flex-shrink: 0;
-
-		img {
-			width: 100%;
-			height: 100%;
-			border-radius: var(--media-radius);
-			object-fit: cover;
-			object-position: center;
-		}
-	}
-
 	.expand {
 		flex-shrink: 0;
 	}
 
-	.info {
+	.channel-info {
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
@@ -317,20 +299,22 @@
 		line-height: 1.2;
 	}
 
-	.description {
-		margin: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	.track-panel {
+		min-width: 0;
+		flex: 1 1 24rem;
 	}
 
-	.description a {
-		color: inherit;
-		text-decoration: none;
+	.track-panel :global(article) {
+		height: 100%;
 	}
 
-	.description a:visited {
-		color: inherit;
+	.track-panel :global(.card) {
+		min-height: 0;
+		padding: 0.25rem 0 0.25rem 0.5rem;
+	}
+
+	.track-panel :global(h3 + p) {
+		max-width: 100%;
 	}
 
 	@media (max-width: 768px) {
@@ -373,12 +357,17 @@
 	}
 
 	@media (max-width: 560px) {
-		.artwork {
-			display: none;
+		.channel-panel {
+			min-width: 0;
 		}
 
 		.header-info {
 			gap: 0.2rem;
+			flex-direction: column;
+		}
+
+		.track-panel {
+			width: 100%;
 		}
 	}
 </style>
