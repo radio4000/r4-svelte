@@ -55,6 +55,8 @@ The Auto button uses the same `infinite` icon in both states:
 - synced: ghost button style
 - drifted: normal button style
 
+In deck and channel headers, the Auto button now sits after the linked `@slug` and linked `#tags` metadata row.
+
 `resyncAutoRadio` now re-applies the stored view (`processViewTracks`) before recomputing the deterministic shuffle, so filtered/tag/search auto-radio resyncs correctly.
 
 ## Deck state

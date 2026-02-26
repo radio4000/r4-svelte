@@ -23,6 +23,14 @@ Listeners continuously compare local playback against expected broadcast positio
 - Re-seek is skipped if already within a `2s` tolerance.
 - `deck.listening_drifted` is computed in `player.svelte` from this expected position.
 
+## Header UI
+
+Deck/channel headers now show listening context as linked `@who` + sync-broadcast icon + linked `@whom`:
+
+- `who` = broadcaster slug
+- `whom` = current track slug when available, fallback to playlist/listening slug
+- sync icon button reflects drift state and can trigger re-sync (`joinBroadcast`)
+
 ## Files
 
 - `broadcast.js` — core logic
