@@ -719,15 +719,15 @@ export async function resyncAutoRadio(deckId: number) {
 
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
-		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 		setPlaylist(
 			deckId,
 			shuffled.map((t) => t.id),
 			{title: label, slug}
 		)
+		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	}
 
-	// Restore auto-radio flags (setPlaylist clears auto_radio)
+	// Restore auto-radio flags after setPlaylist/playTrack
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
