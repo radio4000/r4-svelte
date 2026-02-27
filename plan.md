@@ -4,6 +4,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 ## Backlog
 
+- Check if the track/related page is working. Don't think so. This track https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related "clio - faces" exists several times on r4,. but related shows 'no related information'. Use r4 cli to check in the media_id.
 - Move the play history out of the deck UI so simplify decks. Also since play history is not per deck, but per local storage. We already have /history route. Where do we link it?
 - on https://beta.radio4000.com/ko002/tracks/c3ba2a0d-db49-4143-b953-f8594cd756e7 it shows track.source as "youtube"  but it's a file provider, not youtube.
 - Move history tab out of the deck UI. Play history is global anyway, not related to a single deck. Move it out of the queue thing. Find a way to link /history route instead in the main nav or setting?
