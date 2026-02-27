@@ -5,9 +5,11 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {channelPresence} from '$lib/presence.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 
-	/** @type {{deckId?: number, channelId?: string, isLiveOverride?: boolean, compact?: boolean}} */
-	let {deckId = 1, channelId, isLiveOverride, compact = false} = $props()
+	/** @type {{deckId?: number, channelId?: string, channelSlug?: string, isLiveOverride?: boolean, compact?: boolean}} */
+	let {deckId = 1, channelId, channelSlug, isLiveOverride, compact = false} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -89,6 +91,9 @@
 			<button disabled class:compact title={m.broadcast_requires_track()} aria-label={m.broadcast_requires_track()}>
 				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 			</button>
+		{/if}
+		{#if channelSlug && channelPresence[channelSlug]?.broadcast > 0}
+			<PresenceCount count={channelPresence[channelSlug].broadcast} />
 		{/if}
 		{#if error}
 			<p role="alert">

@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {untrack} from 'svelte'
 	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
@@ -18,6 +19,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
+	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -95,6 +97,14 @@
 		})
 	)
 
+	// Watch presence for this channel (observe counts without tracking self)
+	$effect(() => {
+		const s = channel?.slug
+		if (!s) return
+		untrack(() => watchPresence(s))
+		return () => unwatchPresence(s)
+	})
+
 	// Check freshness in background (cached for 60s)
 	$effect(() => {
 		if (slug) {
@@ -170,13 +180,6 @@
 						slug={channelHeaderState.slug}
 						slugHref={channelHeaderState.slugHref}
 						tags={channelHeaderState.tags}
-						showAutoButton={canShowAutoRadio}
-						autoGhost={anyChannelAutoActive && !anyChannelAutoDrifted}
-						autoTitle={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
-						onAutoClick={() => {
-							if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
-							else if (channel) joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})
-						}}
 						listeningWhoSlug={channelListeningDeck ? channelHeaderState.listeningWhoSlug : undefined}
 						listeningWhoHref={channelListeningDeck ? channelHeaderState.listeningWhoHref : undefined}
 						listeningWhomSlug={channelListeningDeck ? channelHeaderState.listeningWhomSlug : undefined}
@@ -188,6 +191,7 @@
 							if (!channel?.id) return
 							joinBroadcast(appState.active_deck_id, channel.id)
 						}}
+						presenceCount={channelPresence[channel.slug]?.total ?? 0}
 					/>
 				</div>
 				<menu class="channel-actions">
@@ -196,6 +200,7 @@
 							<BroadcastControls
 								deckId={appState.active_deck_id}
 								channelId={channel.id}
+								channelSlug={channel.slug}
 								isLiveOverride={isChannelLive}
 								compact
 							/>
@@ -215,6 +220,20 @@
 					</span>
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
+						{#if canShowAutoRadio}
+							<button
+								type="button"
+								class:ghost={anyChannelAutoActive && !anyChannelAutoDrifted}
+								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+								aria-label={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+								onclick={() => {
+									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
+									else if (channel) joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})
+								}}
+							>
+								<Icon icon="infinite" size={16} />
+							</button>
+						{/if}
 					</span>
 					<span>
 						{#if hasChannel}
