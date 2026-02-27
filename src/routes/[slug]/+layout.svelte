@@ -12,10 +12,12 @@
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
+	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import {joinAutoRadio} from '$lib/api'
+	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -44,13 +46,53 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
-	// True when the active deck is playing this channel's auto-radio but has drifted off schedule
-	let isAutoRadioDrifted = $derived(
-		Boolean(
-			channel?.slug &&
-			appState.decks[appState.active_deck_id]?.view?.channels?.[0] === channel.slug &&
-			appState.decks[appState.active_deck_id]?.auto_radio_drifted
+	// Any auto deck playing this channel, regardless of tag/search filter
+	let anyChannelAutoDecks = $derived.by(() =>
+		Object.values(appState.decks).filter(
+			(d) => d.auto_radio && (d.view?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
 		)
+	)
+	let anyChannelAutoActive = $derived(anyChannelAutoDecks.length > 0)
+	let anyChannelAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	let channelAutoResyncId = $derived.by(() => {
+		const active = appState.decks[appState.active_deck_id]
+		if (
+			active?.auto_radio &&
+			(active?.view?.channels?.[0] === channel?.slug || active?.playlist_slug === channel?.slug)
+		)
+			return active.id
+		return anyChannelAutoDecks[0]?.id
+	})
+	let channelPlayingDeck = $derived.by(() => {
+		if (!channel?.slug) return undefined
+		const active = appState.decks[appState.active_deck_id]
+		if (active && active.playlist_slug === channel.slug) return active
+		return Object.values(appState.decks).find((d) => d.playlist_slug === channel.slug && d.is_playing)
+	})
+	let channelListeningDeck = $derived.by(() => {
+		if (!channel?.id) return undefined
+		const active = appState.decks[appState.active_deck_id]
+		if (active?.listening_to_channel_id === channel.id) return active
+		return Object.values(appState.decks).find((d) => d.listening_to_channel_id === channel.id)
+	})
+	let channelHeaderDeck = $derived(channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0])
+	let listeningTrackSlug = $derived.by(() => {
+		const trackId = channelListeningDeck?.playlist_track
+		if (!trackId) return undefined
+		void tracksCollection.state.size
+		return tracksCollection.state.get(trackId)?.slug
+	})
+	let channelHeaderState = $derived.by(() =>
+		buildDeckChannelHeaderState({
+			title: channel?.name,
+			slug,
+			playlistTitle: channelHeaderDeck?.playlist_title,
+			listening: Boolean(channelListeningDeck),
+			listeningWhoSlug: channelListeningDeck ? slug : undefined,
+			listeningWhomTrackSlug: listeningTrackSlug,
+			listeningWhomFallbackSlug: channelListeningDeck?.playlist_slug,
+			tagBaseSlug: slug
+		})
 	)
 
 	// Check freshness in background (cached for 60s)
@@ -118,49 +160,61 @@
 					</a>
 				</div>
 				<div class="info">
-					<h1 class:active={isChannelPlaying}>
-						{channel.name}
-						{#if isChannelLive}<span class="channel-badge">{canEdit ? 'Broadcasting' : 'Live'}</span>{/if}
-					</h1>
-					<p class="slug">
-						<small><a href="/{slug}">@{slug}</a></small>
-					</p>
+					<DeckChannelHeader
+						title={channelHeaderState.title}
+						titleHref={channelHeaderState.slugHref}
+						titleElement="h1"
+						titleClass="channel-page-title"
+						isPlaying={isChannelPlaying}
+						isBroadcasting={isChannelLive}
+						slug={channelHeaderState.slug}
+						slugHref={channelHeaderState.slugHref}
+						tags={channelHeaderState.tags}
+						showAutoButton={canShowAutoRadio}
+						autoGhost={anyChannelAutoActive && !anyChannelAutoDrifted}
+						autoTitle={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+						onAutoClick={() => {
+							if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
+							else if (channel) joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})
+						}}
+						listeningWhoSlug={channelListeningDeck ? channelHeaderState.listeningWhoSlug : undefined}
+						listeningWhoHref={channelListeningDeck ? channelHeaderState.listeningWhoHref : undefined}
+						listeningWhomSlug={channelListeningDeck ? channelHeaderState.listeningWhomSlug : undefined}
+						listeningWhomHref={channelHeaderState.listeningWhomHref}
+						showBroadcastSync={Boolean(channelListeningDeck && channel.id)}
+						broadcastSyncDrifted={Boolean(channelListeningDeck?.listening_drifted)}
+						broadcastSyncTitle={channelListeningDeck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
+						onBroadcastSyncClick={() => {
+							if (!channel?.id) return
+							joinBroadcast(appState.active_deck_id, channel.id)
+						}}
+					/>
 				</div>
 				<menu class="channel-actions">
-					{#if canEdit}
-						<span>
+					<span>
+						{#if canEdit}
 							<BroadcastControls
 								deckId={appState.active_deck_id}
 								channelId={channel.id}
 								isLiveOverride={isChannelLive}
+								compact
 							/>
-						</span>
-					{:else if channel.id && isChannelLive}
-						<span>
+						{:else if channel.id && isChannelLive}
 							<button
 								type="button"
 								onclick={() => {
 									if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
 									else joinBroadcast(appState.active_deck_id, channel.id)
 								}}
+								title={m.nav_broadcasts()}
+								aria-label={m.nav_broadcasts()}
 							>
 								<Icon icon="cell-signal" />
 							</button>
-						</span>
-					{/if}
+						{/if}
+					</span>
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
-						{#if canShowAutoRadio}
-							<button
-								type="button"
-								onclick={() =>
-									channel && joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})}
-								class:active={isAutoRadioDrifted}
-								title={isAutoRadioDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-							>
-								<Icon icon="signal" />
-							</button>
-						{/if}
 					</span>
 					<span>
 						{#if hasChannel}
@@ -270,22 +324,19 @@
 		flex: 1;
 	}
 
-	h1 {
+	.info :global(.channel-page-title) {
 		font-size: clamp(var(--font-5), 4vw, var(--font-7));
 		line-height: 1.1;
 		margin: 0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		transition: color 0.15s;
-
-		&.active {
-			color: var(--accent-9);
-		}
 	}
 
-	.slug {
-		color: var(--gray-10);
+	.info :global(.channel-page-title.active) {
+		color: var(--accent-9);
+	}
+
+	.info :global(.meta-row) {
+		font-size: var(--font-3);
 	}
 
 	.channel-actions {

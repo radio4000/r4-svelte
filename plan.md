@@ -72,10 +72,10 @@ Findings from a codebase scan. Roughly sorted by impact. Needs explanation to an
 
 ### Player & audio edge cases (investigate)
 
-- **`seekWhenReady` job cancellation race** (`broadcast.js:292–324`). Between the final `seekJobSeqByDeck` check and the `play(deckId)` call, a new job could start. The old job's `play()` still fires.
-- **`userHasPlayed` not reset between playlists** (`player.svelte:106`). When a deck switches from one channel to another, the flag carries over and may cause unexpected autoplay decisions.
-- **Ephemeral broadcast tracks have `slug: null`** (`broadcast.js:360–435`). If a broadcaster sends a non-DB track without `track_url`, the listener can't look it up.
-- **`applyBroadcastState` rebuilds `managedIds` inside loop** (`broadcast.js:607–631`). O(n²) for number of decks — fine now but may matter with more decks.
+- **`seekWhenReady` job cancellation race** (`broadcast.js`, `seekWhenReady`). Between the final `seekJobSeqByDeck` check and the `play(deckId)` call, a new job could start. The old job's `play()` still fires.
+- **`userHasPlayed` not reset between playlists** (`player.svelte`, autoplay state block). When a deck switches from one channel to another, the flag carries over and may cause unexpected autoplay decisions.
+- **Ephemeral broadcast tracks have `slug: null`** (`broadcast.js`, `playBroadcastTrack`). If a broadcaster sends a non-DB track without `track_url`, the listener can't look it up.
+- **`applyBroadcastState` rebuilds `managedIds` inside loop** (`broadcast.js`, `applyBroadcastState`). O(n²) for number of decks — fine now but may matter with more decks.
 
 ### Duplicated code worth extracting
 

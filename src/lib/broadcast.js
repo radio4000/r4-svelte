@@ -7,6 +7,8 @@ import {broadcastsCollection} from '$lib/collections/broadcasts'
 import {channelsCollection} from '$lib/collections/channels'
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
+import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
+export {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
@@ -63,18 +65,9 @@ const broadcastStateListeners = new Map()
  * @type {Map<string, any>}
  */
 const broadcastTableListeners = new Map()
-const lastAppliedSeek = new Map()
 const broadcastStateSeqByChannel = new Map()
 const lastReceivedStateSeqByChannel = new Map()
 const seekJobSeqByDeck = new Map()
-
-/**
- * Tracks the broadcaster's last known seek "intent" per deck.
- * We only re-seek when this fingerprint changes — periodic polls
- * with the same intent are ignored to prevent seek loops.
- * @type {Map<number, {seeked_at: string|null, track_played_at: string|null, is_playing: boolean, seek_position: number|null}>}
- */
-const lastSeekIntent = new Map()
 
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {
@@ -256,33 +249,7 @@ function stopBroadcastSync(deckId) {
 		channel.unsubscribe()
 		broadcastChannels.delete(deckId)
 	}
-	lastSeekIntent.delete(deckId)
-	lastAppliedSeek.delete(deckId)
 	seekJobSeqByDeck.delete(deckId)
-}
-
-/**
- * Calculate elapsed seconds from track_played_at
- * @param {Partial<BroadcastDeckState> & {track_played_at?: string | null}} broadcast
- * @param {import('$lib/types').Track} track
- * @returns {number|undefined}
- */
-function calculateSeekTime(broadcast, track) {
-	if (broadcast.seek_position != null) {
-		if (broadcast.seeked_at) {
-			const elapsed = (Date.now() - new Date(broadcast.seeked_at).getTime()) / 1000
-			if (elapsed < 0) return undefined
-			const base = broadcast.is_playing ? broadcast.seek_position + elapsed : broadcast.seek_position
-			if (track.duration && base >= track.duration) return undefined
-			return Math.round(base)
-		}
-		return Math.round(broadcast.seek_position)
-	}
-	if (!broadcast.track_played_at) return undefined
-	const elapsed = (Date.now() - new Date(broadcast.track_played_at).getTime()) / 1000
-	if (elapsed < 0) return undefined
-	if (track.duration && elapsed >= track.duration) return undefined
-	return Math.round(elapsed)
 }
 
 function nextSeekJobId(deckId) {
@@ -323,36 +290,6 @@ async function seekWhenReady(deckId, seconds, jobId) {
 	const deck = appState.decks[deckId]
 	if (deck?.is_playing) play(deckId)
 	return true
-}
-
-/**
- * Check if the broadcaster's intent (seek/play action) actually changed.
- * Returns true only when the broadcaster did something new (seeked, changed track timing,
- * toggled play/pause). Periodic polls with the same intent are ignored.
- * @param {number} deckId
- * @param {{seeked_at?: string|null, track_played_at?: string|null, is_playing?: boolean, seek_position?: number|null}} state
- */
-function hasIntentChanged(deckId, state) {
-	const prev = lastSeekIntent.get(deckId)
-	const intent = {
-		seeked_at: state.seeked_at ?? null,
-		track_played_at: state.track_played_at ?? null,
-		is_playing: state.is_playing ?? false,
-		seek_position: state.seek_position ?? null
-	}
-	if (!prev) {
-		lastSeekIntent.set(deckId, intent)
-		return true
-	}
-	// Detect actual broadcaster actions: new seek, new track start, or play/pause toggle
-	const changed =
-		prev.seeked_at !== intent.seeked_at ||
-		prev.track_played_at !== intent.track_played_at ||
-		prev.is_playing !== intent.is_playing
-	if (changed) {
-		lastSeekIntent.set(deckId, intent)
-	}
-	return changed
 }
 
 /**
@@ -708,24 +645,18 @@ async function applyBroadcastState(channelId, decks) {
 				}
 				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = state.speed
 			}
-			// Only seek when broadcaster's intent changed (new seek, play/pause toggle, new track start).
-			// Periodic polls with the same intent are skipped to prevent seek loops.
-			if (hasIntentChanged(deckId, state)) {
-				const track = tracksCollection.get(state.track_id)
-				if (track) {
-					const seekTime = calculateSeekTime(state, track)
-					if (seekTime !== undefined) {
-						// Bypass time throttle when intent changed — the dedup in hasIntentChanged
-						// already guarantees this only fires once per broadcaster action.
-						// Only skip if the listener is already within tolerance.
-						const mediaEl = getMediaPlayer(deckId)
-						const alreadyClose =
-							mediaEl && typeof mediaEl.currentTime === 'number' && Math.abs(mediaEl.currentTime - seekTime) < 2
-						if (!alreadyClose) {
-							lastAppliedSeek.set(deckId, Date.now())
-							const seekJobId = nextSeekJobId(deckId)
-							void seekWhenReady(deckId, seekTime, seekJobId)
-						}
+			const track = tracksCollection.get(state.track_id)
+			if (track) {
+				const seekTime = calculateSeekTime(state, track)
+				if (seekTime !== undefined) {
+					const mediaEl = getMediaPlayer(deckId)
+					const alreadyClose =
+						mediaEl &&
+						typeof mediaEl.currentTime === 'number' &&
+						Math.abs(mediaEl.currentTime - seekTime) < DRIFT_TOLERANCE_SECONDS
+					if (!alreadyClose) {
+						const seekJobId = nextSeekJobId(deckId)
+						void seekWhenReady(deckId, seekTime, seekJobId)
 					}
 				}
 			}

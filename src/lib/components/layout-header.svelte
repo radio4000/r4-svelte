@@ -13,6 +13,7 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import PinsNav from '$lib/components/pins-nav.svelte'
+	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
 	const {preloading} = $props()
@@ -21,6 +22,26 @@
 	const isBroadcasting = $derived(
 		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
+	const userChannelAutoDecks = $derived.by(() => {
+		if (!userChannel?.slug) return []
+		return Object.values(appState.decks).filter(
+			(d) => d.auto_radio && (d.view?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
+		)
+	})
+	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
+	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	const userChannelResyncDeckId = $derived.by(() => {
+		if (!userChannel?.slug || !userChannelHasAuto) return undefined
+		const activeDeck = appState.decks[appState.active_deck_id]
+		if (
+			activeDeck?.id &&
+			activeDeck.auto_radio &&
+			(activeDeck.view?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
+		) {
+			return activeDeck.id
+		}
+		return userChannelAutoDecks[0]?.id
+	})
 
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
@@ -73,6 +94,17 @@
 
 	<nav class="user">
 		{#await preloading then}
+			{#if userChannelHasAuto}
+				<button
+					type="button"
+					class="btn resync-link"
+					class:ghost={!userChannelHasAutoDrifted}
+					onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					{@attach tooltip({content: m.auto_radio_resync()})}
+				>
+					<Icon icon="infinite" />
+				</button>
+			{/if}
 			<AddTrackDialog />
 			<EditTrackDialog />
 			<ShareDialog />
@@ -82,10 +114,12 @@
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
+					class:active={userChannelHasAuto}
 					{@attach tooltip({content: isBroadcasting ? 'Broadcasting' : 'Go to your channel'})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
+					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
 			{:else}{/if}
 		{/await}
@@ -140,6 +174,24 @@
 	}
 
 	.btn:has(.broadcast-dot) {
+		position: relative;
+	}
+
+	.auto-dot {
+		position: absolute;
+		bottom: -4px;
+		right: -4px;
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 50%;
+		background: var(--accent-9);
+	}
+
+	.auto-dot.drifted {
+		background: var(--red-9, #e53e3e);
+	}
+
+	.btn:has(.auto-dot) {
 		position: relative;
 	}
 

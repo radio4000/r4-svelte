@@ -27,6 +27,15 @@
 
 	const {display: initialDisplay} = $props()
 
+	const filterLabelMap = {
+		all: () => m.channels_filter_option_all(),
+		broadcasting: () => m.channels_filter_option_broadcasting(),
+		'10+': () => m.channels_filter_option_10(),
+		'100+': () => m.channels_filter_option_100(),
+		'1000+': () => m.channels_filter_option_1000(),
+		artwork: () => m.channels_filter_option_artwork()
+	}
+
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
@@ -173,15 +182,6 @@
 	function setFilter(value) {
 		appState.channels_filter = value
 	}
-
-	const filterLabelMap = {
-		all: () => m.channels_filter_option_all(),
-		broadcasting: () => m.channels_filter_option_broadcasting(),
-		'10+': () => m.channels_filter_option_10(),
-		'100+': () => m.channels_filter_option_100(),
-		'1000+': () => m.channels_filter_option_1000(),
-		artwork: () => m.channels_filter_option_artwork()
-	}
 </script>
 
 <div class={`layout layout--${display}`}>
@@ -268,7 +268,7 @@
 					class:active={display === 'infinite'}
 					onclick={() => setDisplay('infinite')}
 					{@attach tooltip({content: m.channels_tooltip_infinite()})}
-					><Icon icon="infinite" /><small>{m.channels_view_label_infinite()}</small></button
+					><Icon icon="box-3d" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</menu>
 			<SortControls

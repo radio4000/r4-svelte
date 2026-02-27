@@ -12,7 +12,7 @@
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
-	import {processViewTracks, type View} from '$lib/views.svelte'
+	import {processViewTracks, getAutoDecksForView, type View} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
@@ -56,6 +56,14 @@
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
 	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
+	let filteredAutoView = $derived.by(() => ({
+		channels: slug ? [slug] : undefined,
+		tags: selectedTags.length ? selectedTags : undefined,
+		search: searchValue.trim() || undefined
+	}))
+	let filteredAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), filteredAutoView))
+	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
+	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
 		if (search) return search
@@ -120,33 +128,30 @@
 					<SortControls bind:order bind:direction />
 				</PopoverMenu>
 			</menu>
-			{#if isFiltering}
-				{#if selectedTags.length > 0}
-					<menu class="row filter-tags">
-						{#each selectedTags as tag (tag)}
-							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
-								{tag} ×
-							</button>
-						{/each}
-					</menu>
-				{/if}
+			{#if isFiltering && selectedTags.length > 0}
+				<menu class="row filter-tags">
+					{#each selectedTags as tag (tag)}
+						<button type="button" class="chip" onclick={() => toggleTag(tag)}>
+							{tag} ×
+						</button>
+					{/each}
+				</menu>
+			{/if}
+			{#if visibleTracks.length > 0}
 				<menu class="row filter-actions">
-					{#if filteredTracks.length > 0}
-						<small class="filter-count">{filteredTracks.length} selected</small>
-						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
-						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
-						{#if channel && canShowFilteredAutoRadio}
-							<button
-								type="button"
-								onclick={() =>
-									joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, {
-										channels: slug ? [slug] : undefined,
-										tags: selectedTags,
-										search: searchValue
-									})}
-								title="Auto radio this selection"><Icon icon="signal" size={16} /></button
-							>
-						{/if}
+					<small class="filter-count"
+						>{isFiltering ? `${filteredTracks.length} selected` : `${allTracks.length} tracks`}</small
+					>
+					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
+					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
+					{#if channel && canShowFilteredAutoRadio}
+						<button
+							type="button"
+							class:ghost={isFilteredAutoActive && !isFilteredAutoDrifted}
+							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+							title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
+							><Icon icon="infinite" size={16} /></button
+						>
 					{/if}
 				</menu>
 			{/if}

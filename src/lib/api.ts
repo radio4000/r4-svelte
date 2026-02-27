@@ -111,8 +111,6 @@ export async function playTrack(
 ) {
 	log.log('play_track', {deckId, id, endReason, startReason})
 	let deck = getDeck(deckId)
-	// Capture before deck may be replaced (auto-create) or auto_radio may be cleared by setPlaylist
-	const wasAutoRadio = deck?.auto_radio
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
 		deck = addDeck()
@@ -179,14 +177,6 @@ export async function playTrack(
 	// Ensure ephemeral track is included in the current playlist
 	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
 		deck.playlist_tracks = [...deck.playlist_tracks, id]
-	}
-
-	// Mark auto-radio drift when the user intentionally deviates from the scheduled rotation.
-	// endReason 'user_next' catches the Next button (which sets startReason 'auto_next').
-	// 'play_channel' and 'auto_next' (from natural track end) are not drift.
-	const isUserDeviation = startReason === 'user_prev' || startReason === 'user_click_track' || endReason === 'user_next'
-	if (wasAutoRadio && isUserDeviation) {
-		deck.auto_radio_drifted = true
 	}
 
 	// Auto-update broadcast if currently broadcasting.
@@ -657,13 +647,14 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
-	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
 	const label = view ? viewToQuery(view) : undefined
 	setPlaylist(
 		deckId,
 		shuffled.map((t) => t.id),
 		{title: label}
 	)
+	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	if (appState.decks[deckId]) {
 		appState.decks[deckId].auto_radio = true
 		appState.decks[deckId].auto_radio_drifted = false
@@ -724,23 +715,26 @@ export async function resyncAutoRadio(deckId: number) {
 	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
+	const label = viewToQuery(view) || undefined
 
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
-		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 		setPlaylist(
 			deckId,
-			shuffled.map((t) => t.id)
+			shuffled.map((t) => t.id),
+			{title: label, slug}
 		)
+		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	}
 
-	// Restore auto-radio flags (setPlaylist clears auto_radio)
+	// Restore auto-radio flags after setPlaylist/playTrack
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
 		d.auto_radio_drifted = false
 		d.auto_radio_rotation_start = rotationStartUnix
 		d.view = view
+		if (label) d.playlist_title = label
 	}
 
 	if (isSameTrack) {

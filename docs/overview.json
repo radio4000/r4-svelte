@@ -56,9 +56,10 @@
 		{"name": "deck.seeked_at", "desc": "Timestamp of last seek."},
 		{"name": "deck.seek_position", "desc": "Seek position in seconds."},
 		{"name": "deck.auto_radio", "desc": "Auto-radio active flag."},
-		{"name": "deck.auto_radio_drifted", "desc": "Listener deviated from schedule."},
-		{"name": "deck.auto_radio_channel_slug", "desc": "From view.channels[0], used by resync."},
-		{"name": "deck.auto_radio_rotation_start", "desc": "Epoch from oldest track (unix seconds)."}
+		{"name": "deck.auto_radio_drifted", "desc": "Computed drift from expected schedule (2s tolerance)."},
+		{"name": "deck.view", "desc": "Stored View identity/filters for matching and auto-radio resync."},
+		{"name": "deck.auto_radio_rotation_start", "desc": "Epoch from oldest track (unix seconds)."},
+		{"name": "deck.listening_drifted", "desc": "Computed drift from expected broadcast position (2s tolerance)."}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -225,6 +226,12 @@
 		{"name": "parseView(params)", "desc": "Parse URLSearchParams into a View."},
 		{"name": "parseSearchQueryToView(input)", "desc": "Parse human query (@slug #tag text) into a View."},
 		{"name": "serializeView(view)", "desc": "Serialize View to URLSearchParams."},
+		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
+		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."},
+		{
+			"name": "getAutoDecksForView(decks, view?)",
+			"desc": "Return auto-radio decks whose stored view matches the given view identity."
+		},
 		{"name": "viewToQuery(view)", "desc": "Reverse of parseSearchQueryToView: View to human query string."},
 		{
 			"name": "processViewTracks(tracks, view)",
@@ -252,6 +259,10 @@
 		{"name": "isUserBroadcasting(channelId)", "desc": "Check if user is broadcasting on a channel."},
 		{"name": "notifyBroadcastState(channelId)", "desc": "Push broadcast state update via realtime."},
 		{"name": "getBroadcastingChannelId()", "desc": "Get the channel ID being broadcast from any deck."},
+		{
+			"name": "calculateSeekTime(state, track)",
+			"desc": "Compute expected playback second (speed-aware) from broadcast state."
+		},
 		{"name": "startBroadcast(channelId, trackId?)", "desc": "Start broadcasting."},
 		{"name": "stopBroadcast(channelId)", "desc": "Stop broadcasting."},
 		{"name": "joinBroadcast(deckId, channelId)", "desc": "Listen to broadcast on a deck."},
@@ -331,6 +342,14 @@
 		{"name": "ButtonPlay", "desc": "Channel play button."},
 		{"name": "ButtonFollow", "desc": "Follow/unfollow button."},
 		{"name": "BroadcastControls", "desc": "Start/stop live broadcast."},
+		{
+			"name": "DeckChannelHeader",
+			"desc": "Shared title/slug/tags header for deck + channel layouts (auto + broadcast sync controls)."
+		},
+		{
+			"name": "deck-channel-header-shared.js",
+			"desc": "Helpers for parsing playlist #tags and resolving listening who/whom slug display."
+		},
 
 		{"name": "HeaderSearch", "desc": "Global search with debounce, @mention autocomplete."},
 		{"name": "KeyboardShortcuts", "desc": "Initializes global keyboard handling."},
