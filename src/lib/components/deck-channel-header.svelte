@@ -1,6 +1,7 @@
 <script>
 	import Icon from '$lib/components/icon.svelte'
 	import Tag from '$lib/components/tag.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 
 	/**
 	 * @typedef {{label: string, href?: string}} HeaderTag
@@ -29,6 +30,7 @@
 	 *  broadcastSyncDrifted?: boolean
 	 *  broadcastSyncTitle?: string
 	 *  onBroadcastSyncClick?: (() => void) | undefined
+	 *  presenceCount?: number
 	 * }}
 	 */
 	let {
@@ -52,7 +54,8 @@
 		showBroadcastSync = false,
 		broadcastSyncDrifted = false,
 		broadcastSyncTitle = 'Sync broadcast',
-		onBroadcastSyncClick
+		onBroadcastSyncClick,
+		presenceCount = 0
 	} = $props()
 
 	const hasListeningPair = $derived(Boolean(listeningWhoSlug))
@@ -134,6 +137,9 @@
 			>
 				<Icon icon="infinite" size={14} />
 			</button>
+		{/if}
+		{#if presenceCount > 0}
+			<PresenceCount count={presenceCount} />
 		{/if}
 	</div>
 </div>

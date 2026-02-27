@@ -93,6 +93,7 @@ interface User {
 	id: string
 	email: string
 	identities?: UserIdentity[]
+	user_metadata?: {share_presence?: boolean; [key: string]: unknown}
 }
 
 export type KeyBindingsConfig = Record<string, string>
