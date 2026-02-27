@@ -41,7 +41,20 @@ async function fetchBatch(ids, signal) {
 		body: JSON.stringify({ids}),
 		signal
 	})
-	if (!response.ok) throw new Error(`API error: ${response.status}`)
+	if (!response.ok) {
+		let details = ''
+		try {
+			const body = await response.json()
+			details = body?.error || JSON.stringify(body)
+		} catch {
+			try {
+				details = await response.text()
+			} catch {
+				// ignore secondary parse failures
+			}
+		}
+		throw new Error(`API error: ${response.status}${details ? ` - ${details}` : ''}`)
+	}
 	return await response.json()
 }
 

@@ -9,11 +9,11 @@ import {env} from '$env/dynamic/private'
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({request}) {
-	if (!env.YOUTUBE_API_KEY) return error(503, 'YouTube API not configured')
+	if (!env.YOUTUBE_API_KEY) throw error(503, 'YouTube API not configured')
 
 	const {ids} = await request.json()
-	if (!ids || ids.length === 0) return error(400, 'No YouTube IDs provided')
-	if (ids.length > 50) return error(400, 'Cannot process more than 50 YouTube IDs at once')
+	if (!ids || ids.length === 0) throw error(400, 'No YouTube IDs provided')
+	if (ids.length > 50) throw error(400, 'Cannot process more than 50 YouTube IDs at once')
 
 	try {
 		const videoIds = ids.join(',')
@@ -37,7 +37,7 @@ export async function POST({request}) {
 
 		return json(videos)
 	} catch (err) {
-		error(500, `Failed to fetch track metadata: ${err.message}`)
+		throw error(500, `Failed to fetch track metadata: ${err.message}`)
 	}
 }
 
