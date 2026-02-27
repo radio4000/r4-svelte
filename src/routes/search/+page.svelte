@@ -209,38 +209,37 @@
 			</section>
 		{/if}
 
-		<menu>
-			{#if !tracksLoading && tracks.length > 0}
-				<ButtonFeedback onclick={playSearchResults}>
-					{#snippet successChildren()}<Icon icon="play-fill" size={16} /> Playing {tracks.length}{/snippet}
-					<Icon icon="play-fill" size={16} />{multiDeck ? `Play on ${deckLabel}` : m.search_play_all()}
-				</ButtonFeedback>
-				<ButtonFeedback onclick={queueSearchResults}>
-					{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
-					<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
-				</ButtonFeedback>
-				{#if canShowAutoRadio}
-					<button
-						type="button"
-						onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
-						class:ghost={isSearchAutoActive && !isSearchAutoDrifted}
-						title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
-					>
-						<Icon icon="infinite" size={16} />
-					</button>
-				{/if}
-			{/if}
-		</menu>
-
 		{#if tracksLoading}
 			<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching tracks…</p>
 		{:else if tracks.length}
-			<section>
-				<h2>
-					{tracks.length === 1
-						? m.search_track_one({count: tracks.length})
-						: m.search_track_other({count: tracks.length})}
-				</h2>
+			<section class="track-results">
+				<header>
+					<h2>
+						{tracks.length === 1
+							? m.search_track_one({count: tracks.length})
+							: m.search_track_other({count: tracks.length})}
+					</h2>
+					<menu>
+						<ButtonFeedback onclick={playSearchResults}>
+							{#snippet successChildren()}<Icon icon="play-fill" size={16} /> Playing {tracks.length}{/snippet}
+							<Icon icon="play-fill" size={16} />{multiDeck ? `Play on ${deckLabel}` : m.search_play_all()}
+						</ButtonFeedback>
+						<ButtonFeedback onclick={queueSearchResults}>
+							{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
+							<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
+						</ButtonFeedback>
+						{#if canShowAutoRadio}
+							<button
+								type="button"
+								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
+								class:ghost={isSearchAutoActive && !isSearchAutoDrifted}
+								title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
+							>
+								<Icon icon="infinite" size={16} />
+							</button>
+						{/if}
+					</menu>
+				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
 						<li><TrackCard {track} {index} showSlug={true} /></li>
@@ -275,9 +274,17 @@
 		margin-inline: 0.5rem;
 	}
 
-	menu {
-		margin-left: 0.5rem;
+	.track-results > header {
+		display: flex;
 		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-results > header > menu {
+		margin-left: 0;
+		flex-wrap: wrap;
 	}
 
 	menu,
