@@ -5,7 +5,16 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 ## Backlog
 
 - Move the play history out of the deck UI so simplify decks. Also since play history is not per deck, but per local storage. We already have /history route. Where do we link it?
-- Maybe consolidate `channels.svelte` and `channels-view.svelte` — both implement their own filter/sort/display state independently, duplicating ~60% of code (canvas state, display modes, sort controls, click handlers). Should unify into one component powered by the Views abstraction (`docs/views.md`). `channels-view.svelte` is only used by followers/following pages. Likely split: one component owns data/filter/sort/display-choosing, the other is a pure render component that receives sorted channels + display mode and renders the right view (grid/list/map/tuner/infinite).
+- on https://beta.radio4000.com/ko002/tracks/c3ba2a0d-db49-4143-b953-f8594cd756e7 it shows track.source as "youtube"  but it's a file provider, not youtube.
+- Move history tab out of the deck UI. Play history is global anyway, not related to a single deck. Move it out of the queue thing. Find a way to link /history route instead in the main nav or setting?
+- Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is already the right abstraction (receives channels, shows toolbar, renders view) but `channels.svelte` re-implements all display logic instead of using it. Refactor:
+  1. Add `tuner` mode to `channels-view.svelte` (currently missing)
+  2. Add `skipSort` prop — skip client-side `toSorted()` when channels are pre-sorted (needed for paginated DB queries)
+  3. Add `footer` snippet slot for the "load more" pagination button
+  4. Refactor `channels.svelte` to use `<ChannelsView>` — pass pre-sorted channels, filter menu as `header` snippet, load-more as `footer` snippet, set `skipSort`. Data fetching/filtering/pagination stay in `channels.svelte`. Sync `appState.channels_display` via bindable `display` + `$effect` (same pattern followers/following already use).
+  5. Followers/following pages unchanged.
+>>>>>>> conflict 1 of 1 ends
+
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - nav.tabs vs div.track-tabs>nav? clean up markup here
 - on the track+its meta pages the trackdetailcontext could be cleaned up, less repeated types
