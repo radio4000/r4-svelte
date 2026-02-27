@@ -21,6 +21,7 @@
 	import {QueryClientProvider} from '@tanstack/svelte-query'
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
 	import {queryClient} from '$lib/collections/query-client'
+	import {trackAppPresence, untrackAppPresence} from '$lib/presence.svelte'
 
 	const log = logger.ns('layout').seal()
 
@@ -58,6 +59,7 @@
 	}
 
 	onMount(async () => {
+		trackAppPresence()
 		try {
 			await data.preloading
 		} catch (err) {
@@ -133,6 +135,7 @@
 	$effect(() => {
 		const handler = async () => {
 			log.log('beforeunload_closing_db')
+			untrackAppPresence()
 			for (const deck of Object.values(appState.decks)) {
 				deck.broadcasting_channel_id = undefined
 			}
