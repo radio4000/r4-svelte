@@ -1,29 +1,32 @@
 import {logger} from '$lib/logger'
-import {trackMetaCollection} from '$lib/collections/track-meta'
+import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 import {parseTitle} from 'media-now/parse-title'
 
 const log = logger.ns('metadata/musicbrainz').seal()
 
 /**
  * Search MusicBrainz and save to track_meta collection
- * @param {string} mediaId YouTube video ID
+ * @param {string | null | undefined} provider Track media provider
+ * @param {string} mediaId Media ID
  * @param {string} title Track title to search
  * @returns {Promise<Object|null>} MusicBrainz data
  */
-export async function pullMusicBrainz(mediaId, title) {
+export async function pullMusicBrainz(provider, mediaId, title) {
 	if (!mediaId || !title) return null
 
 	const musicbrainzData = await search(title)
 	if (!musicbrainzData) return null
 
 	try {
-		const existing = trackMetaCollection.get(mediaId)
+		const key = trackMetaKey(provider, mediaId)
+		const existing = trackMetaCollection.get(key)
 		if (existing) {
-			trackMetaCollection.update(mediaId, (draft) => {
+			trackMetaCollection.update(key, (draft) => {
+				draft.provider = provider ?? null
 				draft.musicbrainz_data = musicbrainzData
 			})
 		} else {
-			trackMetaCollection.insert({media_id: mediaId, musicbrainz_data: musicbrainzData})
+			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, musicbrainz_data: musicbrainzData})
 		}
 		log.info('updated', musicbrainzData)
 		return musicbrainzData

@@ -3,7 +3,6 @@
 	import TrackMetaYoutube from '$lib/components/track-meta-youtube.svelte'
 	import {pullYouTubeSingle} from '$lib/metadata/youtube'
 	import {updateTrack} from '$lib/collections/tracks'
-	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -12,9 +11,8 @@
 	const meta = $derived(detail.meta)
 	const youtubeData = $derived(meta?.youtube_data)
 	const hasYoutubeInfo = $derived(Boolean(youtubeData && Object.keys(youtubeData).length > 0))
-	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
-	const provider = $derived(track?.provider || parsedTrackUrl?.provider || null)
-	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const provider = $derived(detail.trackProvider)
+	const mediaId = $derived(detail.trackMediaId)
 	const isYoutubeTrack = $derived(provider === 'youtube')
 	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 

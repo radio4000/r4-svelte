@@ -4,7 +4,6 @@
 	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {parseUrl} from 'media-now/parse-url'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
@@ -19,20 +18,22 @@
 	const channel = $derived(channelCtx.data)
 	const canEdit = $derived(canEditChannel(channel?.id))
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
 	const isTrackPlaying = $derived(
 		Boolean(track?.id && Object.values(appState.decks).some((d) => d.playlist_track === track.id))
 	)
-	const mediaId = $derived(track?.media_id ?? parsedTrackUrl?.id ?? null)
-	const isYoutubeTrack = $derived((track?.provider || parsedTrackUrl?.provider || null) === 'youtube')
+	const trackProvider = $derived(track?.provider ?? null)
+	const trackMediaId = $derived(track?.media_id ?? null)
+	const isYoutubeTrack = $derived(trackProvider === 'youtube')
 	const relatedTracks = $derived.by(() => {
-		if (!mediaId || !track?.id) return []
-		return (tracksQuery.data ?? []).filter((t) => t.id !== track.id && t.media_id === mediaId)
+		if (!trackMediaId || !track?.id) return []
+		return (tracksQuery.data ?? []).filter((t) => {
+			return t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+		})
 	})
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => eq(meta.media_id, mediaId || ''))
+			.where(({meta}) => eq(meta.media_id, trackMediaId || '') && eq(meta.provider, trackProvider))
 			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
@@ -47,6 +48,8 @@
 	const detail = $state(
 		/** @type {import('$lib/contexts').TrackDetailCtx} */ ({
 			track: undefined,
+			trackProvider: null,
+			trackMediaId: null,
 			channel: undefined,
 			canEdit: false,
 			meta: undefined,
@@ -62,6 +65,8 @@
 	$effect(() => {
 		Object.assign(detail, {
 			track,
+			trackProvider,
+			trackMediaId,
 			channel,
 			canEdit,
 			meta,

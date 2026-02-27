@@ -1,17 +1,7 @@
 <script>
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {sortByNewest} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 
-	let {track} = $props()
-
-	// Find other tracks with same YouTube video ID
-	const relatedTracks = $derived.by(() => {
-		if (!track?.media_id) return []
-		return [...tracksCollection.state.values()]
-			.filter((t) => t.id !== track.id && t.media_id === track.media_id)
-			.sort(sortByNewest)
-	})
+	let {relatedTracks = []} = $props()
 </script>
 
 {#if relatedTracks.length > 0}

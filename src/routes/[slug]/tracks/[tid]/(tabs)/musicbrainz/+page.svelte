@@ -2,7 +2,6 @@
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackMetaMusicbrainz from '$lib/components/track-meta-musicbrainz.svelte'
 	import {pullMusicBrainz} from '$lib/metadata/musicbrainz'
-	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -12,8 +11,8 @@
 	const hasMusicbrainzInfo = $derived(
 		Boolean(musicbrainzData && typeof musicbrainzData === 'object' && 'recording' in musicbrainzData)
 	)
-	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
-	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const provider = $derived(detail.trackProvider)
+	const mediaId = $derived(detail.trackMediaId)
 	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 
 	let loading = $state(false)
@@ -35,7 +34,7 @@
 
 		Promise.resolve().then(async () => {
 			try {
-				await pullMusicBrainz(mediaId, track.title)
+				await pullMusicBrainz(provider, mediaId, track.title)
 			} catch (err) {
 				if (!cancelled) {
 					error = `MusicBrainz metadata unavailable: ${err instanceof Error ? err.message : String(err)}`

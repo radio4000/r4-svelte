@@ -98,7 +98,7 @@
 		{"name": "readBroadcasts()", "desc": "Fetch all active broadcasts."},
 		{"name": "readBroadcast(channelId)", "desc": "Fetch single broadcast."},
 
-		{"name": "deleteTrackMeta(id)", "desc": "Delete cached track metadata."},
+		{"name": "deleteTrackMeta(items)", "desc": "Delete cached track metadata."},
 
 		{"name": "addPlayHistoryEntry(track, options)", "desc": "Record play start."},
 		{"name": "endPlayHistoryEntry(id, options)", "desc": "Record play end."},

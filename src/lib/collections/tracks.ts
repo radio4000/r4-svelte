@@ -5,7 +5,7 @@ import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import type {Channel} from './channels'
-import {trackMetaCollection, type TrackMeta} from './track-meta'
+import {trackMetaCollection, trackMetaKey, type TrackMeta} from './track-meta'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
 
@@ -195,7 +195,10 @@ async function handleTrackDelete(id: string): Promise<void> {
 
 export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
 	if (!track.media_id) return track
-	const meta = trackMetaCollection.get(track.media_id)
+	const provider = track.provider ?? null
+	const meta =
+		trackMetaCollection.get(trackMetaKey(provider, track.media_id)) ??
+		trackMetaCollection.get(trackMetaKey(null, track.media_id))
 	if (!meta) return track
 	return {...track, ...meta}
 }
@@ -373,7 +376,10 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	for (const track of tracks) {
 		if (track.duration) continue
 		if (!track.media_id) continue
-		const meta = trackMetaCollection.get(track.media_id)
+		const provider = track.provider ?? null
+		const meta =
+			trackMetaCollection.get(trackMetaKey(provider, track.media_id)) ??
+			trackMetaCollection.get(trackMetaKey(null, track.media_id))
 		if (!meta?.youtube_data?.duration) continue
 		updates.push({id: track.id, changes: {duration: meta.youtube_data.duration}})
 	}

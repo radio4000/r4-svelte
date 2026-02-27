@@ -2,7 +2,6 @@
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
 	import {huntDiscogs, pullDiscogs} from '$lib/metadata/discogs'
-	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -11,8 +10,8 @@
 	const canEdit = $derived(detail.canEdit)
 	const tracks = $derived(detail.tracks)
 	const hasDiscogsInfo = $derived(detail.hasDiscogsInfo)
-	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
-	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const provider = $derived(detail.trackProvider)
+	const mediaId = $derived(detail.trackMediaId)
 	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 
 	let loading = $state(false)
@@ -39,7 +38,7 @@
 					discogsUrl = await huntDiscogs(track.id, mediaId, track.title)
 				}
 				if (discogsUrl) {
-					await pullDiscogs(mediaId, discogsUrl)
+					await pullDiscogs(provider, mediaId, discogsUrl)
 				}
 			} catch (err) {
 				if (!cancelled) {

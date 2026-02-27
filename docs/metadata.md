@@ -1,15 +1,15 @@
 # Track metadata system
 
-We enrich our tracks with data from YouTube, MusicBrainz, and Discogs. It is stored in the "trackMeta tanstack db collection" with `{media_id, youtube_data, musicbrainz_data, discogs_data}`.
+We enrich our tracks with data from YouTube, MusicBrainz, and Discogs. It is stored in the "trackMeta tanstack db collection" with `{provider, media_id, youtube_data, musicbrainz_data, discogs_data}`.
 
 All metadata is only stored locally. It is not persisted to remote, except `track.duration` which is persisted.
 
 ## Data flow
 
 ```
-track.url → media_id → pull() → trackMetaCollection
-                                ↓
-              updateTrack() → track.duration (persisted)
+track.url → provider + media_id → pull() → trackMetaCollection
+                                           ↓
+                         updateTrack() → track.duration (persisted)
 ```
 
 Track detail metadata is fetched on demand per tab (`youtube`, `musicbrainz`, `discogs`) instead of globally on track page load.
@@ -28,8 +28,8 @@ Track detail metadata is fetched on demand per tab (`youtube`, `musicbrainz`, `d
 - `fetch(url)` - fetch external data without saving
 - `hunt(trackId, mediaId, title)` - discover Discogs URL via MusicBrainz chain
 - `pullYouTubeSingle(mediaId)` - fetch YouTube metadata on demand
-- `pullMusicBrainz(mediaId, title)` - fetch MusicBrainz metadata on demand
-- `pullDiscogs(mediaId, discogsUrl)` - fetch Discogs metadata on demand
+- `pullMusicBrainz(provider, mediaId, title)` - fetch MusicBrainz metadata on demand
+- `pullDiscogs(provider, mediaId, discogsUrl)` - fetch Discogs metadata on demand
 
 ## Components
 
