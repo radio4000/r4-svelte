@@ -6,6 +6,15 @@
 	let providerLoading = $state(/** @type {string | null} */ (null))
 	let providerError = $state(/** @type {string | null} */ (null))
 
+	let sharePresence = $derived(appState.user?.user_metadata?.share_presence !== false)
+	let presenceLoading = $state(false)
+
+	async function toggleSharePresence() {
+		presenceLoading = true
+		await sdk.supabase.auth.updateUser({data: {share_presence: !sharePresence}})
+		presenceLoading = false
+	}
+
 	let identities = $state([])
 	const canDisconnect = $derived(identities.length > 1)
 
@@ -102,6 +111,18 @@
 					{/if}
 				</div>
 			{/each}
+		</menu>
+
+		<menu class="nav-vertical">
+			<div>
+				<p>
+					<span>Share presence</span>
+					<small>Show others that you're listening (mode &amp; channel)</small>
+				</p>
+				<button onclick={toggleSharePresence} disabled={presenceLoading} aria-pressed={sharePresence}>
+					{sharePresence ? 'On' : 'Off'}
+				</button>
+			</div>
 		</menu>
 
 		<p><button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button></p>
