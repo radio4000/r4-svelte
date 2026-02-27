@@ -35,12 +35,20 @@
 	import {parseUrl} from 'media-now/parse-url'
 	import {tracksCollection, updateTrack} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/svelte-db'
 	import {isDbId} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
-
+	import {
+		trackAutoRadioPresence,
+		untrackAutoRadioPresence,
+		trackBroadcastPresence,
+		untrackBroadcastPresence,
+		channelPresence
+	} from '$lib/presence.svelte'
+	import {viewToQuery} from '$lib/views.svelte'
 	/** @typedef {import('$lib/types').Track} Track */
 	/** @typedef {import('$lib/types').Channel} Channel */
 
@@ -112,6 +120,16 @@
 	let userHasPlayed = $state(false)
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
+	const listenSlug = $derived(
+		deck?.listening_to_channel_id
+			? (channelsCollection.state.get(deck.listening_to_channel_id)?.slug ??
+					broadcastsCollection.state.get(deck.listening_to_channel_id)?.channels?.slug)
+			: undefined
+	)
+	const broadcastSlug = $derived(
+		deck?.broadcasting_channel_id ? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug : undefined
+	)
+
 	// The channel that is broadcasting (the DJ), looked up by ID
 	let broadcastingChannel = $derived.by(() => {
 		const id = deck?.listening_to_channel_id
@@ -125,7 +143,6 @@
 		buildDeckChannelHeaderState({
 			title: headerTitle,
 			slug: headerSlug,
-			playlistTitle: deck?.playlist_title,
 			listening: Boolean(deck?.listening_to_channel_id),
 			listeningWhoSlug: broadcastingChannel?.slug,
 			listeningWhomTrackSlug: displayTrack?.slug,
@@ -133,6 +150,21 @@
 			tagBaseSlug: broadcastingChannel?.slug ?? headerSlug,
 			toHref: (path) => resolve(/** @type {any} */ (path))
 		})
+	)
+
+	const autoUri = $derived(
+		deck?.auto_radio && deck.playlist_slug
+			? viewToQuery(deck.view ?? {channels: [deck.playlist_slug]}) || `@${deck.playlist_slug}`
+			: undefined
+	)
+	const headerPresenceCount = $derived(
+		deck?.listening_to_channel_id && listenSlug
+			? (channelPresence[listenSlug]?.broadcast ?? 0)
+			: deck?.broadcasting_channel_id && broadcastSlug
+				? (channelPresence[broadcastSlug]?.broadcast ?? 0)
+				: autoUri && deck?.playlist_slug
+					? (channelPresence[deck.playlist_slug]?.byUri?.[autoUri] ?? 0)
+					: 0
 	)
 
 	// Track previous track ID to detect changes for autoplay
@@ -314,6 +346,27 @@
 		})
 	})
 
+	// Presence tracking — driven by what this deck is actively doing
+	// Gated on user preference: undefined (not set) or true = share; false = don't share
+	const sharePresence = $derived(appState.user?.user_metadata?.share_presence !== false)
+	$effect(() => {
+		if (!sharePresence) return
+		const autoSlug = deck?.auto_radio ? deck.playlist_slug : undefined
+
+		if (autoSlug) {
+			untrack(() => trackAutoRadioPresence(autoSlug, deck.view))
+			return () => untrackAutoRadioPresence(autoSlug)
+		}
+		if (listenSlug) {
+			untrack(() => trackBroadcastPresence(listenSlug))
+			return () => untrackBroadcastPresence(listenSlug)
+		}
+		if (broadcastSlug) {
+			untrack(() => trackBroadcastPresence(broadcastSlug))
+			return () => untrackBroadcastPresence(broadcastSlug)
+		}
+	})
+
 	// Broadcast drift — O(1) arithmetic per tick
 	$effect(() => {
 		if (!deck?.listening_to_channel_id) return
@@ -368,6 +421,7 @@
 						onBroadcastSyncClick={() => {
 							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
 						}}
+						presenceCount={headerPresenceCount}
 					/>
 				</div>
 			{/if}
