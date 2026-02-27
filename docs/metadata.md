@@ -27,9 +27,9 @@ Track detail metadata is fetched on demand per tab (`youtube`, `musicbrainz`, `d
 - `search(title)` - search external API without saving
 - `fetch(url)` - fetch external data without saving
 - `hunt(trackId, mediaId, title)` - discover Discogs URL via MusicBrainz chain
-- `ensureYouTubeMeta(track, channel)` - fetch YouTube metadata on demand and persist duration
-- `ensureMusicbrainzMeta(track)` - fetch MusicBrainz metadata on demand
-- `ensureDiscogsMeta(track)` - fetch/hunt Discogs metadata on demand
+- `pullYouTubeSingle(mediaId)` - fetch YouTube metadata on demand
+- `pullMusicBrainz(mediaId, title)` - fetch MusicBrainz metadata on demand
+- `pullDiscogs(mediaId, discogsUrl)` - fetch Discogs metadata on demand
 
 ## Components
 

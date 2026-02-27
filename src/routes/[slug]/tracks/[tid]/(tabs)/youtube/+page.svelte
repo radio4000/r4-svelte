@@ -1,8 +1,9 @@
 <script>
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackMetaYoutube from '$lib/components/track-meta-youtube.svelte'
-	import {ensureYouTubeMeta} from '$lib/metadata/pull-track-meta'
-	import {deriveTrackMedia} from '$lib/metadata/track-media'
+	import {pullYouTubeSingle} from '$lib/metadata/youtube'
+	import {updateTrack} from '$lib/collections/tracks'
+	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -11,16 +12,18 @@
 	const meta = $derived(detail.meta)
 	const youtubeData = $derived(meta?.youtube_data)
 	const hasYoutubeInfo = $derived(Boolean(youtubeData && Object.keys(youtubeData).length > 0))
-	const media = $derived(deriveTrackMedia(track))
-	const isYoutubeTrack = $derived(media.provider === 'youtube')
-	const fetchKey = $derived(track?.id && media.mediaId ? `${track.id}:${media.mediaId}` : null)
+	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
+	const provider = $derived(track?.provider || parsedTrackUrl?.provider || null)
+	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const isYoutubeTrack = $derived(provider === 'youtube')
+	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 
 	let loading = $state(false)
 	let error = $state('')
 	let attemptedKey = $state('')
 
 	$effect(() => {
-		if (!fetchKey || !isYoutubeTrack || hasYoutubeInfo) {
+		if (!fetchKey || !mediaId || !isYoutubeTrack || hasYoutubeInfo) {
 			loading = false
 			error = ''
 			return
@@ -33,12 +36,20 @@
 		let cancelled = false
 
 		Promise.resolve().then(async () => {
-			const result = await ensureYouTubeMeta(track, channel)
-			if (cancelled) return
-			if (result.error) {
-				error = result.error
+			try {
+				const video = await pullYouTubeSingle(mediaId)
+				if (video?.duration && track?.id && channel && !track?.duration) {
+					await updateTrack(channel, track.id, {duration: Number(video.duration)})
+				}
+			} catch (err) {
+				if (!cancelled) {
+					error = `YouTube metadata unavailable: ${err instanceof Error ? err.message : String(err)}`
+				}
+			} finally {
+				if (!cancelled) {
+					loading = false
+				}
 			}
-			loading = false
 		})
 
 		return () => {

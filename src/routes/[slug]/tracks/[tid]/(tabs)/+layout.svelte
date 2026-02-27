@@ -4,7 +4,7 @@
 	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
-	import {deriveTrackMedia} from '$lib/metadata/track-media'
+	import {parseUrl} from 'media-now/parse-url'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
@@ -19,12 +19,12 @@
 	const channel = $derived(channelCtx.data)
 	const canEdit = $derived(canEditChannel(channel?.id))
 	const track = $derived(tracksQuery.data?.find((t) => t.id === data.tid))
-	const media = $derived(deriveTrackMedia(track))
+	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
 	const isTrackPlaying = $derived(
 		Boolean(track?.id && Object.values(appState.decks).some((d) => d.playlist_track === track.id))
 	)
-	const mediaId = $derived(media.mediaId)
-	const isYoutubeTrack = $derived(media.provider === 'youtube')
+	const mediaId = $derived(track?.media_id ?? parsedTrackUrl?.id ?? null)
+	const isYoutubeTrack = $derived((track?.provider || parsedTrackUrl?.provider || null) === 'youtube')
 	const relatedTracks = $derived.by(() => {
 		if (!mediaId || !track?.id) return []
 		return (tracksQuery.data ?? []).filter((t) => t.id !== track.id && t.media_id === mediaId)

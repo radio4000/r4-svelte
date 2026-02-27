@@ -1,8 +1,8 @@
 <script>
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
-	import {ensureDiscogsMeta} from '$lib/metadata/pull-track-meta'
-	import {deriveTrackMedia} from '$lib/metadata/track-media'
+	import {huntDiscogs, pullDiscogs} from '$lib/metadata/discogs'
+	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -11,15 +11,16 @@
 	const canEdit = $derived(detail.canEdit)
 	const tracks = $derived(detail.tracks)
 	const hasDiscogsInfo = $derived(detail.hasDiscogsInfo)
-	const media = $derived(deriveTrackMedia(track))
-	const fetchKey = $derived(track?.id && media.mediaId ? `${track.id}:${media.mediaId}` : null)
+	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
+	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 
 	let loading = $state(false)
 	let error = $state('')
 	let attemptedKey = $state('')
 
 	$effect(() => {
-		if (!fetchKey || hasDiscogsInfo) {
+		if (!fetchKey || !mediaId || !track || hasDiscogsInfo) {
 			loading = false
 			error = ''
 			return
@@ -32,12 +33,23 @@
 		let cancelled = false
 
 		Promise.resolve().then(async () => {
-			const result = await ensureDiscogsMeta(track)
-			if (cancelled) return
-			if (result.error) {
-				error = result.error
+			try {
+				let discogsUrl = track.discogs_url || null
+				if (!discogsUrl) {
+					discogsUrl = await huntDiscogs(track.id, mediaId, track.title)
+				}
+				if (discogsUrl) {
+					await pullDiscogs(mediaId, discogsUrl)
+				}
+			} catch (err) {
+				if (!cancelled) {
+					error = `Discogs metadata unavailable: ${err instanceof Error ? err.message : String(err)}`
+				}
+			} finally {
+				if (!cancelled) {
+					loading = false
+				}
 			}
-			loading = false
 		})
 
 		return () => {

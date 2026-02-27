@@ -13,22 +13,6 @@ const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
 import type {Track} from '$lib/types'
 
-function deriveProviderFields(url: string | null | undefined): Pick<Track, 'provider' | 'media_id'> {
-	if (!url) return {provider: null, media_id: null}
-	const parsed = parseUrl(url)
-	return {provider: parsed?.provider || null, media_id: parsed?.id || null}
-}
-
-function withDerivedProvider(track: Track): Track {
-	if (!track.url) return track
-	const derived = deriveProviderFields(track.url)
-	return {
-		...track,
-		provider: track.provider ?? derived.provider,
-		media_id: track.media_id ?? derived.media_id
-	}
-}
-
 export const tracksCollection = createCollection<Track, string>({
 	...queryCollectionOptions({
 		queryKey: (opts) => {
@@ -78,7 +62,14 @@ export const tracksCollection = createCollection<Track, string>({
 				query = query.order('created_at', {ascending: false}).limit(4000)
 				const {data, error} = await query
 				if (error) throw error
-				const tracks = ((data || []) as Track[]).map(withDerivedProvider)
+				const tracks = ((data || []) as Track[]).map((track) => {
+					const parsed = track.url ? parseUrl(track.url) : null
+					return {
+						...track,
+						provider: track.provider ?? parsed?.provider ?? null,
+						media_id: track.media_id ?? parsed?.id ?? null
+					}
+				})
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -87,7 +78,14 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Global: full-text search
 			if (ftsEq) {
-				const tracks = (await searchTracks(ftsEq, {limit: 4000})).map(withDerivedProvider)
+				const tracks = (await searchTracks(ftsEq, {limit: 4000})).map((track) => {
+					const parsed = track.url ? parseUrl(track.url) : null
+					return {
+						...track,
+						provider: track.provider ?? parsed?.provider ?? null,
+						media_id: track.media_id ?? parsed?.id ?? null
+					}
+				})
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -105,7 +103,13 @@ export const tracksCollection = createCollection<Track, string>({
 			if (serverTrack) {
 				// Merge view-only fields (e.g. slug) from the optimistic insert,
 				// since createTrack returns from the tracks table, not channel_tracks view.
-				const merged = withDerivedProvider({...m.modified, ...serverTrack})
+				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
+				const merged = {
+					...m.modified,
+					...serverTrack,
+					provider: serverTrack.provider ?? parsed?.provider ?? null,
+					media_id: serverTrack.media_id ?? parsed?.id ?? null
+				}
 				log.info('onInsert writeUpsert', {id: merged.id})
 				tracksCollection.utils.writeUpsert(merged)
 			}
@@ -117,7 +121,12 @@ export const tracksCollection = createCollection<Track, string>({
 		for (const m of transaction.mutations) {
 			const serverTrack = await handleTrackUpdate(m.modified.id, m.changes as Record<string, unknown>)
 			if (serverTrack) {
-				const normalized = withDerivedProvider(serverTrack)
+				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
+				const normalized = {
+					...serverTrack,
+					provider: serverTrack.provider ?? parsed?.provider ?? null,
+					media_id: serverTrack.media_id ?? parsed?.id ?? null
+				}
 				log.info('onUpdate writeUpsert', {id: normalized.id})
 				tracksCollection.utils.writeUpsert(normalized)
 			}
@@ -144,7 +153,14 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 
 	const {data, error} = await query
 	if (error) throw error
-	return ((data || []) as Track[]).map(withDerivedProvider)
+	return ((data || []) as Track[]).map((track) => {
+		const parsed = track.url ? parseUrl(track.url) : null
+		return {
+			...track,
+			provider: track.provider ?? parsed?.provider ?? null,
+			media_id: track.media_id ?? parsed?.id ?? null
+		}
+	})
 }
 
 async function handleTrackInsert(track: Track, metadata: Record<string, unknown>): Promise<Track | null> {
@@ -188,7 +204,9 @@ export function addTrack(
 	channel: {id: string; slug: string},
 	input: {url: string; title: string; description?: string; discogs_url?: string}
 ) {
-	const {provider, media_id} = deriveProviderFields(input.url)
+	const parsed = parseUrl(input.url)
+	const provider = parsed?.provider ?? null
+	const media_id = parsed?.id ?? null
 	return tracksCollection
 		.insert(
 			{
@@ -214,13 +232,14 @@ export function addTrack(
 }
 
 export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
-	const nextChanges = {...changes}
-	if (typeof nextChanges.url === 'string') {
-		Object.assign(nextChanges, deriveProviderFields(nextChanges.url))
-	}
+	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(id, {metadata: {slug: channel.slug}}, (draft) => {
-			Object.assign(draft, nextChanges)
+			Object.assign(draft, changes)
+			if (parsed) {
+				draft.provider = parsed?.provider ?? null
+				draft.media_id = parsed?.id ?? null
+			}
 		})
 		.isPersisted.promise.then(() => {})
 }
@@ -230,14 +249,15 @@ export function deleteTrack(channel: {id: string; slug: string}, id: string) {
 }
 
 export function batchUpdateTracksUniform(channel: Channel, ids: string[], changes: Record<string, unknown>) {
-	const nextChanges = {...changes}
-	if (typeof nextChanges.url === 'string') {
-		Object.assign(nextChanges, deriveProviderFields(nextChanges.url))
-	}
+	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(ids, {metadata: {slug: channel.slug}}, (drafts) => {
 			for (const draft of drafts as Array<Track>) {
-				Object.assign(draft, nextChanges)
+				Object.assign(draft, changes)
+				if (parsed) {
+					draft.provider = parsed?.provider ?? null
+					draft.media_id = parsed?.id ?? null
+				}
 			}
 		})
 		.isPersisted.promise.then(() => {})
@@ -247,22 +267,20 @@ export function batchUpdateTracksIndividual(
 	channel: Channel,
 	updates: Array<{id: string; changes: Record<string, unknown>}>
 ) {
-	const normalizedUpdates = updates.map((update) => {
-		const nextChanges = {...update.changes}
-		if (typeof nextChanges.url === 'string') {
-			Object.assign(nextChanges, deriveProviderFields(nextChanges.url))
-		}
-		return {...update, changes: nextChanges}
-	})
-
 	return tracksCollection
 		.update(
-			normalizedUpdates.map((u) => u.id),
+			updates.map((u) => u.id),
 			{metadata: {slug: channel.slug}},
 			(drafts) => {
 				for (const draft of drafts as Array<Track>) {
-					const update = normalizedUpdates.find((u) => u.id === draft.id)
-					if (update) Object.assign(draft, update.changes)
+					const update = updates.find((u) => u.id === draft.id)
+					if (!update) continue
+					Object.assign(draft, update.changes)
+					if (typeof update.changes.url === 'string') {
+						const parsed = parseUrl(update.changes.url)
+						draft.provider = parsed?.provider ?? null
+						draft.media_id = parsed?.id ?? null
+					}
 				}
 			}
 		)

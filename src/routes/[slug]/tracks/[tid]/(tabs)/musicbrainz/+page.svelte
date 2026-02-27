@@ -1,8 +1,8 @@
 <script>
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackMetaMusicbrainz from '$lib/components/track-meta-musicbrainz.svelte'
-	import {ensureMusicbrainzMeta} from '$lib/metadata/pull-track-meta'
-	import {deriveTrackMedia} from '$lib/metadata/track-media'
+	import {pullMusicBrainz} from '$lib/metadata/musicbrainz'
+	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -12,15 +12,16 @@
 	const hasMusicbrainzInfo = $derived(
 		Boolean(musicbrainzData && typeof musicbrainzData === 'object' && 'recording' in musicbrainzData)
 	)
-	const media = $derived(deriveTrackMedia(track))
-	const fetchKey = $derived(track?.id && media.mediaId ? `${track.id}:${media.mediaId}` : null)
+	const parsedTrackUrl = $derived(track?.url ? parseUrl(track.url) : null)
+	const mediaId = $derived(track?.media_id || parsedTrackUrl?.id || null)
+	const fetchKey = $derived(track?.id && mediaId ? `${track.id}:${mediaId}` : null)
 
 	let loading = $state(false)
 	let error = $state('')
 	let attemptedKey = $state('')
 
 	$effect(() => {
-		if (!fetchKey || hasMusicbrainzInfo) {
+		if (!fetchKey || !mediaId || !track?.title || hasMusicbrainzInfo) {
 			loading = false
 			error = ''
 			return
@@ -33,12 +34,17 @@
 		let cancelled = false
 
 		Promise.resolve().then(async () => {
-			const result = await ensureMusicbrainzMeta(track)
-			if (cancelled) return
-			if (result.error) {
-				error = result.error
+			try {
+				await pullMusicBrainz(mediaId, track.title)
+			} catch (err) {
+				if (!cancelled) {
+					error = `MusicBrainz metadata unavailable: ${err instanceof Error ? err.message : String(err)}`
+				}
+			} finally {
+				if (!cancelled) {
+					loading = false
+				}
 			}
-			loading = false
 		})
 
 		return () => {
