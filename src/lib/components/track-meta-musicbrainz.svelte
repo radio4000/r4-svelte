@@ -1,6 +1,8 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {formatDurationMs} from '$lib/dates.js'
 	import Icon from '$lib/components/icon.svelte'
+	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data, track} = $props()
@@ -15,14 +17,14 @@
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
-		<dl class="meta">
+		<MetaDefinitionList>
 			{#if artistCredit?.artist?.name}
 				<dt>{m.track_meta_artist()}</dt>
 				<dd>
 					<a
-						href="/search?q={encodeURIComponent(
-							(track?.slug ? '@' + track.slug + ' ' : '') + artistCredit.artist.name
-						)}"
+						href={resolve(
+							`/search?q=${encodeURIComponent((track?.slug ? '@' + track.slug + ' ' : '') + artistCredit.artist.name)}`
+						)}
 					>
 						{artistCredit.artist.name}
 					</a>
@@ -70,7 +72,7 @@
 					</a>
 				</dd>
 			{/if}
-		</dl>
+		</MetaDefinitionList>
 	{/if}
 	<menu class="meta-toolbar">
 		<button

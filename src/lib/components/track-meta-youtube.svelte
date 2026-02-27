@@ -1,6 +1,8 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {relativeDateDetailed, formatDuration} from '$lib/dates.js'
 	import Icon from '$lib/components/icon.svelte'
+	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
@@ -11,7 +13,7 @@
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
-		<dl class="meta">
+		<MetaDefinitionList>
 			{#if data.duration}
 				<dt>{m.track_meta_duration()}</dt>
 				<dd>{formatDuration(data.duration)}</dd>
@@ -25,7 +27,7 @@
 			{#if data.channelTitle}
 				<dt>{m.track_meta_channel()}</dt>
 				<dd>
-					<a href="/search?q={encodeURIComponent(data.channelTitle)}">{data.channelTitle}</a>
+					<a href={resolve(`/search?q=${encodeURIComponent(data.channelTitle)}`)}>{data.channelTitle}</a>
 				</dd>
 			{/if}
 
@@ -45,11 +47,11 @@
 				<dt>{m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
-						<a href="/search?q={encodeURIComponent('#' + tag)}">{tag}</a>
+						<a href={resolve(`/search?q=${encodeURIComponent('#' + tag)}`)}>{tag}</a>
 					{/each}
 				</dd>
 			{/if}
-		</dl>
+		</MetaDefinitionList>
 	{/if}
 	<menu class="meta-toolbar">
 		<button
