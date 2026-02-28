@@ -257,7 +257,8 @@
 		position: sticky;
 		top: 0;
 		background: var(--body-bg);
-		z-index: 10;
+		/* Default page controls layer: above content, below app overlays/fullscreen deck. */
+		z-index: 3;
 	}
 
 	form :global(input) {

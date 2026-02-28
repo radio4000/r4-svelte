@@ -165,7 +165,8 @@
 			top: 0;
 			left: 0;
 			right: 0;
-			z-index: 1000;
+			/* Default page controls layer: above content, below app overlays/fullscreen deck. */
+			z-index: 3;
 		}
 	}
 
