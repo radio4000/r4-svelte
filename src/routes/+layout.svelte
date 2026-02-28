@@ -47,6 +47,14 @@
 	const compactDeckExitMs = 0
 	const compactDeckScaleStart = 0.95
 
+	// Ensure first client render uses persisted locale before any message call runs.
+	if (typeof window !== 'undefined') {
+		const storedLocale = appState.language
+		if (storedLocale && isLocale(storedLocale) && getLocale() !== storedLocale) {
+			void setLocale(storedLocale, {reload: false})
+		}
+	}
+
 	function inferNavigatorLocale() {
 		if (typeof navigator === 'undefined') return undefined
 		const preferred = navigator.languages?.length ? navigator.languages : [navigator.language]
