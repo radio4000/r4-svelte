@@ -47,6 +47,14 @@
 	const compactDeckExitMs = 0
 	const compactDeckScaleStart = 0.95
 
+	// Ensure first client render uses persisted locale before any message call runs.
+	if (typeof window !== 'undefined') {
+		const storedLocale = appState.language
+		if (storedLocale && isLocale(storedLocale) && getLocale() !== storedLocale) {
+			void setLocale(storedLocale, {reload: false})
+		}
+	}
+
 	function inferNavigatorLocale() {
 		if (typeof navigator === 'undefined') return undefined
 		const preferred = navigator.languages?.length ? navigator.languages : [navigator.language]
@@ -198,7 +206,7 @@
 
 							<DeckStrip />
 						</section>
-						<section class="compact-decks" aria-label="Compact decks">
+						<section class="compact-decks" aria-label={m.decks_compact_label()}>
 							{#each compactDeckIds as deckId (deckId)}
 								<div
 									class="compact-deck-item"

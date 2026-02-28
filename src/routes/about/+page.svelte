@@ -1,3 +1,7 @@
+<script>
+	import * as m from '$lib/paraglide/messages'
+</script>
+
 <svelte:head>
 	<title>About Radio4000</title>
 </svelte:head>
@@ -68,8 +72,8 @@
 
 	<footer>
 		<p>
-			<a href="/create-channel" class="btn primary">Create a channel</a>
-			<a href="/" class="btn">Start exploring</a>
+			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
+			<a href="/" class="btn">{m.common_start_exploring()}</a>
 		</p>
 		<p>
 			<a href="https://github.com/radio4000/r4-sync-tests" rel="noopener noreferrer">Source code on GitHub</a>

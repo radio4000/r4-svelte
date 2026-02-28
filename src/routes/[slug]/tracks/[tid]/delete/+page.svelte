@@ -82,7 +82,7 @@
 			</fieldset>
 
 			<button type="submit" disabled={!confirmed || deleting}>
-				{deleting ? 'Deleting...' : 'Delete track'}
+				{deleting ? m.common_deleting() : m.track_delete_button()}
 			</button>
 		</form>
 

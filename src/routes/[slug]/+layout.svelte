@@ -187,7 +187,9 @@
 						listeningWhomHref={channelHeaderState.listeningWhomHref}
 						showBroadcastSync={Boolean(channelListeningDeck && channel.id)}
 						broadcastSyncDrifted={Boolean(channelListeningDeck?.listening_drifted)}
-						broadcastSyncTitle={channelListeningDeck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
+						broadcastSyncTitle={channelListeningDeck?.listening_drifted
+							? m.player_sync_broadcast()
+							: m.player_broadcast_synced()}
 						onBroadcastSyncClick={() => {
 							if (!channel?.id) return
 							joinBroadcast(appState.active_deck_id, channel.id)
@@ -238,7 +240,7 @@
 						{#if hasChannel}
 							<ButtonFollow {channel} />
 						{:else}
-							<a href={authUrl} class="btn" title={m.button_follow()}>
+							<a href={authUrl} class="btn" title={m.common_follow()}>
 								<Icon icon="favorite" />
 							</a>
 						{/if}

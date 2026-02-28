@@ -183,7 +183,7 @@
 				<button
 					type="button"
 					role="menuitem"
-					{@attach tooltip({content: 'Play in new deck'})}
+					{@attach tooltip({content: m.track_card_play_in_deck()})}
 					onclick={async () => {
 						await playTrackInNewDeck(track.id, track.slug ?? undefined)
 						menu?.close()
@@ -201,14 +201,14 @@
 			<menu class="nav-vertical">
 				{#if onLocate}
 					<button type="button" role="menuitem" onclick={onLocate}
-						><Icon icon="arrow-down" size={14} />Locate in list</button
+						><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
 					>
 				{/if}
 				{#if isRealTrack}
 					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
 				{:else if track.url}
 					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
-						><Icon icon="circle-info" size={14} />Open video</a
+						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
 					>
 				{/if}
 				{#if canEdit}

@@ -3,6 +3,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import * as m from '$lib/paraglide/messages'
 	import {useLiveQuery as useLiveQueryCustom} from '$lib/useLiveQuery.svelte'
 	import {viewsCollection} from '$lib/collections/views'
 	import {parseView} from '$lib/views.svelte'
@@ -32,7 +33,7 @@
 			href={resolve('/settings/pins')}
 			class="btn ghost pin-link pin-add"
 			{@attach tooltip({content: 'Pin views to sidebar'})}
-			aria-label="Pin views"
+			aria-label={m.views_pin_label()}
 		>
 			<Icon icon="pin" size={16} />
 		</a>

@@ -3,6 +3,7 @@
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {deleteChannel} from '$lib/collections/channels'
+	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
 	const channel = $derived(channelCtx.data)
@@ -63,7 +64,7 @@
 			</fieldset>
 
 			<button type="submit" disabled={!confirmed || deleting}>
-				{deleting ? 'Deleting...' : 'Delete channel'}
+				{deleting ? m.common_deleting() : m.channel_delete_button()}
 			</button>
 		</form>
 

@@ -165,7 +165,7 @@
 			type="text"
 			value={initialTitle}
 			required
-			placeholder="Track title"
+			placeholder={m.track_form_title_placeholder()}
 		/>
 	</fieldset>
 
@@ -176,7 +176,7 @@
 			id="{uid}-description"
 			name="description"
 			rows="2"
-			placeholder="Optional description">{initialDescription}</textarea
+			placeholder={m.track_form_description_placeholder()}>{initialDescription}</textarea
 		>
 	</fieldset>
 
@@ -188,7 +188,7 @@
 			type="url"
 			value={initialDiscogsUrl}
 			oninput={(e) => (liveDiscogsUrl = /** @type {HTMLInputElement} */ (e.target).value)}
-			placeholder="https://discogs.com/release/..."
+			placeholder={m.track_form_discogs_placeholder()}
 		/>
 	</fieldset>
 

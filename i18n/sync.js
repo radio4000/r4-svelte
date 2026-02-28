@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Syncs translation files with en.json as source of truth.
- * - Adds missing keys to other languages (using English as placeholder)
- * - Removes orphaned keys not in English
+ * - Removes orphaned keys not in English (does NOT add missing keys — paraglide falls back to en)
  * - Sorts keys alphabetically
+ * To get a batch of untranslated keys for translation, run: node i18n/extract-batch.js
  */
 import {readdirSync, readFileSync, writeFileSync} from 'fs'
 import {join, dirname} from 'path'
@@ -22,7 +22,6 @@ writeFileSync(enPath, JSON.stringify(enSorted, null, '\t') + '\n')
 
 const files = readdirSync(messagesDir).filter((f) => f.endsWith('.json') && f !== 'en.json')
 
-let totalAdded = 0
 let totalRemoved = 0
 
 for (const file of files) {
@@ -30,15 +29,9 @@ for (const file of files) {
 	const lang = JSON.parse(readFileSync(path, 'utf8'))
 	const langKeys = new Set(Object.keys(lang))
 
-	const missing = [...enKeys].filter((key) => !langKeys.has(key))
 	const orphaned = [...langKeys].filter((key) => !enKeys.has(key))
 
-	if (missing.length === 0 && orphaned.length === 0) continue
-
-	// Add missing keys
-	for (const key of missing) {
-		lang[key] = en[key]
-	}
+	if (orphaned.length === 0) continue
 
 	// Remove orphaned keys
 	for (const key of orphaned) {
@@ -50,20 +43,12 @@ for (const file of files) {
 
 	writeFileSync(path, JSON.stringify(sorted, null, '\t') + '\n')
 
-	const changes = []
-	if (missing.length) changes.push(`+${missing.length}`)
-	if (orphaned.length) changes.push(`-${orphaned.length}`)
-	console.log(`${file}: ${changes.join(', ')}`)
-
-	totalAdded += missing.length
+	console.log(`${file}: -${orphaned.length}`)
 	totalRemoved += orphaned.length
 }
 
-if (totalAdded === 0 && totalRemoved === 0) {
+if (totalRemoved === 0) {
 	console.log('All languages in sync')
 } else {
-	const summary = []
-	if (totalAdded) summary.push(`${totalAdded} added`)
-	if (totalRemoved) summary.push(`${totalRemoved} removed`)
-	console.log(`\n${summary.join(', ')}`)
+	console.log(`\n${totalRemoved} orphaned keys removed`)
 }

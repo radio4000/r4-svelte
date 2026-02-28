@@ -6,6 +6,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {getLocale} from '$lib/paraglide/runtime'
+	import * as m from '$lib/paraglide/messages'
 
 	/** @typedef {import('$lib/types').Track} Track */
 	/** @typedef {{track: Track, index: number}} IndexedTrack */
@@ -207,7 +208,7 @@
 			class="timeline"
 			role="listbox"
 			tabindex="0"
-			aria-label="Tracks"
+			aria-label={m.nav_tracks()}
 			{@attach listboxNav({
 				onSelect: (_, el) => el.dataset.trackId && playFromList(el.dataset.trackId),
 				onChange: (_, el) => {
@@ -257,7 +258,7 @@
 			class="list tracks"
 			role="listbox"
 			tabindex="0"
-			aria-label="Tracks"
+			aria-label={m.nav_tracks()}
 			{@attach listboxNav({
 				onSelect: (_, el) => el.dataset.trackId && playFromList(el.dataset.trackId),
 				onChange: (_, el) => {

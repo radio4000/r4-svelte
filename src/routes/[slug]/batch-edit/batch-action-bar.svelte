@@ -4,6 +4,7 @@
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {getChannelTags} from '$lib/utils'
+	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
 
@@ -117,15 +118,13 @@
 		<span class="count">Selected: {selectedIds.length}</span>
 
 		{#if tracksWithMetaDuration.length > 0}
-			<button
-				onclick={copyDurationFromMeta}
-				{@attach tooltip({content: 'Copy duration from YouTube metadata to track'})}
+			<button onclick={copyDurationFromMeta} {@attach tooltip({content: m.batch_edit_action_copy_duration()})}
 				>Copy duration ({tracksWithMetaDuration.length})</button
 			>
 		{/if}
 
 		{#if tracksWithDuration.length > 0}
-			<button onclick={removeDuration} {@attach tooltip({content: 'Clear the duration field from selected tracks'})}
+			<button onclick={removeDuration} {@attach tooltip({content: m.batch_edit_action_remove_duration()})}
 				>Remove duration ({tracksWithDuration.length})</button
 			>
 		{/if}
@@ -134,7 +133,7 @@
 			<button
 				onclick={fetchMeta}
 				disabled={fetchingMeta}
-				{@attach tooltip({content: 'Fetch YouTube metadata for selected tracks'})}
+				{@attach tooltip({content: m.batch_edit_action_fetch_meta()})}
 			>
 				{fetchingMeta
 					? `Fetching... (${fetchProgress.current}/${fetchProgress.total})`
@@ -143,7 +142,7 @@
 		{/if}
 
 		{#if tracksWithMeta.length > 0}
-			<button onclick={removeMeta} {@attach tooltip({content: 'Delete cached YouTube/MusicBrainz/Discogs metadata'})}
+			<button onclick={removeMeta} {@attach tooltip({content: m.batch_edit_action_remove_meta()})}
 				>Remove meta ({tracksWithMeta.length})</button
 			>
 		{/if}
@@ -153,14 +152,14 @@
 		<button
 			onclick={() => (showAppend = true)}
 			disabled={selectedIds.length === 0}
-			{@attach tooltip({content: 'Add text or tags to track descriptions'})}
+			{@attach tooltip({content: m.batch_edit_action_append_description()})}
 		>
 			Append text...
 		</button>
 		<button
 			onclick={() => (showRemoveTag = true)}
 			disabled={selectedTracksTags.length === 0}
-			{@attach tooltip({content: 'Remove a specific tag from all selected tracks'})}>Remove tag...</button
+			{@attach tooltip({content: m.batch_edit_action_remove_tag()})}>Remove tag...</button
 		>
 	{:else}
 		&nbsp;
@@ -179,7 +178,13 @@
 		>
 			<fieldset>
 				<label for="{uid}-append" class="visually-hidden">Text to append</label>
-				<input id="{uid}-append" type="text" bind:value={appendText} placeholder="text to append" autofocus />
+				<input
+					id="{uid}-append"
+					type="text"
+					bind:value={appendText}
+					placeholder={m.batch_edit_append_placeholder()}
+					autofocus
+				/>
 			</fieldset>
 			{#if allTags.length > 0}
 				<menu>

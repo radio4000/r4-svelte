@@ -88,19 +88,23 @@
 							isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
 					>
 						<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
-						{isPlaying ? 'Pause' : 'Play'}
+						{isPlaying ? m.common_pause() : m.common_play()}
 					</button>
 					{#if isBroadcasting}
 						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-							<Icon icon="cell-signal" size={16} /> Join broadcast
+							<Icon icon="cell-signal" size={16} />
+							{m.channel_card_join_broadcast()}
 						</button>
 					{/if}
 					<button type="button" role="menuitem" onclick={share}>
-						<Icon icon="share" size={16} /> Share
+						<Icon icon="share" size={16} />
+						{m.channel_card_share()}
 					</button>
 				</menu>
 				<menu class="nav-vertical">
-					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" size={16} /> Visit channel</a>
+					<a class="btn" href={cardHref} role="menuitem"
+						><Icon icon="circle-info" size={16} /> {m.channel_card_visit()}</a
+					>
 				</menu>
 			</PopoverMenu>
 		</div>

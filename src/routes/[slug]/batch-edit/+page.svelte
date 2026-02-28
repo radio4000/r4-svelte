@@ -357,7 +357,7 @@
 				</PopoverMenu>
 			{/if}
 
-			<input type="search" bind:value={search} placeholder="Search..." />
+			<input type="search" bind:value={search} placeholder={m.batch_edit_search_placeholder()} />
 
 			{#if canEdit && targetTracksMissingMeta.length > 0}
 				<button

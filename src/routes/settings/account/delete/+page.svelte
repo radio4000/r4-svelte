@@ -1,6 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	let confirmDelete = $state(false)
 	let deleting = $state(false)
@@ -30,7 +31,7 @@
 	<h1>Delete account</h1>
 
 	{#if !appState.user}
-		<p>Please sign in to manage your account.</p>
+		<p>{m.account_sign_in_prompt()}</p>
 	{:else}
 		<p>This action is permanent and cannot be undone. Deleting your account will:</p>
 		<ul>
@@ -49,9 +50,9 @@
 			<p><strong>Are you sure? This cannot be undone.</strong></p>
 			<menu>
 				<button onclick={handleDeleteAccount} disabled={deleting} class="danger">
-					{deleting ? 'Deleting...' : 'Yes, delete everything'}
+					{deleting ? m.common_deleting() : 'Yes, delete everything'}
 				</button>
-				<button onclick={() => (confirmDelete = false)}>Cancel</button>
+				<button onclick={() => (confirmDelete = false)}>{m.common_cancel()}</button>
 			</menu>
 		{/if}
 	{/if}

@@ -72,7 +72,7 @@
 			{/if}
 
 			{#if data.mentions && data.mentions.length > 0}
-				<dt><Icon icon="users" size={14} /> mentions</dt>
+				<dt><Icon icon="users" size={14} /> {m.track_meta_mentions()}</dt>
 				<dd class="mentions">
 					{#each data.mentions as mention (mention)}
 						<Tag href="/{mention}">@{mention}</Tag>

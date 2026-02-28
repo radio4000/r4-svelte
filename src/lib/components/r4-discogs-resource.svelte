@@ -1,6 +1,7 @@
 <script>
 	import TrackCard from './track-card.svelte'
 	import Icon from './icon.svelte'
+	import * as m from '$lib/paraglide/messages'
 	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
 	import {setPlaylist, playTrack, playNext} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
@@ -257,19 +258,19 @@
 		/** @type {{icon: string, label: string, value: string}[]} */
 		const items = []
 		const date = resource.released_formatted || (resource.year ? String(resource.year) : '')
-		if (date) items.push({icon: 'history', label: 'Release date', value: date})
-		if (resource.country) items.push({icon: 'map', label: 'Country', value: resource.country})
+		if (date) items.push({icon: 'history', label: m.discogs_release_date(), value: date})
+		if (resource.country) items.push({icon: 'map', label: m.discogs_country(), value: resource.country})
 		const format = resource.formats?.[0]
 		if (format) {
 			const descParts =
 				format.descriptions?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d)).slice(0, 2) ?? []
 			const fmtStr = [format.name, ...descParts].join(' ')
-			if (fmtStr) items.push({icon: 'tv', label: 'Format', value: fmtStr})
+			if (fmtStr) items.push({icon: 'tv', label: m.discogs_format(), value: fmtStr})
 		}
 		const label = resource.labels?.[0]
 		if (label) {
 			const catno = label.catno && label.catno !== 'none' ? ` ${label.catno}` : ''
-			items.push({icon: 'tag', label: 'Label', value: `${label.name}${catno}`})
+			items.push({icon: 'tag', label: m.discogs_label_field(), value: `${label.name}${catno}`})
 		}
 		return items
 	})
@@ -286,7 +287,7 @@
 {#if url && !resource}
 	<div class="r4-discogs-resource r4-discogs-resource--loading">
 		<Icon icon="tag" size={12} />
-		<span class="caps">Loading…</span>
+		<span class="caps">{m.common_loading()}</span>
 	</div>
 {/if}
 
@@ -317,10 +318,10 @@
 			</div>
 			{#if full && allPlayableTracks.length > 0}
 				<menu class="release-actions">
-					<button type="button" title="Play release" onclick={handlePlayRelease}>
+					<button type="button" title={m.discogs_play_release()} onclick={handlePlayRelease}>
 						<Icon icon="play-fill" size={14} />
 					</button>
-					<button type="button" title="Play next" onclick={handlePlayNext}>
+					<button type="button" title={m.discogs_play_next()} onclick={handlePlayNext}>
 						<Icon icon="next-fill" size={14} />
 					</button>
 				</menu>
@@ -331,7 +332,7 @@
 					href={resource.uri}
 					target="_blank"
 					rel="noopener noreferrer"
-					title="View on Discogs"
+					title={m.discogs_view_on_discogs()}
 				>
 					<Icon icon="tag" size={12} />
 					Discogs
@@ -340,7 +341,7 @@
 		</div>
 
 		{#if full && (releaseStats || resource.community)}
-			<div class="release-community" aria-label="Release summary">
+			<div class="release-community" aria-label={m.discogs_release_summary()}>
 				{#if releaseStats}
 					<span>
 						<Icon icon="unordered-list" size={12} />
@@ -348,19 +349,21 @@
 					</span>
 				{/if}
 				{#if resource.community}
-					<span title="Users who have this release">
+					<span title={m.discogs_users_have()}>
 						<Icon icon="users" size={12} />
-						{resource.community.have} have
+						{m.discogs_have_count({count: resource.community.have})}
 					</span>
-					<span title="Users who want this release">
+					<span title={m.discogs_users_want()}>
 						<Icon icon="favorite" size={12} />
-						{resource.community.want} want
+						{m.discogs_want_count({count: resource.community.want})}
 					</span>
 				{/if}
 				{#if Number(resource.community?.rating?.count) > 0}
-					<span title="Average Discogs rating">
+					<span title={m.discogs_avg_rating()}>
 						<Icon icon="chart-scatter" size={12} />
-						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({resource.community?.rating?.count ?? 0} ratings)
+						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({m.discogs_ratings_count({
+							count: resource.community?.rating?.count ?? 0
+						})})
 					</span>
 				{/if}
 			</div>
@@ -388,11 +391,11 @@
 								<span class="track-hints">
 									{row.item.position}{row.item.duration ? ` · ${row.item.duration}` : ''}
 									{#if row.isReal}
-										<small class="state state--real">in channel</small>
+										<small class="state state--real">{m.discogs_in_channel()}</small>
 									{:else if row.hasVideo}
-										<small class="state">video available</small>
+										<small class="state">{m.discogs_video_available()}</small>
 									{:else}
-										<small class="state state--muted">no video</small>
+										<small class="state state--muted">{m.discogs_no_video()}</small>
 									{/if}
 								</span>
 							{/snippet}
@@ -403,7 +406,7 @@
 										class="ghost use-btn"
 										onclick={() => onSelectMedia?.(track.url, row.item.title)}
 									>
-										Use
+										{m.discogs_use_button()}
 									</button>
 								{/if}
 							{/snippet}
@@ -415,7 +418,7 @@
 
 		{#if suggestions && suggestionsList.length > 0}
 			<fieldset>
-				<legend>Suggested tags</legend>
+				<legend>{m.discogs_suggested_tags()}</legend>
 				{#each suggestionsList as tag (tag)}
 					<label>
 						<input

@@ -120,7 +120,7 @@
 						</menu>
 					</PopoverMenu>
 				{/if}
-				<SearchInput bind:value={searchInput} placeholder="Filter tracks..." debounce={150} />
+				<SearchInput bind:value={searchInput} placeholder={m.tracks_filter_placeholder()} debounce={150} />
 				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
 					{#snippet trigger()}<Icon
 							icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}

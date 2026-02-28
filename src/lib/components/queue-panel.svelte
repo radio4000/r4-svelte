@@ -113,7 +113,7 @@
 		<menu class="tabs">
 			<button onclick={() => (view = 'queue')} class:active={view === 'queue'}>
 				<Icon icon="unordered-list" size={16} />
-				{m.button_queue()} ({queueTracks.length})
+				{m.common_queue()} ({queueTracks.length})
 			</button>
 			<button onclick={() => (view = 'history')} class:active={view === 'history'}>
 				<Icon icon="history" size={16} />
@@ -125,7 +125,7 @@
 	<div class="search-container">
 		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 		{#if searchQuery !== ''}
-			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: 'Clear search'})}>
+			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: m.queue_clear_search()})}>
 				<Icon icon="close" size={16} />
 			</button>
 		{/if}

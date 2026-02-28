@@ -85,7 +85,7 @@
 					href={resolve('/welcome')}
 					class="btn"
 					class:active={page.route.id === '/welcome'}
-					{@attach tooltip({content: 'Start your radio'})}
+					{@attach tooltip({content: m.header_start_your_radio()})}
 				>
 					<Icon icon="sparkles" />
 				</a>
@@ -119,7 +119,7 @@
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
 					class:active={userChannelHasAuto}
-					{@attach tooltip({content: isBroadcasting ? 'Broadcasting' : 'Go to your channel'})}
+					{@attach tooltip({content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
