@@ -156,18 +156,7 @@
 
 		<div class="channel-meta">
 			{#if channel.description}
-				<div class="description-row">
-					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-					<button
-						type="button"
-						class="description-share"
-						onclick={() => (appState.modal_share = {channel})}
-						title={m.share_native()}
-						aria-label={m.share_native()}
-					>
-						<Icon icon="share" size={16} />
-					</button>
-				</div>
+				<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 			{/if}
 			<div class="meta-row">
 				{#if channel.url}
@@ -176,6 +165,15 @@
 				<p class="dates">
 					<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
 				</p>
+				<button
+					type="button"
+					class="meta-share"
+					onclick={() => (appState.modal_share = {channel})}
+					title={m.share_native()}
+					aria-label={m.share_native()}
+				>
+					<Icon icon="share" size={16} />
+				</button>
 			</div>
 		</div>
 
@@ -377,21 +375,6 @@
 		overflow-wrap: break-word;
 	}
 
-	.description-row {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.5rem;
-	}
-
-	.description-row .description {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.description-share {
-		flex-shrink: 0;
-	}
-
 	.url {
 		font-style: italic;
 		color: var(--gray-9);
@@ -399,6 +382,11 @@
 
 	.url a {
 		color: inherit;
+	}
+
+	.meta-share {
+		margin-left: auto;
+		flex-shrink: 0;
 	}
 
 	.track-section {
