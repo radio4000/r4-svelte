@@ -38,6 +38,8 @@
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
+	let normalDeckCount = $derived(Object.values(appState.decks).filter((deck) => !deck.compact).length)
+	let prioritizeDecksOnMobile = $derived(normalDeckCount > 1)
 	let compactDeckIds = $derived(
 		Object.values(appState.decks)
 			.filter((deck) => deck.compact)
@@ -197,7 +199,7 @@
 					<LayoutHeader preloading={data.preloading} />
 
 					<div class="content-wrapper">
-						<section class="content">
+						<section class="content" class:prioritize-decks-mobile={prioritizeDecksOnMobile}>
 							<div class="scroll-area">
 								<main>
 									{@render children()}
@@ -344,6 +346,11 @@
 
 		.content {
 			flex-direction: column;
+		}
+
+		.content.prioritize-decks-mobile .scroll-area {
+			flex: 0 1 auto;
+			max-height: 28dvh;
 		}
 
 		.compact-decks {

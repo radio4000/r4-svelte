@@ -11,6 +11,7 @@
 	let deck = $derived(appState.decks[deckId])
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
+	let hasMultipleNormalDecks = $derived(Object.values(appState.decks).filter((d) => !d?.compact).length > 1)
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
@@ -71,6 +72,7 @@
 			expanded: deck?.expanded,
 			compact: deck?.compact,
 			listening: isListeningToBroadcast,
+			'multi-normal-decks': hasMultipleNormalDecks,
 			'active-deck': isActiveDeck,
 			resizing,
 			'hide-queue': deck?.hide_queue_panel,
@@ -138,6 +140,31 @@
 			width: 100%;
 		}
 
+		.deck:not(.compact):not(.expanded) {
+			height: 100%;
+		}
+
+		.deck.multi-normal-decks:not(.compact):not(.expanded) :global(.video) {
+			flex: 1 1 0;
+			min-height: 0;
+			max-height: none;
+			aspect-ratio: auto;
+		}
+
+		.deck.multi-normal-decks:not(.compact):not(.expanded) :global(.queue-panel) {
+			flex: 1 1 0;
+			min-height: 0;
+		}
+
+		.deck.multi-normal-decks:not(.compact):not(.expanded) :global(.bottom-controls) {
+			flex-wrap: wrap;
+		}
+
+		.deck.listening {
+			width: 100%;
+			min-width: 0;
+		}
+
 		.resize-handle {
 			display: none;
 		}
@@ -180,6 +207,13 @@
 		transform: scale(0.95);
 		transition-duration: 0ms;
 		pointer-events: none;
+	}
+
+	@media (max-width: 768px) {
+		.deck.compact {
+			height: 0;
+			min-height: 0;
+		}
 	}
 
 	/* Hide queue panel via CSS — keeps it in the DOM */

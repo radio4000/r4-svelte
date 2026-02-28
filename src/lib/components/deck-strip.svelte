@@ -11,18 +11,21 @@
 	)
 	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
+	let nonCompactDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.compact))
+	let splitDecks = $derived(nonCompactDeckIds.length > 1)
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
 	const deckTransitionMs = 200
 	const deckExitMs = 0
 	const deckScaleStart = 0.95
 </script>
 
-<aside class="deck-strip" class:all-compact={allDecksCompact}>
+<aside class="deck-strip" class:all-compact={allDecksCompact} class:split-decks={splitDecks}>
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
+					class:compact={appState.decks[deckId]?.compact}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -36,6 +39,7 @@
 			{#each listeningDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
+					class:compact={appState.decks[deckId]?.compact}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -104,12 +108,29 @@
 
 		.local {
 			flex-direction: column;
+			min-height: 0;
 		}
 
 		.broadcasts {
 			overflow-y: visible;
 			flex: 1 1 auto;
 			min-width: 0;
+		}
+
+		.deck-strip.split-decks {
+			flex: 0 1 auto;
+			min-height: 0;
+			max-height: 100%;
+		}
+
+		.deck-strip.split-decks .local,
+		.deck-strip.split-decks .broadcasts {
+			display: contents;
+		}
+
+		.deck-strip.split-decks .deck-item:not(.compact) {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 	}
 </style>
