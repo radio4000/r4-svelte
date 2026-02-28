@@ -133,7 +133,7 @@
 					<button
 						class="chip-delete"
 						onclick={() => confirm(m.views_delete_confirm({name: sv.name})) && deleteView(sv.id)}
-						aria-label="Delete {sv.name}"
+						aria-label={m.views_delete_aria({name: sv.name})}
 					>
 						<Icon icon="close" size={12} />
 					</button>
@@ -245,7 +245,9 @@
 			/>
 			<button type="button" onclick={saveDirtyAsNew} disabled={!draftName.trim()}>{m.views_save_as_label()}</button>
 			{#if baseViewName}
-				<button type="button" class="primary" onclick={updateBaseView}>Update "{baseViewName}"</button>
+				<button type="button" class="primary" onclick={updateBaseView}
+					>{m.views_update_named({name: baseViewName})}</button
+				>
 			{/if}
 		</section>
 	{/if}

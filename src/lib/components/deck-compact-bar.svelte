@@ -202,7 +202,7 @@
 			</button>
 			<button
 				onclick={() => next(deckId, track, activeQueue, 'user_next')}
-				aria-label="Next"
+				aria-label={m.player_compact_next()}
 				disabled={!canNextFromQueue}
 			>
 				<Icon icon="next-fill" />

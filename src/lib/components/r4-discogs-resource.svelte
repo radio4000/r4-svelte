@@ -341,7 +341,7 @@
 		</div>
 
 		{#if full && (releaseStats || resource.community)}
-			<div class="release-community" aria-label="Release summary">
+			<div class="release-community" aria-label={m.discogs_release_summary()}>
 				{#if releaseStats}
 					<span>
 						<Icon icon="unordered-list" size={12} />
@@ -351,17 +351,19 @@
 				{#if resource.community}
 					<span title={m.discogs_users_have()}>
 						<Icon icon="users" size={12} />
-						{resource.community.have} have
+						{m.discogs_have_count({count: resource.community.have})}
 					</span>
 					<span title={m.discogs_users_want()}>
 						<Icon icon="favorite" size={12} />
-						{resource.community.want} want
+						{m.discogs_want_count({count: resource.community.want})}
 					</span>
 				{/if}
 				{#if Number(resource.community?.rating?.count) > 0}
 					<span title={m.discogs_avg_rating()}>
 						<Icon icon="chart-scatter" size={12} />
-						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({resource.community?.rating?.count ?? 0} ratings)
+						{(resource.community?.rating?.average ?? 0).toFixed(2)} / 5 ({m.discogs_ratings_count({
+							count: resource.community?.rating?.count ?? 0
+						})})
 					</span>
 				{/if}
 			</div>

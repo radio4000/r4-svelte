@@ -249,9 +249,9 @@
 				{:else if tracksQuery.isReady && allTracks.length === 0}
 					<p class="empty">
 						{#if canEdit}
-							<a href="/add">Add your first track (tip: press "c")</a>
+							<a href="/add">{m.channel_first_track_cta()}</a>
 						{:else}
-							No tracks yet
+							{m.channel_no_tracks()}
 						{/if}
 					</p>
 				{/if}
