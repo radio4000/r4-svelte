@@ -38,8 +38,6 @@ bun run i18n   # recompile
 
 `apply-batch.js` validates that all `{placeholders}` are preserved and rejects unknown keys.
 
-See `i18n/batches/template.json` for the expected format.
-
 ## Adding a new language
 
 ```bash
