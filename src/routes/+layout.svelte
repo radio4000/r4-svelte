@@ -206,7 +206,7 @@
 
 							<DeckStrip />
 						</section>
-						<section class="compact-decks" aria-label="Compact decks">
+						<section class="compact-decks" aria-label={m.decks_compact_label()}>
 							{#each compactDeckIds as deckId (deckId)}
 								<div
 									class="compact-deck-item"

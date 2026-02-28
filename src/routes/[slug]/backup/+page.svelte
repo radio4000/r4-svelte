@@ -4,6 +4,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import Icon from '$lib/components/icon.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	const slug = $derived(page.params.slug)
 	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
@@ -56,10 +57,10 @@
 		<p>
 			<button type="button" onclick={downloadBackup}>
 				<Icon icon="document-download" size={16} />
-				Download backup
+				{m.channel_backup_download()}
 			</button>
 		</p>
 	{:else}
-		<p><a href="/auth">Sign in to access backup</a></p>
+		<p><a href="/auth">{m.channel_backup_sign_in()}</a></p>
 	{/if}
 </article>

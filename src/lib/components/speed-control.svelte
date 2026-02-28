@@ -3,6 +3,7 @@
 	import {getMediaPlayer} from '$lib/api'
 	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import * as m from '$lib/paraglide/messages'
 
 	/** @type {{deckId: number, provider: string | null}} */
 	let {deckId, provider} = $props()
@@ -30,7 +31,7 @@
 			class="speed-btn"
 			class:active={deck?.speed != null && deck.speed !== 1}
 			onclick={() => handleSpeedChange(1)}
-			{@attach tooltip({content: 'Reset speed', position: 'top'})}
+			{@attach tooltip({content: m.player_reset_speed(), position: 'top'})}
 		>
 			{Number(deck?.speed ?? 1).toFixed(2)}x
 		</button>

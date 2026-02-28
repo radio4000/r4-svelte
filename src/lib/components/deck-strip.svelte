@@ -2,6 +2,7 @@
 	import {scale} from 'svelte/transition'
 	import {appState} from '$lib/app-state.svelte'
 	import Deck from '$lib/components/deck.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	let deckIds = $derived(
 		Object.keys(appState.decks)
@@ -31,7 +32,7 @@
 		</section>
 	{/if}
 	{#if listeningDeckIds.length}
-		<section class="broadcasts" aria-label="Broadcast listener decks">
+		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
 			{#each listeningDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"

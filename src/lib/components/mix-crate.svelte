@@ -18,6 +18,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {mixAll} from '$lib/lab/mix'
 	import ChannelAvatar from './channel-avatar.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	/**
 	 * @type {{
@@ -146,7 +147,7 @@
 <section>
 	<input
 		type="search"
-		placeholder="Search channels or #tags..."
+		placeholder={m.channels_search_placeholder()}
 		bind:value={searchQuery}
 		onkeydown={handleInputKeydown}
 		data-loading={loading || undefined}
@@ -155,7 +156,7 @@
 	{#if displayItems.length}
 		<menu class="suggestions">
 			{#if !searchResults.length}
-				<button type="button" onclick={() => suggestionSeed++} title="More">↻</button>
+				<button type="button" onclick={() => suggestionSeed++} title={m.common_more()}>↻</button>
 			{/if}
 			{#each displayItems as item (item.type + item.value)}
 				<button

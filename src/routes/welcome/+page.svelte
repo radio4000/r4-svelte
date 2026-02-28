@@ -1,6 +1,7 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
+	import * as m from '$lib/paraglide/messages'
 </script>
 
 <svelte:head>
@@ -31,12 +32,12 @@
 	<menu>
 		{#if appState.user}
 			{#if appState.channels?.length}
-				<a href="/{appState.channel?.slug}" class="btn primary">Go to your radio</a>
+				<a href="/{appState.channel?.slug}" class="btn primary">{m.channel_go_to_radio()}</a>
 			{:else}
-				<a href="/create-channel" class="btn primary">Create your radio</a>
+				<a href="/create-channel" class="btn primary">{m.channel_create_radio()}</a>
 			{/if}
 		{:else}
-			<a href="/auth/create-account?redirect=/create-channel" class="btn primary">Start your radio</a>
+			<a href="/auth/create-account?redirect=/create-channel" class="btn primary">{m.header_start_your_radio()}</a>
 			<a href="/auth/login" class="btn">Sign in</a>
 		{/if}
 		<a href="/" class="ghost">Explore</a>

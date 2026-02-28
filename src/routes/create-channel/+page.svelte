@@ -4,6 +4,7 @@
 	import {createChannel} from '$lib/collections/channels'
 	import {slugify} from '$lib/utils'
 	import IconR4 from '$lib/components/icon-r4.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	let error = $state('')
 	let submitting = $state(false)
@@ -58,8 +59,8 @@
 		</p>
 	{:else}
 		<header>
-			<h1>Create a channel to start saving tracks.</h1>
-			<p><small>You can rename or delete it later.</small></p>
+			<h1>{m.channel_create_prompt()}</h1>
+			<p><small>{m.channel_name_changeable()}</small></p>
 		</header>
 
 		{#if error}
@@ -82,7 +83,7 @@
 					required
 					pattern="[a-z0-9\-]+"
 					minlength="3"
-					title="At least 3 lowercase letters, numbers, or hyphens"
+					title={m.channel_slug_hint()}
 					oninput={() => (slugTouched = true)}
 				/>
 			</fieldset>
