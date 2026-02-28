@@ -409,7 +409,7 @@
 						tags={headerState.tags}
 						showAutoButton={Boolean(deck?.auto_radio)}
 						autoGhost={!deck?.auto_radio_drifted}
-						autoTitle={deck?.auto_radio_drifted ? 'Resync auto radio' : 'Auto radio'}
+						autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onAutoClick={() => resyncAutoRadio(deckId)}
 						listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
 						listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
@@ -417,7 +417,7 @@
 						listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
 						showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
 						broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
-						broadcastSyncTitle={deck?.listening_drifted ? 'Sync broadcast' : 'Broadcast synced'}
+						broadcastSyncTitle={deck?.listening_drifted ? m.player_sync_broadcast() : m.player_broadcast_synced()}
 						onBroadcastSyncClick={() => {
 							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
 						}}
@@ -432,7 +432,7 @@
 						removeDeck(deckId)
 						if (bchId) notifyBroadcastState(bchId)
 					}}
-					{@attach tooltip({content: 'Close deck', position: 'top'})}
+					{@attach tooltip({content: m.player_tooltip_close_deck(), position: 'top'})}
 				>
 					<Icon icon="close" />
 				</button>
@@ -568,14 +568,14 @@
 							<h3 class="title">
 								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a>{:else}{displayTrack.title}{/if}
 							</h3>
-							<p class="description">Live broadcast</p>
+							<p class="description">{m.player_broadcast_live()}</p>
 						</div>
 					{:else}
 						<div class="info">
-							<strong>Live broadcast</strong>
+							<strong>{m.player_broadcast_live()}</strong>
 						</div>
 					{/if}
-					<span class="caps btn-leave">Live</span>
+					<span class="caps btn-leave">{m.status_live_short()}</span>
 				</div>
 			{:else if displayTrack}
 				<TrackCard
@@ -594,8 +594,8 @@
 				<button
 					disabled
 					class="play status"
-					aria-label={deck?.is_playing ? 'Broadcast is playing' : 'Broadcast is paused'}
-					title={deck?.is_playing ? 'Broadcast is playing' : 'Broadcast is paused'}
+					aria-label={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
+					title={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
 				>
 					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 				</button>
@@ -613,8 +613,8 @@
 			{/if}
 			<button
 				onclick={() => toggleDeckCompact(deckId)}
-				aria-label="Compact"
-				{@attach tooltip({content: 'Compact', position: 'top'})}
+				aria-label={m.player_tooltip_compact()}
+				{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
 			>
 				<IconDeckPanel expanded />
 			</button>

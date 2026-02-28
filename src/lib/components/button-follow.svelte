@@ -28,8 +28,8 @@
 {#if userChannelId}
 	<button
 		onclick={toggle}
-		title={following ? m.button_unfollow() : m.button_follow()}
-		aria-label={following ? m.button_unfollow() : m.button_follow()}
+		title={following ? m.common_unfollow() : m.common_follow()}
+		aria-label={following ? m.common_unfollow() : m.common_follow()}
 		{...rest}
 	>
 		<Icon icon={following ? 'favorite-fill' : 'favorite'} />

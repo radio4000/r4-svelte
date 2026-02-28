@@ -97,7 +97,7 @@
 		{/if}
 		{#if error}
 			<p role="alert">
-				{error}. You can still listen, but listeners won't hear this track.
+				{error}. {m.broadcast_listener_warning()}
 			</p>
 		{/if}
 	</div>

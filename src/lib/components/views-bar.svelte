@@ -5,6 +5,7 @@
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	let {view, onchange}: {view: View; onchange: (view: View) => void} = $props()
 
@@ -131,7 +132,7 @@
 					</button>
 					<button
 						class="chip-delete"
-						onclick={() => confirm(`Delete "${sv.name}"?`) && deleteView(sv.id)}
+						onclick={() => confirm(m.views_delete_confirm({name: sv.name})) && deleteView(sv.id)}
 						aria-label="Delete {sv.name}"
 					>
 						<Icon icon="close" size={12} />
@@ -139,51 +140,51 @@
 				</span>
 			{/each}
 			{#if currentParams}
-				<button class="chip" onclick={startAdding} title="Add new view">+</button>
+				<button class="chip" onclick={startAdding} title={m.views_add_new()}>+</button>
 			{/if}
 		</span>
 
 		<menu class="controls">
 			<li>
 				<PopoverMenu id="views-filter" closeOnClick={false} align="end">
-					{#snippet trigger()}Filters{/snippet}
+					{#snippet trigger()}{m.views_filters_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
 						<fieldset>
-							<label for="vb-channels">Channels</label>
+							<label for="vb-channels">{m.views_channels_label()}</label>
 							<input
 								id="vb-channels"
 								type="text"
 								value={view.channels?.join(', ') || ''}
 								onchange={(e) => onchange({...view, channels: splitList(e.currentTarget.value)})}
-								placeholder="oskar, ko002"
+								placeholder={m.views_channels_placeholder()}
 							/>
 						</fieldset>
 						<fieldset>
-							<legend>Tags</legend>
+							<legend>{m.views_tags_label()}</legend>
 							<fieldset class="row">
 								<select
 									value={view.tagsMode || 'any'}
 									onchange={(e) => onchange({...view, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
 								>
-									<option value="any">any</option>
-									<option value="all">all</option>
+									<option value="any">{m.views_tags_any()}</option>
+									<option value="all">{m.views_tags_all()}</option>
 								</select>
 								<input
 									type="text"
 									value={view.tags?.join(', ') || ''}
 									onchange={(e) => onchange({...view, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
-									placeholder="ambient, jazz"
+									placeholder={m.views_tags_placeholder()}
 								/>
 							</fieldset>
 						</fieldset>
 						<fieldset>
-							<label for="vb-search">Search</label>
+							<label for="vb-search">{m.views_search_label()}</label>
 							<input
 								id="vb-search"
 								type="text"
 								value={view.search || ''}
 								onchange={(e) => onchange({...view, search: e.currentTarget.value.trim() || undefined})}
-								placeholder="miles davis"
+								placeholder={m.views_search_placeholder()}
 							/>
 						</fieldset>
 					</form>
@@ -191,20 +192,20 @@
 			</li>
 			<li>
 				<PopoverMenu id="views-display" closeOnClick={false} align="end">
-					{#snippet trigger()}Display{/snippet}
+					{#snippet trigger()}{m.views_display_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
 						<fieldset>
-							<legend>Sort</legend>
+							<legend>{m.views_sort_label()}</legend>
 							<SortControls bind:order={r1Order} bind:direction={r1Direction} />
 						</fieldset>
 						<fieldset>
-							<label for="vb-limit">Limit</label>
+							<label for="vb-limit">{m.views_limit_label()}</label>
 							<input
 								id="vb-limit"
 								type="number"
 								value={view.limit || ''}
 								onchange={(e) => onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
-								placeholder="20"
+								placeholder={m.views_limit_placeholder()}
 								min="1"
 								max="4000"
 							/>
@@ -221,11 +222,12 @@
 			<input
 				type="text"
 				bind:value={draftName}
-				placeholder="View name"
+				placeholder={m.views_view_name_placeholder()}
 				onkeydown={(e) => e.key === 'Enter' && saveNewView()}
 			/>
-			<button type="button" onclick={cancelAdding}>Cancel</button>
-			<button type="button" class="primary" onclick={saveNewView} disabled={!draftName.trim()}>Save</button>
+			<button type="button" onclick={cancelAdding}>{m.common_cancel()}</button>
+			<button type="button" class="primary" onclick={saveNewView} disabled={!draftName.trim()}>{m.common_save()}</button
+			>
 		</section>
 	{/if}
 
@@ -233,15 +235,15 @@
 	{#if mode === 'dirty'}
 		<section class="row row-2">
 			<p>{viewSummary}</p>
-			<button type="reset" class="ghost" onclick={clearDirty}>Clear</button>
+			<button type="reset" class="ghost" onclick={clearDirty}>{m.common_clear()}</button>
 			<input
 				type="text"
 				bind:value={draftName}
-				placeholder="Name"
+				placeholder={m.views_name_placeholder()}
 				size="10"
 				onkeydown={(e) => e.key === 'Enter' && saveDirtyAsNew()}
 			/>
-			<button type="button" onclick={saveDirtyAsNew} disabled={!draftName.trim()}>Save as</button>
+			<button type="button" onclick={saveDirtyAsNew} disabled={!draftName.trim()}>{m.views_save_as_label()}</button>
 			{#if baseViewName}
 				<button type="button" class="primary" onclick={updateBaseView}>Update "{baseViewName}"</button>
 			{/if}

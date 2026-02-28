@@ -151,7 +151,7 @@
 {#if channel}
 	<article>
 		<div class="search-bar">
-			<SearchInput bind:value={searchInput} placeholder="Search tracks..." debounce={300} />
+			<SearchInput bind:value={searchInput} placeholder={m.channel_tracks_search_placeholder()} debounce={300} />
 		</div>
 
 		<div class="channel-meta">
@@ -182,7 +182,7 @@
 						</button>
 					{/each}
 					<button type="button" class:active={selectedTag === null} onclick={() => (selectedTag = null)}>
-						Latest <small>({PREVIEW_LIMIT})</small>
+						{m.channel_section_latest()} <small>({PREVIEW_LIMIT})</small>
 					</button>
 					{#each availableTagSections as { tag, tracks } (tag)}
 						<button
@@ -200,7 +200,7 @@
 							class:active={selectedTag === CHANNELS_TAB}
 							onclick={() => (selectedTag = CHANNELS_TAB)}
 						>
-							Radios <small>({mentionedChannels.length})</small>
+							{m.channel_section_radios()} <small>({mentionedChannels.length})</small>
 						</button>
 					{/if}
 				</nav>
@@ -218,17 +218,17 @@
 								type="button"
 								onclick={() =>
 									activeDeck?.is_playing ? togglePlayPause(appState.active_deck_id) : playTracks(allTracks)}
-								title={activeDeck?.is_playing ? 'Pause' : 'Play latest'}
+								title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
 							>
 								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={14} />
 							</button>
-							<button type="button" onclick={() => queueTracks(allTracks)} title="Queue all">
+							<button type="button" onclick={() => queueTracks(allTracks)} title={m.search_queue_all()}>
 								<Icon icon="next-fill" size={14} />
 							</button>
 							{#if hasAutoRadioCoverage(allTracks)}
 								<AutoRadioButton
 									synced={isAutoActive && !isAutoDrifted}
-									title={isAutoDrifted ? m.auto_radio_resync() : 'Auto radio'}
+									title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 									size={14}
 									onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(allTracks), autoView)}
 								/>
@@ -274,11 +274,17 @@
 									isTagPlaying(section.tag)
 										? togglePlayPause(appState.active_deck_id)
 										: playTracks(section.tracks, `#${section.tag}`)}
-								title={isTagPlaying(section.tag) ? `Pause #${section.tag}` : `Play #${section.tag}`}
+								title={isTagPlaying(section.tag)
+									? m.channel_pause_tag({tag: section.tag})
+									: m.channel_play_tag({tag: section.tag})}
 							>
 								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={14} />
 							</button>
-							<button type="button" onclick={() => queueTracks(section.tracks)} title="Queue #{section.tag}">
+							<button
+								type="button"
+								onclick={() => queueTracks(section.tracks)}
+								title={m.channel_queue_tag({tag: section.tag})}
+							>
 								<Icon icon="next-fill" size={14} />
 							</button>
 							{#if channel}
@@ -290,7 +296,7 @@
 								{#if hasAutoRadioCoverage(section.tracks)}
 									<AutoRadioButton
 										synced={isAutoTagActive && !isAutoTagDrifted}
-										title={isAutoTagDrifted ? m.auto_radio_resync() : `Auto radio #${section.tag}`}
+										title={isAutoTagDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 										size={14}
 										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
 									/>

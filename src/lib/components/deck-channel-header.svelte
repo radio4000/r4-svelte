@@ -3,6 +3,7 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	/**
 	 * @typedef {{label: string, href?: string}} HeaderTag
@@ -72,7 +73,7 @@
 			<span class="title-link">{title}</span>
 		{/if}
 		{#if isBroadcasting}
-			<span class="title-icon" title="Broadcasting" aria-label="Broadcasting">
+			<span class="title-icon" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
 				<Icon icon="cell-signal" size={14} />
 			</span>
 		{/if}

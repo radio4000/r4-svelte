@@ -34,7 +34,7 @@
 		</a>
 		<a href="/settings/player">
 			<Icon icon="tv" />
-			Player
+			{m.settings_player()}
 		</a>
 		<a href="/settings/keyboard">
 			<Icon icon="keyboard" />
@@ -53,7 +53,7 @@
 		</a>
 		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
 			<Icon icon="html" />
-			Changelog
+			{m.settings_changelog()}
 		</a>
 		{#if sha}
 			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
