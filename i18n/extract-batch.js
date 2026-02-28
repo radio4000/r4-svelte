@@ -32,7 +32,7 @@ for (const file of localeFiles) {
 	const missing = {}
 	for (const [key, enValue] of Object.entries(en)) {
 		if (key === '$schema') continue
-		if (localeData[key] === enValue) {
+		if (!(key in localeData) || localeData[key] === enValue) {
 			missing[key] = enValue
 		}
 	}
