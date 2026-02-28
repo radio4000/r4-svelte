@@ -128,6 +128,19 @@ button.ghost.active,
 	}
 }
 
+button.auto-live-btn.ghost .oi-infinite .oi-vector,
+.btn.auto-live-btn.ghost .oi-infinite .oi-vector {
+	stroke: var(--accent-9);
+	stroke: url('#r5-auto-live-gradient');
+}
+
+@media (prefers-reduced-motion: reduce) {
+	button.auto-live-btn.ghost .oi-infinite .oi-vector,
+	.btn.auto-live-btn.ghost .oi-infinite .oi-vector {
+		stroke: var(--accent-9);
+	}
+}
+
 button[data-loading='true'] {
 	cursor: wait;
 }

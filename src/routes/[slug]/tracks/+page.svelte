@@ -6,6 +6,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
@@ -145,13 +146,12 @@
 					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
 					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
 					{#if channel && canShowFilteredAutoRadio}
-						<button
-							type="button"
-							class:ghost={isFilteredAutoActive && !isFilteredAutoDrifted}
-							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+						<AutoRadioButton
+							synced={isFilteredAutoActive && !isFilteredAutoDrifted}
 							title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
-							><Icon icon="infinite" size={16} /></button
-						>
+							size={16}
+							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+						/>
 					{/if}
 				</menu>
 			{/if}

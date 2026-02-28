@@ -6,6 +6,7 @@
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
 	import ShareDialog from '$lib/components/share-dialog.svelte'
 	import ShortcutsDialog from '$lib/components/shortcuts-dialog.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
@@ -99,15 +100,14 @@
 	<nav class="user">
 		{#await preloading then}
 			{#if userChannelHasAuto}
-				<button
-					type="button"
-					class="btn resync-link"
-					class:ghost={!userChannelHasAutoDrifted}
-					onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-					{@attach tooltip({content: m.auto_radio_resync()})}
-				>
-					<Icon icon="infinite" />
-				</button>
+				<span {@attach tooltip({content: m.auto_radio_resync()})}>
+					<AutoRadioButton
+						className="btn resync-link"
+						synced={!userChannelHasAutoDrifted}
+						title={m.auto_radio_resync()}
+						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					/>
+				</span>
 			{/if}
 			<AddTrackDialog />
 			<EditTrackDialog />

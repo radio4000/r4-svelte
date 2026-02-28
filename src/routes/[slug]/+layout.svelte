@@ -11,6 +11,7 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
@@ -221,18 +222,16 @@
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
 						{#if canShowAutoRadio}
-							<button
-								type="button"
-								class:ghost={anyChannelAutoActive && !anyChannelAutoDrifted}
+							<AutoRadioButton
+								synced={anyChannelAutoActive && !anyChannelAutoDrifted}
 								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
-								aria-label={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+								ariaLabel={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
+								size={16}
 								onclick={() => {
 									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
 									else if (channel) joinAutoRadio(appState.active_deck_id, autoRadioTracks, {channels: [channel.slug]})
 								}}
-							>
-								<Icon icon="infinite" size={16} />
-							</button>
+							/>
 						{/if}
 					</span>
 					<span>

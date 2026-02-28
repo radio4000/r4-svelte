@@ -6,6 +6,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -225,14 +226,12 @@
 								<Icon icon="next-fill" size={14} />
 							</button>
 							{#if hasAutoRadioCoverage(allTracks)}
-								<button
-									type="button"
-									class:ghost={isAutoActive && !isAutoDrifted}
-									onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(allTracks), autoView)}
+								<AutoRadioButton
+									synced={isAutoActive && !isAutoDrifted}
 									title={isAutoDrifted ? m.auto_radio_resync() : 'Auto radio'}
-								>
-									<Icon icon="infinite" size={14} />
-								</button>
+									size={14}
+									onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(allTracks), autoView)}
+								/>
 							{/if}
 						</menu>
 					</header>
@@ -289,14 +288,12 @@
 								{@const isAutoTagActive = autoTagDecks.length > 0}
 								{@const isAutoTagDrifted = autoTagDecks.some((d) => d.auto_radio_drifted)}
 								{#if hasAutoRadioCoverage(section.tracks)}
-									<button
-										type="button"
-										class:ghost={isAutoTagActive && !isAutoTagDrifted}
-										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
+									<AutoRadioButton
+										synced={isAutoTagActive && !isAutoTagDrifted}
 										title={isAutoTagDrifted ? m.auto_radio_resync() : `Auto radio #${section.tag}`}
-									>
-										<Icon icon="infinite" size={14} />
-									</button>
+										size={14}
+										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
+									/>
 								{/if}
 							{/if}
 						</menu>

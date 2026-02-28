@@ -146,6 +146,23 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
+	<svg class="auto-live-gradient-defs" width="0" height="0" aria-hidden="true" focusable="false">
+		<defs>
+			<linearGradient id="r5-auto-live-gradient" x1="0" y1="0" x2="1" y2="0">
+				<stop offset="0" stop-color="var(--accent-8)" />
+				<stop offset="0.5" stop-color="var(--accent-11)" />
+				<stop offset="1" stop-color="var(--accent-8)" />
+				<animateTransform
+					attributeName="gradientTransform"
+					type="rotate"
+					from="0 0.5 0.5"
+					to="360 0.5 0.5"
+					dur="2.2s"
+					repeatCount="indefinite"
+				/>
+			</linearGradient>
+		</defs>
+	</svg>
 	<svelte:boundary>
 		{#await data.preloading}
 			<div class="loader">
@@ -201,6 +218,14 @@
 </QueryClientProvider>
 
 <style>
+	.auto-live-gradient-defs {
+		position: absolute;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+
 	.layout {
 		display: flex;
 		flex-direction: row;
