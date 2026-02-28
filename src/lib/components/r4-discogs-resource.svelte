@@ -36,6 +36,8 @@
 	 *   url: string,
 	 *   full?: boolean,
 	 *   slug?: string,
+	 *   resourceData?: DiscogsResource | null,
+	 *   autoload?: boolean,
 	 *   suggestions?: boolean,
 	 *   preselected?: string[],
 	 *   tracks?: import('$lib/types').Track[],
@@ -47,6 +49,8 @@
 		url,
 		full = false,
 		slug = '',
+		resourceData = null,
+		autoload = true,
 		suggestions = false,
 		preselected = [],
 		tracks = [],
@@ -62,9 +66,27 @@
 	let selectedTags = $state(/** @type {string[]} */ ([]))
 	let initializedForUrl = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
-	let loadSeq = $state(0)
+	let loadSeq = 0
 
 	$effect(() => {
+		if (resourceData) {
+			loadSeq++
+			loading = false
+			loadError = ''
+			resource = resourceData
+			return
+		}
+		if (!autoload) {
+			loadSeq++
+			loading = false
+			loadError = ''
+			resource = null
+		}
+	})
+
+	$effect(() => {
+		if (resourceData || !autoload) return
+
 		const discogsUrl = url?.trim() || ''
 		if (discogsUrl) {
 			const seq = ++loadSeq

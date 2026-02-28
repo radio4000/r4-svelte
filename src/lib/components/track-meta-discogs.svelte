@@ -7,9 +7,11 @@
 	 *   track?: import('$lib/types').Track,
 	 *   tracks?: import('$lib/types').Track[],
 	 *   channel?: {id: string, slug: string},
-	 *   canEdit?: boolean
+	 *   canEdit?: boolean,
+	 *   discogsData?: object | null,
+	 *   autoload?: boolean
 	 * }} */
-	let {track, tracks = [], channel, canEdit = false} = $props()
+	let {track, tracks = [], channel, canEdit = false, discogsData = null, autoload = true} = $props()
 
 	let saveError = $state('')
 
@@ -31,6 +33,8 @@
 {#if track?.discogs_url}
 	<R4DiscogsResource
 		url={track.discogs_url}
+		resourceData={discogsData}
+		{autoload}
 		full={true}
 		slug={channel?.slug}
 		{tracks}
