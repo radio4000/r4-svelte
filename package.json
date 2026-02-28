@@ -14,7 +14,8 @@
 		"knip": "knip-bun",
 		"types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"test": "vitest run",
-		"i18n": "node i18n/sync.js && bunx @inlang/paraglide-js compile --project ./i18n/project.inlang --outdir ./src/lib/paraglide"
+		"i18n": "node i18n/sync.js && bunx @inlang/paraglide-js compile --project ./i18n/project.inlang --outdir ./src/lib/paraglide",
+		"i18n:check": "node i18n/check.js"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.4",
