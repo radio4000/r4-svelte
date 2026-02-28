@@ -34,9 +34,9 @@ export async function fetchDiscogs(discogsUrl) {
 /**
  * Search Discogs by title (for future automatic search)
  * @param {string} title
- * @returns {Promise<Object|null>} Search URL object
+ * @returns {{searchUrl: string, query: string} | null} Search URL object
  */
-export async function searchUrl(title) {
+export function searchUrl(title) {
 	if (!title) return null
 
 	// Use the web search interface instead of API (which requires auth)
@@ -56,7 +56,8 @@ export async function searchUrl(title) {
  */
 export function extractSuggestions({year = 0, genres = [], styles = [], labels = []}) {
 	const labelNames = labels?.map(({name}) => name) || []
-	return [...genres, ...styles, year, ...labelNames]
+	const suggestions = [...genres, ...styles, year, ...labelNames]
 		.filter((s) => !!s)
 		.map((s) => s.toString().replaceAll(' ', '-').toLowerCase())
+	return [...new Set(suggestions)]
 }
