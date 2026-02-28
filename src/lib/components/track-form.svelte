@@ -1,6 +1,6 @@
 <script>
 	import {addTrack, updateTrack} from '$lib/collections/tracks'
-	import {getMedia} from 'media-now'
+	import {getMedia, parseUrl} from 'media-now'
 	import {searchUrl} from '$lib/metadata/discogs'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -143,10 +143,14 @@
 		}
 	}
 
-	const isValidDiscogsUrl = $derived(liveDiscogsUrl?.includes('discogs.com'))
+	const hasDiscogsReleaseUrl = $derived.by(() => {
+		const parsed = parseUrl(liveDiscogsUrl?.trim() || '')
+		return parsed?.provider === 'discogs'
+	})
+	const isValidDiscogsUrl = $derived(hasDiscogsReleaseUrl)
 	const discogsActionUrl = $derived.by(() => {
 		const releaseUrl = liveDiscogsUrl?.trim()
-		if (releaseUrl?.includes('discogs.com')) return releaseUrl
+		if (hasDiscogsReleaseUrl && releaseUrl) return releaseUrl
 		const title = liveTitle?.trim()
 		if (!title) return ''
 		return searchUrl(title)?.searchUrl || ''
