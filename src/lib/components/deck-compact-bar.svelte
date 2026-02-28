@@ -224,9 +224,13 @@
 <style>
 	.deck-compact-bar {
 		min-height: 49px;
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-areas:
+			'progress'
+			'info'
+			'controls';
+		row-gap: 0.2rem;
 		gap: 0.2rem;
 		padding: 0.3rem 0.5rem;
 		border: 1px solid var(--gray-6);
@@ -240,15 +244,17 @@
 		display: flex;
 		align-items: center;
 		gap: 0.2rem;
-		flex: 1 1 20rem;
+		grid-area: controls;
+		flex: 1 1 100%;
 		margin-left: 0;
 		min-width: 0;
-		order: 3;
-		justify-content: flex-end;
+		width: 100%;
+		justify-content: flex-start;
+		flex-wrap: wrap;
 	}
 
 	.progress {
-		order: 1;
+		grid-area: progress;
 		flex: 1 0 100%;
 		width: 100%;
 		min-width: 0;
@@ -265,20 +271,24 @@
 	}
 
 	.header-info {
+		grid-area: info;
 		display: flex;
 		align-items: stretch;
-		gap: 0.5rem;
+		flex-direction: column;
+		gap: 0.2rem;
 		min-width: 0;
-		flex: 1 1 42rem;
-		order: 2;
+		flex: 1 1 auto;
+		width: 100%;
+		min-height: 2rem;
 	}
 
 	.channel-panel {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		min-width: 14rem;
-		flex: 0 1 24rem;
+		min-width: 0;
+		width: 100%;
+		flex: 1 1 auto;
 	}
 
 	.avatar {
@@ -302,7 +312,8 @@
 
 	.track-panel {
 		min-width: 0;
-		flex: 1 1 24rem;
+		width: 100%;
+		flex: 1 1 auto;
 	}
 
 	.track-panel :global(article) {
@@ -318,57 +329,56 @@
 		max-width: 100%;
 	}
 
-	@media (max-width: 768px) {
-		.deck-compact-bar {
-			display: grid;
-			grid-template-columns: 1fr;
-			grid-template-areas:
-				'progress'
-				'info'
-				'controls';
-			row-gap: 0.2rem;
-		}
-
-		.progress {
-			grid-area: progress;
-			order: initial;
-		}
-
-		.header-info {
-			grid-area: info;
-			order: initial;
-			flex: 1 1 auto;
-			width: 100%;
-			min-height: 2rem;
-		}
-
-		.row-controls {
-			grid-area: controls;
-			order: initial;
-			margin-left: 0;
-			flex: 1 1 100%;
-			width: 100%;
-			justify-content: flex-start;
-			flex-wrap: wrap;
-		}
-
-		.progress :global(media-time-range) {
-			--media-control-height: 8px;
-		}
+	.progress :global(media-time-range) {
+		--media-control-height: 8px;
 	}
 
-	@media (max-width: 560px) {
-		.channel-panel {
-			min-width: 0;
+	@media (min-width: 601px) {
+		.header-info {
+			flex-direction: row;
+			gap: 0.5rem;
 		}
 
-		.header-info {
-			gap: 0.2rem;
-			flex-direction: column;
+		.channel-panel {
+			width: auto;
+			min-width: 14rem;
+			flex: 0 1 24rem;
 		}
 
 		.track-panel {
-			width: 100%;
+			width: auto;
+			flex: 1 1 24rem;
+		}
+	}
+
+	@media (min-width: 769px) {
+		.deck-compact-bar {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		.progress {
+			order: 1;
+		}
+
+		.header-info {
+			order: 2;
+			flex: 1 1 42rem;
+			width: auto;
+			min-height: 0;
+		}
+
+		.row-controls {
+			order: 3;
+			flex: 1 1 20rem;
+			width: auto;
+			justify-content: flex-end;
+			flex-wrap: nowrap;
+		}
+
+		.progress :global(media-time-range) {
+			--media-control-height: initial;
 		}
 	}
 </style>
