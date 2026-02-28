@@ -1,6 +1,7 @@
 <script>
 	import {addTrack, updateTrack} from '$lib/collections/tracks'
-	import {getMedia} from 'media-now'
+	import {getMedia, parseUrl} from 'media-now'
+	import {searchUrl} from '$lib/metadata/discogs'
 	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {extractHashtags} from '$lib/utils'
@@ -22,7 +23,8 @@
 	let error = $state('')
 	let submitting = $state(false)
 	let fetchingTitle = $state(false)
-	let liveDiscogsUrl = $derived(initialDiscogsUrl)
+	let liveTitle = $state('')
+	let liveDiscogsUrl = $state('')
 	/** All possible suggestion tags from the loaded discogs resource */
 	let allDiscogsSuggestions = $state(/** @type {string[]} */ ([]))
 
@@ -34,6 +36,11 @@
 	let descriptionInput = $state()
 	let pendingUrl = ''
 
+	$effect(() => {
+		liveTitle = initialTitle
+		liveDiscogsUrl = initialDiscogsUrl
+	})
+
 	async function handleUrlInput(event) {
 		const input = /** @type {HTMLInputElement} */ (event.target)
 		if (!input.validity.valid || !input.value || titleInput?.value) return
@@ -44,6 +51,7 @@
 			const media = await getMedia(url)
 			if (media?.title && titleInput && !titleInput.value && url === pendingUrl) {
 				titleInput.value = media.title
+				liveTitle = media.title
 			}
 		} finally {
 			if (url === pendingUrl) fetchingTitle = false
@@ -72,7 +80,10 @@
 	function handleDiscogsSelectMedia(uri, title) {
 		if (!uri) return
 		if (urlInput) urlInput.value = uri
-		if (titleInput) titleInput.value = title
+		if (titleInput) {
+			titleInput.value = title
+			liveTitle = title
+		}
 		pendingUrl = uri
 	}
 
@@ -132,7 +143,18 @@
 		}
 	}
 
-	const isValidDiscogsUrl = $derived(liveDiscogsUrl?.includes('discogs.com'))
+	const hasDiscogsReleaseUrl = $derived.by(() => {
+		const parsed = parseUrl(liveDiscogsUrl?.trim() || '')
+		return parsed?.provider === 'discogs'
+	})
+	const isValidDiscogsUrl = $derived(hasDiscogsReleaseUrl)
+	const discogsActionUrl = $derived.by(() => {
+		const releaseUrl = liveDiscogsUrl?.trim()
+		if (hasDiscogsReleaseUrl && releaseUrl) return releaseUrl
+		const title = liveTitle?.trim()
+		if (!title) return ''
+		return searchUrl(title)?.searchUrl || ''
+	})
 </script>
 
 {#if error}
@@ -160,10 +182,10 @@
 		<label for="{uid}-title">Title {fetchingTitle ? '...' : ''}</label>
 		<input
 			bind:this={titleInput}
+			bind:value={liveTitle}
 			id="{uid}-title"
 			name="title"
 			type="text"
-			value={initialTitle}
 			required
 			placeholder={m.track_form_title_placeholder()}
 		/>
@@ -181,13 +203,22 @@
 	</fieldset>
 
 	<fieldset>
-		<label for="{uid}-discogs_url">Discogs URL</label>
+		<label for="{uid}-discogs_url">
+			Discogs URL
+			{#if mode === 'create' && discogsActionUrl}
+				(
+				<a
+					{...{href: discogsActionUrl, target: '_blank', rel: 'noopener noreferrer'}}
+					onclick={(event) => event.stopPropagation()}>{m.track_meta_view_discogs()}</a
+				>
+				)
+			{/if}
+		</label>
 		<input
+			bind:value={liveDiscogsUrl}
 			id="{uid}-discogs_url"
 			name="discogs_url"
 			type="url"
-			value={initialDiscogsUrl}
-			oninput={(e) => (liveDiscogsUrl = /** @type {HTMLInputElement} */ (e.target).value)}
 			placeholder={m.track_form_discogs_placeholder()}
 		/>
 	</fieldset>

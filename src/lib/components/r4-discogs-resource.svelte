@@ -57,25 +57,42 @@
 
 	/** @type {DiscogsResource | null} */
 	let resource = $state(null)
+	let loading = $state(false)
+	let loadError = $state('')
 	let selectedTags = $state(/** @type {string[]} */ ([]))
 	let initializedForUrl = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
+	let loadSeq = $state(0)
 
 	$effect(() => {
-		if (url) {
+		const discogsUrl = url?.trim() || ''
+		if (discogsUrl) {
+			const seq = ++loadSeq
+			loading = true
+			loadError = ''
 			resource = null
-			loadResource(url)
+			loadResource(discogsUrl, seq)
 		} else {
+			loadSeq++
+			loading = false
+			loadError = ''
 			resource = null
 		}
 	})
 
-	async function loadResource(discogsUrl) {
+	async function loadResource(discogsUrl, seq) {
 		try {
-			resource = await fetchDiscogs(discogsUrl)
+			const data = await fetchDiscogs(discogsUrl)
+			if (seq !== loadSeq) return
+			resource = data
+			if (!data) loadError = m.track_meta_no_discogs()
 		} catch (e) {
+			if (seq !== loadSeq) return
 			console.error('Error fetching discogs', e)
+			loadError = e instanceof Error ? e.message : String(e)
 			resource = null
+		} finally {
+			if (seq === loadSeq) loading = false
 		}
 	}
 
@@ -242,6 +259,10 @@
 		)
 	}
 
+	function selectedTrackTitle(trackName) {
+		return artistsDisplay ? `${artistsDisplay} - ${trackName}` : trackName
+	}
+
 	const suggestionsList = $derived(resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : [])
 	const releaseStats = $derived.by(() => {
 		if (!trackRows.length) return ''
@@ -284,11 +305,13 @@
 	)
 </script>
 
-{#if url && !resource}
+{#if loading}
 	<div class="r4-discogs-resource r4-discogs-resource--loading">
 		<Icon icon="tag" size={12} />
 		<span class="caps">{m.common_loading()}</span>
 	</div>
+{:else if loadError}
+	<p class="error">{m.common_error()}: {loadError}</p>
 {/if}
 
 {#if resource}
@@ -404,7 +427,7 @@
 									<button
 										type="button"
 										class="ghost use-btn"
-										onclick={() => onSelectMedia?.(track.url, row.item.title)}
+										onclick={() => onSelectMedia?.(track.url, selectedTrackTitle(row.item.title))}
 									>
 										{m.discogs_use_button()}
 									</button>
