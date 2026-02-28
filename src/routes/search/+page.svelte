@@ -19,6 +19,7 @@
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {trap} from '$lib/focus'
@@ -229,14 +230,12 @@
 							<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
 						</ButtonFeedback>
 						{#if canShowAutoRadio}
-							<button
-								type="button"
-								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
-								class:ghost={isSearchAutoActive && !isSearchAutoDrifted}
+							<AutoRadioButton
+								synced={isSearchAutoActive && !isSearchAutoDrifted}
 								title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
-							>
-								<Icon icon="infinite" size={16} />
-							</button>
+								size={16}
+								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
+							/>
 						{/if}
 					</menu>
 				</header>

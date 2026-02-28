@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/icon.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
 
@@ -127,16 +128,14 @@
 		{/each}
 
 		{#if showAutoButton}
-			<button
-				type="button"
-				class="auto-btn"
-				class:ghost={autoGhost}
+			<AutoRadioButton
+				className="auto-btn"
+				synced={autoGhost}
 				title={autoTitle}
-				aria-label={autoTitle}
+				ariaLabel={autoTitle}
+				size={14}
 				onclick={onAutoClick}
-			>
-				<Icon icon="infinite" size={14} />
-			</button>
+			/>
 		{/if}
 		{#if presenceCount > 0}
 			<PresenceCount count={presenceCount} />
