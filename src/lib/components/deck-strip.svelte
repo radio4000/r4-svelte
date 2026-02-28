@@ -1,4 +1,5 @@
 <script>
+	import {scale} from 'svelte/transition'
 	import {appState} from '$lib/app-state.svelte'
 	import Deck from '$lib/components/deck.svelte'
 
@@ -10,20 +11,35 @@
 	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
+	const deckTransitionMs = 200
+	const deckExitMs = 0
+	const deckScaleStart = 0.95
 </script>
 
 <aside class="deck-strip" class:all-compact={allDecksCompact}>
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
-				<Deck {deckId} />
+				<div
+					class="deck-item"
+					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
+					out:scale={{start: deckScaleStart, duration: deckExitMs}}
+				>
+					<Deck {deckId} />
+				</div>
 			{/each}
 		</section>
 	{/if}
 	{#if listeningDeckIds.length}
 		<section class="broadcasts" aria-label="Broadcast listener decks">
 			{#each listeningDeckIds as deckId (deckId)}
-				<Deck {deckId} />
+				<div
+					class="deck-item"
+					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
+					out:scale={{start: deckScaleStart, duration: deckExitMs}}
+				>
+					<Deck {deckId} />
+				</div>
 			{/each}
 		</section>
 	{/if}
@@ -54,6 +70,12 @@
 		display: flex;
 		flex-direction: row;
 		min-height: 0;
+	}
+
+	.deck-item {
+		display: flex;
+		min-height: 0;
+		min-width: 0;
 	}
 
 	.broadcasts {
