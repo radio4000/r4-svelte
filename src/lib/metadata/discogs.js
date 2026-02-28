@@ -1,6 +1,6 @@
 import {discoverDiscogsUrl} from 'media-now'
 import {logger} from '$lib/logger'
-import {trackMetaCollection} from '$lib/collections/track-meta'
+import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 import {tracksCollection, updateTrack} from '$lib/collections/tracks'
 import {fetchDiscogs, searchUrl, extractSuggestions} from './discogs-core.js'
 
@@ -11,24 +11,27 @@ const log = logger.ns('metadata/discogs').seal()
 
 /**
  * Fetch Discogs data from URL and save to track_meta collection
- * @param {string} mediaId YouTube video ID
+ * @param {string | null | undefined} provider Track media provider
+ * @param {string} mediaId Media ID
  * @param {string} discogsUrl Discogs release/master URL
  * @returns {Promise<Object|null>} Discogs data
  */
-export async function pullDiscogs(mediaId, discogsUrl) {
+export async function pullDiscogs(provider, mediaId, discogsUrl) {
 	if (!mediaId || !discogsUrl) return null
 
 	const discogsData = await fetchDiscogs(discogsUrl)
 	if (!discogsData) return null
 
 	try {
-		const existing = trackMetaCollection.get(mediaId)
+		const key = trackMetaKey(provider, mediaId)
+		const existing = trackMetaCollection.get(key)
 		if (existing) {
-			trackMetaCollection.update(mediaId, (draft) => {
+			trackMetaCollection.update(key, (draft) => {
+				draft.provider = provider ?? null
 				draft.discogs_data = discogsData
 			})
 		} else {
-			trackMetaCollection.insert({media_id: mediaId, discogs_data: discogsData})
+			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, discogs_data: discogsData})
 		}
 		log.info('updated', discogsData)
 		return discogsData

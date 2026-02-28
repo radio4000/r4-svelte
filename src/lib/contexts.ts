@@ -20,6 +20,8 @@ export const [getTracksQueryCtx, setTracksQueryCtx] = createContext<{
 /** Track detail state shared by [slug]/tracks/[tid] tab routes */
 export type TrackDetailCtx = {
 	track: Track | undefined
+	trackProvider: string | null
+	trackMediaId: string | null
 	channel: Channel | undefined
 	canEdit: boolean
 	meta:

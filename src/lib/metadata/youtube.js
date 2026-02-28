@@ -1,12 +1,12 @@
 import {mapChunked} from '$lib/async'
 import {logger} from '$lib/logger'
-import {trackMetaCollection} from '$lib/collections/track-meta'
+import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 
 const log = logger.ns('metadata/youtube').seal()
 
-/** @param {string[]} mediaIds */
-function getTracksToUpdate(mediaIds) {
-	return mediaIds.filter((mediaId) => !trackMetaCollection.get(mediaId)?.youtube_data)
+/** @param {Array<{provider?: string | null, mediaId: string}>} tracks */
+function getTracksToUpdate(tracks) {
+	return tracks.filter((track) => !trackMetaCollection.get(trackMetaKey(track.provider, track.mediaId))?.youtube_data)
 }
 
 /**
@@ -16,7 +16,7 @@ function getTracksToUpdate(mediaIds) {
  * @returns {Promise<Object[]>} Fetched metadata
  */
 export async function pullFromChannel(mediaIds) {
-	return await pullYouTube(mediaIds)
+	return await pullYouTube(mediaIds.map((mediaId) => ({provider: 'youtube', mediaId})))
 }
 
 /**
@@ -25,8 +25,8 @@ export async function pullFromChannel(mediaIds) {
  * @returns {Promise<Object|null>} Fetched metadata
  */
 export async function pullYouTubeSingle(mediaId) {
-	const mediaIds = [mediaId]
-	return (await pullYouTube(mediaIds))[0] || null
+	const tracks = [{provider: 'youtube', mediaId}]
+	return (await pullYouTube(tracks))[0] || null
 }
 
 /**
@@ -41,7 +41,20 @@ async function fetchBatch(ids, signal) {
 		body: JSON.stringify({ids}),
 		signal
 	})
-	if (!response.ok) throw new Error(`API error: ${response.status}`)
+	if (!response.ok) {
+		let details = ''
+		try {
+			const body = await response.json()
+			details = body?.error || JSON.stringify(body)
+		} catch {
+			try {
+				details = await response.text()
+			} catch {
+				// ignore secondary parse failures
+			}
+		}
+		throw new Error(`API error: ${response.status}${details ? ` - ${details}` : ''}`)
+	}
 	return await response.json()
 }
 
@@ -54,12 +67,12 @@ async function fetchBatch(ids, signal) {
 
 /**
  * Fetch YouTube metadata and save to track_meta collection
- * @param {string[]} mediaIds YouTube video IDs
+ * @param {Array<{provider?: string | null, mediaId: string}>} tracks YouTube media references
  * @param {{signal?: AbortSignal, onProgress?: (event: PullProgressEvent) => void | Promise<void>}} [options]
  * @returns {Promise<Array<{id: string, duration: number, title?: string, [key: string]: unknown}>>} Fetched videos with metadata
  */
-export async function pullYouTube(mediaIds, {signal, onProgress} = {}) {
-	const toUpdate = getTracksToUpdate(mediaIds)
+export async function pullYouTube(tracks, {signal, onProgress} = {}) {
+	const toUpdate = getTracksToUpdate(tracks)
 	if (toUpdate.length === 0) {
 		log.info('all tracks already have metadata')
 		return []
@@ -70,7 +83,11 @@ export async function pullYouTube(mediaIds, {signal, onProgress} = {}) {
 	const totalBatches = Math.ceil(toUpdate.length / chunkSize)
 	let currentBatch = 0
 
-	for await (const result of mapChunked(toUpdate, fetchBatch, {chunk: chunkSize, concurrency: 3, signal})) {
+	for await (const result of mapChunked(
+		toUpdate.map((track) => track.mediaId),
+		fetchBatch,
+		{chunk: chunkSize, concurrency: 3, signal}
+	)) {
 		currentBatch++
 
 		if (!result.ok) {
@@ -85,13 +102,15 @@ export async function pullYouTube(mediaIds, {signal, onProgress} = {}) {
 		for (const video of result.value) {
 			if (!video?.duration) continue
 
-			const existing = trackMetaCollection.get(video.id)
+			const key = trackMetaKey('youtube', video.id)
+			const existing = trackMetaCollection.get(key)
 			if (existing) {
-				trackMetaCollection.update(video.id, (draft) => {
+				trackMetaCollection.update(key, (draft) => {
+					draft.provider = 'youtube'
 					draft.youtube_data = video
 				})
 			} else {
-				trackMetaCollection.insert({media_id: video.id, youtube_data: video})
+				trackMetaCollection.insert({provider: 'youtube', media_id: video.id, youtube_data: video})
 			}
 			videos.push(video)
 			batchVideos.push(video)

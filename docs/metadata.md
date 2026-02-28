@@ -1,18 +1,18 @@
 # Track metadata system
 
-We enrich our tracks with data from YouTube, MusicBrainz, and Discogs. It is stored in the "trackMeta tanstack db collection" with `{ytid, youtube_data, musicbrainz_data, discogs_data}`.
+We enrich our tracks with data from YouTube, MusicBrainz, and Discogs. It is stored in the "trackMeta tanstack db collection" with `{provider, media_id, youtube_data, musicbrainz_data, discogs_data}`.
 
 All metadata is only stored locally. It is not persisted to remote, except `track.duration` which is persisted.
 
 ## Data flow
 
 ```
-track.url → ytid → pull() → trackMetaCollection
-                              ↓
-            insertDurationFromMeta() → track.duration (persisted)
+track.url → provider + media_id → pull() → trackMetaCollection
+                                           ↓
+                         updateTrack() → track.duration (persisted)
 ```
 
-The API layer keeps concerns separate: `pull` fetches metadata to local cache, `insertDurationFromMeta` copies duration to tracks. UI composes both when users expect automatic duration updates.
+Track detail metadata is fetched on demand per tab (`youtube`, `musicbrainz`, `discogs`) instead of globally on track page load.
 
 ## Providers
 
@@ -22,12 +22,14 @@ The API layer keeps concerns separate: `pull` fetches metadata to local cache, `
 
 ## Methods
 
-- `pull(ytids)` - fetch from external API and save to trackMetaCollection
-- `local(ytids)` - read from local track_meta only
+- `pull(mediaIds)` - fetch from external API and save to trackMetaCollection
+- `local(mediaIds)` - read from local track_meta only
 - `search(title)` - search external API without saving
 - `fetch(url)` - fetch external data without saving
-- `hunt(trackId, ytid, title)` - discover Discogs URL via MusicBrainz chain
-- `insertDurationFromMeta(channel, tracks)` - copy duration from trackMetaCollection to track.duration
+- `hunt(trackId, mediaId, title)` - discover Discogs URL via MusicBrainz chain
+- `pullYouTubeSingle(mediaId)` - fetch YouTube metadata on demand
+- `pullMusicBrainz(provider, mediaId, title)` - fetch MusicBrainz metadata on demand
+- `pullDiscogs(provider, mediaId, discogsUrl)` - fetch Discogs metadata on demand
 
 ## Components
 

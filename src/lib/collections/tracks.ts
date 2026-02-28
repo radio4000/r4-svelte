@@ -5,7 +5,7 @@ import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import type {Channel} from './channels'
-import {trackMetaCollection, type TrackMeta} from './track-meta'
+import {trackMetaCollection, trackMetaKey, type TrackMeta} from './track-meta'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
 
@@ -62,7 +62,14 @@ export const tracksCollection = createCollection<Track, string>({
 				query = query.order('created_at', {ascending: false}).limit(4000)
 				const {data, error} = await query
 				if (error) throw error
-				const tracks = (data || []) as Track[]
+				const tracks = ((data || []) as Track[]).map((track) => {
+					const parsed = track.url ? parseUrl(track.url) : null
+					return {
+						...track,
+						provider: track.provider ?? parsed?.provider ?? null,
+						media_id: track.media_id ?? parsed?.id ?? null
+					}
+				})
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -71,7 +78,14 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Global: full-text search
 			if (ftsEq) {
-				const tracks = await searchTracks(ftsEq, {limit: 4000})
+				const tracks = (await searchTracks(ftsEq, {limit: 4000})).map((track) => {
+					const parsed = track.url ? parseUrl(track.url) : null
+					return {
+						...track,
+						provider: track.provider ?? parsed?.provider ?? null,
+						media_id: track.media_id ?? parsed?.id ?? null
+					}
+				})
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -89,7 +103,13 @@ export const tracksCollection = createCollection<Track, string>({
 			if (serverTrack) {
 				// Merge view-only fields (e.g. slug) from the optimistic insert,
 				// since createTrack returns from the tracks table, not channel_tracks view.
-				const merged = {...m.modified, ...serverTrack}
+				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
+				const merged = {
+					...m.modified,
+					...serverTrack,
+					provider: serverTrack.provider ?? parsed?.provider ?? null,
+					media_id: serverTrack.media_id ?? parsed?.id ?? null
+				}
 				log.info('onInsert writeUpsert', {id: merged.id})
 				tracksCollection.utils.writeUpsert(merged)
 			}
@@ -101,8 +121,14 @@ export const tracksCollection = createCollection<Track, string>({
 		for (const m of transaction.mutations) {
 			const serverTrack = await handleTrackUpdate(m.modified.id, m.changes as Record<string, unknown>)
 			if (serverTrack) {
-				log.info('onUpdate writeUpsert', {id: serverTrack.id})
-				tracksCollection.utils.writeUpsert(serverTrack)
+				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
+				const normalized = {
+					...serverTrack,
+					provider: serverTrack.provider ?? parsed?.provider ?? null,
+					media_id: serverTrack.media_id ?? parsed?.id ?? null
+				}
+				log.info('onUpdate writeUpsert', {id: normalized.id})
+				tracksCollection.utils.writeUpsert(normalized)
 			}
 		}
 		log.info('onUpdate done')
@@ -127,7 +153,14 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 
 	const {data, error} = await query
 	if (error) throw error
-	return (data || []) as Track[]
+	return ((data || []) as Track[]).map((track) => {
+		const parsed = track.url ? parseUrl(track.url) : null
+		return {
+			...track,
+			provider: track.provider ?? parsed?.provider ?? null,
+			media_id: track.media_id ?? parsed?.id ?? null
+		}
+	})
 }
 
 async function handleTrackInsert(track: Track, metadata: Record<string, unknown>): Promise<Track | null> {
@@ -162,7 +195,10 @@ async function handleTrackDelete(id: string): Promise<void> {
 
 export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
 	if (!track.media_id) return track
-	const meta = trackMetaCollection.get(track.media_id)
+	const provider = track.provider ?? null
+	const meta =
+		trackMetaCollection.get(trackMetaKey(provider, track.media_id)) ??
+		trackMetaCollection.get(trackMetaKey(null, track.media_id))
 	if (!meta) return track
 	return {...track, ...meta}
 }
@@ -172,8 +208,8 @@ export function addTrack(
 	input: {url: string; title: string; description?: string; discogs_url?: string}
 ) {
 	const parsed = parseUrl(input.url)
-	const media_id = parsed?.provider === 'youtube' ? parsed.id : null
-	const provider = parsed?.provider || null
+	const provider = parsed?.provider ?? null
+	const media_id = parsed?.id ?? null
 	return tracksCollection
 		.insert(
 			{
@@ -199,9 +235,14 @@ export function addTrack(
 }
 
 export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
+	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(id, {metadata: {slug: channel.slug}}, (draft) => {
 			Object.assign(draft, changes)
+			if (parsed) {
+				draft.provider = parsed?.provider ?? null
+				draft.media_id = parsed?.id ?? null
+			}
 		})
 		.isPersisted.promise.then(() => {})
 }
@@ -211,10 +252,15 @@ export function deleteTrack(channel: {id: string; slug: string}, id: string) {
 }
 
 export function batchUpdateTracksUniform(channel: Channel, ids: string[], changes: Record<string, unknown>) {
+	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(ids, {metadata: {slug: channel.slug}}, (drafts) => {
 			for (const draft of drafts as Array<Track>) {
 				Object.assign(draft, changes)
+				if (parsed) {
+					draft.provider = parsed?.provider ?? null
+					draft.media_id = parsed?.id ?? null
+				}
 			}
 		})
 		.isPersisted.promise.then(() => {})
@@ -231,7 +277,13 @@ export function batchUpdateTracksIndividual(
 			(drafts) => {
 				for (const draft of drafts as Array<Track>) {
 					const update = updates.find((u) => u.id === draft.id)
-					if (update) Object.assign(draft, update.changes)
+					if (!update) continue
+					Object.assign(draft, update.changes)
+					if (typeof update.changes.url === 'string') {
+						const parsed = parseUrl(update.changes.url)
+						draft.provider = parsed?.provider ?? null
+						draft.media_id = parsed?.id ?? null
+					}
 				}
 			}
 		)
@@ -324,7 +376,10 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	for (const track of tracks) {
 		if (track.duration) continue
 		if (!track.media_id) continue
-		const meta = trackMetaCollection.get(track.media_id)
+		const provider = track.provider ?? null
+		const meta =
+			trackMetaCollection.get(trackMetaKey(provider, track.media_id)) ??
+			trackMetaCollection.get(trackMetaKey(null, track.media_id))
 		if (!meta?.youtube_data?.duration) continue
 		updates.push({id: track.id, changes: {duration: meta.youtube_data.duration}})
 	}

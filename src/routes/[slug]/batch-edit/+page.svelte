@@ -4,7 +4,7 @@
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import {page} from '$app/state'
 	import {fuzzySearch} from '$lib/search'
-	import {trackMetaCollection} from '$lib/collections/track-meta'
+	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 	import {updateTrack, insertDurationFromMeta} from '$lib/collections/tracks'
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {canEditChannel} from '$lib/app-state.svelte'
@@ -24,14 +24,20 @@
 
 	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
 
+	function getTrackProvider(track) {
+		return track.provider ?? null
+	}
+
 	let channel = $derived(channelCtx.data)
 	let rawTracks = $derived(tracksQuery.data || [])
-	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [m.media_id, m]) || []))
+	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [trackMetaKey(m.provider, m.media_id), m]) || []))
 	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
 			if (!track.media_id) return track
-			const meta = metaMap.get(track.media_id)
+			const provider = getTrackProvider(track)
+			const meta =
+				metaMap.get(trackMetaKey(provider, track.media_id)) ?? metaMap.get(trackMetaKey(null, track.media_id))
 			return meta ? {...track, ...meta} : track
 		})
 	)
@@ -61,7 +67,9 @@
 	}
 
 	// All tracks missing YouTube metadata
-	let allTracksMissingMeta = $derived(tracks.filter((t) => !t.youtube_data && !t.playback_error))
+	let allTracksMissingMeta = $derived(
+		tracks.filter((track) => getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error)
+	)
 
 	// Selection-aware: fetch for selected tracks if any, otherwise all missing meta
 	let targetTracksMissingMeta = $derived(
@@ -75,8 +83,10 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const mediaIds = /** @type {string[]} */ (targetTracksMissingMeta.map((t) => t.media_id).filter(Boolean))
-			await pullYouTube(mediaIds, {
+			const youtubeRefs = targetTracksMissingMeta
+				.map((track) => ({provider: getTrackProvider(track), mediaId: track.media_id ?? ''}))
+				.filter((track) => track.provider === 'youtube' && track.mediaId !== '')
+			await pullYouTube(youtubeRefs, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}

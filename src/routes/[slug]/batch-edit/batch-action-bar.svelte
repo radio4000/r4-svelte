@@ -20,7 +20,11 @@
 	let selectedTracks = $derived(selectedIds.map((id) => tracks.find((t) => t.id === id)).filter((t) => t !== undefined))
 
 	// Selected tracks missing YouTube metadata
-	let selectedMissingMeta = $derived(selectedTracks.filter((t) => !t.youtube_data && !t.playback_error))
+	let selectedMissingMeta = $derived(
+		selectedTracks.filter(
+			(track) => getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error
+		)
+	)
 
 	// Tracks that have metadata duration but no track duration
 	let tracksWithMetaDuration = $derived(selectedTracks.filter((t) => !t.duration && t.youtube_data?.duration))
@@ -33,6 +37,10 @@
 
 	// Tags present in selected tracks
 	let selectedTracksTags = $derived(getChannelTags(selectedTracks))
+
+	function getTrackProvider(track) {
+		return track.provider ?? null
+	}
 
 	function closeDialogs() {
 		showAppend = false
@@ -76,9 +84,11 @@
 	}
 
 	function removeMeta() {
-		const mediaIds = /** @type {string[]} */ (tracksWithMeta.map((t) => t.media_id).filter(Boolean))
-		if (mediaIds.length === 0) return
-		deleteTrackMeta(mediaIds)
+		const refs = tracksWithMeta
+			.filter((track) => track.media_id)
+			.map((track) => ({provider: getTrackProvider(track), media_id: track.media_id}))
+		if (refs.length === 0) return
+		deleteTrackMeta(refs)
 	}
 
 	async function fetchMeta() {
@@ -86,8 +96,10 @@
 		fetchingMeta = true
 		fetchProgress = {current: 0, total: 0}
 		try {
-			const mediaIds = /** @type {string[]} */ (selectedMissingMeta.map((t) => t.media_id).filter(Boolean))
-			await pullYouTube(mediaIds, {
+			const youtubeRefs = selectedMissingMeta
+				.map((track) => ({provider: getTrackProvider(track), mediaId: track.media_id ?? ''}))
+				.filter((track) => track.provider === 'youtube' && track.mediaId !== '')
+			await pullYouTube(youtubeRefs, {
 				onProgress: ({current, total}) => {
 					fetchProgress = {current, total}
 				}

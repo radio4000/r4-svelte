@@ -577,7 +577,7 @@
 	"track_meta_genres": "genres",
 	"track_meta_label": "label",
 	"track_meta_length": "length",
-	"track_meta_loading": "Loading meta data from YouTube, MusicBrainz, and Discogs…",
+	"track_meta_loading": "Loading metadata…",
 	"track_meta_metadata": "metadata",
 	"track_meta_musicbrainz": "musicbrainz",
 	"track_meta_no_data": "No track data available",

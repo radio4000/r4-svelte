@@ -1,43 +1,69 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {relativeDate, formatDuration} from '$lib/dates.js'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
+	import {parseUrl} from 'media-now/parse-url'
+	import {parseTitle} from 'media-now/parse-title'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
 	let showRaw = $state(false)
+	const sourceProvider = $derived(data?.provider || (data?.url ? parseUrl(data.url)?.provider : null) || null)
+	const parsedTitle = $derived(data?.title ? parseTitle(data.title) : null)
+	const parsedArtist = $derived(parsedTitle?.artist || null)
+	const parsedRecording = $derived(parsedTitle?.title || null)
+	const hasMetadata = $derived(
+		Boolean(
+			data?.has_youtube_meta ||
+			data?.has_musicbrainz_meta ||
+			data?.has_discogs_meta ||
+			data?.youtube_data ||
+			data?.musicbrainz_data ||
+			data?.discogs_data
+		)
+	)
 </script>
 
 {#if data}
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
-		<dl class="meta">
+		<MetaDefinitionList>
+			{#if data.slug}
+				<dt><Icon icon="radio" size={14} /> {m.track_meta_channel()}</dt>
+				<dd><a href={resolve(`/${data.slug}`)}>@{data.slug}</a></dd>
+			{/if}
+
 			{#if data.title}
-				<dt>{m.track_meta_title()}</dt>
+				<dt><Icon icon="html" size={14} /> {m.track_meta_title()}</dt>
 				<dd>{data.title}</dd>
 			{/if}
 
-			{#if data.slug}
-				<dt>{m.track_meta_channel()}</dt>
-				<dd><a href="/{data.slug}">@{data.slug}</a></dd>
+			{#if parsedArtist}
+				<dt><Icon icon="users" size={14} /> {m.track_meta_artist()}</dt>
+				<dd>{parsedArtist}</dd>
 			{/if}
 
-			{#if data.url}
-				<dt>{m.track_meta_source()}</dt>
-				<dd><a href={data.url} target="_blank" rel="noopener noreferrer">{m.track_meta_youtube()}</a></dd>
+			{#if parsedRecording && parsedRecording !== data.title}
+				<dt><Icon icon="circle-info" size={14} /> {m.track_meta_recording()}</dt>
+				<dd>{parsedRecording}</dd>
 			{/if}
 
-			{#if data.discogs_url}
-				<dt>{m.track_meta_discogs()}</dt>
-				<dd>
-					<a href={data.discogs_url} target="_blank" rel="noopener noreferrer">{m.track_meta_view_release()}</a>
-				</dd>
+			{#if data.description}
+				<dt><Icon icon="message-circle" size={14} /> {m.track_meta_description()}</dt>
+				<dd class="description"><LinkEntities slug={data.slug ?? undefined} text={data.description} /></dd>
+			{/if}
+
+			{#if data.duration}
+				<dt><Icon icon="history" size={14} /> {m.track_meta_duration()}</dt>
+				<dd>{formatDuration(data.duration)}</dd>
 			{/if}
 
 			{#if data.tags && data.tags.length > 0}
-				<dt>{m.track_meta_tags()}</dt>
+				<dt><Icon icon="tag" size={14} /> {m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
 						<Tag href="/search?q={encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}">#{tag}</Tag>
@@ -46,7 +72,7 @@
 			{/if}
 
 			{#if data.mentions && data.mentions.length > 0}
-				<dt>mentions</dt>
+				<dt><Icon icon="users" size={14} /> mentions</dt>
 				<dd class="mentions">
 					{#each data.mentions as mention (mention)}
 						<Tag href="/{mention}">@{mention}</Tag>
@@ -55,37 +81,33 @@
 			{/if}
 
 			{#if data.created_at}
-				<dt>{m.track_meta_added()}</dt>
+				<dt><Icon icon="history" size={14} /> {m.track_meta_added()}</dt>
 				<dd>{relativeDate(data.created_at)}</dd>
 			{/if}
 
 			{#if data.updated_at && data.updated_at !== data.created_at}
-				<dt>{m.track_meta_updated()}</dt>
+				<dt><Icon icon="history" size={14} /> {m.track_meta_updated()}</dt>
 				<dd>{relativeDate(data.updated_at)}</dd>
 			{/if}
 
-			{#if data.duration}
-				<dt>{m.track_meta_duration()}</dt>
-				<dd>{formatDuration(data.duration)}</dd>
+			{#if data.url}
+				<dt><Icon icon="document-download" size={14} /> {m.track_meta_source()}</dt>
+				<dd>
+					<a {...{href: data.url, target: '_blank', rel: 'noopener noreferrer'}}>
+						{sourceProvider || 'unknown'}
+					</a>
+				</dd>
 			{/if}
 
-			{#if data.playback_error}
-				<dt>{m.track_meta_playback_error()}</dt>
-				<dd>{data.playback_error}</dd>
+			{#if hasMetadata}
+				<dt><Icon icon="sparkles" size={14} /> {m.track_meta_metadata()}</dt>
+				<dd>
+					{#if data.has_youtube_meta || data.youtube_data}{m.track_meta_flag_youtube()}{/if}
+					{#if data.has_musicbrainz_meta || data.musicbrainz_data}{m.track_meta_flag_musicbrainz()}{/if}
+					{#if data.has_discogs_meta || data.discogs_data}{m.track_meta_flag_discogs()}{/if}
+				</dd>
 			{/if}
-
-			{#if data.description}
-				<dt>{m.track_meta_description()}</dt>
-				<dd class="description"><LinkEntities slug={data.slug ?? undefined} text={data.description} /></dd>
-			{/if}
-
-			<dt>{m.track_meta_metadata()}</dt>
-			<dd>
-				{#if data.has_youtube_meta}{m.track_meta_flag_youtube()}{/if}
-				{#if data.has_musicbrainz_meta}{m.track_meta_flag_musicbrainz()}{/if}
-				{#if data.has_discogs_meta}{m.track_meta_flag_discogs()}{/if}
-			</dd>
-		</dl>
+		</MetaDefinitionList>
 	{/if}
 	<menu class="meta-toolbar">
 		<button

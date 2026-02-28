@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
@@ -6,7 +7,6 @@
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
-	import TrackMeta from '$lib/components/track-meta.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -21,15 +21,19 @@
 	const isTrackPlaying = $derived(
 		Boolean(track?.id && Object.values(appState.decks).some((d) => d.playlist_track === track.id))
 	)
-	const mediaId = $derived(track?.media_id ?? null)
+	const trackProvider = $derived(track?.provider ?? null)
+	const trackMediaId = $derived(track?.media_id ?? null)
+	const isYoutubeTrack = $derived(trackProvider === 'youtube')
 	const relatedTracks = $derived.by(() => {
-		if (!track?.media_id) return []
-		return (tracksQuery.data ?? []).filter((t) => t.id !== track.id && t.media_id === track.media_id)
+		if (!trackMediaId || !track?.id) return []
+		return (tracksQuery.data ?? []).filter((t) => {
+			return t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+		})
 	})
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => eq(meta.media_id, mediaId || ''))
+			.where(({meta}) => eq(meta.media_id, trackMediaId || '') && eq(meta.provider, trackProvider))
 			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
@@ -44,6 +48,8 @@
 	const detail = $state(
 		/** @type {import('$lib/contexts').TrackDetailCtx} */ ({
 			track: undefined,
+			trackProvider: null,
+			trackMediaId: null,
 			channel: undefined,
 			canEdit: false,
 			meta: undefined,
@@ -59,6 +65,8 @@
 	$effect(() => {
 		Object.assign(detail, {
 			track,
+			trackProvider,
+			trackMediaId,
 			channel,
 			canEdit,
 			meta,
@@ -95,43 +103,48 @@
 		<header>
 			<div class="tabs track-tabs">
 				<nav aria-label={m.track_meta_title()}>
-					<a href="/{data.slug}/tracks/{data.tid}" class:active={pathname === `/${data.slug}/tracks/${data.tid}`}>
+					<a
+						href={resolve(`/${data.slug}/tracks/${data.tid}`)}
+						class:active={pathname === `/${data.slug}/tracks/${data.tid}`}
+					>
 						<Icon icon="circle-info" size={16} />
 						{m.track_detail_nav_r5()}
 					</a>
 					<a
-						href="/{data.slug}/tracks/{data.tid}/youtube"
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
+						href={resolve(`/${data.slug}/tracks/${data.tid}/related`)}
+						class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
 					>
-						<Icon icon="play-fill" size={16} />
-						{m.track_detail_nav_youtube()}
+						<Icon icon="sparkles" size={16} />
+						{m.track_detail_nav_related()}
 					</a>
+					{#if isYoutubeTrack || hasYoutubeInfo}
+						<a
+							href={resolve(`/${data.slug}/tracks/${data.tid}/youtube`)}
+							class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
+						>
+							<Icon icon="play-fill" size={16} />
+							{m.track_detail_nav_youtube()}
+						</a>
+					{/if}
 					<a
-						href="/{data.slug}/tracks/{data.tid}/musicbrainz"
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
-					>
-						<Icon icon="code-branch" size={16} />
-						{m.track_detail_nav_musicbrainz()}
-					</a>
-					<a
-						href="/{data.slug}/tracks/{data.tid}/discogs"
+						href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
 					>
 						<Icon icon="tag" size={16} />
 						{m.track_detail_nav_discogs()}
 					</a>
 					<a
-						href="/{data.slug}/tracks/{data.tid}/related"
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
+						href={resolve(`/${data.slug}/tracks/${data.tid}/musicbrainz`)}
+						class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
 					>
-						<Icon icon="sparkles" size={16} />
-						{m.track_detail_nav_related()}
+						<Icon icon="code-branch" size={16} />
+						{m.track_detail_nav_musicbrainz()}
 					</a>
 				</nav>
 				{#if canEdit}
 					<nav class="track-tabs-secondary" aria-label={m.common_edit()}>
 						<a
-							href="/{data.slug}/tracks/{data.tid}/edit"
+							href={resolve(`/${data.slug}/tracks/${data.tid}/edit`)}
 							class:active={pathname === `/${data.slug}/tracks/${data.tid}/edit`}
 						>
 							<Icon icon="settings" size={16} />
@@ -145,10 +158,6 @@
 		<main class="meta">
 			{@render children()}
 		</main>
-
-		<hr />
-
-		<TrackMeta {track} {channel} />
 	</article>
 {/if}
 
