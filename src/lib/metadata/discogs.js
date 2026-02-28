@@ -21,6 +21,13 @@ export async function pullDiscogs(provider, mediaId, discogsUrl) {
 
 	const discogsData = await fetchDiscogs(discogsUrl)
 	if (!discogsData) return null
+	const normalizedDiscogsData = {
+		...discogsData,
+		_meta: {
+			...(discogsData?._meta && typeof discogsData._meta === 'object' ? discogsData._meta : {}),
+			sourceUrl: discogsUrl
+		}
+	}
 
 	try {
 		const key = trackMetaKey(provider, mediaId)
@@ -28,13 +35,13 @@ export async function pullDiscogs(provider, mediaId, discogsUrl) {
 		if (existing) {
 			trackMetaCollection.update(key, (draft) => {
 				draft.provider = provider ?? null
-				draft.discogs_data = discogsData
+				draft.discogs_data = normalizedDiscogsData
 			})
 		} else {
-			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, discogs_data: discogsData})
+			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, discogs_data: normalizedDiscogsData})
 		}
-		log.info('updated', discogsData)
-		return discogsData
+		log.info('updated', normalizedDiscogsData)
+		return normalizedDiscogsData
 	} catch (error) {
 		log.error('insert failed', {mediaId, discogsUrl, error})
 		return null

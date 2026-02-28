@@ -5,6 +5,8 @@ const log = logger.ns('metadata/discogs').seal()
 
 /** In-memory cache: url → {data, ts} — avoids repeat API hits within a session */
 const fetchCache = new Map()
+/** In-flight requests: url → promise — avoids duplicate concurrent API hits */
+const inFlight = new Map()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
 /**
@@ -13,22 +15,35 @@ const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
  * @returns {Promise<Object|null>} Discogs data
  */
 export async function fetchDiscogs(discogsUrl) {
-	const cached = fetchCache.get(discogsUrl)
+	const key = discogsUrl?.trim()
+	if (!key) return null
+
+	const cached = fetchCache.get(key)
 	if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data
 
-	try {
-		const result = await getMedia(discogsUrl)
-		if (!result?.payload) return null
-		const data = {
-			...result.payload,
-			_meta: {fetchedAt: new Date().toISOString()}
+	const pending = inFlight.get(key)
+	if (pending) return pending
+
+	const request = (async () => {
+		try {
+			const result = await getMedia(key)
+			if (!result?.payload) return null
+			const data = {
+				...result.payload,
+				_meta: {fetchedAt: new Date().toISOString(), sourceUrl: key}
+			}
+			fetchCache.set(key, {data, ts: Date.now()})
+			return data
+		} catch (error) {
+			log.error('fetch failed', {discogsUrl: key, error})
+			return null
+		} finally {
+			inFlight.delete(key)
 		}
-		fetchCache.set(discogsUrl, {data, ts: Date.now()})
-		return data
-	} catch (error) {
-		log.error('fetch failed', {discogsUrl, error})
-		return null
-	}
+	})()
+
+	inFlight.set(key, request)
+	return request
 }
 
 /**
