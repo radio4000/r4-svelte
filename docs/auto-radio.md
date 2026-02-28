@@ -52,8 +52,12 @@ Range seek and other UI controls do not directly set `auto_radio_drifted` anymor
 
 The Auto button uses the same `infinite` icon in both states:
 
-- synced: ghost button style
+- synced: ghost button style + animated rotating gradient stroke (live/synced signal)
 - drifted: normal button style
+
+All infinity auto controls now use one shared UI component: `components/auto-radio-button.svelte`.
+
+Accessibility: with `prefers-reduced-motion: reduce`, the synced icon falls back to a static accent stroke (no animation).
 
 In deck and channel headers, the Auto button now sits after the linked `@slug` and linked `#tags` metadata row.
 
@@ -75,6 +79,7 @@ Auto-radio uses these `Deck` fields:
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
 - `api.ts` — `joinAutoRadio`, `resyncAutoRadio`
+- `components/auto-radio-button.svelte` — shared infinity auto button UI across headers/pages/search
 - `components/player.svelte` — computed drift detection + auto/live status UI
 - `broadcast.js` — `calculateSeekTime` (speed-aware expected position for listeners)
 - `[slug]/+layout.svelte` — full-channel join button
