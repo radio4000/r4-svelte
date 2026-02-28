@@ -242,6 +242,10 @@
 		)
 	}
 
+	function selectedTrackTitle(trackName) {
+		return artistsDisplay ? `${artistsDisplay} - ${trackName}` : trackName
+	}
+
 	const suggestionsList = $derived(resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : [])
 	const releaseStats = $derived.by(() => {
 		if (!trackRows.length) return ''
@@ -404,7 +408,7 @@
 									<button
 										type="button"
 										class="ghost use-btn"
-										onclick={() => onSelectMedia?.(track.url, row.item.title)}
+										onclick={() => onSelectMedia?.(track.url, selectedTrackTitle(row.item.title))}
 									>
 										{m.discogs_use_button()}
 									</button>
