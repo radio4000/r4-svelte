@@ -1,5 +1,6 @@
 <script>
 	import '../styles/style.css'
+	import {scale} from 'svelte/transition'
 	import {appState} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
@@ -42,6 +43,9 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
+	const compactDeckTransitionMs = 200
+	const compactDeckExitMs = 0
+	const compactDeckScaleStart = 0.95
 
 	function inferNavigatorLocale() {
 		if (typeof navigator === 'undefined') return undefined
@@ -194,13 +198,17 @@
 
 							<DeckStrip />
 						</section>
-						{#if compactDeckIds.length}
-							<section class="compact-decks" aria-label="Compact decks">
-								{#each compactDeckIds as deckId (deckId)}
+						<section class="compact-decks" aria-label="Compact decks">
+							{#each compactDeckIds as deckId (deckId)}
+								<div
+									class="compact-deck-item"
+									in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
+									out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
+								>
 									<DeckCompactBar {deckId} />
-								{/each}
-							</section>
-						{/if}
+								</div>
+							{/each}
+						</section>
 					</div>
 
 					{#if chatPanelVisible}
@@ -300,6 +308,10 @@
 		position: sticky;
 		bottom: 0;
 		z-index: 30;
+	}
+
+	.compact-deck-item {
+		min-width: 0;
 	}
 
 	.compact-decks:empty {
