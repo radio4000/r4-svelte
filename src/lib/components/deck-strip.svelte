@@ -1,6 +1,8 @@
 <script>
+	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {appState} from '$lib/app-state.svelte'
+	import {playHistoryCollection} from '$lib/collections/play-history'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -9,23 +11,42 @@
 			.map(Number)
 			.sort((a, b) => a - b)
 	)
-	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
-	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
-	let nonCompactDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.compact))
-	let splitDecks = $derived(nonCompactDeckIds.length > 1)
+	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
+	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+
+	let visibleDeckIds = $derived(
+		deckIds.filter((id) => {
+			const deck = appState.decks[id]
+			if (!deck || !showPlayer) return false
+			if (id !== 1) return true
+			const hasContent = (deck.playlist_tracks?.length ?? 0) > 0 || Boolean(deck.playlist_track) || hasHistory
+			return hasContent
+		})
+	)
+	let listeningDeckIds = $derived(visibleDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
+	let localDeckIds = $derived(visibleDeckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
+	const deckNeedsSpace = (deck) =>
+		Boolean(
+			deck && !deck.compact && (!deck.hide_video_player || (!deck.listening_to_channel_id && !deck.hide_queue_panel))
+		)
+	let localFillDeckIds = $derived(localDeckIds.filter((id) => deckNeedsSpace(appState.decks[id])))
+	let listeningFillDeckIds = $derived(listeningDeckIds.filter((id) => deckNeedsSpace(appState.decks[id])))
+	let totalFillDecks = $derived(localFillDeckIds.length + listeningFillDeckIds.length)
+	let hasFillDecks = $derived(totalFillDecks > 0)
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
 	const deckTransitionMs = 200
 	const deckExitMs = 0
 	const deckScaleStart = 0.95
 </script>
 
-<aside class="deck-strip" class:all-compact={allDecksCompact} class:split-decks={splitDecks}>
+<aside class="deck-strip" class:all-compact={allDecksCompact} class:has-fill={hasFillDecks}>
 	{#if localDeckIds.length}
-		<section class="local">
+		<section class="local" style={`--fill-count: ${localFillDeckIds.length}`}>
 			{#each localDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
 					class:compact={appState.decks[deckId]?.compact}
+					class:fill={deckNeedsSpace(appState.decks[deckId])}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -35,11 +56,16 @@
 		</section>
 	{/if}
 	{#if listeningDeckIds.length}
-		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
+		<section
+			class="broadcasts"
+			aria-label={m.decks_broadcast_listeners()}
+			style={`--fill-count: ${listeningFillDeckIds.length}`}
+		>
 			{#each listeningDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
 					class:compact={appState.decks[deckId]?.compact}
+					class:fill={deckNeedsSpace(appState.decks[deckId])}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -102,8 +128,17 @@
 		.deck-strip {
 			flex-direction: column;
 			height: auto;
-			flex-shrink: 1;
 			overflow-y: auto;
+		}
+
+		.deck-strip:not(.all-compact) {
+			flex: 0 1 auto;
+			min-height: 0;
+		}
+
+		.deck-strip.has-fill:not(.all-compact) {
+			flex: 1 1 0;
+			min-height: 100%;
 		}
 
 		.local {
@@ -113,23 +148,29 @@
 
 		.broadcasts {
 			overflow-y: visible;
-			flex: 1 1 auto;
+			flex-direction: column;
 			min-width: 0;
 		}
 
-		.deck-strip.split-decks {
+		.deck-strip.has-fill .local,
+		.deck-strip.has-fill .broadcasts {
+			flex: var(--fill-count, 0) 1 0;
+			flex-direction: column-reverse;
+			min-height: 0;
+		}
+
+		.deck-strip .deck-item.compact {
+			flex: 0 0 auto;
+			min-width: 0;
+		}
+
+		.deck-strip .deck-item:not(.fill) {
 			flex: 0 1 auto;
 			min-height: 0;
-			max-height: 100%;
 		}
 
-		.deck-strip.split-decks .local,
-		.deck-strip.split-decks .broadcasts {
-			display: contents;
-		}
-
-		.deck-strip.split-decks .deck-item:not(.compact) {
-			flex: 1 1 auto;
+		.deck-strip .deck-item.fill {
+			flex: 1 1 0;
 			min-height: 0;
 		}
 	}

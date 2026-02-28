@@ -38,8 +38,15 @@
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
-	let normalDeckCount = $derived(Object.values(appState.decks).filter((deck) => !deck.compact).length)
-	let prioritizeDecksOnMobile = $derived(normalDeckCount > 1)
+	let fillDeckCount = $derived(
+		Object.values(appState.decks).filter(
+			(deck) =>
+				Boolean(deck) &&
+				!deck.compact &&
+				(!deck.hide_video_player || (!deck.listening_to_channel_id && !deck.hide_queue_panel))
+		).length
+	)
+	let prioritizeDecksOnMobile = $derived(fillDeckCount > 0)
 	let compactDeckIds = $derived(
 		Object.values(appState.decks)
 			.filter((deck) => deck.compact)
