@@ -244,9 +244,6 @@
 								<Icon icon="favorite" />
 							</a>
 						{/if}
-						<button type="button" onclick={() => (appState.modal_share = {channel})} title={m.share_native()}>
-							<Icon icon="share" size={16} />
-						</button>
 					</span>
 				</menu>
 			</header>
