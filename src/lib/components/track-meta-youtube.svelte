@@ -72,4 +72,19 @@
 		justify-content: flex-end;
 		margin-top: 0.5rem;
 	}
+
+	.description {
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.tags a {
+		overflow-wrap: anywhere;
+	}
 </style>
