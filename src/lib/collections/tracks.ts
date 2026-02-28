@@ -171,7 +171,8 @@ async function handleTrackInsert(track: Track, metadata: Record<string, unknown>
 		id: track.id,
 		url: track.url,
 		title: track.title,
-		description: track.description || undefined
+		description: track.description || undefined,
+		discogs_url: track.discogs_url || undefined
 	})
 	log.info('insert_done', {clientId: track.id, serverId: data?.id, match: track.id === data?.id, error})
 	if (error) throw new Error(getErrorMessage(error))
