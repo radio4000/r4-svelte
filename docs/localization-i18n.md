@@ -14,6 +14,34 @@ bun run i18n
 
 This syncs all languages with English (adds missing keys using English as placeholder, removes orphaned keys not in English, sorts alphabetically) and recompiles Paraglide. The script lives at `i18n/sync.js` if you're curious.
 
+## Monthly translation batch workflow
+
+If you translate in batches (for example once per month), use this workflow:
+
+```bash
+# 1) Sync keys from en and compile runtime messages
+bun run i18n
+
+# 2) Extract untranslated keys into a batch file template
+bun run i18n:extract -- i18n/batches/2026-03.json
+
+# 3) Edit i18n/batches/2026-03.json with real translations
+#    (keep all {placeholders} unchanged)
+
+# 4) Apply the batch into locale files
+bun run i18n:apply -- i18n/batches/2026-03.json
+
+# 5) Re-sync/compile and verify
+bun run i18n
+bun run i18n:check
+```
+
+Scripts:
+
+- `i18n/extract-batch.js` generates a translation batch JSON with keys still identical to English.
+- `i18n/apply-batch.js` applies a batch JSON to locale files and validates interpolation placeholders.
+- See `i18n/batches/template.json` for the expected batch file format.
+
 ## Full example, how to add Spanish (`es`)
 
 ```bash
