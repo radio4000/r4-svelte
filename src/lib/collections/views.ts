@@ -11,7 +11,7 @@ export interface SavedView {
 	id: string
 	name: string
 	description?: string
-	params: ViewURI
+	uri: ViewURI
 	position?: number // non-null = pinned, value = sort order
 	created_at: string
 }
@@ -27,7 +27,7 @@ export function createView(name: string, view: View, description?: string): Save
 	const entry: SavedView = {
 		id: uuid(),
 		name,
-		params: serializeView(view),
+		uri: serializeView(view),
 		created_at: new Date().toISOString(),
 		...(description ? {description} : {})
 	}
@@ -36,14 +36,11 @@ export function createView(name: string, view: View, description?: string): Save
 	return entry
 }
 
-export function updateView(
-	id: string,
-	updates: Partial<Pick<SavedView, 'name' | 'description' | 'params' | 'position'>>
-) {
+export function updateView(id: string, updates: Partial<Pick<SavedView, 'name' | 'description' | 'uri' | 'position'>>) {
 	viewsCollection.update(id, (draft) => {
 		if (updates.name !== undefined) draft.name = updates.name
 		if (updates.description !== undefined) draft.description = updates.description
-		if (updates.params !== undefined) draft.params = updates.params
+		if (updates.uri !== undefined) draft.uri = updates.uri
 		if (updates.position !== undefined) draft.position = updates.position
 	})
 	log.info('Updated view', {id, updates})

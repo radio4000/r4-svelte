@@ -24,7 +24,7 @@
 
 	// Active detection
 	const currentParams = $derived(serializeView(view))
-	const activeViewId = $derived(savedViews.find((sv) => sv.params === currentParams)?.id ?? null)
+	const activeViewId = $derived(savedViews.find((sv) => sv.uri === currentParams)?.id ?? null)
 	const baseViewName = $derived(baseViewId ? savedViews.find((sv) => sv.id === baseViewId)?.name : null)
 
 	// Dirty detection
@@ -80,7 +80,7 @@
 
 	function updateBaseView() {
 		if (!baseViewId) return
-		updateView(baseViewId, {params: currentParams})
+		updateView(baseViewId, {uri: currentParams})
 		lastSavedParams = currentParams
 		mode = 'idle'
 	}
@@ -93,9 +93,9 @@
 	}
 
 	function clickView(sv: SavedView) {
-		lastSavedParams = sv.params
+		lastSavedParams = sv.uri
 		baseViewId = sv.id
-		onchange(parseView(sv.params))
+		onchange(parseView(sv.uri))
 	}
 
 	const viewSummary = $derived.by(() => {
@@ -185,7 +185,8 @@
 									<fieldset class="row">
 										<select
 											value={q.tagsMode || 'any'}
-											onchange={(e) => updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+											onchange={(e) =>
+												updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
 										>
 											<option value="any">{m.views_tags_any()}</option>
 											<option value="all">{m.views_tags_all()}</option>
@@ -193,7 +194,8 @@
 										<input
 											type="text"
 											value={q.tags?.join(', ') || ''}
-											onchange={(e) => updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+											onchange={(e) =>
+												updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
 											placeholder={m.views_tags_placeholder()}
 										/>
 									</fieldset>

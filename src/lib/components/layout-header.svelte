@@ -13,7 +13,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import PinsNav from '$lib/components/pins-nav.svelte'
+
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appPresence} from '$lib/presence.svelte'

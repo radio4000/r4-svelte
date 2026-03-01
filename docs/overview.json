@@ -233,7 +233,7 @@
 		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
 		{"name": "viewLabel(view)", "desc": "All queries as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
-		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."}
+		{"name": "viewURI(view?)", "desc": "Canonical serialized key for comparing View identity."}
 	],
 
 	"src/lib/views.svelte.ts": [
@@ -252,10 +252,10 @@
 	],
 
 	"src/lib/collections/views.ts": [
-		{"name": "SavedView", "desc": "Type: {id, name, params, position?, description?, created_at}."},
+		{"name": "SavedView", "desc": "Type: {id, name, uri, position?, description?, created_at}."},
 		{"name": "viewsCollection", "desc": "localStorage collection of saved views."},
 		{"name": "createView(name, view, description?)", "desc": "Create and persist a SavedView."},
-		{"name": "updateView(id, updates)", "desc": "Update name/description/params/position."},
+		{"name": "updateView(id, updates)", "desc": "Update name/description/uri/position."},
 		{"name": "deleteView(id)", "desc": "Delete a saved view."},
 		{"name": "getPinnedViews()", "desc": "All pinned views sorted by position."},
 		{"name": "pinView(id)", "desc": "Pin a view (appends to end)."},

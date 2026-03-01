@@ -1,6 +1,15 @@
 import {describe, test, expect} from 'vitest'
-import {parseQuery, serializeQuery, parseView, serializeView, normalizeView, viewKey, viewLabel, viewFromUrl} from './views'
-import type {View, ViewURI} from './views'
+import {
+	parseQuery,
+	serializeQuery,
+	parseView,
+	serializeView,
+	normalizeView,
+	viewURI,
+	viewLabel,
+	viewFromUrl
+} from './views'
+import type {View} from './views'
 
 const channelPrefixRe = /^@ko002\?/
 
@@ -179,19 +188,19 @@ describe('viewLabel', () => {
 	})
 })
 
-describe('viewKey', () => {
+describe('viewURI', () => {
 	test('equivalent views produce same key', () => {
 		const a: View = {queries: [{channels: ['ko002'], tags: ['jazz']}]}
 		const b: View = {queries: [{channels: ['ko002'], tags: ['jazz']}]}
-		expect(viewKey(a)).toBe(viewKey(b))
+		expect(viewURI(a)).toBe(viewURI(b))
 	})
 	test('different views produce different keys', () => {
 		const a: View = {queries: [{channels: ['a']}]}
 		const b: View = {queries: [{channels: ['b']}]}
-		expect(viewKey(a)).not.toBe(viewKey(b))
+		expect(viewURI(a)).not.toBe(viewURI(b))
 	})
 	test('empty view', () => {
-		expect(viewKey({queries: [{}]})).toBe('')
+		expect(viewURI({queries: [{}]})).toBe('')
 	})
 })
 
@@ -571,28 +580,28 @@ describe('normalizeView deep', () => {
 	})
 })
 
-describe('viewKey deep', () => {
+describe('viewURI deep', () => {
 	test('views with different order produce different keys', () => {
 		const a: View = {queries: [{channels: ['ko002']}], order: 'shuffle'}
 		const b: View = {queries: [{channels: ['ko002']}], order: 'created'}
-		expect(viewKey(a)).not.toBe(viewKey(b))
+		expect(viewURI(a)).not.toBe(viewURI(b))
 	})
 	test('view with options vs without', () => {
 		const a: View = {queries: [{channels: ['ko002']}]}
 		const b: View = {queries: [{channels: ['ko002']}], order: 'shuffle'}
-		expect(viewKey(a)).not.toBe(viewKey(b))
+		expect(viewURI(a)).not.toBe(viewURI(b))
 	})
 	test('ignores empty arrays via normalize', () => {
 		const a: View = {queries: [{channels: ['ko002'], tags: []}]}
 		const b: View = {queries: [{channels: ['ko002']}]}
-		expect(viewKey(a)).toBe(viewKey(b))
+		expect(viewURI(a)).toBe(viewURI(b))
 	})
 	test('undefined view', () => {
-		expect(viewKey(undefined)).toBe('')
+		expect(viewURI(undefined)).toBe('')
 	})
 	test('multi-query key', () => {
 		const view: View = {queries: [{channels: ['alice']}, {channels: ['bob']}], order: 'shuffle'}
-		const key = viewKey(view)
+		const key = viewURI(view)
 		expect(key).toBe('@alice;@bob?order=shuffle')
 	})
 })

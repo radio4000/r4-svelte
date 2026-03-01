@@ -8,12 +8,12 @@ import {channelsCollection} from '$lib/collections/channels'
 import {searchTracks} from '$lib/search-fts'
 import {sdk} from '@radio4000/sdk'
 import type {Channel, Deck, Track} from '$lib/types'
-import {viewKey, type View} from '$lib/views'
+import {viewURI, type View} from '$lib/views'
 
 /** Auto-radio decks matching a specific View identity. */
 export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
-	const key = viewKey(view)
-	return decks.filter((d) => d.auto_radio && viewKey(d.view) === key)
+	const key = viewURI(view)
+	return decks.filter((d) => d.auto_radio && viewURI(d.view) === key)
 }
 
 /** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */

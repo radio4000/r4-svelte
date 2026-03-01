@@ -22,7 +22,7 @@ type View = {
 	exclude?: string[]
 }
 
-/** A serialized View as a compact string. Branded type — only produced by serializeView/viewKey. */
+/** A serialized View as a compact string. Branded type — only produced by serializeView/viewURI. */
 type ViewURI = string & {readonly __brand: 'ViewURI'}
 ```
 
@@ -80,21 +80,21 @@ serializeView({
 viewFromUrl(url) // extract a View from a URL (decodes search string, passes to parseView)
 viewLabel(view) // all queries as a human string, no options (for labels/display)
 normalizeView(view) // strip empty fields so equivalent views compare equal
-viewKey(view) // canonical string: serializeView(normalizeView(view))
+viewURI(view) // canonical string: serializeView(normalizeView(view))
 ```
 
 ### Summary
 
-| Function         | Input → Output       | Use                                   |
-| ---------------- | -------------------- | ------------------------------------- | ---------------------------- |
-| `parseQuery`     | `string → ViewQuery` | Human query string to query object    |
-| `serializeQuery` | `ViewQuery → ViewURI`| Query object to human string          |
-| `parseView`      | `string → View`      | Full view string (`;` and `?options`) |
-| `serializeView`  | `View → ViewURI`     | View to compact string                |
-| `viewFromUrl`    | `URL → View`         | Decode URL search → `parseView`       |
-| `viewLabel`      | `View → string`      | All queries as human string (labels)  |
-| `normalizeView`  | `View → View         | undefined`                            | Strip empties for comparison |
-| `viewKey`        | `View → ViewURI`     | Canonical string for comparison/seed  |
+| Function         | Input → Output        | Use                                   |
+| ---------------- | --------------------- | ------------------------------------- | ---------------------------- |
+| `parseQuery`     | `string → ViewQuery`  | Human query string to query object    |
+| `serializeQuery` | `ViewQuery → ViewURI` | Query object to human string          |
+| `parseView`      | `string → View`       | Full view string (`;` and `?options`) |
+| `serializeView`  | `View → ViewURI`      | View to compact string                |
+| `viewFromUrl`    | `URL → View`          | Decode URL search → `parseView`       |
+| `viewLabel`      | `View → string`       | All queries as human string (labels)  |
+| `normalizeView`  | `View → View          | undefined`                            | Strip empties for comparison |
+| `viewURI`        | `View → ViewURI`      | Canonical string for comparison/seed  |
 
 ## Two contexts
 
@@ -143,13 +143,13 @@ After `?`, global to all queries:
 
 ## Saving and pinning
 
-A **View** is a stateless query recipe. A **SavedView** gives it a name and persists it to localStorage: `{id, name, params, position?, description?, created_at}`. `params` is `serializeView(view)` — the compact string form.
+A **View** is a stateless query recipe. A **SavedView** gives it a name and persists it to localStorage: `{id, name, uri, position?, description?, created_at}`. `uri` is `serializeView(view)` — the compact string form.
 
 A SavedView with a non-null `position` appears in the sidebar. `pinView(id)` appends to the end, `unpinView(id)` clears the position, `reorderPinnedViews(orderedIds)` updates sort weights.
 
 ## ViewsBar
 
-Shared component on `/explore` and `/_debug/views`. Props: `view`, `onchange(view)`. Active detection: `serializeView(view) === sv.params`.
+Shared component on `/explore` and `/_debug/views`. Props: `view`, `onchange(view)`. Active detection: `serializeView(view) === sv.uri`.
 
 Three-state `mode`: **idle** (tabs + filter/display popovers), **adding** (clicked `+`, empty form to build a new view from scratch), **dirty** (changed filters after loading a saved view — shows a summary of active filters with "Save as" for a new view or "Update" to overwrite the base view).
 
@@ -159,7 +159,7 @@ Three-state `mode`: **idle** (tabs + filter/display popovers), **adding** (click
 
 ## Files
 
-- `src/lib/views.ts` — `ViewQuery`, `View` types, pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewKey`)
+- `src/lib/views.ts` — `ViewQuery`, `View` types, pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewURI`)
 - `src/lib/views.svelte.ts` — `processViewTracks`, `queryView`, `getAutoDecksForView` (reactive, Svelte-dependent)
 - `src/lib/collections/views.ts` — `SavedView`, `viewsCollection`, CRUD + pin/unpin helpers
 - `src/lib/components/views-bar.svelte` — `ViewsBar` component

@@ -143,7 +143,7 @@ export function normalizeView(view?: View): View | undefined {
 }
 
 /** Canonical string key for comparing two Views. */
-export function viewKey(view?: View): ViewURI {
+export function viewURI(view?: View): ViewURI {
 	const normalized = normalizeView(view)
 	return normalized ? serializeView(normalized) : ('' as ViewURI)
 }
