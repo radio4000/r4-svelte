@@ -132,6 +132,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		log.info('channels onDelete', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			await handleChannelDelete(m.original.id)
+			channelsCollection.utils.writeDelete(m.original.id)
 		}
 		await queryClient.invalidateQueries({queryKey: ['channels']})
 		log.info('channels onDelete done')

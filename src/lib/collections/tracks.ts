@@ -139,6 +139,7 @@ export const tracksCollection = createCollection<Track, string>({
 		for (const m of transaction.mutations) {
 			slug ??= (m.metadata as Record<string, unknown>)?.slug as string | undefined
 			await handleTrackDelete(m.original.id)
+			tracksCollection.utils.writeDelete(m.original.id)
 		}
 		if (slug) await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
 		log.info('onDelete done', {slug})
