@@ -352,7 +352,7 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 	lastIndex = curIndex
 	config.onChange?.(els[curIndex], curIndex)
 
-	const onResize = () => refresh(!(draggableInstance && draggableInstance.isDragging))
+	const onResize = () => refresh(!draggableInstance?.isDragging)
 	window.addEventListener('resize', onResize)
 
 	return {

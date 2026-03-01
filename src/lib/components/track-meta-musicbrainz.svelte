@@ -14,6 +14,16 @@
 </script>
 
 {#if data}
+	<menu class="meta-toolbar">
+		<button
+			type="button"
+			onclick={() => (showRaw = !showRaw)}
+			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+		>
+			<Icon icon="code" size={16} />
+		</button>
+	</menu>
 	{#if showRaw}
 		<pre><code>{JSON.stringify(data, null, 2)}</code></pre>
 	{:else}
@@ -74,16 +84,6 @@
 			{/if}
 		</MetaDefinitionList>
 	{/if}
-	<menu class="meta-toolbar">
-		<button
-			type="button"
-			onclick={() => (showRaw = !showRaw)}
-			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
-			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
-		>
-			<Icon icon="code" size={16} />
-		</button>
-	</menu>
 {:else}
 	<p>{m.track_meta_no_musicbrainz()}</p>
 {/if}

@@ -129,7 +129,6 @@ a.slug-link,
 	font-family: var(--monospace);
 	letter-spacing: 0.03em;
 	color: var(--gray-10);
-	white-space: nowrap;
 
 	&:visited {
 		color: var(--gray-10);

@@ -300,6 +300,7 @@ menu.nav-grouped {
 		background: none;
 		border: none;
 		border-radius: 0;
+		font-size: var(--font-4);
 	}
 
 	:is(a, button):hover {

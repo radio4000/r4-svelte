@@ -307,6 +307,7 @@
 		line-height: 1.2;
 		color: light-dark(var(--gray-11), var(--gray-10));
 		overflow-x: auto;
+		scrollbar-width: thin;
 		white-space: nowrap;
 		/* to accomodate tag borders */
 		padding: 2px 1px 2px;
