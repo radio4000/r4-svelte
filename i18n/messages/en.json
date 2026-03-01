@@ -178,6 +178,8 @@
 	"channel_queue_tag": "Queue #{tag}",
 	"channel_section_latest": "Latest",
 	"channel_section_radios": "Radios",
+	"channel_see_all_tag": "See all {count} #{tag}",
+	"channel_see_all_tracks": "See all {count} tracks",
 	"channel_since": "Since {date}",
 	"channel_slug_hint": "At least 3 lowercase letters, numbers, or hyphens",
 	"channel_stats_summary": "Broadcasting since {since}. Updated {updated}. {count} tracks",

@@ -256,7 +256,7 @@
 					</a>
 					<a href="/{slug}/tracks" class:active={routeId?.startsWith('/[slug]/tracks')}>
 						<Icon icon="unordered-list" size={16} />
-						{m.nav_tracks()} ({channel.track_count ?? 0})
+						{m.nav_tracks()} ({allChannelTracks.length})
 					</a>
 					<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
 						<Icon icon="hash" size={16} />

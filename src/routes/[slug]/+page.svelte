@@ -252,7 +252,7 @@
 						virtual={false}
 						playContext={true}
 					/>
-					<footer><a href="/{slug}/tracks">All {allTracks.length} tracks</a></footer>
+					<footer><a href="/{slug}/tracks">{m.channel_see_all_tracks({count: allTracks.length})}</a></footer>
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
 				{:else if tracksQuery.isReady && allTracks.length === 0}
@@ -323,7 +323,7 @@
 						playContext={true}
 					/>
 					<footer>
-						<a href="/{slug}/tracks?tags={section.tag}">All {section.tracks.length} #{section.tag}</a>
+						<a href="/{slug}/tracks?tags={section.tag}">{m.channel_see_all_tag({count: section.tracks.length, tag: section.tag})}</a>
 					</footer>
 				{/if}
 			{/if}
@@ -411,7 +411,7 @@
 	}
 
 	.track-section footer {
-		padding: 0.4rem;
+		padding: 1rem 0.4rem 0.4rem;
 		text-align: center;
 	}
 
