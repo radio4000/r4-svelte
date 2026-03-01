@@ -74,6 +74,8 @@ export interface AppState {
 	show_speed_control?: boolean
 	/** Show track progress/range control in deck transport */
 	show_track_range_control?: boolean
+	/** Use pointer cursor on interactive elements instead of default arrow */
+	use_pointer_cursor?: boolean
 	font_family?: string
 	user?: User
 	language?: string

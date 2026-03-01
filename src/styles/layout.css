@@ -156,7 +156,7 @@ nav {
 
 	a,
 	button {
-		cursor: default;
+		cursor: var(--cursor, default);
 	}
 
 	a:not(:hover) {

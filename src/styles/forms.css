@@ -107,6 +107,6 @@ fieldset {
 	label,
 	legend {
 		font-size: var(--font-3);
-		font-weight: 600;
+		font-weight: 500;
 	}
 }

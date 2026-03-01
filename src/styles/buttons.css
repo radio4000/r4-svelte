@@ -14,6 +14,7 @@ button,
 	flex-shrink: 0;
 	white-space: nowrap;
 	user-select: none;
+	cursor: var(--cursor, default);
 
 	font-size: var(--font-4);
 	font-weight: 400;

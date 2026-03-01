@@ -44,7 +44,7 @@ html {
 
 body {
 	margin: 0;
-	cursor: default;
+	cursor: var(--cursor, default);
 	overflow: hidden;
 	scrollbar-gutter: stable;
 }
@@ -95,6 +95,7 @@ img {
 a {
 	text-decoration-skip-ink: auto;
 	hyphens: auto;
+	cursor: var(--cursor, default);
 	transition: text-decoration-color 150ms;
 }
 

@@ -218,6 +218,11 @@
 			</fieldset>
 
 			<fieldset>
+				<label for={`${uid}-pointer-cursor`}>Use pointer cursor on interactive elements</label>
+				<input type="checkbox" bind:checked={appState.use_pointer_cursor} id={`${uid}-pointer-cursor`} />
+			</fieldset>
+
+			<fieldset>
 				<label for={`${uid}-font-family`}>Font</label>
 				<select
 					id={`${uid}-font-family`}
