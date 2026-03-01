@@ -211,8 +211,8 @@
 	.channel-link {
 		padding: 0;
 		height: 30px;
-		overflow: visible;
-		max-width: 42px;
+		overflow: hidden;
+		max-width: 36px;
 		padding: 1px;
 		@media (min-width: 768px) {
 			height: auto;
