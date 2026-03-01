@@ -135,8 +135,8 @@
 		{"name": "pause(player)", "desc": "Pause playback."},
 		{"name": "togglePlay(player)", "desc": "Toggle playback."},
 		{"name": "seekTo(deckId, seconds)", "desc": "Seek to position in current track."},
-		{"name": "next(deckId, track, activeQueue, endReason)", "desc": "Advance to next track."},
-		{"name": "previous(deckId, track, activeQueue, endReason)", "desc": "Return to previous track."},
+		{"name": "next(deckId, endReason)", "desc": "Advance to next track."},
+		{"name": "previous(deckId, endReason)", "desc": "Return to previous track."},
 		{"name": "toggleVideo(deckId)", "desc": "Toggle video player visibility."},
 		{"name": "eject(deckId)", "desc": "Clear deck player state."},
 
@@ -211,9 +211,10 @@
 			"desc": "Type: {queries: ViewQuery[], order?, direction?, limit?, exclude?}. One or more queries + display options."
 		},
 		{"name": "parseQuery(input)", "desc": "Parse human query (@slug #tag text) into a ViewQuery."},
-		{"name": "serializeQuery(query)", "desc": "ViewQuery to human query string."},
+		{"name": "serializeQuery(query)", "desc": "ViewQuery to human query string (also a valid ViewURI)."},
 		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
 		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
+		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (decodes search string, passes to parseView)."},
 		{"name": "viewLabel(view)", "desc": "All queries as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
 		{"name": "viewURI(view?)", "desc": "Canonical serialized key for comparing View identity."}

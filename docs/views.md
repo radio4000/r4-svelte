@@ -86,14 +86,14 @@ viewURI(view) // canonical string: serializeView(normalizeView(view))
 ### Summary
 
 | Function         | Input → Output        | Use                                   |
-| ---------------- | --------------------- | ------------------------------------- | ---------------------------- |
+| ---------------- | --------------------- | ------------------------------------- |
 | `parseQuery`     | `string → ViewQuery`  | Human query string to query object    |
 | `serializeQuery` | `ViewQuery → ViewURI` | Query object to human string          |
 | `parseView`      | `string → View`       | Full view string (`;` and `?options`) |
 | `serializeView`  | `View → ViewURI`      | View to compact string                |
 | `viewFromUrl`    | `URL → View`          | Decode URL search → `parseView`       |
 | `viewLabel`      | `View → string`       | All queries as human string (labels)  |
-| `normalizeView`  | `View → View          | undefined`                            | Strip empties for comparison |
+| `normalizeView`  | `View → View`         | Strip empties for comparison          |
 | `viewURI`        | `View → ViewURI`      | Canonical string for comparison/seed  |
 
 ## Two contexts
