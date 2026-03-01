@@ -15,7 +15,7 @@
 
 	/** @type {{
 		tracks: Track[],
-		playlistTracks?: Track[],
+		playlistTracks?: Track[],  // Overrides tracks for playlist context when rendering a subset (e.g. preview)
 		deckId?: number,
 		playlistTitle?: string,
 		footer?: (props: {track: Track}) => any,

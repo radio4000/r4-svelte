@@ -30,14 +30,13 @@
 	}
 </script>
 
-<div class="track-row" class:selected={isSelected} onclick={onSelect} style:grid-template-columns={gridTemplate}>
+<div class="track-row" class:selected={isSelected} style:grid-template-columns={gridTemplate}>
 	<div class="col-checkbox">
 		<input
 			type="checkbox"
 			checked={isSelected}
 			onclick={(e) => {
-				e.stopPropagation()
-				// Preserve shift for range selection, otherwise toggle without Ctrl
+				// Preserve shift for range selection, otherwise toggle
 				if (e.shiftKey) {
 					onSelect(e)
 				} else {
