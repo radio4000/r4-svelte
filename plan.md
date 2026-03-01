@@ -29,6 +29,12 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 
 ## Code cleanup
 
+### API alignment
+
+- `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly.
+- `togglePlay(player)` skips deck state updates and error handling — calls `player.play()` raw. Near-duplicate of `togglePlayPause(deckId)`. Drop both `togglePlay` and `pause(player)`, make callers use `togglePlayPause(deckId)`.
+- Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`.
+
 ### Player & audio edge cases
 
 - `seekWhenReady` race in `broadcast.js` — between the final `seekJobSeqByDeck` check and `play(deckId)`, a new job could start. Old job's `play()` still fires.
