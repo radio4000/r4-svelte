@@ -2,6 +2,17 @@
 
 ## February 2026
 
+- #Broadcast Listener presence — live counts per channel, per deck, and app-wide, with opt-in sharing in settings
+- #Channels 3D canvas reflects live playback, broadcast, and favorite state on cards; `/@slug/image` shows an interactive 3D scene per channel
+- #Channels Link previews via OpenGraph meta tags on channel and track pages
+- #i18n Full localization pass — all remaining hardcoded strings extracted, locale applied before first render
+- #Broadcast Auto radio detects playback drift and resyncs listeners automatically
+- #Tracks Centralized track identity by provider and media ID, per-tab metadata fetching, and tighter Discogs integration with URL validation and deduplicated suggestions
+- #Search Views use a URI-based system with pure functions and tests; `queryView()` replaces `queryViewTracks()`
+- #Channels Tabbed tag/channel navigation on channel pages and a new `/@slug/mentions` route
+- #UI Neutral surface tokens for overlays, higher contrast, animated deck transitions
+- #Auth `/welcome` page for users who haven't created a channel yet
+- #Player Play history moved from deck panel into main navigation
 - #Search Saved views — bookmark any search as a named view and pin favorites for quick access from the header
 - #Channels Channel homepage shows the latest track, description, and a tags/mentions overview
 - #Channels Channel cards display @mentions and #hashtags from descriptions
