@@ -819,10 +819,13 @@
 
 	.video {
 		flex: 1 0 auto;
-		aspect-ratio: 16 / 9;
 		width: 100%;
 		max-height: 25dvh;
 		background: black;
+	}
+
+	.video:not(:has(.native-audio-player)) {
+		aspect-ratio: 16 / 9;
 	}
 
 	.native-audio-player {

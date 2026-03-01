@@ -143,7 +143,8 @@
 			height: 100%;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.video) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+			:global(.video:not(:has(.native-audio-player))) {
 			flex: 1 1 auto;
 			min-height: 0;
 			max-height: none;
