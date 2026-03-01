@@ -26,7 +26,7 @@ View params are the format of record. ViewsBar reads and writes them. Saved view
 
 A search returns **channels** and **tracks** as parallel result sets.
 
-Track results go through the [View pipeline](views.md) — same `queryViewTracks` that powers `/_debug/views`.
+Track results go through the [View pipeline](views.md) — same `queryView` that powers `/_debug/views`.
 
 Channel results run separately: exact slug lookup (`@ko002` finds the channel card), remote FTS (channels whose name/description matches), and local fuzzy search (channels already in memory). These are not part of the View — they're a search-page feature.
 

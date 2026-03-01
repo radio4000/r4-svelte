@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {serializeView, parseView, type View} from '$lib/views.svelte'
+	import {serializeView, parseView, viewLabel, type View, type ViewQuery} from '$lib/views'
 	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -8,6 +8,8 @@
 	import * as m from '$lib/paraglide/messages'
 
 	let {view, onchange}: {view: View; onchange: (view: View) => void} = $props()
+
+	const uid = $props.id()
 
 	let mode: 'idle' | 'adding' | 'dirty' = $state('idle')
 
@@ -21,7 +23,7 @@
 	const savedViews: SavedView[] = $derived(viewsQuery.data)
 
 	// Active detection
-	const currentParams = $derived(serializeView(view).toString())
+	const currentParams = $derived(serializeView(view))
 	const activeViewId = $derived(savedViews.find((sv) => sv.params === currentParams)?.id ?? null)
 	const baseViewName = $derived(baseViewId ? savedViews.find((sv) => sv.id === baseViewId)?.name : null)
 
@@ -53,6 +55,21 @@
 		]
 	}
 
+	function updateQuery(index: number, q: ViewQuery) {
+		const queries = [...view.queries]
+		queries[index] = q
+		onchange({...view, queries})
+	}
+
+	function addQuery() {
+		onchange({...view, queries: [...view.queries, {}]})
+	}
+
+	function removeQuery(index: number) {
+		const queries = view.queries.filter((_, i) => i !== index)
+		onchange({...view, queries: queries.length ? queries : [{}]})
+	}
+
 	function saveNewView() {
 		const name = draftName.trim()
 		if (!name) return
@@ -78,7 +95,7 @@
 	}
 
 	function clearDirty() {
-		onchange({})
+		onchange({queries: [{}]})
 		lastSavedParams = ''
 		baseViewId = null
 		draftName = ''
@@ -87,17 +104,17 @@
 	function clickView(sv: SavedView) {
 		lastSavedParams = sv.params
 		baseViewId = sv.id
-		onchange(parseView(new URLSearchParams(sv.params)))
+		onchange(parseView(sv.params))
 	}
 
 	const viewSummary = $derived.by(() => {
 		const parts: string[] = []
-		if (view.channels?.length) parts.push(`channels: ${view.channels.join(', ')}`)
-		if (view.tags?.length) parts.push(`tags: ${view.tags.join(', ')}`)
-		if (view.search) parts.push(`search: ${view.search}`)
+		const label = viewLabel(view)
+		if (label) parts.push(label)
 		if (view.order) parts.push(`order: ${view.order}`)
 		if (view.direction === 'asc') parts.push('asc')
 		if (view.limit) parts.push(`limit: ${view.limit}`)
+		if (view.exclude?.length) parts.push(`exclude: ${view.exclude.length}`)
 		return parts.join(' \u00b7 ')
 	})
 
@@ -146,52 +163,66 @@
 
 		<menu class="controls">
 			<li>
-				<PopoverMenu id="views-filter" closeOnClick={false} align="end">
+				<PopoverMenu closeOnClick={false} align="end">
 					{#snippet trigger()}{m.views_filters_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
-						<fieldset>
-							<label for="vb-channels">{m.views_channels_label()}</label>
-							<input
-								id="vb-channels"
-								type="text"
-								value={view.channels?.join(', ') || ''}
-								onchange={(e) => onchange({...view, channels: splitList(e.currentTarget.value)})}
-								placeholder={m.views_channels_placeholder()}
-							/>
-						</fieldset>
-						<fieldset>
-							<legend>{m.views_tags_label()}</legend>
-							<fieldset class="row">
-								<select
-									value={view.tagsMode || 'any'}
-									onchange={(e) => onchange({...view, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
-								>
-									<option value="any">{m.views_tags_any()}</option>
-									<option value="all">{m.views_tags_all()}</option>
-								</select>
-								<input
-									type="text"
-									value={view.tags?.join(', ') || ''}
-									onchange={(e) => onchange({...view, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
-									placeholder={m.views_tags_placeholder()}
-								/>
-							</fieldset>
-						</fieldset>
-						<fieldset>
-							<label for="vb-search">{m.views_search_label()}</label>
-							<input
-								id="vb-search"
-								type="text"
-								value={view.search || ''}
-								onchange={(e) => onchange({...view, search: e.currentTarget.value.trim() || undefined})}
-								placeholder={m.views_search_placeholder()}
-							/>
-						</fieldset>
+						{#each view.queries as q, i (i)}
+							<div class="query-group">
+								{#if view.queries.length > 1}
+									<header class="query-header">
+										<strong>Query {i + 1}</strong>
+										<button type="button" onclick={() => removeQuery(i)} data-no-close data-delete>
+											<Icon icon="delete" size={12} />
+										</button>
+									</header>
+								{/if}
+								<fieldset>
+									<label for="{uid}-channels-{i}">{m.views_channels_label()}</label>
+									<input
+										id="{uid}-channels-{i}"
+										type="text"
+										value={q.channels?.join(', ') || ''}
+										onchange={(e) => updateQuery(i, {...q, channels: splitList(e.currentTarget.value)})}
+										placeholder={m.views_channels_placeholder()}
+									/>
+								</fieldset>
+								<fieldset>
+									<legend>{m.views_tags_label()}</legend>
+									<fieldset class="row">
+										<select
+											value={q.tagsMode || 'any'}
+											onchange={(e) => updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+										>
+											<option value="any">{m.views_tags_any()}</option>
+											<option value="all">{m.views_tags_all()}</option>
+										</select>
+										<input
+											type="text"
+											value={q.tags?.join(', ') || ''}
+											onchange={(e) => updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+											placeholder={m.views_tags_placeholder()}
+										/>
+									</fieldset>
+								</fieldset>
+								<fieldset>
+									<label for="{uid}-search-{i}">{m.views_search_label()}</label>
+									<input
+										id="{uid}-search-{i}"
+										type="text"
+										value={q.search || ''}
+										onchange={(e) => updateQuery(i, {...q, search: e.currentTarget.value.trim() || undefined})}
+										placeholder={m.views_search_placeholder()}
+									/>
+								</fieldset>
+							</div>
+							{#if i < view.queries.length - 1}<hr />{/if}
+						{/each}
+						<button type="button" onclick={addQuery} data-no-close>+ Query</button>
 					</form>
 				</PopoverMenu>
 			</li>
 			<li>
-				<PopoverMenu id="views-display" closeOnClick={false} align="end">
+				<PopoverMenu closeOnClick={false} align="end">
 					{#snippet trigger()}{m.views_display_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
 						<fieldset>
@@ -199,15 +230,28 @@
 							<SortControls bind:order={r1Order} bind:direction={r1Direction} />
 						</fieldset>
 						<fieldset>
-							<label for="vb-limit">{m.views_limit_label()}</label>
+							<label for="{uid}-limit">{m.views_limit_label()}</label>
 							<input
-								id="vb-limit"
+								id="{uid}-limit"
 								type="number"
 								value={view.limit || ''}
 								onchange={(e) => onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
 								placeholder={m.views_limit_placeholder()}
 								min="1"
 								max="4000"
+							/>
+						</fieldset>
+						<fieldset>
+							<label for="{uid}-exclude">Exclude track IDs</label>
+							<input
+								id="{uid}-exclude"
+								type="text"
+								value={view.exclude?.join(', ') || ''}
+								onchange={(e) => {
+									const ids = splitList(e.currentTarget.value)
+									onchange({...view, exclude: ids.length ? ids : undefined})
+								}}
+								placeholder="uuid-1, uuid-2"
 							/>
 						</fieldset>
 					</form>
@@ -273,6 +317,18 @@
 	.controls {
 		margin-inline-start: auto;
 		flex-shrink: 0;
+	}
+	.query-group {
+		padding: 0.25rem;
+		border-radius: 0.25rem;
+	}
+	.query-group:has([data-delete]:hover) {
+		box-shadow: inset 0 0 0 1px currentColor;
+	}
+	.query-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 	}
 	.row-2 {
 		align-items: center;

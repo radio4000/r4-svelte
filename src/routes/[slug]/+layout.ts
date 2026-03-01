@@ -1,7 +1,7 @@
-import {parseView} from '$lib/views.svelte'
+import {viewFromUrl} from '$lib/views'
 
 export function load({url}) {
 	return {
-		view: parseView(url.searchParams)
+		view: viewFromUrl(url)
 	}
 }

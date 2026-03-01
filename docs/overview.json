@@ -221,29 +221,37 @@
 		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."}
 	],
 
-	"src/lib/views.svelte.ts": [
-		{"name": "View", "desc": "Type: {channels?, tags?, tagsMode?, order?, direction?, limit?, search?}."},
-		{"name": "parseView(params)", "desc": "Parse URLSearchParams into a View."},
-		{"name": "parseSearchQueryToView(input)", "desc": "Parse human query (@slug #tag text) into a View."},
-		{"name": "serializeView(view)", "desc": "Serialize View to URLSearchParams."},
+	"src/lib/views.ts": [
+		{"name": "ViewQuery", "desc": "Type: {channels?, tags?, tagsMode?, search?}. What to fetch."},
+		{
+			"name": "View",
+			"desc": "Type: {queries: ViewQuery[], order?, direction?, limit?, exclude?}. One or more queries + display options."
+		},
+		{"name": "parseQuery(input)", "desc": "Parse human query (@slug #tag text) into a ViewQuery."},
+		{"name": "serializeQuery(query)", "desc": "ViewQuery to human query string."},
+		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
+		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
+		{"name": "viewLabel(view)", "desc": "All queries as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
-		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."},
+		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."}
+	],
+
+	"src/lib/views.svelte.ts": [
 		{
 			"name": "getAutoDecksForView(decks, view?)",
 			"desc": "Return auto-radio decks whose stored view matches the given view identity."
 		},
-		{"name": "viewToQuery(view)", "desc": "Reverse of parseSearchQueryToView: View to human query string."},
 		{
 			"name": "processViewTracks(tracks, view)",
 			"desc": "Post-process tracks: tag filter, fuzzy search, sort/shuffle, limit."
 		},
 		{
-			"name": "queryViewTracks(getView)",
-			"desc": "Reactive view query (component init). Returns {tracks, loading} getters."
+			"name": "queryView(getView)",
+			"desc": "Reactive view query (component init). Returns {tracks, channels, loading} getters."
 		}
 	],
 
-	"src/lib/tanstack/collections/views.ts": [
+	"src/lib/collections/views.ts": [
 		{"name": "SavedView", "desc": "Type: {id, name, params, position?, description?, created_at}."},
 		{"name": "viewsCollection", "desc": "localStorage collection of saved views."},
 		{"name": "createView(name, view, description?)", "desc": "Create and persist a SavedView."},

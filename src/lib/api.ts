@@ -18,7 +18,8 @@ import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {weeklyShuffle, playbackState, toAutoTracks, epochFromTracks, type AutoTrack} from '$lib/player/auto-radio'
-import {processViewTracks, serializeView, viewToQuery, type View} from '$lib/views.svelte'
+import {processViewTracks} from '$lib/views.svelte'
+import {serializeView, viewLabel, normalizeView, type View} from '$lib/views'
 
 const log = logger.ns('api').seal()
 
@@ -635,21 +636,16 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	if (!autoTracks.length) return
 
 	// Strip empty fields so callers don't need to guard
-	if (view) {
-		if (!view.tags?.length) delete view.tags
-		if (!view.search) delete view.search
-		if (!view.channels?.length) delete view.channels
-		if (!Object.keys(view).length) view = undefined
-	}
+	if (view) view = normalizeView(view)
 
 	const rotationStartUnix = epochFromTracks(autoTracks)
-	const viewSeed = view ? serializeView(view).toString() : undefined
+	const viewSeed = view ? serializeView(view) : undefined
 	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
-	const label = view ? viewToQuery(view) : undefined
+	const label = view ? viewLabel(view) : undefined
 	setPlaylist(
 		deckId,
 		shuffled.map((t) => t.id),
@@ -702,7 +698,7 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!deck?.auto_radio || !deck.view || deck.auto_radio_rotation_start == null) return
 
 	const view = deck.view
-	const slug = view.channels?.[0]
+	const slug = view.queries[0]?.channels?.[0]
 	if (!slug) return
 	const rotationStartUnix = deck.auto_radio_rotation_start
 
@@ -712,11 +708,11 @@ export async function resyncAutoRadio(deckId: number) {
 	const autoTracks = toAutoTracks(filtered)
 	if (!autoTracks.length) return
 
-	const viewSeed = serializeView(view).toString()
+	const viewSeed = serializeView(view)
 	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
-	const label = viewToQuery(view) || undefined
+	const label = viewLabel(view) || undefined
 
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {

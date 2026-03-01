@@ -31,9 +31,15 @@ For any task or question:
 - [browser-testing](docs/browser-testing.md) - testing with agent-browser
 - See `docs/` for topic-specific docs (player, search, broadcast, etc.)
 
+## Running scripts
+
+Run `bun run test`, `bun run check`, `bun run types` **directly** — never pipe through `tail`, `head`, or `grep`. Bun/Vitest use terminal control sequences that break when piped, causing empty output or hanging commands.
+
 ## Debug
 
 `window.r5` exposes sdk, appState, queryClient, tracksCollection, channelsCollection for console testing.
 Use `/src/routes/_debug` freely for (temporary) test routes and playgrounds.
 The `r4 --help` CLI can help inspect data from remote PostgreSQL
 Be concise. Short answers, no walls of text.
+
+Please read ./docs folder for any relevant topics.

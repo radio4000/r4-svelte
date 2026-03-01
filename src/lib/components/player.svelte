@@ -48,7 +48,7 @@
 		untrackBroadcastPresence,
 		channelPresence
 	} from '$lib/presence.svelte'
-	import {viewToQuery} from '$lib/views.svelte'
+	import {viewLabel} from '$lib/views'
 	/** @typedef {import('$lib/types').Track} Track */
 	/** @typedef {import('$lib/types').Channel} Channel */
 
@@ -154,7 +154,7 @@
 
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
-			? viewToQuery(deck.view ?? {channels: [deck.playlist_slug]}) || `@${deck.playlist_slug}`
+			? viewLabel(deck.view ?? {queries: [{channels: [deck.playlist_slug]}]}) || `@${deck.playlist_slug}`
 			: undefined
 	)
 	const headerPresenceCount = $derived(

@@ -13,7 +13,8 @@
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
-	import {processViewTracks, getAutoDecksForView, type View} from '$lib/views.svelte'
+	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
+	import type {View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()
@@ -47,9 +48,13 @@
 	let isFiltering = $derived(isSearching || isSorting)
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
-			tags: selectedTags.length ? selectedTags : undefined,
-			tagsMode: 'all',
-			search: searchValue || undefined,
+			queries: [
+				{
+					tags: selectedTags.length ? selectedTags : undefined,
+					tagsMode: 'all',
+					search: searchValue || undefined
+				}
+			],
 			order: isSorting ? order : undefined,
 			direction: isSorting ? direction : undefined
 		})
@@ -57,10 +62,14 @@
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
 	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
-	let filteredAutoView = $derived.by(() => ({
-		channels: slug ? [slug] : undefined,
-		tags: selectedTags.length ? selectedTags : undefined,
-		search: searchValue.trim() || undefined
+	let filteredAutoView: View = $derived.by(() => ({
+		queries: [
+			{
+				channels: slug ? [slug] : undefined,
+				tags: selectedTags.length ? selectedTags : undefined,
+				search: searchValue.trim() || undefined
+			}
+		]
 	}))
 	let filteredAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), filteredAutoView))
 	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)

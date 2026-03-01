@@ -6,7 +6,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {useLiveQuery as useLiveQueryCustom} from '$lib/useLiveQuery.svelte'
 	import {viewsCollection} from '$lib/collections/views'
-	import {parseView} from '$lib/views.svelte'
+	import {parseView} from '$lib/views'
 
 	const viewsQuery = useLiveQueryCustom(viewsCollection)
 	const pinnedViews = $derived(
@@ -14,9 +14,10 @@
 			.filter((sv) => sv.position != null)
 			.toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
 			.map((sv) => {
-				const view = parseView(new URLSearchParams(sv.params))
-				const channels = view.channels || []
-				const isSingleChannel = channels.length === 1 && !view.tags?.length && !view.search
+				const view = parseView(sv.params)
+				const q = view.queries[0] ?? {}
+				const channels = q.channels || []
+				const isSingleChannel = channels.length === 1 && !q.tags?.length && !q.search
 				const href = isSingleChannel ? resolve(`/${channels[0]}`) : resolve(`/search?${sv.params}`)
 				return {sv, href}
 			})

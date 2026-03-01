@@ -2,14 +2,8 @@
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
-	import {
-		parseSearchQueryToView,
-		parseView,
-		serializeView,
-		viewToQuery,
-		queryViewTracks,
-		getAutoDecksForView
-	} from '$lib/views.svelte'
+	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
+	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -34,8 +28,9 @@
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// --- URL is the single source of truth ---
-	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
+	const view = $derived(viewFromUrl(page.url))
+	const q = $derived(view.queries[0] ?? {})
+	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
 	// --- Resolve ?q= on arrival → rewrite to view params ---
 	// ?q= is a human-friendly entry point. Resolves once, rewrites URL, done.
@@ -48,8 +43,8 @@
 		const fullQuery = (q + hash).trim()
 		if (!fullQuery) return
 		inputValue = fullQuery
-		const resolved = parseSearchQueryToView(fullQuery)
-		const params = serializeView(resolved).toString()
+		const resolved = parseView(fullQuery)
+		const params = serializeView(resolved)
 		goto(params ? `/search?${params}` : '/search', {replaceState: true})
 	})
 
@@ -59,7 +54,7 @@
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		if (page.url.searchParams.has('q')) return
-		const seeded = viewToQuery(parseView(page.url.searchParams))
+		const seeded = viewLabel(viewFromUrl(page.url))
 		inputValue = seeded
 		inputSeeded = !!seeded
 	})
@@ -73,8 +68,8 @@
 			inputSeeded = false
 			return
 		}
-		const resolved = parseSearchQueryToView(q)
-		const params = serializeView(resolved).toString()
+		const resolved = parseView(q)
+		const params = serializeView(resolved)
 		goto(params ? `/search?${params}` : '/search', {replaceState: true})
 	})
 
@@ -91,8 +86,8 @@
 	// --- ViewsBar → URL ---
 	function onViewsBarChange(v) {
 		inputSeeded = true
-		inputValue = viewToQuery(v)
-		const params = serializeView(v).toString()
+		inputValue = viewLabel(v)
+		const params = serializeView(v)
 		goto(params ? `/search?${params}` : '/search', {replaceState: true})
 	}
 
@@ -119,7 +114,7 @@
 	}
 
 	// --- Track results (View pipeline) ---
-	const viewQuery = queryViewTracks(() => view)
+	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
 	const tracksLoading = $derived(viewQuery.loading)
 	const autoRadioTracks = $derived(toAutoTracks(tracks))
@@ -140,12 +135,12 @@
 		}
 		/** @type {Promise<import('$lib/types.ts').Channel[]>[]} */
 		const promises = []
-		if (view.channels?.length) {
-			promises.push(...view.channels.map((slug) => findChannelBySlug(slug).then((c) => (c ? [c] : []))))
+		if (q.channels?.length) {
+			promises.push(...q.channels.map((slug) => findChannelBySlug(slug).then((c) => (c ? [c] : []))))
 		}
-		if (view.search) {
-			promises.push(searchChannels(view.search))
-			const local = searchChannelsLocal(view.search, [...channelsCollection.state.values()])
+		if (q.search) {
+			promises.push(searchChannels(q.search))
+			const local = searchChannelsLocal(q.search, [...channelsCollection.state.values()])
 			if (local.length) promises.push(Promise.resolve(local))
 		}
 		if (!promises.length) {

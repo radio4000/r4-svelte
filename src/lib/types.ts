@@ -34,7 +34,7 @@ export interface Deck {
 	listening_to_channel_id?: string
 	auto_radio?: boolean
 	auto_radio_drifted?: boolean
-	view?: import('$lib/views.svelte').View
+	view?: import('$lib/views').View
 	auto_radio_rotation_start?: number
 	listening_drifted?: boolean
 	track_played_at?: string

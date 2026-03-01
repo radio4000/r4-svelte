@@ -2,12 +2,23 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
+## Views
+
+Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewKey`) are in `src/lib/views.ts` with tests. See `docs/views.md`.
+
+- Replace `params: string` on `SavedView` with `uri: string` (clean break). `uri` is `serializeView(view)`.
+- Update `views-bar`, `pins-nav`, `settings/pins` to read/write `uri`
+- Update `queryView` to accept `View`
+- Update auto-radio seed: `serializeView(view)` instead of `viewKey(view)`
+- Send view URI in broadcast payload; listeners resolve locally
+- Broadcast current view URI via Supabase presence for "now listening" discovery
+
 ## Backlog
 
 - Verify track deletion end-to-end — TanStack collection, reactivity, optimistic mutations, SDK return values.
 - Track related page may be broken. "clio - faces" (https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related) exists multiple times on r4 but related shows "no related information". Check with `r4` CLI against `media_id`.
 - Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is the right abstraction but `channels.svelte` re-implements all display logic instead of delegating. After: data fetching/filtering/pagination stay in `channels.svelte`, rendering lives in `<ChannelsView>` (needs `tuner` mode, `skipSort` for pre-sorted data, snippet slots for header/footer). Followers/following pages unchanged.
-- Hashtag parsing: should `"#one#two"` be one tag or two? Decide, update LinkEntities test and regexes. Parsing happens in Postgres, not the app — tests should use the same regexes, not define new ones.
+- Hashtag parsing: should `"#one#two"` be one tag or two? Decide, update LinkEntities test and regexes. Parsing happens in Postgres, not the app — tests should use the same regexes, not define new ones. Same question applies to `parseQuery` in `views.ts` — currently `#fish#apples` is one tag `fish#apples`, and `@alice@bob` is one channel `alice@bob`. Tokenizer splits on whitespace only.
 - `nav.tabs` vs `div.track-tabs>nav` — clean up markup
 - Track meta introduces a `.tags` style — reuse or unify with existing?
 - Track meta pages: json/raw toggle sits below output, jumps when tapped. Move it above.
