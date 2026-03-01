@@ -38,15 +38,6 @@
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
-	let fillDeckCount = $derived(
-		Object.values(appState.decks).filter(
-			(deck) =>
-				Boolean(deck) &&
-				!deck.compact &&
-				(!deck.hide_video_player || (!deck.listening_to_channel_id && !deck.hide_queue_panel))
-		).length
-	)
-	let prioritizeDecksOnMobile = $derived(fillDeckCount > 0)
 	let compactDeckIds = $derived(
 		Object.values(appState.decks)
 			.filter((deck) => deck.compact)
@@ -206,7 +197,7 @@
 					<LayoutHeader preloading={data.preloading} />
 
 					<div class="content-wrapper">
-						<section class="content" class:prioritize-decks-mobile={prioritizeDecksOnMobile}>
+						<section class="content">
 							<div class="scroll-area">
 								<main>
 									{@render children()}
@@ -355,7 +346,9 @@
 			flex-direction: column;
 		}
 
-		.content.prioritize-decks-mobile .scroll-area {
+		/* when any deck has visible content, cap page scroll area so decks get most of the viewport */
+		.content:has(:global(.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))))
+			.scroll-area {
 			flex: 0 1 auto;
 			max-height: 28dvh;
 		}
