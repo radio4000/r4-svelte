@@ -11,14 +11,13 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 
 ## Backlog
 
+- `trackImageUrl` only supports YouTube thumbnails. Support all providers (SoundCloud, etc.) so `trackImageUrl(track)` returns an image for any track, not just YouTube.
 - Track related page may be broken. "clio - faces" (https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related) exists multiple times on r4 but related shows "no related information". Check with `r4` CLI against `media_id`.
 - Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is the right abstraction but `channels.svelte` re-implements all display logic instead of delegating. After: data fetching/filtering/pagination stay in `channels.svelte`, rendering lives in `<ChannelsView>` (needs `tuner` mode, `skipSort` for pre-sorted data, snippet slots for header/footer). Followers/following pages unchanged.
 - Hashtag parsing: should `"#one#two"` be one tag or two? Decide, update LinkEntities test and regexes. Parsing happens in Postgres, not the app — tests should use the same regexes, not define new ones. Same question applies to `parseQuery` in `views.ts` — currently `#fish#apples` is one tag `fish#apples`, and `@alice@bob` is one channel `alice@bob`. Tokenizer splits on whitespace only.
-- Batch edit: remove tap-to-select on rows. The checkbox is enough.
 - 3D globe map view alongside flat map. Try OGL instead of Three.js. Someday/maybe.
 - Test RTL support
 - `TrackCard` parses `track.description` with LinkEntities on every render. Consider a DB trigger or cache.
-- OpenGraph `<meta>` tags on channel/track pages for social sharing previews. Load functions already fetch the data server-side.
 - Media Session API — lock screen and notification controls (play/pause/skip/artwork). Player has all the hooks, wire up `navigator.mediaSession`.
 - Channel page (`/@slug`) could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a URL that already exists in the channel. Could also surface in batch-edit (group by URL or `media_id`).
@@ -53,7 +52,6 @@ Known hotspots:
 ### Duplicated code
 
 - **Metadata upsert × 3** — `metadata/youtube.js`, `metadata/musicbrainz.js`, `metadata/discogs.js` repeat get-or-insert + update on `trackMetaCollection`. Extract `upsertTrackMeta(mediaId, field, data)`. TanStack db collections may already have `writeUpsert`.
-- **`sortByNewest`** only sorts by `created_at`. Multiple places sort by `started_at`, `updated_at`. Accept a field parameter or extract `sortByDate(field, dir)`.
 
 ### Accessibility
 
