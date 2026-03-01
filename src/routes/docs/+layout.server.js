@@ -1,0 +1,7 @@
+import {listDocs} from './docs.server.js'
+
+export const prerender = true
+
+export async function load() {
+	return {docs: await listDocs()}
+}

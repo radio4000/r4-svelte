@@ -51,22 +51,14 @@
 </script>
 
 <svelte:head>
-	<title>overview - r5 docs</title>
+	<title>Reference - r5 docs</title>
 </svelte:head>
-
-<menu class="nav-grouped">
-	<a href="/docs">index</a>
-	<a href="/docs/overview">overview</a>
-	{#each data.docs.filter((d) => d !== 'index' && d !== 'overview') as doc (doc)}
-		<a href="/docs/{doc}">{doc}</a>
-	{/each}
-</menu>
 
 <article>
 	<header>
-		<h1>OVERVIEW</h1>
+		<h1>REFERENCE</h1>
 		<p>
-			.. of our primary modules and their functions. Generated from <code>docs/overview.json</code> which is created manually,
+			.. of our primary modules and their functions. Generated from <code>docs/reference.json</code> which is created manually,
 			well, by another robot, but still.
 		</p>
 		<button onclick={toggleAll}>{allExpanded ? 'Collapse all' : 'Expand all'}</button>
@@ -101,14 +93,10 @@
 
 <style>
 	header {
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
 		margin-bottom: var(--space-3);
 	}
 
 	details.group {
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
 		margin-block-start: var(--space-3);
 
 		> summary h2 {
@@ -117,7 +105,7 @@
 		}
 	}
 	details:not(.group) {
-		margin-left: 0.5rem;
+		margin-inline-start: var(--space-3);
 
 		> summary code {
 			color: var(--accent-11);

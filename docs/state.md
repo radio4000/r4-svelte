@@ -2,7 +2,7 @@
 
 ## Remote
 
-Supabase PostgreSQL is the source of truth. Access via [`@radio4000/sdk`](radio4000-sdk.md) or the `r4` CLI. See [overview.json](overview.json) for all available methods.
+Supabase PostgreSQL is the source of truth. Access via [`@radio4000/sdk`](radio4000-sdk.md) or the `r4` CLI. See [reference.json](reference.json) for all available methods.
 
 ## App state
 

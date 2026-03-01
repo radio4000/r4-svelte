@@ -107,11 +107,6 @@ h3 {
 	min-height: unset;
 	min-width: unset;
 	box-shadow: none;
-	cursor: default;
-}
-
-button.channel-badge {
-	cursor: pointer;
 }
 
 button.channel-badge:hover {
@@ -159,12 +154,7 @@ img {
 a {
 	text-decoration-skip-ink: auto;
 	hyphens: auto;
-	text-decoration-color: transparent;
 	transition: text-decoration-color 150ms;
-}
-
-a:hover {
-	text-decoration-color: currentColor;
 }
 
 a:link,

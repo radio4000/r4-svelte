@@ -1,6 +1,6 @@
 # Authentication
 
-Supabase Auth via `sdk.supabase.auth`. See `@radio4000/sdk` in docs/overview.json for methods.
+Supabase Auth via `sdk.supabase.auth`. See `@radio4000/sdk` in docs/reference.json for methods.
 
 ## Sign up/in
 

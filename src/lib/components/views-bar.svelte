@@ -35,11 +35,6 @@
 
 	let draftName = $state('')
 
-	function startAdding() {
-		draftName = ''
-		mode = 'adding'
-	}
-
 	function cancelAdding() {
 		mode = 'idle'
 	}

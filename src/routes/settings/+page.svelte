@@ -47,6 +47,10 @@
 			<Icon icon="circle-info" />
 			{m.nav_about()}
 		</a>
+		<a href="/docs">
+			<Icon icon="document" />
+			Docs
+		</a>
 		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">
 			<Icon icon="message-circle" />
 			{m.nav_chat()}

@@ -6,7 +6,7 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 
 For any task or question:
 
-1. **Read docs first** — `docs/overview.json` (full API reference). Read any topic-specific doc inside the ./docs folder. Most answers are already there. Assess whether existing APIs cover the task or if new concepts are needed.
+1. **Read docs first** — `docs/reference.json` (full API reference). Read any topic-specific doc inside the ./docs folder. Most answers are already there. Assess whether existing APIs cover the task or if new concepts are needed.
 2. **Ask clarifying questions!** before exploring the entire code base, and when the task is ambiguous
 3. Once done review your work with `bun run check && bun run types`
 4. Update @plan.md and docs where needed — delete done items from plan, don't strikethrough
@@ -22,7 +22,7 @@ For any task or question:
 
 ## Key docs
 
-- [overview](docs/overview.json) - **read this first** — all exported functions, SDK methods, components, types
+- [reference](docs/reference.json) - **read this first** — all exported functions, SDK methods, components, types
 - [state](docs/state.md) - how data flows (remote, local sync, app state)
 - [tone](docs/tone.md) - voice and tone for all copy (UI, docs, changelog)
 - [code-style](docs/code-style.md) - code conventions, HTML/CSS, Svelte

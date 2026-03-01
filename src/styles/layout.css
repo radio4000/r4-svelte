@@ -154,6 +154,10 @@ nav {
 		cursor: default;
 	}
 
+	a:not(:hover) {
+		text-decoration-color: transparent;
+	}
+
 	a:has(svg, i) {
 		gap: 0.2rem;
 	}

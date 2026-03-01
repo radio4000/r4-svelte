@@ -1,18 +1,18 @@
-# followers
+# Followers
 
 Follow/save channels as favorites. Stored in `followers` table with `follower_id` and `channel_id`.
 
-## behavior
+## Behavior
 
 **unauthenticated**: follow button hidden
 
 **authenticated**: on login, invalidates the follows query to trigger a fresh fetch. Button updates optimistically.
 
-## collection
+## Collection
 
 Uses `queryCollectionOptions` like other collections. Data flows through query cache (persisted to IDB). See `src/lib/tanstack/collections/follows.ts`.
 
-## api
+## API
 
 ```ts
 followChannel(channelId) // optimistic insert + sync to remote
@@ -22,7 +22,7 @@ loadUserFollows() // invalidates query to trigger refetch
 
 Follow/unfollow use `utils.writeInsert`/`utils.writeDelete` for optimistic updates with rollback on error.
 
-## button
+## Button
 
 Each button has its own `useLiveQuery`:
 
@@ -33,7 +33,7 @@ const followQuery = useLiveQuery((q) =>
 let following = $derived(followQuery.data?.length > 0)
 ```
 
-## pages
+## Pages
 
 Followers/following pages fetch directly via SDK (not from collection). Display settings (list/grid view) persist across visits.
 
@@ -42,7 +42,7 @@ sdk.channels.readFollowers(channelId) // who follows this channel
 sdk.channels.readFollowings(channelId) // who this channel follows
 ```
 
-## files
+## Files
 
 - `src/lib/tanstack/collections/follows.ts` - collection + functions
 - `src/lib/components/button-follow.svelte` - follow button

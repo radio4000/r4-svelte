@@ -1,4 +1,4 @@
-## Deployment & CI
+# Deployment & CI
 
 After running `bun run build` you have everything inside the `./dist` folder to deploy to any static webhost.
 
