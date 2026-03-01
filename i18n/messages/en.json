@@ -454,6 +454,7 @@
 	"shortcuts_action_gotoSettings": "Go to settings",
 	"shortcuts_action_openSearch": "Open search",
 	"shortcuts_action_showShortcutsHelp": "Show keyboard shortcuts",
+	"shortcuts_action_toggleCompactDeck": "Toggle compact deck",
 	"shortcuts_action_togglePlayerExpanded": "Toggle player expansion",
 	"shortcuts_action_togglePlayPause": "Toggle play/pause",
 	"shortcuts_action_toggleQueuePanel": "Toggle queue panel",

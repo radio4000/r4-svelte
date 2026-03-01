@@ -1,6 +1,6 @@
 import {createKeybindingsHandler} from 'tinykeys'
 import {goto} from '$app/navigation'
-import {openSearch, togglePlayPause, clearQueue, toggleShuffle} from '$lib/api'
+import {openSearch, togglePlayPause, clearQueue, toggleShuffle, toggleDeckCompact} from '$lib/api'
 import {appState} from '$lib/app-state.svelte'
 
 /** Maps keybinding to functions from api.ts */
@@ -8,24 +8,30 @@ export const DEFAULT_KEY_BINDINGS = {
 	'/': 'openSearch',
 	k: 'togglePlayPause',
 	s: 'toggleShuffle',
+	r: 'toggleCompactDeck',
 	'g h': 'gotoHome',
 	'g s': 'gotoSettings',
 	'g d': 'gotoDebug',
 	'Shift+Slash': 'showShortcutsHelp'
 }
 
-let activeCleanup = null
+/** Single stable listener — swap the inner handler instead of add/remove */
+let currentHandler = null
+let listenerAttached = false
+
+function onKeyDown(event) {
+	if (currentHandler) currentHandler(event)
+}
 
 export function initializeKeyboardShortcuts() {
-	if (activeCleanup) activeCleanup()
 	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
-	const bindings = {}
 
 	const actionMap = {
 		toggleShuffle: () => toggleShuffle(appState.active_deck_id),
 		openSearch,
 		togglePlayPause: () => togglePlayPause(appState.active_deck_id),
 		clearQueue: () => clearQueue(appState.active_deck_id),
+		toggleCompactDeck: () => toggleDeckCompact(appState.active_deck_id),
 		gotoHome: () => goto('/'),
 		gotoSettings: () => goto('/settings'),
 		gotoDebug: () => goto('/_debug'),
@@ -34,6 +40,7 @@ export function initializeKeyboardShortcuts() {
 		}
 	}
 
+	const bindings = {}
 	for (const [key, actionName] of Object.entries(keyBindings)) {
 		const actionFn = actionMap[actionName]
 		if (actionFn) {
@@ -51,11 +58,18 @@ export function initializeKeyboardShortcuts() {
 		}
 	}
 
-	const handler = createKeybindingsHandler(bindings)
-	window.addEventListener('keydown', handler)
-	activeCleanup = () => {
-		window.removeEventListener('keydown', handler)
-		activeCleanup = null
+	currentHandler = createKeybindingsHandler(bindings)
+
+	if (!listenerAttached) {
+		window.addEventListener('keydown', onKeyDown)
+		listenerAttached = true
 	}
-	return activeCleanup
+
+	return () => {
+		currentHandler = null
+		if (listenerAttached) {
+			window.removeEventListener('keydown', onKeyDown)
+			listenerAttached = false
+		}
+	}
 }

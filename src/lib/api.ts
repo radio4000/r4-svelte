@@ -404,12 +404,15 @@ export function togglePlayerExpanded(deckId) {
 /** @param {KeyboardEvent} [event] */
 export function openSearch(event) {
 	event?.preventDefault()
-	const searchInput = document.querySelector('input[type="search"]')
-	if (searchInput instanceof HTMLInputElement && searchInput.checkVisibility()) {
-		searchInput.focus()
-	} else {
-		goto('/search')
+	const hasVisibleDeck = Object.values(appState.decks).some((d) => !d.compact)
+	if (hasVisibleDeck) {
+		const searchInput = document.querySelector('input[type="search"]')
+		if (searchInput instanceof HTMLInputElement && searchInput.checkVisibility()) {
+			searchInput.focus()
+			return
+		}
 	}
+	goto('/search')
 }
 
 /** @param {number} deckId */
