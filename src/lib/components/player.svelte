@@ -555,13 +555,9 @@
 							: null}
 						{#if ytid}
 							{#if trackHref}
-								<a href={trackHref} class="track-artwork"
-									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a
-								>
+								<a href={trackHref} class="track-artwork"><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a>
 							{:else}
-								<span class="track-artwork"
-									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span
-								>
+								<span class="track-artwork"><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span>
 							{/if}
 						{/if}
 						<div class="info">

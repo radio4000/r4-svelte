@@ -170,7 +170,10 @@ export function channelAvatarUrl(id: string, size = 250, format = 'webp', qualit
 }
 
 /** YouTube thumbnail URL for a track. Size: default, mqdefault, hqdefault, sddefault, maxresdefault */
-export function trackImageUrl(mediaId: string, size: 'default' | 'mqdefault' | 'hqdefault' | 'sddefault' | 'maxresdefault' = 'mqdefault') {
+export function trackImageUrl(
+	mediaId: string,
+	size: 'default' | 'mqdefault' | 'hqdefault' | 'sddefault' | 'maxresdefault' = 'mqdefault'
+) {
 	return `https://i.ytimg.com/vi/${mediaId}/${size}.jpg`
 }
 
