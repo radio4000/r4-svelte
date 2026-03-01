@@ -7,7 +7,7 @@
 	<title>Player — {m.settings_title()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<a href="/settings">&larr; {m.nav_settings()}</a>
 
 	<h1>Player</h1>

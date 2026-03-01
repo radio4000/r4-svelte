@@ -166,8 +166,9 @@
 	const accents = Array.from(Array(12).keys(), (i) => `--accent-${i + 1}`)
 </script>
 
-<div class="constrained">
+<div class="focused constrained">
 	<section>
+		<h2>Change it!</h2>
 		<form class="form">
 			<fieldset>
 				<p>Theme</p>
@@ -260,7 +261,7 @@
 				</fieldset>
 			{/each}
 
-			<button type="button" onclick={resetToDefaults}>{m.theme_reset_button()}</button>
+			<button type="button" onclick={resetToDefaults} style:align-self="start">{m.theme_reset_button()}</button>
 		</form>
 	</section>
 

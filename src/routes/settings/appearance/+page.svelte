@@ -7,7 +7,7 @@
 	<title>{m.settings_appearance_title()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<a href="/settings">&larr; {m.nav_settings()}</a>
 	<h1>{m.theme_heading()}</h1>
 </article>

@@ -13,7 +13,7 @@
 	<title>{m.settings_title()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<h1>{m.settings_title()}</h1>
 
 	<menu class="nav-vertical">
