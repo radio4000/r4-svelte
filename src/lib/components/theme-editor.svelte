@@ -167,8 +167,8 @@
 </script>
 
 <div class="focused constrained">
-	<section>
-		<h2>Change it!</h2>
+	<h2>Change it!</h2>
+	<section class="box">
 		<form class="form">
 			<fieldset>
 				<p>Theme</p>
@@ -239,8 +239,8 @@
 		</form>
 	</section>
 
-	<section>
-		<h2>{m.theme_create_heading()}</h2>
+	<h2>{m.theme_create_heading()}</h2>
+	<section class="box">
 		<form class="form color-form">
 			{#each baseColors as variable, i (variable.name + i)}
 				<fieldset class:inactive={!isActiveVariable(variable)}>
@@ -270,8 +270,8 @@
 		</form>
 	</section>
 
-	<section>
-		<h2>{m.theme_share_heading()}</h2>
+	<h2>{m.theme_share_heading()}</h2>
+	<section class="box">
 		<form class="form share-form">
 			<fieldset>
 				<label for="{uid}-export" class="visually-hidden">{m.theme_copy_button()}</label>
@@ -306,16 +306,15 @@
 </div>
 
 <style>
-	section {
-		margin-bottom: 2rem;
+	.box {
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		padding: 0.75rem;
+		margin-bottom: 1rem;
 	}
 
 	h2 {
-		margin-bottom: 0.5rem;
-	}
-
-	form {
-		margin-left: 1rem;
+		margin-block: 0 0.5rem;
 	}
 
 	fieldset {

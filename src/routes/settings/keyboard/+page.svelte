@@ -7,7 +7,7 @@
 	<title>{m.page_title_keyboard()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
 		<a href="/settings">&larr; {m.nav_settings()}</a>
 	</header>

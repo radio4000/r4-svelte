@@ -12,48 +12,56 @@
 
 	<h1>Player</h1>
 
-	<form class="form">
-		<fieldset>
-			<legend>New deck volume</legend>
-			<label>
-				<input type="radio" bind:group={appState.default_new_deck_volume} value={0} />
-				Silent (0%)
-			</label>
-			<label>
-				<input type="radio" bind:group={appState.default_new_deck_volume} value={1} />
-				Full (100%)
-			</label>
-		</fieldset>
+	<section class="box">
+		<form class="form">
+			<fieldset>
+				<legend>New deck volume</legend>
+				<label>
+					<input type="radio" bind:group={appState.default_new_deck_volume} value={0} />
+					Silent (0%)
+				</label>
+				<label>
+					<input type="radio" bind:group={appState.default_new_deck_volume} value={1} />
+					Full (100%)
+				</label>
+			</fieldset>
 
-		<fieldset>
-			<legend>Auto-play</legend>
-			<label>
-				<input type="checkbox" bind:checked={appState.autoplay_new_deck} />
-				Auto-play track when opening a new deck
-			</label>
-		</fieldset>
+			<fieldset>
+				<legend>Auto-play</legend>
+				<label>
+					<input type="checkbox" bind:checked={appState.autoplay_new_deck} />
+					Auto-play track when opening a new deck
+				</label>
+			</fieldset>
 
-		<fieldset>
-			<legend>Speed control</legend>
-			<label>
-				<input type="checkbox" bind:checked={appState.show_speed_control} />
-				Show playback speed slider in deck transport
-			</label>
-		</fieldset>
+			<fieldset>
+				<legend>Speed control</legend>
+				<label>
+					<input type="checkbox" bind:checked={appState.show_speed_control} />
+					Show playback speed slider in deck transport
+				</label>
+			</fieldset>
 
-		<fieldset>
-			<legend>Track range</legend>
-			<label>
-				<input type="checkbox" bind:checked={appState.show_track_range_control} />
-				Show track progress bar in deck transport
-			</label>
-		</fieldset>
-	</form>
+			<fieldset>
+				<legend>Track range</legend>
+				<label>
+					<input type="checkbox" bind:checked={appState.show_track_range_control} />
+					Show track progress bar in deck transport
+				</label>
+			</fieldset>
+		</form>
+	</section>
 </article>
 
 <style>
 	h1 {
 		margin-block: 1rem;
+	}
+
+	.box {
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		padding: 0.75rem;
 	}
 
 	.form {

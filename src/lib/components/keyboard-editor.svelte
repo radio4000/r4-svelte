@@ -12,12 +12,20 @@
 		return appState.shortcuts || DEFAULT_KEY_BINDINGS
 	})
 
-	const shortcutActions = ['openSearch', 'togglePlayPause', 'toggleShuffle', 'gotoSettings', 'showShortcutsHelp']
+	const shortcutActions = [
+		'openSearch',
+		'togglePlayPause',
+		'toggleShuffle',
+		'toggleCompactDeck',
+		'gotoSettings',
+		'showShortcutsHelp'
+	]
 
 	const actionLabelMap = {
 		openSearch: () => m.shortcuts_action_openSearch(),
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
+		toggleCompactDeck: () => m.shortcuts_action_toggleCompactDeck(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
@@ -66,16 +74,16 @@
 	const shortcutExamples = ['k', '$mod+k', 'Escape', 'ArrowUp']
 </script>
 
-<section>
-	<header>
-		<h2>{m.shortcuts_heading()}</h2>
-		{#if !editing}
-			<button onclick={() => (editing = true)}>{m.shortcuts_edit()}</button>
-		{:else}
-			<button onclick={handleDone}>{m.shortcuts_done()}</button>
-		{/if}
-	</header>
+<header>
+	<h2>{m.shortcuts_heading()}</h2>
+	{#if !editing}
+		<button onclick={() => (editing = true)}>{m.shortcuts_edit()}</button>
+	{:else}
+		<button onclick={handleDone}>{m.shortcuts_done()}</button>
+	{/if}
+</header>
 
+<section class="box">
 	{#if !editing}
 		<dl>
 			{#each Object.entries(keyBindings) as [key, action] (key)}
@@ -134,7 +142,10 @@
 </section>
 
 <style>
-	section {
+	.box {
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		padding: 0.75rem;
 		margin-bottom: 1rem;
 	}
 
@@ -146,7 +157,7 @@
 	}
 
 	dl {
-		margin: 0 0 0 1rem;
+		margin: 0;
 		display: grid;
 		gap: 0.5rem;
 	}
@@ -187,11 +198,6 @@
 		background: var(--gray-3);
 		padding: 0.125rem 0.2rem;
 		border-radius: var(--border-radius);
-	}
-
-	form,
-	dl {
-		margin-left: 1rem;
 	}
 
 	form {
