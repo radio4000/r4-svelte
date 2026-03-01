@@ -11,9 +11,6 @@
 	let deck = $derived(appState.decks[deckId])
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
-	let deckNeedsSpace = $derived(
-		Boolean(deck && !deck.compact && (!deck.hide_video_player || (!isListeningToBroadcast && !deck.hide_queue_panel)))
-	)
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
@@ -73,7 +70,6 @@
 			deck: true,
 			expanded: deck?.expanded,
 			compact: deck?.compact,
-			'needs-space': deckNeedsSpace,
 			listening: isListeningToBroadcast,
 			'active-deck': isActiveDeck,
 			resizing,
@@ -142,29 +138,26 @@
 			width: 100%;
 		}
 
-		.deck.needs-space:not(.compact):not(.expanded) {
+		/* deck has at least one visible panel (video or queue): fill available height */
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) {
 			height: 100%;
 		}
 
-		.deck.needs-space:not(.compact):not(.expanded) :global(.video) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.video) {
 			flex: 1 1 auto;
 			min-height: 0;
 			max-height: none;
 			aspect-ratio: auto;
 		}
 
-		.deck.needs-space:not(.compact):not(.expanded) :global(.queue-panel) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.queue-panel) {
 			flex: 1 1 auto;
 			min-height: 0;
 		}
 
-		.deck.needs-space:not(.compact):not(.expanded) :global(.bottom-controls) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+			:global(.bottom-controls) {
 			flex-wrap: wrap;
-		}
-
-		.deck.listening {
-			width: 100%;
-			min-width: 0;
 		}
 
 		.resize-handle {
@@ -238,7 +231,7 @@
 	.deck.listening {
 		width: 280px;
 		min-width: 200px;
-		flex-shrink: 1;
+		flex-shrink: 0;
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */

@@ -6,7 +6,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
 
 - Check if the track/related page is working. Don't think so. This track https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related "clio - faces" exists several times on r4,. but related shows 'no related information'. Use r4 cli to check in the media_id.
 - Move the play history out of the deck UI so simplify decks. Also since play history is not per deck, but per local storage. We already have /history route. Where do we link it?
-- on https://beta.radio4000.com/ko002/tracks/c3ba2a0d-db49-4143-b953-f8594cd756e7 it shows track.source as "youtube"  but it's a file provider, not youtube.
+- on https://beta.radio4000.com/ko002/tracks/c3ba2a0d-db49-4143-b953-f8594cd756e7 it shows track.source as "youtube" but it's a file provider, not youtube.
 - Move history tab out of the deck UI. Play history is global anyway, not related to a single deck. Move it out of the queue thing. Find a way to link /history route instead in the main nav or setting?
 - Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is already the right abstraction (receives channels, shows toolbar, renders view) but `channels.svelte` re-implements all display logic instead of using it. Refactor:
   1. Add `tuner` mode to `channels-view.svelte` (currently missing)
@@ -14,7 +14,7 @@ List of possible improvements. Sorted roughly by priority. Verify before impleme
   3. Add `footer` snippet slot for the "load more" pagination button
   4. Refactor `channels.svelte` to use `<ChannelsView>` — pass pre-sorted channels, filter menu as `header` snippet, load-more as `footer` snippet, set `skipSort`. Data fetching/filtering/pagination stay in `channels.svelte`. Sync `appState.channels_display` via bindable `display` + `$effect` (same pattern followers/following already use).
   5. Followers/following pages unchanged.
->>>>>>> conflict 1 of 1 ends
+     > > > > > > > conflict 1 of 1 ends
 
 - make sure "#one#two" parses hashtags as a single '#one%23two' and not two hashtags? decide whats the right way here, update linkentities test, the regexes. remember we parse track.descriptions inside postgres, not in the app. and linkentities test should not define its own, new regex!
 - nav.tabs vs div.track-tabs>nav? clean up markup here
