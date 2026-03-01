@@ -33,9 +33,17 @@ function maybeBroadcastNotify() {
 	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
+/** Sort by a date field. Returns a comparator function. */
+export function sortByDate(field: string, direction: 'asc' | 'desc' = 'desc') {
+	return (a: Record<string, any>, b: Record<string, any>) => {
+		const ta = new Date(a[field]).getTime()
+		const tb = new Date(b[field]).getTime()
+		return direction === 'desc' ? tb - ta : ta - tb
+	}
+}
+
 /** Sort tracks by created_at descending (newest first) */
-export const sortByNewest = (a: {created_at: string}, b: {created_at: string}) =>
-	new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+export const sortByNewest = sortByDate('created_at', 'desc')
 
 const userInitiatedPlayMap = new Map<number, boolean>()
 
