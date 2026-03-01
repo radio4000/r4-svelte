@@ -37,7 +37,7 @@ The voice adapts to context. Not everything gets the same register.
 
 **Docs** — complete sentences, technically precise, descriptive headings ("Play queue and track ordering"). No corporate headers ("Key Takeaways"), no preamble paragraphs.
 
-**Changelog** — result-oriented, domain-tagged, one sentence. See [update-changelog skill](../.claude/skills/update-changelog/SKILL.md).
+**Changelog** — result-oriented, domain-tagged, one sentence. See [r4pm skill](../.claude/skills/r4pm/SKILL.md).
 
 ## What this voice is NOT
 
