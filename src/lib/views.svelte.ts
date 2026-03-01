@@ -4,19 +4,20 @@ import {createQuery} from '@tanstack/svelte-query'
 import {useLiveQuery} from '@tanstack/svelte-db'
 import {inArray} from '@tanstack/db'
 import {tracksCollection} from '$lib/collections/tracks'
+import {channelsCollection} from '$lib/collections/channels'
 import {searchTracks} from '$lib/search-fts'
 import {sdk} from '@radio4000/sdk'
-import type {Deck, Track} from '$lib/types'
-import {viewKey} from '$lib/views'
+import type {Channel, Deck, Track} from '$lib/types'
+import {viewKey, type View} from '$lib/views'
 
 /** Auto-radio decks matching a specific View identity. */
-export function getAutoDecksForView(decks: Deck[], view?: import('$lib/views').View): Deck[] {
+export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 	const key = viewKey(view)
 	return decks.filter((d) => d.auto_radio && viewKey(d.view) === key)
 }
 
 /** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */
-export function processViewTracks(tracks: Track[], view: import('$lib/views').View): Track[] {
+export function processViewTracks(tracks: Track[], view: View): Track[] {
 	let data = tracks
 	// Tag post-filtering (channels+tags combo, or tags-only with "all" mode)
 	if (view.channels?.length && view.tags?.length) {
@@ -47,19 +48,24 @@ export function processViewTracks(tracks: Track[], view: import('$lib/views').Vi
 	return data
 }
 
-/** Reactive view query. Call during component init. Returns {tracks, loading} with getters. */
-export function queryViewTracks(getView: () => import('$lib/views').View) {
+/** Reactive view query. Call during component init. Returns {tracks, channels, loading} with getters. */
+export function queryView(getView: () => View) {
 	// Stable $derived primitives — only change when actual query params change.
 	// Prevents re-creating queries on sort/direction/limit changes (same pattern as [slug]/+layout).
 	const channelsKey = $derived(getView().channels?.join(',') || '')
 	const tagsKey = $derived(getView().tags?.toSorted().join(',') || '')
 	const searchKey = $derived(getView().search?.trim() || '')
 
-	const channelQuery = useLiveQuery((q) => {
-		const channels = channelsKey ? channelsKey.split(',') : []
-		// No channels selected — return empty result (no rows have id === '')
-		if (!channels.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
-		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, channels))
+	const channelsQuery = useLiveQuery((q) => {
+		const slugs = channelsKey ? channelsKey.split(',') : []
+		if (!slugs.length) return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
+		return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, slugs))
+	})
+
+	const tracksQuery = useLiveQuery((q) => {
+		const slugs = channelsKey ? channelsKey.split(',') : []
+		if (!slugs.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
+		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, slugs))
 	})
 
 	const tagsQuery = createQuery(() => {
@@ -105,7 +111,7 @@ export function queryViewTracks(getView: () => import('$lib/views').View) {
 		get tracks() {
 			const v = getView()
 			const data: Track[] = channelsKey
-				? ((channelQuery.data ?? []) as Track[])
+				? ((tracksQuery.data ?? []) as Track[])
 				: tagsKey
 					? ((tagsQuery.data ?? []) as Track[])
 					: searchKey
@@ -113,9 +119,12 @@ export function queryViewTracks(getView: () => import('$lib/views').View) {
 						: []
 			return processViewTracks(data, v)
 		},
+		get channels() {
+			return (channelsQuery.data ?? []) as Channel[]
+		},
 		get loading() {
 			return (
-				(!!channelsKey && !channelQuery.isReady) ||
+				(!!channelsKey && !tracksQuery.isReady) ||
 				(!!tagsKey && !channelsKey && tagsQuery.isPending) ||
 				(!!searchKey && !channelsKey && !tagsKey && searchQuery.isPending)
 			)

@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
-	import {queryViewTracks, getAutoDecksForView} from '$lib/views.svelte'
+	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
 	import {parseSearchQueryToView, parseView, serializeView, viewToQuery} from '$lib/views'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
@@ -113,7 +113,7 @@
 	}
 
 	// --- Track results (View pipeline) ---
-	const viewQuery = queryViewTracks(() => view)
+	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
 	const tracksLoading = $derived(viewQuery.loading)
 	const autoRadioTracks = $derived(toAutoTracks(tracks))

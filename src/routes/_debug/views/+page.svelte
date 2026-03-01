@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
-	import {queryViewTracks} from '$lib/views.svelte'
+	import {queryView} from '$lib/views.svelte'
 	import {parseView, parseSearchQueryToView, serializeView, type View} from '$lib/views'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
@@ -9,7 +9,7 @@
 
 	const view = $derived(parseView(page.url.searchParams))
 	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
-	const viewQuery = queryViewTracks(() => view)
+	const viewQuery = queryView(() => view)
 
 	// Form state (not $derived — avoids URL→form feedback loop)
 	let channelsInput = $state('')

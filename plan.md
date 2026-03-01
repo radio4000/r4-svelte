@@ -4,28 +4,30 @@ Possible improvements. Roughly by priority. Verify before implementing.
 
 ## r4:// URI scheme
 
-Compact, human-readable URIs encoding composite views (one or more channel/tag/search queries merged into one queue). See `docs/r4-uri.md` for full spec.
+Compact, human-readable URIs encoding composite views (one or more channel/tag/search queries merged into one queue). See `docs/views.md`.
 
-**Phase 1 — URI for pins** (start here)
+Types (`ViewSegment`, `View`, `CompositeView`) and pure helpers (`parseUri`, `serializeUri`, `parseSegment`, `serializeSegment`, `parseParams`, `serializeParams`, `normalizeView`, `viewKey`) are in `src/lib/views.ts` with tests.
 
-- Add `parseUri(uri): CompositeView` and `serializeUri(cv): string` to `src/lib/views.svelte.ts`
-- Single-segment support + `exclude` option
-- Add `query` field to `SavedView` (compact URI body without `r4://` prefix); `params` stays as migration fallback
-- Update `views-bar`, `pins-nav`, `settings/pins` to read/write `query`
+### Naming question
 
-**Phase 2 — Composite views**
+Current type names feel off. `ViewSegment` is what you'd naturally call a "view" — the query part (channels, tags, search). But `View` is taken by the flat segment + display options combo.
 
-- Add `ViewSegment`, `CompositeView` types
-- Add `resolveUri(uri, {tracksCollection, sdk}): Promise<Track[]>`
-- Update `queryViewTracks` to accept `CompositeView`
+Options:
+
+1. **Rename `ViewSegment` → `View`** — matches the mental model ("a view is what you're looking at"). But then what's the flat `View` (segment + display) called? And `CompositeView`?
+2. **Keep current names** — `ViewSegment` is a segment, `View` is segment + display, `CompositeView` is multi-segment + display. Naming is fine, just unfamiliar at first.
+3. **Something else** — maybe `View` + `ViewQuery` (the thing you query with), or `View` + `ViewConfig`.
+
+Decide before SavedView migration (below), since the field name and type names should align.
+
+### Next steps
+
+- Replace `params: string` on `SavedView` with `uri: string` (clean break, no migration fallback). Stores the URI body without `r4://` prefix. `parseUri('r4://' + sv.uri)` gives the `CompositeView`.
+- Update `views-bar`, `pins-nav`, `settings/pins` to read/write `uri`
+- Add `resolveUri(uri, {tracksCollection, sdk}): Promise<Track[]>` — resolve a URI to tracks
+- Update `queryView` to accept `CompositeView`
 - Update auto-radio seed: `serializeUri(cv)` instead of `viewKey(view)`
-
-**Phase 3 — Broadcast compression**
-
 - Send URI in broadcast payload; listeners resolve locally
-
-**Phase 4 — Presence**
-
 - Broadcast current URI via Supabase presence for "now listening" discovery
 
 ## Backlog
