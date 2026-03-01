@@ -191,4 +191,9 @@
 		flex: 0 0 var(--track-artwork-size);
 		align-self: center;
 	}
+
+	/* Hide above if user has hidden artwork */
+	main :global(.hide-artwork .card:not(:has(.artwork)))::before {
+		content: none;
+	}
 </style>

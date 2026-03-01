@@ -166,7 +166,7 @@
 
 {#if tracks.length}
 	{#if virtual}
-		<div class="virtual-tracklist">
+		<div class={{'virtual-tracklist': true, 'hide-artwork': appState.hide_track_artwork}}>
 			<SvelteVirtualList
 				bind:this={virtualList}
 				items={flatItems}
@@ -205,7 +205,7 @@
 		</div>
 	{:else if grouped}
 		<div
-			class="timeline"
+			class={{'timeline': true, 'hide-artwork': appState.hide_track_artwork}}
 			role="listbox"
 			tabindex="0"
 			aria-label={m.nav_tracks()}
@@ -255,7 +255,7 @@
 		</div>
 	{:else}
 		<ul
-			class="list tracks"
+			class={{'list': true, 'tracks': true, 'hide-artwork': appState.hide_track_artwork}}
 			role="listbox"
 			tabindex="0"
 			aria-label={m.nav_tracks()}

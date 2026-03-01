@@ -56,7 +56,6 @@
 		height: 100%;
 		overflow-x: auto;
 		overflow-y: hidden;
-		padding: 0.4rem;
 
 		&:empty {
 			display: none;
