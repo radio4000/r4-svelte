@@ -74,6 +74,7 @@
 			width: fit-content;
 			max-width: 72vw;
 			min-width: 0;
+			padding-inline: 0;
 		}
 	}
 

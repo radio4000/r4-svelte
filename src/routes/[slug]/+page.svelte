@@ -229,16 +229,16 @@
 									activeDeck?.is_playing ? togglePlayPause(appState.active_deck_id) : playTracks(allTracks)}
 								title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
 							>
-								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={14} />
+								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={16} />Play
 							</button>
 							<button type="button" onclick={() => queueTracks(allTracks)} title={m.search_queue_all()}>
-								<Icon icon="next-fill" size={14} />
+								<Icon icon="next-fill" size={16} />Queue
 							</button>
 							{#if hasAutoRadioCoverage(allTracks)}
 								<AutoRadioButton
 									synced={isAutoActive && !isAutoDrifted}
 									title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-									size={14}
+									size={16}
 									onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(allTracks), autoView)}
 								/>
 							{/if}
@@ -287,14 +287,14 @@
 									? m.channel_pause_tag({tag: section.tag})
 									: m.channel_play_tag({tag: section.tag})}
 							>
-								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={14} />
+								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={16} />Play
 							</button>
 							<button
 								type="button"
 								onclick={() => queueTracks(section.tracks)}
 								title={m.channel_queue_tag({tag: section.tag})}
 							>
-								<Icon icon="next-fill" size={14} />
+								<Icon icon="next-fill" size={16} />Queue
 							</button>
 							{#if channel}
 								{@const autoTagTracks = toAutoTracks(section.tracks)}
@@ -306,7 +306,7 @@
 									<AutoRadioButton
 										synced={isAutoTagActive && !isAutoTagDrifted}
 										title={isAutoTagDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-										size={14}
+										size={16}
 										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
 									/>
 								{/if}
@@ -346,7 +346,7 @@
 	}
 
 	.search-bar {
-		padding: 0.5rem 0.75rem;
+		padding: 0.5rem 0.5rem;
 	}
 
 	.search-bar :global(.search-input) {
