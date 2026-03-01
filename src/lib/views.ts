@@ -96,10 +96,11 @@ export function serializeView(view: View): string {
 	if (view.order) options.set('order', view.order)
 	if (view.direction) options.set('direction', view.direction)
 	if (view.limit) options.set('limit', String(view.limit))
+	if (view.queries.some((q) => q.tagsMode === 'all')) options.set('tagsMode', 'all')
 	const optStr = options.toString()
 	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
 	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
-	return `${queriesStr}${allOpts ? '?' + allOpts : ''}`
+	return `${queriesStr}${allOpts ? `?${allOpts}` : ''}`
 }
 
 // --- Utilities ---

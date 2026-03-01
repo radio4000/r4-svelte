@@ -2,13 +2,14 @@
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, parseSearchQueryToView, serializeView, type View} from '$lib/views'
+	import {parseView, serializeView, type View, type ViewQuery} from '$lib/views'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {Debounced} from 'runed'
 
-	const view = $derived(parseView(page.url.searchParams))
-	const hasFilter = $derived(!!view.channels?.length || !!view.tags?.length || !!view.search)
+	const view = $derived(parseView(page.url.searchParams.toString()))
+	const vq = $derived(view.queries[0] ?? {})
+	const hasFilter = $derived(!!vq.channels?.length || !!vq.tags?.length || !!vq.search)
 	const viewQuery = queryView(() => view)
 
 	// Form state (not $derived — avoids URL→form feedback loop)
@@ -22,17 +23,18 @@
 	let quickQuery = $state('')
 
 	function syncForm(v: View) {
-		channelsInput = v.channels?.join(', ') || ''
-		tagsInput = v.tags?.join(', ') || ''
-		tagsModeValue = v.tagsMode || 'any'
+		const fq = v.queries[0] ?? {}
+		channelsInput = fq.channels?.join(', ') || ''
+		tagsInput = fq.tags?.join(', ') || ''
+		tagsModeValue = fq.tagsMode || 'any'
 		orderValue = v.order || 'created'
 		directionValue = v.direction || 'desc'
 		limitValue = v.limit ? String(v.limit) : ''
-		searchInput = v.search || ''
+		searchInput = fq.search || ''
 	}
-	syncForm(parseView(page.url.searchParams))
+	syncForm(parseView(page.url.searchParams.toString()))
 	afterNavigate(({type}) => {
-		if (type !== 'goto') syncForm(parseView(page.url.searchParams))
+		if (type !== 'goto') syncForm(parseView(page.url.searchParams.toString()))
 	})
 
 	// Debounce expensive inputs (trigger fetches); sort/limit are instant
@@ -49,14 +51,15 @@
 	]
 
 	const formView = $derived.by((): View => {
-		const v: View = {}
+		const fq: ViewQuery = {}
 		const ch = splitList(dChannels.current ?? '')
-		if (ch.length) v.channels = ch
+		if (ch.length) fq.channels = ch
 		const tg = splitList((dTags.current ?? '').replaceAll('#', ''))
-		if (tg.length) v.tags = tg
-		if (tagsModeValue === 'all') v.tagsMode = 'all'
+		if (tg.length) fq.tags = tg
+		if (tagsModeValue === 'all') fq.tagsMode = 'all'
 		const search = (dSearch.current ?? '').trim()
-		if (search) v.search = search
+		if (search) fq.search = search
+		const v: View = {queries: [fq]}
 		v.order = orderValue
 		v.direction = directionValue
 		const n = Number(limitValue)
@@ -87,7 +90,7 @@
 		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
-			syncForm(parseSearchQueryToView(quickQuery))
+			syncForm(parseView(quickQuery))
 		}}
 	>
 		<fieldset>
@@ -100,7 +103,7 @@
 		{#if quickQuery}
 			<details>
 				<summary>Parsed</summary>
-				<pre>{JSON.stringify(parseSearchQueryToView(quickQuery), null, 2)}</pre>
+				<pre>{JSON.stringify(parseView(quickQuery), null, 2)}</pre>
 			</details>
 		{/if}
 	</form>
@@ -144,7 +147,7 @@
 				<input id="limit" type="number" bind:value={limitValue} placeholder="20" min="1" max="4000" />
 			</fieldset>
 			<fieldset class="end">
-				<button type="button" onclick={() => syncForm({})}>Clear</button>
+				<button type="button" onclick={() => syncForm({queries: [{}]})}>Clear</button>
 			</fieldset>
 		</fieldset>
 	</form>

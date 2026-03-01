@@ -21,7 +21,8 @@
 	const savedViews: SavedView[] = $derived(viewsQuery.data)
 
 	// Active detection
-	const currentParams = $derived(serializeView(view).toString())
+	const query = $derived(view.queries[0] ?? {})
+	const currentParams = $derived(serializeView(view))
 	const activeViewId = $derived(savedViews.find((sv) => sv.params === currentParams)?.id ?? null)
 	const baseViewName = $derived(baseViewId ? savedViews.find((sv) => sv.id === baseViewId)?.name : null)
 
@@ -78,7 +79,7 @@
 	}
 
 	function clearDirty() {
-		onchange({})
+		onchange({queries: [{}]})
 		lastSavedParams = ''
 		baseViewId = null
 		draftName = ''
@@ -87,14 +88,14 @@
 	function clickView(sv: SavedView) {
 		lastSavedParams = sv.params
 		baseViewId = sv.id
-		onchange(parseView(new URLSearchParams(sv.params)))
+		onchange(parseView(sv.params))
 	}
 
 	const viewSummary = $derived.by(() => {
 		const parts: string[] = []
-		if (view.channels?.length) parts.push(`channels: ${view.channels.join(', ')}`)
-		if (view.tags?.length) parts.push(`tags: ${view.tags.join(', ')}`)
-		if (view.search) parts.push(`search: ${view.search}`)
+		if (query.channels?.length) parts.push(`channels: ${query.channels.join(', ')}`)
+		if (query.tags?.length) parts.push(`tags: ${query.tags.join(', ')}`)
+		if (query.search) parts.push(`search: ${query.search}`)
 		if (view.order) parts.push(`order: ${view.order}`)
 		if (view.direction === 'asc') parts.push('asc')
 		if (view.limit) parts.push(`limit: ${view.limit}`)
@@ -154,8 +155,8 @@
 							<input
 								id="vb-channels"
 								type="text"
-								value={view.channels?.join(', ') || ''}
-								onchange={(e) => onchange({...view, channels: splitList(e.currentTarget.value)})}
+								value={query.channels?.join(', ') || ''}
+								onchange={(e) => onchange({...view, queries: [{...query, channels: splitList(e.currentTarget.value)}]})}
 								placeholder={m.views_channels_placeholder()}
 							/>
 						</fieldset>
@@ -163,16 +164,24 @@
 							<legend>{m.views_tags_label()}</legend>
 							<fieldset class="row">
 								<select
-									value={view.tagsMode || 'any'}
-									onchange={(e) => onchange({...view, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+									value={query.tagsMode || 'any'}
+									onchange={(e) =>
+										onchange({
+											...view,
+											queries: [{...query, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'}]
+										})}
 								>
 									<option value="any">{m.views_tags_any()}</option>
 									<option value="all">{m.views_tags_all()}</option>
 								</select>
 								<input
 									type="text"
-									value={view.tags?.join(', ') || ''}
-									onchange={(e) => onchange({...view, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+									value={query.tags?.join(', ') || ''}
+									onchange={(e) =>
+										onchange({
+											...view,
+											queries: [{...query, tags: splitList(e.currentTarget.value.replaceAll('#', ''))}]
+										})}
 									placeholder={m.views_tags_placeholder()}
 								/>
 							</fieldset>
@@ -182,8 +191,9 @@
 							<input
 								id="vb-search"
 								type="text"
-								value={view.search || ''}
-								onchange={(e) => onchange({...view, search: e.currentTarget.value.trim() || undefined})}
+								value={query.search || ''}
+								onchange={(e) =>
+									onchange({...view, queries: [{...query, search: e.currentTarget.value.trim() || undefined}]})}
 								placeholder={m.views_search_placeholder()}
 							/>
 						</fieldset>

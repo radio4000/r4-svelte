@@ -55,7 +55,7 @@ export async function findChannelBySlug(slug) {
 export async function searchAll(query, {limit = 100} = {}) {
 	if (query.trim().length < 2) return {channels: [], tracks: []}
 
-	const {channels: slugs = [], tags = [], search = ''} = parseSearchQueryToView(query)
+	const {channels: slugs = [], tags = [], search = ''} = parseQuery(query)
 	const hasChannels = !!slugs.length
 	const hasTags = !!tags.length
 	const hasSearch = !!search

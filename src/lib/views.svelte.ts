@@ -19,19 +19,20 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 /** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */
 export function processViewTracks(tracks: Track[], view: View): Track[] {
 	let data = tracks
+	const q = view.queries[0]
 	// Tag post-filtering (channels+tags combo, or tags-only with "all" mode)
-	if (view.channels?.length && view.tags?.length) {
-		if (view.tagsMode === 'all') {
-			data = data.filter((t) => view.tags?.every((tag) => t.tags?.includes(tag)))
+	if (q?.channels?.length && q?.tags?.length) {
+		if (q.tagsMode === 'all') {
+			data = data.filter((t) => q.tags?.every((tag) => t.tags?.includes(tag)))
 		} else {
-			data = data.filter((t) => t.tags?.some((tag) => view.tags?.includes(tag)))
+			data = data.filter((t) => t.tags?.some((tag) => q.tags?.includes(tag)))
 		}
-	} else if (view.tagsMode === 'all' && view.tags?.length) {
+	} else if (q?.tagsMode === 'all' && q?.tags?.length) {
 		// Tags-only with "all" mode: supabase used overlaps (any), so post-filter
-		data = data.filter((t) => view.tags?.every((tag) => t.tags?.includes(tag)))
+		data = data.filter((t) => q.tags?.every((tag) => t.tags?.includes(tag)))
 	}
-	if (view.search) {
-		data = fuzzySearch(view.search, data, ['title', 'description'])
+	if (q?.search) {
+		data = fuzzySearch(q.search, data, ['title', 'description'])
 	}
 	if (view.order === 'shuffle') {
 		data = shuffleArray(data)
@@ -52,9 +53,9 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 export function queryView(getView: () => View) {
 	// Stable $derived primitives — only change when actual query params change.
 	// Prevents re-creating queries on sort/direction/limit changes (same pattern as [slug]/+layout).
-	const channelsKey = $derived(getView().channels?.join(',') || '')
-	const tagsKey = $derived(getView().tags?.toSorted().join(',') || '')
-	const searchKey = $derived(getView().search?.trim() || '')
+	const channelsKey = $derived(getView().queries[0]?.channels?.join(',') || '')
+	const tagsKey = $derived(getView().queries[0]?.tags?.toSorted().join(',') || '')
+	const searchKey = $derived(getView().queries[0]?.search?.trim() || '')
 
 	const channelsQuery = useLiveQuery((q) => {
 		const slugs = channelsKey ? channelsKey.split(',') : []

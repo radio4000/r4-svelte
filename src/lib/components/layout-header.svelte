@@ -27,7 +27,8 @@
 	const userChannelAutoDecks = $derived.by(() => {
 		if (!userChannel?.slug) return []
 		return Object.values(appState.decks).filter(
-			(d) => d.auto_radio && (d.view?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
+			(d) =>
+				d.auto_radio && (d.view?.queries[0]?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
 		)
 	})
 	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
@@ -38,7 +39,7 @@
 		if (
 			activeDeck?.id &&
 			activeDeck.auto_radio &&
-			(activeDeck.view?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
+			(activeDeck.view?.queries[0]?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
 		) {
 			return activeDeck.id
 		}

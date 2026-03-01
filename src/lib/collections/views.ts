@@ -11,7 +11,7 @@ export interface SavedView {
 	id: string
 	name: string
 	description?: string
-	params: string // serializeView(view).toString()
+	params: string // serializeView(view)
 	position?: number // non-null = pinned, value = sort order
 	created_at: string
 }
@@ -27,7 +27,7 @@ export function createView(name: string, view: View, description?: string): Save
 	const entry: SavedView = {
 		id: uuid(),
 		name,
-		params: serializeView(view).toString(),
+		params: serializeView(view),
 		created_at: new Date().toISOString(),
 		...(description ? {description} : {})
 	}
