@@ -15,10 +15,10 @@ import {appState} from '$lib/app-state.svelte'
 import * as api from '$lib/api'
 import * as queue from '$lib/player/queue'
 
-import '$lib/rough-spinner.js'
+if (browser) import('$lib/rough-spinner.js')
 
-// Disable SSR
-export const ssr = false
+// SSR enabled for OpenGraph meta tags
+export const ssr = true
 
 const log = logger.ns('layout').seal()
 
