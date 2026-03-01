@@ -41,3 +41,5 @@ Run `bun run test`, `bun run check`, `bun run types` **directly** — never pipe
 Use `/src/routes/_debug` freely for (temporary) test routes and playgrounds.
 The `r4 --help` CLI can help inspect data from remote PostgreSQL
 Be concise. Short answers, no walls of text.
+
+Please read ./docs folder for any relevant topics.

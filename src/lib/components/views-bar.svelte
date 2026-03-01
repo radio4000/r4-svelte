@@ -167,55 +167,57 @@
 					{#snippet trigger()}{m.views_filters_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
 						{#each view.queries as q, i (i)}
-							{#if view.queries.length > 1}
-								<header class="query-header">
-									<strong>Query {i + 1}</strong>
-									<button type="button" class="ghost" onclick={() => removeQuery(i)} data-no-close>
-										<Icon icon="close" size={12} />
-									</button>
-								</header>
-							{/if}
-							<fieldset>
-								<label for="{uid}-channels-{i}">{m.views_channels_label()}</label>
-								<input
-									id="{uid}-channels-{i}"
-									type="text"
-									value={q.channels?.join(', ') || ''}
-									onchange={(e) => updateQuery(i, {...q, channels: splitList(e.currentTarget.value)})}
-									placeholder={m.views_channels_placeholder()}
-								/>
-							</fieldset>
-							<fieldset>
-								<legend>{m.views_tags_label()}</legend>
-								<fieldset class="row">
-									<select
-										value={q.tagsMode || 'any'}
-										onchange={(e) => updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
-									>
-										<option value="any">{m.views_tags_any()}</option>
-										<option value="all">{m.views_tags_all()}</option>
-									</select>
+							<div class="query-group">
+								{#if view.queries.length > 1}
+									<header class="query-header">
+										<strong>Query {i + 1}</strong>
+										<button type="button" onclick={() => removeQuery(i)} data-no-close data-delete>
+											<Icon icon="delete" size={12} />
+										</button>
+									</header>
+								{/if}
+								<fieldset>
+									<label for="{uid}-channels-{i}">{m.views_channels_label()}</label>
 									<input
+										id="{uid}-channels-{i}"
 										type="text"
-										value={q.tags?.join(', ') || ''}
-										onchange={(e) => updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
-										placeholder={m.views_tags_placeholder()}
+										value={q.channels?.join(', ') || ''}
+										onchange={(e) => updateQuery(i, {...q, channels: splitList(e.currentTarget.value)})}
+										placeholder={m.views_channels_placeholder()}
 									/>
 								</fieldset>
-							</fieldset>
-							<fieldset>
-								<label for="{uid}-search-{i}">{m.views_search_label()}</label>
-								<input
-									id="{uid}-search-{i}"
-									type="text"
-									value={q.search || ''}
-									onchange={(e) => updateQuery(i, {...q, search: e.currentTarget.value.trim() || undefined})}
-									placeholder={m.views_search_placeholder()}
-								/>
-							</fieldset>
+								<fieldset>
+									<legend>{m.views_tags_label()}</legend>
+									<fieldset class="row">
+										<select
+											value={q.tagsMode || 'any'}
+											onchange={(e) => updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+										>
+											<option value="any">{m.views_tags_any()}</option>
+											<option value="all">{m.views_tags_all()}</option>
+										</select>
+										<input
+											type="text"
+											value={q.tags?.join(', ') || ''}
+											onchange={(e) => updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+											placeholder={m.views_tags_placeholder()}
+										/>
+									</fieldset>
+								</fieldset>
+								<fieldset>
+									<label for="{uid}-search-{i}">{m.views_search_label()}</label>
+									<input
+										id="{uid}-search-{i}"
+										type="text"
+										value={q.search || ''}
+										onchange={(e) => updateQuery(i, {...q, search: e.currentTarget.value.trim() || undefined})}
+										placeholder={m.views_search_placeholder()}
+									/>
+								</fieldset>
+							</div>
 							{#if i < view.queries.length - 1}<hr />{/if}
 						{/each}
-						<button type="button" class="ghost" onclick={addQuery} data-no-close>+ Query</button>
+						<button type="button" onclick={addQuery} data-no-close>+ Query</button>
 					</form>
 				</PopoverMenu>
 			</li>
@@ -315,6 +317,13 @@
 	.controls {
 		margin-inline-start: auto;
 		flex-shrink: 0;
+	}
+	.query-group {
+		padding: 0.25rem;
+		border-radius: 0.25rem;
+	}
+	.query-group:has([data-delete]:hover) {
+		box-shadow: inset 0 0 0 1px currentColor;
 	}
 	.query-header {
 		display: flex;
