@@ -198,8 +198,8 @@
 					/>
 				</div>
 				<menu class="channel-actions">
-					<span>
-						{#if canEdit}
+					{#if canEdit}
+						<span>
 							<BroadcastControls
 								deckId={appState.active_deck_id}
 								channelId={channel.id}
@@ -207,7 +207,9 @@
 								isLiveOverride={isChannelLive}
 								compact
 							/>
-						{:else if channel.id && isChannelLive}
+						</span>
+					{:else if channel.id && isChannelLive}
+						<span>
 							<button
 								type="button"
 								onclick={() => {
@@ -219,8 +221,8 @@
 							>
 								<Icon icon="cell-signal" />
 							</button>
-						{/if}
-					</span>
+						</span>
+					{/if}
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
 						{#if canShowAutoRadio}
