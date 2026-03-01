@@ -17,6 +17,7 @@
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getAutoDecksForView} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import Seo from '$lib/components/seo.svelte'
 
 	const PREVIEW_LIMIT = 8
 	const FEATURED_LIMIT = 10
@@ -144,16 +145,13 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{m.channel_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
-	{#if channel}
-		<meta property="og:title" content={channel.name} />
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content={page.url.href} />
-		{#if channel.description}<meta property="og:description" content={channel.description} />{/if}
-		{#if channel.image}<meta property="og:image" content={channelAvatarUrl(channel.image)} />{/if}
-	{/if}
-</svelte:head>
+<Seo
+	title={channel?.name || m.channel_page_fallback()}
+	description={channel?.description}
+	image={channel?.image ? channelAvatarUrl(channel.image) : undefined}
+	url={page.url.href}
+	type="music.radio_station"
+/>
 
 {#if channel}
 	<article>
