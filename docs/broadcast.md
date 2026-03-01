@@ -1,6 +1,6 @@
 # Broadcast feature
 
-This allows any user to broadcast (sync) their `appState.decks` to listeners in realtime via Supabase. Broadcast syncs the core player's deck state — it is independent of [/mix](mix.md).
+This allows any user to broadcast (sync) their `appState.decks` to listeners in realtime via Supabase.
 
 A user broadcasts as their channel. The broadcast's `decks` JSONB column mirrors the local deck state (`BroadcastDeckState[]`). Listeners subscribe and play along. When the broadcaster changes tracks, seeks, or adjusts any deck - including volume - listeners are updated.
 

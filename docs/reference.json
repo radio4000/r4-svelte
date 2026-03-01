@@ -188,23 +188,6 @@
 		{"name": "AutoRadio", "desc": "Stateful wrapper: setTracks + tick. Re-shuffles on week rollover."}
 	],
 
-	"src/lib/lab/mix.ts": [
-		{"name": "mix()", "desc": "Empty mix."},
-		{"name": "mixAll()", "desc": "Mix from all loaded tracks."},
-
-		{"name": "mix.from(slug)", "desc": "Add channel tracks."},
-		{"name": "mix.shuffle()", "desc": "Shuffle tracks."},
-		{"name": "mix.take(n)", "desc": "Take first n."},
-		{"name": "mix.unique()", "desc": "Remove duplicates."},
-		{"name": "mix.withoutErrors()", "desc": "Filter out errors."},
-		{"name": "mix.withTag(tag)", "desc": "Filter by tag."},
-		{"name": "mix.clone()", "desc": "Fork mix for variations."},
-
-		{"name": "mix.ids()", "desc": "Return track IDs."},
-		{"name": "mix.tracks()", "desc": "Return track objects."},
-		{"name": "mix.count()", "desc": "Count tracks."}
-	],
-
 	"src/lib/search-fts.js": [
 		{"name": "buildFtsFilter(query)", "desc": "Build FTS filter combining websearch + prefix."},
 		{"name": "searchChannels(query, {limit?})", "desc": "Search channels remotely."},
