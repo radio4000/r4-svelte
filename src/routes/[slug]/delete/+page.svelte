@@ -37,7 +37,7 @@
 </script>
 
 <svelte:head>
-	<title>Delete {channel?.name || 'channel'} - R5</title>
+	<title>Delete {channel?.name || 'channel'}</title>
 </svelte:head>
 
 <article class="constrained focused">
