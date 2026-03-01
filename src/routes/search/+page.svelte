@@ -3,7 +3,7 @@
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
 	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
-	import {parseSearchQueryToView, parseView, serializeView, viewToQuery} from '$lib/views'
+	import {parseSearchQueryToView, parseView, serializeView, viewLabel} from '$lib/views'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -53,7 +53,7 @@
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		if (page.url.searchParams.has('q')) return
-		const seeded = viewToQuery(parseView(page.url.searchParams))
+		const seeded = viewLabel(parseView(page.url.searchParams))
 		inputValue = seeded
 		inputSeeded = !!seeded
 	})
@@ -85,7 +85,7 @@
 	// --- ViewsBar → URL ---
 	function onViewsBarChange(v) {
 		inputSeeded = true
-		inputValue = viewToQuery(v)
+		inputValue = viewLabel(v)
 		const params = serializeView(v).toString()
 		goto(params ? `/search?${params}` : '/search', {replaceState: true})
 	}

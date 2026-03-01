@@ -31,6 +31,10 @@ For any task or question:
 - [browser-testing](docs/browser-testing.md) - testing with agent-browser
 - See `docs/` for topic-specific docs (player, search, broadcast, etc.)
 
+## Running scripts
+
+Run `bun run test`, `bun run check`, `bun run types` **directly** — never pipe through `tail`, `head`, or `grep`. Bun/Vitest use terminal control sequences that break when piped, causing empty output or hanging commands.
+
 ## Debug
 
 `window.r5` exposes sdk, appState, queryClient, tracksCollection, channelsCollection for console testing.

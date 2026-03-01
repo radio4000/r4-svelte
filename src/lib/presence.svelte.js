@@ -1,7 +1,7 @@
 import {sdk} from '@radio4000/sdk'
 import {untrack} from 'svelte'
 import {logger} from '$lib/logger'
-import {viewToQuery} from '$lib/views'
+import {viewLabel} from '$lib/views'
 
 const log = logger.ns('presence').seal()
 
@@ -160,7 +160,7 @@ export function trackBroadcastPresence(slug) {
  * @param {import('$lib/views').View} [view]
  */
 export function trackAutoRadioPresence(slug, view) {
-	const uri = viewToQuery(view ?? {channels: [slug]}) || `@${slug}`
+	const uri = viewLabel(view ?? {channels: [slug]}) || `@${slug}`
 	_trackChannelPresence(slug, 'auto-radio', uri)
 }
 

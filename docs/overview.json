@@ -222,20 +222,18 @@
 	],
 
 	"src/lib/views.ts": [
-		{"name": "ViewSegment", "desc": "Type: {channels?, tags?, tagsMode?, search?}. The query atom."},
-		{"name": "View", "desc": "Type: ViewSegment & {order?, direction?, limit?}. Segment + display options."},
+		{"name": "ViewQuery", "desc": "Type: {channels?, tags?, tagsMode?, search?}. What to fetch."},
 		{
-			"name": "CompositeView",
-			"desc": "Type: {segments: ViewSegment[], order?, direction?, limit?, exclude?}. Multiple segments merged."
+			"name": "View",
+			"desc": "Type: {queries: ViewQuery[], order?, direction?, limit?, exclude?}. One or more queries + display options."
 		},
-		{"name": "parseSegment(input)", "desc": "Parse human query (@slug #tag text) into a ViewSegment."},
-		{"name": "serializeSegment(segment)", "desc": "ViewSegment to human query string."},
-		{"name": "parseParams(params)", "desc": "Parse URLSearchParams into a View."},
-		{"name": "serializeParams(view)", "desc": "Serialize View to URLSearchParams."},
+		{"name": "parseQuery(input)", "desc": "Parse human query (@slug #tag text) into a ViewQuery."},
+		{"name": "serializeQuery(query)", "desc": "ViewQuery to human query string."},
+		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
+		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
+		{"name": "viewLabel(view)", "desc": "All queries as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
-		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."},
-		{"name": "parseUri(uri)", "desc": "Parse r4:// URI into a CompositeView."},
-		{"name": "serializeUri(cv)", "desc": "Serialize CompositeView to r4:// URI."}
+		{"name": "viewKey(view?)", "desc": "Canonical serialized key for comparing View identity."}
 	],
 
 	"src/lib/views.svelte.ts": [

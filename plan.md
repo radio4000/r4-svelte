@@ -2,33 +2,16 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-## r4:// URI scheme
+## Views
 
-Compact, human-readable URIs encoding composite views (one or more channel/tag/search queries merged into one queue). See `docs/views.md`.
+Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewKey`) are in `src/lib/views.ts` with tests. See `docs/views.md`.
 
-Types (`ViewSegment`, `View`, `CompositeView`) and pure helpers (`parseUri`, `serializeUri`, `parseSegment`, `serializeSegment`, `parseParams`, `serializeParams`, `normalizeView`, `viewKey`) are in `src/lib/views.ts` with tests.
-
-### Naming question
-
-Current type names feel off. `ViewSegment` is what you'd naturally call a "view" — the query part (channels, tags, search). But `View` is taken by the flat segment + display options combo.
-
-Options:
-
-1. **Rename `ViewSegment` → `View`** — matches the mental model ("a view is what you're looking at"). But then what's the flat `View` (segment + display) called? And `CompositeView`?
-2. **Keep current names** — `ViewSegment` is a segment, `View` is segment + display, `CompositeView` is multi-segment + display. Naming is fine, just unfamiliar at first.
-3. **Something else** — maybe `View` + `ViewQuery` (the thing you query with), or `View` + `ViewConfig`.
-
-Decide before SavedView migration (below), since the field name and type names should align.
-
-### Next steps
-
-- Replace `params: string` on `SavedView` with `uri: string` (clean break, no migration fallback). Stores the URI body without `r4://` prefix. `parseUri('r4://' + sv.uri)` gives the `CompositeView`.
+- Replace `params: string` on `SavedView` with `uri: string` (clean break). `uri` is `serializeView(view)`.
 - Update `views-bar`, `pins-nav`, `settings/pins` to read/write `uri`
-- Add `resolveUri(uri, {tracksCollection, sdk}): Promise<Track[]>` — resolve a URI to tracks
-- Update `queryView` to accept `CompositeView`
-- Update auto-radio seed: `serializeUri(cv)` instead of `viewKey(view)`
-- Send URI in broadcast payload; listeners resolve locally
-- Broadcast current URI via Supabase presence for "now listening" discovery
+- Update `queryView` to accept `View`
+- Update auto-radio seed: `serializeView(view)` instead of `viewKey(view)`
+- Send view URI in broadcast payload; listeners resolve locally
+- Broadcast current view URI via Supabase presence for "now listening" discovery
 
 ## Backlog
 

@@ -1,23 +1,16 @@
-/** The query part of a view — what to fetch. */
-export type ViewSegment = {
+/** What to fetch — a query for tracks. */
+export type ViewQuery = {
 	channels?: string[]
 	tags?: string[]
 	tagsMode?: 'any' | 'all'
 	search?: string
 }
 
-/** A ViewSegment + display options (order, direction, limit). */
-export type View = ViewSegment & {
+/** One or more queries merged, with display options. */
+export type View = {
+	queries: ViewQuery[]
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
-	limit?: number
-}
-
-/** Multiple segments merged into a single queue, with shared display options. */
-export type CompositeView = {
-	segments: ViewSegment[]
-	order?: View['order']
-	direction?: View['direction']
 	limit?: number
 	exclude?: string[]
 }
@@ -27,11 +20,11 @@ const validDirections = ['asc', 'desc'] as const
 const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
 
-// --- Segment: human query string ↔ ViewSegment ---
+// --- Query: human string ↔ ViewQuery ---
 
-/** Parse a human query string into a ViewSegment. `@slug` → channels, `#tag` → tags, rest → search. */
-export function parseSegment(input: string): ViewSegment {
-	const segment: ViewSegment = {}
+/** Parse a human query string into a ViewQuery. `@slug` → channels, `#tag` → tags, rest → search. */
+export function parseQuery(input: string): ViewQuery {
+	const query: ViewQuery = {}
 	const channels: string[] = []
 	const tags: string[] = []
 	const rest: string[] = []
@@ -46,128 +39,104 @@ export function parseSegment(input: string): ViewSegment {
 			rest.push(token)
 		}
 	}
-	if (channels.length) segment.channels = [...new Set(channels)]
-	if (tags.length) segment.tags = [...new Set(tags)]
+	if (channels.length) query.channels = [...new Set(channels)]
+	if (tags.length) query.tags = [...new Set(tags)]
 	const search = rest.join(' ')
-	if (search) segment.search = search
-	return segment
+	if (search) query.search = search
+	return query
 }
 
-/** Turn a ViewSegment back into a human-readable query string.
- *  Only represents channels/tags/search — order/direction/limit/tagsMode are params. */
-export function serializeSegment(segment: ViewSegment): string {
+/** Turn a ViewQuery back into a human-readable query string. */
+export function serializeQuery(query: ViewQuery): string {
 	const parts: string[] = []
-	if (segment.channels?.length) parts.push(...segment.channels.map((s) => `@${s}`))
-	if (segment.tags?.length) parts.push(...segment.tags.map((t) => `#${t}`))
-	if (segment.search) parts.push(segment.search)
+	if (query.channels?.length) parts.push(...query.channels.map((s) => `@${s}`))
+	if (query.tags?.length) parts.push(...query.tags.map((t) => `#${t}`))
+	if (query.search) parts.push(query.search)
 	return parts.join(' ')
 }
 
-// --- Params: URLSearchParams ↔ View ---
+// --- View: full string ↔ View ---
 
-/** Parse URLSearchParams into a View. */
-export function parseParams(params: URLSearchParams): View {
-	const view: View = {}
-	const channels = params.get('channels')
-	if (channels) view.channels = channels.split(',').filter(Boolean)
-	const tags = params.get('tags')
-	if (tags) view.tags = tags.split(',').filter(Boolean)
-	const tagsMode = params.get('tagsMode')
-	if (tagsMode === 'all') view.tagsMode = 'all'
-	const order = params.get('order')
-	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
-	const direction = params.get('direction')
-	if (direction && (validDirections as readonly string[]).includes(direction))
-		view.direction = direction as View['direction']
-	const limit = params.get('limit')
-	if (limit) {
-		const n = Number(limit)
-		if (n > 0) view.limit = Math.min(n, 4000)
+/** Parse a view string into a View. Handles `;` for multiple queries and `?` for options. Strips `r4://` if present. */
+export function parseView(input: string): View {
+	const body = input.replace(RE_R4_PREFIX, '')
+	const [queriesPart, optionsPart] = body.split('?')
+	const queries = (queriesPart || '')
+		.split(';')
+		.map((s) => parseQuery(s))
+		.filter((q) => Object.keys(q).length > 0)
+	const view: View = {queries: queries.length ? queries : [{}]}
+	if (optionsPart) {
+		const p = new URLSearchParams(optionsPart)
+		const order = p.get('order')
+		if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
+		const dir = p.get('direction')
+		if (dir && (validDirections as readonly string[]).includes(dir)) view.direction = dir as View['direction']
+		const limit = p.get('limit')
+		if (limit) {
+			const n = Number(limit)
+			if (n > 0) view.limit = Math.min(n, 4000)
+		}
+		const tagsMode = p.get('tagsMode')
+		if (tagsMode === 'all') {
+			for (const q of view.queries) {
+				if (!q.tagsMode && q.tags?.length) q.tagsMode = 'all'
+			}
+		}
+		const exclude = p.get('exclude')
+		if (exclude) view.exclude = exclude.split(',').filter(Boolean)
 	}
-	const search = params.get('search')
-	if (search) view.search = search
 	return view
 }
 
-/** Serialize a View to URLSearchParams. */
-export function serializeParams(view: View): URLSearchParams {
-	const params = new URLSearchParams()
-	if (view.channels?.length) params.set('channels', view.channels.join(','))
-	if (view.tags?.length) params.set('tags', view.tags.join(','))
-	if (view.tagsMode === 'all') params.set('tagsMode', 'all')
-	if (view.order) params.set('order', view.order)
-	if (view.direction) params.set('direction', view.direction)
-	if (view.limit) params.set('limit', String(view.limit))
-	if (view.search) params.set('search', view.search)
-	return params
+/** Serialize a View to a compact string. No `r4://` prefix. */
+export function serializeView(view: View): string {
+	const queriesStr = view.queries.map((q) => serializeQuery(q)).join(';')
+	const options = new URLSearchParams()
+	if (view.order) options.set('order', view.order)
+	if (view.direction) options.set('direction', view.direction)
+	if (view.limit) options.set('limit', String(view.limit))
+	const optStr = options.toString()
+	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
+	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
+	return `${queriesStr}${allOpts ? '?' + allOpts : ''}`
 }
 
-// --- View utilities ---
+// --- Utilities ---
+
+/** Human-readable label for a View: all queries, no options. */
+export function viewLabel(view: View): string {
+	return view.queries
+		.map((q) => serializeQuery(q))
+		.filter(Boolean)
+		.join('; ')
+}
 
 /** Remove empty fields so two semantically equivalent views compare equal. */
 export function normalizeView(view?: View): View | undefined {
 	if (!view) return undefined
-	const normalized: View = {}
-	if (view.channels?.length) normalized.channels = view.channels
-	if (view.tags?.length) normalized.tags = view.tags
-	if (view.tagsMode === 'all') normalized.tagsMode = 'all'
+	const queries = view.queries
+		.map((q) => {
+			const normalized: ViewQuery = {}
+			if (q.channels?.length) normalized.channels = q.channels
+			if (q.tags?.length) normalized.tags = q.tags
+			if (q.tagsMode === 'all') normalized.tagsMode = 'all'
+			const search = q.search?.trim()
+			if (search) normalized.search = search
+			return Object.keys(normalized).length ? normalized : undefined
+		})
+		.filter((q): q is ViewQuery => q !== undefined)
+	if (!queries.length && !view.order && !view.direction && !view.limit && !view.exclude?.length) return undefined
+	const normalized: View = {queries: queries.length ? queries : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction
 	if (view.limit) normalized.limit = view.limit
-	const search = view.search?.trim()
-	if (search) normalized.search = search
-	return Object.keys(normalized).length ? normalized : undefined
+	if (view.exclude?.length) normalized.exclude = view.exclude
+	return normalized
 }
 
 /** Canonical string key for comparing two Views. */
 export function viewKey(view?: View): string {
 	const normalized = normalizeView(view)
-	return normalized ? serializeParams(normalized).toString() : ''
-}
-
-// --- URI: string ↔ CompositeView ---
-
-/** Parse an r4:// URI into a CompositeView. */
-export function parseUri(uri: string): CompositeView {
-	const body = uri.replace(RE_R4_PREFIX, '')
-	const [segmentsPart, optionsPart] = body.split('?')
-	const segments = (segmentsPart || '')
-		.split(';')
-		.map((s) => parseSegment(s))
-		.filter((s) => Object.keys(s).length > 0)
-	const cv: CompositeView = {segments: segments.length ? segments : [{}]}
-	if (optionsPart) {
-		const p = new URLSearchParams(optionsPart)
-		const order = p.get('order')
-		if (order && (validOrders as readonly string[]).includes(order)) cv.order = order as View['order']
-		const dir = p.get('direction')
-		if (dir && (validDirections as readonly string[]).includes(dir)) cv.direction = dir as View['direction']
-		const limit = p.get('limit')
-		if (limit) {
-			const n = Number(limit)
-			if (n > 0) cv.limit = Math.min(n, 4000)
-		}
-		const tagsMode = p.get('tagsMode')
-		if (tagsMode === 'all') {
-			for (const seg of cv.segments) {
-				if (!seg.tagsMode && seg.tags?.length) seg.tagsMode = 'all'
-			}
-		}
-		const exclude = p.get('exclude')
-		if (exclude) cv.exclude = exclude.split(',').filter(Boolean)
-	}
-	return cv
-}
-
-/** Serialize a CompositeView to an r4:// URI. */
-export function serializeUri(cv: CompositeView): string {
-	const segmentStr = cv.segments.map((s) => serializeSegment(s)).join(';')
-	const options = new URLSearchParams()
-	if (cv.order) options.set('order', cv.order)
-	if (cv.direction) options.set('direction', cv.direction)
-	if (cv.limit) options.set('limit', String(cv.limit))
-	const optStr = options.toString()
-	const excludeStr = cv.exclude?.length ? `exclude=${cv.exclude.join(',')}` : ''
-	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
-	return `r4://${segmentStr}${allOpts ? '?' + allOpts : ''}`
+	return normalized ? serializeView(normalized) : ''
 }
