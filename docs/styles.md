@@ -28,7 +28,7 @@ Generated from four base colors in `variables.css` and `color-scales.css`.
 
 Interface surfaces use neutral background colors:
 
-- `--color-interface` (default `color-mix(in oklch, var(--gray-1) 50%, var(--gray-2) 50%)`) for main panels (site nav, decks)
+- `--color-interface` (default `color-mix(in oklch, var(--gray-1) 25%, var(--gray-2) 75%)`) for main panels (site nav, decks)
 - `--color-interface-elevated` (default `var(--gray-2)`) for raised UI (dialogs, popovers, tooltip)
 - `--color-interface-border` (default `var(--gray-6)`) for matching borders
 

@@ -26,7 +26,7 @@
 	--font-9: 2.25rem;
 
 	/* interface surface colors (neutral backgrounds, not accent-derived) */
-	--color-interface: color-mix(in oklch, var(--gray-1) 50%, var(--gray-2) 50%);
+	--color-interface: color-mix(in oklch, var(--gray-1) 25%, var(--gray-2) 75%);
 	--color-interface-elevated: var(--gray-2);
 	--color-interface-border: var(--gray-6);
 

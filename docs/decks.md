@@ -24,3 +24,10 @@ Four booleans on the `Deck` type. `compact`/`expanded` are mutually exclusive. T
 - **`hide_queue_panel`** — `display:none` on queue panel. Video fills freed space.
 
 Deck ID 1 (the default) is hidden until it has queued tracks, an active track, or play history. Additional decks are always visible once created.
+
+## Mobile layout behavior
+
+- With multiple non-compact decks, the deck strip splits available height between them.
+- On small screens with multiple non-compact decks, the main page content area is capped so decks can use most of the viewport height.
+- Compact decks still render their hidden `deck.svelte` instance (for audio continuity), but collapse to zero height in the mobile strip.
+- Visible compact controls live in the bottom compact section (`deck-compact-bar.svelte` in `+layout.svelte`).

@@ -138,6 +138,28 @@
 			width: 100%;
 		}
 
+		/* deck has at least one visible panel (video or queue): fill available height */
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) {
+			height: 100%;
+		}
+
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.video) {
+			flex: 1 1 auto;
+			min-height: 0;
+			max-height: none;
+			aspect-ratio: auto;
+		}
+
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.queue-panel) {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+			:global(.bottom-controls) {
+			flex-wrap: wrap;
+		}
+
 		.resize-handle {
 			display: none;
 		}
@@ -182,6 +204,13 @@
 		pointer-events: none;
 	}
 
+	@media (max-width: 768px) {
+		.deck.compact {
+			height: 0;
+			min-height: 0;
+		}
+	}
+
 	/* Hide queue panel via CSS — keeps it in the DOM */
 	.deck.hide-queue :global(.queue-panel) {
 		display: none;
@@ -202,7 +231,7 @@
 	.deck.listening {
 		width: 280px;
 		min-width: 200px;
-		flex-shrink: 1;
+		flex-shrink: 0;
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */
