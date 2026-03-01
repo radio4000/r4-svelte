@@ -162,10 +162,11 @@ export function delayWithJitter(base: number, jitter: number = 0.2): Promise<voi
  * @param {string} id - Cloudinary image ID
  * @param {number} [size=250] - Image dimensions (square)
  * @param {string} [format='webp'] - Image format
+ * @param {number} [quality=60] - Image quality (1-100)
  */
-export function channelAvatarUrl(id: string, size = 250, format = 'webp') {
+export function channelAvatarUrl(id: string, size = 250, format = 'webp', quality = 60) {
 	const baseUrl = 'https://res.cloudinary.com/radio4000/image/upload'
-	return `${baseUrl}/w_${size},h_${size},c_thumb,q_60,fl_awebp/${id}.${format}`
+	return `${baseUrl}/w_${size},h_${size},c_thumb,q_${quality},fl_awebp/${id}.${format}`
 }
 
 /** Pick N random elements from array (no duplicates) */

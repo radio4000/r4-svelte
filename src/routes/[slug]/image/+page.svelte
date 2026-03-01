@@ -9,6 +9,7 @@
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
+	import {channelAvatarUrl} from '$lib/utils'
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
@@ -18,7 +19,8 @@
 	let channel = $derived(channelCtx.data ?? null)
 	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
-	const mediaItem = $derived(channel ? toChannelCardMedia(channel, channelActivity) : null)
+	const imageBase = $derived(channel?.image ? {url: channelAvatarUrl(channel.image, 1024, 'webp', 90)} : undefined)
+	const mediaItem = $derived(channel ? toChannelCardMedia(channel, channelActivity, imageBase) : null)
 
 	function handleSceneClick(item) {
 		if (!item?.id) return
