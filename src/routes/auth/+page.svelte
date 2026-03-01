@@ -88,10 +88,16 @@
 				<p>{m.auth_card_login_description()}</p>
 			</a>
 		</menu>
+		<a href="/welcome" class="welcome-link">What is Radio4000?</a>
 	{/if}
 </article>
 
 <style>
+	.welcome-link {
+		text-align: center;
+		margin-top: 2rem;
+	}
+
 	.channels-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

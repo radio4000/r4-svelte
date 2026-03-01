@@ -38,9 +38,9 @@
 			{/if}
 		{:else}
 			<a href="/auth/create-account?redirect=/create-channel" class="btn primary">{m.header_start_your_radio()}</a>
-			<a href="/auth/login" class="btn">Sign in</a>
+			<a href="/auth/login" class="btn">{m.nav_sign_in()}</a>
 		{/if}
-		<a href="/" class="ghost">Explore</a>
+		<a href="/" class="ghost">{m.nav_explore()}</a>
 	</menu>
 </article>
 
@@ -49,6 +49,7 @@
 		display: flex;
 		flex-flow: column;
 		gap: 0.5rem;
+		padding-inline: 1.5rem;
 	}
 
 	p,
@@ -68,5 +69,7 @@
 	menu {
 		margin-top: 1.5rem;
 		gap: 0.5rem;
+		justify-content: center;
+		align-items: center;
 	}
 </style>
