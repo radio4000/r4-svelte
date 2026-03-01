@@ -1,6 +1,5 @@
 <script>
-	import gsap from 'gsap'
-	import {verticalLoop} from '$lib/vertical-loop.js'
+	import {createLoop} from '$lib/loop.ts'
 
 	/** @type {{
 	 *  items: any[],
@@ -12,71 +11,35 @@
 	let {items, scrollItemsPerNotch = 1, orientation = 'vertical', item, active, ...rest} = $props()
 	let container = $state()
 	let loop
-	let activeElement
 	let activeIndex = $state(-1)
-	const instanceId =
-		typeof crypto !== 'undefined' && 'randomUUID' in crypto
-			? crypto.randomUUID()
-			: `cover-flip-${Math.random().toString(36).slice(2)}`
+	const instanceId = $props.id()
 	const getItemId = (index) => `${instanceId}-item-${index}`
 	const isHorizontal = $derived(orientation === 'horizontal')
 
 	$effect(() => {
 		const elements = container?.children
-		if (!elements.length) return
+		if (!elements?.length) return
+		void items
 
-		loop = verticalLoop(elements, {
+		loop = createLoop(elements, {
 			paused: true,
 			draggable: true,
 			center: true,
 			axis: isHorizontal ? 'x' : 'y',
-			onChange: (element, index) => {
-				activeElement?.classList.remove('active')
-				element.classList.add('active')
-				activeElement = element
+			wheel: {itemsPerNotch: scrollItemsPerNotch},
+			onChange: (_element, index) => {
 				activeIndex = index
 			}
 		})
 
-		// Direct scrolling without animation
-		const wrapTime = gsap.utils.wrap(0, loop.duration())
-		const timePerItem = loop.duration() / elements.length
-		let playhead = {time: 0}
-
-		function normalizeWheel(e) {
-			// Normalize delta to discrete notches
-			let delta = isHorizontal ? e.deltaX : e.deltaY
-			if (isHorizontal && delta === 0 && e.deltaY !== 0) {
-				delta = e.deltaY
-			}
-			if (e.deltaMode === 1) {
-				delta *= 16
-			} else if (e.deltaMode === 2) {
-				delta *= (isHorizontal ? container?.clientWidth : container?.clientHeight) || 400
-			}
-			// Return normalized notches (typically -1 or 1)
-			return Math.sign(delta) * Math.max(1, Math.abs(delta) / 100)
-		}
-
-		const handleWheel = (e) => {
-			e.preventDefault()
-			const notches = normalizeWheel(e)
-			const deltaTime = notches * scrollItemsPerNotch * timePerItem
-			playhead.time += deltaTime
-			loop.time(wrapTime(playhead.time))
-		}
-
-		container.addEventListener('wheel', handleWheel, {passive: false})
-
-		return () => {
-			container?.removeEventListener('wheel', handleWheel)
-			loop?.kill?.()
-		}
+		return () => loop?.kill?.()
 	})
+
+	const tweenVars = {duration: 0.3, ease: 'power2.out'}
 
 	const handleClick = (index) => {
 		if (!loop) return
-		loop.toIndex(index, {duration: 0, ease: 'power1.easeInOut'})
+		loop.toIndex(index, tweenVars)
 	}
 
 	const handleKeydown = (event) => {
@@ -85,10 +48,10 @@
 		const backwardKeys = isHorizontal ? ['ArrowLeft', 'h'] : ['ArrowUp', 'k']
 		if (forwardKeys.includes(event.key)) {
 			event.preventDefault()
-			loop.next({duration: 0})
+			loop.next(tweenVars)
 		} else if (backwardKeys.includes(event.key)) {
 			event.preventDefault()
-			loop.previous({duration: 0})
+			loop.previous(tweenVars)
 		}
 	}
 </script>
@@ -107,6 +70,7 @@
 	{#each items as itemData, index (index)}
 		<div
 			class="CoverFlip-item"
+			class:active={index === activeIndex}
 			id={getItemId(index)}
 			role="option"
 			aria-selected={index === activeIndex}
@@ -124,32 +88,21 @@
 
 <style>
 	.CoverFlip {
-		width: 30%;
-		height: 50vh;
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		gap: 1rem;
 		overflow: hidden;
 	}
 
-	.CoverFlip-item {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 10%;
-		flex-shrink: 0;
-		cursor: pointer;
-	}
-
 	.CoverFlip--horizontal {
-		width: 60%;
-		height: 30vh;
 		flex-direction: row;
 	}
 
-	.CoverFlip--horizontal .CoverFlip-item {
-		width: 10%;
-		height: auto;
+	.CoverFlip-item {
+		flex-shrink: 0;
+		cursor: pointer;
+		will-change: transform;
 	}
 </style>
