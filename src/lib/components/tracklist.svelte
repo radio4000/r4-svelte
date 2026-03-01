@@ -205,7 +205,7 @@
 		</div>
 	{:else if grouped}
 		<div
-			class={{'timeline': true, 'hide-artwork': appState.hide_track_artwork}}
+			class={{timeline: true, 'hide-artwork': appState.hide_track_artwork}}
 			role="listbox"
 			tabindex="0"
 			aria-label={m.nav_tracks()}
@@ -255,7 +255,7 @@
 		</div>
 	{:else}
 		<ul
-			class={{'list': true, 'tracks': true, 'hide-artwork': appState.hide_track_artwork}}
+			class={{list: true, tracks: true, 'hide-artwork': appState.hide_track_artwork}}
 			role="listbox"
 			tabindex="0"
 			aria-label={m.nav_tracks()}

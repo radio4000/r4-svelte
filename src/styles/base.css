@@ -77,12 +77,63 @@ h3 {
 	font-weight: 400;
 }
 
+p {
+	font-size: var(--font-4);
+	margin: 0;
+}
+
+dl.meta,
+ul {
+	font-size: var(--font-4);
+}
+
+img {
+	max-width: 100%;
+	display: block;
+}
+
+a {
+	text-decoration-skip-ink: auto;
+	hyphens: auto;
+	transition: text-decoration-color 150ms;
+}
+
+a:link,
+a:visited {
+	color: var(--gray-12);
+	/* color: var(--accent-9); */
+}
+
+a[href^='http://']:not(.btn):not([data-no-external-icon])::after,
+a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
+	content: '↗';
+	display: inline-block;
+	margin-left: 0.2em;
+	font-size: 0.85em;
+	line-height: 1;
+	vertical-align: text-top;
+	opacity: 0.85;
+}
+
 .caps {
 	text-transform: uppercase;
 	font-size: var(--font-2);
 	font-weight: 400;
 	font-family: var(--monospace);
 	letter-spacing: 0.03em;
+}
+
+a.slug-link,
+.slug-link {
+	text-decoration: none;
+	font-family: var(--monospace);
+	letter-spacing: 0.03em;
+	color: var(--gray-10);
+	white-space: nowrap;
+
+	&:visited {
+		color: var(--gray-10);
+	}
 }
 
 .channel-badge {
@@ -134,44 +185,6 @@ button.channel-badge.drifted:hover {
 .channel-badge.drifted::after {
 	content: ' ↺';
 	font-style: normal;
-}
-
-p {
-	font-size: var(--font-4);
-	margin: 0;
-}
-
-dl.meta,
-ul {
-	font-size: var(--font-4);
-}
-
-img {
-	max-width: 100%;
-	display: block;
-}
-
-a {
-	text-decoration-skip-ink: auto;
-	hyphens: auto;
-	transition: text-decoration-color 150ms;
-}
-
-a:link,
-a:visited {
-	color: var(--gray-12);
-	/* color: var(--accent-9); */
-}
-
-a[href^='http://']:not(.btn):not([data-no-external-icon])::after,
-a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
-	content: '↗';
-	display: inline-block;
-	margin-left: 0.2em;
-	font-size: 0.85em;
-	line-height: 1;
-	vertical-align: text-top;
-	opacity: 0.85;
 }
 
 hr {

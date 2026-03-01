@@ -11,6 +11,10 @@
 	--deck-transition-fast: 200ms;
 	--deck-transition-ease: cubic-bezier(0.2, 0, 0, 1);
 
+	/* media-chrome icon size */
+	--media-button-icon-width: 18px;
+	--media-button-icon-height: 18px;
+
 	/* typography */
 	--sans-serif: firava, system-ui, sans-serif;
 	--font-system: system-ui, sans-serif;

@@ -176,11 +176,6 @@
 		margin-top: auto;
 	}
 
-	nav.pins {
-		flex: 1;
-		justify-content: center;
-	}
-
 	.broadcast-dot {
 		position: absolute;
 		top: -7px;

@@ -18,7 +18,7 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 - 3D globe map view alongside flat map. Try OGL instead of Three.js. Someday/maybe.
 - Test RTL support
 - `TrackCard` parses `track.description` with LinkEntities on every render. Consider a DB trigger or cache.
-- Media Session API — lock screen and notification controls (play/pause/skip/artwork). Player has all the hooks, wire up `navigator.mediaSession`.
+- Media Session API — lock screen and notification controls (play/pause/skip/artwork). Needs research: YouTube/SoundCloud iframes set their own `mediaSession`, may conflict. Our next/prev/seek would work (we proxy via iframe APIs), but play/pause and metadata could fight the iframe.
 - Channel page (`/@slug`) could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Duplicate track detection — warn when adding a URL that already exists in the channel. Could also surface in batch-edit (group by URL or `media_id`).
 - Musicbrainz/discogs auto-matching has a high error rate. Let users mark metadata as wrong, or show an "unverified" badge.
@@ -27,13 +27,8 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 
 ## Performance
 
-Mutating `$state` arrays item-by-item (push-in-loop) instead of replacing them causes heavy proxy overhead. The `syncDataFromCollection` fix (assign `[...values()]`) cut ~140ms blocking per query on large collections. Same pattern likely exists elsewhere.
-
 Known hotspots:
 
-- `.push()` loops into `$state([])` variables — replace with single assignment
-- `player.svelte` uses `useLiveQuery` on `channelsCollection` (~350ms per deck) for a single-channel lookup that could be `collection.get(id)`
-- `queue-panel.svelte` has two `useLiveQuery` calls (tracks by IDs + play history). The history query scans all of `playHistoryCollection` every time
 - Live query accumulation — navigating creates new queries without cleaning up old ones. Unclear if disposed queries are GC'd or leak
 
 ## Data

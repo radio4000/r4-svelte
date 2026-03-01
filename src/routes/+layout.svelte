@@ -1,7 +1,7 @@
 <script>
 	import '../styles/style.css'
 	import {scale} from 'svelte/transition'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
 	import KeyboardShortcuts from '$lib/components/keyboard-shortcuts.svelte'
@@ -38,6 +38,11 @@
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
+	let allDeckIds = $derived(
+		Object.keys(appState.decks)
+			.map(Number)
+			.sort((a, b) => a - b)
+	)
 	let compactDeckIds = $derived(
 		Object.values(appState.decks)
 			.filter((deck) => deck.compact)
@@ -210,6 +215,7 @@
 							{#each compactDeckIds as deckId (deckId)}
 								<div
 									class="compact-deck-item"
+									style:--deck-accent={deckAccent(allDeckIds, deckId)}
 									in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
 									out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
 								>
@@ -308,7 +314,7 @@
 	.compact-decks {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0rem;
 		/*
 		padding: 0.4rem 0.5rem;
 		 */

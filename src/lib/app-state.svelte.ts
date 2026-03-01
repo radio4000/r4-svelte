@@ -132,6 +132,21 @@ export function canEditChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)
 }
 
+const DECK_ACCENTS = [
+	'hsl(17 70% 55%)',
+	'hsl(221 35% 54%)',
+	'hsl(150 50% 50%)',
+	'hsl(280 40% 55%)',
+	'hsl(35 70% 55%)',
+	'hsl(190 50% 50%)'
+]
+
+/** Accent color for a deck by index. Returns undefined when only one deck exists. */
+export function deckAccent(deckIds: number[], deckId: number): string | undefined {
+	if (deckIds.length < 2) return undefined
+	return DECK_ACCENTS[deckIds.indexOf(deckId) % DECK_ACCENTS.length]
+}
+
 /** Add a new deck, returns it */
 export function addDeck(): Deck {
 	const id = appState.next_deck_id

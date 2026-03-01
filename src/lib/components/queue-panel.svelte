@@ -62,13 +62,6 @@
 </script>
 
 <div class="queue-panel">
-	<header>
-		<span class="queue-title">
-			<Icon icon="unordered-list" size={16} />
-			{m.common_queue()} ({queueTracks.length})
-		</span>
-	</header>
-
 	<div class="search-container">
 		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
 		{#if searchQuery !== ''}
@@ -102,8 +95,7 @@
 			/>
 		{:else if queueTracks.length === 0}
 			<div class="empty-state">
-				<p>{m.queue_no_tracks()}</p>
-				<p><small>{m.queue_select_channel()}</small></p>
+				<p><small>{m.queue_no_tracks()}</small></p>
 			</div>
 		{:else}
 			<div class="empty-state">
@@ -122,21 +114,6 @@
 		min-height: 0;
 		width: 100%;
 		border-top: 1px solid var(--gray-6);
-	}
-
-	header {
-		display: flex;
-		justify-content: space-between;
-		background: var(--aside-bg);
-		border-bottom: 1px solid var(--gray-5);
-	}
-
-	.queue-title {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.4rem 0.5rem;
-		font-size: var(--font-2);
 	}
 
 	main {

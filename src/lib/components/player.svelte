@@ -27,7 +27,6 @@
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
-	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -612,7 +611,7 @@
 				aria-label={m.player_tooltip_compact()}
 				{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
 			>
-				<IconDeckPanel expanded />
+				<Icon icon="deck-panel" expanded />
 			</button>
 		</menu>
 	</section>

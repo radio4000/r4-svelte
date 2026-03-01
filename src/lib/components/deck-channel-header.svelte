@@ -186,17 +186,6 @@
 		font-size: var(--font-2);
 	}
 
-	.slug-link {
-		color: var(--gray-10);
-		font-family: var(--monospace);
-		text-decoration: none;
-		white-space: nowrap;
-	}
-
-	.slug-link:visited {
-		color: var(--gray-10);
-	}
-
 	.sync-icon {
 		margin-left: 0;
 		display: inline-flex;

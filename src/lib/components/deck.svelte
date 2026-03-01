@@ -99,7 +99,7 @@
 		min-width: 280px;
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
-		background: var(--footer-bg);
+		background: color-mix(in srgb, var(--deck-accent, var(--footer-bg)) 8%, var(--footer-bg));
 		position: relative;
 		opacity: 1;
 		transform: scale(1);
@@ -126,8 +126,7 @@
 	.resize-handle:hover,
 	.resize-handle:focus-visible,
 	.deck.resizing .resize-handle {
-		width: 5px;
-		background: var(--accent, var(--gray-5));
+		background: var(--accent-9);
 	}
 
 	@media (max-width: 768px) {

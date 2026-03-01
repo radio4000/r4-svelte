@@ -1,6 +1,6 @@
 <script>
 	import {scale} from 'svelte/transition'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -23,6 +23,7 @@
 			{#each localDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
+					style:--deck-accent={deckAccent(deckIds, deckId)}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -36,6 +37,7 @@
 			{#each listeningDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
+					style:--deck-accent={deckAccent(deckIds, deckId)}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>

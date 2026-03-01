@@ -40,7 +40,6 @@
 <article
 	class:playing={isPlaying}
 	ondblclick={handleDblClick}
-	tabindex="0"
 	role="group"
 	aria-label={channel.name}
 	bind:this={articleEl}
@@ -58,7 +57,9 @@
 					{/if}
 				</a>
 			</h3>
-			<small class="slug"><a href={cardHref} data-sveltekit-preload-data="false">@{channel.slug}</a></small>
+			<small class="slug"
+				><a href={cardHref} class="slug-link" data-sveltekit-preload-data="false">@{channel.slug}</a></small
+			>
 			{#if channel.description}
 				<p class="description">
 					<LinkEntities slug={channel.slug} text={trimWithEllipsis(channel.description)} />
@@ -252,13 +253,9 @@
 		}
 	}
 
-	.slug {
-		a {
-			text-decoration: none;
-			color: inherit;
-			&:hover {
-				text-decoration: underline;
-			}
+	.slug-link {
+		&:hover {
+			text-decoration: underline;
 		}
 	}
 

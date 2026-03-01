@@ -55,7 +55,7 @@ input[type='checkbox'] {
 
 input[type='range'] {
 	margin: 0;
-	accent-color: var(--accent-9);
+	accent-color: var(--gray-7);
 
 	&:disabled {
 		opacity: 0.4;

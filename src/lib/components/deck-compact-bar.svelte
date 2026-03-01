@@ -12,7 +12,6 @@
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import TrackCard from '$lib/components/track-card.svelte'
-	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -216,7 +215,7 @@
 			aria-label={m.player_compact_show_panel()}
 			{@attach tooltip({content: m.player_compact_show_panel()})}
 		>
-			<IconDeckPanel />
+			<Icon icon="deck-panel" />
 		</button>
 	</div>
 </div>
@@ -235,7 +234,7 @@
 		padding: 0.3rem 0.5rem;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
-		background: var(--header-bg);
+		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 6%, var(--header-bg));
 		min-width: 0;
 		overflow: hidden;
 	}
