@@ -89,7 +89,7 @@
 
 .grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 20vw, 280px), 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(clamp(180px, 20vw, 280px), 1fr));
 	margin: 0.5rem;
 	/* margin-block: 0.5rem; */
 	gap: 2rem 1rem;
@@ -99,7 +99,7 @@
 
 .grid--scroll {
 	grid-auto-flow: column;
-	grid-auto-columns: clamp(150px, 20vw, 280px);
+	grid-auto-columns: clamp(180px, 20vw, 280px);
 	grid-template-columns: none;
 	grid-template-rows: 1fr;
 	justify-content: start;
