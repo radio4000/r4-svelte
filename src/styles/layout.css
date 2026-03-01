@@ -365,3 +365,9 @@ dl.meta {
 	overflow: hidden;
 	background: var(--gray-2);
 }
+
+/* Overwrites to make it look ok with our styles */
+.lil-controller.lil-number input {
+	color: initial;
+	min-height: 0;
+}

@@ -132,7 +132,7 @@ export function canEditChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)
 }
 
-const DECK_ACCENTS = [
+export const DECK_ACCENTS = [
 	'hsl(17 70% 55%)',
 	'hsl(221 35% 54%)',
 	'hsl(150 50% 50%)',

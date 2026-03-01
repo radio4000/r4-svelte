@@ -1,77 +1,82 @@
 <script>
-	import gsap from 'gsap'
-	import {verticalLoop} from '$lib/vertical-loop.js'
+	import {createLoop} from '$lib/loop.ts'
 
 	/** @type {{
 	 *  items: any[],
 	 *  scrollItemsPerNotch?: number,
+	 *  orientation?: 'vertical' | 'horizontal',
 	 *  item: (args: {item: any, index: number, active: boolean}) => any,
 	 *  active: (args: {item: any, index: number}) => any,
 	 * }} */
-	let {items, scrollItemsPerNotch = 1, item, active, ...rest} = $props()
-	let container
+	let {items, scrollItemsPerNotch = 1, orientation = 'vertical', item, active, ...rest} = $props()
+	let container = $state()
 	let loop
-	let activeElement
 	let activeIndex = $state(-1)
+	const instanceId = $props.id()
+	const getItemId = (index) => `${instanceId}-item-${index}`
+	const isHorizontal = $derived(orientation === 'horizontal')
 
 	$effect(() => {
 		const elements = container?.children
-		if (!elements.length) return
+		if (!elements?.length) return
+		void items
 
-		loop = verticalLoop(elements, {
+		loop = createLoop(elements, {
 			paused: true,
 			draggable: true,
 			center: true,
-			onChange: (element, index) => {
-				activeElement?.classList.remove('active')
-				element.classList.add('active')
-				activeElement = element
+			axis: isHorizontal ? 'x' : 'y',
+			wheel: {itemsPerNotch: scrollItemsPerNotch},
+			onChange: (_element, index) => {
 				activeIndex = index
 			}
 		})
 
-		// Direct scrolling without animation
-		const wrapTime = gsap.utils.wrap(0, loop.duration())
-		const timePerItem = loop.duration() / elements.length
-		let playhead = {time: 0}
-
-		function normalizeWheel(e) {
-			// Normalize delta to discrete notches
-			let dy = e.deltaY
-			if (e.deltaMode === 1) {
-				dy *= 16
-			} else if (e.deltaMode === 2) {
-				dy *= container?.clientHeight || 400
-			}
-			// Return normalized notches (typically -1 or 1)
-			return Math.sign(dy) * Math.max(1, Math.abs(dy) / 100)
-		}
-
-		const handleWheel = (e) => {
-			e.preventDefault()
-			const notches = normalizeWheel(e)
-			const deltaTime = notches * scrollItemsPerNotch * timePerItem
-			playhead.time += deltaTime
-			loop.time(wrapTime(playhead.time))
-		}
-
-		container.addEventListener('wheel', handleWheel, {passive: false})
-
-		return () => {
-			container?.removeEventListener('wheel', handleWheel)
-			loop?.kill?.()
-		}
+		return () => loop?.kill?.()
 	})
+
+	const tweenVars = {duration: 0.3, ease: 'power2.out'}
 
 	const handleClick = (index) => {
 		if (!loop) return
-		loop.toIndex(index, {duration: 0, ease: 'power1.easeInOut'})
+		loop.toIndex(index, tweenVars)
+	}
+
+	const handleKeydown = (event) => {
+		if (!loop) return
+		const forwardKeys = isHorizontal ? ['ArrowRight', 'l'] : ['ArrowDown', 'j']
+		const backwardKeys = isHorizontal ? ['ArrowLeft', 'h'] : ['ArrowUp', 'k']
+		if (forwardKeys.includes(event.key)) {
+			event.preventDefault()
+			loop.next(tweenVars)
+		} else if (backwardKeys.includes(event.key)) {
+			event.preventDefault()
+			loop.previous(tweenVars)
+		}
 	}
 </script>
 
-<section class="CoverFlip" bind:this={container} {...rest}>
+<section
+	class={`CoverFlip${isHorizontal ? ' CoverFlip--horizontal' : ''}`}
+	bind:this={container}
+	tabindex="0"
+	role="listbox"
+	aria-label="Cover flip"
+	aria-orientation={isHorizontal ? 'horizontal' : 'vertical'}
+	aria-activedescendant={activeIndex > -1 ? getItemId(activeIndex) : undefined}
+	onkeydown={handleKeydown}
+	{...rest}
+>
 	{#each items as itemData, index (index)}
-		<div class="CoverFlip-item" onclick={() => handleClick(index)}>
+		<div
+			class="CoverFlip-item"
+			class:active={index === activeIndex}
+			id={getItemId(index)}
+			role="option"
+			aria-selected={index === activeIndex}
+			tabindex="-1"
+			onclick={() => handleClick(index)}
+		>
 			{@render item({item: itemData, index, active: index === activeIndex})}
 		</div>
 	{/each}
@@ -83,21 +88,21 @@
 
 <style>
 	.CoverFlip {
-		width: 30%;
-		height: 50vh;
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		gap: 1rem;
 		overflow: hidden;
 	}
 
+	.CoverFlip--horizontal {
+		flex-direction: row;
+	}
+
 	.CoverFlip-item {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 10%;
 		flex-shrink: 0;
 		cursor: pointer;
+		will-change: transform;
 	}
 </style>
