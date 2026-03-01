@@ -4,12 +4,10 @@
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
-	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import {appChatUrl} from '$lib/config'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
-	const commitDate = $derived(__GIT_INFO__.date)
 </script>
 
 <svelte:head>
@@ -70,10 +68,10 @@
 			{m.settings_changelog()}
 		</a>
 		{#if sha}
-			<p class="build-info-row">
+			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				<AppBuildInfo {repo} {sha} {commitDate} showPresenceCount={true} />
-			</p>
+				Source code {sha}
+			</a>
 		{/if}
 	</menu>
 
@@ -89,12 +87,5 @@
 	}
 	menu a small {
 		display: block;
-	}
-	.build-info-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin: 0;
-		padding: 0.5rem;
 	}
 </style>
