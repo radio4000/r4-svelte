@@ -27,6 +27,7 @@ const INITIAL_CAMERA_Z = 50
 const ITEMS_PER_CHUNK = 5
 const DEPTH_FADE_END = 260
 
+const RE_CLOUDINARY_EXT = /\.\w+$/
 const lerp = (a, b, t) => a + (b - a) * t
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 
@@ -1658,17 +1659,38 @@ export class InfiniteCanvasOGL {
 			minFilter: this.gl.LINEAR,
 			magFilter: this.gl.LINEAR
 		})
-		const img = new Image()
-		img.crossOrigin = 'anonymous'
-		img.onload = () => {
-			texture.image = img
-			texture.generateMipmaps = true
-			texture.minFilter = /** @type {GLenum} */ (this.gl?.LINEAR_MIPMAP_LINEAR)
+
+		if (this.sceneMode === 'single' && url.includes('res.cloudinary.com')) {
+			// Single-card scene: use video so animated GIFs play
+			const src = url.replace(RE_CLOUDINARY_EXT, '.mp4')
+			const video = document.createElement('video')
+			video.crossOrigin = 'anonymous'
+			video.autoplay = true
+			video.loop = true
+			video.muted = true
+			video.playsInline = true
+			video.oncanplay = () => {
+				texture.image = video
+				video.play()
+			}
+			video.onerror = () => {
+				console.warn('Texture load failed:', src)
+			}
+			video.src = src
+		} else {
+			const img = new Image()
+			img.crossOrigin = 'anonymous'
+			img.onload = () => {
+				texture.image = img
+				texture.generateMipmaps = true
+				texture.minFilter = /** @type {GLenum} */ (this.gl?.LINEAR_MIPMAP_LINEAR)
+			}
+			img.onerror = () => {
+				console.warn('Texture load failed:', url)
+			}
+			img.src = url
 		}
-		img.onerror = () => {
-			console.warn('Texture load failed:', url)
-		}
-		img.src = url
+
 		this.textureCache.set(url, texture)
 		return texture
 	}
@@ -2541,6 +2563,9 @@ export class InfiniteCanvasOGL {
 		this.updateVisibility()
 		this.rotateBorders()
 		this.animateCardBodies(performance.now())
+		for (const texture of this.textureCache.values()) {
+			if (texture.image instanceof HTMLVideoElement) texture.needsUpdate = true
+		}
 		this.renderer.render({scene: this.scene, camera: this.camera})
 
 		this.animationId = requestAnimationFrame(() => this.animate())
@@ -2939,6 +2964,10 @@ export class InfiniteCanvasOGL {
 		}
 		this.exitingChunks.clear()
 		for (const texture of this.textureCache.values()) {
+			if (texture.image instanceof HTMLVideoElement) {
+				texture.image.pause()
+				texture.image.src = ''
+			}
 			if (texture.texture && this.gl) this.gl.deleteTexture(texture.texture)
 		}
 		this.textureCache.clear()
