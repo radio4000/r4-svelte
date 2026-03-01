@@ -1,4 +1,5 @@
 <script>
+	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
@@ -40,6 +41,12 @@
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}
 		</a>
+		{#if appState.user}
+			<button onclick={() => sdk.auth.signOut()}>
+				<Icon icon="eject" />
+				{m.auth_log_out()}
+			</button>
+		{/if}
 	</menu>
 
 	<menu class="nav-vertical">
