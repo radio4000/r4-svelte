@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {serializeView, parseView, type View} from '$lib/views.svelte'
+	import {serializeView, parseView, type View} from '$lib/views'
 	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import PopoverMenu from './popover-menu.svelte'

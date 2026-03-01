@@ -2,14 +2,8 @@
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
-	import {
-		parseSearchQueryToView,
-		parseView,
-		serializeView,
-		viewToQuery,
-		queryViewTracks,
-		getAutoDecksForView
-	} from '$lib/views.svelte'
+	import {queryViewTracks, getAutoDecksForView} from '$lib/views.svelte'
+	import {parseSearchQueryToView, parseView, serializeView, viewToQuery} from '$lib/views'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'

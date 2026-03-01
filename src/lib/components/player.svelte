@@ -48,7 +48,7 @@
 		untrackBroadcastPresence,
 		channelPresence
 	} from '$lib/presence.svelte'
-	import {viewToQuery} from '$lib/views.svelte'
+	import {viewToQuery} from '$lib/views'
 	/** @typedef {import('$lib/types').Track} Track */
 	/** @typedef {import('$lib/types').Channel} Channel */
 

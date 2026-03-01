@@ -1,4 +1,4 @@
-import {parseView} from '$lib/views.svelte'
+import {parseView} from '$lib/views'
 
 export function load({url}) {
 	return {

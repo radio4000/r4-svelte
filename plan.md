@@ -7,21 +7,25 @@ Possible improvements. Roughly by priority. Verify before implementing.
 Compact, human-readable URIs encoding composite views (one or more channel/tag/search queries merged into one queue). See `docs/r4-uri.md` for full spec.
 
 **Phase 1 — URI for pins** (start here)
+
 - Add `parseUri(uri): CompositeView` and `serializeUri(cv): string` to `src/lib/views.svelte.ts`
 - Single-segment support + `exclude` option
 - Add `query` field to `SavedView` (compact URI body without `r4://` prefix); `params` stays as migration fallback
 - Update `views-bar`, `pins-nav`, `settings/pins` to read/write `query`
 
 **Phase 2 — Composite views**
+
 - Add `ViewSegment`, `CompositeView` types
 - Add `resolveUri(uri, {tracksCollection, sdk}): Promise<Track[]>`
 - Update `queryViewTracks` to accept `CompositeView`
 - Update auto-radio seed: `serializeUri(cv)` instead of `viewKey(view)`
 
 **Phase 3 — Broadcast compression**
+
 - Send URI in broadcast payload; listeners resolve locally
 
 **Phase 4 — Presence**
+
 - Broadcast current URI via Supabase presence for "now listening" discovery
 
 ## Backlog

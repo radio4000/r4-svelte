@@ -13,7 +13,8 @@
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
-	import {processViewTracks, getAutoDecksForView, type View} from '$lib/views.svelte'
+	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
+	import type {View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
 
 	const tracksQuery = getTracksQueryCtx()

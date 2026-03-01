@@ -1,7 +1,8 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
-	import {parseView, parseSearchQueryToView, serializeView, queryViewTracks, type View} from '$lib/views.svelte'
+	import {queryViewTracks} from '$lib/views.svelte'
+	import {parseView, parseSearchQueryToView, serializeView, type View} from '$lib/views'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import {Debounced} from 'runed'

@@ -6,7 +6,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {useLiveQuery as useLiveQueryCustom} from '$lib/useLiveQuery.svelte'
 	import {viewsCollection} from '$lib/collections/views'
-	import {parseView} from '$lib/views.svelte'
+	import {parseView} from '$lib/views'
 
 	const viewsQuery = useLiveQueryCustom(viewsCollection)
 	const pinnedViews = $derived(

@@ -18,7 +18,8 @@ import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {weeklyShuffle, playbackState, toAutoTracks, epochFromTracks, type AutoTrack} from '$lib/player/auto-radio'
-import {processViewTracks, serializeView, viewToQuery, type View} from '$lib/views.svelte'
+import {processViewTracks} from '$lib/views.svelte'
+import {serializeView, viewToQuery, type View} from '$lib/views'
 
 const log = logger.ns('api').seal()
 
