@@ -56,7 +56,6 @@ Known hotspots:
 ### Accessibility
 
 - Click handlers on non-interactive elements need `<button>` or `role="button"` + `tabindex="0"` + keyboard handler: `player.svelte` (header, footer), `cover-flip.svelte`, `track-card.svelte`, `r4-discogs-resource.svelte`, `draggable-panel.svelte`.
-- `channel-card.svelte` — `tabindex="0"` on `<article>` without `role` or `aria-label`. The svelte-ignore comment suppresses the warning rather than fixing it.
 
 ## Needs research
 

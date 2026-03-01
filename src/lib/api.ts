@@ -35,7 +35,7 @@ function maybeBroadcastNotify() {
 
 /** Sort by a date field. Returns a comparator function. */
 export function sortByDate(field: string, direction: 'asc' | 'desc' = 'desc') {
-	return (a: Record<string, any>, b: Record<string, any>) => {
+	return (a: Record<string, unknown>, b: Record<string, unknown>) => {
 		const ta = new Date(a[field]).getTime()
 		const tb = new Date(b[field]).getTime()
 		return direction === 'desc' ? tb - ta : ta - tb

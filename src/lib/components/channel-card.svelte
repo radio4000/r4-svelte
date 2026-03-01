@@ -37,8 +37,14 @@
 	let articleEl = $state()
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<article class:playing={isPlaying} ondblclick={handleDblClick} tabindex="0" bind:this={articleEl}>
+<article
+	class:playing={isPlaying}
+	ondblclick={handleDblClick}
+	tabindex="0"
+	role="group"
+	aria-label={channel.name}
+	bind:this={articleEl}
+>
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
 	</figure>
