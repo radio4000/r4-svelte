@@ -1,6 +1,7 @@
 <script>
 	import R4PasswordReset from '$lib/components/r4-password-reset.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {appChatUrl} from '$lib/config'
 
 	let emailSent = $state(false)
 
@@ -37,7 +38,7 @@
 		<p>
 			<small>
 				{m.auth_reset_help_intro()}
-				<a href="https://matrix.to/#/#radio4000:matrix.org" target="_blank">{m.auth_reset_help_link()}</a>
+				<a href={appChatUrl} target="_blank">{m.auth_reset_help_link()}</a>
 			</small>
 		</p>
 	</footer>

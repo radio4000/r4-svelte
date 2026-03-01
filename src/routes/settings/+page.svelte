@@ -4,9 +4,12 @@
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
+	import AppBuildInfo from '$lib/components/app-build-info.svelte'
+	import {appChatUrl} from '$lib/config'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
+	const commitDate = $derived(__GIT_INFO__.date)
 </script>
 
 <svelte:head>
@@ -58,7 +61,7 @@
 			<Icon icon="document" />
 			Docs
 		</a>
-		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">
+		<a href={appChatUrl} rel="noreferrer">
 			<Icon icon="message-circle" />
 			{m.nav_chat()}
 		</a>
@@ -67,10 +70,10 @@
 			{m.settings_changelog()}
 		</a>
 		{#if sha}
-			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
+			<p class="build-info-row">
 				<Icon icon="code-branch" />
-				Source code {sha}
-			</a>
+				<AppBuildInfo {repo} {sha} {commitDate} showPresenceCount={true} />
+			</p>
 		{/if}
 	</menu>
 
@@ -86,5 +89,12 @@
 	}
 	menu a small {
 		display: block;
+	}
+	.build-info-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0.5rem;
 	}
 </style>

@@ -1,5 +1,6 @@
 <script>
 	import * as m from '$lib/paraglide/messages'
+	import {appChatUrl} from '$lib/config'
 </script>
 
 <svelte:head>
@@ -78,7 +79,7 @@
 		<p>
 			<a href="https://github.com/radio4000/r4-sync-tests" rel="noopener noreferrer">Source code on GitHub</a>
 			·
-			<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noopener noreferrer">Chat on Matrix</a>
+			<a href={appChatUrl} rel="noopener noreferrer">Chat on Matrix</a>
 		</p>
 	</footer>
 </article>

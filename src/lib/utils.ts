@@ -1,3 +1,5 @@
+import {appCloudinaryUrl} from '$lib/config'
+
 export function uuid() {
 	return crypto.randomUUID()
 }
@@ -165,7 +167,7 @@ export function delayWithJitter(base: number, jitter: number = 0.2): Promise<voi
  * @param {number} [quality=60] - Image quality (1-100)
  */
 export function channelAvatarUrl(id: string, size = 250, format = 'webp', quality = 60) {
-	const baseUrl = 'https://res.cloudinary.com/radio4000/image/upload'
+	const baseUrl = appCloudinaryUrl + '/image/upload'
 	return `${baseUrl}/w_${size},h_${size},c_thumb,q_${quality},fl_awebp/${id}.${format}`
 }
 

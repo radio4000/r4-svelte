@@ -1,14 +1,12 @@
 import type {Channel, Track} from '$lib/types'
-import {appUrl} from '$lib/config'
-
-const PLAYER_URL = 'https://player.radio4000.com'
+import {appUrl, appPlayerUrl} from '$lib/config'
 
 export const channelUrl = (channel: Channel) => `${appUrl}/${channel.slug}`
 
 export const trackUrl = (channel: Channel, track: Track) => `${appUrl}/${channel.slug}/tracks/${track.id}`
 
 export const channelEmbed = (channel: Channel) =>
-	`<iframe src="${PLAYER_URL}/?slug=${channel.slug}" width="320" height="500"></iframe>`
+	`<iframe src="${appPlayerUrl}/?slug=${channel.slug}" width="320" height="500"></iframe>`
 
 export const copyToClipboard = (text: string) =>
 	navigator.clipboard.writeText(text).then(
