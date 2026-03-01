@@ -212,10 +212,11 @@ export function addTrack(
 	const parsed = parseUrl(input.url)
 	const provider = parsed?.provider ?? null
 	const media_id = parsed?.id ?? null
+	const id = uuid()
 	return tracksCollection
 		.insert(
 			{
-				id: uuid(),
+				id,
 				url: input.url,
 				title: input.title,
 				description: input.description || '',
@@ -233,7 +234,7 @@ export function addTrack(
 			},
 			{metadata: {channelId: channel.id, slug: channel.slug}}
 		)
-		.isPersisted.promise.then(() => {})
+		.isPersisted.promise.then(() => id)
 }
 
 export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {

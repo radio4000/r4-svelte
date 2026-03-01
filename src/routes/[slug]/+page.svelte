@@ -323,7 +323,9 @@
 						playContext={true}
 					/>
 					<footer>
-						<a href="/{slug}/tracks?tags={section.tag}">{m.channel_see_all_tag({count: section.tracks.length, tag: section.tag})}</a>
+						<a href="/{slug}/tracks?tags={section.tag}"
+							>{m.channel_see_all_tag({count: section.tracks.length, tag: section.tag})}</a
+						>
 					</footer>
 				{/if}
 			{/if}

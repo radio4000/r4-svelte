@@ -114,7 +114,7 @@
 		<div class="recent-tracks">
 			<h3>{m.track_recently_saved()}</h3>
 			{#each recentTracks as track, i (i)}
-				<div>{track.title || track.url}</div>
+				<a href="/{channel?.slug}/tracks/{track.id}">{track.title || track.url}</a>
 			{/each}
 		</div>
 	{/if}
