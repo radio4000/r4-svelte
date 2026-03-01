@@ -25,28 +25,18 @@
 	)
 	let listeningDeckIds = $derived(visibleDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
 	let localDeckIds = $derived(visibleDeckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
-	const deckNeedsSpace = (deck) =>
-		Boolean(
-			deck && !deck.compact && (!deck.hide_video_player || (!deck.listening_to_channel_id && !deck.hide_queue_panel))
-		)
-	let localFillDeckIds = $derived(localDeckIds.filter((id) => deckNeedsSpace(appState.decks[id])))
-	let listeningFillDeckIds = $derived(listeningDeckIds.filter((id) => deckNeedsSpace(appState.decks[id])))
-	let totalFillDecks = $derived(localFillDeckIds.length + listeningFillDeckIds.length)
-	let hasFillDecks = $derived(totalFillDecks > 0)
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
 	const deckTransitionMs = 200
 	const deckExitMs = 0
 	const deckScaleStart = 0.95
 </script>
 
-<aside class="deck-strip" class:all-compact={allDecksCompact} class:has-fill={hasFillDecks}>
+<aside class="deck-strip" class:all-compact={allDecksCompact}>
 	{#if localDeckIds.length}
-		<section class="local" style={`--fill-count: ${localFillDeckIds.length}`}>
+		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
-					class:compact={appState.decks[deckId]?.compact}
-					class:fill={deckNeedsSpace(appState.decks[deckId])}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -56,16 +46,10 @@
 		</section>
 	{/if}
 	{#if listeningDeckIds.length}
-		<section
-			class="broadcasts"
-			aria-label={m.decks_broadcast_listeners()}
-			style={`--fill-count: ${listeningFillDeckIds.length}`}
-		>
+		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
 			{#each listeningDeckIds as deckId (deckId)}
 				<div
 					class="deck-item"
-					class:compact={appState.decks[deckId]?.compact}
-					class:fill={deckNeedsSpace(appState.decks[deckId])}
 					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
 					out:scale={{start: deckScaleStart, duration: deckExitMs}}
 				>
@@ -84,6 +68,8 @@
 		flex-shrink: 0;
 		min-height: 0;
 		height: 100%;
+		overflow-x: auto;
+		overflow-y: hidden;
 		padding: 0.4rem;
 
 		&:empty {
@@ -97,14 +83,25 @@
 		}
 	}
 
+	@media (min-width: 769px) {
+		.deck-strip {
+			width: fit-content;
+			max-width: 72vw;
+			min-width: 0;
+		}
+	}
+
 	.local {
 		display: flex;
 		flex-direction: row;
+		flex: 0 0 auto;
 		min-height: 0;
+		min-width: max-content;
 	}
 
 	.deck-item {
 		display: flex;
+		flex: 0 0 auto;
 		min-height: 0;
 		min-width: 0;
 	}
@@ -114,7 +111,7 @@
 		flex-direction: column;
 		min-height: 0;
 		overflow-y: auto;
-		flex: 1 1 24rem;
+		flex: 0 0 auto;
 		min-width: min(36rem, 45vw);
 	}
 
@@ -124,6 +121,7 @@
 		flex: 1 1 auto;
 	}
 
+	/* "fill deck": non-compact with at least one visible panel (video or queue) */
 	@media (max-width: 768px) {
 		.deck-strip {
 			flex-direction: column;
@@ -136,7 +134,8 @@
 			min-height: 0;
 		}
 
-		.deck-strip.has-fill:not(.all-compact) {
+		/* grow to fill available height when any deck has visible content */
+		.deck-strip:not(.all-compact):has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
 			flex: 1 1 0;
 			min-height: 100%;
 		}
@@ -152,26 +151,21 @@
 			min-width: 0;
 		}
 
-		.deck-strip.has-fill .local,
-		.deck-strip.has-fill .broadcasts {
-			flex: var(--fill-count, 0) 1 0;
-			flex-direction: column-reverse;
+		/* sections with fill decks share the strip height */
+		.local:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))),
+		.broadcasts:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+			flex: 1 1 0;
 			min-height: 0;
 		}
 
-		.deck-strip .deck-item.compact {
-			flex: 0 0 auto;
-			min-width: 0;
-		}
-
-		.deck-strip .deck-item:not(.fill) {
+		/* deck-items: non-fill shrink but don't grow, fill items take available space */
+		.deck-strip .deck-item {
 			flex: 0 1 auto;
 			min-height: 0;
 		}
 
-		.deck-strip .deck-item.fill {
+		.deck-strip .deck-item:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
 			flex: 1 1 0;
-			min-height: 0;
 		}
 	}
 </style>
