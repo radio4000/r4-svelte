@@ -126,7 +126,7 @@
 	.resize-handle:hover,
 	.resize-handle:focus-visible,
 	.deck.resizing .resize-handle {
-		background: var(--accent-9);
+		background: var(--deck-accent, var(--gray-5));
 	}
 
 	@media (max-width: 768px) {

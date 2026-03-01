@@ -1,5 +1,5 @@
 <script>
-	import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
+	import {appState, addDeck, removeDeck, deckAccent} from '$lib/app-state.svelte'
 	import {toggleDeckCompact, togglePlayerExpanded, toggleVideo, toggleQueuePanel} from '$lib/api'
 	import InputRange from '$lib/components/input-range.svelte'
 
@@ -61,7 +61,8 @@
 	{#each deckIds as id (id)}
 		{@const deck = appState.decks[id]}
 		{@const active = id === appState.active_deck_id}
-		<section>
+		{@const accent = deckAccent(deckIds, id)}
+		<section style:border-left={accent ? `3px solid ${accent}` : undefined}>
 			<header>
 				<h2>
 					Deck {id}

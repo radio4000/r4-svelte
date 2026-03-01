@@ -233,6 +233,7 @@
 		gap: 0.2rem;
 		padding: 0.3rem 0.5rem;
 		border: 1px solid var(--gray-6);
+		border-left: 3px solid var(--deck-accent, var(--gray-6));
 		border-radius: var(--border-radius);
 		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 6%, var(--header-bg));
 		min-width: 0;
