@@ -1,8 +1,6 @@
 <script>
-	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {appState} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/collections/play-history'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -11,20 +9,8 @@
 			.map(Number)
 			.sort((a, b) => a - b)
 	)
-	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
-	let hasHistory = $derived(playHistoryCollection.state.size > 0)
-
-	let visibleDeckIds = $derived(
-		deckIds.filter((id) => {
-			const deck = appState.decks[id]
-			if (!deck || !showPlayer) return false
-			if (id !== 1) return true
-			const hasContent = (deck.playlist_tracks?.length ?? 0) > 0 || Boolean(deck.playlist_track) || hasHistory
-			return hasContent
-		})
-	)
-	let listeningDeckIds = $derived(visibleDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
-	let localDeckIds = $derived(visibleDeckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
+	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
+	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
 	const deckTransitionMs = 200
 	const deckExitMs = 0
@@ -135,7 +121,9 @@
 		}
 
 		/* grow to fill available height when any deck has visible content */
-		.deck-strip:not(.all-compact):has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+		.deck-strip:not(.all-compact):has(
+				:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+			) {
 			flex: 1 1 0;
 			min-height: 100%;
 		}
