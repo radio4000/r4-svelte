@@ -2,7 +2,7 @@ import {createCollection} from '@tanstack/svelte-db'
 import {localStorageCollectionOptions} from '@tanstack/db'
 import {uuid} from '$lib/utils'
 import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-import {serializeView, type View} from '$lib/views'
+import {serializeView, type View, type ViewURI} from '$lib/views'
 import {logger} from '$lib/logger'
 
 const log = logger.ns('views').seal()
@@ -11,7 +11,7 @@ export interface SavedView {
 	id: string
 	name: string
 	description?: string
-	params: string // serializeView(view)
+	params: ViewURI
 	position?: number // non-null = pinned, value = sort order
 	created_at: string
 }

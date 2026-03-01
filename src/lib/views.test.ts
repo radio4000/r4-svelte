@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'vitest'
-import {parseQuery, serializeQuery, parseView, serializeView, normalizeView, viewKey, viewLabel} from './views'
-import type {View} from './views'
+import {parseQuery, serializeQuery, parseView, serializeView, normalizeView, viewKey, viewLabel, viewFromUrl} from './views'
+import type {View, ViewURI} from './views'
 
 const channelPrefixRe = /^@ko002\?/
 
@@ -597,5 +597,32 @@ describe('viewLabel deep', () => {
 		const view: View = {queries: [{channels: ['alice']}, {}, {channels: ['bob']}]}
 		// empty query serializes to '' → filter(Boolean) drops it
 		expect(viewLabel(view)).toBe('@alice; @bob')
+	})
+})
+
+describe('viewFromUrl', () => {
+	test('decodes URL-encoded @ and # correctly', () => {
+		const url = new URL('http://x.com/search?@nikita')
+		expect(viewFromUrl(url)).toEqual({queries: [{channels: ['nikita']}]})
+	})
+	test('channel + tags + options', () => {
+		const url = new URL('http://x.com/search?@ko002%20%23jazz?order=shuffle')
+		expect(viewFromUrl(url)).toEqual({
+			queries: [{channels: ['ko002'], tags: ['jazz']}],
+			order: 'shuffle'
+		})
+	})
+	test('multi-query', () => {
+		const url = new URL('http://x.com/search?@alice%20%23jazz;@bob%20%23techno')
+		expect(viewFromUrl(url)).toEqual({
+			queries: [
+				{channels: ['alice'], tags: ['jazz']},
+				{channels: ['bob'], tags: ['techno']}
+			]
+		})
+	})
+	test('no search string gives empty view', () => {
+		const url = new URL('http://x.com/search')
+		expect(viewFromUrl(url)).toEqual({queries: [{}]})
 	})
 })

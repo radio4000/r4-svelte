@@ -1,4 +1,4 @@
-/** What to fetch — a query for tracks. */
+/** Describes which channels and tracks to fetch */
 export type ViewQuery = {
 	channels?: string[]
 	tags?: string[]
@@ -15,12 +15,13 @@ export type View = {
 	exclude?: string[]
 }
 
+/** A serialized View as a compact string (e.g. `@alice #jazz;@bob #techno synth?order=shuffle`). */
+export type ViewURI = string & {readonly __brand: 'ViewURI'}
+
 const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle'] as const
 const validDirections = ['asc', 'desc'] as const
 const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
-
-// --- Query: human string ↔ ViewQuery ---
 
 /** Parse a human query string into a ViewQuery. `@slug` → channels, `#tag` → tags, rest → search. */
 export function parseQuery(input: string): ViewQuery {
@@ -46,13 +47,13 @@ export function parseQuery(input: string): ViewQuery {
 	return query
 }
 
-/** Turn a ViewQuery back into a human-readable query string. */
-export function serializeQuery(query: ViewQuery): string {
+/** Turn a ViewQuery back into a human-readable query string (also a valid ViewURI). */
+export function serializeQuery(query: ViewQuery): ViewURI {
 	const parts: string[] = []
 	if (query.channels?.length) parts.push(...query.channels.map((s) => `@${s}`))
 	if (query.tags?.length) parts.push(...query.tags.map((t) => `#${t}`))
 	if (query.search) parts.push(query.search)
-	return parts.join(' ')
+	return parts.join(' ') as ViewURI
 }
 
 // --- View: full string ↔ View ---
@@ -89,8 +90,8 @@ export function parseView(input: string): View {
 	return view
 }
 
-/** Serialize a View to a compact string. No `r4://` prefix. */
-export function serializeView(view: View): string {
+/** Serialize a View to a compact ViewURI string. No `r4://` prefix. */
+export function serializeView(view: View): ViewURI {
 	const queriesStr = view.queries.map((q) => serializeQuery(q)).join(';')
 	const options = new URLSearchParams()
 	if (view.order) options.set('order', view.order)
@@ -100,7 +101,12 @@ export function serializeView(view: View): string {
 	const optStr = options.toString()
 	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
 	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
-	return `${queriesStr}${allOpts ? `?${allOpts}` : ''}`
+	return `${queriesStr}${allOpts ? `?${allOpts}` : ''}` as ViewURI
+}
+
+/** Extract a View from a URL whose search string is the compact view format. */
+export function viewFromUrl(url: URL): View {
+	return parseView(decodeURIComponent(url.search.slice(1)))
 }
 
 // --- Utilities ---
@@ -137,7 +143,7 @@ export function normalizeView(view?: View): View | undefined {
 }
 
 /** Canonical string key for comparing two Views. */
-export function viewKey(view?: View): string {
+export function viewKey(view?: View): ViewURI {
 	const normalized = normalizeView(view)
-	return normalized ? serializeView(normalized) : ''
+	return normalized ? serializeView(normalized) : ('' as ViewURI)
 }

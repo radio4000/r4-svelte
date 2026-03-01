@@ -21,9 +21,12 @@ type View = {
 	limit?: number
 	exclude?: string[]
 }
+
+/** A serialized View as a compact string. Branded type — only produced by serializeView/viewKey. */
+type ViewURI = string & {readonly __brand: 'ViewURI'}
 ```
 
-`ViewQuery` is what to fetch. `View` combines one or more queries with how to display the result.
+`ViewQuery` is what to fetch. `View` combines one or more queries with how to display the result. `ViewURI` is the serialized compact string form — a branded type so TypeScript prevents passing arbitrary strings where a serialized view is expected.
 
 A single-query view: `{queries: [{channels: ['ko002'], tags: ['jazz']}], order: 'created'}`.
 
@@ -74,6 +77,7 @@ serializeView({
 ### Utilities
 
 ```ts
+viewFromUrl(url) // extract a View from a URL (decodes search string, passes to parseView)
 viewLabel(view) // all queries as a human string, no options (for labels/display)
 normalizeView(view) // strip empty fields so equivalent views compare equal
 viewKey(view) // canonical string: serializeView(normalizeView(view))
@@ -84,12 +88,13 @@ viewKey(view) // canonical string: serializeView(normalizeView(view))
 | Function         | Input → Output       | Use                                   |
 | ---------------- | -------------------- | ------------------------------------- | ---------------------------- |
 | `parseQuery`     | `string → ViewQuery` | Human query string to query object    |
-| `serializeQuery` | `ViewQuery → string` | Query object to human string          |
+| `serializeQuery` | `ViewQuery → ViewURI`| Query object to human string          |
 | `parseView`      | `string → View`      | Full view string (`;` and `?options`) |
-| `serializeView`  | `View → string`      | View to compact string                |
+| `serializeView`  | `View → ViewURI`     | View to compact string                |
+| `viewFromUrl`    | `URL → View`         | Decode URL search → `parseView`       |
 | `viewLabel`      | `View → string`      | All queries as human string (labels)  |
 | `normalizeView`  | `View → View         | undefined`                            | Strip empties for comparison |
-| `viewKey`        | `View → string`      | Canonical string for comparison/seed  |
+| `viewKey`        | `View → ViewURI`     | Canonical string for comparison/seed  |
 
 ## Two contexts
 

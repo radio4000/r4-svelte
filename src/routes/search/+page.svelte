@@ -3,7 +3,7 @@
 	import {afterNavigate, goto} from '$app/navigation'
 	import {Debounced} from 'runed'
 	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewLabel} from '$lib/views'
+	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -28,7 +28,7 @@
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// --- URL is the single source of truth ---
-	const view = $derived(parseView(page.url.searchParams.toString()))
+	const view = $derived(viewFromUrl(page.url))
 	const q = $derived(view.queries[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
@@ -54,7 +54,7 @@
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		if (page.url.searchParams.has('q')) return
-		const seeded = viewLabel(parseView(page.url.searchParams.toString()))
+		const seeded = viewLabel(viewFromUrl(page.url))
 		inputValue = seeded
 		inputSeeded = !!seeded
 	})
