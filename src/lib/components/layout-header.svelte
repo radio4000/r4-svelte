@@ -94,9 +94,9 @@
 		{/await}
 	</nav>
 
-	<nav class="pins">
+	<!-- <nav class="pins">
 		<PinsNav />
-	</nav>
+	</nav> -->
 
 	<nav class="user">
 		{#await preloading then}
@@ -170,6 +170,10 @@
 
 	.nav-secondary {
 		justify-content: flex-start;
+	}
+
+	.user {
+		margin-top: auto;
 	}
 
 	nav.pins {

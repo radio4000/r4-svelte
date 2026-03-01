@@ -78,15 +78,6 @@
 		mode = 'idle'
 	}
 
-	function saveDirtyAsNew() {
-		const name = draftName.trim()
-		if (!name) return
-		createView(name, view)
-		lastSavedParams = currentParams
-		baseViewId = null
-		mode = 'idle'
-	}
-
 	function updateBaseView() {
 		if (!baseViewId) return
 		updateView(baseViewId, {params: currentParams})
@@ -156,12 +147,15 @@
 					</button>
 				</span>
 			{/each}
-			{#if currentParams}
+			<!-- {#if currentParams}
 				<button class="chip" onclick={startAdding} title={m.views_add_new()}>+</button>
-			{/if}
+			{/if} -->
 		</span>
 
 		<menu class="controls">
+			{#if mode === 'dirty'}
+				<li><button type="reset" class="ghost" onclick={clearDirty}>{m.common_clear()}</button></li>
+			{/if}
 			<li>
 				<PopoverMenu closeOnClick={false} align="end">
 					{#snippet trigger()}{m.views_filters_label()}{/snippet}
@@ -275,24 +269,13 @@
 		</section>
 	{/if}
 
-	<!-- Row 2: dirty mode -->
-	{#if mode === 'dirty'}
+	<!-- Row 2: dirty mode (update existing saved view) -->
+	{#if mode === 'dirty' && baseViewName}
 		<section class="row row-2">
 			<p>{viewSummary}</p>
-			<button type="reset" class="ghost" onclick={clearDirty}>{m.common_clear()}</button>
-			<input
-				type="text"
-				bind:value={draftName}
-				placeholder={m.views_name_placeholder()}
-				size="10"
-				onkeydown={(e) => e.key === 'Enter' && saveDirtyAsNew()}
-			/>
-			<button type="button" onclick={saveDirtyAsNew} disabled={!draftName.trim()}>{m.views_save_as_label()}</button>
-			{#if baseViewName}
-				<button type="button" class="primary" onclick={updateBaseView}
-					>{m.views_update_named({name: baseViewName})}</button
-				>
-			{/if}
+			<button type="button" class="primary" onclick={updateBaseView}
+				>{m.views_update_named({name: baseViewName})}</button
+			>
 		</section>
 	{/if}
 </nav>
@@ -338,8 +321,5 @@
 	}
 	.row-2 input[type='text'] {
 		flex: 1;
-	}
-	.row-2 input[size] {
-		flex: 0;
 	}
 </style>
