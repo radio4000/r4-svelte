@@ -169,6 +169,11 @@ export function channelAvatarUrl(id: string, size = 250, format = 'webp', qualit
 	return `${baseUrl}/w_${size},h_${size},c_thumb,q_${quality},fl_awebp/${id}.${format}`
 }
 
+/** YouTube thumbnail URL for a track. Size: default, mqdefault, hqdefault, sddefault, maxresdefault */
+export function trackImageUrl(mediaId: string, size: 'default' | 'mqdefault' | 'hqdefault' | 'sddefault' | 'maxresdefault' = 'mqdefault') {
+	return `https://i.ytimg.com/vi/${mediaId}/${size}.jpg`
+}
+
 /** Pick N random elements from array (no duplicates) */
 export function pickRandomN<T>(n: number) {
 	return (arr: T[]): T[] => {

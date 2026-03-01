@@ -38,7 +38,7 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/svelte-db'
-	import {isDbId} from '$lib/utils'
+	import {isDbId, trackImageUrl} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {
@@ -556,11 +556,11 @@
 						{#if ytid}
 							{#if trackHref}
 								<a href={trackHref} class="track-artwork"
-									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></a
+									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a
 								>
 							{:else}
 								<span class="track-artwork"
-									><img src="https://i.ytimg.com/vi/{ytid}/mqdefault.jpg" alt={displayTrack.title} /></span
+									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span
 								>
 							{/if}
 						{/if}

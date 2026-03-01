@@ -10,7 +10,7 @@
 	import LinkEntities from './link-entities.svelte'
 	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
-	import {isDbId} from '$lib/utils'
+	import {isDbId, trackImageUrl} from '$lib/utils'
 
 	interface Props {
 		track: Track
@@ -57,7 +57,7 @@
 	})
 	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
-	const imageSrc = $derived(ytid ? `https://i.ytimg.com/vi/${ytid}/mqdefault.jpg` : null)
+	const imageSrc = $derived(ytid ? trackImageUrl(ytid) : null)
 
 	const dblclick = (event: MouseEvent) => {
 		event.preventDefault()

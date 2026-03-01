@@ -11,7 +11,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {relativeDate} from '$lib/dates'
-	import {extractHashtags, extractMentions} from '$lib/utils'
+	import {extractHashtags, extractMentions, channelAvatarUrl} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
@@ -146,6 +146,13 @@
 
 <svelte:head>
 	<title>{m.channel_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
+	{#if channel}
+		<meta property="og:title" content={channel.name} />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={page.url.href} />
+		{#if channel.description}<meta property="og:description" content={channel.description} />{/if}
+		{#if channel.image}<meta property="og:image" content={channelAvatarUrl(channel.image)} />{/if}
+	{/if}
 </svelte:head>
 
 {#if channel}

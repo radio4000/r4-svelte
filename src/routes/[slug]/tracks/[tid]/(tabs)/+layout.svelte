@@ -8,6 +8,7 @@
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import {channelAvatarUrl, trackImageUrl} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data, children} = $props()
@@ -38,6 +39,13 @@
 			.limit(1)
 	)
 	const meta = $derived(metaQuery.data?.[0])
+	const ogImage = $derived(
+		isYoutubeTrack && trackMediaId
+			? trackImageUrl(trackMediaId, 'hqdefault')
+			: channel?.image
+				? channelAvatarUrl(channel.image)
+				: undefined
+	)
 	const isLoading = $derived(tracksQuery.isLoading)
 	const hasYoutubeInfo = $derived(Boolean(meta?.youtube_data && Object.keys(meta.youtube_data).length > 0))
 	const hasMusicbrainzInfo = $derived(Boolean(meta?.musicbrainz_data && 'recording' in meta.musicbrainz_data))
@@ -86,6 +94,13 @@
 			channel: channel?.name || m.channel_page_fallback()
 		})}
 	</title>
+	{#if track}
+		<meta property="og:title" content={track.title} />
+		<meta property="og:type" content="music.song" />
+		<meta property="og:url" content={page.url.href} />
+		{#if track.description}<meta property="og:description" content={track.description} />{/if}
+		{#if ogImage}<meta property="og:image" content={ogImage} />{/if}
+	{/if}
 </svelte:head>
 
 {#if isLoading}
