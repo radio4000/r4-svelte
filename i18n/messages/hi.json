@@ -15,7 +15,7 @@
 	"account_no_connected": "कोई कनेक्टेड खाता नहीं।",
 	"account_password_updated": "पासवर्ड अपडेट हो गया",
 	"account_sign_in_prompt": "अपना खाता प्रबंधित करने के लिए साइन इन करें",
-	"app_loading": "R5 तैयार किया जा रहा है…",
+	"app_loading": "तैयार किया जा रहा है",
 	"auth_already_have_account": "पहले से खाता है? इसके बजाय साइन इन करें।",
 	"auth_already_have_account_intro": "पहले से खाता है?",
 	"auth_card_create_description": "मैं Radio4000 पर नया हूँ",
