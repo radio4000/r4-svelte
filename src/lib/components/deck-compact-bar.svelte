@@ -184,7 +184,7 @@
 	<div class="row-controls">
 		<menu class="controls">
 			<button
-				onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
+				onclick={() => previous(deckId, 'user_prev')}
 				aria-label={m.player_compact_prev()}
 				disabled={!canPrevFromQueue}
 			>
@@ -200,7 +200,7 @@
 				<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 			</button>
 			<button
-				onclick={() => next(deckId, track, activeQueue, 'user_next')}
+				onclick={() => next(deckId, 'user_next')}
 				aria-label={m.player_compact_next()}
 				disabled={!canNextFromQueue}
 			>

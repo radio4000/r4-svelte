@@ -244,11 +244,11 @@
 				.then(() => log.log('playback_error saved', {id: track.id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
 		}
-		next(deckId, track, activeQueue, 'youtube_error')
+		next(deckId, 'youtube_error')
 	}
 
 	function handleEndTrack() {
-		next(deckId, track, activeQueue, 'track_completed')
+		next(deckId, 'track_completed')
 	}
 
 	function applyInitialVolume() {
@@ -619,7 +619,7 @@
 
 {#snippet btnPrev()}
 	<button
-		onclick={() => previous(deckId, track, activeQueue, 'user_prev')}
+		onclick={() => previous(deckId, 'user_prev')}
 		disabled={!canPrevFromQueue}
 		class="prev"
 		{@attach tooltip({content: m.player_tooltip_prev()})}
@@ -630,7 +630,7 @@
 
 {#snippet btnNext()}
 	<button
-		onclick={() => next(deckId, track, activeQueue, 'user_next')}
+		onclick={() => next(deckId, 'user_next')}
 		disabled={!canNextFromQueue}
 		class="next"
 		{@attach tooltip({content: m.player_tooltip_next()})}

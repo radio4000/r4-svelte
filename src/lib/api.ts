@@ -7,6 +7,7 @@ import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
 import {shuffleArray, isDbId} from '$lib/utils'
 import {
+	getActiveQueue,
 	queueInsertManyAfter,
 	queueNext,
 	queuePrev,
@@ -583,16 +584,18 @@ export function seekTo(deckId, seconds) {
 	maybeBroadcastNotify()
 }
 
-export function next(deckId: number, track: Track | undefined, activeQueue: string[], endReason: PlayEndReason) {
-	if (!track?.id) {
+export function next(deckId: number, endReason: PlayEndReason) {
+	const deck = getDeck(deckId)
+	if (!deck?.playlist_track) {
 		log.warn('No current track')
 		return
 	}
-	if (!activeQueue?.length) {
+	const activeQueue = getActiveQueue(deck)
+	if (!activeQueue.length) {
 		log.warn('No active queue')
 		return
 	}
-	const nextId = queueNext(activeQueue, track.id)
+	const nextId = queueNext(activeQueue, deck.playlist_track)
 	if (nextId) {
 		const startReason: PlayStartReason = endReason === 'youtube_error' ? 'track_error' : 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
@@ -604,16 +607,18 @@ export function next(deckId: number, track: Track | undefined, activeQueue: stri
 	}
 }
 
-export function previous(deckId: number, track: Track | undefined, activeQueue: string[], endReason: PlayEndReason) {
-	if (!track?.id) {
+export function previous(deckId: number, endReason: PlayEndReason) {
+	const deck = getDeck(deckId)
+	if (!deck?.playlist_track) {
 		log.warn('No current track')
 		return
 	}
-	if (!activeQueue?.length) {
+	const activeQueue = getActiveQueue(deck)
+	if (!activeQueue.length) {
 		log.warn('No active queue')
 		return
 	}
-	const prevId = queuePrev(activeQueue, track.id)
+	const prevId = queuePrev(activeQueue, deck.playlist_track)
 	if (prevId) {
 		playTrack(deckId, prevId, endReason, 'user_prev')
 	} else {
