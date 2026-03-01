@@ -69,7 +69,7 @@
 		"luxon": "^3.7.2",
 		"marked": "^17.0.3",
 		"media-chrome": "^4.18.0",
-		"media-now": "^2.2.2",
+		"media-now": "^2.2.3",
 		"obra-icons-svelte": "^1.23.1",
 		"ogl": "^1.0.11",
 		"p-limit": "^7.3.0",

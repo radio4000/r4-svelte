@@ -83,9 +83,12 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 	const els = gsap.utils.toArray(items) as HTMLElement[]
 	const axisKey = config.axis === 'horizontal' || config.axis === 'x' ? 'x' : 'y'
 	const ax = AXIS[axisKey]
-	const snap = config.snap === false ? (v: number) => v
-		: typeof config.snap === 'function' ? config.snap
-		: gsap.utils.snap(config.snap || 1)
+	const snap =
+		config.snap === false
+			? (v: number) => v
+			: typeof config.snap === 'function'
+				? config.snap
+				: gsap.utils.snap(config.snap || 1)
 	const length = els.length
 	const startOffset = els[0][ax.offset]
 	const pxPerSec = (config.speed || 1) * 100
@@ -162,7 +165,7 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 		return {sizes, percents, spaceBefore, totalDistance}
 	}
 
-	function build(m: Measured): {times: number[], timeWrap: (t: number) => number} {
+	function build(m: Measured): {times: number[]; timeWrap: (t: number) => number} {
 		tl.clear()
 		const t: number[] = []
 		for (let i = 0; i < length; i++) {
@@ -189,7 +192,11 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 		if (!config.center) return t
 		const half = container[ax.containerSize] / 2
 		return t.map((_, i) =>
-			tw(tl.labels[`label${i}`] + (tl.duration() * m.sizes[i]) / 2 / m.totalDistance - (tl.duration() * half) / m.totalDistance)
+			tw(
+				tl.labels[`label${i}`] +
+					(tl.duration() * m.sizes[i]) / 2 / m.totalDistance -
+					(tl.duration() * half) / m.totalDistance
+			)
 		)
 	}
 
@@ -243,7 +250,7 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 
 	// --- Input: drag & wheel ---
 
-	function setupDraggable(): {proxy: HTMLElement, instance: Draggable} | undefined {
+	function setupDraggable(): {proxy: HTMLElement; instance: Draggable} | undefined {
 		if (!config.draggable || typeof Draggable !== 'function') return
 		if (typeof InertiaPlugin === 'undefined') {
 			log.warn('InertiaPlugin required for momentum-based scrolling', {url: 'https://greensock.com/club'})
@@ -319,7 +326,9 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 				duration: 0.4,
 				ease: 'power2.out',
 				overwrite: true,
-				onUpdate: () => { tl.time(timeWrap(scrollProxy.time)) }
+				onUpdate: () => {
+					tl.time(timeWrap(scrollProxy.time))
+				}
 			})
 		}
 
@@ -331,7 +340,10 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 	}
 
 	const drag = setupDraggable()
-	if (drag) { proxy = drag.proxy; draggableInstance = drag.instance }
+	if (drag) {
+		proxy = drag.proxy
+		draggableInstance = drag.instance
+	}
 	const wheelCleanup = setupWheel()
 
 	// --- Finalize ---

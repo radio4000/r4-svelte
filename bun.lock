@@ -28,7 +28,7 @@
         "luxon": "^3.7.2",
         "marked": "^17.0.3",
         "media-chrome": "^4.18.0",
-        "media-now": "^2.2.2",
+        "media-now": "^2.2.3",
         "obra-icons-svelte": "^1.23.1",
         "ogl": "^1.0.11",
         "p-limit": "^7.3.0",
@@ -759,7 +759,7 @@
 
     "media-chrome": ["media-chrome@4.18.0", "", { "dependencies": { "ce-la-react": "^0.3.2" } }, "sha512-OQmpUCeMMWtUcbar3CiY7V0S6j43HaDhwa6uRUyYiWdfPIj3riWp0agu3x6EcIlDRFIf8iDGZiGeb26ll+mz0g=="],
 
-    "media-now": ["media-now@2.2.2", "", {}, "sha512-scOjn0E/EMWo2I7LOk6Qlp7iReBY5w/PZByGugq0XFyTzgaVkxmLSSWsnIA9vdFuxtVxQtL79RV3HQCO5HvDuw=="],
+    "media-now": ["media-now@2.2.3", "", {}, "sha512-JQih6jWH+pr3H+zqcHc9sZH23x6vC8gmFKlKciYGZOLGXaePIsAu25wAdGw3kcFKajt7cY5TfVE6mW7x5pn7CA=="],
 
     "media-played-ranges-mixin": ["media-played-ranges-mixin@0.1.0", "", {}, "sha512-zTsvkleu5sAyTsPVxDI+KUbCwy/lXwHgOPi3ER9S3lhtAWhGTQH6qxvfrVMym1cvoLU36SPbVr6Qe8Zxyc0WpA=="],
 
