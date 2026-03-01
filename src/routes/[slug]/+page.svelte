@@ -403,12 +403,6 @@
 		gap: 0.5rem;
 	}
 
-	.track-section > header h3 {
-		font-size: var(--font-5);
-		font-weight: 600;
-		color: var(--gray-10);
-	}
-
 	.track-section > header menu {
 		display: flex;
 		align-items: center;

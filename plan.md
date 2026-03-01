@@ -6,7 +6,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 
 - Verify track deletion end-to-end — TanStack collection, reactivity, optimistic mutations, SDK return values.
 - Track related page may be broken. "clio - faces" (https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related) exists multiple times on r4 but related shows "no related information". Check with `r4` CLI against `media_id`.
-- Move play history out of the deck UI. History is global (local storage), not per-deck. `/history` route already exists — link it from main nav or settings instead of embedding it in the queue panel.
 - Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is the right abstraction but `channels.svelte` re-implements all display logic instead of delegating. After: data fetching/filtering/pagination stay in `channels.svelte`, rendering lives in `<ChannelsView>` (needs `tuner` mode, `skipSort` for pre-sorted data, snippet slots for header/footer). Followers/following pages unchanged.
 - Hashtag parsing: should `"#one#two"` be one tag or two? Decide, update LinkEntities test and regexes. Parsing happens in Postgres, not the app — tests should use the same regexes, not define new ones.
 - `nav.tabs` vs `div.track-tabs>nav` — clean up markup
