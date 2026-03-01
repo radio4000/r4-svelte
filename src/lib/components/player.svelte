@@ -2,9 +2,12 @@
 	import {untrack} from 'svelte'
 	import {resolve} from '$app/paths'
 	import IconR4 from '$lib/components/icon-r4.svelte'
-	import 'media-chrome'
-	import '$lib/youtube-video-custom-element.js'
-	import '$lib/soundcloud-player-custom-element.js'
+	import {browser} from '$app/environment'
+	if (browser) {
+		import('media-chrome')
+		import('$lib/youtube-video-custom-element.js')
+		import('$lib/soundcloud-player-custom-element.js')
+	}
 	import {
 		next,
 		play,

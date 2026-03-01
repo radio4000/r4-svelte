@@ -12,7 +12,9 @@ import {logger} from '$lib/logger'
 
 const log = logger.ns('cache').seal()
 
-let store = createStore(IDB_DATABASES.keyval, 'keyval')
+let store = browser
+	? createStore(IDB_DATABASES.keyval, 'keyval')
+	: (undefined as unknown as ReturnType<typeof createStore>)
 
 /** Delete and recreate the IDB database if it's in a bad state. */
 async function resetStore(reason: string) {
@@ -132,8 +134,6 @@ const persistOptions = {
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 
-export const cacheReady = persistQueryClientRestore(persistOptions)
-
-cacheReady.then(() => {
-	persistQueryClientSubscribe(persistOptions)
-})
+export const cacheReady = browser
+	? persistQueryClientRestore(persistOptions).then(() => persistQueryClientSubscribe(persistOptions))
+	: Promise.resolve()

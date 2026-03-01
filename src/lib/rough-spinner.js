@@ -101,3 +101,5 @@ class Spinner extends HTMLElement {
 }
 
 customElements.define('rough-spinner', Spinner)
+
+export {Spinner}
