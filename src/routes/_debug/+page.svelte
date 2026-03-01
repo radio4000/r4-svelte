@@ -15,6 +15,7 @@
 		{href: 'tanstack', title: 'Tanstack', desc: 'TanStack DB collections and queries'},
 		{href: 'tooltips', title: 'Tooltips', desc: 'Tooltip positioning and behavior'},
 		{href: 'styles', title: 'Styles', desc: 'Global style reference'},
+		{href: 'cover-flip', title: 'CoverFlip', desc: 'Vertical loop scroll with GSAP'},
 		{href: 'views', title: 'Views', desc: 'Saved view CRUD and filtering'}
 	]
 </script>

@@ -3,17 +3,49 @@ import {logger} from '$lib/logger'
 
 const log = logger.ns('vertical-loop').seal()
 
+const AXIS_CONFIGS = {
+	x: {
+		axis: 'x',
+		sizeProp: 'width',
+		domSizeProp: 'offsetWidth',
+		offsetProp: 'offsetLeft',
+		translateProp: 'x',
+		translatePercentProp: 'xPercent',
+		scaleProp: 'scaleX',
+		boundsStartProp: 'left',
+		boundsEndProp: 'right',
+		containerSizeProp: 'clientWidth',
+		dragProp: 'x',
+		startProp: 'startX'
+	},
+	y: {
+		axis: 'y',
+		sizeProp: 'height',
+		domSizeProp: 'offsetHeight',
+		offsetProp: 'offsetTop',
+		translateProp: 'y',
+		translatePercentProp: 'yPercent',
+		scaleProp: 'scaleY',
+		boundsStartProp: 'top',
+		boundsEndProp: 'bottom',
+		containerSizeProp: 'clientHeight',
+		dragProp: 'y',
+		startProp: 'startY'
+	}
+}
+
 gsap.registerPlugin(Draggable, InertiaPlugin)
 
 /**
- * This helper function makes a group of elements animate along the y-axis in a seamless, responsive loop.
- * Uses yPercent so that even if the heights change (like if the window gets resized), it should still work in most cases.
- * When each item animates up or down enough, it will loop back to the other side
+ * This helper function makes a group of elements animate along a single axis in a seamless, responsive loop.
+ * Uses axis-based percents so that even if the dimensions change (like if the window gets resized), it should still work in most cases.
+ * When each item animates enough along the axis, it loops back to the other side.
  *
  * @param {NodeList|Array<HTMLElement>|string} items - Elements (or selector) to loop.
  * @param {Object} [config] - Loop configuration.
  * @param {boolean} [config.draggable=false] - Enable momentum dragging via GSAP Draggable.
  * @param {boolean|Element|string|Array<Element>} [config.center=false] - Center active item. `true` uses the items' parent; element/selector uses that container.
+ * @param {'x'|'y'|'horizontal'|'vertical'} [config.axis='y'] - Axis to animate on.
  * @param {number} [config.speed=1] - Scroll speed multiplier (1 ≈ 100px/sec).
  * @param {boolean} [config.paused=false] - Start the timeline paused.
  * @param {number} [config.repeat] - Number of repeats for the timeline (GSAP `repeat`).
@@ -25,23 +57,39 @@ gsap.registerPlugin(Draggable, InertiaPlugin)
 export function verticalLoop(items, config = {}) {
 	items = gsap.utils.toArray(items)
 
+	// Axis config
+	const axisSetting = config.axis
+	const axisKey = axisSetting === 'horizontal' || axisSetting === 'x' ? 'x' : 'y'
+	const axisConfig = AXIS_CONFIGS[axisKey]
+	const {
+		sizeProp,
+		domSizeProp,
+		offsetProp,
+		translateProp,
+		translatePercentProp,
+		scaleProp,
+		boundsStartProp,
+		boundsEndProp,
+		containerSizeProp
+	} = axisConfig
+
 	// Early setup
 	const length = items.length
-	const startY = items[0].offsetTop
+	const startOffset = items[0][offsetProp]
 	const pixelsPerSecond = (config.speed || 1) * 100
 	const container = getContainer(config.center, items)
 
 	// State arrays
 	const times = []
-	const heights = []
+	const sizes = []
 	const spaceBefore = []
-	const yPercents = []
+	const percents = []
 
 	// State variables
 	let curIndex = 0
 	let lastIndex = 0
 	let indexIsDirty = false
-	let totalHeight
+	let totalDistance
 	let timeOffset = 0
 	let timeWrap
 	let proxy
@@ -51,43 +99,45 @@ export function verticalLoop(items, config = {}) {
 
 	// Helper functions
 	const snap = createSnapFunction(config.snap)
-	const getTotalHeight = () => {
+	const getTotalDistance = () => {
 		const lastItem = items[length - 1]
-		const scaleY = Number(gsap.getProperty(lastItem, 'scaleY')) || 1
+		const scale = Number(gsap.getProperty(lastItem, scaleProp)) || 1
 		return (
-			lastItem.offsetTop +
-			(yPercents[length - 1] / 100) * heights[length - 1] -
-			startY +
+			lastItem[offsetProp] +
+			(percents[length - 1] / 100) * sizes[length - 1] -
+			startOffset +
 			spaceBefore[0] +
-			lastItem.offsetHeight * scaleY +
+			lastItem[domSizeProp] * scale +
 			(Number(config.paddingBottom) || 0)
 		)
 	}
 
-	const populateHeights = () => {
+	const populateSizes = () => {
 		let b1 = container.getBoundingClientRect()
 		let b2
 
 		items.forEach((el, i) => {
-			heights[i] = Number(gsap.getProperty(el, 'height', 'px'))
-			yPercents[i] = snap(
-				(Number(gsap.getProperty(el, 'y', 'px')) / heights[i]) * 100 + Number(gsap.getProperty(el, 'yPercent'))
-			)
+			// Dimensions need to be numeric; fallback to DOM offsets when CSS returns non-px units.
+			const elSize = Number(gsap.getProperty(el, sizeProp)) || el[domSizeProp] || 1
+			const elTranslate = Number(gsap.getProperty(el, translateProp)) || 0
+			const elPercent = Number(gsap.getProperty(el, translatePercentProp)) || 0
+			sizes[i] = elSize
+			percents[i] = snap((elTranslate / elSize) * 100 + elPercent)
 			b2 = el.getBoundingClientRect()
-			spaceBefore[i] = b2.top - (i ? b1.bottom : b1.top)
+			spaceBefore[i] = b2[boundsStartProp] - (i ? b1[boundsEndProp] : b1[boundsStartProp])
 			b1 = b2
 		})
 
-		gsap.set(items, {yPercent: (i) => yPercents[i]})
-		totalHeight = getTotalHeight()
+		gsap.set(items, {[translatePercentProp]: (i) => percents[i]})
+		totalDistance = getTotalDistance()
 	}
 
 	const populateOffsets = () => {
 		if (!config.center) return
 
-		timeOffset = (tl.duration() * (container.offsetHeight / 2)) / totalHeight
+		timeOffset = (tl.duration() * (container[containerSizeProp] / 2)) / totalDistance
 		times.forEach((_t, i) => {
-			times[i] = timeWrap(tl.labels[`label${i}`] + (tl.duration() * heights[i]) / 2 / totalHeight - timeOffset)
+			times[i] = timeWrap(tl.labels[`label${i}`] + (tl.duration() * sizes[i]) / 2 / totalDistance - timeOffset)
 		})
 	}
 
@@ -111,16 +161,16 @@ export function verticalLoop(items, config = {}) {
 
 		for (let i = 0; i < length; i++) {
 			const item = items[i]
-			const curY = (yPercents[i] / 100) * heights[i]
-			const distanceToStart = item.offsetTop + curY - startY + spaceBefore[0]
-			const scaleY = Number(gsap.getProperty(item, 'scaleY')) || 1
-			const distanceToLoop = distanceToStart + heights[i] * scaleY
+			const curPos = (percents[i] / 100) * sizes[i]
+			const distanceToStart = item[offsetProp] + curPos - startOffset + spaceBefore[0]
+			const scale = Number(gsap.getProperty(item, scaleProp)) || 1
+			const distanceToLoop = distanceToStart + sizes[i] * scale
 
 			// Animation to loop point
 			tl.to(
 				item,
 				{
-					yPercent: snap(((curY - distanceToLoop) / heights[i]) * 100),
+					[translatePercentProp]: snap(((curPos - distanceToLoop) / sizes[i]) * 100),
 					duration: distanceToLoop / pixelsPerSecond
 				},
 				0
@@ -130,11 +180,11 @@ export function verticalLoop(items, config = {}) {
 			tl.fromTo(
 				item,
 				{
-					yPercent: snap(((curY - distanceToLoop + totalHeight) / heights[i]) * 100)
+					[translatePercentProp]: snap(((curPos - distanceToLoop + totalDistance) / sizes[i]) * 100)
 				},
 				{
-					yPercent: yPercents[i],
-					duration: (curY - distanceToLoop + totalHeight - curY) / pixelsPerSecond,
+					[translatePercentProp]: percents[i],
+					duration: (curPos - distanceToLoop + totalDistance - curPos) / pixelsPerSecond,
 					immediateRender: false
 				},
 				distanceToLoop / pixelsPerSecond
@@ -150,7 +200,7 @@ export function verticalLoop(items, config = {}) {
 	const refresh = (deep) => {
 		const progress = tl.progress()
 		tl.progress(0, true)
-		populateHeights()
+		populateSizes()
 
 		if (deep) {
 			populateTimeline()
@@ -166,8 +216,8 @@ export function verticalLoop(items, config = {}) {
 
 	const onResize = () => refresh(true)
 	// Initialize
-	gsap.set(items, {y: 0})
-	populateHeights()
+	gsap.set(items, {[translateProp]: 0})
+	populateSizes()
 	populateTimeline()
 	populateOffsets()
 
@@ -223,7 +273,7 @@ export function verticalLoop(items, config = {}) {
 		const draggableSetup = setupDraggable(
 			tl,
 			items,
-			totalHeight,
+			totalDistance,
 			times,
 			timeWrap,
 			getClosest,
@@ -231,7 +281,8 @@ export function verticalLoop(items, config = {}) {
 			() => indexIsDirty,
 			(val) => {
 				indexIsDirty = val
-			}
+			},
+			axisConfig
 		)
 		proxy = draggableSetup.proxy
 		tl.draggable = draggableSetup.draggable
@@ -291,13 +342,14 @@ function createTimeline(config, items, getLastIndex) {
 function setupDraggable(
 	tl,
 	items,
-	totalHeight,
+	totalDistance,
 	times,
 	timeWrap,
 	getClosest,
 	refresh,
 	_getIndexIsDirty,
-	setIndexIsDirty
+	setIndexIsDirty,
+	axisConfig
 ) {
 	if (typeof InertiaPlugin === 'undefined') {
 		log.warn('InertiaPlugin required for momentum-based scrolling and snapping', {url: 'https://greensock.com/club'})
@@ -305,27 +357,28 @@ function setupDraggable(
 
 	const proxy = document.createElement('div')
 	const wrap = gsap.utils.wrap(0, 1)
-	let ratio, startProgress, lastSnap, initChangeY, wasPlaying
+	let ratio, startProgress, lastSnap, initChange, wasPlaying
+	const {axis, dragProp, startProp} = axisConfig
 
-	const align = () => tl.progress(wrap(startProgress + (draggable.startY - draggable.y) * ratio))
+	const align = () => tl.progress(wrap(startProgress + (draggable[startProp] - draggable[dragProp]) * ratio))
 	const syncIndex = () => tl.closestIndex(true)
 
 	const draggable = Draggable.create(proxy, {
 		trigger: items[0].parentNode,
-		type: 'y',
+		type: axis,
 		inertia: true,
 		overshootTolerance: 0,
 
 		onPressInit() {
-			const y = this.y
+			const current = this[dragProp]
 			gsap.killTweensOf(tl)
 			wasPlaying = !tl.paused()
 			tl.pause()
 			startProgress = tl.progress()
 			refresh()
-			ratio = 1 / totalHeight
-			initChangeY = startProgress / -ratio - y
-			gsap.set(proxy, {y: startProgress / -ratio})
+			ratio = 1 / totalDistance
+			initChange = startProgress / -ratio - current
+			gsap.set(proxy, {[dragProp]: startProgress / -ratio})
 		},
 
 		onDrag: align,
@@ -333,8 +386,8 @@ function setupDraggable(
 
 		snap(value) {
 			// Handle edge case for small movements
-			if (Math.abs(startProgress / -ratio - this.y) < 10) {
-				return lastSnap + initChangeY
+			if (Math.abs(startProgress / -ratio - this[dragProp]) < 10) {
+				return lastSnap + initChange
 			}
 
 			const time = -(value * ratio) * tl.duration()
