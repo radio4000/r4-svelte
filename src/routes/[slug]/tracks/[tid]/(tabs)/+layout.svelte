@@ -10,6 +10,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {channelAvatarUrl, trackImageUrl} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
+	import Seo from '$lib/components/seo.svelte'
 
 	let {data, children} = $props()
 	const pathname = $derived(page.url.pathname)
@@ -87,21 +88,13 @@
 	})
 </script>
 
-<svelte:head>
-	<title>
-		{m.track_detail_page_title({
-			track: track?.title || m.track_meta_title(),
-			channel: channel?.name || m.channel_page_fallback()
-		})}
-	</title>
-	{#if track}
-		<meta property="og:title" content={track.title} />
-		<meta property="og:type" content="music.song" />
-		<meta property="og:url" content={page.url.href} />
-		{#if track.description}<meta property="og:description" content={track.description} />{/if}
-		{#if ogImage}<meta property="og:image" content={ogImage} />{/if}
-	{/if}
-</svelte:head>
+<Seo
+	title={track?.title || m.track_meta_title()}
+	description={track?.description}
+	image={ogImage}
+	url={page.url.href}
+	type="music.song"
+/>
 
 {#if isLoading}
 	<p>Loading...</p>

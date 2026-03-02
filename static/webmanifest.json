@@ -28,7 +28,7 @@
   "start_url": "/",
   "app": {
     "launch": {
-      "web_url": "https://radio4000.com/"
+      "web_url": "https://beta.radio4000.com/"
     }
   },
   "screenshots": [

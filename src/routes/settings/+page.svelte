@@ -4,6 +4,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
+	import {appChatUrl} from '$lib/config'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
@@ -58,7 +59,7 @@
 			<Icon icon="document" />
 			Docs
 		</a>
-		<a href="https://matrix.to/#/#radio4000:matrix.org" rel="noreferrer">
+		<a href={appChatUrl} rel="noreferrer">
 			<Icon icon="message-circle" />
 			{m.nav_chat()}
 		</a>

@@ -4,6 +4,7 @@
 	import AuthProviders from './auth-providers.svelte'
 	// import ButtonFeedback from './button-feedback.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {appLegalUrl} from '$lib/config'
 
 	const log = logger.ns('auth').seal()
 
@@ -246,8 +247,7 @@
 	<p>
 		<small
 			>{m.auth_terms_prefix()}
-			<a href="https://legal.radio4000.com/terms-of-service" target="_blank" rel="noopener">{m.auth_terms_link()}</a
-			>.</small
+			<a href="{appLegalUrl}/terms-of-service" target="_blank" rel="noopener">{m.auth_terms_link()}</a>.</small
 		>
 	</p>
 {/if}

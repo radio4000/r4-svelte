@@ -17,6 +17,7 @@
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appPresence} from '$lib/presence.svelte'
+	import {appName} from '$lib/config'
 
 	const {preloading} = $props()
 
@@ -52,7 +53,7 @@
 
 <header>
 	<nav class="nav-secondary">
-		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={m.app_name()}>
+		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={appName}>
 			<IconR4 />
 			{#if appPresence.count > 1}
 				<span class="count">{appPresence.count}</span>
