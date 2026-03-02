@@ -63,7 +63,7 @@
 
 <div class="queue-panel">
 	<div class="search-container">
-		<SearchInput bind:value={searchQuery} placeholder={m.search_placeholder()} debounce={150} />
+		<SearchInput bind:value={searchQuery} placeholder={`${m.search_placeholder()} (${queueTracks.length})`} debounce={150} />
 		{#if searchQuery !== ''}
 			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: m.queue_clear_search()})}>
 				<Icon icon="close" size={16} />
