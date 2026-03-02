@@ -12,45 +12,91 @@
 
 Do **not** add the new keys manually to other language files — they stay absent until translated, and Paraglide falls back to English in the meantime.
 
-## Translating
+## Tools
 
-To see what is untranslated across all languages:
+Each script does one thing. Locale argument is always optional and positional.
+
+| Command | What it does |
+|---|---|
+| `bun run i18n` | Sync + recompile Paraglide |
+| `bun run i18n:stats` | Per-locale coverage table |
+| `bun run i18n:stats da` | Coverage for one locale |
+| `bun run i18n:extract` | Missing keys → stdout JSON (all locales) |
+| `bun run i18n:extract da` | Missing keys → stdout JSON (one locale) |
+| `bun run i18n:review da` | Missing keys + review flags → stdout JSON |
+| `bun run i18n:apply batch.json` | Apply a batch file to locale files |
+
+All output goes to stdout (pipe to a file if you want one). Stats goes to stdout too — no stderr/stdout mixing.
+
+## Translating a locale
 
 ```bash
-bun run i18n:extract
-# prints summary to stderr: "Total untranslated keys: N"
+# 1. Check coverage
+bun run i18n:stats da
+
+# 2. Extract missing keys
+bun run i18n:extract da > /tmp/da-batch.json
+
+# 3. Translate the batch (hand to a translator or LLM)
+#    Keep all {placeholders} unchanged
+
+# 4. Apply
+bun run i18n:apply /tmp/da-batch.json
+bun run i18n
 ```
 
-To generate a batch file for translation:
+## Quality review
+
+Missing keys are the easy part. The most valuable fixes are in existing translations: typos (`kanalımm`), formality mixing (`sen` vs `siz` in Turkish), awkward phrasing. No tool catches these automatically.
+
+`i18n:review` runs heuristics on existing translations and flags:
+
+- **Placeholder mismatch** — `{name}` in English but missing or extra in translation
+- **Length ratio** — translation <30% or >300% of English length (for strings >10 chars)
+- **Identical to another locale** — same value as a different language (possible copy-paste)
 
 ```bash
-bun run i18n:extract -- i18n/batches/2026-03.json
+bun run i18n:review da > /tmp/da-review.json
 ```
 
-This writes a JSON with every key/locale pair whose value still matches English. Give it to a translator or an LLM — keep all `{placeholders}` unchanged.
+The output has two sections: `translations` (missing keys) and `review` (flagged existing translations). Only `translations` is applied by `i18n:apply` — review flags are informational.
 
-To apply a completed batch:
+These heuristics catch mechanical issues. For typos, tone, and formality drift, read the full locale file alongside `en.json`. The [tone guide](tone.md) applies to translations too.
 
-```bash
-bun run i18n:apply -- i18n/batches/2026-03.json
-bun run i18n   # recompile
+### Full review workflow
+
+1. Read `i18n/messages/en.json` and the target locale file
+2. Run `bun run i18n:review da` for heuristic flags
+3. Review the full file for typos, grammar, formality consistency, tone
+4. Edit the locale file directly, or put fixes in a batch and apply with `i18n:apply`
+5. Run `bun run i18n` to recompile
+
+`i18n:apply` overwrites existing translations — it's not limited to missing keys.
+
+## Batch format
+
+```json
+{
+  "source_locale": "en",
+  "translations": {
+    "da": {
+      "key_name": "Translated value with {placeholder}"
+    }
+  }
+}
 ```
 
-`apply-batch.js` validates that all `{placeholders}` are preserved and rejects unknown keys.
+`apply-batch.js` validates that all `{placeholders}` match English and rejects unknown keys.
 
 ## Adding a new language
 
 ```bash
-# 1. Copy the English baseline
 cp i18n/messages/en.json i18n/messages/dk.json
-
-# 2. Add "dk" to languageTags in i18n/project.inlang/settings.json
-
-# 3. Compile
+# Add "dk" to languageTags in i18n/project.inlang/settings.json
 bun run i18n
 ```
 
-The new locale appears in the language switcher immediately. Translate `messages/dk.json` at your own pace — untranslated keys fall back to English.
+The new locale appears in the language switcher immediately. Untranslated keys fall back to English.
 
 ## Notes
 
