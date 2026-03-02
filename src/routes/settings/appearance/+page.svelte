@@ -13,9 +13,10 @@
 		<BackLink href="/settings" />
 		<h1>{m.theme_heading()}</h1>
 	</header>
+	<main>
+		<ThemeEditor />
+	</main>
 </article>
-
-<ThemeEditor />
 
 <style>
 	header {
