@@ -1,6 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let providerLoading = $state(/** @type {string | null} */ (null))
@@ -64,10 +65,11 @@
 	<title>{m.settings_account()}</title>
 </svelte:head>
 
-<article class="constrained">
-	<a href="/settings">&larr; {m.settings_page_title()}</a>
-
-	<h1>{m.settings_account()}</h1>
+<article class="focused constrained">
+	<header>
+		<BackLink href="/settings" />
+		<h1>{m.settings_account()}</h1>
+	</header>
 
 	{#if !appState.user}
 		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
@@ -132,8 +134,14 @@
 </article>
 
 <style>
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem;
+	}
 	h1 {
-		margin-block-start: 1rem;
+		margin: 0;
 	}
 
 	article > menu {

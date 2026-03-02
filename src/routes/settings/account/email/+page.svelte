@@ -2,6 +2,7 @@
 	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let newEmail = $state('')
@@ -39,9 +40,10 @@
 </svelte:head>
 
 <article class="constrained">
-	<a href="/settings/account">&larr; {m.settings_account()}</a>
-
-	<h1>{m.account_change_email()}</h1>
+	<header>
+		<BackLink href="/settings/account" />
+		<h1>{m.account_change_email()}</h1>
+	</header>
 
 	{#if confirmMessage}
 		<p class="success">{confirmMessage}</p>
@@ -75,7 +77,15 @@
 </article>
 
 <style>
-	h1,
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem;
+	}
+	h1 {
+		margin: 0;
+	}
 	form {
 		margin-block: 1rem;
 	}

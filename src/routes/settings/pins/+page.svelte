@@ -8,6 +8,7 @@
 		type SavedView
 	} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -55,8 +56,10 @@
 </svelte:head>
 
 <article class="constrained">
-	<a href="/settings">&larr; Settings</a>
-	<h1>Pins</h1>
+	<header>
+		<BackLink href="/settings" />
+		<h1>Pins</h1>
+	</header>
 	<p><small>Pretty neat for quick access</small></p>
 
 	{#if !savedViews.length}
@@ -106,8 +109,14 @@
 </article>
 
 <style>
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem;
+	}
 	h1 {
-		margin-block-start: 1rem;
+		margin: 0;
 	}
 	menu {
 		margin-block: 1rem;

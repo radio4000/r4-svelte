@@ -16,15 +16,15 @@ Do **not** add the new keys manually to other language files — they stay absen
 
 Each script does one thing. Locale argument is always optional and positional.
 
-| Command | What it does |
-|---|---|
-| `bun run i18n` | Sync + recompile Paraglide |
-| `bun run i18n:stats` | Per-locale coverage table |
-| `bun run i18n:stats da` | Coverage for one locale |
-| `bun run i18n:extract` | Missing keys → stdout JSON (all locales) |
-| `bun run i18n:extract da` | Missing keys → stdout JSON (one locale) |
-| `bun run i18n:review da` | Missing keys + review flags → stdout JSON |
-| `bun run i18n:apply batch.json` | Apply a batch file to locale files |
+| Command                         | What it does                              |
+| ------------------------------- | ----------------------------------------- |
+| `bun run i18n`                  | Sync + recompile Paraglide                |
+| `bun run i18n:stats`            | Per-locale coverage table                 |
+| `bun run i18n:stats da`         | Coverage for one locale                   |
+| `bun run i18n:extract`          | Missing keys → stdout JSON (all locales)  |
+| `bun run i18n:extract da`       | Missing keys → stdout JSON (one locale)   |
+| `bun run i18n:review da`        | Missing keys + review flags → stdout JSON |
+| `bun run i18n:apply batch.json` | Apply a batch file to locale files        |
 
 All output goes to stdout (pipe to a file if you want one). Stats goes to stdout too — no stderr/stdout mixing.
 
@@ -77,12 +77,12 @@ These heuristics catch mechanical issues. For typos, tone, and formality drift, 
 
 ```json
 {
-  "source_locale": "en",
-  "translations": {
-    "da": {
-      "key_name": "Translated value with {placeholder}"
-    }
-  }
+	"source_locale": "en",
+	"translations": {
+		"da": {
+			"key_name": "Translated value with {placeholder}"
+		}
+	}
 }
 ```
 
