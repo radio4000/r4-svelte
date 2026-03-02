@@ -7,6 +7,7 @@
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
 	import {channelAvatarUrl} from '$lib/utils'
@@ -20,7 +21,21 @@
 	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
 	const imageBase = $derived(channel?.image ? {url: channelAvatarUrl(channel.image, 1024, 'webp', 90)} : undefined)
-	const mediaItem = $derived(channel ? toChannelCardMedia(channel, channelActivity, imageBase) : null)
+	const isChannelLive = $derived.by(() => {
+		const channelId = channel?.id
+		if (!channelId) return false
+		void broadcastsCollection.state.size
+		const remoteLive = broadcastsCollection.state.has(channelId)
+		const localLive = Object.values(appState.decks).some((deck) => deck.broadcasting_channel_id === channelId)
+		return remoteLive || localLive
+	})
+	const mediaItem = $derived.by(() => {
+		if (!channel) return null
+		return {
+			...toChannelCardMedia(channel, channelActivity, imageBase),
+			isLive: isChannelLive
+		}
+	})
 
 	function handleSceneClick(item) {
 		if (!item?.id) return

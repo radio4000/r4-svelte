@@ -63,19 +63,17 @@
 	<title>{m.page_title_broadcasts()}</title>
 </svelte:head>
 
+<header class="page-header">
+	<h1>{m.broadcasts_title()}</h1>
+	<menu class="page-actions">
+		<BroadcastControls deckId={appState.active_deck_id} />
+	</menu>
+</header>
+
 <article class="constrained">
-	<header>
-		<h1>{m.broadcasts_title()}</h1>
-		<p>{m.broadcasts_wip()}</p>
-
-		{#if loadingError}
-			<p>{m.broadcasts_error()} {loadingError}</p>
-		{/if}
-
-		<menu>
-			<BroadcastControls deckId={appState.active_deck_id} />
-		</menu>
-	</header>
+	{#if loadingError}
+		<p>{m.broadcasts_error()} {loadingError}</p>
+	{/if}
 
 	<section class="list">
 		{#each activeBroadcasts as broadcast (broadcast.channel_id)}
@@ -145,8 +143,24 @@
 </article>
 
 <style>
-	header > menu {
-		margin-block: 1rem;
+	.page-header {
+		position: sticky;
+		top: 0.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin: 0.5rem 0.5rem 0.75rem;
+		z-index: 1;
+	}
+
+	.page-header h1 {
+		margin: 0;
+	}
+
+	.page-actions {
+		margin: 0;
+		flex-shrink: 0;
 	}
 
 	.scanning {
