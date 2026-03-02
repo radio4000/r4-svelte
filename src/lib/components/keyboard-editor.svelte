@@ -17,7 +17,9 @@
 		'togglePlayPause',
 		'toggleShuffle',
 		'toggleCompactDeck',
+		'gotoHome',
 		'gotoSettings',
+		'gotoDebug',
 		'showShortcutsHelp'
 	]
 
@@ -26,7 +28,9 @@
 		togglePlayPause: () => m.shortcuts_action_togglePlayPause(),
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
 		toggleCompactDeck: () => m.shortcuts_action_toggleCompactDeck(),
+		gotoHome: () => m.shortcuts_action_gotoHome(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
+		gotoDebug: () => m.shortcuts_action_gotoDebug(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 
