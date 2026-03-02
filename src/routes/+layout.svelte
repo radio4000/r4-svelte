@@ -11,6 +11,7 @@
 	import LiveChat from '$lib/components/live-chat.svelte'
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
+	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate} from '$app/navigation'
@@ -192,10 +193,7 @@
 				<p>{m.app_loading()}</p>
 				<R4Loading />
 				{#if sha}
-					<p class="app-version">
-						<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">{m.app_version({sha})}</a>
-						<time datetime={commitDate}>{new Date(commitDate).toLocaleString()}</time>
-					</p>
+					<p class="app-version"><AppBuildInfo {repo} {sha} {commitDate} /></p>
 				{/if}
 			</div>
 		{:then}
@@ -310,11 +308,6 @@
 		margin: 0.25rem 0.5rem 0.5rem;
 		font-size: var(--font-2);
 		text-align: right;
-	}
-
-	.app-version a {
-		text-decoration: none;
-		color: var(--gray-9);
 	}
 
 	.compact-decks {
