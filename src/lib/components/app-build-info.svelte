@@ -2,14 +2,14 @@
 	import DateFormal from '$lib/components/date-formal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
+	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
 	const commitDate = $derived(__GIT_INFO__.date)
 
 	/** @type {{link?: boolean}} */
 	let {link = true} = $props()
 
-	const commitHref = $derived(repo && sha ? `${repo}/commit/${sha}` : undefined)
+	const commitHref = $derived(repoUrl && sha ? `${repoUrl}/commit/${sha}` : undefined)
 </script>
 
 {#if sha}
