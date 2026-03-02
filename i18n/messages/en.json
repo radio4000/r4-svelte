@@ -175,6 +175,7 @@
 	"channel_play_latest": "Play latest",
 	"channel_play_tag": "Play #{tag}",
 	"channel_queue_tag": "Queue #{tag}",
+	"channel_section_featured_channels": "Featured channels",
 	"channel_section_latest": "Latest",
 	"channel_section_radios": "Radios",
 	"channel_see_all_tag": "See all {count} #{tag}",
