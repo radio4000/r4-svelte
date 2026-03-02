@@ -18,6 +18,7 @@
 		deckId?: number
 		selected?: boolean
 		onPlay?: (trackId: string) => void
+		onQueue?: (trackId: string) => void
 		showImage?: boolean
 		showSlug?: boolean
 		canEdit?: boolean
@@ -35,6 +36,7 @@
 		deckId,
 		selected = false,
 		onPlay,
+		onQueue,
 		showImage = true,
 		showSlug = false,
 		canEdit = false,
@@ -177,7 +179,11 @@
 					role="menuitem"
 					{@attach tooltip({content: m.track_play_next()})}
 					onclick={() => {
-						playNext(deckId ?? appState.active_deck_id, track.id)
+						if (onQueue) {
+							onQueue(track.id)
+						} else {
+							playNext(deckId ?? appState.active_deck_id, track.id)
+						}
 						menu?.close()
 					}}><Icon icon="next-fill" size={16} /></button
 				>
