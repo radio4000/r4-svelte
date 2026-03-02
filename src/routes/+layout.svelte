@@ -32,10 +32,6 @@
 
 	// Channels are now fetched on-demand by each page's useLiveQuery (no more fetch-all)
 
-	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
-	const sha = $derived(__GIT_INFO__.sha)
-	const commitDate = $derived(__GIT_INFO__.date)
-
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
@@ -192,9 +188,7 @@
 			<div class="loader">
 				<p>{m.app_loading()}</p>
 				<R4Loading />
-				{#if sha}
-					<p class="app-version"><AppBuildInfo {repo} {sha} {commitDate} /></p>
-				{/if}
+				<p class="app-version"><AppBuildInfo /></p>
 			</div>
 		{:then}
 			<AuthListener />

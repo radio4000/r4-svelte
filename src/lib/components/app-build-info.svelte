@@ -3,8 +3,12 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {appPresence} from '$lib/presence.svelte'
 
-	/** @type {{repo?: string, sha?: string, commitDate?: string, showPresenceCount?: boolean, link?: boolean}} */
-	let {repo, sha, commitDate, showPresenceCount = false, link = true} = $props()
+	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
+	const sha = $derived(__GIT_INFO__.sha)
+	const commitDate = $derived(__GIT_INFO__.date)
+
+	/** @type {{showPresenceCount?: boolean, link?: boolean}} */
+	let {showPresenceCount = false, link = true} = $props()
 
 	const commitHref = $derived(repo && sha ? `${repo}/commit/${sha}` : undefined)
 	const formattedCommitDate = $derived(commitDate ? new Date(commitDate).toLocaleString() : null)

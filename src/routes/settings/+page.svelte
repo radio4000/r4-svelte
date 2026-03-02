@@ -7,10 +7,6 @@
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import {appChatUrl} from '$lib/config'
-
-	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
-	const sha = $derived(__GIT_INFO__.sha)
-	const commitDate = $derived(__GIT_INFO__.date)
 </script>
 
 <svelte:head>
@@ -66,14 +62,14 @@
 			<Icon icon="message-circle" />
 			{m.nav_chat()}
 		</a>
-		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
+		<a href="{__REPO_URL__ || __GIT_INFO__.remoteUrl}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
 			<Icon icon="html" />
 			{m.settings_changelog()}
 		</a>
-		{#if sha}
-			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
+		{#if __GIT_INFO__.sha}
+			<a href="{__REPO_URL__ || __GIT_INFO__.remoteUrl}/commit/{__GIT_INFO__.sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				<AppBuildInfo {repo} {sha} {commitDate} link={false} />
+				<AppBuildInfo link={false} />
 			</a>
 		{/if}
 	</menu>
