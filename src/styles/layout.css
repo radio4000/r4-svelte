@@ -27,10 +27,6 @@
 	margin-inline: auto;
 	@media (min-width: 768px) {
 		padding-top: 5vh;
-
-		& + .focused {
-			padding-top: 2rem;
-		}
 	}
 }
 
