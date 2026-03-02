@@ -1,8 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
-	import {appPresence} from '$lib/presence.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import AppPresenceCount from '$lib/components/app-presence-count.svelte'
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
@@ -52,7 +52,8 @@
 	<menu class="nav-vertical">
 		<a href="/about">
 			<Icon icon="circle-info" />
-			{m.nav_about()} ({appPresence.count})
+			{m.nav_about()}
+			<AppPresenceCount />
 		</a>
 		<a href="/docs">
 			<Icon icon="document" />

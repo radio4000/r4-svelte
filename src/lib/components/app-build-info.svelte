@@ -1,14 +1,12 @@
 <script>
 	import * as m from '$lib/paraglide/messages'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {appPresence} from '$lib/presence.svelte'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
 	const commitDate = $derived(__GIT_INFO__.date)
 
-	/** @type {{showPresenceCount?: boolean, link?: boolean}} */
-	let {showPresenceCount = false, link = true} = $props()
+	/** @type {{link?: boolean}} */
+	let {link = true} = $props()
 
 	const commitHref = $derived(repo && sha ? `${repo}/commit/${sha}` : undefined)
 	const formattedCommitDate = $derived(commitDate ? new Date(commitDate).toLocaleString() : null)
@@ -23,15 +21,6 @@
 		{/if}
 		{#if formattedCommitDate}
 			<time datetime={commitDate}>{formattedCommitDate}</time>
-		{/if}
-		{#if showPresenceCount}
-			<span
-				class="presence-total"
-				aria-label={m.app_presence_count_tooltip()}
-				{@attach tooltip({content: m.app_presence_count_tooltip()})}
-			>
-				({appPresence.count})
-			</span>
 		{/if}
 	</span>
 {/if}
@@ -51,9 +40,5 @@
 
 	.app-build-info a:hover {
 		text-decoration: underline;
-	}
-
-	.presence-total {
-		color: var(--gray-10);
 	}
 </style>
