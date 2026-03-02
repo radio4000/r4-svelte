@@ -167,7 +167,6 @@
 </script>
 
 <div class="focused constrained">
-	<h2>Change it!</h2>
 	<section class="box">
 		<form class="form">
 			<fieldset>
