@@ -15,11 +15,52 @@ export function formatDurationMs(ms) {
 }
 
 /** @param {Date | string | number | null | undefined} date */
-export function formatDate(date) {
-	if (date == null) return ''
+function toValidDate(date) {
+	if (date == null) return null
 	const value = date instanceof Date ? date : new Date(date)
-	if (!Number.isFinite(value.getTime())) return ''
-	return new Intl.DateTimeFormat().format(value)
+	if (!Number.isFinite(value.getTime())) return null
+	return value
+}
+
+/** @param {Date | string | number | null | undefined} date */
+export function formatDate(date, locale = undefined) {
+	const value = toValidDate(date)
+	if (!value) return ''
+	return new Intl.DateTimeFormat(locale).format(value)
+}
+
+/** Formal date-time: "Year/Month/day time", localized numerals/time by locale
+ * @param {Date | string | number | null | undefined} date
+ * @param {string | string[] | undefined} [locale] */
+export function formatDateFormal(date, locale = undefined) {
+	const value = toValidDate(date)
+	if (!value) return ''
+	const parts = new Intl.DateTimeFormat(locale, {
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).formatToParts(value)
+	const year = parts.find((part) => part.type === 'year')?.value
+	const month = parts.find((part) => part.type === 'month')?.value
+	const day = parts.find((part) => part.type === 'day')?.value
+	if (!year || !month || !day) return ''
+	const time = new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit'
+	}).format(value)
+	return `${year}/${month}/${day} ${time}`
+}
+
+/** @param {Date | string | number | null | undefined} date */
+export function toIsoDateTime(date) {
+	const value = toValidDate(date)
+	if (!value) return ''
+	return value.toISOString()
+}
+
+/** @param {Date | string | number | null | undefined} date */
+export function isValidDateInput(date) {
+	return Boolean(toValidDate(date))
 }
 
 /** @param {string | null | undefined} dateString */

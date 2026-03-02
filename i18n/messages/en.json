@@ -16,7 +16,6 @@
 	"account_password_updated": "Password updated",
 	"account_sign_in_prompt": "Please sign in to manage your account",
 	"app_loading": "Preparing",
-	"app_presence_count_tooltip": "People online now",
 	"app_version": "Version {sha}",
 	"auth_already_have_account": "Already have an account? Sign in instead.",
 	"auth_already_have_account_intro": "Already have an account?",

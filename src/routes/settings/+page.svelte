@@ -2,12 +2,14 @@
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import AppPresenceCount from '$lib/components/app-presence-count.svelte'
+	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import {appChatUrl} from '$lib/config'
 
-	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
-	const sha = $derived(__GIT_INFO__.sha)
+	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
+	const sha = __GIT_INFO__.sha
 </script>
 
 <svelte:head>
@@ -54,6 +56,7 @@
 		<a href="/about">
 			<Icon icon="circle-info" />
 			{m.nav_about()}
+			<AppPresenceCount />
 		</a>
 		<a href="/docs">
 			<Icon icon="document" />
@@ -63,14 +66,14 @@
 			<Icon icon="message-circle" />
 			{m.nav_chat()}
 		</a>
-		<a href="{repo}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
+		<a href="{repoUrl}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
 			<Icon icon="html" />
 			{m.settings_changelog()}
 		</a>
 		{#if sha}
-			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
+			<a href="{repoUrl}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				Source code {sha}
+				<AppBuildInfo link={false} />
 			</a>
 		{/if}
 	</menu>

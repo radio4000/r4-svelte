@@ -7,7 +7,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewURI`) are in `src/lib/views.ts` with tests. See `docs/views.md`.
 
 - Send view URI in broadcast payload; listeners resolve locally
-- Broadcast current view URI via Supabase presence for "now listening" discovery
 
 ## Backlog
 

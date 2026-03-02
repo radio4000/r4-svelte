@@ -11,12 +11,11 @@
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
-	import {appPresence} from '$lib/presence.svelte'
 	import {appName} from '$lib/config'
 
 	const {preloading} = $props()
@@ -55,9 +54,6 @@
 	<nav class="nav-secondary">
 		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={appName}>
 			<IconR4 />
-			{#if appPresence.count > 1}
-				<span class="count">{appPresence.count}</span>
-			{/if}
 		</a>
 		<a
 			href={resolve('/search')}
