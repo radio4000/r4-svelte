@@ -1,4 +1,5 @@
 <script>
+	import DateFormal from '$lib/components/date-formal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
@@ -9,7 +10,6 @@
 	let {link = true} = $props()
 
 	const commitHref = $derived(repo && sha ? `${repo}/commit/${sha}` : undefined)
-	const formattedCommitDate = $derived(commitDate ? new Date(commitDate).toLocaleString() : null)
 </script>
 
 {#if sha}
@@ -19,8 +19,8 @@
 		{:else}
 			<span>{m.app_version({sha})}</span>
 		{/if}
-		{#if formattedCommitDate}
-			<time datetime={commitDate}>{formattedCommitDate}</time>
+		{#if commitDate}
+			<DateFormal date={commitDate} />
 		{/if}
 	</span>
 {/if}

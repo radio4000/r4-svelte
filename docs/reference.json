@@ -276,6 +276,9 @@
 
 	"src/lib/dates.js": [
 		{"name": "formatDate(date)", "desc": "Format date using Intl.DateTimeFormat."},
+		{"name": "formatDateFormal(date, locale?)", "desc": "Formal date+time: Year/Month/day + localized time."},
+		{"name": "toIsoDateTime(date)", "desc": "Convert date input to ISO datetime string."},
+		{"name": "isValidDateInput(date)", "desc": "True when Date/string/number is a valid date."},
 		{"name": "dateYear(dateString)", "desc": "Just the year."},
 		{"name": "dateProvenance(dateString)", "desc": "Smart: 'this week'/'this month'/'recent'/year."},
 		{"name": "relativeDate(dateString)", "desc": "Returns 'X days ago'."},
@@ -328,6 +331,7 @@
 		{"name": "ChannelCard", "desc": "Channel preview with avatar, description, live dot."},
 
 		{"name": "dialog.svelte", "desc": "Generic dialog wrapper with header/children snippets."},
+		{"name": "date-formal.svelte", "desc": "Localized formal date-time display."},
 		{"name": "Icon", "desc": "Iconify icon wrapper."},
 		{"name": "LinkEntities", "desc": "Parses #tags @mentions into search links."},
 
