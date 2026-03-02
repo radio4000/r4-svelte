@@ -115,7 +115,7 @@
 				<a
 					href={resolve('/history')}
 					class="btn"
-					class:active={page.route.id === '/history' || page.route.id === '/stats'}
+					class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
 					aria-label={m.nav_history()}
 					{@attach tooltip({content: m.nav_history()})}
 				>

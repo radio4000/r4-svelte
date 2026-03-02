@@ -1,7 +1,5 @@
 <script>
-	import {page} from '$app/state'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import Icon from '$lib/components/icon.svelte'
 	import {formatDate} from '$lib/dates'
 	import {playHistoryCollection} from '$lib/collections/play-history'
 	import * as m from '$lib/paraglide/messages'
@@ -18,17 +16,6 @@
 </svelte:head>
 
 <article class="constrained">
-	<menu>
-		<a class="btn" href="/stats" class:active={page.route.id === '/stats'}>
-			<Icon icon="chart-scatter" />
-			{m.nav_stats()}
-		</a>
-		<a class="btn" href="/history" class:active={page.route.id === '/history'}>
-			<Icon icon="history" />
-			{m.nav_history()}
-		</a>
-	</menu>
-
 	<header>
 		<h1>{m.history_title()}</h1>
 		<p>{m.history_local_note()}</p>
@@ -81,7 +68,6 @@
 {/snippet}
 
 <style>
-	article > menu,
 	article > header {
 		margin-bottom: 1rem;
 	}
@@ -93,16 +79,7 @@
 
 	a {
 		text-decoration: none;
-	}
-
-	.channel a {
-		background: var(--test-green);
-		color: var(--test-white);
-	}
-
-	.track a {
-		background: var(--test-magenta);
-		color: var(--test-yellow);
+		color: var(--gray-12);
 	}
 
 	.reasons {
@@ -110,7 +87,6 @@
 	}
 
 	li[data-skipped] {
-		opacity: 0.4;
 		font-size: var(--font-2);
 	}
 </style>

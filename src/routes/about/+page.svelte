@@ -59,8 +59,8 @@
 
 <article class="constrained">
 	<p>
-		A track is a pointer with your opinions — a URL, a title, your tags. The music lives out there. Your channel is
-		the context.
+		A track is a pointer with your opinions — a URL, a title, your tags. The music lives out there. Your channel is the
+		context.
 	</p>
 </article>
 
@@ -71,9 +71,9 @@
 
 <article class="constrained">
 	<p>
-		Use #tags to filter however you want. Search your archive instantly. Save a search as a view. Browse other radios
-		to discover what fellow humans are curating. Broadcast your deck live, or let auto-radio play for everyone at the
-		same time — just the clock.
+		Use #tags to filter however you want. Search your archive instantly. Save a search as a view. Browse other radios to
+		discover what fellow humans are curating. Broadcast your deck live, or let auto-radio play for everyone at the same
+		time — just the clock.
 	</p>
 	<ul>
 		<li>No native apps, just the web</li>
