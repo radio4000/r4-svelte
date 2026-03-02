@@ -1,5 +1,6 @@
 <script>
 	import ThemeEditor from '$lib/components/theme-editor.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 </script>
 
@@ -8,14 +9,22 @@
 </svelte:head>
 
 <article class="focused constrained">
-	<a href="/settings">&larr; {m.nav_settings()}</a>
-	<h1>{m.theme_heading()}</h1>
+	<header>
+		<BackLink href="/settings" />
+		<h1>{m.theme_heading()}</h1>
+	</header>
 </article>
 
 <ThemeEditor />
 
 <style>
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem;
+	}
 	h1 {
-		margin-block-start: 1rem;
+		margin: 0;
 	}
 </style>

@@ -1,5 +1,6 @@
 <script>
 	import * as m from '$lib/paraglide/messages'
+	import BackLink from '$lib/components/back-link.svelte'
 	import {appChatUrl} from '$lib/config'
 </script>
 
@@ -7,21 +8,25 @@
 	<title>About Radio4000</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
-		<figure>
-			<img
-				src="https://upload.wikimedia.org/wikipedia/commons/3/30/The_Burning_of_the_Library_at_Alexandria_in_391_AD.jpg"
-				alt="The Burning of the Library at Alexandria in 391 AD"
-				width="1836"
-				height="1552"
-			/>
-			<figcaption>The Burning of the Library at Alexandria in 391 AD — Ambrose Dudley</figcaption>
-		</figure>
+		<BackLink href="/settings" />
+		<h1>About Radio4000</h1>
 	</header>
+</article>
 
+<figure>
+	<img
+		src="https://upload.wikimedia.org/wikipedia/commons/3/30/The_Burning_of_the_Library_at_Alexandria_in_391_AD.jpg"
+		alt="The Burning of the Library at Alexandria in 391 AD"
+		width="1836"
+		height="1552"
+	/>
+	<figcaption>The Burning of the Library at Alexandria in 391 AD — Ambrose Dudley</figcaption>
+</figure>
+
+<article class="constrained">
 	<section>
-		<h1>About Radio4000, music explorer</h1>
 		<p>
 			Everyone gets one channel. When you like a track, add it. No playlists to organize, no folders to maintain — your
 			personality gives soul to your radio. Discover songs in the context of someone whose taste you enjoy.
@@ -45,32 +50,34 @@
 		</ul>
 		<p>Radio4000 was started back in 2014 and we're still online.</p>
 	</section>
+</article>
 
-	<section>
-		<figure>
-			<img
-				src="/images/illustrations/ruins-of-the-augustus-bridge-at-narni.jpg"
-				alt="Ruins of the Augustus Bridge at Narni"
-			/>
-			<figcaption>Ruins of the Augustus Bridge at Narni — Georg Abraham Hackert</figcaption>
-		</figure>
-		<figure>
-			<img src="/images/illustrations/around-the-moon-bayard-neuville.jpg" alt="Around the Moon" />
-			<figcaption>Around the Moon — Bayard & Neuville</figcaption>
-		</figure>
-		<figure>
-			<img
-				src="/images/illustrations/une-caverne-pendant-la-nuit.jpg"
-				alt="Une caverne pendant la nuit à l'époque du grand ours et du mammouth"
-			/>
-			<figcaption>Une caverne pendant la nuit — Émile Bayard</figcaption>
-		</figure>
-		<figure>
-			<img src="/images/illustrations/more-otho-flying-richard-neuhauss.jpg" alt="More Otho Flying" />
-			<figcaption>More Otho Flying — Richard Neuhauss</figcaption>
-		</figure>
-	</section>
+<section class="gallery">
+	<figure>
+		<img
+			src="/images/illustrations/ruins-of-the-augustus-bridge-at-narni.jpg"
+			alt="Ruins of the Augustus Bridge at Narni"
+		/>
+		<figcaption>Ruins of the Augustus Bridge at Narni — Georg Abraham Hackert</figcaption>
+	</figure>
+	<figure>
+		<img src="/images/illustrations/around-the-moon-bayard-neuville.jpg" alt="Around the Moon" />
+		<figcaption>Around the Moon — Bayard & Neuville</figcaption>
+	</figure>
+	<figure>
+		<img
+			src="/images/illustrations/une-caverne-pendant-la-nuit.jpg"
+			alt="Une caverne pendant la nuit à l'époque du grand ours et du mammouth"
+		/>
+		<figcaption>Une caverne pendant la nuit — Émile Bayard</figcaption>
+	</figure>
+	<figure>
+		<img src="/images/illustrations/more-otho-flying-richard-neuhauss.jpg" alt="More Otho Flying" />
+		<figcaption>More Otho Flying — Richard Neuhauss</figcaption>
+	</figure>
+</section>
 
+<article class="constrained">
 	<footer>
 		<p>
 			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
@@ -85,16 +92,14 @@
 </article>
 
 <style>
-	section {
-		margin-inline: 1rem;
-		ul,
-		p {
-			margin-block: 1rem;
-		}
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem;
 	}
-
-	ul {
-		padding-left: 2rem;
+	h1 {
+		margin: 0;
 	}
 
 	figure {
@@ -108,6 +113,17 @@
 	figcaption {
 		font-size: var(--font-3);
 		margin-top: 0.2rem;
+	}
+
+	section {
+		ul,
+		p {
+			margin-block: 1rem;
+		}
+	}
+
+	ul {
+		padding-left: 2rem;
 	}
 
 	footer {

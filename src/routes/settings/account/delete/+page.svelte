@@ -1,6 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let confirmDelete = $state(false)
@@ -26,9 +27,10 @@
 </svelte:head>
 
 <article class="constrained">
-	<a href="/settings/account">&larr; Account</a>
-
-	<h1>Delete account</h1>
+	<header>
+		<BackLink href="/settings/account" />
+		<h1>Delete account</h1>
+	</header>
 
 	{#if !appState.user}
 		<p>{m.account_sign_in_prompt()}</p>
@@ -59,7 +61,13 @@
 </article>
 
 <style>
-	h1 {
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		margin-block: 1rem;
+	}
+	h1 {
+		margin: 0;
 	}
 </style>

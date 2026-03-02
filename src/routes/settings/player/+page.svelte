@@ -1,5 +1,6 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
+	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 </script>
 
@@ -8,9 +9,10 @@
 </svelte:head>
 
 <article class="focused constrained">
-	<a href="/settings">&larr; {m.nav_settings()}</a>
-
-	<h1>Player</h1>
+	<header>
+		<BackLink href="/settings" />
+		<h1>Player</h1>
+	</header>
 
 	<section class="box">
 		<form class="form">
@@ -54,8 +56,14 @@
 </article>
 
 <style>
-	h1 {
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		margin-block: 1rem;
+	}
+	h1 {
+		margin: 0;
 	}
 
 	.box {
