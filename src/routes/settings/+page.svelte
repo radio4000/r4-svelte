@@ -31,7 +31,14 @@
 				{m.settings_account()}
 				<small>{appState.user.email}</small>
 			</a>
+			<button onclick={() => sdk.auth.signOut()}>
+				<Icon icon="eject" />
+				{m.auth_log_out()}
+			</button>
 		{/if}
+	</menu>
+
+	<menu class="nav-vertical">
 		<a href="/settings/appearance">
 			<Icon icon="palette" />
 			{m.settings_appearance()}
@@ -44,12 +51,6 @@
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}
 		</a>
-		{#if appState.user}
-			<button onclick={() => sdk.auth.signOut()}>
-				<Icon icon="eject" />
-				{m.auth_log_out()}
-			</button>
-		{/if}
 	</menu>
 
 	<menu class="nav-vertical">
