@@ -46,6 +46,16 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 
 - Click handlers on non-interactive elements need `<button>` or `role="button"` + `tabindex="0"` + keyboard handler: `player.svelte` (header, footer), `cover-flip.svelte`, `track-card.svelte`, `r4-discogs-resource.svelte`, `draggable-panel.svelte`.
 
+## i18n coverage
+
+Translate missing keys and fix review flags per batch. Use `i18n:review <locale>`, translate, apply with `i18n:apply`, run `i18n`. Brand names/abbreviations identical to English are skipped by sync (Paraglide falls back).
+
+- Batch 1: de (87%), pt (85%), it (84%) — big European languages, lowest coverage
+- Batch 2: zh (90%), ko (87%), ar (89%) — major non-Latin languages
+- Batch 3: ru (88%), uk (88%), pl (86%) — Slavic cluster
+- Batch 4: hi (87%), bn (87%), ur (87%) — South Asian cluster
+- Batch 5: eo (87%), ro (85%), vi (87%) — remaining locales
+
 ## Needs research
 
 - **`useLiveQuery` migration** — two versions in use: official `@tanstack/svelte-db` (14 files) and custom `$lib/tanstack/useLiveQuery.svelte` (11 files). The official version fires `$state` mutations during `$derived` evaluation when IDB-cached data loads (`state_unsafe_mutation`). Custom version avoids this with `includeInitialState: false` + `untrack()`. Root layout already swapped. ~15 files remain: `layout-header`, `player`, `button-follow`, `queue-panel`, `history/+page`, `broadcasts/+page`, `[slug]/edit`, `auth/+page`, `[slug]/map`, `[slug]/batch-edit`, `[slug]/trackids`, `[slug]/delete`, `[slug]/tracks/[tid]/(tabs)/+layout`, plus debug pages. Need a way to switch globally + per page.
