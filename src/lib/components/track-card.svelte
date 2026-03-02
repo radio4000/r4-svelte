@@ -287,6 +287,7 @@
 		background: var(--accent-3);
 		outline: 1px solid var(--gray-5);
 		outline-offset: -1px;
+		border-radius: var(--border-radius);
 		--tag-bg: var(--accent-5);
 		--tag-bg-hover: var(--accent-7);
 		--tag-bg-active: var(--accent-8);
@@ -295,6 +296,7 @@
 
 	.selected {
 		background: var(--gray-2);
+		border-radius: var(--border-radius);
 		outline: 1px solid var(--accent-7);
 		outline-offset: -1px;
 		--tag-bg: var(--accent-4);
