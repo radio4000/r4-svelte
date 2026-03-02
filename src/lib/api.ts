@@ -600,7 +600,8 @@ export function next(deckId: number, endReason: PlayEndReason) {
 	}
 	const nextId = queueNext(activeQueue, deck.playlist_track)
 	if (nextId) {
-		const startReason: PlayStartReason = endReason === 'youtube_error' ? 'track_error' : 'auto_next'
+		const startReason: PlayStartReason =
+			endReason === 'youtube_error' ? 'track_error' : endReason === 'user_next' ? 'user_next' : 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
