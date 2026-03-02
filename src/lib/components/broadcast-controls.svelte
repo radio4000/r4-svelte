@@ -1,8 +1,7 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
-	import {startBroadcast, stopBroadcast} from '$lib/broadcast'
+	import {startBroadcast, stopBroadcast, getBroadcastingChannelId, isUserBroadcasting} from '$lib/broadcast'
 	import {getMediaPlayer} from '$lib/api'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {channelPresence} from '$lib/presence.svelte'
@@ -13,13 +12,12 @@
 
 	let deck = $derived(appState.decks[deckId])
 
-	const userChannelId = $derived(channelId ?? appState?.channels?.[0])
-	// Check collection only (source of truth) — deck state is synced via effect below
+	// Prefer explicit channelId, then currently broadcasting channel, then default user channel.
+	const userChannelId = $derived(channelId ?? getBroadcastingChannelId() ?? appState?.channels?.[0])
 	const isBroadcasting = $derived.by(() => {
 		if (typeof isLiveOverride === 'boolean') return isLiveOverride
 		if (!userChannelId) return false
-		void broadcastsCollection.state.size
-		return broadcastsCollection.state.has(userChannelId)
+		return isUserBroadcasting(userChannelId)
 	})
 	let error = $state(/** @type {string|null} */ (null))
 	const canStartBroadcast = $derived(Boolean(deck?.playlist_track))
@@ -29,7 +27,7 @@
 		error = null
 	})
 
-	// Sync broadcasting_channel_id from collection state → deck
+	// Mirror computed broadcast state to the active deck for local UI consumers.
 	$effect(() => {
 		if (deck) {
 			deck.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
@@ -71,6 +69,10 @@
 
 {#if userChannelId}
 	<div>
+		{#if channelSlug && channelPresence[channelSlug]?.broadcast > 0}
+			<PresenceCount count={channelPresence[channelSlug].broadcast} />
+		{/if}
+
 		{#if isBroadcasting}
 			<button
 				class="active"
@@ -91,9 +93,6 @@
 			<button disabled class:compact title={m.broadcast_requires_track()} aria-label={m.broadcast_requires_track()}>
 				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 			</button>
-		{/if}
-		{#if channelSlug && channelPresence[channelSlug]?.broadcast > 0}
-			<PresenceCount count={channelPresence[channelSlug].broadcast} />
 		{/if}
 		{#if error}
 			<p role="alert">
