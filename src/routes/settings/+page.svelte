@@ -1,13 +1,16 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import {appPresence} from '$lib/presence.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import {appChatUrl} from '$lib/config'
 
 	const repo = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = $derived(__GIT_INFO__.sha)
+	const commitDate = $derived(__GIT_INFO__.date)
 </script>
 
 <svelte:head>
@@ -53,7 +56,7 @@
 	<menu class="nav-vertical">
 		<a href="/about">
 			<Icon icon="circle-info" />
-			{m.nav_about()}
+			{m.nav_about()} ({appPresence.count})
 		</a>
 		<a href="/docs">
 			<Icon icon="document" />
@@ -70,7 +73,7 @@
 		{#if sha}
 			<a href="{repo}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				Source code {sha}
+				<AppBuildInfo {repo} {sha} {commitDate} link={false} />
 			</a>
 		{/if}
 	</menu>
