@@ -21,7 +21,6 @@
 
 	const PREVIEW_LIMIT = 8
 	const FEATURED_LIMIT = 10
-	const CHANNELS_TAB = '__channels__'
 
 	const tracksQuery = getTracksQueryCtx()
 
@@ -107,13 +106,7 @@
 	// Reset if selected tab is no longer available
 	$effect(() => {
 		const allSections = [...availableTagSections, ...deckOnlyTagSections]
-		if (selectedTag === CHANNELS_TAB && mentionedChannels.length === 0) {
-			selectedTag = null
-		} else if (
-			selectedTag !== null &&
-			selectedTag !== CHANNELS_TAB &&
-			!allSections.some((s) => s.tag === selectedTag)
-		) {
+		if (selectedTag !== null && !allSections.some((s) => s.tag === selectedTag)) {
 			selectedTag = null
 		}
 	})
@@ -183,7 +176,7 @@
 		</div>
 
 		<section class="track-section">
-			{#if deckOnlyTagSections.length > 0 || availableTagSections.length > 0 || mentionedChannels.length > 0}
+			{#if deckOnlyTagSections.length > 0 || availableTagSections.length > 0}
 				<nav class="tabs">
 					{#each deckOnlyTagSections as { tag, tracks } (tag)}
 						<button
@@ -208,15 +201,6 @@
 							#{tag} <small>({tracks.length})</small>
 						</button>
 					{/each}
-					{#if mentionedChannels.length > 0}
-						<button
-							type="button"
-							class:active={selectedTag === CHANNELS_TAB}
-							onclick={() => (selectedTag = CHANNELS_TAB)}
-						>
-							{m.channel_section_radios()} <small>({mentionedChannels.length})</small>
-						</button>
-					{/if}
 				</nav>
 			{/if}
 
@@ -234,10 +218,10 @@
 									activeDeck?.is_playing ? togglePlayPause(appState.active_deck_id) : playTracks(allTracks)}
 								title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
 							>
-								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={16} />Play
+								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={16} />{m.common_play()}
 							</button>
 							<button type="button" onclick={() => queueTracks(allTracks)} title={m.search_queue_all()}>
-								<Icon icon="next-fill" size={16} />Queue
+								<Icon icon="next-fill" size={16} />{m.common_queue()}
 							</button>
 							{#if hasAutoRadioCoverage(allTracks)}
 								<AutoRadioButton
@@ -269,12 +253,6 @@
 						{/if}
 					</p>
 				{/if}
-			{:else if selectedTag === CHANNELS_TAB}
-				<ul class="grid grid--scroll">
-					{#each mentionedChannels as ch (ch.id)}
-						<li><ChannelCard channel={ch} /></li>
-					{/each}
-				</ul>
 			{:else}
 				{@const section =
 					availableTagSections.find((s) => s.tag === selectedTag) ??
@@ -292,14 +270,14 @@
 									? m.channel_pause_tag({tag: section.tag})
 									: m.channel_play_tag({tag: section.tag})}
 							>
-								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={16} />Play
+								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={16} />{m.common_play()}
 							</button>
 							<button
 								type="button"
 								onclick={() => queueTracks(section.tracks)}
 								title={m.channel_queue_tag({tag: section.tag})}
 							>
-								<Icon icon="next-fill" size={16} />Queue
+								<Icon icon="next-fill" size={16} />{m.common_queue()}
 							</button>
 							{#if channel}
 								{@const autoTagTracks = toAutoTracks(section.tracks)}
@@ -333,6 +311,22 @@
 						>
 					</footer>
 				{/if}
+			{/if}
+
+			{#if mentionedChannels.length > 0}
+				<section class="featured-channels">
+					<header>
+						<h2>
+							{m.channel_section_featured_channels()}
+							<small>({mentionedChannels.length})</small>
+						</h2>
+					</header>
+					<ol class="grid grid--scroll">
+						{#each mentionedChannels as ch (ch.id)}
+							<li><ChannelCard channel={ch} /></li>
+						{/each}
+					</ol>
+				</section>
 			{/if}
 		</section>
 	</article>
@@ -435,8 +429,32 @@
 		color: var(--accent-9);
 	}
 
-	.track-section ul.grid {
+	.featured-channels {
+		border-top: 1px solid var(--gray-4);
+		margin-top: 0.5rem;
+	}
+
+	.featured-channels > header {
+		padding: 0.6rem 0.5rem 0.1rem;
+	}
+
+	.featured-channels > header h2 {
+		font-size: inherit;
 		margin: 0;
-		padding: 0.5rem;
+	}
+
+	.featured-channels :global(.grid--scroll) {
+		grid-auto-columns: minmax(clamp(180px, 20vw, 280px), 1fr);
+	}
+
+	@media (max-width: 640px) {
+		.featured-channels :global(.grid--scroll) {
+			grid-auto-columns: 100%;
+			scroll-snap-type: x mandatory;
+		}
+
+		.featured-channels :global(.grid--scroll > li) {
+			scroll-snap-stop: always;
+		}
 	}
 </style>
