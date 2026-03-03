@@ -19,9 +19,9 @@
 
 	const tracksQuery = getTracksQueryCtx()
 
-	let searchInput = $state(page.url.searchParams.get('search') ?? '')
+	let searchInput = $state(page.url.searchParams.get('q') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
-	let searchValue = $derived(page.url.searchParams.get('search') ?? '')
+	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
 	let order: View['order'] = $state('created')
 	let direction: View['direction'] = $state('desc')
 
@@ -31,9 +31,9 @@
 		if (trimmed === searchValue) return
 		const url = new URL(page.url)
 		if (trimmed) {
-			url.searchParams.set('search', trimmed)
+			url.searchParams.set('q', trimmed)
 		} else {
-			url.searchParams.delete('search')
+			url.searchParams.delete('q')
 		}
 		goto(`${url.pathname}${url.search}`, {replaceState: true})
 	})

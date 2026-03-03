@@ -16,7 +16,7 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 	return decks.filter((d) => d.auto_radio && viewURI(d.view) === key)
 }
 
-/** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle, limit. */
+/** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle. Pagination (offset/limit) is handled by the fetch layer. */
 export function processViewTracks(tracks: Track[], view: View): Track[] {
 	let data = tracks
 	const q = view.queries[0]
@@ -45,7 +45,6 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 			return va < vb ? -dir : va > vb ? dir : 0
 		})
 	}
-	if (view.limit) data = data.slice(0, view.limit)
 	return data
 }
 
@@ -56,6 +55,8 @@ export function queryView(getView: () => View) {
 	const channelsKey = $derived(getView().queries[0]?.channels?.join(',') || '')
 	const tagsKey = $derived(getView().queries[0]?.tags?.toSorted().join(',') || '')
 	const searchKey = $derived(getView().queries[0]?.search?.trim() || '')
+	const limitKey = $derived(getView().limit ?? 50)
+	const offsetKey = $derived(getView().offset ?? 0)
 
 	const channelsQuery = useLiveQuery((q) => {
 		const slugs = channelsKey ? channelsKey.split(',') : []
@@ -66,20 +67,26 @@ export function queryView(getView: () => View) {
 	const tracksQuery = useLiveQuery((q) => {
 		const slugs = channelsKey ? channelsKey.split(',') : []
 		if (!slugs.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
-		return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.slug, slugs))
+		const fetchAll = !!searchKey || !!tagsKey
+		return q
+			.from({tracks: tracksCollection})
+			.where(({tracks}) => inArray(tracks.slug, slugs))
+			.orderBy(({tracks}) => tracks.created_at, 'desc')
+			.limit(fetchAll ? 4000 : limitKey)
+			.offset(fetchAll ? 0 : offsetKey)
 	})
 
 	const tagsQuery = createQuery(() => {
 		const tags = tagsKey ? tagsKey.split(',') : []
 		return {
-			queryKey: ['tracks', 'tags', ...tags],
+			queryKey: ['tracks', 'tags', ...tags, offsetKey, limitKey],
 			queryFn: async () => {
 				const {data, error} = await sdk.supabase
 					.from('channel_tracks')
 					.select('*')
 					.overlaps('tags', tags)
 					.order('created_at', {ascending: false})
-					.limit(4000)
+					.range(offsetKey, offsetKey + limitKey - 1)
 				if (error) throw error
 				const tracks = (data || []) as Track[]
 				tracksCollection.utils.writeBatch(() => {
@@ -95,13 +102,16 @@ export function queryView(getView: () => View) {
 	const searchQuery = createQuery(() => {
 		const search = searchKey
 		return {
-			queryKey: ['tracks', 'search', search],
+			queryKey: ['tracks', 'search', search, offsetKey, limitKey],
 			queryFn: async () => {
-				const tracks = (await searchTracks(search, {limit: 100})) as Track[]
+				const {tracks, count} = (await searchTracks(search, {limit: limitKey, offset: offsetKey})) as {
+					tracks: Track[]
+					count: number
+				}
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
-				return tracks
+				return {tracks, count}
 			},
 			enabled: !!search && !channelsKey && !tagsKey,
 			staleTime: 24 * 60 * 60 * 1000
@@ -116,9 +126,23 @@ export function queryView(getView: () => View) {
 				: tagsKey
 					? ((tagsQuery.data ?? []) as Track[])
 					: searchKey
-						? ((searchQuery.data ?? []) as Track[])
+						? ((searchQuery.data as {tracks: Track[]} | undefined)?.tracks ?? [])
 						: []
-			return processViewTracks(data, v)
+			const processed = processViewTracks(data, v)
+			// channel+tags or channel+search: fetched all, filtered client-side, paginate here
+			if (channelsKey && (searchKey || tagsKey)) {
+				return processed.slice(offsetKey, offsetKey + limitKey)
+			}
+			return processed
+		},
+		get count(): number {
+			if (searchKey && !channelsKey && !tagsKey) return (searchQuery.data as {count: number} | undefined)?.count ?? 0
+			// channel+tags or channel+search: count is full filtered result before slicing
+			if (channelsKey && (searchKey || tagsKey)) {
+				const data = (tracksQuery.data ?? []) as Track[]
+				return processViewTracks(data, getView()).length
+			}
+			return 0
 		},
 		get channels() {
 			return (channelsQuery.data ?? []) as Channel[]

@@ -309,11 +309,25 @@
 	h3 + p {
 		line-height: 1.2;
 		color: light-dark(var(--gray-11), var(--gray-10));
-		overflow-x: auto;
-		scrollbar-width: thin;
 		white-space: nowrap;
 		/* to accomodate tag borders */
 		padding: 2px 1px 2px;
+
+		/* scroll */
+		overflow-x: auto;
+		scrollbar-width: thin;
+
+		/* trick to only show scrollbar on hover */
+		scrollbar-color: transparent transparent;
+		transition: scrollbar-color 150ms;
+
+		&:hover {
+			scrollbar-color: var(--gray-1) transparent;
+		}
+
+		&:not(:hover)::-webkit-scrollbar-thumb {
+			background: transparent;
+		}
 	}
 
 	time {

@@ -57,16 +57,21 @@ export async function searchChannels(query, {limit = 100} = {}) {
 /**
  * Search tracks remotely, optionally scoped to a channel
  * @param {string} query
- * @param {{limit?: number, channelSlug?: string}} options
- * @returns {Promise<import('$lib/types').Track[]>}
+ * @param {{limit?: number, offset?: number, channelSlug?: string}} options
+ * @returns {Promise<{tracks: import('$lib/types').Track[], count: number}>}
  */
-export async function searchTracks(query, {limit = 100, channelSlug} = {}) {
-	if (!query?.trim()) return []
+export async function searchTracks(query, {limit = 100, offset = 0, channelSlug} = {}) {
+	if (!query?.trim()) return {tracks: [], count: 0}
 	const filter = buildFtsFilter(query)
-	if (!filter) return []
-	let q = sdk.supabase.from('channel_tracks').select('*').or(filter).limit(limit)
+	if (!filter) return {tracks: [], count: 0}
+	let q = sdk.supabase
+		.from('channel_tracks')
+		.select('*')
+		.or(filter)
+		.order('created_at', {ascending: false})
+		.range(offset, offset + limit - 1)
 	if (channelSlug) q = q.eq('slug', channelSlug)
 	const {data, error} = await q
 	if (error) throw new Error(error.message)
-	return /** @type {import('$lib/types').Track[]} */ (data ?? [])
+	return {tracks: /** @type {import('$lib/types').Track[]} */ (data ?? []), count: 0}
 }
