@@ -255,7 +255,7 @@
 	"history_error": "Não foi possível carregar o histórico de escuta.",
 	"history_flag_shuffled": "(embaralhado)",
 	"history_flag_skipped": "(ignorado)",
-	"history_local_note": "O histórico permanece neste dispositivo até você exportar.",
+	"history_local_note": "O seu histórico de reprodução é privado, armazenado localmente neste dispositivo e não está associado à sua conta.",
 	"history_played_duration": "(reproduzido {seconds}s)",
 	"history_title": "Histórico de escuta",
 	"home_pull_from_r4": "Puxar rádios do R4",

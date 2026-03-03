@@ -259,7 +259,7 @@
 	"history_error": "Historie konnte nicht geladen werden.",
 	"history_flag_shuffled": "(zufällig)",
 	"history_flag_skipped": "(übersprungen)",
-	"history_local_note": "Die Historie bleibt auf diesem Gerät, bis du sie exportierst.",
+	"history_local_note": "Dein Wiedergabeverlauf ist privat, wird lokal auf diesem Gerät gespeichert und ist nicht mit deinem Konto verbunden.",
 	"history_played_duration": "(gespielt {seconds} s)",
 	"history_title": "Hör-Historie",
 	"home_pull_from_r4": "Radios von R4 importieren",

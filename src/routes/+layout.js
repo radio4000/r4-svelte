@@ -9,6 +9,7 @@ import {channelsCollection} from '$lib/collections/channels'
 import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
 import {broadcastsCollection} from '$lib/collections/broadcasts'
 import {followsCollection} from '$lib/collections/follows'
+import {playHistoryCollection} from '$lib/collections/play-history'
 import {cacheReady} from '$lib/query-cache-persistence'
 import {collectionsHydrated} from '$lib/collection-persistence'
 import {appState} from '$lib/app-state.svelte'
@@ -73,6 +74,7 @@ async function preload() {
 			broadcastsCollection,
 			followsCollection,
 			spamDecisionsCollection,
+			playHistoryCollection,
 			queue,
 			api
 		}

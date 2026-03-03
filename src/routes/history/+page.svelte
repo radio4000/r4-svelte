@@ -1,116 +1,185 @@
-<script>
-	import {page} from '$app/state'
+<script lang="ts">
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import Icon from '$lib/components/icon.svelte'
-	import {formatDate} from '$lib/dates'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {playHistoryCollection, clearPlayHistory, type PlayHistoryEntry} from '$lib/collections/play-history'
+	import {playTrack} from '$lib/api'
+	import {ensureTracksLoaded} from '$lib/collections/tracks'
+	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {getLocale} from '$lib/paraglide/runtime'
+	import {dayLabel, formatDurationCompact} from '$lib/dates.js'
+	import TrackCard from '$lib/components/track-card.svelte'
+	import DateTime from '$lib/components/date-time.svelte'
+	import Icon from '$lib/components/icon.svelte'
+	import type {Track, PlayStartReason} from '$lib/types'
+	import {parseUrl} from 'media-now'
 
 	const historyQuery = useLiveQuery((q) =>
 		q.from({history: playHistoryCollection}).orderBy(({history}) => history.started_at, 'desc')
 	)
 
 	let history = $derived(historyQuery.data || [])
+
+	// Group entries by calendar day (key = toDateString() which is locale-neutral and day-accurate)
+	let days = $derived.by(() => {
+		const result: {key: string; plays: typeof history}[] = []
+		for (const play of history) {
+			const key = new Date(play.started_at).toDateString()
+			if (result.length === 0 || result.at(-1)!.key !== key) {
+				result.push({key, plays: []})
+			}
+			result.at(-1)!.plays.push(play)
+		}
+		return result
+	})
+
+	function toTrack(play: PlayHistoryEntry): Track {
+		const parsed = play.url ? parseUrl(play.url) : null
+		return {
+			id: play.track_id,
+			title: play.title,
+			url: play.url,
+			slug: play.slug,
+			provider: parsed?.provider ?? null,
+			media_id: parsed?.id ?? null,
+			description: null,
+			created_at: play.started_at,
+			updated_at: play.started_at,
+			discogs_url: null,
+			duration: null,
+			fts: null,
+			mentions: null,
+			playback_error: null,
+			tags: null
+		} as unknown as Track
+	}
+
+	async function playHistoryTrack(play: PlayHistoryEntry) {
+		await ensureTracksLoaded(play.slug)
+		await playTrack(appState.active_deck_id, play.track_id, null, 'user_click_track')
+	}
+
+	const startReasons: Partial<Record<PlayStartReason, {icon: string; label: () => string}>> = {
+		play_channel: {icon: 'radio', label: m.history_reason_play_channel},
+		play_search: {icon: 'search', label: m.history_reason_play_search},
+		user_click_track: {icon: 'hand-pointer', label: m.history_reason_user_click},
+		user_next: {icon: 'next-fill', label: m.history_reason_user_next},
+		user_prev: {icon: 'previous-fill', label: m.history_reason_user_prev},
+		auto_next: {icon: 'next-fill', label: m.history_reason_auto_next},
+		broadcast_sync: {icon: 'signal', label: m.history_reason_broadcast}
+	}
+
+	let confirmClear = $state(false)
+
+	const locale = $derived(appState.language || getLocale())
 </script>
 
 <svelte:head>
 	<title>{m.page_title_history()}</title>
 </svelte:head>
 
-<article class="constrained">
-	<menu>
-		<a class="btn" href="/stats" class:active={page.route.id === '/stats'}>
-			<Icon icon="chart-scatter" />
-			{m.nav_stats()}
-		</a>
-		<a class="btn" href="/history" class:active={page.route.id === '/history'}>
-			<Icon icon="history" />
-			{m.nav_history()}
-		</a>
-	</menu>
-
-	<header>
+<article>
+	<header class="constrained">
 		<h1>{m.history_title()}</h1>
 		<p>{m.history_local_note()}</p>
 	</header>
+	{#if history.length > 0}
+		<menu class="header-actions">
+			<menu class="clear-actions">
+				{#if confirmClear}
+					<button
+						class="danger"
+						onclick={() => {
+							clearPlayHistory()
+							confirmClear = false
+						}}
+					>
+						{m.common_confirm()}
+					</button>
+					<button onclick={() => (confirmClear = false)}>{m.common_cancel()}</button>
+				{:else}
+					<button onclick={() => (confirmClear = true)}>{m.queue_clear_history_button()}</button>
+				{/if}
+			</menu>
+		</menu>
+	{/if}
 
 	{#if historyQuery.isLoading}
-		<p>{m.common_loading()}</p>
+		<p class="constrained">{m.common_loading()}</p>
 	{:else if history.length === 0}
-		<p>{m.history_empty()}</p>
+		<p class="constrained">{m.history_empty()}</p>
 	{:else}
-		<ul class="list">
-			{#each history as play (play.id)}
-				<li
-					data-skipped={(play.ms_played != null && play.ms_played < 3000) || null}
-					data-start-reason={play.reason_start || null}
-					data-end-reason={play.reason_end || null}
-				>
-					{@render playRecord(play)}
-				</li>
-			{/each}
-		</ul>
+		{#each days as day (day.key)}
+			<h2>{dayLabel(day.plays[0].started_at, locale)}</h2>
+			<ul class="list">
+				{#each day.plays as play (play.id)}
+					{@const reason = startReasons[play.reason_start as PlayStartReason]}
+					<li>
+						<small class="play-time">
+							<DateTime date={play.started_at} {locale} />
+						</small>
+						<span class="reason-icon" title={reason?.label()}>
+							{#if reason}<Icon icon={reason.icon} size={13} />{/if}
+						</span>
+						<TrackCard track={toTrack(play)} showSlug={true} onPlay={() => playHistoryTrack(play)}>
+							{#snippet description()}
+								{#if play.ms_played || play.skipped || play.shuffle}
+									<small class="play-metas">
+										{#if play.ms_played}<span class="play-meta">{formatDurationCompact(play.ms_played)}</span>{/if}
+										{#if play.skipped}<span class="play-meta">{m.history_flag_skipped()}</span>{/if}
+										{#if play.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span>{/if}
+									</small>
+								{/if}
+							{/snippet}
+						</TrackCard>
+					</li>
+				{/each}
+			</ul>
+		{/each}
 	{/if}
 </article>
 
-{#snippet playRecord(play)}
-	<article class="row">
-		<header>
-			<span class="channel">
-				<a href={`/${play.slug}`}>@{play.slug}</a>
-			</span>
-			<span class="track">
-				<a href={`/${play.slug}/tracks/${play.track_id}`}>{play.title}</a>
-			</span>
-		</header>
-		{#if play.reason_start || play.reason_end}
-			<div class="reasons">{play.reason_start || ''} → {play.reason_end || ''}</div>
-		{/if}
-		<div class="meta">
-			<time>
-				{formatDate(new Date(play.started_at))}
-				{new Date(play.started_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-				{#if play.ms_played}
-					{m.history_played_duration({seconds: Math.round(play.ms_played / 1000)})}
-				{/if}
-			</time>
-			{#if play.shuffle}{m.history_flag_shuffled()}{/if}
-			{#if play.skipped}{m.history_flag_skipped()}{/if}
-		</div>
-	</article>
-{/snippet}
-
 <style>
-	article > menu,
-	article > header {
+	header {
 		margin-bottom: 1rem;
 	}
 
-	.row {
-		color: var(--gray-9);
-		padding: 0.2rem 0;
+	.header-actions {
+		padding-inline-start: 0.5rem;
+		justify-content: space-between;
 	}
 
-	a {
-		text-decoration: none;
+	h2 {
+		text-transform: capitalize;
+		margin: var(--space-3);
 	}
 
-	.channel a {
-		background: var(--test-green);
-		color: var(--test-white);
+	li {
+		display: grid;
+		grid-template-columns: min-content 1.5rem 1fr;
+		padding-left: 0.5rem;
+		align-items: center;
+		overflow: hidden;
 	}
 
-	.track a {
-		background: var(--test-magenta);
-		color: var(--test-yellow);
+	.play-time {
+		font-variant-numeric: tabular-nums;
+		text-align: right;
 	}
 
-	.reasons {
-		color: var(--gray-11);
+	.play-metas {
+		display: inline-flex;
+		gap: 0.3rem;
 	}
 
-	li[data-skipped] {
-		opacity: 0.4;
-		font-size: var(--font-2);
+	.reason-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--gray-10);
+
+		:global(svg) {
+			width: 1rem;
+			height: 1rem;
+		}
 	}
 </style>

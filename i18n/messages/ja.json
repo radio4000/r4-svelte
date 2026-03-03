@@ -304,7 +304,7 @@
 	"history_error": "聴き履歴を読み込めませんでした。",
 	"history_flag_shuffled": "（シャッフル）",
 	"history_flag_skipped": "（スキップ）",
-	"history_local_note": "履歴は、エクスポートするまでこのデバイスに保存されます。",
+	"history_local_note": "再生履歴はプライベートであり、このデバイスにローカルで保存され、アカウントには接続されていません。",
 	"history_played_duration": "（{seconds}s 再生）",
 	"history_title": "聴き履歴",
 	"home_pull_from_r4": "R4 からラジオを取得",

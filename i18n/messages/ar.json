@@ -261,7 +261,7 @@
 	"history_error": "لم يمكن تحميل تاريخ الاستماع.",
 	"history_flag_shuffled": "(تم الخلط)",
 	"history_flag_skipped": "(تم التخطي)",
-	"history_local_note": "التاريخ يبقى على هذا الجهاز حتى تصدّره.",
+	"history_local_note": "سجل التشغيل الخاص بك خاص، ومحفوظ محلياً على هذا الجهاز وغير مرتبط بحسابك.",
 	"history_played_duration": "(تم التشغيل {seconds}ث)",
 	"history_title": "تاريخ الاستماع",
 	"home_pull_from_r4": "سحب الراديوهات من R4",

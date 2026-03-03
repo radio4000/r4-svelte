@@ -262,7 +262,7 @@
 	"history_error": "청취 기록을 불러올 수 없어요.",
 	"history_flag_shuffled": "(셔플)",
 	"history_flag_skipped": "(건너뜀)",
-	"history_local_note": "기록은 내보내기 전까지 이 기기에만 보관됩니다.",
+	"history_local_note": "재생 기록은 비공개이며, 이 기기에 로컬로 저장되고 계정과 연결되지 않습니다.",
 	"history_played_duration": "(재생 {seconds}s)",
 	"history_title": "청취 기록",
 	"home_pull_from_r4": "R4에서 라디오 가져오기",

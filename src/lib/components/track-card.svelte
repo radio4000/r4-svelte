@@ -87,7 +87,8 @@
 	}
 
 	const shareTrack = () => {
-		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug) as Channel | undefined
+		const channel = ([...channelsCollection.state.values()].find((ch) => ch.slug === track.slug) ??
+			(track.slug ? ({slug: track.slug} as unknown as Channel) : undefined)) as Channel | undefined
 		if (channel) appState.modal_share = {track, channel}
 	}
 

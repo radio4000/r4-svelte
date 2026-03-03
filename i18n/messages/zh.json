@@ -265,7 +265,7 @@
 	"history_error": "无法加载收听历史。",
 	"history_flag_shuffled": "(随机播放)",
 	"history_flag_skipped": "(跳过)",
-	"history_local_note": "历史记录保留在本设备上，直到您导出。",
+	"history_local_note": "您的播放历史是私密的，仅存储在本设备上，不与您的账户关联。",
 	"history_played_duration": "(播放了 {seconds}s)",
 	"history_title": "收听历史",
 	"home_pull_from_r4": "从 R4 拉取电台",

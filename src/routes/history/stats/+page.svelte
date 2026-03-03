@@ -1,6 +1,4 @@
 <script>
-	import {page} from '$app/state'
-	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale} from '$lib/paraglide/runtime'
 	import {playHistoryCollection} from '$lib/collections/play-history'
@@ -200,20 +198,10 @@
 </svelte:head>
 
 <article class="constrained">
-	<menu>
-		<a class="btn" href="/stats" class:active={page.route.id === '/stats'}>
-			<Icon icon="chart-scatter" />
-			{m.nav_stats()}
-		</a>
-		<a class="btn" href="/history" class:active={page.route.id === '/history'}>
-			<Icon icon="history" />
-			{m.nav_history()}
-		</a>
-	</menu>
-
 	<header>
 		<h1>{m.stats_heading()}</h1>
 		<p>{m.stats_intro()}</p>
+		<p>This page is a work in progress :)</p>
 	</header>
 
 	<section>
@@ -296,7 +284,6 @@
 					</li>
 				{/each}
 			</ol>
-			<p style="text-align:right"><a href="/history">{m.stats_history_link()}</a></p>
 		</section>
 	{/if}
 
@@ -435,8 +422,6 @@
 
 	.reasons {
 		display: flex;
-		gap: 0rem;
-		padding: 0rem;
 	}
 
 	.reason-line {
