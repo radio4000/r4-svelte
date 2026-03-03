@@ -19,6 +19,7 @@ type View = {
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
 	limit?: number
+	offset?: number
 	exclude?: string[]
 }
 
@@ -122,7 +123,8 @@ After `?`, global to all queries:
 | ----------- | ------------------------------------------------- | --------- | ----------------------------------------------- |
 | `order`     | `created`, `updated`, `name`, `tracks`, `shuffle` | `created` | Sort applied to merged result                   |
 | `direction` | `asc`, `desc`                                     | `desc`    | Sort direction                                  |
-| `limit`     | 1–4000                                            | none      | Max tracks after merge                          |
+| `limit`     | 1–4000                                            | none      | Max tracks per page                             |
+| `offset`    | ≥ 0                                               | 0         | Page start (0-indexed). Pairs with `limit`.     |
 | `tagsMode`  | `any`, `all`                                      | `any`     | Tag match for queries without explicit override |
 | `exclude`   | comma-separated track UUIDs                       | none      | Skip these track IDs                            |
 
@@ -155,7 +157,19 @@ Three-state `mode`: **idle** (tabs + filter/display popovers), **adding** (click
 
 ## Processing
 
-`processViewTracks(tracks, view)` applies post-processing to raw tracks: tag filtering (respects `tagsMode`), fuzzy search on title/description, sort by order/direction, shuffle, and limit. `queryView` uses it internally, but it can also be used standalone for in-memory filtering.
+`processViewTracks(tracks, view)` applies post-processing to raw tracks: tag filtering (respects `tagsMode`), fuzzy search on title/description, sort by order/direction, shuffle. `queryView` uses it internally, but it can also be used standalone for in-memory filtering.
+
+`queryView` picks a fetch strategy based on which fields are set:
+
+| Mode           | Fetch                         | Post-process        | Pagination        |
+| -------------- | ----------------------------- | ------------------- | ----------------- |
+| channel-only   | DB: limit+offset              | sort                | fetch layer       |
+| search-only    | Remote FTS: limit+offset      | —                   | fetch layer       |
+| tags-only      | Remote overlaps: limit+offset | tagsMode=all filter | fetch layer       |
+| channel+tags   | DB: all tracks                | tag filter, sort    | client-side slice |
+| channel+search | DB: all tracks                | fuzzy search, sort  | client-side slice |
+
+When client-side pagination is used, `count` reflects the full filtered result (before slice).
 
 ## Files
 

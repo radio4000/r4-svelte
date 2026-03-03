@@ -625,19 +625,27 @@ describe('viewLabel deep', () => {
 })
 
 describe('viewFromUrl', () => {
-	test('decodes URL-encoded @ and # correctly', () => {
-		const url = new URL('http://x.com/search?@nikita')
+	test('q param parsed as channel', () => {
+		const url = new URL('http://x.com/search?q=%40nikita')
 		expect(viewFromUrl(url)).toEqual({queries: [{channels: ['nikita']}]})
 	})
-	test('channel + tags + options', () => {
-		const url = new URL('http://x.com/search?@ko002%20%23jazz?order=shuffle')
+	test('q param with separate order param', () => {
+		const url = new URL('http://x.com/search?q=%40ko002&order=shuffle')
 		expect(viewFromUrl(url)).toEqual({
-			queries: [{channels: ['ko002'], tags: ['jazz']}],
+			queries: [{channels: ['ko002']}],
 			order: 'shuffle'
 		})
 	})
-	test('multi-query', () => {
-		const url = new URL('http://x.com/search?@alice%20%23jazz;@bob%20%23techno')
+	test('q param with limit and offset', () => {
+		const url = new URL('http://x.com/search?q=%40ko002&limit=50&offset=50')
+		expect(viewFromUrl(url)).toEqual({
+			queries: [{channels: ['ko002']}],
+			limit: 50,
+			offset: 50
+		})
+	})
+	test('multi-query in q param', () => {
+		const url = new URL('http://x.com/search?q=%40alice%20%23jazz%3B%40bob%20%23techno')
 		expect(viewFromUrl(url)).toEqual({
 			queries: [
 				{channels: ['alice'], tags: ['jazz']},
@@ -645,8 +653,12 @@ describe('viewFromUrl', () => {
 			]
 		})
 	})
-	test('no search string gives empty view', () => {
+	test('no q param gives empty view', () => {
 		const url = new URL('http://x.com/search')
 		expect(viewFromUrl(url)).toEqual({queries: [{}]})
+	})
+	test('only options, no q', () => {
+		const url = new URL('http://x.com/search?order=shuffle&limit=50')
+		expect(viewFromUrl(url)).toEqual({queries: [{}], order: 'shuffle', limit: 50})
 	})
 })

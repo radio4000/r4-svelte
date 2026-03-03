@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {goto, afterNavigate} from '$app/navigation'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel, type View} from '$lib/views'
+	import {parseView, viewFromUrl, viewLabel, type View} from '$lib/views'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
@@ -23,10 +23,24 @@
 	let inputSeeded = false
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
-		const seeded = viewLabel(viewFromUrl(page.url))
+		const seeded = page.url.searchParams.get('q') ?? ''
 		inputValue = seeded
 		inputSeeded = !!seeded
 	})
+
+	// --- View → URL params ---
+	function viewToUrl(v: View): string {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const params = new URLSearchParams()
+		const q = viewLabel(v)
+		if (q) params.set('q', q)
+		if (v.order) params.set('order', v.order)
+		if (v.direction) params.set('direction', v.direction)
+		if (v.limit) params.set('limit', String(v.limit))
+		if (v.offset) params.set('offset', String(v.offset))
+		const str = params.toString()
+		return str ? `/_debug/views?${str}` : '/_debug/views'
+	}
 
 	// --- Smart input → URL ---
 	$effect(() => {
@@ -37,8 +51,7 @@
 			return
 		}
 		const resolved = parseView(q)
-		const params = serializeView(resolved)
-		goto(params ? `/_debug/views?${params}` : '/_debug/views', {replaceState: true})
+		goto(viewToUrl(resolved), {replaceState: true})
 	})
 
 	function handleSubmit(e: Event) {
@@ -55,8 +68,19 @@
 	function onViewsBarChange(v: View) {
 		inputSeeded = true
 		inputValue = viewLabel(v)
-		const params = serializeView(v)
-		goto(params ? `/_debug/views?${params}` : '/_debug/views', {replaceState: true})
+		goto(viewToUrl(v), {replaceState: true})
+	}
+
+	// --- Pagination ---
+	const DEFAULT_LIMIT = 50
+	const offset = $derived(view.offset ?? 0)
+	const limit = $derived(view.limit ?? DEFAULT_LIMIT)
+	const hasNext = $derived(
+		viewQuery.count ? offset + viewQuery.tracks.length < viewQuery.count : viewQuery.tracks.length >= limit
+	)
+
+	function navigate(newOffset: number) {
+		goto(viewToUrl({...view, offset: newOffset, limit}), {replaceState: true})
 	}
 
 	// --- Examples ---
@@ -74,8 +98,7 @@
 		const v = parseView(viewStr)
 		inputSeeded = true
 		inputValue = viewLabel(v)
-		const params = serializeView(v)
-		goto(params ? `/_debug/views?${params}` : '/_debug/views', {replaceState: true})
+		goto(viewToUrl(v), {replaceState: true})
 	}
 </script>
 
@@ -121,10 +144,19 @@
 <div class="container">
 	{#if !hasFilter}
 		<p>Add channels, tags, or a search to start.</p>
-	{:else if viewQuery.loading}
-		<p>Loading tracks…</p>
-	{:else if viewQuery.tracks.length}
-		<p>{viewQuery.tracks.length} tracks</p>
+	{:else}
+		<div class="pagination">
+			<button disabled={offset === 0} onclick={() => navigate(Math.max(0, offset - limit))}>← Prev</button>
+			<button disabled={!hasNext} onclick={() => navigate(offset + limit)}>Next →</button>
+			{#if viewQuery.loading}
+				<span>Loading…</span>
+			{:else}
+				<span>{offset + 1}–{offset + viewQuery.tracks.length}{viewQuery.count ? ` of ${viewQuery.count}` : ''}</span>
+			{/if}
+		</div>
+		{#if !viewQuery.loading && !viewQuery.tracks.length}
+			<p>No results.</p>
+		{/if}
 	{/if}
 </div>
 
@@ -157,6 +189,11 @@
 	.examples code {
 		font-size: 0.85em;
 		opacity: 0.7;
+	}
+	.pagination {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 	details {
 		margin-block: 0.5rem;

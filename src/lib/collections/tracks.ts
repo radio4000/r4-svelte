@@ -78,7 +78,8 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Global: full-text search
 			if (ftsEq) {
-				const tracks = (await searchTracks(ftsEq, {limit: 4000})).map((track) => {
+				const {tracks: rawTracks} = await searchTracks(ftsEq, {limit: 4000})
+				const tracks = rawTracks.map((track) => {
 					const parsed = track.url ? parseUrl(track.url) : null
 					return {
 						...track,
