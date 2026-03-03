@@ -214,6 +214,91 @@ export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }
 
+export interface TagGraphNode {
+	id: string
+	label: string
+	count: number
+}
+
+export interface TagGraphEdge {
+	id: string
+	source: string
+	target: string
+	weight: number
+}
+
+export interface TagGraph {
+	nodes: TagGraphNode[]
+	edges: TagGraphEdge[]
+}
+
+export interface TagGraphOptions {
+	minEdgeWeight?: number
+	maxTags?: number
+	maxEdgesPerNode?: number
+}
+
+/**
+ * Build a tag co-occurrence graph from tracks.
+ * Nodes are tags (raw strings, no `#` prefix). Edges connect tags that appear on the same track.
+ * Edge weight = number of tracks where both tags appear together.
+ */
+export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?: TagGraphOptions): TagGraph {
+	const {minEdgeWeight = 2, maxTags = 500, maxEdgesPerNode = 20} = options ?? {}
+
+	// Count tags
+	const tagCounts: Record<string, number> = {}
+	for (const track of tracks) {
+		for (const tag of track.tags ?? []) {
+			const key = tag.toLowerCase()
+			tagCounts[key] = (tagCounts[key] || 0) + 1
+		}
+	}
+
+	// Top maxTags by count
+	const sorted = Object.entries(tagCounts)
+		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+		.slice(0, maxTags)
+	const topTagSet = new Set(sorted.map(([t]) => t))
+
+	const nodes: TagGraphNode[] = sorted.map(([tag, count]) => ({id: tag, label: tag, count}))
+
+	// Co-occurrence edge weights
+	const edgeWeights: Record<string, number> = {}
+	for (const track of tracks) {
+		const tags = [...new Set((track.tags ?? []).map((t) => t.toLowerCase()).filter((t) => topTagSet.has(t)))]
+		for (let i = 0; i < tags.length; i++) {
+			for (let j = i + 1; j < tags.length; j++) {
+				const a = tags[i] < tags[j] ? tags[i] : tags[j]
+				const b = tags[i] < tags[j] ? tags[j] : tags[i]
+				const key = `${a}\0${b}`
+				edgeWeights[key] = (edgeWeights[key] || 0) + 1
+			}
+		}
+	}
+
+	// Filter and limit edges
+	const edgesPerNode: Record<string, number> = {}
+	const edges: TagGraphEdge[] = []
+
+	const sortedEdges = Object.entries(edgeWeights)
+		.filter(([, w]) => w >= minEdgeWeight)
+		.sort((a, b) => b[1] - a[1])
+
+	for (const [key, weight] of sortedEdges) {
+		const sep = key.indexOf('\0')
+		const source = key.slice(0, sep)
+		const target = key.slice(sep + 1)
+		if ((edgesPerNode[source] ?? 0) >= maxEdgesPerNode) continue
+		if ((edgesPerNode[target] ?? 0) >= maxEdgesPerNode) continue
+		edgesPerNode[source] = (edgesPerNode[source] ?? 0) + 1
+		edgesPerNode[target] = (edgesPerNode[target] ?? 0) + 1
+		edges.push({id: key, source, target, weight})
+	}
+
+	return {nodes, edges}
+}
+
 /** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */
 export function dedupeById<T extends {id: string | null}>(rows: T[]): T[] {
 	const seen = new Map<string, T>()
