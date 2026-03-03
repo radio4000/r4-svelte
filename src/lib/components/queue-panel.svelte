@@ -5,7 +5,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {shuffleRemaining} from '$lib/api'
+	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import Icon from './icon.svelte'
 	import Tracklist from './tracklist.svelte'
@@ -39,7 +39,7 @@
 		scrollToActive = doScrollToActive
 	})
 
-	let trackIds = $derived(deck?.playlist_tracks ?? [])
+	let trackIds = $derived(getActiveQueue(deck))
 
 	// Resolve tracks by playlist IDs (works for cross-channel queues like search results)
 	const tracksQuery = useLiveQuery((q) =>
