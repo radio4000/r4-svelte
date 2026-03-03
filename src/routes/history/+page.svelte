@@ -1,16 +1,17 @@
 <script lang="ts">
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {playHistoryCollection} from '$lib/collections/play-history'
-	import {clearPlayHistory} from '$lib/collections/play-history'
+	import {playHistoryCollection, clearPlayHistory} from '$lib/collections/play-history'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {playTrack, setPlaylist, addToPlaylist, playNext} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {getLocale} from '$lib/paraglide/runtime'
+	import {dayLabel, formatDurationCompact} from '$lib/dates.js'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import DateTime from '$lib/components/date-time.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import type {Track, PlayStartReason} from '$lib/types'
 	import {parseUrl} from 'media-now'
-	import {getLocale} from '$lib/paraglide/runtime'
 	import {SvelteSet} from 'svelte/reactivity'
 
 	const historyQuery = useLiveQuery((q) =>
@@ -19,31 +20,13 @@
 
 	let history = $derived(historyQuery.data || [])
 
-	function dayKey(dateStr: string) {
-		return new Date(dateStr).toLocaleDateString(undefined, {year: 'numeric', month: '2-digit', day: '2-digit'})
-	}
-
-	function dayLabel(dateStr: string) {
-		const date = new Date(dateStr)
-		const now = Date.now()
-		const todayKey = dayKey(new Date(now).toISOString())
-		const yesterdayKey = dayKey(new Date(now - 86400000).toISOString())
-		if (dayKey(dateStr) === todayKey) return 'Today'
-		if (dayKey(dateStr) === yesterdayKey) return 'Yesterday'
-		const isThisYear = date.getFullYear() === new Date(now).getFullYear()
-		return date.toLocaleDateString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			...(isThisYear ? {} : {year: 'numeric'})
-		})
-	}
-
+	// Group entries by calendar day (key = toDateString() which is locale-neutral and day-accurate)
 	let days = $derived.by(() => {
-		const result: {key: string; label: string; plays: typeof history}[] = []
+		const result: {key: string; plays: typeof history}[] = []
 		for (const play of history) {
-			const key = dayKey(play.started_at)
+			const key = new Date(play.started_at).toDateString()
 			if (result.length === 0 || result.at(-1)!.key !== key) {
-				result.push({key, label: dayLabel(play.started_at), plays: []})
+				result.push({key, plays: []})
 			}
 			result.at(-1)!.plays.push(play)
 		}
@@ -125,33 +108,20 @@
 		addToPlaylist(appState.active_deck_id, uniqueIds)
 	}
 
-	function playTime(dateStr: string) {
-		const locale = appState.language || getLocale()
-		return new Date(dateStr).toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit'})
-	}
-
-	function formatMs(ms: number) {
-		const s = Math.round(ms / 1000)
-		if (s < 60) return `${s}s`
-		const m = Math.floor(s / 60)
-		const rem = s % 60
-		return rem ? `${m}m${rem}s` : `${m}m`
-	}
-
-	// Shown below each track (except the last/oldest): explains how we got from the
-	// track below to this one. Reading top-to-bottom: Track A → [connector] → Track B.
-	const startReasons: Partial<Record<PlayStartReason, {icon: string; label: string}>> = {
-		play_channel: {icon: 'radio', label: 'Played channel'},
-		play_search: {icon: 'search', label: 'Played from search'},
-		user_click_track: {icon: 'hand-pointer', label: 'Played'},
-		user_next: {icon: 'next-fill', label: 'Next'},
-		user_prev: {icon: 'previous-fill', label: 'Previous'},
-		auto_next: {icon: 'next-fill', label: 'Track ended'},
-		broadcast_sync: {icon: 'signal', label: 'Broadcast'}
+	const startReasons: Partial<Record<PlayStartReason, {icon: string; label: () => string}>> = {
+		play_channel: {icon: 'radio', label: m.history_reason_play_channel},
+		play_search: {icon: 'search', label: m.history_reason_play_search},
+		user_click_track: {icon: 'hand-pointer', label: m.history_reason_user_click},
+		user_next: {icon: 'next-fill', label: m.history_reason_user_next},
+		user_prev: {icon: 'previous-fill', label: m.history_reason_user_prev},
+		auto_next: {icon: 'next-fill', label: m.history_reason_auto_next},
+		broadcast_sync: {icon: 'signal', label: m.history_reason_broadcast}
 	}
 
 	let selectedId = $state<string | null>(null)
 	let confirmClear = $state(false)
+
+	const locale = $derived(appState.language || getLocale())
 </script>
 
 <svelte:head>
@@ -182,8 +152,8 @@
 				{/if}
 			</div>
 			<div class="play-actions">
-				<button type="button" onclick={playHistory}><Icon icon="play-fill" size={16} />Play</button>
-				<button type="button" onclick={queueHistory}><Icon icon="next-fill" size={16} />Queue</button>
+				<button type="button" onclick={playHistory}><Icon icon="play-fill" size={16} />{m.common_play()}</button>
+				<button type="button" onclick={queueHistory}><Icon icon="next-fill" size={16} />{m.common_queue()}</button>
 			</div>
 		</div>
 	{/if}
@@ -194,13 +164,15 @@
 		<p class="constrained">{m.history_empty()}</p>
 	{:else}
 		{#each days as day (day.key)}
-			<h2>{day.label}</h2>
+			<h2>{dayLabel(day.plays[0].started_at, locale)}</h2>
 			<ul class="list">
 				{#each day.plays as play (play.id)}
 					{@const reason = startReasons[play.reason_start as PlayStartReason]}
 					<li onclick={() => (selectedId = play.id)}>
-						<time class="play-time">{playTime(play.started_at)}</time>
-						<span class="reason-icon" title={reason?.label}>
+						<span class="play-time">
+							<DateTime date={play.started_at} {locale} />
+						</span>
+						<span class="reason-icon" title={reason?.label()}>
 							{#if reason}<Icon icon={reason.icon} size={13} />{/if}
 						</span>
 						<div class="track-wrap">
@@ -212,9 +184,13 @@
 								onQueue={() => queueHistoryTrack(play)}
 							>
 								{#snippet description()}
-									{#if play.ms_played}<span class="play-meta">{formatMs(play.ms_played)}</span>{/if}
-									{#if play.skipped}<span class="play-meta">{m.history_flag_skipped()}</span>{/if}
-									{#if play.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span>{/if}
+									{#if play.ms_played || play.skipped || play.shuffle}
+										<span class="play-metas">
+											{#if play.ms_played}<span class="play-meta">{formatDurationCompact(play.ms_played)}</span>{/if}
+											{#if play.skipped}<span class="play-meta">{m.history_flag_skipped()}</span>{/if}
+											{#if play.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span>{/if}
+										</span>
+									{/if}
 								{/snippet}
 							</TrackCard>
 						</div>
@@ -245,6 +221,7 @@
 
 	h2 {
 		padding: 1rem var(--space-3) 0.25rem;
+		text-transform: capitalize;
 	}
 
 	li {
@@ -256,6 +233,11 @@
 
 	.track-wrap {
 		min-width: 0;
+	}
+
+	.play-metas {
+		display: inline-flex;
+		gap: 0.3rem;
 	}
 
 	.play-meta {
