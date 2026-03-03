@@ -6,6 +6,10 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
+	import Tag from '$lib/components/tag.svelte'
+	import Icon from '$lib/components/icon.svelte'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
@@ -19,6 +23,12 @@
 	let filter = $state('all')
 	let timePeriod = $state('year')
 	let currentPeriod = $state(0)
+	let sort = $state('count') // 'count' | 'alpha'
+	let display = $state('list') // 'list' | 'cloud'
+	let search = $state('')
+
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag'}
+	const displayLabelMap = {list: () => m.channels_view_label_list(), cloud: () => 'Cloud'}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -120,6 +130,31 @@
 		return periodTags
 	})
 
+	// Apply sort — maxCount always from count-sorted filteredTags (not affected by sort)
+	let maxCount = $derived(filteredTags[0]?.count ?? 1)
+
+	let sortedTags = $derived.by(() => {
+		if (sort === 'alpha') return filteredTags.toSorted((a, b) => a.value.localeCompare(b.value))
+		return filteredTags // already sorted by count desc from getChannelTags
+	})
+
+	// Apply name search — final list rendered
+	let visibleTags = $derived.by(() => {
+		const q = search.trim().toLowerCase()
+		if (!q) return sortedTags
+		return sortedTags.filter((t) => t.value.includes(q))
+	})
+
+	// Track count for the current period (denominator for count display)
+	let periodTrackCount = $derived.by(() => {
+		if (currentPeriod === 0 || !periods.length) return tracks.length
+		const period = periods[currentPeriod - 1]
+		return tracks.filter((t) => {
+			const d = new Date(t.created_at)
+			return d >= period.startDate && d < period.endDate
+		}).length
+	})
+
 	// Reset period when time period changes
 	function onTimePeriodChange() {
 		currentPeriod = 0
@@ -132,7 +167,7 @@
 	// Animated tag count
 	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
 	$effect(() => {
-		tagCount.set(filteredTags.length)
+		tagCount.set(visibleTags.length)
 	})
 </script>
 
@@ -140,28 +175,41 @@
 	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {:else}
 	<main>
-		<header class="row">
-			<menu>
-				<label title={m.tags_filter_label()}>
-					<select bind:value={filter}>
-						<option value="all">{m.tags_filter_all()}</option>
-						<option value="single-use">{m.tags_filter_single()}</option>
-						<option value="frequent">{m.tags_filter_frequent()}</option>
-						<option value="rare">{m.tags_filter_rare()}</option>
-					</select>
-				</label>
-				<label title={m.tags_period_label()}>
+		<menu class="filtermenu">
+			<SearchInput bind:value={search} placeholder={m.tracks_filter_placeholder()} />
+			<PopoverMenu align="end" closeOnClick={false} style="margin-left: auto;">
+				{#snippet trigger()}<Icon icon={displayIconMap[display]} /> {displayLabelMap[display]()}{/snippet}
+				<menu class="nav-vertical">
+					<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>{m.tags_filter_all()}</button>
+					<button class:active={filter === 'single-use'} onclick={() => (filter = 'single-use')}
+						>{m.tags_filter_single()}</button
+					>
+					<button class:active={filter === 'frequent'} onclick={() => (filter = 'frequent')}
+						>{m.tags_filter_frequent()}</button
+					>
+					<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}>{m.tags_filter_rare()}</button>
+				</menu>
+				<menu class="view-modes">
+					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
+						<Icon icon="unordered-list" /><small>{m.channels_view_label_list()}</small>
+					</button>
+					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
+						<Icon icon="tag" /><small>Cloud</small>
+					</button>
+				</menu>
+				<div class="sort-row">
 					<select bind:value={timePeriod} onchange={onTimePeriodChange}>
 						<option value="year">{m.tags_period_years()}</option>
 						<option value="solstice">{m.tags_period_solstices()}</option>
 						<option value="month">{m.tags_period_months()}</option>
 					</select>
-				</label>
-			</menu>
-			<!--
-			<h1>{m.tags_heading({name: channel.name})}</h1>
-			-->
-		</header>
+					<select bind:value={sort}>
+						<option value="count">Count</option>
+						<option value="alpha">A–Z</option>
+					</select>
+				</div>
+			</PopoverMenu>
+		</menu>
 
 		{#if periods.length > 0}
 			<div class="scrubber">
@@ -195,19 +243,26 @@
 
 		{#if tracksQuery.isLoading}
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
-		{:else if filteredTags.length > 0}
-			<ol class="list">
-				{#each filteredTags as { value, count } (value)}
-					<li>
-						<span class="tag">
-							<a href={`/search?q=@${channel.slug} ${value}`}>
-								{value}
-							</a>
+		{:else if visibleTags.length > 0}
+			{#if display === 'list'}
+				<ol class="list">
+					{#each visibleTags as { value, count } (value)}
+						<li>
+							<Tag href={`/${channel.slug}/tracks?tags=${encodeURIComponent(value)}`} {value}>{value}</Tag>
+							<span class="count">{count} / {periodTrackCount}</span>
+							<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
+						</li>
+					{/each}
+				</ol>
+			{:else}
+				<div class="cloud">
+					{#each visibleTags as { value, count } (value)}
+						<span style="font-size: calc(0.8rem + {((count / maxCount) * 0.9).toFixed(2)}rem)">
+							<Tag href={`/${channel.slug}/tracks?tags=${encodeURIComponent(value)}`} {value}>{value}</Tag>
 						</span>
-						<span class="count">{count}</span>
-					</li>
-				{/each}
-			</ol>
+					{/each}
+				</div>
+			{/if}
 		{:else}
 			<p>{m.tags_empty()}</p>
 		{/if}
@@ -215,9 +270,33 @@
 {/if}
 
 <style>
-	header {
-		margin: 0.5rem 0.5rem 0;
-		place-items: center;
+	.filtermenu {
+		position: sticky;
+		top: 0.5rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0.5rem 0.5rem 1rem;
+		z-index: 1;
+	}
+
+	.filtermenu :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.filtermenu :global(.search-input input) {
+		width: 100%;
+	}
+
+	.sort-row {
+		display: flex;
+		gap: 0.25rem;
+		margin-top: 0.25rem;
+	}
+
+	.sort-row select {
+		flex: 1;
 	}
 
 	.scrubber {
@@ -263,5 +342,36 @@
 
 	.list {
 		margin: 0 0.5rem;
+	}
+
+	.list li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.25rem 0;
+	}
+
+	.list .count {
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-11);
+		font-size: 0.85em;
+		min-width: 2ch;
+		text-align: right;
+	}
+
+	.bar {
+		flex: 1;
+		height: 2px;
+		background: linear-gradient(to left, var(--accent-6) var(--pct), var(--gray-7) var(--pct));
+		border-radius: 1px;
+		align-self: center;
+	}
+
+	.cloud {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		padding: 1rem 0.5rem;
+		align-items: baseline;
 	}
 </style>
