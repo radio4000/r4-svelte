@@ -5,6 +5,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
+	import {toggleShuffle} from '$lib/api'
 	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import Icon from './icon.svelte'
@@ -76,9 +77,10 @@
 		{/if}
 		{#if trackIds.length > 1}
 			<button
-				onclick={() => shuffleRemaining(deckId)}
-				{@attach tooltip({content: m.queue_shuffle_remaining()})}
-				title={m.queue_shuffle_remaining()}
+				onclick={() => toggleShuffle(deckId)}
+				class:active={deck?.shuffle}
+				{@attach tooltip({content: m.player_tooltip_shuffle()})}
+				title={m.player_tooltip_shuffle()}
 			>
 				<Icon icon="shuffle" size={16} />
 			</button>
