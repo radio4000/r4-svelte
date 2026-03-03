@@ -257,7 +257,7 @@
 	"history_error": "Nie udało się wczytać historii słuchania.",
 	"history_flag_shuffled": "(losowo)",
 	"history_flag_skipped": "(pominięto)",
-	"history_local_note": "Historia pozostaje na tym urządzeniu, dopóki jej nie wyeksportujesz.",
+	"history_local_note": "Twoja historia odtwarzania jest prywatna, przechowywana lokalnie na tym urządzeniu i niepołączona z Twoim kontem.",
 	"history_played_duration": "(odtwarzano {seconds}s)",
 	"history_title": "Historia słuchania",
 	"home_pull_from_r4": "Pobierz radia z R4",

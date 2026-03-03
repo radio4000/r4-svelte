@@ -7,18 +7,16 @@
 	const pathname = $derived(page.url.pathname)
 </script>
 
-<div class="tabs constrained">
-	<nav>
-		<a href="/history" class:active={pathname === '/history'}>
-			<Icon icon="history" />
-			{m.nav_history()}
-		</a>
-		<a href="/history/stats" class:active={pathname === '/history/stats'}>
-			<Icon icon="chart-scatter" />
-			{m.nav_stats()}
-		</a>
-	</nav>
-</div>
+<nav class="tabs constrained">
+	<a href="/history" class:active={pathname === '/history'}>
+		<Icon icon="history" />
+		{m.nav_history()}
+	</a>
+	<a href="/history/stats" class:active={pathname === '/history/stats'}>
+		<Icon icon="chart-scatter" />
+		{m.nav_stats()}
+	</a>
+</nav>
 
 {@render children()}
 

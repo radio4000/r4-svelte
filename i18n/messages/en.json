@@ -305,7 +305,7 @@
 	"history_error": "Could not load listening history.",
 	"history_flag_shuffled": "(shuffled)",
 	"history_flag_skipped": "(skipped)",
-	"history_local_note": "History stays on this device until you export it.",
+	"history_local_note": "Your play history is private, local on this device and not connected to your account.",
 	"history_played_duration": "(played {seconds}s)",
 	"history_reason_auto_next": "Auto-played",
 	"history_reason_broadcast": "Broadcast",

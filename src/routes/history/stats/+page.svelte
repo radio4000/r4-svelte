@@ -201,6 +201,7 @@
 	<header>
 		<h1>{m.stats_heading()}</h1>
 		<p>{m.stats_intro()}</p>
+		<p>This page is a work in progress :)</p>
 	</header>
 
 	<section>
@@ -421,8 +422,6 @@
 
 	.reasons {
 		display: flex;
-		gap: 0rem;
-		padding: 0rem;
 	}
 
 	.reason-line {

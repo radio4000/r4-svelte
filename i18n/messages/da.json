@@ -280,7 +280,7 @@
 	"history_error": "Kunne ikke indlæse lyttelog.",
 	"history_flag_shuffled": "(shuffle)",
 	"history_flag_skipped": "(sprunget over)",
-	"history_local_note": "Historik bliver på denne enhed, indtil du eksporterer den.",
+	"history_local_note": "Din afspilningshistorik er privat, gemt lokalt på denne enhed og ikke forbundet med din konto.",
 	"history_played_duration": "(afspillet {seconds}s)",
 	"history_title": "Lyttehistorik",
 	"home_pull_from_r4": "Hent radioer fra R4",

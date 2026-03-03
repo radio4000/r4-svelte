@@ -20,7 +20,7 @@ export function readLocale(locale) {
 }
 
 export function resolveLocales(filter) {
-	if (!filter) return localeFiles.map((f) => f.replace(/\.json$/, ''))
+	if (!filter) return localeFiles.map((f) => f.replace(jsonExtRegex, ''))
 	if (!localeFiles.includes(`${filter}.json`)) {
 		console.error(`Locale not found: ${filter}`)
 		process.exit(1)
@@ -29,7 +29,8 @@ export function resolveLocales(filter) {
 }
 
 const placeholderRegex = /\{([a-zA-Z0-9_]+)\}/g
-export const placeholderNames = (v) => new Set([...String(v ?? '').matchAll(placeholderRegex)].map((m) => m[1]))
+const jsonExtRegex = /\.json$/
+export const placeholderNames = (v) => new Set(Array.from(String(v ?? '').matchAll(placeholderRegex), (m) => m[1]))
 
 /** Keys missing or still identical to English */
 export function missingKeys(localeData) {

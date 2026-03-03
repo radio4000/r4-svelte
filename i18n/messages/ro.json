@@ -258,7 +258,7 @@
 	"history_error": "Nu s-a putut încărca istoricul de ascultare.",
 	"history_flag_shuffled": "(aleatoriu)",
 	"history_flag_skipped": "(sărită)",
-	"history_local_note": "Istoricul rămâne pe acest dispozitiv până când îl exporți.",
+	"history_local_note": "Istoricul de redare este privat, stocat local pe acest dispozitiv și nu este conectat la contul dvs.",
 	"history_played_duration": "(redată {seconds}s)",
 	"history_title": "Istoric de ascultare",
 	"home_pull_from_r4": "Importă posturi din R4",

@@ -16,7 +16,7 @@
 			.order('latest_track_at', {ascending: false})
 			.limit(10)
 			.then(({data}) => {
-				if (data) featuredChannels = data
+				if (data) featuredChannels = /** @type {import('$lib/types').Channel[]} */ (data)
 			})
 	})
 </script>

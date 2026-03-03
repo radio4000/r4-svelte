@@ -256,7 +256,7 @@
 	"history_error": "Impossibile caricare la cronologia di ascolto.",
 	"history_flag_shuffled": "(casuale)",
 	"history_flag_skipped": "(saltata)",
-	"history_local_note": "La cronologia resta su questo dispositivo finché non la esporti.",
+	"history_local_note": "La tua cronologia di riproduzione è privata, memorizzata localmente su questo dispositivo e non collegata al tuo account.",
 	"history_played_duration": "(riprodotte {seconds}s)",
 	"history_title": "Cronologia di ascolto",
 	"home_pull_from_r4": "Importa radio da R4",

@@ -304,7 +304,7 @@
 	"history_error": "No se pudo cargar el historial de escucha.",
 	"history_flag_shuffled": "(aleatorio)",
 	"history_flag_skipped": "(saltado)",
-	"history_local_note": "El historial permanece en este dispositivo hasta que lo exportes.",
+	"history_local_note": "Tu historial de reproducción es privado, almacenado localmente en este dispositivo y no está conectado a tu cuenta.",
 	"history_played_duration": "(reproducido {seconds}s)",
 	"history_title": "Historial de escucha",
 	"home_pull_from_r4": "Traer radios desde R4",

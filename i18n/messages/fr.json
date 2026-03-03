@@ -258,7 +258,7 @@
 	"history_error": "Impossible de charger l’historique.",
 	"history_flag_shuffled": "(aléatoire)",
 	"history_flag_skipped": "(sauté)",
-	"history_local_note": "L’historique reste sur cet appareil jusqu’à exportation.",
+	"history_local_note": "Votre historique de lecture est privé, stocké localement sur cet appareil et non connecté à votre compte.",
 	"history_played_duration": "(écouté {seconds} s)",
 	"history_title": "Historique d’écoute",
 	"home_pull_from_r4": "Importer les radios depuis R4",

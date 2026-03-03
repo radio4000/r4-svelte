@@ -304,7 +304,7 @@
 	"history_error": "Dinleme geçmişi yüklenemedi.",
 	"history_flag_shuffled": "(karıştırıldı)",
 	"history_flag_skipped": "(atlandı)",
-	"history_local_note": "Geçmiş, dışa aktarana kadar bu cihazda kalır.",
+	"history_local_note": "Oynatma geçmişiniz gizlidir, bu cihazda yerel olarak saklanır ve hesabınıza bağlı değildir.",
 	"history_played_duration": "(çalındı {seconds}s)",
 	"history_title": "Dinleme geçmişi",
 	"home_pull_from_r4": "R4’tan radyoları çek",

@@ -46,7 +46,9 @@ export function formatDate(date, locale = undefined) {
 export function formatTime(date, locale = undefined) {
 	const value = toValidDate(date)
 	if (!value) return ''
-	return new Intl.DateTimeFormat(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(value)
+	return new Intl.DateTimeFormat(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false}).format(
+		value
+	)
 }
 
 /** Label for a calendar day: "today", "yesterday", or a short locale date.

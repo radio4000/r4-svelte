@@ -258,7 +258,7 @@
 	"history_error": "Không thể tải lịch sử nghe.",
 	"history_flag_shuffled": "(trộn)",
 	"history_flag_skipped": "(bỏ qua)",
-	"history_local_note": "Lịch sử ở lại thiết bị này cho tới khi bạn xuất.",
+	"history_local_note": "Lịch sử phát của bạn là riêng tư, lưu trữ cục bộ trên thiết bị này và không kết nối với tài khoản của bạn.",
 	"history_played_duration": "(đã phát {seconds}s)",
 	"history_title": "Lịch sử nghe",
 	"home_pull_from_r4": "Kéo đài từ R4",

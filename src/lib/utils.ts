@@ -167,8 +167,7 @@ export function delayWithJitter(base: number, jitter: number = 0.2): Promise<voi
  * @param {number} [quality=60] - Image quality (1-100)
  */
 export function channelAvatarUrl(id: string, size = 250, format = 'webp', quality = 60) {
-	const baseUrl = appCloudinaryUrl + '/image/upload'
-	return `${baseUrl}/w_${size},h_${size},c_thumb,q_${quality},fl_awebp/${id}.${format}`
+	return `${appCloudinaryUrl}/image/upload/w_${size},h_${size},c_thumb,q_${quality},fl_awebp/${id}.${format}`
 }
 
 /** YouTube thumbnail URL for a track. Size: default, mqdefault, hqdefault, sddefault, maxresdefault */

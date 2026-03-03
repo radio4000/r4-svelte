@@ -260,7 +260,7 @@
 	"history_error": "শোনার হিস্টরি লোড করা গেল না।",
 	"history_flag_shuffled": "(শাফলড)",
 	"history_flag_skipped": "(স্কিপড)",
-	"history_local_note": "এক্সপোর্ট না করা পর্যন্ত হিস্টরি এই ডিভাইসেই থাকে।",
+	"history_local_note": "আপনার প্লে ইতিহাস ব্যক্তিগত, এই ডিভাইসে স্থানীয়ভাবে সংরক্ষিত এবং আপনার অ্যাকাউন্টের সাথে সংযুক্ত নয়।",
 	"history_played_duration": "(প্লে হয়েছে {seconds}s)",
 	"history_title": "শোনার হিস্টরি",
 	"home_pull_from_r4": "R4 থেকে রেডিও টেনে আনুন",

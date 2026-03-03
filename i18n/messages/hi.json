@@ -260,7 +260,7 @@
 	"history_error": "सुनने का इतिहास लोड नहीं हो सका।",
 	"history_flag_shuffled": "(शफ़ल्ड)",
 	"history_flag_skipped": "(स्किप्ड)",
-	"history_local_note": "जब तक आप एक्सपोर्ट नहीं करते, इतिहास इसी डिवाइस पर रहता है।",
+	"history_local_note": "आपका प्ले इतिहास निजी है, इस डिवाइस पर स्थानीय रूप से संग्रहीत है और आपके खाते से जुड़ा नहीं है।",
 	"history_played_duration": "(चलाया {seconds}s)",
 	"history_title": "सुनने का इतिहास",
 	"home_pull_from_r4": "R4 से रेडियो पुल करें",
