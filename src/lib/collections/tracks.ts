@@ -4,7 +4,7 @@ import {sdk} from '@radio4000/sdk'
 import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
-import type {Channel} from './channels'
+import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, trackMetaKey, type TrackMeta} from './track-meta'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
@@ -351,12 +351,15 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 
 export async function ensureTracksLoaded(slug: string): Promise<void> {
 	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-	if (existing.length) return
+	if (existing.length) {
+		const channel = [...channelsCollection.state.values()].find((c) => c?.slug === slug)
+		if (!channel || existing.length >= (channel.track_count ?? 0)) return
+	}
 
 	const data = await queryClient.fetchQuery<Track[]>({
 		queryKey: ['tracks', slug],
 		queryFn: () => fetchTracksBySlug(slug),
-		staleTime: 60 * 60 * 1000
+		staleTime: 0
 	})
 
 	// Ensure sync is started so write utils are available
