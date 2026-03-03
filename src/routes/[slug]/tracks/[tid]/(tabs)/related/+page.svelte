@@ -5,7 +5,6 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
-	import {parseUrl} from 'media-now'
 	import TrackCard from '$lib/components/track-card.svelte'
 
 	const detail = getTrackDetailCtx()
