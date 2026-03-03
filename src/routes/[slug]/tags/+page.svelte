@@ -10,6 +10,8 @@
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import TagGalaxy from '$lib/components/tag-galaxy.svelte'
+	import {buildTagGraph} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
@@ -24,11 +26,15 @@
 	let timePeriod = $state('year')
 	let currentPeriod = $state(0)
 	let sort = $state('count') // 'count' | 'alpha'
-	let display = $state('list') // 'list' | 'cloud'
+	let display = $state('list') // 'list' | 'cloud' | 'galaxy'
 	let search = $state('')
 
-	const displayIconMap = {list: 'unordered-list', cloud: 'tag'}
-	const displayLabelMap = {list: () => m.channels_view_label_list(), cloud: () => 'Cloud'}
+	// Galaxy-specific options
+	let galaxyMinEdgeWeight = $state(2)
+	let galaxyMaxEdgesPerNode = $state(20)
+
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag', galaxy: 'share-alt'}
+	const displayLabelMap = {list: () => m.channels_view_label_list(), cloud: () => 'Cloud', galaxy: () => 'Galaxy'}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -138,6 +144,25 @@
 		return filteredTags // already sorted by count desc from getChannelTags
 	})
 
+	// Galaxy graph (built from filteredTags — respects period + filter)
+	let galaxyGraph = $derived.by(() => {
+		if (display !== 'galaxy') return {nodes: [], edges: []}
+		// Build a synthetic track list: one track per tag occurrence
+		// filteredTags gives {value, count} — reconstruct co-occurrence from actual tracks
+		const periodStart = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].startDate
+		const periodEnd = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].endDate
+		const periodTracks = tracks.filter((t) => {
+			const d = new Date(t.created_at)
+			if (periodStart && d < periodStart) return false
+			if (periodEnd && d >= periodEnd) return false
+			return true
+		})
+		return buildTagGraph(periodTracks, {
+			minEdgeWeight: galaxyMinEdgeWeight,
+			maxEdgesPerNode: galaxyMaxEdgesPerNode
+		})
+	})
+
 	// Apply name search — final list rendered
 	let visibleTags = $derived.by(() => {
 		const q = search.trim().toLowerCase()
@@ -196,7 +221,22 @@
 					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
 						<Icon icon="tag" /><small>Cloud</small>
 					</button>
+					<button class:active={display === 'galaxy'} onclick={() => (display = 'galaxy')}>
+						<Icon icon="share-alt" /><small>Galaxy</small>
+					</button>
 				</menu>
+				{#if display === 'galaxy'}
+					<div class="galaxy-controls">
+						<label>
+							<span>min co-occur: {galaxyMinEdgeWeight}</span>
+							<input type="range" min="1" max="20" step="1" bind:value={galaxyMinEdgeWeight} />
+						</label>
+						<label>
+							<span>max edges/node: {galaxyMaxEdgesPerNode}</span>
+							<input type="range" min="1" max="50" step="1" bind:value={galaxyMaxEdgesPerNode} />
+						</label>
+					</div>
+				{/if}
 				<div class="sort-row">
 					<select bind:value={timePeriod} onchange={onTimePeriodChange}>
 						<option value="year">{m.tags_period_years()}</option>
@@ -243,6 +283,21 @@
 
 		{#if tracksQuery.isLoading}
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
+		{:else if display === 'galaxy'}
+			{#if galaxyGraph.nodes.length > 0}
+				<div class="galaxy-canvas">
+					<TagGalaxy
+						nodes={galaxyGraph.nodes}
+						edges={galaxyGraph.edges}
+						searchQuery={search}
+						onNodeClick={(n) => {
+							search = n.label
+						}}
+					/>
+				</div>
+			{:else}
+				<p style="margin: 1rem;">{m.tags_empty()}</p>
+			{/if}
 		{:else if visibleTags.length > 0}
 			{#if display === 'list'}
 				<ol class="list">
@@ -373,5 +428,31 @@
 		gap: 0.5rem;
 		padding: 1rem 0.5rem;
 		align-items: baseline;
+	}
+
+	.galaxy-canvas {
+		height: 70vh;
+		min-height: 400px;
+		position: relative;
+		margin: 0.5rem;
+	}
+
+	.galaxy-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.5rem 0 0.25rem;
+		font-size: 0.8rem;
+	}
+
+	.galaxy-controls label {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		white-space: nowrap;
+	}
+
+	.galaxy-controls input[type='range'] {
+		width: 80px;
 	}
 </style>

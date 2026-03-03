@@ -16,7 +16,8 @@
 		{href: 'tooltips', title: 'Tooltips', desc: 'Tooltip positioning and behavior'},
 		{href: 'styles', title: 'Styles', desc: 'Global style reference'},
 		{href: 'cover-flip', title: 'CoverFlip', desc: 'Vertical loop scroll with GSAP'},
-		{href: 'views', title: 'Views', desc: 'Saved view CRUD and filtering'}
+		{href: 'views', title: 'Views', desc: 'Saved view CRUD and filtering'},
+		{href: 'tag-galaxy', title: 'Tag Galaxy', desc: 'Force-directed tag co-occurrence graph'}
 	]
 </script>
 
