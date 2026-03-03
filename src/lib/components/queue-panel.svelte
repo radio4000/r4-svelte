@@ -57,6 +57,7 @@
 	function clearQueue() {
 		if (!deck) return
 		deck.playlist_tracks = []
+		deck.playlist_tracks_shuffled = []
 		deck.playlist_track = undefined
 	}
 </script>
