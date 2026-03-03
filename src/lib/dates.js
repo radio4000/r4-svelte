@@ -14,6 +14,17 @@ export function formatDurationMs(ms) {
 	return formatDuration(Math.floor(ms / 1000))
 }
 
+/** Format milliseconds as a compact duration string: "42s", "1m30s", "3m"
+ * @param {number | null | undefined} ms */
+export function formatDurationCompact(ms) {
+	if (!ms) return ''
+	const s = Math.round(ms / 1000)
+	if (s < 60) return `${s}s`
+	const m = Math.floor(s / 60)
+	const rem = s % 60
+	return rem ? `${m}m${rem}s` : `${m}m`
+}
+
 /** @param {Date | string | number | null | undefined} date */
 function toValidDate(date) {
 	if (date == null) return null
@@ -27,6 +38,37 @@ export function formatDate(date, locale = undefined) {
 	const value = toValidDate(date)
 	if (!value) return ''
 	return new Intl.DateTimeFormat(locale).format(value)
+}
+
+/** Format just the time portion (HH:MM:SS), localized.
+ * @param {Date | string | number | null | undefined} date
+ * @param {string | string[] | undefined} [locale] */
+export function formatTime(date, locale = undefined) {
+	const value = toValidDate(date)
+	if (!value) return ''
+	return new Intl.DateTimeFormat(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(value)
+}
+
+/** Label for a calendar day: "today", "yesterday", or a short locale date.
+ * Uses Intl so "today"/"yesterday" are translated automatically.
+ * @param {Date | string | number | null | undefined} date
+ * @param {string | string[] | undefined} [locale] */
+export function dayLabel(date, locale = undefined) {
+	const value = toValidDate(date)
+	if (!value) return ''
+	const today = new Date()
+	const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+	const startOfValue = new Date(value.getFullYear(), value.getMonth(), value.getDate())
+	const diffDays = Math.round((startOfToday.getTime() - startOfValue.getTime()) / 86400000)
+	if (diffDays === 0 || diffDays === 1) {
+		return new Intl.RelativeTimeFormat(locale, {numeric: 'auto'}).format(-diffDays, 'day')
+	}
+	const isThisYear = value.getFullYear() === today.getFullYear()
+	return new Intl.DateTimeFormat(locale, {
+		month: 'short',
+		day: 'numeric',
+		...(isThisYear ? {} : {year: 'numeric'})
+	}).format(value)
 }
 
 /** Formal date-time: "Year/Month/day time", localized numerals/time by locale
