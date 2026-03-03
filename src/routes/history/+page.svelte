@@ -84,24 +84,28 @@
 		})
 	}
 
-	function playHistoryTrack(play: (typeof history)[number]) {
+	async function playHistoryTrack(play: (typeof history)[number]) {
 		upsertHistoryTracks()
-		const deckId = appState.active_deck_id
 		const uniqueIds = [...new Set(history.map((p) => p.track_id))]
-		setPlaylist(deckId, uniqueIds)
-		playTrack(deckId, play.track_id, null, 'user_click_track')
+		// playTrack auto-creates a deck if none exists; await so deck is guaranteed before setPlaylist
+		await playTrack(appState.active_deck_id, play.track_id, null, 'user_click_track')
+		setPlaylist(appState.active_deck_id, uniqueIds)
 	}
 
-	function playHistory() {
+	async function playHistory() {
 		if (!history.length) return
 		upsertHistoryTracks()
-		const deckId = appState.active_deck_id
 		const uniqueIds = [...new Set(history.map((p) => p.track_id))]
-		setPlaylist(deckId, uniqueIds)
-		playTrack(deckId, uniqueIds[0], null, 'user_click_track')
+		await playTrack(appState.active_deck_id, uniqueIds[0], null, 'user_click_track')
+		setPlaylist(appState.active_deck_id, uniqueIds)
 	}
 
-	function queueHistoryTrack(play: (typeof history)[number]) {
+	async function queueHistoryTrack(play: (typeof history)[number]) {
+		// No active deck — fall back to play so the track actually starts
+		if (!appState.decks[appState.active_deck_id]) {
+			await playHistoryTrack(play)
+			return
+		}
 		if (!tracksCollection.get(play.track_id)) {
 			if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
 			tracksCollection.utils.writeBatch(() => tracksCollection.utils.writeUpsert(toTrack(play)))
@@ -109,8 +113,13 @@
 		playNext(appState.active_deck_id, play.track_id)
 	}
 
-	function queueHistory() {
+	async function queueHistory() {
 		if (!history.length) return
+		// No active deck — fall back to play
+		if (!appState.decks[appState.active_deck_id]) {
+			await playHistory()
+			return
+		}
 		upsertHistoryTracks()
 		const uniqueIds = [...new Set(history.map((p) => p.track_id))]
 		addToPlaylist(appState.active_deck_id, uniqueIds)
