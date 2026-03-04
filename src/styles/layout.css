@@ -373,3 +373,44 @@ dl.meta {
 	color: initial;
 	min-height: 0;
 }
+
+/* Useful for docs, longer text */
+.article {
+	h1,h2,h3 {
+		color: initial;
+	}
+
+	h1 {
+		font-size: var(--font-8);
+		font-weight: 500;
+	}
+	h2 {
+		margin-block-start: 1.5rem;
+		font-weight: 500;
+	}
+
+	a {
+		color: var(--accent-9);
+	}
+
+	pre {
+		background: var(--accent-1);
+		padding: 0.2rem 0.5rem;
+		border-radius: var(--border-radius);
+	}
+
+	ul {
+		line-height: 1.8;
+		padding-left: 2rem;
+	}
+
+	p code {
+		font-size: var(--font-4);
+		color: var(--gray-10);
+	}
+
+	p, ul, ol {
+		margin-block-start: 0.75rem;
+		margin-block-end: 0.75rem;
+	}
+}

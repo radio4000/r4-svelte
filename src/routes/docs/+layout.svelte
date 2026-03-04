@@ -16,7 +16,7 @@
 		{/each}
 	</nav>
 
-	<main class="docs-content">
+	<main class="docs-content article">
 		<div class="constrained">
 			{@render children()}
 		</div>
@@ -54,7 +54,7 @@
 	.docs-content {
 		overflow-y: auto;
 		max-height: 100dvh;
-		padding: 1rem;
+		padding: 1rem;	
 	}
 
 	@media (max-width: 640px) {
