@@ -43,12 +43,17 @@
 			: tracks.filter((t) => chain.every((tag) => t.tags?.some((tTag) => tTag.toLowerCase() === tag.toLowerCase())))
 	)
 
-	/** Filtered tags: show branches when chain has selection + matching tracks, otherwise show all */
-	let visibleTags = $derived(
-		chain.length > 0 && matchingTracks.length > 0 && availableBranches && availableBranches.size > 0
-			? tags.filter((t) => availableBranches.has(t.value.toLowerCase()))
-			: tags
-	)
+	/** Filtered tags: show branches when chain has selection, filter out branches with 0 tracks */
+	let visibleTags = $derived.by(() => {
+		if (chain.length === 0) return tags
+
+		// If no branches, show nothing (dead end)
+		if (!availableBranches || availableBranches.size === 0) return []
+
+		// Show branches that have tracks
+		const branchTags = tags.filter((t) => availableBranches.has(t.value.toLowerCase()))
+		return branchTags
+	})
 
 	/** Toggle tag in/out of chain */
 	function toggleTag(tag) {
