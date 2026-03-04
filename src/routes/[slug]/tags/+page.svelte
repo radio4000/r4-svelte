@@ -7,6 +7,9 @@
 	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import TagChain from '$lib/components/tag-chain.svelte'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import Icon from '$lib/components/icon.svelte'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
@@ -21,6 +24,22 @@
 	let timePeriod = $state('year')
 	let currentPeriod = $state(0)
 	let display = $state('list')
+
+	const filterLabelMap = {
+		all: () => m.tags_filter_all(),
+		'single-use': () => m.tags_filter_single(),
+		frequent: () => m.tags_filter_frequent(),
+		rare: () => m.tags_filter_rare()
+	}
+
+	const periodLabelMap = {
+		year: () => m.tags_period_years(),
+		solstice: () => m.tags_period_solstices(),
+		month: () => m.tags_period_months()
+	}
+
+	const displayIconMap = {list: 'unordered-list', chain: 'share-alt'}
+	const displayLabelMap = {list: () => 'List', chain: () => 'Chain'}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -143,30 +162,68 @@
 {:else}
 	<main>
 		<header class="row">
-			<menu>
-				<label title={m.tags_filter_label()}>
-					<select bind:value={filter}>
-						<option value="all">{m.tags_filter_all()}</option>
-						<option value="single-use">{m.tags_filter_single()}</option>
-						<option value="frequent">{m.tags_filter_frequent()}</option>
-						<option value="rare">{m.tags_filter_rare()}</option>
-					</select>
-				</label>
-				<label title={m.tags_period_label()}>
-					<select bind:value={timePeriod} onchange={onTimePeriodChange}>
-						<option value="year">{m.tags_period_years()}</option>
-						<option value="solstice">{m.tags_period_solstices()}</option>
-						<option value="month">{m.tags_period_months()}</option>
-					</select>
-				</label>
-				<div class="display-toggle">
-					<button class:active={display === 'list'} onclick={() => (display = 'list')} title="List"> ☰ </button>
-					<button class:active={display === 'chain'} onclick={() => (display = 'chain')} title="Chain"> ⚡ </button>
-				</div>
-			</menu>
-			<!--
-			<h1>{m.tags_heading({name: channel.name})}</h1>
-			-->
+			<PopoverMenu id="tags-filter" closeOnClick={false}>
+				{#snippet trigger()}<Icon icon="filter" /><span>{filterLabelMap[filter]()}</span>{/snippet}
+				<menu>
+					<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>
+						{filterLabelMap.all()}
+					</button>
+					<button class:active={filter === 'single-use'} onclick={() => (filter = 'single-use')}>
+						{filterLabelMap['single-use']()}
+					</button>
+					<button class:active={filter === 'frequent'} onclick={() => (filter = 'frequent')}>
+						{filterLabelMap.frequent()}
+					</button>
+					<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}>
+						{filterLabelMap.rare()}
+					</button>
+				</menu>
+			</PopoverMenu>
+
+			<PopoverMenu id="tags-period" closeOnClick={false}>
+				{#snippet trigger()}<Icon icon="calendar" /><span>{periodLabelMap[timePeriod]()}</span>{/snippet}
+				<menu>
+					<button
+						class:active={timePeriod === 'year'}
+						onclick={() => {
+							timePeriod = 'year'
+							currentPeriod = 0
+						}}
+					>
+						{periodLabelMap.year()}
+					</button>
+					<button
+						class:active={timePeriod === 'solstice'}
+						onclick={() => {
+							timePeriod = 'solstice'
+							currentPeriod = 0
+						}}
+					>
+						{periodLabelMap.solstice()}
+					</button>
+					<button
+						class:active={timePeriod === 'month'}
+						onclick={() => {
+							timePeriod = 'month'
+							currentPeriod = 0
+						}}
+					>
+						{periodLabelMap.month()}
+					</button>
+				</menu>
+			</PopoverMenu>
+
+			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
+				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]()}{/snippet}
+				<menu>
+					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
+						<Icon icon="unordered-list" /><small>List</small>
+					</button>
+					<button class:active={display === 'chain'} onclick={() => (display = 'chain')}>
+						<Icon icon="share-alt" /><small>Chain</small>
+					</button>
+				</menu>
+			</PopoverMenu>
 		</header>
 
 		{#if periods.length > 0}
@@ -227,32 +284,9 @@
 <style>
 	header {
 		margin: 0.5rem 0.5rem 0;
-		place-items: center;
-	}
-
-	.display-toggle {
 		display: flex;
-		gap: 0.25rem;
-		margin-left: auto;
-	}
-
-	.display-toggle button {
-		padding: 0.375rem 0.5rem;
-		background: var(--gray-3);
-		border: 1px solid var(--gray-7);
-		border-radius: var(--border-radius);
-		cursor: pointer;
-		font-size: 1rem;
-	}
-
-	.display-toggle button:hover {
-		background: var(--gray-4);
-	}
-
-	.display-toggle button.active {
-		background: var(--accent-9);
-		color: var(--gray-1);
-		border-color: var(--accent-9);
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.scrubber {
