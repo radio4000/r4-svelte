@@ -67,7 +67,8 @@ export const defaultAppState: AppState = {
 	language: undefined,
 	modal_track_add: null,
 	modal_track_edit: null,
-	modal_shortcuts: false
+	modal_shortcuts: false,
+	show_welcome_hint: true
 }
 
 // Load from local storage on module init

@@ -19,4 +19,26 @@
 	<title>{m.home_title()}</title>
 </svelte:head>
 
+{#if !appState.user && appState.show_welcome_hint !== false}
+	<p class="welcome">
+		Welcome! <a href="/welcome">Learn about Radio4000</a> or <a href="/auth/login">sign in</a>
+		<button class="link" onclick={() => (appState.show_welcome_hint = false)}>
+			<small>(dismiss)</small>
+		</button>
+	</p>
+{/if}
+
 <Channels {display} />
+
+<style>
+	.welcome {
+		margin: 0.5rem;
+
+		.link {
+			margin-top: 0.1rem;
+			margin-left: 0.5rem;
+			color: initial;
+			text-decoration: none;
+		}
+	}
+</style>

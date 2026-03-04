@@ -83,6 +83,7 @@ export interface AppState {
 	modal_track_edit?: {track: Track} | null
 	modal_share?: {track?: Track; channel: Channel} | null
 	modal_shortcuts?: boolean
+	show_welcome_hint?: boolean
 }
 
 export interface UserIdentity {

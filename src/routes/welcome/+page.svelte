@@ -40,8 +40,13 @@
 			<a href="/auth/create-account?redirect=/create-channel" class="btn primary">{m.header_start_your_radio()}</a>
 			<a href="/auth/login" class="btn">{m.nav_sign_in()}</a>
 		{/if}
-		<a href="/" class="ghost">{m.nav_explore()}</a>
 	</menu>
+
+	<p class="center">
+		<a href="/" class="ghost">Explore radios →</a>
+		<br />
+		<a href="/about" class="ghost">More about Radio4000&hellip;</a>
+	</p>
 </article>
 
 <style>
@@ -67,9 +72,18 @@
 	}
 
 	menu {
-		margin-top: 1.5rem;
+		margin-block: 2rem;
 		gap: 0.5rem;
 		justify-content: center;
 		align-items: center;
+		.btn {
+			font-size: var(--font-5);
+			padding: 0.5rem 1rem;
+		}
+	}
+
+	p.center {
+		text-align: center;
+		font-size: 1rem;
 	}
 </style>
