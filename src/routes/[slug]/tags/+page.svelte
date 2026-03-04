@@ -244,35 +244,6 @@
 					</button>
 				</menu>
 				<menu class="nav-vertical">
-					<button
-						class:active={timePeriod === 'year'}
-						onclick={() => {
-							timePeriod = 'year'
-							currentPeriod = 0
-						}}
-					>
-						{periodLabelMap.year()}
-					</button>
-					<button
-						class:active={timePeriod === 'solstice'}
-						onclick={() => {
-							timePeriod = 'solstice'
-							currentPeriod = 0
-						}}
-					>
-						{periodLabelMap.solstice()}
-					</button>
-					<button
-						class:active={timePeriod === 'month'}
-						onclick={() => {
-							timePeriod = 'month'
-							currentPeriod = 0
-						}}
-					>
-						{periodLabelMap.month()}
-					</button>
-				</menu>
-				<menu class="nav-vertical">
 					<button class:active={sort === 'count'} onclick={() => (sort = 'count')}>
 						{sortLabelMap.count()}
 					</button>
@@ -300,7 +271,23 @@
 
 		{#if periods.length > 0}
 			<div class="scrubber">
-				<h3><span>{currentPeriodLabel}</span><span class="count">({Math.round(tagCount.current)})</span></h3>
+				<h3>
+					<span>{currentPeriodLabel}</span>
+					<span class="scrubber-meta">
+						<span class="count">({Math.round(tagCount.current)})</span>
+						<select
+							bind:value={timePeriod}
+							onchange={() => {
+								currentPeriod = 0
+							}}
+							aria-label={m.tags_period_label()}
+						>
+							<option value="year">{periodLabelMap.year()}</option>
+							<option value="solstice">{periodLabelMap.solstice()}</option>
+							<option value="month">{periodLabelMap.month()}</option>
+						</select>
+					</span>
+				</h3>
 				<InputRange
 					min={0}
 					max={periods.length}
@@ -414,6 +401,17 @@
 
 	.scrubber h3 .count {
 		font-variant-numeric: tabular-nums;
+	}
+
+	.scrubber .scrubber-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.scrubber .scrubber-meta select {
+		flex: 0 1 auto;
+		max-width: 100%;
 	}
 
 	.scrubber-labels {
