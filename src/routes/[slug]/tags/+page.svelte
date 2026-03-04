@@ -74,7 +74,7 @@
 		alpha: () => 'A–Z'
 	}
 
-	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'share-alt'}
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'link'}
 	const displayLabelMap = {list: () => 'List', cloud: () => 'Cloud', chain: () => 'Chain'}
 
 	// Date range from tracks
@@ -225,7 +225,7 @@
 {:else}
 	<main>
 		<menu class="filtermenu">
-			<SearchInput bind:value={search} placeholder={m.tracks_filter_placeholder()} />
+			<SearchInput bind:value={search} placeholder="Search tags…" />
 
 			<PopoverMenu id="tags-data" closeOnClick={false}>
 				{#snippet trigger()}<Icon icon="filter" /><span>Data</span>{/snippet}
@@ -267,7 +267,7 @@
 						<Icon icon="tag" /><small>Cloud</small>
 					</button>
 					<button class:active={display === 'chain'} onclick={() => (display = 'chain')}>
-						<Icon icon="share-alt" /><small>Chain</small>
+						<Icon icon="link" /><small>Chain</small>
 					</button>
 				</menu>
 			</PopoverMenu>
