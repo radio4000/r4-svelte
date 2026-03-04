@@ -159,6 +159,11 @@
 
 	nav {
 		flex-direction: column;
+
+		@media (min-width: 768px) {
+			/* vertical version has more space */
+			gap: 0.3rem;
+		}
 	}
 
 	nav :global(.btn svg) {
@@ -167,10 +172,6 @@
 
 	.nav-secondary {
 		justify-content: flex-start;
-	}
-
-	.user {
-		margin-top: auto;
 	}
 
 	.broadcast-dot {

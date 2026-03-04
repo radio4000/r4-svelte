@@ -63,10 +63,6 @@
 			{m.nav_about()}
 			<AppPresenceCount />
 		</a>
-		<a href="/docs">
-			<Icon icon="document" />
-			Docs
-		</a>
 		<a href={appDiscordUrl} target="_blank" rel="noreferrer">
 			<Icon icon="message-circle" />
 			Discord
@@ -82,9 +78,13 @@
 		{#if sha}
 			<a href="{repoUrl}/commit/{sha}" target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
-				<AppBuildInfo link={false} />
+				Source code <AppBuildInfo link={false} />
 			</a>
 		{/if}
+		<a href="/docs">
+			<Icon icon="document" />
+			Docs
+		</a>
 	</menu>
 
 	<LanguageSwitcher />

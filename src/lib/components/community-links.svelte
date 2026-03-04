@@ -13,6 +13,12 @@
 	Chat on <a href={appDiscordUrl} target="_blank" rel="noreferrer">Discord chat</a> or
 	<a href={appChatUrl} target="_blank" rel="noreferrer">Matrix chat</a>. Follow along on <a href={appSocialUrl} target="_blank" rel="noreferrer">Bluesky</a>
 </nav>
+<nav>
+&nbsp;
+&nbsp;
+&nbsp;
+<a href="/" class="ghost">Explore radios</a> or more <a href="/about" class="ghost">about Radio4000&hellip;</a>
+</nav>
 
 <style>
 	nav {

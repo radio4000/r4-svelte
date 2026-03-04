@@ -2,6 +2,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import CommunityLinks from '$lib/components/community-links.svelte'
 </script>
 
 <svelte:head>
@@ -42,11 +43,7 @@
 		{/if}
 	</menu>
 
-	<p class="center">
-		<a href="/" class="ghost">Explore radios →</a>
-		<br />
-		<a href="/about" class="ghost">More about Radio4000&hellip;</a>
-	</p>
+	<CommunityLinks />
 </article>
 
 <style>

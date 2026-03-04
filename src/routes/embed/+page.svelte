@@ -98,7 +98,13 @@
 		if (inputLimit) params.set('limit', String(inputLimit))
 		goto(`/embed?${params}`)
 	}
+
+	$inspect(rawView)
 </script>
+
+{#if !hasView}
+	<p>Did you forget to add <code>/embed?q=@slug</code>?</p>
+{/if}
 
 <details hidden>
 	<summary>debug</summary>
