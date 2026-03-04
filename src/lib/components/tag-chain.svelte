@@ -1,12 +1,47 @@
-<script>
+<script lang="ts">
 	import {setPlaylist, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
+	import {buildTagGraph} from '$lib/utils'
 
-	/** @type {{tags: Array<{value: string, count: number}>, tracks: Array<{id: string, tags?: string[] | null}>, channelSlug: string}} */
+	type Tag = {value: string; count: number}
+	type Track = {id: string; tags?: string[] | null}
+
+	/** @type {{tags: Tag[], tracks: Track[], channelSlug: string}} */
 	const {tags = [], tracks = [], channelSlug = ''} = $props()
 
-	/** @type {string[]} */
-	let chain = $state([])
+	let chain: string[] = $state([])
+
+	/** Compute tag co-occurrence graph */
+	let tagGraph = $derived(buildTagGraph(tracks, {minEdgeWeight: 1, maxTags: 500}))
+
+	/** Get tags that co-occur with current chain (branches) */
+	let availableBranches = $derived.by((): Set<string> | null => {
+		if (chain.length === 0) return null
+
+		const branchSet = new Set<string>()
+		const chainLower = chain.map((t) => t.toLowerCase())
+
+		for (const edge of tagGraph.edges) {
+			const sourceLower = edge.source.toLowerCase()
+			const targetLower = edge.target.toLowerCase()
+
+			// If one end is in chain, add the other end
+			if (chainLower.includes(sourceLower) && !chainLower.includes(targetLower)) {
+				branchSet.add(edge.target)
+			} else if (chainLower.includes(targetLower) && !chainLower.includes(sourceLower)) {
+				branchSet.add(edge.source)
+			}
+		}
+
+		return branchSet
+	})
+
+	/** Filtered tags: show branches when chain has selection, otherwise show all */
+	let visibleTags = $derived(
+		availableBranches && availableBranches.size > 0
+			? tags.filter((t) => availableBranches.has(t.value.toLowerCase()))
+			: tags
+	)
 
 	/** Toggle tag in/out of chain */
 	function toggleTag(tag) {
@@ -66,7 +101,7 @@
 	{/if}
 
 	<ol class="tag-list">
-		{#each tags as { value, count } (value)}
+		{#each visibleTags as { value, count } (value)}
 			<li>
 				<button type="button" class="tag-link" class:in-chain={chain.includes(value)} onclick={() => toggleTag(value)}>
 					{value}
