@@ -715,7 +715,7 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!deck?.auto_radio || !deck.view || deck.auto_radio_rotation_start == null) return
 
 	const view = deck.view
-	const slug = view.queries[0]?.channels?.[0]
+	const slug = view.sources[0]?.channels?.[0]
 	if (!slug) return
 	const rotationStartUnix = deck.auto_radio_rotation_start
 

@@ -52,7 +52,7 @@
 	// Any auto deck playing this channel, regardless of tag/search filter
 	let anyChannelAutoDecks = $derived.by(() =>
 		Object.values(appState.decks).filter(
-			(d) => d.auto_radio && (d.view?.queries[0]?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
+			(d) => d.auto_radio && (d.view?.sources[0]?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
 		)
 	)
 	let anyChannelAutoActive = $derived(anyChannelAutoDecks.length > 0)
@@ -61,7 +61,7 @@
 		const active = appState.decks[appState.active_deck_id]
 		if (
 			active?.auto_radio &&
-			(active?.view?.queries[0]?.channels?.[0] === channel?.slug || active?.playlist_slug === channel?.slug)
+			(active?.view?.sources[0]?.channels?.[0] === channel?.slug || active?.playlist_slug === channel?.slug)
 		)
 			return active.id
 		return anyChannelAutoDecks[0]?.id
@@ -234,7 +234,7 @@
 								onclick={() => {
 									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
 									else if (channel)
-										joinAutoRadio(appState.active_deck_id, autoRadioTracks, {queries: [{channels: [channel.slug]}]})
+										joinAutoRadio(appState.active_deck_id, autoRadioTracks, {sources: [{channels: [channel.slug]}]})
 								}}
 							/>
 						{/if}

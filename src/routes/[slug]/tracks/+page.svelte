@@ -48,7 +48,7 @@
 	let isFiltering = $derived(isSearching || isSorting)
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
-			queries: [
+			sources: [
 				{
 					tags: selectedTags.length ? selectedTags : undefined,
 					tagsMode: 'all',
@@ -63,7 +63,7 @@
 	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
 	let filteredAutoView: View = $derived.by(() => ({
-		queries: [
+		sources: [
 			{
 				channels: slug ? [slug] : undefined,
 				tags: selectedTags.length ? selectedTags : undefined,

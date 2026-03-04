@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {serializeView, parseView, viewLabel, type View, type ViewQuery} from '$lib/views'
+	import {serializeView, parseView, viewLabel, type View, type ViewSource} from '$lib/views'
 	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import PopoverMenu from './popover-menu.svelte'
@@ -50,19 +50,19 @@
 		]
 	}
 
-	function updateQuery(index: number, q: ViewQuery) {
-		const queries = [...view.queries]
-		queries[index] = q
-		onchange({...view, queries})
+	function updateSource(index: number, s: ViewSource) {
+		const sources = [...view.sources]
+		sources[index] = s
+		onchange({...view, sources})
 	}
 
-	function addQuery() {
-		onchange({...view, queries: [...view.queries, {}]})
+	function addSource() {
+		onchange({...view, sources: [...view.sources, {}]})
 	}
 
-	function removeQuery(index: number) {
-		const queries = view.queries.filter((_, i) => i !== index)
-		onchange({...view, queries: queries.length ? queries : [{}]})
+	function removeSource(index: number) {
+		const sources = view.sources.filter((_, i) => i !== index)
+		onchange({...view, sources: sources.length ? sources : [{}]})
 	}
 
 	function saveNewView() {
@@ -81,7 +81,7 @@
 	}
 
 	function clearDirty() {
-		onchange({queries: [{}]})
+		onchange({sources: [{}]})
 		lastSavedParams = ''
 		baseViewId = null
 		draftName = ''
@@ -155,12 +155,12 @@
 				<PopoverMenu closeOnClick={false} align="end">
 					{#snippet trigger()}{m.views_filters_label()}{/snippet}
 					<form class="form" onsubmit={(e) => e.preventDefault()}>
-						{#each view.queries as q, i (i)}
+						{#each view.sources as s, i (i)}
 							<div class="query-group">
-								{#if view.queries.length > 1}
+								{#if view.sources.length > 1}
 									<header class="query-header">
-										<strong>Query {i + 1}</strong>
-										<button type="button" onclick={() => removeQuery(i)} data-no-close data-delete>
+										<strong>Source {i + 1}</strong>
+										<button type="button" onclick={() => removeSource(i)} data-no-close data-delete>
 											<Icon icon="delete" size={12} />
 										</button>
 									</header>
@@ -170,8 +170,8 @@
 									<input
 										id="{uid}-channels-{i}"
 										type="text"
-										value={q.channels?.join(', ') || ''}
-										onchange={(e) => updateQuery(i, {...q, channels: splitList(e.currentTarget.value)})}
+										value={s.channels?.join(', ') || ''}
+										onchange={(e) => updateSource(i, {...s, channels: splitList(e.currentTarget.value)})}
 										placeholder={m.views_channels_placeholder()}
 									/>
 								</fieldset>
@@ -179,18 +179,18 @@
 									<legend>{m.views_tags_label()}</legend>
 									<fieldset class="row">
 										<select
-											value={q.tagsMode || 'any'}
+											value={s.tagsMode || 'any'}
 											onchange={(e) =>
-												updateQuery(i, {...q, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+												updateSource(i, {...s, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
 										>
 											<option value="any">{m.views_tags_any()}</option>
 											<option value="all">{m.views_tags_all()}</option>
 										</select>
 										<input
 											type="text"
-											value={q.tags?.join(', ') || ''}
+											value={s.tags?.join(', ') || ''}
 											onchange={(e) =>
-												updateQuery(i, {...q, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+												updateSource(i, {...s, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
 											placeholder={m.views_tags_placeholder()}
 										/>
 									</fieldset>
@@ -200,15 +200,15 @@
 									<input
 										id="{uid}-search-{i}"
 										type="text"
-										value={q.search || ''}
-										onchange={(e) => updateQuery(i, {...q, search: e.currentTarget.value.trim() || undefined})}
+										value={s.search || ''}
+										onchange={(e) => updateSource(i, {...s, search: e.currentTarget.value.trim() || undefined})}
 										placeholder={m.views_search_placeholder()}
 									/>
 								</fieldset>
 							</div>
-							{#if i < view.queries.length - 1}<hr />{/if}
+							{#if i < view.sources.length - 1}<hr />{/if}
 						{/each}
-						<button type="button" onclick={addQuery} data-no-close>+ Query</button>
+						<button type="button" onclick={addSource} data-no-close>+ Source</button>
 					</form>
 				</PopoverMenu>
 			</li>

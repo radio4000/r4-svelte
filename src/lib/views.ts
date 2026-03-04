@@ -1,14 +1,14 @@
-/** Describes which channels and tracks to fetch */
-export type ViewQuery = {
+/** One source of tracks: which channels, tags, and optional search text. */
+export type ViewSource = {
 	channels?: string[]
 	tags?: string[]
 	tagsMode?: 'any' | 'all'
 	search?: string
 }
 
-/** One or more queries merged, with display options. */
+/** One or more sources merged, with display options. */
 export type View = {
-	queries: ViewQuery[]
+	sources: ViewSource[]
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
 	limit?: number
@@ -24,9 +24,27 @@ const validDirections = ['asc', 'desc'] as const
 const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
 
-/** Parse a human query string into a ViewQuery. `@slug` → channels, `#tag` → tags, rest → search. */
-export function parseQuery(input: string): ViewQuery {
-	const query: ViewQuery = {}
+/** Apply order/direction/limit/offset from URLSearchParams onto a View in place. */
+function parseOptions(p: URLSearchParams, view: View): void {
+	const order = p.get('order')
+	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
+	const dir = p.get('direction')
+	if (dir && (validDirections as readonly string[]).includes(dir)) view.direction = dir as View['direction']
+	const limit = p.get('limit')
+	if (limit) {
+		const n = Number(limit)
+		if (n > 0) view.limit = Math.min(n, 4000)
+	}
+	const offset = p.get('offset')
+	if (offset) {
+		const n = Number(offset)
+		if (n > 0) view.offset = n
+	}
+}
+
+/** Parse a human source string into a ViewSource. `@slug` → channels, `#tag` → tags, rest → search. */
+export function parseSource(input: string): ViewSource {
+	const source: ViewSource = {}
 	const channels: string[] = []
 	const tags: string[] = []
 	const rest: string[] = []
@@ -41,53 +59,40 @@ export function parseQuery(input: string): ViewQuery {
 			rest.push(token)
 		}
 	}
-	if (channels.length) query.channels = [...new Set(channels)]
-	if (tags.length) query.tags = [...new Set(tags)]
+	if (channels.length) source.channels = [...new Set(channels)]
+	if (tags.length) source.tags = [...new Set(tags)]
 	const search = rest.join(' ')
-	if (search) query.search = search
-	return query
+	if (search) source.search = search
+	return source
 }
 
-/** Turn a ViewQuery back into a human-readable query string (also a valid ViewURI). */
-export function serializeQuery(query: ViewQuery): ViewURI {
+/** Turn a ViewSource back into a human-readable string (also a valid ViewURI segment). */
+export function serializeSource(source: ViewSource): ViewURI {
 	const parts: string[] = []
-	if (query.channels?.length) parts.push(...query.channels.map((s) => `@${s}`))
-	if (query.tags?.length) parts.push(...query.tags.map((t) => `#${t}`))
-	if (query.search) parts.push(query.search)
+	if (source.channels?.length) parts.push(...source.channels.map((s) => `@${s}`))
+	if (source.tags?.length) parts.push(...source.tags.map((t) => `#${t}`))
+	if (source.search) parts.push(source.search)
 	return parts.join(' ') as ViewURI
 }
 
 // --- View: full string ↔ View ---
 
-/** Parse a view string into a View. Handles `;` for multiple queries and `?` for options. Strips `r4://` if present. */
+/** Parse a ViewURI string into a View. Handles `;` for multiple sources and `?` for options. Strips `r4://` if present. */
 export function parseView(input: string): View {
 	const body = input.replace(RE_R4_PREFIX, '')
-	const [queriesPart, optionsPart] = body.split('?')
-	const queries = (queriesPart || '')
+	const [sourcesPart, optionsPart] = body.split('?')
+	const sources = (sourcesPart || '')
 		.split(';')
-		.map((s) => parseQuery(s))
-		.filter((q) => Object.keys(q).length > 0)
-	const view: View = {queries: queries.length ? queries : [{}]}
+		.map((s) => parseSource(s))
+		.filter((s) => Object.keys(s).length > 0)
+	const view: View = {sources: sources.length ? sources : [{}]}
 	if (optionsPart) {
 		const p = new URLSearchParams(optionsPart)
-		const order = p.get('order')
-		if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
-		const dir = p.get('direction')
-		if (dir && (validDirections as readonly string[]).includes(dir)) view.direction = dir as View['direction']
-		const limit = p.get('limit')
-		if (limit) {
-			const n = Number(limit)
-			if (n > 0) view.limit = Math.min(n, 4000)
-		}
-		const offset = p.get('offset')
-		if (offset) {
-			const n = Number(offset)
-			if (n > 0) view.offset = n
-		}
+		parseOptions(p, view)
 		const tagsMode = p.get('tagsMode')
 		if (tagsMode === 'all') {
-			for (const q of view.queries) {
-				if (!q.tagsMode && q.tags?.length) q.tagsMode = 'all'
+			for (const s of view.sources) {
+				if (!s.tagsMode && s.tags?.length) s.tagsMode = 'all'
 			}
 		}
 		const exclude = p.get('exclude')
@@ -98,47 +103,33 @@ export function parseView(input: string): View {
 
 /** Serialize a View to a compact ViewURI string. No `r4://` prefix. */
 export function serializeView(view: View): ViewURI {
-	const queriesStr = view.queries.map((q) => serializeQuery(q)).join(';')
+	const sourcesStr = view.sources.map((s) => serializeSource(s)).join(';')
 	const options = new URLSearchParams()
 	if (view.order) options.set('order', view.order)
 	if (view.direction) options.set('direction', view.direction)
 	if (view.limit) options.set('limit', String(view.limit))
 	if (view.offset) options.set('offset', String(view.offset))
-	if (view.queries.some((q) => q.tagsMode === 'all')) options.set('tagsMode', 'all')
+	if (view.sources.some((s) => s.tagsMode === 'all')) options.set('tagsMode', 'all')
 	const optStr = options.toString()
 	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
 	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
-	return `${queriesStr}${allOpts ? `?${allOpts}` : ''}` as ViewURI
+	return `${sourcesStr}${allOpts ? `?${allOpts}` : ''}` as ViewURI
 }
 
 /** Extract a View from a URL. Reads `q` param as the human query, plus separate `order`/`direction`/`limit`/`offset` params. */
 export function viewFromUrl(url: URL): View {
 	const q = url.searchParams.get('q') ?? ''
 	const view = parseView(decodeURIComponent(q))
-	const order = url.searchParams.get('order')
-	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
-	const direction = url.searchParams.get('direction')
-	if (direction && (validDirections as readonly string[]).includes(direction))
-		view.direction = direction as View['direction']
-	const limit = url.searchParams.get('limit')
-	if (limit) {
-		const n = Number(limit)
-		if (n > 0) view.limit = Math.min(n, 4000)
-	}
-	const offset = url.searchParams.get('offset')
-	if (offset) {
-		const n = Number(offset)
-		if (n > 0) view.offset = n
-	}
+	parseOptions(url.searchParams, view)
 	return view
 }
 
 // --- Utilities ---
 
-/** Human-readable label for a View: all queries, no options. */
+/** Human-readable label for a View: all sources, no options. */
 export function viewLabel(view: View): string {
-	return view.queries
-		.map((q) => serializeQuery(q))
+	return view.sources
+		.map((s) => serializeSource(s))
 		.filter(Boolean)
 		.join('; ')
 }
@@ -146,20 +137,20 @@ export function viewLabel(view: View): string {
 /** Remove empty fields so two semantically equivalent views compare equal. */
 export function normalizeView(view?: View): View | undefined {
 	if (!view) return undefined
-	const queries = view.queries
-		.map((q) => {
-			const normalized: ViewQuery = {}
-			if (q.channels?.length) normalized.channels = q.channels
-			if (q.tags?.length) normalized.tags = q.tags
-			if (q.tagsMode === 'all') normalized.tagsMode = 'all'
-			const search = q.search?.trim()
+	const sources = view.sources
+		.map((s) => {
+			const normalized: ViewSource = {}
+			if (s.channels?.length) normalized.channels = s.channels
+			if (s.tags?.length) normalized.tags = s.tags
+			if (s.tagsMode === 'all') normalized.tagsMode = 'all'
+			const search = s.search?.trim()
 			if (search) normalized.search = search
 			return Object.keys(normalized).length ? normalized : undefined
 		})
-		.filter((q): q is ViewQuery => q !== undefined)
-	if (!queries.length && !view.order && !view.direction && !view.limit && !view.offset && !view.exclude?.length)
+		.filter((s): s is ViewSource => s !== undefined)
+	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset && !view.exclude?.length)
 		return undefined
-	const normalized: View = {queries: queries.length ? queries : [{}]}
+	const normalized: View = {sources: sources.length ? sources : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction
 	if (view.limit) normalized.limit = view.limit

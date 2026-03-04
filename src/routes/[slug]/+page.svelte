@@ -121,7 +121,7 @@
 				.map((t) => t.slice(1)) ?? []
 		if (titleTags.includes(tag)) return true
 		if (!slug) return false
-		return getAutoDecksForView([activeDeck], {queries: [{channels: [slug], tags: [tag]}]}).length > 0
+		return getAutoDecksForView([activeDeck], {sources: [{channels: [slug], tags: [tag]}]}).length > 0
 	}
 
 	async function playTracks(tracks: {id: string}[], title?: string) {
@@ -206,7 +206,7 @@
 
 			{#if selectedTag === null}
 				{#if tracksQuery.isReady && previewTracks.length > 0}
-					{@const autoView = slug ? {queries: [{channels: [slug]}]} : undefined}
+					{@const autoView = slug ? {sources: [{channels: [slug]}]} : undefined}
 					{@const autoDecks = getAutoDecksForView(Object.values(appState.decks), autoView)}
 					{@const isAutoActive = autoDecks.length > 0}
 					{@const isAutoDrifted = autoDecks.some((d) => d.auto_radio_drifted)}
@@ -281,7 +281,7 @@
 							</button>
 							{#if channel}
 								{@const autoTagTracks = toAutoTracks(section.tracks)}
-								{@const autoTagView = slug ? {queries: [{channels: [slug], tags: [section.tag]}]} : undefined}
+								{@const autoTagView = slug ? {sources: [{channels: [slug], tags: [section.tag]}]} : undefined}
 								{@const autoTagDecks = getAutoDecksForView(Object.values(appState.decks), autoTagView)}
 								{@const isAutoTagActive = autoTagDecks.length > 0}
 								{@const isAutoTagDrifted = autoTagDecks.some((d) => d.auto_radio_drifted)}

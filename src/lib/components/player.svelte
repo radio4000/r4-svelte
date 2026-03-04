@@ -154,7 +154,7 @@
 
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
-			? viewLabel(deck.view ?? {queries: [{channels: [deck.playlist_slug]}]}) || `@${deck.playlist_slug}`
+			? viewLabel(deck.view ?? {sources: [{channels: [deck.playlist_slug]}]}) || `@${deck.playlist_slug}`
 			: undefined
 	)
 	const headerPresenceCount = $derived(

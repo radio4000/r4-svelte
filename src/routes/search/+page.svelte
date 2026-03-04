@@ -29,7 +29,7 @@
 
 	// --- URL is the single source of truth ---
 	const view = $derived(viewFromUrl(page.url))
-	const q = $derived(view.queries[0] ?? {})
+	const q = $derived(view.sources[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
 	// --- View → URL ---

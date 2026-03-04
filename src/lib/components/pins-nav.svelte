@@ -15,7 +15,7 @@
 			.toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
 			.map((sv) => {
 				const view = parseView(sv.uri)
-				const q = view.queries[0] ?? {}
+				const q = view.sources[0] ?? {}
 				const channels = q.channels || []
 				const isSingleChannel = channels.length === 1 && !q.tags?.length && !q.search
 				const href = isSingleChannel ? resolve(`/${channels[0]}`) : resolve(`/search?${sv.uri}`)

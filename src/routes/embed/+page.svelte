@@ -17,18 +17,18 @@
 */
 
 	const rawView: View = $derived.by(() => viewFromUrl(page.url))
-	const hasView = $derived(rawView.queries.some((q) => q.channels?.length || q.tags?.length || q.search))
+	const hasView = $derived(rawView.sources.some((s) => s.channels?.length || s.tags?.length || s.search))
 
 	function viewToDecks(view: View): Record<number, ReturnType<typeof createDefaultDeck>> {
-		if (!view.queries.length) return {1: createDefaultDeck(1)}
+		if (!view.sources.length) return {1: createDefaultDeck(1)}
 		return Object.fromEntries(
-			view.queries.map((query, i) => {
+			view.sources.map((source, i) => {
 				const id = i + 1
 				return [
 					id,
 					{
 						...createDefaultDeck(id),
-						view: {queries: [query], order: view.order, direction: view.direction, limit: view.limit}
+						view: {sources: [source], order: view.order, direction: view.direction, limit: view.limit}
 					}
 				]
 			})
@@ -57,17 +57,17 @@
 		applyDecks(hasView ? viewToDecks(rawView) : {1: createDefaultDeck(1)})
 	})
 
-	// One per-query view — load tracks and set playlist per deck
+	// One per-source view — load tracks and set playlist per deck
 	const deckViews = $derived(
-		rawView.queries.map((query, i) => ({
+		rawView.sources.map((source, i) => ({
 			deckId: i + 1,
-			view: {queries: [query], order: rawView.order, direction: rawView.direction, limit: rawView.limit} satisfies View
+			view: {sources: [source], order: rawView.order, direction: rawView.direction, limit: rawView.limit} satisfies View
 		}))
 	)
 
 	$effect(() => {
 		for (const {view} of deckViews) {
-			const slugs = view.queries.flatMap((q) => q.channels ?? [])
+			const slugs = view.sources.flatMap((s) => s.channels ?? [])
 			for (const slug of slugs) ensureTracksLoaded(slug)
 		}
 	})
@@ -77,7 +77,7 @@
 	$effect(() => {
 		for (const {deckId, view, query} of viewQueries) {
 			if (query.loading || !query.tracks.length) continue
-			const channels = view.queries[0]?.channels ?? []
+			const channels = view.sources[0]?.channels ?? []
 			const slug = channels.length === 1 ? channels[0] : undefined
 			setPlaylist(
 				deckId,

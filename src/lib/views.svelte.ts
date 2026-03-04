@@ -19,7 +19,7 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 /** Post-process raw tracks according to a View: tag filtering, fuzzy search, sort/shuffle. Pagination (offset/limit) is handled by the fetch layer. */
 export function processViewTracks(tracks: Track[], view: View): Track[] {
 	let data = tracks
-	const q = view.queries[0]
+	const q = view.sources[0]
 	// Tag post-filtering (channels+tags combo, or tags-only with "all" mode)
 	if (q?.channels?.length && q?.tags?.length) {
 		if (q.tagsMode === 'all') {
@@ -52,9 +52,9 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 export function queryView(getView: () => View) {
 	// Stable $derived primitives — only change when actual query params change.
 	// Prevents re-creating queries on sort/direction/limit changes (same pattern as [slug]/+layout).
-	const channelsKey = $derived(getView().queries[0]?.channels?.join(',') || '')
-	const tagsKey = $derived(getView().queries[0]?.tags?.toSorted().join(',') || '')
-	const searchKey = $derived(getView().queries[0]?.search?.trim() || '')
+	const channelsKey = $derived(getView().sources[0]?.channels?.join(',') || '')
+	const tagsKey = $derived(getView().sources[0]?.tags?.toSorted().join(',') || '')
+	const searchKey = $derived(getView().sources[0]?.search?.trim() || '')
 	const limitKey = $derived(getView().limit ?? 50)
 	const offsetKey = $derived(getView().offset ?? 0)
 

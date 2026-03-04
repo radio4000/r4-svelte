@@ -16,7 +16,7 @@
 
 	// --- URL is the single source of truth ---
 	const view: View = $derived(viewFromUrl(page.url))
-	const hasFilter = $derived(view.queries.some((q) => !!q.channels?.length || !!q.tags?.length || !!q.search))
+	const hasFilter = $derived(view.sources.some((s) => !!s.channels?.length || !!s.tags?.length || !!s.search))
 	const viewQuery = queryView(() => view)
 
 	// --- Sync input from URL on landing + browser back/forward ---

@@ -205,17 +205,26 @@
 	],
 
 	"src/lib/views.ts": [
-		{"name": "ViewQuery", "desc": "Type: {channels?, tags?, tagsMode?, search?}. What to fetch."},
+		{
+			"name": "ViewSource",
+			"desc": "Type: {channels?, tags?, tagsMode?, search?}. One source of tracks (one ; segment)."
+		},
 		{
 			"name": "View",
-			"desc": "Type: {queries: ViewQuery[], order?, direction?, limit?, exclude?}. One or more queries + display options."
+			"desc": "Type: {sources: ViewSource[], order?, direction?, limit?, exclude?}. One or more sources + display options."
 		},
-		{"name": "parseQuery(input)", "desc": "Parse human query (@slug #tag text) into a ViewQuery."},
-		{"name": "serializeQuery(query)", "desc": "ViewQuery to human query string (also a valid ViewURI)."},
+		{
+			"name": "parseSource(input)",
+			"desc": "Parse a source string (@slug #tag text) into a ViewSource. Internal to parseView."
+		},
+		{
+			"name": "serializeSource(source)",
+			"desc": "ViewSource to human string (also a valid ViewURI segment). Internal to serializeView."
+		},
 		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
 		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
 		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (decodes search string, passes to parseView)."},
-		{"name": "viewLabel(view)", "desc": "All queries as a human-readable string, no options. For labels/display."},
+		{"name": "viewLabel(view)", "desc": "All sources as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
 		{"name": "viewURI(view?)", "desc": "Canonical serialized key for comparing View identity."}
 	],
