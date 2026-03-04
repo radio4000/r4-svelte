@@ -10,11 +10,28 @@
 	interface Props {
 		nodes: TagGraphNode[]
 		edges: TagGraphEdge[]
+		tracks?: Array<{id: string; tags?: string[] | null}>
+		totalCount?: number
+		channelSlug?: string
+		chainTags?: string[]
 		searchQuery?: string
+		onTagChainChange?: (tags: string[]) => void
+		onPlayTags?: (tags: string[], tracks: Array<{id: string}>) => void
 		onNodeClick?: (node: TagGraphNode) => void
 	}
 
-	let {nodes = [], edges = [], searchQuery = '', onNodeClick}: Props = $props()
+	let {
+		nodes = [],
+		edges = [],
+		tracks = [],
+		totalCount = 0,
+		channelSlug = '',
+		chainTags = $bindable([]),
+		searchQuery = '',
+		onTagChainChange,
+		onPlayTags,
+		onNodeClick
+	}: Props = $props()
 
 	let container: HTMLDivElement
 	let glCanvas: HTMLCanvasElement
@@ -23,7 +40,7 @@
 	// Camera orbit state — plain object so GSAP can animate it
 	// orbitX = pitch, orbitY = yaw, zoom = camera radius from origin
 	// panX/panY = orbit center offset (Ctrl+drag)
-	const cam = {orbitX: -0.3, orbitY: 0, zoom: 300, panX: 0, panY: 0}
+	const cam = {orbitX: -0.3, orbitY: 0, zoom: 300, panX: 0, panY: 0, panZ: 0}
 
 	// Inertia (applied in render loop when not dragging / not GSAP tweening)
 	let velX = 0
@@ -31,14 +48,14 @@
 	const INERTIA = 0.88
 	const HALF_PI = Math.PI / 2
 
-	// Hover/select — reactive so uploadNodeColors re-runs
+	// Hover — reactive so uploadNodeColors re-runs
 	let hoveredIdx = $state(-1)
-	let selectedIdx = $state(-1)
-	let connectedSet = new SvelteSet<number>()
+	// Connected to chain set (nodes reachable from any chain tag)
+	let connectedToChainSet = new SvelteSet<number>()
 
 	// Simulation output: Float32Array of [x,y,z, x,y,z, …]
 	let simPos: Float32Array<ArrayBuffer> = new Float32Array(0) as Float32Array<ArrayBuffer>
-	// Maps edge array index → [sourceNodeIdx, targetNodeIdx] for uploadEdgeColors()
+	// Maps edge array index → [si, ti] for uploadEdgeColors(); -1 means invalid/skipped edge
 	let edgeNodeIndices: Array<[number, number]> = []
 
 	// OGL
@@ -48,6 +65,7 @@
 	let scene: InstanceType<typeof Transform>
 	let nodeMesh: InstanceType<typeof Mesh> | null = null
 	let edgeMesh: InstanceType<typeof Mesh> | null = null
+	let edgeProg: InstanceType<typeof Program> | null = null
 	let ctx2d: CanvasRenderingContext2D | null = null
 	const vpMat = new Mat4()
 	let rafId: number
@@ -127,6 +145,11 @@
 	// Shaders
 	// ---------------------------------------------------------------------------
 
+	// REF_DIST: world-space reference depth for point sizing.
+	// At depth=REF_DIST the point appears at its "natural" CSS pixel radius.
+	// Zooming in (smaller depth) → bigger nodes; zooming out → smaller. Natural perspective.
+	const REF_DIST = 500
+
 	const NODE_VERT = /* glsl */ `
 		precision highp float;
 		attribute vec3 position;
@@ -135,12 +158,12 @@
 		uniform mat4 projectionMatrix;
 		uniform mat4 modelViewMatrix;
 		uniform float uDpr;
-		uniform float uCamZ;
+		uniform float uRefDist;
 		varying vec3 vColor;
 		void main() {
 			vColor = aColor;
 			vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-			gl_PointSize = aSize * uDpr * uCamZ / max(-mvPos.z, 1.0);
+			gl_PointSize = max(aSize * uDpr * uRefDist / max(-mvPos.z, 1.0), 2.0 * uDpr);
 			gl_Position = projectionMatrix * mvPos;
 		}
 	`
@@ -152,21 +175,44 @@
 			vec2 uv = gl_PointCoord * 2.0 - 1.0;
 			float d = dot(uv, uv);
 			if (d > 1.0) discard;
-			float alpha = 1.0 - smoothstep(0.65, 1.0, d);
-			gl_FragColor = vec4(vColor, alpha);
+			// Sphere shading: treat the disc as a hemisphere facing the camera
+			float z = sqrt(1.0 - d);
+			vec3 normal = normalize(vec3(uv, z));
+			vec3 lightDir = normalize(vec3(0.5, 0.8, 0.6));
+			float diffuse = max(dot(normal, lightDir), 0.0);
+			float specular = pow(max(dot(reflect(-lightDir, normal), vec3(0.0, 0.0, 1.0)), 0.0), 16.0);
+			vec3 color = vColor * (0.25 + 0.75 * diffuse) + vec3(0.9) * specular * 0.35;
+			gl_FragColor = vec4(color, 1.0);
 		}
 	`
 
+	// Thick-line edge shader: renders each edge as a screen-space quad (6 verts, GL_TRIANGLES).
+	// aPos/aOther = the two 3D endpoints; aSide = ±1 (which side of the line); aWidth = half-width px.
 	const EDGE_VERT = /* glsl */ `
 		precision highp float;
-		attribute vec3 position;
+		attribute vec3 aPos;
+		attribute vec3 aOther;
+		attribute float aSide;
 		attribute float aHighlight;
+		attribute float aWidth;
 		uniform mat4 projectionMatrix;
 		uniform mat4 modelViewMatrix;
+		uniform vec2 uViewport;
 		varying float vHighlight;
 		void main() {
 			vHighlight = aHighlight;
-			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+			vec4 clipSelf  = projectionMatrix * modelViewMatrix * vec4(aPos,   1.0);
+			vec4 clipOther = projectionMatrix * modelViewMatrix * vec4(aOther, 1.0);
+			vec2 ndcSelf  = clipSelf.xy  / clipSelf.w;
+			vec2 ndcOther = clipOther.xy / clipOther.w;
+			// Screen-space direction (accounts for viewport aspect ratio)
+			vec2 dirRaw = (ndcSelf - ndcOther) * uViewport;
+			if (length(dirRaw) < 0.001) dirRaw = vec2(1.0, 0.0);
+			vec2 dir  = normalize(dirRaw);
+			vec2 perp = vec2(-dir.y, dir.x);
+			// Offset in clip space (aWidth = half-width in CSS pixels)
+			vec2 offset = perp * aSide * aWidth * 2.0 / uViewport * clipSelf.w;
+			gl_Position = vec4(clipSelf.xy + offset, clipSelf.z, clipSelf.w);
 		}
 	`
 
@@ -177,7 +223,7 @@
 		varying float vHighlight;
 		void main() {
 			vec3 color = mix(uEdgeDimColor, uEdgeHighColor, vHighlight);
-			float alpha = 0.2 + vHighlight * 0.7;
+			float alpha = 0.15 + vHighlight * 0.75;
 			gl_FragColor = vec4(color, alpha);
 		}
 	`
@@ -191,14 +237,13 @@
 	}
 
 	function getNodeColor(i: number): [number, number, number] {
+		const tag = nodes[i].id
 		const q = searchQuery.trim().toLowerCase()
-		if (q) {
-			return nodes[i].label.toLowerCase().includes(q) ? clrSelected : clrDimmed
-		}
-		if (selectedIdx >= 0) {
-			if (i === selectedIdx) return clrSelected
-			if (connectedSet.has(i)) return clrConnected
-			return clrDimmed
+		if (q) return nodes[i].label.toLowerCase().includes(q) ? clrSelected : clrDimmed
+		const chainSet = new Set(chainTags)
+		if (chainSet.has(tag)) return clrSelected
+		if (chainTags.length > 0) {
+			return connectedToChainSet.has(i) ? clrConnected : clrDimmed
 		}
 		if (i === hoveredIdx) return clrHover
 		return clrNode
@@ -223,19 +268,16 @@
 		const attr = edgeMesh.geometry.attributes.aHighlight
 		if (!attr?.data) return
 		const data = attr.data
-		const hasSelection = selectedIdx >= 0
+		const chainSet = new Set(chainTags)
+		const hasChain = chainTags.length > 0
 		for (let i = 0; i < edgeNodeIndices.length; i++) {
 			const [si, ti] = edgeNodeIndices[i]
-			let h: number
-			if (!hasSelection) {
-				h = 0.35 // default: moderate
-			} else if (si === selectedIdx || ti === selectedIdx) {
-				h = 1.0 // connected to selected: bright
-			} else {
-				h = 0.0 // unrelated: barely visible
-			}
-			data[i * 2] = h
-			data[i * 2 + 1] = h
+			if (si < 0) continue // invalid/skipped edge
+			const sIn = chainSet.has(nodes[si]?.id ?? '')
+			const tIn = chainSet.has(nodes[ti]?.id ?? '')
+			const h = !hasChain ? 0.35 : sIn && tIn ? 1.0 : sIn || tIn ? 0.8 : 0.0
+			// 6 vertices per edge quad
+			for (let v = 0; v < 6; v++) data[i * 6 + v] = h
 		}
 		attr.needsUpdate = true
 	}
@@ -322,7 +364,7 @@
 		const nProg = new Program(gl, {
 			vertex: NODE_VERT,
 			fragment: NODE_FRAG,
-			uniforms: {uDpr: {value: renderer.dpr}, uCamZ: {value: cam.zoom}},
+			uniforms: {uDpr: {value: renderer.dpr}, uRefDist: {value: REF_DIST}},
 			transparent: true,
 			depthTest: false
 		})
@@ -331,44 +373,79 @@
 
 		edgeMesh?.setParent(null)
 		edgeMesh = null
+		edgeProg = null
 		edgeNodeIndices = []
 
 		if (edges.length > 0) {
 			const idxMap: Record<string, number> = {}
 			for (let i = 0; i < n; i++) idxMap[nodes[i].id] = i
 
-			const ePos = new Float32Array(edges.length * 6)
-			// 0.35 → default alpha ≈ 0.28, neutral colour; updated by uploadEdgeColors()
-			const eHighlight = new Float32Array(edges.length * 2).fill(0.35)
+			// Thick-line quads: 6 vertices per edge (2 triangles), [-1,-1] for invalid edges
+			const numVerts = edges.length * 6
+			const ePosArr = new Float32Array(numVerts * 3) // aPos
+			const eOtherArr = new Float32Array(numVerts * 3) // aOther
+			const eSideArr = new Float32Array(numVerts) // aSide ±1
+			const eHighlightArr = new Float32Array(numVerts).fill(0.35) // updated by uploadEdgeColors
+			const eWidthArr = new Float32Array(numVerts) // half-width in px
+
+			// Weight range for visual width scaling
+			const maxW = Math.max(1, ...edges.map((e) => e.weight))
+			// Which endpoint each of the 6 triangle vertices belongs to
+			const IS_A = [true, false, true, true, false, false]
+			const SIDES = [-1, -1, 1, 1, -1, 1]
+
 			let vi = 0
 			for (const e of edges) {
 				const si = idxMap[e.source]
 				const ti = idxMap[e.target]
 				if (si == null || ti == null) {
+					edgeNodeIndices.push([-1, -1])
 					vi += 6
 					continue
 				}
-				ePos[vi++] = simPos[si * 3]
-				ePos[vi++] = simPos[si * 3 + 1]
-				ePos[vi++] = simPos[si * 3 + 2]
-				ePos[vi++] = simPos[ti * 3]
-				ePos[vi++] = simPos[ti * 3 + 1]
-				ePos[vi++] = simPos[ti * 3 + 2]
 				edgeNodeIndices.push([si, ti])
+
+				const ax = simPos[si * 3],
+					ay = simPos[si * 3 + 1],
+					az = simPos[si * 3 + 2]
+				const bx = simPos[ti * 3],
+					by = simPos[ti * 3 + 1],
+					bz = simPos[ti * 3 + 2]
+				// Half-width: 0.6–2.4px, log-scaled by weight
+				const hw = 0.6 + 1.8 * (Math.log(e.weight + 1) / Math.log(maxW + 1))
+
+				for (let v = 0; v < 6; v++, vi++) {
+					const isA = IS_A[v]
+					ePosArr[vi * 3] = isA ? ax : bx
+					ePosArr[vi * 3 + 1] = isA ? ay : by
+					ePosArr[vi * 3 + 2] = isA ? az : bz
+					eOtherArr[vi * 3] = isA ? bx : ax
+					eOtherArr[vi * 3 + 1] = isA ? by : ay
+					eOtherArr[vi * 3 + 2] = isA ? bz : az
+					eSideArr[vi] = SIDES[v]
+					eWidthArr[vi] = hw
+				}
 			}
 
 			const eGeo = new Geometry(gl, {
-				position: {size: 3, data: ePos},
-				aHighlight: {size: 1, data: eHighlight}
+				aPos: {size: 3, data: ePosArr},
+				aOther: {size: 3, data: eOtherArr},
+				aSide: {size: 1, data: eSideArr},
+				aHighlight: {size: 1, data: eHighlightArr},
+				aWidth: {size: 1, data: eWidthArr}
 			})
-			const eProg = new Program(gl, {
+			edgeProg = new Program(gl, {
 				vertex: EDGE_VERT,
 				fragment: EDGE_FRAG,
-				uniforms: {uEdgeDimColor: {value: clrEdge}, uEdgeHighColor: {value: clrSelected}},
+				uniforms: {
+					uEdgeDimColor: {value: clrEdge},
+					uEdgeHighColor: {value: clrSelected},
+					uViewport: {value: [canvasW, canvasH]}
+				},
 				transparent: true,
 				depthTest: false
 			})
-			edgeMesh = new Mesh(gl, {mode: gl.LINES, geometry: eGeo, program: eProg})
+			edgeMesh = new Mesh(gl, {mode: gl.TRIANGLES, geometry: eGeo, program: edgeProg})
 			edgeMesh.setParent(scene)
 		}
 	}
@@ -397,14 +474,16 @@
 		updateVPMatrix()
 		let best = -1,
 			bestD2 = Infinity
-		const touchR = 28 // generous touch target in CSS px
+		// Hit radius matches the apparent screen size of each node (same formula as renderLabels)
+		const perspScale = REF_DIST / Math.max(cam.zoom, 50)
 		for (let i = 0; i < nodes.length; i++) {
 			const s = simToScreen(simPos[i * 3], simPos[i * 3 + 1], simPos[i * 3 + 2])
 			if (!s) continue
 			const dx = s.x - mx,
 				dy = s.y - my
 			const d2 = dx * dx + dy * dy
-			if (d2 < touchR * touchR && d2 < bestD2) {
+			const r = Math.max(12, nodeRadius(nodes[i]) * perspScale + 4)
+			if (d2 < r * r && d2 < bestD2) {
 				best = i
 				bestD2 = d2
 			}
@@ -427,24 +506,37 @@
 		ctx2d.textBaseline = 'alphabetic'
 
 		const q = searchQuery.trim().toLowerCase()
-		// Apparent scale factor: at default zoom (300), scale ≈ 1
-		const scaleFactor = cam.zoom / 300
+		// CSS pixel radius matching the vertex shader: aSize * REF_DIST / depth, depth ≈ cam.zoom
+		const perspScale = REF_DIST / Math.max(cam.zoom, 50)
+		const chainSet = new Set(chainTags)
 
-		for (let i = 0; i < nodes.length; i++) {
+		// Sort nodes farthest-first so nearer labels draw on top
+		const camX = camera.position.x,
+			camY = camera.position.y,
+			camZ = camera.position.z
+		const drawOrder = Array.from({length: nodes.length}, (_, i) => {
+			const dx = simPos[i * 3] - camX,
+				dy = simPos[i * 3 + 1] - camY,
+				dz = simPos[i * 3 + 2] - camZ
+			return {i, dist2: dx * dx + dy * dy + dz * dz}
+		}).sort((a, b) => b.dist2 - a.dist2)
+
+		for (const {i} of drawOrder) {
 			const s = simToScreen(simPos[i * 3], simPos[i * 3 + 1], simPos[i * 3 + 2])
 			if (!s) continue
 			const {x, y} = s
 
 			if (x < -120 || x > canvasW + 120 || y < -20 || y > canvasH + 20) continue
 
-			const isSelected = i === selectedIdx
+			const isSelected = chainSet.has(nodes[i].id)
 			const isHovered = i === hoveredIdx
 			const isMatch = Boolean(q && nodes[i].label.toLowerCase().includes(q))
-			const isDimmed = (!isSelected && !isHovered && selectedIdx >= 0 && !connectedSet.has(i)) || Boolean(q && !isMatch)
+			const isDimmed =
+				(!isSelected && !isHovered && chainTags.length > 0 && !connectedToChainSet.has(i)) || Boolean(q && !isMatch)
 
-			// Approximate apparent radius for label positioning/culling
+			// Apparent CSS pixel radius (matches what the shader draws)
 			const baseR = nodeRadius(nodes[i])
-			const apparentR = baseR * scaleFactor
+			const apparentR = Math.max(baseR * perspScale, 1)
 
 			// Skip tiny dimmed nodes — reduces label clutter at overview zoom
 			if (isDimmed && apparentR < 4) continue
@@ -499,13 +591,9 @@
 		// Orbit camera: sphere of radius cam.zoom around the pan target
 		camera.position.x = Math.sin(cam.orbitY) * Math.cos(cam.orbitX) * cam.zoom + cam.panX
 		camera.position.y = Math.sin(cam.orbitX) * cam.zoom + cam.panY
-		camera.position.z = Math.cos(cam.orbitY) * Math.cos(cam.orbitX) * cam.zoom
-		camera.lookAt([cam.panX, cam.panY, 0])
+		camera.position.z = Math.cos(cam.orbitY) * Math.cos(cam.orbitX) * cam.zoom + cam.panZ
+		camera.lookAt([cam.panX, cam.panY, cam.panZ])
 		camera.updateMatrixWorld()
-
-		if (nodeMesh?.program?.uniforms?.uCamZ) {
-			nodeMesh.program.uniforms.uCamZ.value = cam.zoom
-		}
 
 		renderer.render({scene, camera})
 		renderLabels()
@@ -526,50 +614,83 @@
 			labelCanvas.width = canvasW * dpr
 			labelCanvas.height = canvasH * dpr
 		}
+		if (edgeProg) edgeProg.uniforms.uViewport.value = [canvasW, canvasH]
 	}
 
 	// ---------------------------------------------------------------------------
-	// Selection / fly-to
+	// Chain selection
 	// ---------------------------------------------------------------------------
 
-	function selectNode(ni: number) {
-		selectedIdx = ni
-		connectedSet = new SvelteSet<number>()
-		const nodeId = nodes[ni].id
-		for (const edge of edges) {
-			if (edge.source === nodeId) {
-				const ti = nodes.findIndex((n) => n.id === edge.target)
-				if (ti >= 0) connectedSet.add(ti)
-			} else if (edge.target === nodeId) {
-				const si = nodes.findIndex((n) => n.id === edge.source)
-				if (si >= 0) connectedSet.add(si)
+	function handleNodeClick(ni: number) {
+		if (ni < 0 || ni >= nodes.length) return
+		const tag = nodes[ni].id
+		let next: string[]
+		if (chainTags.includes(tag)) {
+			next = chainTags.filter((t) => t !== tag) // remove from chain
+		} else if (chainTags.length > 0) {
+			const connected = edges.some(
+				(e) => (e.source === tag && chainTags.includes(e.target)) || (e.target === tag && chainTags.includes(e.source))
+			)
+			next = connected ? [...chainTags, tag] : [tag] // extend or start new
+		} else {
+			next = [tag]
+		}
+		chainTags = next
+		onTagChainChange?.(next)
+		onNodeClick?.(nodes[ni])
+		if (next.length > 0) flyTo(ni)
+		rebuildConnectedSet()
+		uploadNodeColors()
+		uploadEdgeColors()
+	}
+
+	function clearChain() {
+		chainTags = []
+		onTagChainChange?.([])
+		connectedToChainSet = new SvelteSet()
+		uploadNodeColors()
+		uploadEdgeColors()
+		gsap.killTweensOf(cam)
+		gsap.to(cam, {panX: 0, panY: 0, panZ: 0, duration: 0.5, ease: 'power2.out'})
+	}
+
+	function rebuildConnectedSet() {
+		const next = new SvelteSet<number>()
+		if (chainTags.length === 0) {
+			connectedToChainSet = next
+			return
+		}
+		const chainSet = new Set(chainTags)
+		const idxMap: Record<string, number> = {}
+		nodes.forEach((n, i) => {
+			idxMap[n.id] = i
+		})
+		for (const e of edges) {
+			if (chainSet.has(e.source)) {
+				const i = idxMap[e.target]
+				if (i != null) next.add(i)
+			}
+			if (chainSet.has(e.target)) {
+				const i = idxMap[e.source]
+				if (i != null) next.add(i)
 			}
 		}
-		uploadNodeColors()
-		uploadEdgeColors()
-		onNodeClick?.(nodes[ni])
-		flyTo(ni)
+		connectedToChainSet = next
 	}
 
-	function deselect() {
-		if (selectedIdx === -1 && connectedSet.size === 0) return
-		selectedIdx = -1
-		connectedSet = new SvelteSet()
-		uploadNodeColors()
-		uploadEdgeColors()
-	}
+	// ---------------------------------------------------------------------------
+	// Fly-to
+	// ---------------------------------------------------------------------------
 
 	function flyTo(ni: number) {
 		const sx = simPos[ni * 3],
 			sy = simPos[ni * 3 + 1],
 			sz = simPos[ni * 3 + 2]
-		const targetY = Math.atan2(sx, sz)
-		const dist = Math.sqrt(sx * sx + sy * sy + sz * sz)
-		const targetX = dist > 0.01 ? -Math.asin(sy / dist) * 0.5 : cam.orbitX
 		velX = 0
 		velY = 0
 		gsap.killTweensOf(cam)
-		gsap.to(cam, {orbitY: targetY, orbitX: targetX, panX: 0, panY: 0, duration: 0.6, ease: 'power2.out'})
+		// Move orbit center to the node — it appears in the viewport center
+		gsap.to(cam, {panX: sx, panY: sy, panZ: sz, duration: 0.6, ease: 'power2.out'})
 	}
 
 	// ---------------------------------------------------------------------------
@@ -577,6 +698,7 @@
 	// ---------------------------------------------------------------------------
 
 	let isDragging = false
+	let isPanning = false // right-button drag = pan
 	let dragMoved = false
 	let lastPX = 0,
 		lastPY = 0
@@ -591,6 +713,7 @@
 
 		if (activePointers.size === 1) {
 			isDragging = true
+			isPanning = e.button === 2 // right-click = pan; left-click = orbit
 			dragMoved = false
 			downPX = lastPX = e.clientX
 			downPY = lastPY = e.clientY
@@ -607,6 +730,16 @@
 	function onPointerMove(e: PointerEvent) {
 		activePointers.set(e.pointerId, {x: e.clientX, y: e.clientY})
 
+		// Mouse hover — always, even when not dragging
+		if (e.pointerType !== 'touch') {
+			const rect = container.getBoundingClientRect()
+			const ni = hitTest(e.clientX - rect.left, e.clientY - rect.top)
+			if (ni !== hoveredIdx) {
+				hoveredIdx = ni
+				uploadNodeColors()
+			}
+		}
+
 		if (activePointers.size === 2) {
 			// Two-finger pinch-zoom
 			const pts = [...activePointers.values()]
@@ -622,15 +755,15 @@
 		const dy = e.clientY - lastPY
 		if (Math.abs(e.clientX - downPX) > 6 || Math.abs(e.clientY - downPY) > 6) dragMoved = true
 
-		if (e.ctrlKey) {
-			// Ctrl+drag: pan the orbit center (laterally shift the scene)
+		if (isPanning) {
+			// Right-drag: pan the orbit center
 			const panScale = cam.zoom / Math.max(canvasW, 1)
 			cam.panX -= dx * panScale
 			cam.panY += dy * panScale
 			velX = 0
 			velY = 0
 		} else {
-			// Orbit
+			// Left-drag: orbit
 			velX = -dy * 0.005
 			velY = dx * 0.005
 			cam.orbitX = Math.max(-HALF_PI, Math.min(HALF_PI, cam.orbitX + velX))
@@ -639,16 +772,6 @@
 
 		lastPX = e.clientX
 		lastPY = e.clientY
-
-		// Hover for mouse only (no hover concept on touch)
-		if (e.pointerType !== 'touch') {
-			const rect = container.getBoundingClientRect()
-			const ni = hitTest(e.clientX - rect.left, e.clientY - rect.top)
-			if (ni !== hoveredIdx) {
-				hoveredIdx = ni
-				uploadNodeColors()
-			}
-		}
 	}
 
 	function onPointerUp(e: PointerEvent) {
@@ -659,11 +782,14 @@
 		if (wasSingle) {
 			isDragging = false
 			if (!dragMoved) {
-				// Tap / click — select or deselect
+				// Tap / click — chain select or clear
 				const rect = container.getBoundingClientRect()
 				const ni = hitTest(e.clientX - rect.left, e.clientY - rect.top)
-				if (ni >= 0 && ni !== selectedIdx) selectNode(ni)
-				else deselect()
+				if (ni >= 0) {
+					handleNodeClick(ni)
+				} else {
+					clearChain()
+				}
 				velX = 0
 				velY = 0
 			}
@@ -680,6 +806,15 @@
 	function applyZoom(factor: number) {
 		cam.zoom = Math.max(50, Math.min(15000, cam.zoom / factor))
 	}
+
+	// ---------------------------------------------------------------------------
+	// Derived — intersection count + href
+	// ---------------------------------------------------------------------------
+
+	let matchingTracks = $derived.by(() => {
+		if (!chainTags.length || !tracks?.length) return []
+		return tracks.filter((t) => chainTags.every((tag) => t.tags?.map((x) => x.toLowerCase()).includes(tag)))
+	})
 
 	// ---------------------------------------------------------------------------
 	// Mount
@@ -729,6 +864,11 @@
 		untrack(() => {
 			simPos = newPos
 			buildGeometry()
+			// Preserve chain tags that are still valid in the new graph (e.g. URL-initialized tags)
+			const validIds = new Set(nodes.map((n) => n.id))
+			chainTags = chainTags.filter((t) => validIds.has(t))
+			hoveredIdx = -1
+			rebuildConnectedSet()
 			uploadNodeColors()
 			uploadEdgeColors()
 			cam.orbitX = -0.3
@@ -736,20 +876,27 @@
 			cam.zoom = newZoom
 			cam.panX = 0
 			cam.panY = 0
+			cam.panZ = 0
 			velX = 0
 			velY = 0
-			selectedIdx = -1
-			hoveredIdx = -1
-			connectedSet = new SvelteSet()
 		})
 	})
 
-	// Re-upload colors on interaction state or search change
+	// Re-upload colors on hover or search change
 	$effect(() => {
 		void searchQuery
 		void hoveredIdx
-		void selectedIdx
 		uploadNodeColors()
+	})
+
+	// Sync colors when chainTags changes from outside (parent binding)
+	$effect(() => {
+		void chainTags.length
+		untrack(() => {
+			rebuildConnectedSet()
+			uploadNodeColors()
+			uploadEdgeColors()
+		})
 	})
 </script>
 
@@ -760,6 +907,7 @@
 	onpointermove={onPointerMove}
 	onpointerup={onPointerUp}
 	onpointerleave={onPointerLeave}
+	oncontextmenu={(e) => e.preventDefault()}
 	role="img"
 	aria-label="Tag galaxy graph"
 >
@@ -768,6 +916,29 @@
 
 	{#if nodes.length === 0}
 		<p class="empty">No tags to display.</p>
+	{/if}
+
+	{#if chainTags.length > 0}
+		<aside class="chain-panel" onpointerdown={(e) => e.stopPropagation()} onpointerup={(e) => e.stopPropagation()}>
+			<div class="chain-tags">
+				{#each chainTags as tag, i (tag)}
+					{#if i > 0}<span class="sep">→</span>{/if}
+					<button class="chain-tag" onclick={() => handleNodeClick(nodes.findIndex((n) => n.id === tag))}>
+						{tag} <span aria-hidden="true">×</span>
+					</button>
+				{/each}
+				<button class="chain-clear" onclick={clearChain} aria-label="Clear chain">✕</button>
+			</div>
+			<div class="chain-meta">
+				<span class="chain-count">{matchingTracks.length} / {totalCount}</span>
+				{#if onPlayTags && matchingTracks.length > 0}
+					<button onclick={() => onPlayTags?.(chainTags, matchingTracks)}>▶ Play</button>
+				{/if}
+				{#if channelSlug}
+					<a href="/{channelSlug}/tracks?tags={chainTags.map(encodeURIComponent).join(',')}">View tracks</a>
+				{/if}
+			</div>
+		</aside>
 	{/if}
 </div>
 
@@ -809,5 +980,86 @@
 		justify-content: center;
 		color: var(--gray-11);
 		pointer-events: none;
+	}
+
+	.chain-panel {
+		position: absolute;
+		bottom: 0.5rem;
+		left: 0.5rem;
+		z-index: 2;
+		background: var(--gray-2);
+		border: 1px solid var(--gray-6);
+		border-radius: var(--radius-2, 4px);
+		padding: 0.5rem 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.8rem;
+	}
+
+	.chain-tags {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+	}
+
+	.sep {
+		color: var(--gray-10);
+	}
+
+	.chain-tag {
+		background: var(--accent-3);
+		border: 1px solid var(--accent-6);
+		border-radius: var(--radius-1, 3px);
+		padding: 0.1rem 0.4rem;
+		cursor: pointer;
+		font-size: 0.8rem;
+		color: var(--accent-11);
+	}
+
+	.chain-tag:hover {
+		background: var(--accent-4);
+	}
+
+	.chain-clear {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--gray-10);
+		padding: 0.1rem 0.3rem;
+		font-size: 0.85rem;
+	}
+
+	.chain-clear:hover {
+		color: var(--gray-12);
+	}
+
+	.chain-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.chain-count {
+		color: var(--gray-11);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.chain-meta button,
+	.chain-meta a {
+		background: var(--gray-4);
+		border: 1px solid var(--gray-6);
+		border-radius: var(--radius-1, 3px);
+		padding: 0.15rem 0.5rem;
+		cursor: pointer;
+		font-size: 0.8rem;
+		color: var(--gray-12);
+		text-decoration: none;
+	}
+
+	.chain-meta button:hover,
+	.chain-meta a:hover {
+		background: var(--gray-5);
 	}
 </style>

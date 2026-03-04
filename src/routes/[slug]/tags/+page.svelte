@@ -3,8 +3,11 @@
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
+	import {replaceState} from '$app/navigation'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelTags} from '$lib/utils'
+	import {setPlaylist, playTrack} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -22,16 +25,17 @@
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])
 
-	let filter = $state('all')
-	let timePeriod = $state('year')
-	let currentPeriod = $state(0)
-	let sort = $state('count') // 'count' | 'alpha'
-	let display = $state('list') // 'list' | 'cloud' | 'galaxy'
+	let filter = $state(page.url.searchParams.get('filter') ?? 'all')
+	let timePeriod = $state(page.url.searchParams.get('timePeriod') ?? 'year')
+	let currentPeriod = $state(Number(page.url.searchParams.get('period') ?? 0))
+	let sort = $state(page.url.searchParams.get('sort') ?? 'count')
+	let display = $state(page.url.searchParams.get('display') ?? 'list')
 	let search = $state('')
 
 	// Galaxy-specific options
-	let galaxyMinEdgeWeight = $state(2)
-	let galaxyMaxEdgesPerNode = $state(20)
+	let galaxyMinEdgeWeight = $state(Number(page.url.searchParams.get('minEdge') ?? 2))
+	let galaxyMaxEdgesPerNode = $state(Number(page.url.searchParams.get('maxEdge') ?? 20))
+	let galaxyChainTags = $state(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
 
 	const displayIconMap = {list: 'unordered-list', cloud: 'tag', galaxy: 'share-alt'}
 	const displayLabelMap = {list: () => m.channels_view_label_list(), cloud: () => 'Cloud', galaxy: () => 'Galaxy'}
@@ -107,6 +111,18 @@
 		return newPeriods
 	})
 
+	// Tracks filtered to the current period (shared between galaxyGraph and TagGalaxy)
+	let periodTracks = $derived.by(() => {
+		const start = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].startDate
+		const end = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].endDate
+		return tracks.filter((t) => {
+			const d = new Date(t.created_at)
+			if (start && d < start) return false
+			if (end && d >= end) return false
+			return true
+		})
+	})
+
 	// Tag aggregation from track.tags
 	function aggregateTags(trackList, startDate, endDate) {
 		const filtered = trackList.filter((track) => {
@@ -144,19 +160,9 @@
 		return filteredTags // already sorted by count desc from getChannelTags
 	})
 
-	// Galaxy graph (built from filteredTags — respects period + filter)
+	// Galaxy graph (built from periodTracks — respects period)
 	let galaxyGraph = $derived.by(() => {
 		if (display !== 'galaxy') return {nodes: [], edges: []}
-		// Build a synthetic track list: one track per tag occurrence
-		// filteredTags gives {value, count} — reconstruct co-occurrence from actual tracks
-		const periodStart = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].startDate
-		const periodEnd = currentPeriod === 0 || !periods.length ? null : periods[currentPeriod - 1].endDate
-		const periodTracks = tracks.filter((t) => {
-			const d = new Date(t.created_at)
-			if (periodStart && d < periodStart) return false
-			if (periodEnd && d >= periodEnd) return false
-			return true
-		})
 		return buildTagGraph(periodTracks, {
 			minEdgeWeight: galaxyMinEdgeWeight,
 			maxEdgesPerNode: galaxyMaxEdgesPerNode
@@ -194,6 +200,30 @@
 	$effect(() => {
 		tagCount.set(visibleTags.length)
 	})
+
+	// URL persistence — write state to URL on change without triggering navigation.
+	// Uses plain string building (no reactive URLSearchParams) and replaceState (no load re-runs).
+	$effect(() => {
+		const parts = []
+		if (display !== 'list') parts.push(`display=${encodeURIComponent(display)}`)
+		if (sort !== 'count') parts.push(`sort=${encodeURIComponent(sort)}`)
+		if (filter !== 'all') parts.push(`filter=${encodeURIComponent(filter)}`)
+		if (timePeriod !== 'year') parts.push(`timePeriod=${encodeURIComponent(timePeriod)}`)
+		if (currentPeriod !== 0) parts.push(`period=${currentPeriod}`)
+		if (galaxyMinEdgeWeight !== 2) parts.push(`minEdge=${galaxyMinEdgeWeight}`)
+		if (galaxyMaxEdgesPerNode !== 20) parts.push(`maxEdge=${galaxyMaxEdgesPerNode}`)
+		if (galaxyChainTags.length) parts.push(`tags=${galaxyChainTags.map(encodeURIComponent).join(',')}`)
+		const search = parts.length ? `?${parts.join('&')}` : ''
+		replaceState(`/${slug}/tags${search}`, {})
+	})
+
+	// Play all tracks matching the current tag chain
+	function handlePlayTags(tags, matchingTracks) {
+		const ids = matchingTracks.map((t) => t.id)
+		if (!ids.length || !channel) return
+		setPlaylist(appState.active_deck_id, ids, {title: tags.join(' + '), slug: channel.slug})
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
+	}
 </script>
 
 {#if !channel}
@@ -289,10 +319,15 @@
 					<TagGalaxy
 						nodes={galaxyGraph.nodes}
 						edges={galaxyGraph.edges}
-						searchQuery={search}
-						onNodeClick={(n) => {
-							search = n.label
+						tracks={periodTracks}
+						totalCount={periodTrackCount}
+						channelSlug={channel.slug}
+						bind:chainTags={galaxyChainTags}
+						onTagChainChange={(tags) => {
+							galaxyChainTags = tags
 						}}
+						onPlayTags={handlePlayTags}
+						searchQuery={search}
 					/>
 				</div>
 			{:else}
@@ -430,9 +465,16 @@
 		align-items: baseline;
 	}
 
+	main {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		min-height: 0;
+	}
+
 	.galaxy-canvas {
-		height: 70vh;
-		min-height: 400px;
+		flex: 1;
+		min-height: 0;
 		position: relative;
 		margin: 0.5rem;
 	}
