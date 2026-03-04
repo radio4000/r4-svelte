@@ -206,7 +206,7 @@
 
 	let maxVisibleTagCount = $derived(visibleTags.reduce((max, tag) => Math.max(max, tag.count), 1))
 
-	let visibleTrackCount = $derived(visibleTags.reduce((sum, tag) => sum + tag.count, 0))
+	let visibleTrackCount = $derived(baseTracks.length)
 
 	let currentPeriodLabel = $derived(
 		currentPeriod === 0 ? m.tags_all_time() : periods[currentPeriod - 1]?.label || m.tags_all_time()
