@@ -6,6 +6,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
+	import TagChain from '$lib/components/tag-chain.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
@@ -19,6 +20,7 @@
 	let filter = $state('all')
 	let timePeriod = $state('year')
 	let currentPeriod = $state(0)
+	let display = $state('list')
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -157,6 +159,10 @@
 						<option value="month">{m.tags_period_months()}</option>
 					</select>
 				</label>
+				<div class="display-toggle">
+					<button class:active={display === 'list'} onclick={() => (display = 'list')} title="List"> ☰ </button>
+					<button class:active={display === 'chain'} onclick={() => (display = 'chain')} title="Chain"> ⚡ </button>
+				</div>
 			</menu>
 			<!--
 			<h1>{m.tags_heading({name: channel.name})}</h1>
@@ -196,18 +202,22 @@
 		{#if tracksQuery.isLoading}
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if filteredTags.length > 0}
-			<ol class="list">
-				{#each filteredTags as { value, count } (value)}
-					<li>
-						<span class="tag">
-							<a href={`/search?q=@${channel.slug} ${value}`}>
-								{value}
-							</a>
-						</span>
-						<span class="count">{count}</span>
-					</li>
-				{/each}
-			</ol>
+			{#if display === 'chain'}
+				<TagChain tags={filteredTags} {tracks} channelSlug={channel.slug} />
+			{:else}
+				<ol class="list">
+					{#each filteredTags as { value, count } (value)}
+						<li>
+							<span class="tag">
+								<a href={`/search?q=@${channel.slug} ${value}`}>
+									{value}
+								</a>
+							</span>
+							<span class="count">{count}</span>
+						</li>
+					{/each}
+				</ol>
+			{/if}
 		{:else}
 			<p>{m.tags_empty()}</p>
 		{/if}
@@ -218,6 +228,31 @@
 	header {
 		margin: 0.5rem 0.5rem 0;
 		place-items: center;
+	}
+
+	.display-toggle {
+		display: flex;
+		gap: 0.25rem;
+		margin-left: auto;
+	}
+
+	.display-toggle button {
+		padding: 0.375rem 0.5rem;
+		background: var(--gray-3);
+		border: 1px solid var(--gray-7);
+		border-radius: var(--border-radius);
+		cursor: pointer;
+		font-size: 1rem;
+	}
+
+	.display-toggle button:hover {
+		background: var(--gray-4);
+	}
+
+	.display-toggle button.active {
+		background: var(--accent-9);
+		color: var(--gray-1);
+		border-color: var(--accent-9);
 	}
 
 	.scrubber {
