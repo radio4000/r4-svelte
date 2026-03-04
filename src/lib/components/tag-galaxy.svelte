@@ -851,6 +851,12 @@
 			ro.disconnect()
 			container.removeEventListener('wheel', onWheel)
 			gsap.killTweensOf(cam)
+			// Dispose OGL resources
+			nodeMesh?.geometry?.delete()
+			nodeMesh?.program?.delete()
+			edgeMesh?.geometry?.delete()
+			edgeProg?.delete()
+			renderer?.delete()
 		}
 	})
 
