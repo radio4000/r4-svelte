@@ -28,6 +28,7 @@ export const tracksCollection = createCollection<Track, string>({
 			return ['tracks']
 		},
 		syncMode: 'on-demand',
+		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
 		staleTime: 24 * 60 * 60 * 1000,
