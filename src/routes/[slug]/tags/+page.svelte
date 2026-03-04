@@ -26,6 +26,7 @@
 	const periodValues = ['year', 'solstice', 'month']
 	const displayValues = ['list', 'cloud', 'chain']
 	const sortValues = ['count', 'alpha']
+	const directionValues = ['desc', 'asc']
 
 	const readEnumParam = (key, validValues, fallback) => {
 		const value = page.url.searchParams.get(key)
@@ -48,13 +49,23 @@
 
 	const readSearchParam = () => page.url.searchParams.get('search') ?? ''
 
-	let filter = $state(readEnumParam('filter', filterValues, 'all'))
-	let timePeriod = $state(readEnumParam('timePeriod', periodValues, 'year'))
-	let currentPeriod = $state(readPeriodParam())
-	let display = $state(readEnumParam('display', displayValues, 'list'))
-	let sort = $state(readEnumParam('sort', sortValues, 'count'))
-	let chainTags = $state(readTagsParam())
-	let search = $state(readSearchParam())
+	let urlFilter = $derived(readEnumParam('filter', filterValues, 'all'))
+	let urlTimePeriod = $derived(readEnumParam('timePeriod', periodValues, 'year'))
+	let urlCurrentPeriod = $derived(readPeriodParam())
+	let urlDisplay = $derived(readEnumParam('display', displayValues, 'list'))
+	let urlSort = $derived(readEnumParam('sort', sortValues, 'count'))
+	let urlDirection = $derived(readEnumParam('direction', directionValues, 'desc'))
+	let urlChainTags = $derived(readTagsParam())
+	let urlSearch = $derived(readSearchParam())
+
+	let filter = $state('all')
+	let timePeriod = $state('year')
+	let currentPeriod = $state(0)
+	let display = $state('list')
+	let sort = $state('count')
+	let direction = $state('desc')
+	let chainTags = $state([])
+	let search = $state('')
 
 	const filterLabelMap = {
 		all: () => m.tags_filter_all(),
@@ -172,9 +183,11 @@
 
 		// Apply sort
 		if (sort === 'alpha') {
-			return tags.toSorted((a, b) => a.value.localeCompare(b.value))
+			const sorted = tags.toSorted((a, b) => a.value.localeCompare(b.value))
+			return direction === 'asc' ? sorted : sorted.toReversed()
 		}
-		return tags // count is already sorted from getChannelTags
+		const sorted = tags.toSorted((a, b) => b.count - a.count || a.value.localeCompare(b.value))
+		return direction === 'desc' ? sorted : sorted.toReversed()
 	})
 
 	let visibleTags = $derived.by(() => {
@@ -198,7 +211,20 @@
 		tagCount.set(visibleTags.length)
 	})
 
+	// URL is the source of truth. Keep local UI state synced when URL changes.
 	$effect(() => {
+		filter = urlFilter
+		timePeriod = urlTimePeriod
+		currentPeriod = urlCurrentPeriod
+		display = urlDisplay
+		sort = urlSort
+		direction = urlDirection
+		chainTags = urlChainTags
+		search = urlSearch
+	})
+
+	$effect(() => {
+		if (!periods.length) return
 		if (currentPeriod <= periods.length) return
 		currentPeriod = periods.length
 	})
@@ -207,6 +233,7 @@
 		const parts = []
 		if (display !== 'list') parts.push(`display=${encodeURIComponent(display)}`)
 		if (sort !== 'count') parts.push(`sort=${encodeURIComponent(sort)}`)
+		if (direction !== 'desc') parts.push(`direction=${encodeURIComponent(direction)}`)
 		if (filter !== 'all') parts.push(`filter=${encodeURIComponent(filter)}`)
 		if (timePeriod !== 'year') parts.push(`timePeriod=${encodeURIComponent(timePeriod)}`)
 		if (currentPeriod !== 0) parts.push(`period=${currentPeriod}`)
@@ -228,7 +255,7 @@
 			<SearchInput bind:value={search} placeholder="Search tags…" />
 
 			<PopoverMenu id="tags-data" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="filter" /><span>Data</span>{/snippet}
+				{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
 				<menu class="nav-vertical">
 					<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>
 						{filterLabelMap.all()}
@@ -246,15 +273,26 @@
 			</PopoverMenu>
 
 			<PopoverMenu id="tags-order" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="sort" />{sortLabelMap[sort]()}{/snippet}
-				<menu class="nav-vertical">
-					<button class:active={sort === 'count'} onclick={() => (sort = 'count')}>
-						{sortLabelMap.count()}
+				{#snippet trigger()}
+					<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+					{sortLabelMap[sort]()}
+				{/snippet}
+				<div class="sort-row">
+					<select bind:value={sort} aria-label={m.sort_order_label()}>
+						<option value="count">{sortLabelMap.count()}</option>
+						<option value="alpha">{sortLabelMap.alpha()}</option>
+					</select>
+					<button
+						type="button"
+						onclick={() => {
+							direction = direction === 'asc' ? 'desc' : 'asc'
+						}}
+						title={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
+						aria-label={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
+					>
+						<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
 					</button>
-					<button class:active={sort === 'alpha'} onclick={() => (sort = 'alpha')}>
-						{sortLabelMap.alpha()}
-					</button>
-				</menu>
+				</div>
 			</PopoverMenu>
 
 			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
@@ -386,6 +424,15 @@
 
 	.filtermenu :global(.search-input input) {
 		width: 100%;
+	}
+
+	.sort-row {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	.sort-row select {
+		flex: 1;
 	}
 
 	.scrubber {
