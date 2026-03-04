@@ -1,72 +1,67 @@
 <script lang="ts">
+	import {resolve} from '$app/paths'
 	import {setPlaylist, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
-	import {buildTagGraph} from '$lib/utils'
+	import {getChannelTags} from '$lib/utils'
 
-	type Tag = {value: string; count: number}
-	type Track = {id: string; tags?: string[] | null}
+	interface Tag {
+		value: string
+		count: number
+	}
 
-	/** @type {{tags: Tag[], tracks: Track[], channelSlug: string}} */
-	const {tags = [], tracks = [], channelSlug = ''} = $props()
+	interface Track {
+		id: string
+		tags?: string[] | null
+	}
+
+	interface Props {
+		tags?: Tag[]
+		tracks?: Track[]
+		channelSlug?: string
+	}
+
+	let {tags = [], tracks = [], channelSlug = ''}: Props = $props()
 
 	let chain: string[] = $state([])
 
-	/** Compute tag co-occurrence graph */
-	let tagGraph = $derived(buildTagGraph(tracks, {minEdgeWeight: 1, maxTags: 500}))
-
-	/** Get tags that co-occur with current chain (branches) */
-	let availableBranches = $derived.by((): Set<string> | null => {
-		if (chain.length === 0) return null
-
-		const branchSet = new Set<string>()
-		const chainLower = chain.map((t) => t.toLowerCase())
-
-		for (const edge of tagGraph.edges) {
-			const sourceLower = edge.source.toLowerCase()
-			const targetLower = edge.target.toLowerCase()
-
-			// If one end is in chain, add the other end
-			if (chainLower.includes(sourceLower) && !chainLower.includes(targetLower)) {
-				branchSet.add(edge.target)
-			} else if (chainLower.includes(targetLower) && !chainLower.includes(sourceLower)) {
-				branchSet.add(edge.source)
-			}
-		}
-
-		return branchSet
-	})
+	let chainLower = $derived(chain.map((t) => t.toLowerCase()))
 
 	/** Get tracks matching chain (AND logic) */
-	let matchingTracks = $derived(
-		chain.length === 0
-			? tracks
-			: tracks.filter((t) => chain.every((tag) => t.tags?.some((tTag) => tTag.toLowerCase() === tag.toLowerCase())))
-	)
+	let matchingTracks = $derived.by(() => {
+		if (chainLower.length === 0) return []
+		return tracks.filter((track) => {
+			const trackTags = (track.tags ?? []).map((tag) => tag.toLowerCase())
+			return chainLower.every((tag) => trackTags.includes(tag))
+		})
+	})
 
-	/** Filtered tags: show branches when chain has selection, filter out branches with 0 tracks */
+	/** Show only branch tags that produce >0 matches with current chain. */
 	let visibleTags = $derived.by(() => {
 		if (chain.length === 0) return tags
 
-		// If no branches, show nothing (dead end)
-		if (!availableBranches || availableBranches.size === 0) return []
+		const chainLookup = Object.fromEntries(chainLower.map((tag) => [tag, true]))
+		const branchCounts = Object.fromEntries(getChannelTags(matchingTracks).map((tag) => [tag.value, tag.count]))
 
-		// Show branches that have tracks
-		const branchTags = tags.filter((t) => availableBranches.has(t.value.toLowerCase()))
-		return branchTags
+		return tags
+			.filter((tag) => !chainLookup[tag.value.toLowerCase()])
+			.map((tag) => ({value: tag.value, count: branchCounts[tag.value.toLowerCase()] ?? 0}))
+			.filter((tag) => tag.count > 0)
 	})
 
 	/** Toggle tag in/out of chain */
-	function toggleTag(tag) {
-		if (chain.includes(tag)) {
-			chain = chain.filter((t) => t !== tag)
+	function toggleTag(tag: string) {
+		const key = tag.toLowerCase()
+		if (chainLower.includes(key)) {
+			chain = chain.filter((t) => t.toLowerCase() !== key)
 		} else {
 			chain = [...chain, tag]
 		}
 	}
 
 	/** Remove single tag from chain */
-	function removeTag(tag) {
-		chain = chain.filter((t) => t !== tag)
+	function removeTag(tag: string) {
+		const key = tag.toLowerCase()
+		chain = chain.filter((t) => t.toLowerCase() !== key)
 	}
 
 	/** Clear entire chain */
@@ -76,7 +71,7 @@
 
 	/** Play matching tracks */
 	async function playChain() {
-		if (matchingTracks.length === 0) return
+		if (chain.length === 0 || matchingTracks.length === 0) return
 		const trackIds = matchingTracks.map((t) => t.id)
 		const deckId = appState.active_deck_id
 		setPlaylist(deckId, trackIds)
@@ -97,7 +92,7 @@
 			</div>
 			<div class="chain-actions">
 				<button class="play-btn" onclick={playChain} disabled={matchingTracks.length === 0}> ▶ Play </button>
-				<a href="/{channelSlug}/tracks?tags={chain.map(encodeURIComponent).join(',')}" class="view-link">
+				<a href={resolve(`/${channelSlug}/tracks?tags=${chain.map(encodeURIComponent).join(',')}`)} class="view-link">
 					View {matchingTracks.length} tracks
 				</a>
 				<button class="clear-btn" onclick={clearChain} aria-label="Clear chain">✕</button>
@@ -108,7 +103,12 @@
 	<ol class="tag-list">
 		{#each visibleTags as { value, count } (value)}
 			<li>
-				<button type="button" class="tag-link" class:in-chain={chain.includes(value)} onclick={() => toggleTag(value)}>
+				<button
+					type="button"
+					class="tag-link"
+					class:in-chain={chainLower.includes(value.toLowerCase())}
+					onclick={() => toggleTag(value)}
+				>
 					{value}
 				</button>
 				<span class="count">{count}</span>
