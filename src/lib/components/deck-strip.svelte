@@ -109,6 +109,11 @@
 		flex: 1 1 auto;
 	}
 
+	/* hide close button when only one deck */
+	.deck-strip:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
+		display: none;
+	}
+
 	/* "fill deck": non-compact with at least one visible panel (video or queue) */
 	@media (max-width: 768px) {
 		.deck-strip {

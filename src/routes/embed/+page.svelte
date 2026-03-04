@@ -100,7 +100,7 @@
 	}
 </script>
 
-<details>
+<details hidden>
 	<summary>debug</summary>
 	<form onsubmit={navigate}>
 		<input bind:value={inputQ} placeholder="@ko002 @oskar #jazz; @good-time-radio" size="40" />

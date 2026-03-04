@@ -427,6 +427,7 @@
 			{/if}
 			<menu class="layout-controls top-layout-controls">
 				<button
+					class="close-deck"
 					onclick={() => {
 						const bchId = getBroadcastingChannelId()
 						removeDeck(deckId)
