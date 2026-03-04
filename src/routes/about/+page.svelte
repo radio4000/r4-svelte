@@ -2,8 +2,8 @@
 	import * as m from '$lib/paraglide/messages'
 	import BackLink from '$lib/components/back-link.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import {appChatUrl} from '$lib/config'
 	import {sdk} from '@radio4000/sdk'
+	import CommunityLinks from '$lib/components/community-links.svelte'
 
 	/** @type {import('$lib/types').Channel[]} */
 	let featuredChannels = $state([])
@@ -119,11 +119,7 @@
 			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
 			<a href="/" class="btn">{m.common_start_exploring()}</a>
 		</p>
-		<p>
-			<a href="https://github.com/radio4000/r4-sync-tests" rel="noopener noreferrer">Source code on GitHub</a>
-			·
-			<a href={appChatUrl} rel="noopener noreferrer">Chat on Matrix</a>
-		</p>
+		<CommunityLinks />
 	</footer>
 </article>
 
@@ -169,15 +165,6 @@
 
 	ul {
 		padding-left: 2rem;
-	}
-
-	footer {
-		margin-top: 3rem;
-		text-align: center;
-		color: var(--color-text-secondary);
-		display: flex;
-		flex-flow: column;
-		gap: 1rem;
 	}
 
 	.featured-channels {

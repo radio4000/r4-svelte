@@ -6,7 +6,7 @@
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
-	import {appChatUrl} from '$lib/config'
+	import {appChatUrl, appDiscordUrl} from '$lib/config'
 
 	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = __GIT_INFO__.sha
@@ -67,9 +67,13 @@
 			<Icon icon="document" />
 			Docs
 		</a>
+		<a href={appDiscordUrl} target="_blank" rel="noreferrer">
+			<Icon icon="message-circle" />
+			Discord
+		</a>
 		<a href={appChatUrl} rel="noreferrer">
 			<Icon icon="message-circle" />
-			{m.nav_chat()}
+			Matrix
 		</a>
 		<a href="{repoUrl}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
 			<Icon icon="html" />

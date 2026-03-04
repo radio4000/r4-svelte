@@ -1,0 +1,27 @@
+<script>
+	import {appChatUrl, appDiscordUrl, appSocialUrl} from '$lib/config'
+
+	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
+</script>
+
+<nav>
+	<a href={repoUrl} target="_blank" rel="noreferrer">Source <small>how it's built</small></a> &rarr;
+	<a href="/docs">Docs <small>how things work</small></a>
+</nav>
+
+<nav>
+	Chat on <a href={appDiscordUrl} target="_blank" rel="noreferrer">Discord chat</a> or
+	<a href={appChatUrl} target="_blank" rel="noreferrer">Matrix chat</a>. Follow along on <a href={appSocialUrl} target="_blank" rel="noreferrer">Bluesky</a>
+</nav>
+
+<style>
+	nav {
+		font-size: var(--font-4);
+		color: var(--gray-10);
+		margin: 0;
+	}
+
+	a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
+		display: none;
+	}
+</style>
