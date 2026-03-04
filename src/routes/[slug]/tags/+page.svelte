@@ -255,6 +255,12 @@
 		color: var(--accent-9);
 	}
 
+	@media (max-width: 640px) {
+		.scrubber-labels {
+			display: none;
+		}
+	}
+
 	.list {
 		margin: 0 0.5rem;
 	}

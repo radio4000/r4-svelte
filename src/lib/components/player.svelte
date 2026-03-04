@@ -142,6 +142,7 @@
 		buildDeckChannelHeaderState({
 			title: headerTitle,
 			slug: headerSlug,
+			playlistTitle: deck?.playlist_title,
 			listening: Boolean(deck?.listening_to_channel_id),
 			listeningWhoSlug: broadcastingChannel?.slug,
 			listeningWhomTrackSlug: displayTrack?.slug,
