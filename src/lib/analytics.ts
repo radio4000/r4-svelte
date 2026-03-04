@@ -27,6 +27,12 @@ export function syncAnalyticsConsent(optIn: boolean) {
 	if (optIn) {
 		init()
 		posthog.opt_in_capturing()
+		// If a user is already logged in when opting in, identify them now
+		const user = appState.user
+		if (user && !identified) {
+			identified = true
+			posthog.identify(user.id)
+		}
 	} else {
 		if (initialized) posthog.opt_out_capturing()
 	}

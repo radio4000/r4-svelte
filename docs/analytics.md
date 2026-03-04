@@ -14,6 +14,16 @@ The `appState.analytics_opt_in` boolean (default `false`) controls whether data 
 
 When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` is called reactively in `+layout.svelte`.
 
+## Identity
+
+`identify(userId)` and `reset()` are exported from `$lib/analytics` and called in `+layout.svelte`:
+
+- On opt-in: if a user is already logged in, they are identified immediately
+- On login: `identify(user.id)` links future events to the user
+- On logout: `reset()` unlinks the session so anonymous events don't bleed across users
+
+All three helpers are no-ops when the user has not opted in.
+
 ## Capturing custom events
 
 Import and call `capture()` from `$lib/analytics`:
