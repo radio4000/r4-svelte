@@ -11,6 +11,7 @@
 	import TagChain from '$lib/components/tag-chain.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug ?? '')
@@ -23,7 +24,7 @@
 
 	const filterValues = ['all', 'single-use', 'frequent', 'rare']
 	const periodValues = ['year', 'solstice', 'month']
-	const displayValues = ['list', 'chain']
+	const displayValues = ['list', 'cloud', 'chain']
 	const sortValues = ['count', 'alpha']
 
 	const readEnumParam = (key, validValues, fallback) => {
@@ -45,12 +46,15 @@
 			.filter(Boolean)
 	}
 
+	const readSearchParam = () => page.url.searchParams.get('search') ?? ''
+
 	let filter = $state(readEnumParam('filter', filterValues, 'all'))
 	let timePeriod = $state(readEnumParam('timePeriod', periodValues, 'year'))
 	let currentPeriod = $state(readPeriodParam())
 	let display = $state(readEnumParam('display', displayValues, 'list'))
 	let sort = $state(readEnumParam('sort', sortValues, 'count'))
 	let chainTags = $state(readTagsParam())
+	let search = $state(readSearchParam())
 
 	const filterLabelMap = {
 		all: () => m.tags_filter_all(),
@@ -70,8 +74,8 @@
 		alpha: () => 'A–Z'
 	}
 
-	const displayIconMap = {list: 'unordered-list', chain: 'share-alt'}
-	const displayLabelMap = {list: () => 'List', chain: () => 'Chain'}
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'share-alt'}
+	const displayLabelMap = {list: () => 'List', cloud: () => 'Cloud', chain: () => 'Chain'}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -173,6 +177,14 @@
 		return tags // count is already sorted from getChannelTags
 	})
 
+	let visibleTags = $derived.by(() => {
+		const query = search.trim().toLowerCase()
+		if (!query) return filteredTags
+		return filteredTags.filter((tag) => tag.value.includes(query))
+	})
+
+	let maxVisibleTagCount = $derived(visibleTags.reduce((max, tag) => Math.max(max, tag.count), 1))
+
 	// Track count for current period
 	let periodTrackCount = $derived(periodTracks.length)
 
@@ -183,7 +195,7 @@
 	// Animated tag count
 	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
 	$effect(() => {
-		tagCount.set(filteredTags.length)
+		tagCount.set(visibleTags.length)
 	})
 
 	$effect(() => {
@@ -198,12 +210,13 @@
 		if (filter !== 'all') parts.push(`filter=${encodeURIComponent(filter)}`)
 		if (timePeriod !== 'year') parts.push(`timePeriod=${encodeURIComponent(timePeriod)}`)
 		if (currentPeriod !== 0) parts.push(`period=${currentPeriod}`)
+		if (search.trim()) parts.push(`search=${encodeURIComponent(search.trim())}`)
 		if (chainTags.length) parts.push(`tags=${chainTags.map(encodeURIComponent).join(',')}`)
-		const search = parts.length ? `?${parts.join('&')}` : ''
+		const queryString = parts.length ? `?${parts.join('&')}` : ''
 		const basePath = resolve('/[slug]/tags', {slug})
-		const nextPath = `${basePath}${search}`
+		const nextPath = `${basePath}${queryString}`
 		const currentPath = `${page.url.pathname}${page.url.search}`
-		if (currentPath !== nextPath) replaceState(`${resolve('/[slug]/tags', {slug})}${search}`, {})
+		if (currentPath !== nextPath) replaceState(`${resolve('/[slug]/tags', {slug})}${queryString}`, {})
 	})
 </script>
 
@@ -211,10 +224,12 @@
 	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {:else}
 	<main>
-		<header class="row">
-			<PopoverMenu id="tags-filter" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="filter" /><span>{filterLabelMap[filter]()}</span>{/snippet}
-				<menu>
+		<menu class="filtermenu">
+			<SearchInput bind:value={search} placeholder={m.tracks_filter_placeholder()} />
+
+			<PopoverMenu id="tags-data" closeOnClick={false}>
+				{#snippet trigger()}<Icon icon="filter" /><span>Data</span>{/snippet}
+				<menu class="nav-vertical">
 					<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>
 						{filterLabelMap.all()}
 					</button>
@@ -228,11 +243,7 @@
 						{filterLabelMap.rare()}
 					</button>
 				</menu>
-			</PopoverMenu>
-
-			<PopoverMenu id="tags-period" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="calendar" /><span>{periodLabelMap[timePeriod]()}</span>{/snippet}
-				<menu>
+				<menu class="nav-vertical">
 					<button
 						class:active={timePeriod === 'year'}
 						onclick={() => {
@@ -261,11 +272,7 @@
 						{periodLabelMap.month()}
 					</button>
 				</menu>
-			</PopoverMenu>
-
-			<PopoverMenu id="tags-sort" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="sort-asc" /><span>{sortLabelMap[sort]()}</span>{/snippet}
-				<menu>
+				<menu class="nav-vertical">
 					<button class:active={sort === 'count'} onclick={() => (sort = 'count')}>
 						{sortLabelMap.count()}
 					</button>
@@ -277,16 +284,19 @@
 
 			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
 				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]()}{/snippet}
-				<menu>
+				<menu class="view-modes">
 					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
 						<Icon icon="unordered-list" /><small>List</small>
+					</button>
+					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
+						<Icon icon="tag" /><small>Cloud</small>
 					</button>
 					<button class:active={display === 'chain'} onclick={() => (display = 'chain')}>
 						<Icon icon="share-alt" /><small>Chain</small>
 					</button>
 				</menu>
 			</PopoverMenu>
-		</header>
+		</menu>
 
 		{#if periods.length > 0}
 			<div class="scrubber">
@@ -320,12 +330,26 @@
 
 		{#if tracksQuery.isLoading}
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
-		{:else if filteredTags.length > 0}
+		{:else if visibleTags.length > 0}
 			{#if display === 'chain'}
-				<TagChain tags={filteredTags} tracks={periodTracks} channelSlug={channel.slug} bind:chainTags />
+				<TagChain tags={visibleTags} tracks={periodTracks} channelSlug={channel.slug} bind:chainTags />
+			{:else if display === 'cloud'}
+				<div class="cloud">
+					{#each visibleTags as { value, count } (value)}
+						<span
+							style="font-size: calc(0.8rem + {maxVisibleTagCount
+								? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
+								: '0.0'}rem)"
+						>
+							<a href={resolve(`/search?q=@${channel.slug} ${value}`)}>
+								{value}
+							</a>
+						</span>
+					{/each}
+				</div>
 			{:else}
 				<ol class="list">
-					{#each filteredTags as { value, count } (value)}
+					{#each visibleTags as { value, count } (value)}
 						<li>
 							<span class="tag">
 								<a href={resolve(`/search?q=@${channel.slug} ${value}`)}>
@@ -348,11 +372,23 @@
 {/if}
 
 <style>
-	header {
+	.filtermenu {
 		margin: 0.5rem 0.5rem 0;
 		display: flex;
+		align-items: center;
 		gap: 0.5rem;
-		flex-wrap: wrap;
+		position: sticky;
+		top: 0.5rem;
+		z-index: 1;
+	}
+
+	.filtermenu :global(.search-input) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.filtermenu :global(.search-input input) {
+		width: 100%;
 	}
 
 	.scrubber {
@@ -431,5 +467,21 @@
 		background: linear-gradient(to left, var(--accent-6) var(--pct), var(--gray-7) var(--pct));
 		border-radius: 1px;
 		align-self: center;
+	}
+
+	.cloud {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 0.625rem;
+		margin: 0.5rem;
+		line-height: 1.35;
+	}
+
+	.cloud a {
+		text-decoration: none;
+	}
+
+	.cloud a:hover {
+		text-decoration: underline;
 	}
 </style>
