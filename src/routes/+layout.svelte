@@ -15,6 +15,7 @@
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate} from '$app/navigation'
+	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -111,6 +112,7 @@
 		} else {
 			scrollArea.scrollTo({top: 0})
 		}
+		capture('$pageview')
 	})
 
 	// Theme application
@@ -142,6 +144,21 @@
 			document.documentElement.style.setProperty('--font-family', value)
 		} else {
 			document.documentElement.style.removeProperty('--font-family')
+		}
+	})
+
+	// Sync PostHog opt-in/out with user preference
+	$effect(() => {
+		syncAnalyticsConsent(appState.analytics_opt_in ?? false)
+	})
+
+	// Identify or reset PostHog person profile when user session changes
+	$effect(() => {
+		const user = appState.user
+		if (user) {
+			identify(user.id)
+		} else {
+			reset()
 		}
 	})
 

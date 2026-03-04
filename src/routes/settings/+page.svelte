@@ -51,6 +51,10 @@
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}
 		</a>
+		<a href="/settings/analytics">
+			<Icon icon="eye" />
+			Analytics
+		</a>
 	</menu>
 
 	<menu class="nav-vertical">

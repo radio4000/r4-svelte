@@ -4,6 +4,7 @@ import {appState, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
+import {capture} from '$lib/analytics'
 import {sdk} from '@radio4000/sdk'
 import {shuffleArray, isDbId} from '$lib/utils'
 import {
@@ -174,6 +175,7 @@ export async function playTrack(
 	}
 	if (!isEphemeral && startReason && track.slug) {
 		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
+		capture('player:track_play', {channel_slug: track.slug, start_reason: startReason})
 	}
 
 	deck.playlist_track = id
@@ -240,6 +242,7 @@ export async function playChannel(deckId: number, {id, slug}: {id: string; slug:
 	}
 	const ids = tracks.map((t) => t.id)
 	await setPlaylist(deckId, ids)
+	capture('player:channel_play', {channel_slug: slug, is_shuffle: false})
 	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
 
@@ -290,6 +293,7 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await setPlaylist(deckId, ids)
 	const deck = getDeck(deckId)
 	if (deck) deck.shuffle = true
+	capture('player:channel_play', {channel_slug: slug, is_shuffle: true})
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
@@ -651,6 +655,8 @@ export function eject(deckId) {
 export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View) {
 	const autoTracks = toAutoTracks(tracks)
 	if (!autoTracks.length) return
+
+	capture('player:auto_radio_start', {view: view ? serializeView(view) : undefined})
 
 	// Strip empty fields so callers don't need to guard
 	if (view) view = normalizeView(view)

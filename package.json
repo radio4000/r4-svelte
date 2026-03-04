@@ -75,6 +75,7 @@
 		"obra-icons-svelte": "^1.23.1",
 		"ogl": "^1.0.11",
 		"p-limit": "^7.3.0",
+		"posthog-js": "^1.358.0",
 		"runed": "^0.37.1",
 		"svelte-awesome-color-picker": "^4.1.1",
 		"tinykeys": "^3.0.0",

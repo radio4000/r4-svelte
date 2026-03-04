@@ -84,6 +84,7 @@ export interface AppState {
 	modal_share?: {track?: Track; channel: Channel} | null
 	modal_shortcuts?: boolean
 	show_welcome_hint?: boolean
+	analytics_opt_in?: boolean
 }
 
 export interface UserIdentity {

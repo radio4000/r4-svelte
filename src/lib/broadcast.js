@@ -9,6 +9,7 @@ import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {isDbId} from '$lib/utils'
 import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 export {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
+import {capture} from '$lib/analytics'
 
 /** @typedef {import('$lib/types').Broadcast} Broadcast */
 /** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
@@ -148,6 +149,7 @@ export async function joinBroadcast(deckId, channelId) {
 
 		startBroadcastStateListener(channelId)
 		startBroadcastTableListener(channelId)
+		capture('broadcast:channel_join', {channel_slug: label(channelId)})
 		log.log(`joined ${label(channelId)} on ${listenerIds.length} deck(s)`)
 	} catch (error) {
 		log.error(`join failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
@@ -215,6 +217,7 @@ export async function startBroadcast(channelId, trackId) {
 	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)
+	capture('broadcast:channel_start', {channel_slug: label(channelId)})
 	log.log(`started ${label(channelId)}`)
 }
 
@@ -235,6 +238,7 @@ export async function stopBroadcast(channelId) {
 			}
 		}
 		stopBroadcastState(channelId)
+		capture('broadcast:channel_end', {channel_slug: label(channelId)})
 		log.log(`stopped ${label(channelId)}`)
 	} catch (error) {
 		log.error(`stop failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
