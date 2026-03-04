@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
@@ -9,7 +10,6 @@
 	import TagChain from '$lib/components/tag-chain.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug)
@@ -24,6 +24,7 @@
 	let timePeriod = $state('year')
 	let currentPeriod = $state(0)
 	let display = $state('list')
+	let sort = $state('count')
 
 	const filterLabelMap = {
 		all: () => m.tags_filter_all(),
@@ -36,6 +37,11 @@
 		year: () => m.tags_period_years(),
 		solstice: () => m.tags_period_solstices(),
 		month: () => m.tags_period_months()
+	}
+
+	const sortLabelMap = {
+		count: () => 'Count',
+		alpha: () => 'A–Z'
 	}
 
 	const displayIconMap = {list: 'unordered-list', chain: 'share-alt'}
@@ -112,52 +118,36 @@
 		return newPeriods
 	})
 
-	// Tag aggregation from track.tags
-	function aggregateTags(trackList, startDate, endDate) {
-		const filtered = trackList.filter((track) => {
-			const trackDate = new Date(track.created_at)
-			if (startDate && trackDate < startDate) return false
-			if (endDate && trackDate >= endDate) return false
-			return true
-		})
-		return getChannelTags(filtered)
-	}
-
 	// Tags for current period
-	let periodTags = $derived.by(() => {
-		if (currentPeriod === 0 || !periods.length) {
-			return aggregateTags(tracks, null, null)
-		}
+	let periodTracks = $derived.by(() => {
+		if (currentPeriod === 0 || !periods.length) return tracks
 		const period = periods[currentPeriod - 1]
-		return aggregateTags(tracks, period.startDate, period.endDate)
+		return tracks.filter((track) => {
+			const date = new Date(track.created_at)
+			return date >= period.startDate && date < period.endDate
+		})
+	})
+
+	let periodTags = $derived.by(() => {
+		return getChannelTags(periodTracks)
 	})
 
 	// Apply filter
 	let filteredTags = $derived.by(() => {
-		if (filter === 'all') return periodTags
-		if (filter === 'single-use') return periodTags.filter((t) => t.count === 1)
-		if (filter === 'frequent') return periodTags.filter((t) => t.count >= 5)
-		if (filter === 'rare') return periodTags.filter((t) => t.count >= 1 && t.count <= 4)
-		return periodTags
-	})
+		let tags = periodTags
+		if (filter === 'single-use') tags = tags.filter((t) => t.count === 1)
+		else if (filter === 'frequent') tags = tags.filter((t) => t.count >= 5)
+		else if (filter === 'rare') tags = tags.filter((t) => t.count >= 1 && t.count <= 4)
 
-	// Max count for progress bar visualization
-	let maxCount = $derived(filteredTags[0]?.count ?? 1)
+		// Apply sort
+		if (sort === 'alpha') {
+			return tags.toSorted((a, b) => a.value.localeCompare(b.value))
+		}
+		return tags // count is already sorted from getChannelTags
+	})
 
 	// Track count for current period
-	let periodTrackCount = $derived.by(() => {
-		if (currentPeriod === 0 || !periods.length) return tracks.length
-		const period = periods[currentPeriod - 1]
-		return tracks.filter((t) => {
-			const d = new Date(t.created_at)
-			return d >= period.startDate && d < period.endDate
-		}).length
-	})
-
-	// Reset period when time period changes
-	function onTimePeriodChange() {
-		currentPeriod = 0
-	}
+	let periodTrackCount = $derived(periodTracks.length)
 
 	let currentPeriodLabel = $derived(
 		currentPeriod === 0 ? m.tags_all_time() : periods[currentPeriod - 1]?.label || m.tags_all_time()
@@ -226,6 +216,18 @@
 				</menu>
 			</PopoverMenu>
 
+			<PopoverMenu id="tags-sort" closeOnClick={false}>
+				{#snippet trigger()}<Icon icon="sort-asc" /><span>{sortLabelMap[sort]()}</span>{/snippet}
+				<menu>
+					<button class:active={sort === 'count'} onclick={() => (sort = 'count')}>
+						{sortLabelMap.count()}
+					</button>
+					<button class:active={sort === 'alpha'} onclick={() => (sort = 'alpha')}>
+						{sortLabelMap.alpha()}
+					</button>
+				</menu>
+			</PopoverMenu>
+
 			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
 				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]()}{/snippet}
 				<menu>
@@ -273,18 +275,21 @@
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if filteredTags.length > 0}
 			{#if display === 'chain'}
-				<TagChain tags={filteredTags} {tracks} channelSlug={channel.slug} />
+				<TagChain tags={filteredTags} tracks={periodTracks} channelSlug={channel.slug} />
 			{:else}
 				<ol class="list">
 					{#each filteredTags as { value, count } (value)}
 						<li>
 							<span class="tag">
-								<a href={`/search?q=@${channel.slug} ${value}`}>
+								<a href={resolve(`/search?q=@${channel.slug} ${value}`)}>
 									{value}
 								</a>
 							</span>
 							<span class="count">{count} / {periodTrackCount}</span>
-							<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
+							<span
+								class="bar"
+								style="--pct: {periodTrackCount ? ((count / periodTrackCount) * 100).toFixed(1) : '0.0'}%"
+							></span>
 						</li>
 					{/each}
 				</ol>
