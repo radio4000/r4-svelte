@@ -2,14 +2,9 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-## Views
-
-Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `parseView`, `serializeView`, `normalizeView`, `viewURI`) are in `src/lib/views.ts` with tests. See `docs/views.md`.
-
-- Send view URI in broadcast payload; listeners resolve locally
-
 ## Backlog
 
+- Send view URI in broadcast payload; listeners resolve locally
 - `trackImageUrl` only supports YouTube thumbnails. Support all providers (SoundCloud, etc.) so `trackImageUrl(track)` returns an image for any track, not just YouTube.
 - Track related page may be broken. "clio - faces" (https://beta.radio4000.com/good-time-radio/tracks/175ed76b-a97d-44c8-a56c-12968f2b19f0/related) exists multiple times on r4 but related shows "no related information". Check with `r4` CLI against `media_id`.
 - Consolidate `channels.svelte` and `channels-view.svelte` — ~95 lines duplicated (view rendering, display mode switcher, canvas state, layout CSS). `channels-view.svelte` is the right abstraction but `channels.svelte` re-implements all display logic instead of delegating. After: data fetching/filtering/pagination stay in `channels.svelte`, rendering lives in `<ChannelsView>` (needs `tuner` mode, `skipSort` for pre-sorted data, snippet slots for header/footer). Followers/following pages unchanged.
@@ -24,15 +19,10 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 - Local file player for mp3/m4a
 - `discogs-core.js:6–8` — in-memory fetch cache grows unbounded. 5-min TTL but no eviction. Long sessions accumulate entries. Could move to a db collection.
 - Live query accumulation — navigating creates new queries without cleaning up old ones. Unclear if disposed queries are GC'd or leak.
-- **Play history threshold** — a track is recorded the moment it starts playing. Should count only after enough listening: full track if under 2 min, half the duration (max 4 min) otherwise. Open questions: accumulate actual play time vs. furthest position? What about pause/resume? Should skipped tracks get a `skipped` flag or disappear? Currently `addPlayHistoryEntry` fires in `playTrack()` (api.ts); would move to `player.svelte` using `timeupdate`. Needs `getPlayCountThreshold(durationSec)` helper and a way to pass `reason_start` to the player.
-
-## Code cleanup
-
-### API alignment
-
-- `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly.
+- Play history threshold: a track is recorded the moment it starts playing. Should count only after enough listening: full track if under 2 min, half the duration (max 4 min) otherwise. Open questions: accumulate actual play time vs. furthest position? What about pause/resume? Should skipped tracks get a `skipped` flag or disappear? Currently `addPlayHistoryEntry` fires in `playTrack()` (api.ts); would move to `player.svelte` using `timeupdate`. Needs `getPlayCountThreshold(durationSec)` helper and a way to pass `reason_start` to the player.
+- Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`
+- `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly
 - `togglePlay(player)` skips deck state updates and error handling — calls `player.play()` raw. Near-duplicate of `togglePlayPause(deckId)`. Drop both `togglePlay` and `pause(player)`, make callers use `togglePlayPause(deckId)`.
-- Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`.
 
 ### Player & audio edge cases
 
@@ -40,10 +30,6 @@ Types (`ViewQuery`, `View`) and pure helpers (`parseQuery`, `serializeQuery`, `p
 - `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay.
 - Ephemeral broadcast tracks have `slug: null` (`broadcast.js`) — listeners can't look up non-DB tracks without `track_url`.
 - `applyBroadcastState` rebuilds `managedIds` inside loop — O(n²) for deck count. Fine now, may matter later.
-
-### Accessibility
-
-- Click handlers on non-interactive elements need `<button>` or `role="button"` + `tabindex="0"` + keyboard handler: `player.svelte` (header, footer), `cover-flip.svelte`, `track-card.svelte`, `r4-discogs-resource.svelte`, `draggable-panel.svelte`.
 
 ## i18n coverage
 

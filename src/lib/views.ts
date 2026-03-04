@@ -12,6 +12,7 @@ export type View = {
 	order?: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	direction?: 'asc' | 'desc'
 	limit?: number
+	offset?: number
 	exclude?: string[]
 }
 
@@ -78,6 +79,11 @@ export function parseView(input: string): View {
 			const n = Number(limit)
 			if (n > 0) view.limit = Math.min(n, 4000)
 		}
+		const offset = p.get('offset')
+		if (offset) {
+			const n = Number(offset)
+			if (n > 0) view.offset = n
+		}
 		const tagsMode = p.get('tagsMode')
 		if (tagsMode === 'all') {
 			for (const q of view.queries) {
@@ -97,6 +103,7 @@ export function serializeView(view: View): ViewURI {
 	if (view.order) options.set('order', view.order)
 	if (view.direction) options.set('direction', view.direction)
 	if (view.limit) options.set('limit', String(view.limit))
+	if (view.offset) options.set('offset', String(view.offset))
 	if (view.queries.some((q) => q.tagsMode === 'all')) options.set('tagsMode', 'all')
 	const optStr = options.toString()
 	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
@@ -104,9 +111,26 @@ export function serializeView(view: View): ViewURI {
 	return `${queriesStr}${allOpts ? `?${allOpts}` : ''}` as ViewURI
 }
 
-/** Extract a View from a URL whose search string is the compact view format. */
+/** Extract a View from a URL. Reads `q` param as the human query, plus separate `order`/`direction`/`limit`/`offset` params. */
 export function viewFromUrl(url: URL): View {
-	return parseView(decodeURIComponent(url.search.slice(1)))
+	const q = url.searchParams.get('q') ?? ''
+	const view = parseView(decodeURIComponent(q))
+	const order = url.searchParams.get('order')
+	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
+	const direction = url.searchParams.get('direction')
+	if (direction && (validDirections as readonly string[]).includes(direction))
+		view.direction = direction as View['direction']
+	const limit = url.searchParams.get('limit')
+	if (limit) {
+		const n = Number(limit)
+		if (n > 0) view.limit = Math.min(n, 4000)
+	}
+	const offset = url.searchParams.get('offset')
+	if (offset) {
+		const n = Number(offset)
+		if (n > 0) view.offset = n
+	}
+	return view
 }
 
 // --- Utilities ---
@@ -133,11 +157,13 @@ export function normalizeView(view?: View): View | undefined {
 			return Object.keys(normalized).length ? normalized : undefined
 		})
 		.filter((q): q is ViewQuery => q !== undefined)
-	if (!queries.length && !view.order && !view.direction && !view.limit && !view.exclude?.length) return undefined
+	if (!queries.length && !view.order && !view.direction && !view.limit && !view.offset && !view.exclude?.length)
+		return undefined
 	const normalized: View = {queries: queries.length ? queries : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction
 	if (view.limit) normalized.limit = view.limit
+	if (view.offset) normalized.offset = view.offset
 	if (view.exclude?.length) normalized.exclude = view.exclude
 	return normalized
 }

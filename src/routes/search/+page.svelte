@@ -32,35 +32,30 @@
 	const q = $derived(view.queries[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
-	// --- Resolve ?q= on arrival → rewrite to view params ---
-	// ?q= is a human-friendly entry point. Resolves once, rewrites URL, done.
-	// Browser treats # as fragment separator, so ?q=@ko002 #pm dance arrives as
-	// q="@ko002 " with hash="#pm dance". Recombine them before parsing.
-	$effect(() => {
-		if (!page.url.searchParams.has('q')) return
-		const q = page.url.searchParams.get('q') || ''
-		const hash = page.url.hash || ''
-		const fullQuery = (q + hash).trim()
-		if (!fullQuery) return
-		inputValue = fullQuery
-		const resolved = parseView(fullQuery)
-		const params = serializeView(resolved)
-		goto(params ? `/search?${params}` : '/search', {replaceState: true})
-	})
+	// --- View → URL ---
+	function viewToUrl(v) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const params = new URLSearchParams()
+		const q = viewLabel(v)
+		if (q) params.set('q', q)
+		if (v.order) params.set('order', v.order)
+		if (v.direction) params.set('direction', v.direction)
+		if (v.limit) params.set('limit', String(v.limit))
+		if (v.offset) params.set('offset', String(v.offset))
+		const str = params.toString()
+		return str ? `/search?${str}` : '/search'
+	}
 
 	// --- Sync input from URL on landing + browser back/forward ---
-	// Skips 'goto' (our own navigations) and '?q=' (handled by resolve effect above).
 	let inputSeeded = false
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
-		if (page.url.searchParams.has('q')) return
-		const seeded = viewLabel(viewFromUrl(page.url))
+		const seeded = page.url.searchParams.get('q') ?? ''
 		inputValue = seeded
 		inputSeeded = !!seeded
 	})
 
-	// --- Smart input → resolve to view params → URL ---
-	// Dependencies: only debouncedInput.current. Does NOT read URL, so no cycle.
+	// --- Smart input → URL ---
 	$effect(() => {
 		const q = debouncedInput.current.trim()
 		if (!q) return
@@ -69,8 +64,7 @@
 			return
 		}
 		const resolved = parseView(q)
-		const params = serializeView(resolved)
-		goto(params ? `/search?${params}` : '/search', {replaceState: true})
+		goto(viewToUrl(resolved), {replaceState: true})
 	})
 
 	function handleSubmit(e) {
@@ -87,8 +81,7 @@
 	function onViewsBarChange(v) {
 		inputSeeded = true
 		inputValue = viewLabel(v)
-		const params = serializeView(v)
-		goto(params ? `/search?${params}` : '/search', {replaceState: true})
+		goto(viewToUrl(v), {replaceState: true})
 	}
 
 	// --- Play / Queue ---

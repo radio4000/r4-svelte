@@ -102,7 +102,7 @@ export async function searchAll(query, {limit = 100} = {}) {
 		// Plain FTS (no channel/tag filter)
 		const fts = await Promise.all([searchChannels(search, {limit}), searchTracks(search, {limit})])
 		channels = fts[0]
-		tracks = fts[1]
+		tracks = fts[1].tracks
 	}
 
 	// Post-filter by tags when we fetched via FTS (tags weren't part of the DB query)

@@ -28,8 +28,10 @@
 	})
 
 	// Mirror computed broadcast state to the active deck for local UI consumers.
+	// Skip when isLiveOverride is provided: that's a read-only display signal from the channel page
+	// and should not write back to the deck (would transiently clear broadcasting_channel_id on mount).
 	$effect(() => {
-		if (deck) {
+		if (deck && typeof isLiveOverride !== 'boolean') {
 			deck.broadcasting_channel_id = isBroadcasting ? userChannelId : undefined
 		}
 	})
