@@ -1,5 +1,4 @@
 <script>
-	import {goto} from '$app/navigation'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -10,12 +9,6 @@
 	let error = $state(/** @type {string | null} */ (null))
 	let success = $state(false)
 	let loading = $state(false)
-
-	$effect(() => {
-		if (!appState.user) {
-			goto(`/auth?redirect=${encodeURIComponent('/settings/account/password')}`)
-		}
-	})
 
 	async function updatePassword(e) {
 		e.preventDefault()
@@ -56,7 +49,9 @@
 		<h1>{m.account_change_password()}</h1>
 	</header>
 
-	{#if appState.user}
+	{#if !appState.user}
+		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
+	{:else}
 		<form class="form" onsubmit={updatePassword}>
 			<fieldset>
 				<label for="new-password">{m.auth_new_password()}</label>
