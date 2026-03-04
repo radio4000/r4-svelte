@@ -141,6 +141,19 @@
 		return periodTags
 	})
 
+	// Max count for progress bar visualization
+	let maxCount = $derived(filteredTags[0]?.count ?? 1)
+
+	// Track count for current period
+	let periodTrackCount = $derived.by(() => {
+		if (currentPeriod === 0 || !periods.length) return tracks.length
+		const period = periods[currentPeriod - 1]
+		return tracks.filter((t) => {
+			const d = new Date(t.created_at)
+			return d >= period.startDate && d < period.endDate
+		}).length
+	})
+
 	// Reset period when time period changes
 	function onTimePeriodChange() {
 		currentPeriod = 0
@@ -270,7 +283,8 @@
 									{value}
 								</a>
 							</span>
-							<span class="count">{count}</span>
+							<span class="count">{count} / {periodTrackCount}</span>
+							<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
 						</li>
 					{/each}
 				</ol>
@@ -332,5 +346,38 @@
 
 	.list {
 		margin: 0 0.5rem;
+	}
+
+	.list li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem 0.25rem;
+		border-bottom: 1px solid var(--gray-4);
+	}
+
+	.list li:first-child {
+		border-top: 1px solid var(--gray-4);
+	}
+
+	.list .tag {
+		flex: 0 0 auto;
+	}
+
+	.list .count {
+		flex: 0 0 auto;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-11);
+		font-size: 0.85em;
+		min-width: 2ch;
+		text-align: right;
+	}
+
+	.bar {
+		flex: 1;
+		height: 2px;
+		background: linear-gradient(to left, var(--accent-6) var(--pct), var(--gray-7) var(--pct));
+		border-radius: 1px;
+		align-self: center;
 	}
 </style>
