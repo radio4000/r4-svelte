@@ -216,7 +216,7 @@
 		const basePath = resolve('/[slug]/tags', {slug})
 		const nextPath = `${basePath}${queryString}`
 		const currentPath = `${page.url.pathname}${page.url.search}`
-		if (currentPath !== nextPath) replaceState(`${resolve('/[slug]/tags', {slug})}${queryString}`, {})
+		if (currentPath !== nextPath) replaceState(resolve('/[slug]/tags', {slug}) + queryString, {})
 	})
 </script>
 
@@ -332,7 +332,13 @@
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if visibleTags.length > 0}
 			{#if display === 'chain'}
-				<TagChain tags={visibleTags} tracks={periodTracks} channelSlug={channel.slug} bind:chainTags />
+				<TagChain
+					tags={visibleTags}
+					tracks={periodTracks}
+					totalCount={periodTrackCount}
+					channelSlug={channel.slug}
+					bind:chainTags
+				/>
 			{:else if display === 'cloud'}
 				<div class="cloud">
 					{#each visibleTags as { value, count } (value)}
@@ -341,7 +347,7 @@
 								? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
 								: '0.0'}rem)"
 						>
-							<a href={resolve(`/search?q=@${channel.slug} ${value}`)}>
+							<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
 								{value}
 							</a>
 						</span>
@@ -352,7 +358,7 @@
 					{#each visibleTags as { value, count } (value)}
 						<li>
 							<span class="tag">
-								<a href={resolve(`/search?q=@${channel.slug} ${value}`)}>
+								<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
 									{value}
 								</a>
 							</span>

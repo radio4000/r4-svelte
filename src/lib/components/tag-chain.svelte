@@ -19,9 +19,10 @@
 		tracks?: Track[]
 		channelSlug?: string
 		chainTags?: string[]
+		totalCount?: number
 	}
 
-	let {tags = [], tracks = [], channelSlug = '', chainTags = $bindable([])}: Props = $props()
+	let {tags = [], tracks = [], channelSlug = '', chainTags = $bindable([]), totalCount = 0}: Props = $props()
 
 	let chainLower = $derived(chainTags.map((t) => t.toLowerCase()))
 
@@ -92,7 +93,7 @@
 			<div class="chain-actions">
 				<button class="play-btn" onclick={playChain} disabled={matchingTracks.length === 0}> ▶ Play </button>
 				<a
-					href={resolve(`/${channelSlug}/tracks?tags=${chainTags.map(encodeURIComponent).join(',')}`)}
+					href={resolve('/[slug]/tracks', {slug: channelSlug}) + `?tags=${chainTags.map(encodeURIComponent).join(',')}`}
 					class="view-link"
 				>
 					View {matchingTracks.length} tracks
@@ -113,7 +114,8 @@
 				>
 					{value}
 				</button>
-				<span class="count">{count}</span>
+				<span class="count">{count} / {totalCount}</span>
+				<span class="bar" style="--pct: {totalCount ? ((count / totalCount) * 100).toFixed(1) : '0.0'}%"></span>
 			</li>
 		{/each}
 	</ol>
@@ -223,7 +225,7 @@
 
 	.tag-list li {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 		gap: 0.5rem;
 		padding: 0.25rem 0;
 		border-bottom: 1px solid var(--gray-4);
@@ -253,8 +255,19 @@
 	}
 
 	.count {
+		flex: 0 0 auto;
 		color: var(--gray-10);
 		font-size: 0.875rem;
 		margin-left: auto;
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.bar {
+		flex: 1;
+		height: 2px;
+		background: linear-gradient(to left, var(--accent-6) var(--pct), var(--gray-7) var(--pct));
+		border-radius: 1px;
+		align-self: center;
 	}
 </style>
