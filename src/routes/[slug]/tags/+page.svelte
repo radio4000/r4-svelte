@@ -243,6 +243,10 @@
 						{filterLabelMap.rare()}
 					</button>
 				</menu>
+			</PopoverMenu>
+
+			<PopoverMenu id="tags-order" closeOnClick={false}>
+				{#snippet trigger()}<Icon icon="sort" />{sortLabelMap[sort]()}{/snippet}
 				<menu class="nav-vertical">
 					<button class:active={sort === 'count'} onclick={() => (sort = 'count')}>
 						{sortLabelMap.count()}
