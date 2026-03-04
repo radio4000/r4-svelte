@@ -24,7 +24,7 @@
 
 	const filterValues = ['all', 'single-use', 'frequent', 'rare']
 	const periodValues = ['year', 'solstice', 'month']
-	const displayValues = ['list', 'cloud', 'chain']
+	const displayValues = ['list', 'cloud']
 	const sortValues = ['count', 'alpha']
 	const directionValues = ['desc', 'asc']
 
@@ -47,16 +47,14 @@
 			.filter(Boolean)
 	}
 
-	const readSearchParam = () => page.url.searchParams.get('search') ?? ''
-
 	let urlFilter = $derived(readEnumParam('filter', filterValues, 'all'))
 	let urlTimePeriod = $derived(readEnumParam('timePeriod', periodValues, 'year'))
 	let urlCurrentPeriod = $derived(readPeriodParam())
 	let urlDisplay = $derived(readEnumParam('display', displayValues, 'list'))
 	let urlSort = $derived(readEnumParam('sort', sortValues, 'count'))
 	let urlDirection = $derived(readEnumParam('direction', directionValues, 'desc'))
-	let urlChainTags = $derived(readTagsParam())
-	let urlSearch = $derived(readSearchParam())
+	let urlTags = $derived(readTagsParam())
+	let urlSearch = $derived(page.url.searchParams.get('search') ?? '')
 
 	let filter = $state('all')
 	let timePeriod = $state('year')
@@ -80,13 +78,10 @@
 		month: () => m.tags_period_months()
 	}
 
-	const sortLabelMap = {
-		count: () => 'Count',
-		alpha: () => 'A–Z'
-	}
+	const sortLabelMap = {count: 'Count', alpha: 'A–Z'}
 
-	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'code-branch'}
-	const displayLabelMap = {list: () => 'List', cloud: () => 'Cloud', chain: () => 'Chain'}
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag'}
+	const displayLabelMap = {list: 'List', cloud: 'Cloud'}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -170,13 +165,26 @@
 		})
 	})
 
-	let periodTags = $derived.by(() => {
-		return getChannelTags(periodTracks)
+	// Chain logic
+	let chainLower = $derived(chainTags.map((t) => t.toLowerCase()))
+
+	let matchingTracks = $derived.by(() => {
+		if (chainLower.length === 0) return []
+		return periodTracks.filter((track) => {
+			const trackTags = (track.tags ?? []).map((tag) => tag.toLowerCase())
+			return chainLower.every((tag) => trackTags.includes(tag))
+		})
 	})
+
+	// Base track set: refine by chain when active
+	let baseTracks = $derived(chainLower.length > 0 ? matchingTracks : periodTracks)
+
+	let periodTags = $derived(getChannelTags(baseTracks))
 
 	// Apply filter
 	let filteredTags = $derived.by(() => {
-		let tags = periodTags
+		// Exclude tags already in the chain
+		let tags = periodTags.filter((t) => !chainLower.includes(t.value.toLowerCase()))
 		if (filter === 'single-use') tags = tags.filter((t) => t.count === 1)
 		else if (filter === 'frequent') tags = tags.filter((t) => t.count >= 5)
 		else if (filter === 'rare') tags = tags.filter((t) => t.count >= 1 && t.count <= 4)
@@ -198,12 +206,20 @@
 
 	let maxVisibleTagCount = $derived(visibleTags.reduce((max, tag) => Math.max(max, tag.count), 1))
 
-	// Track count for current period
-	let periodTrackCount = $derived(periodTracks.length)
+	let visibleTrackCount = $derived(visibleTags.reduce((sum, tag) => sum + tag.count, 0))
 
 	let currentPeriodLabel = $derived(
 		currentPeriod === 0 ? m.tags_all_time() : periods[currentPeriod - 1]?.label || m.tags_all_time()
 	)
+
+	function toggleTag(tag) {
+		const key = tag.toLowerCase()
+		if (chainLower.includes(key)) {
+			chainTags = chainTags.filter((t) => t.toLowerCase() !== key)
+		} else {
+			chainTags = [...chainTags, tag]
+		}
+	}
 
 	// Animated tag count
 	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
@@ -219,7 +235,7 @@
 		display = urlDisplay
 		sort = urlSort
 		direction = urlDirection
-		chainTags = urlChainTags
+		chainTags = urlTags
 		search = urlSearch
 	})
 
@@ -275,12 +291,12 @@
 			<PopoverMenu id="tags-order" closeOnClick={false}>
 				{#snippet trigger()}
 					<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
-					{sortLabelMap[sort]()}
+					{sortLabelMap[sort]}
 				{/snippet}
-				<div class="sort-row">
+				<div class="row">
 					<select bind:value={sort} aria-label={m.sort_order_label()}>
-						<option value="count">{sortLabelMap.count()}</option>
-						<option value="alpha">{sortLabelMap.alpha()}</option>
+						<option value="count">{sortLabelMap.count}</option>
+						<option value="alpha">{sortLabelMap.alpha}</option>
 					</select>
 					<button
 						type="button"
@@ -296,16 +312,13 @@
 			</PopoverMenu>
 
 			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
-				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]()}{/snippet}
+				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]}{/snippet}
 				<menu class="view-modes">
 					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
 						<Icon icon="unordered-list" /><small>List</small>
 					</button>
 					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
 						<Icon icon="tag" /><small>Cloud</small>
-					</button>
-					<button class:active={display === 'chain'} onclick={() => (display = 'chain')}>
-						<Icon icon="code-branch" /><small>Chain</small>
 					</button>
 				</menu>
 			</PopoverMenu>
@@ -359,49 +372,46 @@
 
 		{#if tracksQuery.isLoading}
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
-		{:else if visibleTags.length > 0}
-			{#if display === 'chain'}
-				<TagChain
-					tags={visibleTags}
-					tracks={periodTracks}
-					totalCount={periodTrackCount}
-					channelSlug={channel.slug}
-					bind:chainTags
-				/>
-			{:else if display === 'cloud'}
-				<div class="cloud">
-					{#each visibleTags as { value, count } (value)}
-						<span
-							style="font-size: calc(0.8rem + {maxVisibleTagCount
-								? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
-								: '0.0'}rem)"
-						>
-							<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
-								{value}
-							</a>
-						</span>
-					{/each}
-				</div>
-			{:else}
+		{:else if display === 'cloud'}
+			<div class="cloud">
+				{#each visibleTags as { value, count } (value)}
+					<span
+						style="font-size: calc(0.8rem + {maxVisibleTagCount
+							? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
+							: '0.0'}rem)"
+					>
+						<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
+							{value}
+						</a>
+					</span>
+				{/each}
+			</div>
+		{:else}
+			<TagChain bind:tags={chainTags} {matchingTracks} channelSlug={channel.slug} />
+			{#if visibleTags.length > 0}
 				<ol class="list">
 					{#each visibleTags as { value, count } (value)}
 						<li>
-							<span class="tag">
-								<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
-									{value}
-								</a>
-							</span>
-							<span class="count">{count} / {periodTrackCount}</span>
-							<span
-								class="bar"
-								style="--pct: {periodTrackCount ? ((count / periodTrackCount) * 100).toFixed(1) : '0.0'}%"
-							></span>
+							<button
+								class="ghost row"
+								class:selected={chainLower.includes(value.toLowerCase())}
+								onclick={() => toggleTag(value)}
+							>
+								<span class="tag-value">{value}</span>
+								<span class="count">{count} / {visibleTrackCount}</span>
+								<span
+									class="bar"
+									style="--pct: {visibleTrackCount ? ((count / visibleTrackCount) * 100).toFixed(1) : '0.0'}%"
+								></span>
+							</button>
 						</li>
 					{/each}
 				</ol>
+			{:else}
+				<p style="margin: 1rem; text-align: center;">
+					{m.tags_empty()}
+				</p>
 			{/if}
-		{:else}
-			<p>{m.tags_empty()}</p>
 		{/if}
 	</main>
 {/if}
@@ -426,117 +436,110 @@
 		width: 100%;
 	}
 
-	.sort-row {
-		display: flex;
-		gap: 0.25rem;
-	}
-
-	.sort-row select {
-		flex: 1;
-	}
-
 	.scrubber {
-		margin: 1rem 0.5rem 1rem;
-		padding: 1rem;
-		background: var(--gray-5);
+		margin: 0.5rem 0 0.5rem 0.5rem;
+		border: 1px dashed var(--gray-5);
+		padding: 0.5rem;
 		border-radius: var(--border-radius);
-		border: 1px solid var(--gray-7);
+
+		:global(input[type='range']) {
+			accent-color: var(--accent-9);
+		}
+
+		h3 {
+			display: flex;
+			place-items: center;
+			justify-content: space-between;
+			font-weight: bold;
+			margin-bottom: 0.5rem;
+
+			.count {
+				font-variant-numeric: tabular-nums;
+			}
+		}
 	}
 
-	.scrubber h3 {
-		display: flex;
-		justify-content: space-between;
-		font-weight: bold;
-		margin-bottom: 0.5rem;
-	}
-
-	.scrubber h3 .count {
-		font-variant-numeric: tabular-nums;
-	}
-
-	.scrubber .scrubber-meta {
+	.scrubber-meta {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-	}
 
-	.scrubber .scrubber-meta select {
-		flex: 0 1 auto;
-		max-width: 100%;
+		select {
+			flex: 0 1 auto;
+			max-width: 100%;
+		}
 	}
 
 	.scrubber-labels {
 		display: flex;
 		justify-content: space-between;
 		margin-top: 0.5rem;
-	}
 
-	.scrubber-labels span {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+		span {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
 
-	.scrubber-labels span.active {
-		color: var(--accent-9);
-	}
+			&.active {
+				color: var(--accent-9);
+			}
+		}
 
-	@media (max-width: 640px) {
-		.scrubber-labels {
+		@media (max-width: 640px) {
 			display: none;
 		}
 	}
 
 	.list {
-		margin: 0 0.5rem;
-	}
+		margin-left: 0.5rem;
 
-	.list li {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.375rem 0.25rem;
-		border-bottom: 1px solid var(--gray-4);
-	}
+		li {
+			border-bottom: 0;
+		}
 
-	.list li:first-child {
-		border-top: 1px solid var(--gray-4);
-	}
+		button.row {
+			width: 100%;
+			text-align: left;
 
-	.list .tag {
-		flex: 0 0 auto;
-	}
+			.tag-value {
+				min-width: 2ch;
+				color: var(--accent-9);
+			}
+		}
 
-	.list .count {
-		flex: 0 0 auto;
-		font-variant-numeric: tabular-nums;
-		color: var(--gray-11);
-		font-size: 0.85em;
-		min-width: 2ch;
-		text-align: right;
-	}
+		.count {
+			flex: 0 0 auto;
+			font-variant-numeric: tabular-nums;
+			text-align: right;
+		}
 
-	.bar {
-		flex: 1;
-		height: 2px;
-		background: linear-gradient(to left, var(--accent-6) var(--pct), var(--gray-7) var(--pct));
-		border-radius: 1px;
-		align-self: center;
+		.bar {
+			flex: 1;
+			height: 4px;
+			background: linear-gradient(to left, var(--accent-9) var(--pct), var(--gray-7) var(--pct));
+			border-radius: 1px;
+			align-self: center;
+			transition: height 120ms cubic-bezier(0.19, 1, 0.22, 1);
+		}
+
+		li:hover .bar {
+			height: 1rem;
+		}
 	}
 
 	.cloud {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 0.625rem;
-		margin: 0.5rem;
-		line-height: 1.35;
-	}
+		gap: 0.5rem;
+		margin: 1rem 0.5rem 0.5rem;
 
-	.cloud a {
-		text-decoration: none;
-	}
+		a {
+			text-decoration: none;
+			color: var(--accent-9);
+		}
 
-	.cloud a:hover {
-		text-decoration: underline;
+		a:hover {
+			text-decoration: underline;
+		}
 	}
 </style>

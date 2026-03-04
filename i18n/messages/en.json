@@ -554,7 +554,7 @@
 	"status_offline": "Offline",
 	"status_online": "Online",
 	"tags_all_time": "All time",
-	"tags_empty": "No tags found for this filter.",
+	"tags_empty": "No further tags found for this filter.",
 	"tags_filter_all": "All tags",
 	"tags_filter_frequent": "Frequent (5+)",
 	"tags_filter_label": "Tag filter",

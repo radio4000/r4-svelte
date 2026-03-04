@@ -125,6 +125,42 @@
 	</section>
 
 	<section>
+		<h2>Chip (<code>.chip</code>)</h2>
+		<p><small>Standalone toggle</small></p>
+		<div class="row">
+			<button class="chip">jazz</button>
+			<button class="chip active">dub</button>
+			<button class="chip" disabled>disabled</button>
+		</div>
+		<p><small>With delete — label as toggle (<code>button.chip</code> + <code>.chip-delete</code>)</small></p>
+		<div class="row">
+			<span class="chip-group">
+				<button class="chip">jazz</button>
+				<button class="chip-delete" aria-label="Remove jazz">×</button>
+			</span>
+			<span class="chip-group">
+				<button class="chip active">dub</button>
+				<button class="chip-delete" aria-label="Remove dub">×</button>
+			</span>
+			<span class="chip-group">
+				<button class="chip" disabled>disabled</button>
+				<button class="chip-delete" disabled aria-label="Remove">×</button>
+			</span>
+		</div>
+		<p><small>With delete — label as inert (<code>span.chip</code> + <code>.chip-delete</code>)</small></p>
+		<div class="row">
+			<span class="chip-group">
+				<span class="chip">jazz</span>
+				<button class="chip-delete" aria-label="Remove jazz">×</button>
+			</span>
+			<span class="chip-group">
+				<span class="chip active">dub</span>
+				<button class="chip-delete" aria-label="Remove dub">×</button>
+			</span>
+		</div>
+	</section>
+
+	<section>
 		<h2>Tags (<code>&lt;Tag&gt;</code>)</h2>
 		<div class="row">
 			<Tag href="#tag">#dub</Tag>

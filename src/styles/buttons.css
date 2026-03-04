@@ -179,7 +179,7 @@ button.danger:focus,
 button[role='primary'],
 button.primary,
 .btn.primary {
-	color: var(--gray-1);
+	color: light-dark(var(--gray-1), var(--gray-12));
 	background: var(--accent-7);
 	border-color: var(--accent-8);
 
@@ -212,6 +212,21 @@ button.chip.active,
 	border-color: var(--accent-9);
 }
 
+.chip-group > :not(button) {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 0.5rem;
+	background: var(--accent-4);
+	border: 1px solid var(--accent-6);
+	border-right: 0;
+	border-radius: 1rem 0 0 1rem;
+
+	&.active {
+		background: var(--accent-8);
+		border-color: var(--accent-9);
+	}
+}
+
 button.chip.active:hover,
 .btn.chip.active:hover {
 	background: var(--accent-9);
@@ -229,9 +244,9 @@ button.chip.active:hover,
 }
 
 .chip-delete {
-	padding: 0 0.2rem;
+	padding: 0 0.5rem 0 0.2rem;
 	border-radius: 0 1rem 1rem 0;
-	background: var(--accent-3);
+	background: var(--accent-4);
 	border: 1px solid var(--accent-6);
 	border-left: 0;
 	min-width: 0;
