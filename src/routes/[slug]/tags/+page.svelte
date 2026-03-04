@@ -1,4 +1,5 @@
 <script>
+	import {replaceState} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {Tween} from 'svelte/motion'
@@ -12,7 +13,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let slug = $derived(page.params.slug)
+	let slug = $derived(page.params.slug ?? '')
 
 	// Get tracks from layout (query stays alive during navigation)
 	const tracksQuery = getTracksQueryCtx()
@@ -20,11 +21,36 @@
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])
 
-	let filter = $state('all')
-	let timePeriod = $state('year')
-	let currentPeriod = $state(0)
-	let display = $state('list')
-	let sort = $state('count')
+	const filterValues = ['all', 'single-use', 'frequent', 'rare']
+	const periodValues = ['year', 'solstice', 'month']
+	const displayValues = ['list', 'chain']
+	const sortValues = ['count', 'alpha']
+
+	const readEnumParam = (key, validValues, fallback) => {
+		const value = page.url.searchParams.get(key)
+		return validValues.includes(value) ? value : fallback
+	}
+
+	const readPeriodParam = () => {
+		const value = Number(page.url.searchParams.get('period') ?? 0)
+		return Number.isInteger(value) && value >= 0 ? value : 0
+	}
+
+	const readTagsParam = () => {
+		const value = page.url.searchParams.get('tags')
+		if (!value) return []
+		return value
+			.split(',')
+			.map((v) => v.trim())
+			.filter(Boolean)
+	}
+
+	let filter = $state(readEnumParam('filter', filterValues, 'all'))
+	let timePeriod = $state(readEnumParam('timePeriod', periodValues, 'year'))
+	let currentPeriod = $state(readPeriodParam())
+	let display = $state(readEnumParam('display', displayValues, 'list'))
+	let sort = $state(readEnumParam('sort', sortValues, 'count'))
+	let chainTags = $state(readTagsParam())
 
 	const filterLabelMap = {
 		all: () => m.tags_filter_all(),
@@ -122,6 +148,7 @@
 	let periodTracks = $derived.by(() => {
 		if (currentPeriod === 0 || !periods.length) return tracks
 		const period = periods[currentPeriod - 1]
+		if (!period) return tracks
 		return tracks.filter((track) => {
 			const date = new Date(track.created_at)
 			return date >= period.startDate && date < period.endDate
@@ -157,6 +184,26 @@
 	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
 	$effect(() => {
 		tagCount.set(filteredTags.length)
+	})
+
+	$effect(() => {
+		if (currentPeriod <= periods.length) return
+		currentPeriod = periods.length
+	})
+
+	$effect(() => {
+		const parts = []
+		if (display !== 'list') parts.push(`display=${encodeURIComponent(display)}`)
+		if (sort !== 'count') parts.push(`sort=${encodeURIComponent(sort)}`)
+		if (filter !== 'all') parts.push(`filter=${encodeURIComponent(filter)}`)
+		if (timePeriod !== 'year') parts.push(`timePeriod=${encodeURIComponent(timePeriod)}`)
+		if (currentPeriod !== 0) parts.push(`period=${currentPeriod}`)
+		if (chainTags.length) parts.push(`tags=${chainTags.map(encodeURIComponent).join(',')}`)
+		const search = parts.length ? `?${parts.join('&')}` : ''
+		const basePath = resolve('/[slug]/tags', {slug})
+		const nextPath = `${basePath}${search}`
+		const currentPath = `${page.url.pathname}${page.url.search}`
+		if (currentPath !== nextPath) replaceState(`${resolve('/[slug]/tags', {slug})}${search}`, {})
 	})
 </script>
 
@@ -275,7 +322,7 @@
 			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
 		{:else if filteredTags.length > 0}
 			{#if display === 'chain'}
-				<TagChain tags={filteredTags} tracks={periodTracks} channelSlug={channel.slug} />
+				<TagChain tags={filteredTags} tracks={periodTracks} channelSlug={channel.slug} bind:chainTags />
 			{:else}
 				<ol class="list">
 					{#each filteredTags as { value, count } (value)}

@@ -18,13 +18,12 @@
 		tags?: Tag[]
 		tracks?: Track[]
 		channelSlug?: string
+		chainTags?: string[]
 	}
 
-	let {tags = [], tracks = [], channelSlug = ''}: Props = $props()
+	let {tags = [], tracks = [], channelSlug = '', chainTags = $bindable([])}: Props = $props()
 
-	let chain: string[] = $state([])
-
-	let chainLower = $derived(chain.map((t) => t.toLowerCase()))
+	let chainLower = $derived(chainTags.map((t) => t.toLowerCase()))
 
 	/** Get tracks matching chain (AND logic) */
 	let matchingTracks = $derived.by(() => {
@@ -37,7 +36,7 @@
 
 	/** Show only branch tags that produce >0 matches with current chain. */
 	let visibleTags = $derived.by(() => {
-		if (chain.length === 0) return tags
+		if (chainTags.length === 0) return tags
 
 		const chainLookup = Object.fromEntries(chainLower.map((tag) => [tag, true]))
 		const branchCounts = Object.fromEntries(getChannelTags(matchingTracks).map((tag) => [tag.value, tag.count]))
@@ -52,26 +51,26 @@
 	function toggleTag(tag: string) {
 		const key = tag.toLowerCase()
 		if (chainLower.includes(key)) {
-			chain = chain.filter((t) => t.toLowerCase() !== key)
+			chainTags = chainTags.filter((t) => t.toLowerCase() !== key)
 		} else {
-			chain = [...chain, tag]
+			chainTags = [...chainTags, tag]
 		}
 	}
 
 	/** Remove single tag from chain */
 	function removeTag(tag: string) {
 		const key = tag.toLowerCase()
-		chain = chain.filter((t) => t.toLowerCase() !== key)
+		chainTags = chainTags.filter((t) => t.toLowerCase() !== key)
 	}
 
 	/** Clear entire chain */
 	function clearChain() {
-		chain = []
+		chainTags = []
 	}
 
 	/** Play matching tracks */
 	async function playChain() {
-		if (chain.length === 0 || matchingTracks.length === 0) return
+		if (chainTags.length === 0 || matchingTracks.length === 0) return
 		const trackIds = matchingTracks.map((t) => t.id)
 		const deckId = appState.active_deck_id
 		setPlaylist(deckId, trackIds)
@@ -80,10 +79,10 @@
 </script>
 
 <div class="tag-chain">
-	{#if chain.length > 0}
+	{#if chainTags.length > 0}
 		<div class="chain-bar">
 			<div class="chain-tags">
-				{#each chain as tag, i (tag)}
+				{#each chainTags as tag, i (tag)}
 					{#if i > 0}<span class="sep">→</span>{/if}
 					<button class="chain-tag" onclick={() => removeTag(tag)}>
 						{tag} <span aria-hidden="true">×</span>
@@ -92,7 +91,10 @@
 			</div>
 			<div class="chain-actions">
 				<button class="play-btn" onclick={playChain} disabled={matchingTracks.length === 0}> ▶ Play </button>
-				<a href={resolve(`/${channelSlug}/tracks?tags=${chain.map(encodeURIComponent).join(',')}`)} class="view-link">
+				<a
+					href={resolve(`/${channelSlug}/tracks?tags=${chainTags.map(encodeURIComponent).join(',')}`)}
+					class="view-link"
+				>
 					View {matchingTracks.length} tracks
 				</a>
 				<button class="clear-btn" onclick={clearChain} aria-label="Clear chain">✕</button>
