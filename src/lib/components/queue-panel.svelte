@@ -55,6 +55,12 @@
 
 	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description']))
 
+	/** @param {string} tag */
+	function toggleTag(tag) {
+		const query = '#' + tag
+		searchQuery = searchQuery === query ? '' : query
+	}
+
 	function clearQueue() {
 		if (!deck) return
 		deck.playlist_tracks = []
@@ -99,6 +105,7 @@
 				virtual={true}
 				{selectedTrackId}
 				onSelectTrack={(trackId) => (selectedTrackId = trackId)}
+				onTagClick={toggleTag}
 			/>
 		{:else if queueTracks.length === 0}
 			<div class="empty-state">
