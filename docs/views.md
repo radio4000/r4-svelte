@@ -8,8 +8,8 @@ Going the other way, `serializeView(view)` turns a View back into a ViewURI. `vi
 
 ```ts
 type ViewURI = string & {readonly __brand: 'ViewURI'}
-type ViewSource = {channels?, tags?, tagsMode?, search?}
-type View = {sources: ViewSource[], order?, direction?, limit?, offset?, exclude?}
+type ViewSource = {channels?; tags?; tagsMode?; search?}
+type View = {sources: ViewSource[]; order?; direction?; limit?; offset?; exclude?}
 ```
 
 For more, see lib/views.ts, lib/views.svelte.ts, lib/collections/views.ts.
@@ -50,6 +50,3 @@ After `?`, global to all sources:
 A **SavedView** gives a View a name and persists it to localStorage: `{id, name, uri, position?, description?, created_at}`. `uri` is `serializeView(view)`.
 
 A SavedView with a non-null `position` appears in the sidebar. `pinView(id)` appends to the end, `unpinView(id)` clears it, `reorderPinnedViews(orderedIds)` updates sort weights.
-
-
-

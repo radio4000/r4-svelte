@@ -2,7 +2,7 @@ import fuzzysort from 'fuzzysort'
 import {sdk} from '@radio4000/sdk'
 import {searchChannels, searchTracks} from '$lib/search-fts'
 import {channelsCollection} from '$lib/collections/channels'
-import {parseQuery} from '$lib/views'
+import {parseSource} from '$lib/views'
 
 const RE_WHITESPACE = /\s+/
 
@@ -55,7 +55,7 @@ export async function findChannelBySlug(slug) {
 export async function searchAll(query, {limit = 100} = {}) {
 	if (query.trim().length < 2) return {channels: [], tracks: []}
 
-	const {channels: slugs = [], tags = [], search = ''} = parseQuery(query)
+	const {channels: slugs = [], tags = [], search = ''} = parseSource(query)
 	const hasChannels = !!slugs.length
 	const hasTags = !!tags.length
 	const hasSearch = !!search

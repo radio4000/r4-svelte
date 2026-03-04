@@ -160,7 +160,7 @@ export function trackBroadcastPresence(slug) {
  * @param {import('$lib/views').View} [view]
  */
 export function trackAutoRadioPresence(slug, view) {
-	const uri = viewLabel(view ?? {queries: [{channels: [slug]}]}) || `@${slug}`
+	const uri = viewLabel(view ?? {sources: [{channels: [slug]}]}) || `@${slug}`
 	_trackChannelPresence(slug, 'auto-radio', uri)
 }
 

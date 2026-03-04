@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {onMount} from 'svelte'
+	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {viewFromUrl, viewLabel, type View} from '$lib/views'
@@ -92,7 +93,7 @@
 
 	function navigate(e: Event) {
 		e.preventDefault()
-		const params = new URLSearchParams()
+		const params = new SvelteURLSearchParams()
 		if (inputQ.trim()) params.set('q', inputQ.trim())
 		if (inputLimit) params.set('limit', String(inputLimit))
 		goto(`/embed?${params}`)
