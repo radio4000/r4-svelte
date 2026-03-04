@@ -74,7 +74,7 @@
 		alpha: () => 'A–Z'
 	}
 
-	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'link'}
+	const displayIconMap = {list: 'unordered-list', cloud: 'tag', chain: 'code-branch'}
 	const displayLabelMap = {list: () => 'List', cloud: () => 'Cloud', chain: () => 'Chain'}
 
 	// Date range from tracks
@@ -267,7 +267,7 @@
 						<Icon icon="tag" /><small>Cloud</small>
 					</button>
 					<button class:active={display === 'chain'} onclick={() => (display = 'chain')}>
-						<Icon icon="link" /><small>Chain</small>
+						<Icon icon="code-branch" /><small>Chain</small>
 					</button>
 				</menu>
 			</PopoverMenu>

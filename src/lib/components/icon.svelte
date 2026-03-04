@@ -109,7 +109,6 @@
 		sun: IconSun,
 		settings: IconSettings,
 		share: IconShare,
-		link: IconShare,
 		shuffle: IconShuffle,
 		'sidebar-fill-right': IconSidebarFillRight,
 		signal: IconSignal,
