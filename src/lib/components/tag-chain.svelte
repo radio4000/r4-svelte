@@ -36,9 +36,16 @@
 		return branchSet
 	})
 
-	/** Filtered tags: show branches when chain has selection, otherwise show all */
+	/** Get tracks matching chain (AND logic) */
+	let matchingTracks = $derived(
+		chain.length === 0
+			? tracks
+			: tracks.filter((t) => chain.every((tag) => t.tags?.some((tTag) => tTag.toLowerCase() === tag.toLowerCase())))
+	)
+
+	/** Filtered tags: show branches when chain has selection + matching tracks, otherwise show all */
 	let visibleTags = $derived(
-		availableBranches && availableBranches.size > 0
+		chain.length > 0 && matchingTracks.length > 0 && availableBranches && availableBranches.size > 0
 			? tags.filter((t) => availableBranches.has(t.value.toLowerCase()))
 			: tags
 	)
@@ -61,13 +68,6 @@
 	function clearChain() {
 		chain = []
 	}
-
-	/** Get tracks matching chain (AND logic) */
-	let matchingTracks = $derived(
-		chain.length === 0
-			? tracks
-			: tracks.filter((t) => chain.every((tag) => t.tags?.some((tTag) => tTag.toLowerCase() === tag.toLowerCase())))
-	)
 
 	/** Play matching tracks */
 	async function playChain() {
