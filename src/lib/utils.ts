@@ -296,7 +296,15 @@ export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?:
 		edges.push({id: key, source, target, weight})
 	}
 
-	return {nodes, edges}
+	// Remove isolated nodes — tags with no edges after weight/count filtering
+	// add visual noise in the galaxy without conveying any relationship
+	const connectedTags = new Set<string>()
+	for (const e of edges) {
+		connectedTags.add(e.source)
+		connectedTags.add(e.target)
+	}
+
+	return {nodes: nodes.filter((n) => connectedTags.has(n.id)), edges}
 }
 
 /** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */
