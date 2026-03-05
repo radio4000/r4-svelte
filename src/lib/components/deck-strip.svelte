@@ -1,6 +1,8 @@
 <script>
+	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
+	import {playHistoryCollection} from '$lib/collections/play-history'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -12,12 +14,24 @@
 	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
+	let isEmbedRoute = $derived(page.url.pathname.startsWith('/embed'))
+	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
+	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+	let visibleDeckIds = $derived.by(() =>
+		deckIds.filter((id) => {
+			const deck = appState.decks[id]
+			if (!deck || deck.compact || !showPlayer) return false
+			if (id !== 1) return true
+			return (deck.playlist_tracks?.length ?? 0) > 0 || Boolean(deck.playlist_track) || hasHistory
+		})
+	)
+	let singleVisibleDeck = $derived(isEmbedRoute && visibleDeckIds.length === 1)
 	const deckTransitionMs = 200
 	const deckExitMs = 0
 	const deckScaleStart = 0.95
 </script>
 
-<aside class="deck-strip" class:all-compact={allDecksCompact}>
+<aside class="deck-strip" class:all-compact={allDecksCompact} class:single-visible={singleVisibleDeck}>
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
@@ -77,6 +91,38 @@
 			min-width: 0;
 			padding-inline: 0;
 		}
+
+		.deck-strip.single-visible {
+			width: 100%;
+			max-width: none;
+		}
+
+		.deck-strip.single-visible .local,
+		.deck-strip.single-visible .broadcasts {
+			flex: 1 1 auto;
+			min-width: 0;
+			width: 100%;
+		}
+
+		.deck-strip.single-visible .deck-item {
+			flex: 0 0 auto;
+		}
+
+		.deck-strip.single-visible .deck-item:has(:global(.deck:not(.compact))) {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		.deck-strip.single-visible :global(.deck:not(.compact)) {
+			width: 100% !important;
+			min-width: 0;
+			flex: 1 1 auto;
+		}
+
+		.deck-strip.single-visible :global(.deck.listening:not(.compact)) {
+			width: 100%;
+			min-width: 0;
+		}
 	}
 
 	.local {
@@ -92,6 +138,14 @@
 		flex: 0 0 auto;
 		min-height: 0;
 		min-width: 0;
+	}
+
+	/* Compact decks keep media alive but must not reserve strip width. */
+	.deck-item:has(:global(.deck.compact)) {
+		flex: 0 0 0;
+		width: 0;
+		min-width: 0;
+		overflow: hidden;
 	}
 
 	.broadcasts {
