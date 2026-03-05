@@ -53,8 +53,8 @@
 
 	const log = logger.ns('player').seal()
 
-	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
-	let {deckId, children, scrollToActive} = $props()
+	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined, embedLocked?: boolean}} */
+	let {deckId, children, scrollToActive, embedLocked = false} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -148,7 +148,7 @@
 			listeningWhomTrackSlug: displayTrack?.slug,
 			listeningWhomFallbackSlug: deck?.playlist_slug,
 			tagBaseSlug: broadcastingChannel?.slug ?? headerSlug,
-			toHref: (path) => resolve(/** @type {any} */ (path))
+			toHref: embedLocked ? undefined : (path) => resolve(/** @type {any} */ (path))
 		})
 	)
 
@@ -394,9 +394,15 @@
 			{/if}
 			{#if headerChannel}
 				<div class="header-channel">
-					<a class="avatar-link" href={resolve(`/${headerChannel.slug}`)}>
-						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					</a>
+					{#if embedLocked}
+						<span class="avatar-link">
+							<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+						</span>
+					{:else}
+						<a class="avatar-link" href={resolve(`/${headerChannel.slug}`)}>
+							<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+						</a>
+					{/if}
 					<DeckChannelHeader
 						title={headerState.title}
 						titleHref={headerState.slugHref}
@@ -551,9 +557,10 @@
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
 						{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-						{@const trackHref = isDbId(displayTrack.id)
-							? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
-							: null}
+						{@const trackHref =
+							!embedLocked && isDbId(displayTrack.id)
+								? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
+								: null}
 						{#if ytid}
 							{#if trackHref}
 								<a href={trackHref} class="track-artwork"><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a>
@@ -582,6 +589,7 @@
 					menuValign="top"
 					menuAlign="end"
 					onLocate={scrollToActive}
+					{embedLocked}
 				/>
 			{/if}
 		</footer>
@@ -608,13 +616,15 @@
 			{#if !isListeningToBroadcast}
 				<VolumeControl {deckId} />
 			{/if}
-			<button
-				onclick={() => toggleDeckCompact(deckId)}
-				aria-label={m.player_tooltip_compact()}
-				{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
-			>
-				<Icon icon="deck-panel" expanded />
-			</button>
+			{#if hasMultipleDecks}
+				<button
+					onclick={() => toggleDeckCompact(deckId)}
+					aria-label={m.player_tooltip_compact()}
+					{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
+				>
+					<Icon icon="deck-panel" expanded />
+				</button>
+			{/if}
 		</menu>
 	</section>
 </div>

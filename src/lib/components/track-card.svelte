@@ -25,6 +25,7 @@
 		menuAlign?: 'left' | 'right' | 'end'
 		menuValign?: 'top' | 'bottom'
 		onLocate?: () => void
+		embedLocked?: boolean
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -42,6 +43,7 @@
 		menuAlign,
 		menuValign,
 		onLocate,
+		embedLocked = false,
 		children,
 		description
 	}: Props = $props()
@@ -132,10 +134,10 @@
 		<time>
 			{#if isRealTrack}
 				<span class="mobile">&rarr;</span>
-			{:else if track.url}
+			{:else if track.url && !embedLocked}
 				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer">&rarr;</a>
 			{/if}
-			{#if track.slug && track.discogs_url}
+			{#if track.slug && track.discogs_url && !embedLocked}
 				<a href="{permalink}/discogs" class="discogs">{m.track_meta_discogs()}</a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
@@ -172,15 +174,17 @@
 						menu?.close()
 					}}><Icon icon="play-fill" size={16} /></button
 				>
-				<button
-					type="button"
-					role="menuitem"
-					{@attach tooltip({content: m.track_play_next()})}
-					onclick={() => {
-						playNext(deckId ?? appState.active_deck_id, track.id)
-						menu?.close()
-					}}><Icon icon="next-fill" size={16} /></button
-				>
+				{#if !embedLocked}
+					<button
+						type="button"
+						role="menuitem"
+						{@attach tooltip({content: m.track_play_next()})}
+						onclick={() => {
+							playNext(deckId ?? appState.active_deck_id, track.id)
+							menu?.close()
+						}}><Icon icon="next-fill" size={16} /></button
+					>
+				{/if}
 				<button
 					type="button"
 					role="menuitem"
@@ -190,9 +194,14 @@
 						menu?.close()
 					}}><Icon icon="sidebar-fill-right" size={16} /></button
 				>
-				<button type="button" role="menuitem" {@attach tooltip({content: m.track_add_to_radio()})} onclick={addToRadio}
-					><Icon icon="add" size={16} /></button
-				>
+				{#if !embedLocked}
+					<button
+						type="button"
+						role="menuitem"
+						{@attach tooltip({content: m.track_add_to_radio()})}
+						onclick={addToRadio}><Icon icon="add" size={16} /></button
+					>
+				{/if}
 				{#if isRealTrack}
 					<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
 						><Icon icon="share" size={16} /></button
@@ -205,9 +214,9 @@
 						><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
 					>
 				{/if}
-				{#if isRealTrack}
+				{#if isRealTrack && !embedLocked}
 					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
-				{:else if track.url}
+				{:else if track.url && !embedLocked}
 					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
 						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
 					>

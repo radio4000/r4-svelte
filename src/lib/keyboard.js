@@ -25,6 +25,11 @@ function onKeyDown(event) {
 
 export function initializeKeyboardShortcuts() {
 	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
+	const isEmbedRoute = () => window.location.pathname.startsWith('/embed')
+	const gotoIfAllowed = (path) => {
+		if (isEmbedRoute()) return
+		goto(path)
+	}
 
 	const actionMap = {
 		toggleShuffle: () => toggleShuffle(appState.active_deck_id),
@@ -32,9 +37,9 @@ export function initializeKeyboardShortcuts() {
 		togglePlayPause: () => togglePlayPause(appState.active_deck_id),
 		clearQueue: () => clearQueue(appState.active_deck_id),
 		toggleCompactDeck: () => toggleDeckCompact(appState.active_deck_id),
-		gotoHome: () => goto('/'),
-		gotoSettings: () => goto('/settings'),
-		gotoDebug: () => goto('/_debug'),
+		gotoHome: () => gotoIfAllowed('/'),
+		gotoSettings: () => gotoIfAllowed('/settings'),
+		gotoDebug: () => gotoIfAllowed('/_debug'),
 		showShortcutsHelp: () => {
 			appState.modal_shortcuts = true
 		}

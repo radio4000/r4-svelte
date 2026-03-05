@@ -9,6 +9,7 @@
 	let {deckId} = $props()
 
 	let deck = $derived(appState.decks[deckId])
+	let embedLocked = $derived(page.url.pathname.startsWith('/embed'))
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
@@ -82,9 +83,9 @@
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
-			<Player {deckId} {scrollToActive}>
+			<Player {deckId} {scrollToActive} {embedLocked}>
 				{#if !isListeningToBroadcast}
-					<QueuePanel {deckId} bind:scrollToActive />
+					<QueuePanel {deckId} bind:scrollToActive {embedLocked} />
 				{/if}
 			</Player>
 		</div>

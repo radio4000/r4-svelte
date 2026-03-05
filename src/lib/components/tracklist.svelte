@@ -24,6 +24,7 @@
 		virtual?: boolean,
 		playContext?: boolean,
 		showSlug?: boolean,
+		embedLocked?: boolean,
 		selectedTrackId?: string | null,
 		onSelectTrack?: (trackId: string | null) => void,
 		onTagClick?: (tag: string) => void
@@ -40,6 +41,7 @@
 		virtual = false,
 		playContext = false,
 		showSlug = false,
+		embedLocked = false,
 		selectedTrackId: selectedTrackIdProp = null,
 		onSelectTrack,
 		onTagClick
@@ -196,6 +198,7 @@
 								{canEdit}
 								{showSlug}
 								{onTagClick}
+								{embedLocked}
 							/>
 							{@render footer?.({track: item.track})}
 						</div>
@@ -244,6 +247,7 @@
 										{canEdit}
 										{showSlug}
 										{onTagClick}
+										{embedLocked}
 									/>
 									{@render footer?.({track})}
 								</li>
@@ -287,6 +291,7 @@
 						{canEdit}
 						{showSlug}
 						{onTagClick}
+						{embedLocked}
 					/>
 					{@render footer?.({track})}
 				</li>

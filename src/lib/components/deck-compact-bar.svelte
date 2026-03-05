@@ -1,4 +1,5 @@
 <script>
+	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -21,6 +22,7 @@
 	let {deckId} = $props()
 
 	let deck = $derived(appState.decks[deckId])
+	let embedLocked = $derived(page.url.pathname.startsWith('/embed'))
 
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
@@ -66,7 +68,7 @@
 			listeningWhomTrackSlug: displayTrack?.slug,
 			listeningWhomFallbackSlug: deck?.playlist_slug ?? displaySlug,
 			tagBaseSlug: broadcasterChannel?.slug ?? headerSlug,
-			toHref: (path) => resolve(/** @type {any} */ (path))
+			toHref: embedLocked ? undefined : (path) => resolve(/** @type {any} */ (path))
 		})
 	)
 	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
@@ -146,14 +148,27 @@
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
 		{#if displayTrack}
 			<div class="track-panel">
-				<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+				<TrackCard
+					track={displayTrack}
+					{deckId}
+					canEdit={canEditTrackChannel}
+					menuAlign="end"
+					menuValign="top"
+					{embedLocked}
+				/>
 			</div>
 		{/if}
 		<div class="channel-panel">
 			{#if headerChannel}
-				<a class="avatar" href={headerState.slugHref}>
-					<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-				</a>
+				{#if embedLocked}
+					<span class="avatar">
+						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+					</span>
+				{:else}
+					<a class="avatar" href={headerState.slugHref}>
+						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+					</a>
+				{/if}
 			{/if}
 			<div class="channel-info">
 				<DeckChannelHeader

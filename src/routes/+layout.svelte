@@ -16,6 +16,7 @@
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate} from '$app/navigation'
 	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
+	import {page} from '$app/state'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -46,6 +47,7 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
+	let isEmbedRoute = $derived(page.url.pathname.startsWith('/embed'))
 	const compactDeckTransitionMs = 200
 	const compactDeckExitMs = 0
 	const compactDeckScaleStart = 0.95
@@ -214,7 +216,9 @@
 
 			{#key uiLocale}
 				<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
-					<LayoutHeader preloading={data.preloading} />
+					{#if !isEmbedRoute}
+						<LayoutHeader preloading={data.preloading} />
+					{/if}
 
 					<div class="content-wrapper">
 						<section class="content">

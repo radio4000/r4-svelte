@@ -44,10 +44,29 @@
 	}
 
 	onMount(() => {
+		document.documentElement.classList.add('embed-mode')
+		const handleLinkClick = (event: MouseEvent) => {
+			if (event.defaultPrevented || event.button !== 0) return
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+			const target = event.target as Element | null
+			const link = target?.closest('a[href]') as HTMLAnchorElement | null
+			if (!link || link.hasAttribute('download')) return
+			const href = link.getAttribute('href')
+			if (!href || href.startsWith('#')) return
+			const url = new URL(link.href, window.location.href)
+			if (url.origin !== window.location.origin || !url.pathname.startsWith('/embed')) {
+				event.preventDefault()
+				event.stopPropagation()
+			}
+		}
+		document.addEventListener('click', handleLinkClick, true)
+
 		const savedDecks = $state.snapshot(appState.decks)
 		const savedActiveDeckId = appState.active_deck_id
 		const savedNextDeckId = appState.next_deck_id
 		return () => {
+			document.removeEventListener('click', handleLinkClick, true)
+			document.documentElement.classList.remove('embed-mode')
 			appState.decks = savedDecks
 			appState.active_deck_id = savedActiveDeckId
 			appState.next_deck_id = savedNextDeckId
@@ -119,5 +138,42 @@
 <style>
 	:global(.layout > header) {
 		display: none !important;
+	}
+
+	:global(.embed-mode .content .scroll-area) {
+		display: none;
+	}
+
+	:global(.embed-mode .content .deck-strip) {
+		width: 100%;
+		max-width: none;
+		flex: 1 1 auto;
+	}
+
+	:global(.embed-mode .content .deck-strip .local) {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	:global(.embed-mode .content .deck-strip .deck-item) {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	:global(.embed-mode .content .deck-strip .deck) {
+		width: 100%;
+		min-width: 0;
+		flex: 1 1 0;
+	}
+
+	:global(.embed-mode .content .deck-strip .broadcasts) {
+		min-width: 0;
+		width: 100%;
+	}
+
+	:global(.embed-mode .content .deck-strip .deck.listening) {
+		width: 100%;
+		min-width: 0;
+		flex: 1 1 0;
 	}
 </style>
