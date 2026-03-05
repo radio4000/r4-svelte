@@ -54,7 +54,7 @@
 	.docs-content {
 		overflow-y: auto;
 		max-height: 100dvh;
-		padding: 1rem;	
+		padding: 1rem;
 	}
 
 	@media (max-width: 640px) {

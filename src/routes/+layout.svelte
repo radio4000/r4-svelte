@@ -16,7 +16,6 @@
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate} from '$app/navigation'
 	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
-	import {page} from '$app/state'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -29,7 +28,7 @@
 
 	const log = logger.ns('layout').seal()
 
-	/** @type {import('./$types').LayoutProps} */
+	/** @type {import('./$types').LayoutProps & {data: {embedMode: boolean}}} */
 	const {data, children} = $props()
 
 	// Channels are now fetched on-demand by each page's useLiveQuery (no more fetch-all)
@@ -47,7 +46,6 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
-	let isEmbedRoute = $derived(page.url.pathname.startsWith('/embed'))
 	const compactDeckTransitionMs = 200
 	const compactDeckExitMs = 0
 	const compactDeckScaleStart = 0.95
@@ -74,6 +72,12 @@
 		}
 		return undefined
 	}
+
+	// Overwrite on every load — server is authoritative for embed mode
+	$effect(() => {
+		appState.embed_mode = data.embedMode
+		document.documentElement.classList.toggle('embed-mode', data.embedMode)
+	})
 
 	onMount(async () => {
 		trackAppPresence()
@@ -216,7 +220,7 @@
 
 			{#key uiLocale}
 				<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
-					{#if !isEmbedRoute}
+					{#if !appState.embed_mode}
 						<LayoutHeader preloading={data.preloading} />
 					{/if}
 

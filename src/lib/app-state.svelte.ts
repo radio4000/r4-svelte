@@ -64,6 +64,8 @@ export const defaultAppState: AppState = {
 
 	user: undefined,
 
+	embed_mode: false,
+
 	language: undefined,
 	modal_track_add: null,
 	modal_track_edit: null,

@@ -25,7 +25,6 @@
 		menuAlign?: 'left' | 'right' | 'end'
 		menuValign?: 'top' | 'bottom'
 		onLocate?: () => void
-		embedLocked?: boolean
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -43,7 +42,6 @@
 		menuAlign,
 		menuValign,
 		onLocate,
-		embedLocked = false,
 		children,
 		description
 	}: Props = $props()
@@ -134,10 +132,10 @@
 		<time>
 			{#if isRealTrack}
 				<span class="mobile">&rarr;</span>
-			{:else if track.url && !embedLocked}
+			{:else if track.url && !appState.embed_mode}
 				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer">&rarr;</a>
 			{/if}
-			{#if track.slug && track.discogs_url && !embedLocked}
+			{#if track.slug && track.discogs_url && !appState.embed_mode}
 				<a href="{permalink}/discogs" class="discogs">{m.track_meta_discogs()}</a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
@@ -174,7 +172,7 @@
 						menu?.close()
 					}}><Icon icon="play-fill" size={16} /></button
 				>
-				{#if !embedLocked}
+				{#if !appState.embed_mode}
 					<button
 						type="button"
 						role="menuitem"
@@ -194,7 +192,7 @@
 						menu?.close()
 					}}><Icon icon="sidebar-fill-right" size={16} /></button
 				>
-				{#if !embedLocked}
+				{#if !appState.embed_mode}
 					<button
 						type="button"
 						role="menuitem"
@@ -214,9 +212,9 @@
 						><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
 					>
 				{/if}
-				{#if isRealTrack && !embedLocked}
+				{#if isRealTrack && !appState.embed_mode}
 					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
-				{:else if track.url && !embedLocked}
+				{:else if track.url && !appState.embed_mode}
 					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
 						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
 					>

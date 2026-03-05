@@ -85,6 +85,8 @@ export interface AppState {
 	modal_shortcuts?: boolean
 	show_welcome_hint?: boolean
 	analytics_opt_in?: boolean
+	/** Hides navigation and external links; set by the server on embed domains. */
+	embed_mode?: boolean
 }
 
 export interface UserIdentity {

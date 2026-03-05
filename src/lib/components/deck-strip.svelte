@@ -14,7 +14,6 @@
 	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
-	let isEmbedRoute = $derived(page.url.pathname.startsWith('/embed'))
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let hasHistory = $derived(playHistoryCollection.state.size > 0)
 	let visibleDeckIds = $derived.by(() =>
@@ -25,13 +24,13 @@
 			return (deck.playlist_tracks?.length ?? 0) > 0 || Boolean(deck.playlist_track) || hasHistory
 		})
 	)
-	let singleVisibleDeck = $derived(isEmbedRoute && visibleDeckIds.length === 1)
+	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
 	const deckTransitionMs = 200
 	const deckExitMs = 0
 	const deckScaleStart = 0.95
 </script>
 
-<aside class="deck-strip" class:all-compact={allDecksCompact} class:single-visible={singleVisibleDeck}>
+<aside class={['deck-strip', allDecksCompact && 'all-compact', singleVisibleDeck && 'single-visible']}>
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
@@ -82,140 +81,139 @@
 			flex: 0 0 0;
 			overflow: hidden;
 		}
-	}
 
-	@media (min-width: 769px) {
-		.deck-strip {
+		/* hide close button when only one deck */
+		&:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
+			display: none;
+		}
+
+		.local {
+			display: flex;
+			flex-direction: row;
+			flex: 0 0 auto;
+			min-height: 0;
+			min-width: max-content;
+		}
+
+		.broadcasts {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			overflow-y: auto;
+			flex: 0 0 auto;
+			min-width: min(36rem, 45vw);
+
+			:global(.deck.listening) {
+				width: 100%;
+				min-width: 0;
+				flex: 1 1 auto;
+			}
+		}
+
+		.deck-item {
+			display: flex;
+			flex: 0 0 auto;
+			min-height: 0;
+			min-width: 0;
+
+			/* Compact decks keep media alive but must not reserve strip width. */
+			&:has(:global(.deck.compact)) {
+				flex: 0 0 0;
+				width: 0;
+				min-width: 0;
+				overflow: hidden;
+			}
+		}
+
+		@media (min-width: 769px) {
 			width: fit-content;
 			max-width: 72vw;
 			min-width: 0;
 			padding-inline: 0;
+
+			&.single-visible {
+				width: 100%;
+				max-width: none;
+
+				.local,
+				.broadcasts {
+					flex: 1 1 auto;
+					min-width: 0;
+					width: 100%;
+				}
+
+				.deck-item {
+					flex: 0 0 auto;
+
+					&:has(:global(.deck:not(.compact))) {
+						flex: 1 1 auto;
+						min-width: 0;
+					}
+				}
+
+				:global(.deck:not(.compact)) {
+					width: 100% !important;
+					min-width: 0;
+					flex: 1 1 auto;
+				}
+
+				:global(.deck.listening:not(.compact)) {
+					width: 100%;
+					min-width: 0;
+				}
+			}
 		}
 
-		.deck-strip.single-visible {
-			width: 100%;
-			max-width: none;
-		}
-
-		.deck-strip.single-visible .local,
-		.deck-strip.single-visible .broadcasts {
-			flex: 1 1 auto;
-			min-width: 0;
-			width: 100%;
-		}
-
-		.deck-strip.single-visible .deck-item {
-			flex: 0 0 auto;
-		}
-
-		.deck-strip.single-visible .deck-item:has(:global(.deck:not(.compact))) {
-			flex: 1 1 auto;
-			min-width: 0;
-		}
-
-		.deck-strip.single-visible :global(.deck:not(.compact)) {
-			width: 100% !important;
-			min-width: 0;
-			flex: 1 1 auto;
-		}
-
-		.deck-strip.single-visible :global(.deck.listening:not(.compact)) {
-			width: 100%;
-			min-width: 0;
-		}
-	}
-
-	.local {
-		display: flex;
-		flex-direction: row;
-		flex: 0 0 auto;
-		min-height: 0;
-		min-width: max-content;
-	}
-
-	.deck-item {
-		display: flex;
-		flex: 0 0 auto;
-		min-height: 0;
-		min-width: 0;
-	}
-
-	/* Compact decks keep media alive but must not reserve strip width. */
-	.deck-item:has(:global(.deck.compact)) {
-		flex: 0 0 0;
-		width: 0;
-		min-width: 0;
-		overflow: hidden;
-	}
-
-	.broadcasts {
-		display: flex;
-		flex-direction: column;
-		min-height: 0;
-		overflow-y: auto;
-		flex: 0 0 auto;
-		min-width: min(36rem, 45vw);
-	}
-
-	.broadcasts :global(.deck.listening) {
-		width: 100%;
-		min-width: 0;
-		flex: 1 1 auto;
-	}
-
-	/* hide close button when only one deck */
-	.deck-strip:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
-		display: none;
-	}
-
-	/* "fill deck": non-compact with at least one visible panel (video or queue) */
-	@media (max-width: 768px) {
-		.deck-strip {
+		/* "fill deck": non-compact with at least one visible panel (video or queue) */
+		@media (max-width: 768px) {
 			flex-direction: column;
 			height: auto;
 			overflow-y: auto;
-		}
 
-		.deck-strip:not(.all-compact) {
-			flex: 0 1 auto;
-			min-height: 0;
-		}
+			&:not(.all-compact) {
+				flex: 0 1 auto;
+				min-height: 0;
 
-		/* grow to fill available height when any deck has visible content */
-		.deck-strip:not(.all-compact):has(
-				:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
-			) {
-			flex: 1 1 0;
-			min-height: 100%;
-		}
+				/* grow to fill available height when any deck has visible content */
+				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+					flex: 1 1 0;
+					min-height: 100%;
+				}
+			}
 
-		.local {
-			flex-direction: column;
-			min-height: 0;
-			min-width: 0;
-		}
+			.local {
+				flex-direction: column;
+				min-height: 0;
+				min-width: 0;
 
-		.broadcasts {
-			overflow-y: visible;
-			flex-direction: column;
-			min-width: 0;
-		}
+				/* sections with fill decks share the strip height */
+				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+					flex: 1 1 0;
+					min-height: 0;
+				}
+			}
 
-		/* sections with fill decks share the strip height */
-		.local:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))),
-		.broadcasts:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
-			flex: 1 1 0;
-			min-height: 0;
-		}
+			.broadcasts {
+				overflow-y: visible;
+				flex-direction: column;
+				min-width: 0;
 
-		/* deck-items: non-fill shrink but don't grow, fill items take available space */
-		.deck-strip .deck-item {
-			flex: 0 1 auto;
-			min-height: 0;
-		}
+				/* sections with fill decks share the strip height */
+				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+					flex: 1 1 0;
+					min-height: 0;
+				}
+			}
 
-		.deck-strip .deck-item:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
-			flex: 1 1 0;
+			/* deck-items: non-fill shrink but don't grow, fill items take available space */
+			.deck-item {
+				flex: 0 1 auto;
+				min-height: 0;
+
+				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+					flex: 1 1 0;
+				}
+			}
 		}
 	}
 </style>

@@ -53,8 +53,8 @@
 
 	const log = logger.ns('player').seal()
 
-	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined, embedLocked?: boolean}} */
-	let {deckId, children, scrollToActive, embedLocked = false} = $props()
+	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
+	let {deckId, children, scrollToActive} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -148,7 +148,7 @@
 			listeningWhomTrackSlug: displayTrack?.slug,
 			listeningWhomFallbackSlug: deck?.playlist_slug,
 			tagBaseSlug: broadcastingChannel?.slug ?? headerSlug,
-			toHref: embedLocked ? undefined : (path) => resolve(/** @type {any} */ (path))
+			toHref: appState.embed_mode ? undefined : (path) => resolve(/** @type {any} */ (path))
 		})
 	)
 
@@ -394,7 +394,7 @@
 			{/if}
 			{#if headerChannel}
 				<div class="header-channel">
-					{#if embedLocked}
+					{#if appState.embed_mode}
 						<span class="avatar-link">
 							<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 						</span>
@@ -558,7 +558,7 @@
 					{#if displayTrack && displayChannel}
 						{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
 						{@const trackHref =
-							!embedLocked && isDbId(displayTrack.id)
+							!appState.embed_mode && isDbId(displayTrack.id)
 								? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
 								: null}
 						{#if ytid}
@@ -589,7 +589,6 @@
 					menuValign="top"
 					menuAlign="end"
 					onLocate={scrollToActive}
-					{embedLocked}
 				/>
 			{/if}
 		</footer>

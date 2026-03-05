@@ -25,9 +25,8 @@ function onKeyDown(event) {
 
 export function initializeKeyboardShortcuts() {
 	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
-	const isEmbedRoute = () => window.location.pathname.startsWith('/embed')
 	const gotoIfAllowed = (path) => {
-		if (isEmbedRoute()) return
+		if (appState.embed_mode) return
 		goto(path)
 	}
 

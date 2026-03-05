@@ -10,4 +10,3 @@
 <article>
 	{@html data.html}
 </article>
-

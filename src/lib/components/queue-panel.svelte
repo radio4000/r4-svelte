@@ -13,8 +13,8 @@
 	import {tick} from 'svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined, embedLocked?: boolean}} */
-	let {deckId, scrollToActive = $bindable(undefined), embedLocked = false} = $props()
+	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
+	let {deckId, scrollToActive = $bindable(undefined)} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -90,7 +90,7 @@
 			>
 				<Icon icon="shuffle" size={16} />
 			</button>
-			{#if !embedLocked}
+			{#if !appState.embed_mode}
 				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
 					<Icon icon="delete" size={16} />
 				</button>
@@ -108,7 +108,6 @@
 				{selectedTrackId}
 				onSelectTrack={(trackId) => (selectedTrackId = trackId)}
 				onTagClick={toggleTag}
-				{embedLocked}
 			/>
 		{:else if queueTracks.length === 0}
 			<div class="empty-state">
