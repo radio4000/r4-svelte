@@ -328,6 +328,14 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 
 			const remoteLatest = data?.[0]?.updated_at
 			const remoteCount = count ?? 0
+
+			// Remote has no tracks for this slug — treat as local-only (imported backup).
+			// Don't invalidate or we'd wipe data that only exists locally.
+			if (remoteCount === 0 && cachedTracks.length > 0) {
+				log.info('freshness skip local-only', {slug, cached: cachedTracks.length})
+				return false
+			}
+
 			const countMismatch = remoteCount !== cachedTracks.length
 			const outdated = countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
 

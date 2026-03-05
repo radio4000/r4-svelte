@@ -55,6 +55,10 @@
 			<Icon icon="eye" />
 			Analytics
 		</a>
+		<a href="/settings/import/backup">
+			<Icon icon="document-download" />
+			Import channel data
+		</a>
 	</menu>
 
 	<menu class="nav-vertical">
