@@ -1,24 +1,6 @@
 <script>
 	import * as m from '$lib/paraglide/messages'
 	import BackLink from '$lib/components/back-link.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
-	import {sdk} from '@radio4000/sdk'
-	import CommunityLinks from '$lib/components/community-links.svelte'
-
-	/** @type {import('$lib/types').Channel[]} */
-	let featuredChannels = $state([])
-
-	$effect(() => {
-		sdk.supabase
-			.from('channels_with_tracks')
-			.select('*')
-			.gte('track_count', 1000)
-			.order('latest_track_at', {ascending: false})
-			.limit(10)
-			.then(({data}) => {
-				if (data) featuredChannels = /** @type {import('$lib/types').Channel[]} */ (data)
-			})
-	})
 </script>
 
 <svelte:head>
@@ -80,8 +62,7 @@
 		<li>Export tracks anytime — what is yours is yours</li>
 		<li>Use the R4 CLI to mirror your radio offline</li>
 		<li>Build on the open API to do whatever you need</li>
-		<li>It'd be cool if this was based on atproto but its not, yet</li>
-		<li>No trackers, no ads (except those from YouTube player)</li>
+<li>No trackers, no ads (except those from YouTube player)</li>
 	</ul>
 </article>
 
@@ -93,25 +74,7 @@
 	<figcaption>Une caverne pendant la nuit — Émile Bayard</figcaption>
 </figure>
 
-<article class="constrained">
-	<p>Radio4000 was started back in 2014 and we're still online.</p>
-</article>
 
-<figure>
-	<img src="/images/illustrations/more-otho-flying-richard-neuhauss.jpg" alt="More Otho Flying" />
-	<figcaption>More Otho Flying — Richard Neuhauss</figcaption>
-</figure>
-
-{#if featuredChannels.length > 0}
-	<section class="featured-channels">
-		<h2>Large collections</h2>
-		<ol class="grid grid--scroll">
-			{#each featuredChannels as channel (channel.id)}
-				<li><ChannelCard {channel} /></li>
-			{/each}
-		</ol>
-	</section>
-{/if}
 
 <article class="constrained">
 	<footer>
@@ -119,8 +82,7 @@
 			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
 			<a href="/" class="btn">{m.common_start_exploring()}</a>
 		</p>
-		<CommunityLinks />
-	</footer>
+</footer>
 </article>
 
 <style>
@@ -165,15 +127,5 @@
 
 	ul {
 		padding-left: 2rem;
-	}
-
-	.featured-channels {
-		margin-block: 2rem;
-		padding-inline: 0.5rem;
-
-		h2 {
-			font-size: inherit;
-			margin-block-end: 0.5rem;
-		}
 	}
 </style>
