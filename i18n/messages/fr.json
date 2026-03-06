@@ -25,7 +25,7 @@
 	"auth_check_email": "Vérifiez votre boîte mail pour le lien de confirmation.",
 	"auth_click_link": "Cliquez sur le lien reçu pour finaliser la création du compte.",
 	"auth_confirm_password": "Confirmer le mot de passe",
-	"auth_continue_with_email": "Continuer avec l'email",
+	"auth_continue_with_email": "Continuer avec un email",
 	"auth_continue_with_facebook": "Continuer avec Facebook",
 	"auth_continue_with_google": "Continuer avec Google",
 	"auth_create_account": "Créer un compte",
@@ -635,5 +635,11 @@
 	"views_tags_label": "Étiquettes",
 	"views_tags_placeholder": "ex. : ambient, jazz",
 	"views_update_named": "Mettre à jour \"{name}\"",
-	"views_view_name_placeholder": "Nom de la vue"
+	"views_view_name_placeholder": "Nom de la vue",
+	"welcome_feature_archive": "Rechercher, filtrer, écouter et exporter votre archive",
+	"welcome_feature_decks": "Jouer en direct ou laisser l'auto-radio synchroniser tout le monde",
+	"welcome_feature_follow": "Suivre des radios curées par d'autres personnes",
+	"welcome_feature_open": "Gratuit et open source — sans publicité, sans pistage.",
+	"welcome_tagline_channel": "Votre canal de radio web personnel est une collection de liens médias.",
+	"welcome_tagline_metadata": "Créez de nouvelles pistes avec n'importe quelle URL média. Donnez-lui un titre, des notes et des tags."
 }

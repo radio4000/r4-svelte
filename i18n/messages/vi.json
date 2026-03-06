@@ -629,5 +629,11 @@
 	"views_tags_label": "Thẻ",
 	"views_tags_placeholder": "vd: ambient, jazz",
 	"views_update_named": "Cập nhật \"{name}\"",
-	"views_view_name_placeholder": "Tên chế độ xem"
+	"views_view_name_placeholder": "Tên chế độ xem",
+	"welcome_feature_archive": "Tìm kiếm, lọc, phát và xuất kho lưu trữ của bạn",
+	"welcome_feature_decks": "Phát trực tiếp hoặc để auto-radio đồng bộ mọi người",
+	"welcome_feature_follow": "Theo dõi đài được tuyển chọn bởi người khác",
+	"welcome_feature_open": "Miễn phí và mã nguồn mở — không quảng cáo, không theo dõi.",
+	"welcome_tagline_channel": "Kênh web radio cá nhân của bạn là tập hợp các liên kết phương tiện.",
+	"welcome_tagline_metadata": "Tạo bản nhạc mới bằng bất kỳ URL phương tiện nào. Đặt tiêu đề, ghi chú, thẻ."
 }

@@ -630,5 +630,11 @@
 	"views_tags_label": "टैग",
 	"views_tags_placeholder": "उदा.: ambient, jazz",
 	"views_update_named": "\"{name}\" अपडेट करें",
-	"views_view_name_placeholder": "व्यू नाम"
+	"views_view_name_placeholder": "व्यू नाम",
+	"welcome_feature_archive": "अपना संग्रह खोजें, फ़िल्टर करें, चलाएं और निर्यात करें",
+	"welcome_feature_decks": "लाइव चलाएं या ऑटो-रेडियो को सभी को सिंक्रोनाइज़ करने दें",
+	"welcome_feature_follow": "दूसरे लोगों द्वारा क्यूरेट किए गए रेडियो फ़ॉलो करें",
+	"welcome_feature_open": "मुफ़्त और ओपन सोर्स — कोई विज्ञापन नहीं, कोई ट्रैकिंग नहीं।",
+	"welcome_tagline_channel": "आपका व्यक्तिगत वेब रेडियो चैनल मीडिया लिंक का संग्रह है।",
+	"welcome_tagline_metadata": "किसी भी मीडिया URL का उपयोग करके नए ट्रैक बनाएं। उसे एक शीर्षक, नोट्स और टैग दें।"
 }

@@ -651,5 +651,11 @@
 	"views_tags_label": "标签",
 	"views_tags_placeholder": "例如：ambient, jazz",
 	"views_update_named": "更新“{name}”",
-	"views_view_name_placeholder": "视图名称"
+	"views_view_name_placeholder": "视图名称",
+	"welcome_feature_archive": "搜索、筛选、播放和导出您的档案",
+	"welcome_feature_decks": "现场播放或让自动广播同步所有人",
+	"welcome_feature_follow": "关注其他人精心策划的电台",
+	"welcome_feature_open": "免费开源 — 无广告，无跟踪。",
+	"welcome_tagline_channel": "您的个人网络电台频道是媒体链接的集合。",
+	"welcome_tagline_metadata": "使用任何媒体URL创建新曲目。给它一个标题、备注和标签。"
 }

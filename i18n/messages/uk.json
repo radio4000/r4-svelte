@@ -634,5 +634,11 @@
 	"views_tags_label": "Теги",
 	"views_tags_placeholder": "напр.: ambient, jazz",
 	"views_update_named": "Оновити \"{name}\"",
-	"views_view_name_placeholder": "Назва вигляду"
+	"views_view_name_placeholder": "Назва вигляду",
+	"welcome_feature_archive": "Пошук, фільтрація, відтворення та експорт архіву",
+	"welcome_feature_decks": "Грати наживо або нехай авторадіо синхронізує всіх",
+	"welcome_feature_follow": "Стежте за радіо, кураторованими іншими людьми",
+	"welcome_feature_open": "Безкоштовно і з відкритим кодом — без реклами, без відстеження.",
+	"welcome_tagline_channel": "Ваш особистий канал веб-радіо — це колекція медіапосилань.",
+	"welcome_tagline_metadata": "Створюйте нові треки за допомогою будь-якого медіа URL. Дайте їм назву, нотатки та теги."
 }

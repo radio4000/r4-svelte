@@ -633,5 +633,11 @@
 	"views_tags_label": "Schlagwörter",
 	"views_tags_placeholder": "z. B. ambient, jazz",
 	"views_update_named": "\"{name}\" aktualisieren",
-	"views_view_name_placeholder": "Ansichtsname"
+	"views_view_name_placeholder": "Ansichtsname",
+	"welcome_feature_archive": "Archiv durchsuchen, filtern, abspielen und exportieren",
+	"welcome_feature_decks": "Live abspielen oder Auto-Radio alle synchronisieren lassen",
+	"welcome_feature_follow": "Von anderen kuratierten Radios folgen",
+	"welcome_feature_open": "Kostenlos und open source — keine Werbung, kein Tracking.",
+	"welcome_tagline_channel": "Dein persönlicher Webradio-Kanal ist eine Sammlung von Medienlinks.",
+	"welcome_tagline_metadata": "Neue Tracks mit einer beliebigen Medien-URL erstellen. Titel, Notizen und Tags vergeben."
 }

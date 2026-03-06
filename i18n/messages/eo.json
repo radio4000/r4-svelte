@@ -633,5 +633,11 @@
 	"views_tags_label": "Etikedoj",
 	"views_tags_placeholder": "ekz. ambient, jazz",
 	"views_update_named": "Ĝisdatigi \"{name}\"",
-	"views_view_name_placeholder": "Nomo de vido"
+	"views_view_name_placeholder": "Nomo de vido",
+	"welcome_feature_archive": "Serĉi, filtri, ludi kaj eksporti vian arkivon",
+	"welcome_feature_decks": "Ludi vive aŭ lasi aŭtoradion sinkronigi ĉiujn",
+	"welcome_feature_follow": "Sekvi radiojn kuraceritajn de aliaj homoj",
+	"welcome_feature_open": "Senpaga kaj malfermkoda — sen reklamoj, sen spurado.",
+	"welcome_tagline_channel": "Via persona reta radiokanalo estas kolekto de mediaj ligiloj.",
+	"welcome_tagline_metadata": "Kreu novajn traketojn per ajna media URL-o. Donu al ĝi titolon, notojn kaj etikedojn."
 }

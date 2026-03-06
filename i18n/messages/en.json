@@ -731,5 +731,11 @@
 	"views_tags_label": "Tags",
 	"views_tags_placeholder": "ambient, jazz",
 	"views_update_named": "Update \"{name}\"",
-	"views_view_name_placeholder": "View name"
+	"views_view_name_placeholder": "View name",
+	"welcome_feature_archive": "Search, filter, play and export your archive",
+	"welcome_feature_decks": "Play live or let auto-radio have everyone synchronized",
+	"welcome_feature_follow": "Follow radios curated by other people",
+	"welcome_feature_open": "Free and open source — no ads, no tracking.",
+	"welcome_tagline_channel": "Your personal web radio channel is a collection of media links.",
+	"welcome_tagline_metadata": "Create new tracks using any media URL. Give it a title, notes, tags."
 }

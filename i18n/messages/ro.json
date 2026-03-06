@@ -615,5 +615,11 @@
 	"views_tags_label": "Taguri",
 	"views_tags_placeholder": "ex.: ambient, jazz",
 	"views_update_named": "Actualizează \"{name}\"",
-	"views_view_name_placeholder": "Nume vizualizare"
+	"views_view_name_placeholder": "Nume vizualizare",
+	"welcome_feature_archive": "Caută, filtrează, redă și exportează arhiva ta",
+	"welcome_feature_decks": "Redă live sau lasă auto-radio să sincronizeze pe toată lumea",
+	"welcome_feature_follow": "Urmărește radiouri curate de alte persoane",
+	"welcome_feature_open": "Gratuit și open source — fără reclame, fără urmărire.",
+	"welcome_tagline_channel": "Canalul tău personal de radio web este o colecție de linkuri media.",
+	"welcome_tagline_metadata": "Creează noi piese folosind orice URL media. Dă-i un titlu, note și etichete."
 }

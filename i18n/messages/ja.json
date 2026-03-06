@@ -15,8 +15,8 @@
 	"account_no_connected": "接続されたアカウントはありません。",
 	"account_password_updated": "パスワードが更新されました",
 	"account_sign_in_prompt": "アカウントを管理するにはログインしてください",
-	"app_version": "バージョン {sha}",
 	"app_loading": "を準備しています",
+	"app_version": "バージョン {sha}",
 	"auth_already_have_account": "すでにアカウントをお持ちですか？代わりにログインしてください。",
 	"auth_already_have_account_intro": "すでにアカウントをお持ちですか？",
 	"auth_card_create_description": "Radio4000 を初めて利用します",
@@ -723,5 +723,11 @@
 	"views_tags_label": "タグ",
 	"views_tags_placeholder": "例: ambient, jazz",
 	"views_update_named": "\"{name}\" を更新",
-	"views_view_name_placeholder": "ビュー名"
+	"views_view_name_placeholder": "ビュー名",
+	"welcome_feature_archive": "アーカイブを検索・フィルタリング・再生・エクスポート",
+	"welcome_feature_decks": "ライブ再生またはオートラジオで全員を同期",
+	"welcome_feature_follow": "他の人がキュレーションしたラジオをフォロー",
+	"welcome_feature_open": "無料かつオープンソース — 広告なし、トラッキングなし。",
+	"welcome_tagline_channel": "あなた個人のウェブラジオチャンネルはメディアリンクのコレクションです。",
+	"welcome_tagline_metadata": "任意のメディアURLで新しいトラックを作成。タイトル、メモ、タグをつける。"
 }

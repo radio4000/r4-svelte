@@ -626,5 +626,11 @@
 	"views_tags_label": "Tagi",
 	"views_tags_placeholder": "np. ambient, jazz",
 	"views_update_named": "Zaktualizuj \"{name}\"",
-	"views_view_name_placeholder": "Nazwa widoku"
+	"views_view_name_placeholder": "Nazwa widoku",
+	"welcome_feature_archive": "Wyszukuj, filtruj, odtwarzaj i eksportuj swoje archiwum",
+	"welcome_feature_decks": "Graj na żywo lub pozwól auto-radio synchronizować wszystkich",
+	"welcome_feature_follow": "Obserwuj radia tworzone przez innych ludzi",
+	"welcome_feature_open": "Darmowe i open source — bez reklam, bez śledzenia.",
+	"welcome_tagline_channel": "Twój osobisty kanał radia internetowego to zbiór linków do mediów.",
+	"welcome_tagline_metadata": "Twórz nowe utwory używając dowolnego adresu URL mediów. Nadaj mu tytuł, notatki i tagi."
 }

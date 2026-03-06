@@ -645,5 +645,11 @@
 	"views_tags_label": "الوسوم",
 	"views_tags_placeholder": "مثال: ambient, jazz",
 	"views_update_named": "تحديث \"{name}\"",
-	"views_view_name_placeholder": "اسم العرض"
+	"views_view_name_placeholder": "اسم العرض",
+	"welcome_feature_archive": "ابحث وصفّ واستمع وصدّر أرشيفك",
+	"welcome_feature_decks": "العب مباشرة أو دع الراديو التلقائي يزامن الجميع",
+	"welcome_feature_follow": "تابع إذاعات منسّقة من قبل أشخاص آخرين",
+	"welcome_feature_open": "مجاني ومفتوح المصدر — بدون إعلانات، بدون تتبع.",
+	"welcome_tagline_channel": "قناتك الشخصية على راديو الويب هي مجموعة من روابط الوسائط.",
+	"welcome_tagline_metadata": "أنشئ مسارات جديدة باستخدام أي رابط وسائط. أعطه عنوانًا وملاحظات وعلامات."
 }

@@ -615,5 +615,11 @@
 	"views_tags_label": "Etiquetas",
 	"views_tags_placeholder": "ex.: ambient, jazz",
 	"views_update_named": "Atualizar \"{name}\"",
-	"views_view_name_placeholder": "Nome da visão"
+	"views_view_name_placeholder": "Nome da visão",
+	"welcome_feature_archive": "Pesquisar, filtrar, reproduzir e exportar o seu arquivo",
+	"welcome_feature_decks": "Tocar ao vivo ou deixar o auto-rádio sincronizar todos",
+	"welcome_feature_follow": "Seguir rádios curadas por outras pessoas",
+	"welcome_feature_open": "Gratuito e de código aberto — sem anúncios, sem rastreamento.",
+	"welcome_tagline_channel": "O seu canal de rádio web pessoal é uma coleção de links de mídia.",
+	"welcome_tagline_metadata": "Crie novas faixas usando qualquer URL de mídia. Dê-lhe um título, notas e tags."
 }

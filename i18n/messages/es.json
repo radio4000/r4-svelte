@@ -15,8 +15,8 @@
 	"account_no_connected": "No hay cuentas conectadas.",
 	"account_password_updated": "Contraseña actualizada",
 	"account_sign_in_prompt": "Inicia sesión para gestionar tu cuenta",
-	"app_version": "Versión {sha}",
 	"app_loading": "Preparando",
+	"app_version": "Versión {sha}",
 	"auth_already_have_account": "¿Ya tienes una cuenta? Inicia sesión en su lugar.",
 	"auth_already_have_account_intro": "¿Ya tienes una cuenta?",
 	"auth_card_create_description": "Soy nuevo en Radio4000",
@@ -723,5 +723,11 @@
 	"views_tags_label": "Etiquetas",
 	"views_tags_placeholder": "p. ej., ambient, jazz",
 	"views_update_named": "Actualizar \"{name}\"",
-	"views_view_name_placeholder": "Nombre de la vista"
+	"views_view_name_placeholder": "Nombre de la vista",
+	"welcome_feature_archive": "Buscar, filtrar, reproducir y exportar tu archivo",
+	"welcome_feature_decks": "Reproducir en vivo o dejar que auto-radio sincronice a todos",
+	"welcome_feature_follow": "Seguir radios curadas por otras personas",
+	"welcome_feature_open": "Gratis y de código abierto — sin anuncios, sin rastreo.",
+	"welcome_tagline_channel": "Tu canal de radio web personal es una colección de enlaces multimedia.",
+	"welcome_tagline_metadata": "Crea nuevas pistas usando cualquier URL de medios. Dale un título, notas y etiquetas."
 }

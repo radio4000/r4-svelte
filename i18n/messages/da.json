@@ -645,5 +645,11 @@
 	"views_tags_label": "Mærker",
 	"views_tags_placeholder": "f.eks. ambient, jazz",
 	"views_update_named": "Opdater \"{name}\"",
-	"views_view_name_placeholder": "Visningsnavn"
+	"views_view_name_placeholder": "Visningsnavn",
+	"welcome_feature_archive": "Søg, filtrer, afspil og eksporter dit arkiv",
+	"welcome_feature_decks": "Spil live eller lad auto-radio holde alle synkroniseret",
+	"welcome_feature_follow": "Følg radioer kurateret af andre",
+	"welcome_feature_open": "Gratis og open source — ingen reklamer, ingen sporing.",
+	"welcome_tagline_channel": "Din personlige webradiokanal er en samling af medielinks.",
+	"welcome_tagline_metadata": "Opret nye numre med en hvilken som helst medie-URL. Giv det en titel, noter og tags."
 }

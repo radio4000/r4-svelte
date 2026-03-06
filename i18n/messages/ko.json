@@ -633,5 +633,11 @@
 	"views_tags_label": "태그",
 	"views_tags_placeholder": "예: ambient, jazz",
 	"views_update_named": "\"{name}\" 업데이트",
-	"views_view_name_placeholder": "보기 이름"
+	"views_view_name_placeholder": "보기 이름",
+	"welcome_feature_archive": "아카이브 검색, 필터링, 재생 및 내보내기",
+	"welcome_feature_decks": "라이브 재생 또는 자동 라디오로 모두 동기화",
+	"welcome_feature_follow": "다른 사람이 큐레이션한 라디오 팔로우",
+	"welcome_feature_open": "무료 오픈소스 — 광고 없음, 추적 없음.",
+	"welcome_tagline_channel": "나만의 웹 라디오 채널은 미디어 링크의 모음입니다.",
+	"welcome_tagline_metadata": "미디어 URL로 새 트랙을 만드세요. 제목, 메모, 태그를 달아보세요."
 }

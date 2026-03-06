@@ -631,5 +631,11 @@
 	"views_tags_label": "ট্যাগ",
 	"views_tags_placeholder": "যেমন: ambient, jazz",
 	"views_update_named": "\"{name}\" আপডেট করুন",
-	"views_view_name_placeholder": "ভিউয়ের নাম"
+	"views_view_name_placeholder": "ভিউয়ের নাম",
+	"welcome_feature_archive": "আপনার আর্কাইভ অনুসন্ধান, ফিল্টার, প্লে এবং রপ্তানি করুন",
+	"welcome_feature_decks": "লাইভ চালান বা অটো-রেডিওকে সবাইকে সিঙ্ক্রোনাইজ করতে দিন",
+	"welcome_feature_follow": "অন্য মানুষদের দ্বারা কিউরেটেড রেডিও অনুসরণ করুন",
+	"welcome_feature_open": "বিনামূল্যে এবং ওপেন সোর্স — কোনো বিজ্ঞাপন নেই, কোনো ট্র্যাকিং নেই।",
+	"welcome_tagline_channel": "আপনার ব্যক্তিগত ওয়েব রেডিও চ্যানেল হল মিডিয়া লিঙ্কের একটি সংগ্রহ।",
+	"welcome_tagline_metadata": "যেকোনো মিডিয়া URL ব্যবহার করে নতুন ট্র্যাক তৈরি করুন। এটিকে একটি শিরোনাম, নোট এবং ট্যাগ দিন।"
 }

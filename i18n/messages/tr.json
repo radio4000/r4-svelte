@@ -15,8 +15,8 @@
 	"account_no_connected": "Bağlı hesap yok.",
 	"account_password_updated": "Şifre güncellendi",
 	"account_sign_in_prompt": "Hesabınızı yönetmek için lütfen oturum açın",
-	"app_version": "Sürüm {sha}",
 	"app_loading": "hazırlanıyor",
+	"app_version": "Sürüm {sha}",
 	"auth_already_have_account": "Zaten hesabınız var mı? Bunun yerine oturum açın.",
 	"auth_already_have_account_intro": "Zaten hesabınız var mı?",
 	"auth_card_create_description": "Radio4000’da yeniyim",
@@ -454,8 +454,8 @@
 	"shortcuts_action_openSearch": "Aramayı aç",
 	"shortcuts_action_showShortcutsHelp": "Klavye kısayollarını göster",
 	"shortcuts_action_toggleCompactDeck": "Kompakt deck'i aç/kapat",
-	"shortcuts_action_togglePlayPause": "Oynat/Duraklat",
 	"shortcuts_action_togglePlayerExpanded": "Oynatıcı genişliğini değiştir",
+	"shortcuts_action_togglePlayPause": "Oynat/Duraklat",
 	"shortcuts_action_toggleQueuePanel": "Sıra panelini aç/kapat",
 	"shortcuts_action_toggleShuffle": "Karıştırmayı aç/kapat",
 	"shortcuts_action_toggleTheme": "Temayı değiştir",
@@ -723,5 +723,11 @@
 	"views_tags_label": "Etiketler",
 	"views_tags_placeholder": "örn: ambient, jazz",
 	"views_update_named": "\"{name}\" güncelle",
-	"views_view_name_placeholder": "Görünüm adı"
+	"views_view_name_placeholder": "Görünüm adı",
+	"welcome_feature_archive": "Arşivini ara, filtrele, oynat ve dışa aktar",
+	"welcome_feature_decks": "Canlı çal veya otomatik radyonun herkesi senkronize etmesine izin ver",
+	"welcome_feature_follow": "Diğer kişiler tarafından derlenen radyoları takip et",
+	"welcome_feature_open": "Ücretsiz ve açık kaynak — reklam yok, takip yok.",
+	"welcome_tagline_channel": "Kişisel web radyo kanalın, medya bağlantılarından oluşan bir koleksiyondur.",
+	"welcome_tagline_metadata": "Herhangi bir medya URL'si kullanarak yeni parçalar oluştur. Başlık, notlar ve etiketler ekle."
 }

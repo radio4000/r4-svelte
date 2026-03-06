@@ -631,5 +631,11 @@
 	"views_tags_label": "ٹیگز",
 	"views_tags_placeholder": "مثال: ambient, jazz",
 	"views_update_named": "\"{name}\" اپڈیٹ کریں",
-	"views_view_name_placeholder": "ویو کا نام"
+	"views_view_name_placeholder": "ویو کا نام",
+	"welcome_feature_archive": "اپنا آرکائیو تلاش، فلٹر، چلائیں اور برآمد کریں",
+	"welcome_feature_decks": "لائیو چلائیں یا آٹو ریڈیو کو سب کو سنکرونائز کرنے دیں",
+	"welcome_feature_follow": "دوسرے لوگوں کی طرف سے تیار کردہ ریڈیو فالو کریں",
+	"welcome_feature_open": "مفت اور اوپن سورس — کوئی اشتہار نہیں، کوئی ٹریکنگ نہیں۔",
+	"welcome_tagline_channel": "آپ کا ذاتی ویب ریڈیو چینل میڈیا لنکس کا مجموعہ ہے۔",
+	"welcome_tagline_metadata": "کسی بھی میڈیا URL کا استعمال کرتے ہوئے نئے ٹریک بنائیں۔ اسے ایک عنوان، نوٹس اور ٹیگز دیں۔"
 }
