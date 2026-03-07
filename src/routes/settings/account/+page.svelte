@@ -78,58 +78,71 @@
 			<p class="error" role="alert">{providerError}</p>
 		{/if}
 
-		<menu class="nav-vertical">
-			<div>
-				<p>
-					<span>Email</span>
-					<small>{appState.user.email}</small>
-				</p>
-				<menu>
-					<a class="btn" href="/settings/account/password">{m.account_change_password()}</a>
-					<a class="btn" href="/settings/account/email">{m.account_change_email()}</a>
-				</menu>
-			</div>
-			{#each providers as provider (provider)}
-				{@const identity = getIdentity(provider)}
+		<section>
+			<menu class="nav-vertical">
 				<div>
 					<p>
-						<span>{provider}</span>
-						{#if identity?.identity_data?.email}
-							<small>{identity.identity_data.email}</small>
-						{/if}
+						<span>Email</span>
+						<small>{appState.user.email}</small>
 					</p>
-					{#if identity}
-						<button
-							onclick={() => disconnectProvider(identity)}
-							disabled={!canDisconnect || providerLoading === provider}
-							title={canDisconnect ? '' : m.account_need_two_providers()}
-						>
-							{providerLoading === provider ? '...' : m.account_disconnect_provider()}
-						</button>
-					{:else}
-						<button onclick={() => connectProvider(provider)} disabled={providerLoading === provider}>
-							{providerLoading === provider ? '...' : m.account_connect_provider({provider})}
-						</button>
-					{/if}
+					<menu>
+						<a class="btn" href="/settings/account/password">{m.account_change_password()}</a>
+						<a class="btn" href="/settings/account/email">{m.account_change_email()}</a>
+					</menu>
 				</div>
-			{/each}
-		</menu>
+				{#each providers as provider (provider)}
+					{@const identity = getIdentity(provider)}
+					<div>
+						<p>
+							<span>{provider}</span>
+							{#if identity?.identity_data?.email}
+								<small>{identity.identity_data.email}</small>
+							{/if}
+						</p>
+						{#if identity}
+							<button
+								onclick={() => disconnectProvider(identity)}
+								disabled={!canDisconnect || providerLoading === provider}
+								title={canDisconnect ? '' : m.account_need_two_providers()}
+							>
+								{providerLoading === provider ? '...' : m.account_disconnect_provider()}
+							</button>
+						{:else}
+							<button onclick={() => connectProvider(provider)} disabled={providerLoading === provider}>
+								{providerLoading === provider ? '...' : m.account_connect_provider({provider})}
+							</button>
+						{/if}
+					</div>
+				{/each}
+			</menu>
+		</section>
 
-		<menu class="nav-vertical">
-			<div>
-				<p>
-					<span>Share presence</span>
-					<small>Show others that you're listening (mode &amp; channel)</small>
-				</p>
-				<button onclick={toggleSharePresence} disabled={presenceLoading} aria-pressed={sharePresence}>
-					{sharePresence ? 'On' : 'Off'}
-				</button>
-			</div>
-		</menu>
+		<section>
+			<menu class="nav-vertical">
+				<div>
+					<p>
+						<span>Share presence</span>
+						<small>Show others that you're listening (mode &amp; channel)</small>
+					</p>
+					<button onclick={toggleSharePresence} disabled={presenceLoading} aria-pressed={sharePresence}>
+						{sharePresence ? 'On' : 'Off'}
+					</button>
+				</div>
+				<div>
+					<p><span>{m.auth_log_out()}</span></p>
+					<button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button>
+				</div>
+			</menu>
+		</section>
 
-		<p><button onclick={() => sdk.auth.signOut()}>{m.auth_log_out()}</button></p>
-		<br />
-		<p><a href="/settings/account/delete">{m.account_delete_link()}</a></p>
+		<section class="danger-zone">
+			<menu class="nav-vertical">
+				<div>
+					<p><span>{m.account_delete_title()}</span></p>
+					<a class="btn" href="/settings/account/delete">{m.account_delete_link()}</a>
+				</div>
+			</menu>
+		</section>
 	{/if}
 </article>
 
@@ -143,17 +156,31 @@
 	h1 {
 		margin: 0;
 	}
+	section {
+		margin-block: 1.5rem;
+	}
+	section.danger-zone {
+		border: 1px solid var(--color-error);
+		border-radius: var(--border-radius);
+		padding: 0.75rem;
 
-	article > menu {
-		margin-block: 1rem;
-		div {
-			display: flex;
+		menu {
+			margin-block: 0;
+		}
+	}
+	div {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.5rem;
+
+		@media (min-width: 480px) {
+			flex-direction: row;
 			justify-content: space-between;
 			align-items: center;
-			padding: 0.5rem;
 		}
-		span {
-			text-transform: capitalize;
-		}
+	}
+	span {
+		text-transform: capitalize;
 	}
 </style>
