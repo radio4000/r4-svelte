@@ -38,7 +38,7 @@
 	<title>{m.auth_set_new_password()}</title>
 </svelte:head>
 
-<article class="constrained focused">
+<article class="constrained focused splash">
 	<header>
 		<p><a href="/auth">{m.auth_page_title()}</a> / {m.auth_set_new_password()}</p>
 	</header>

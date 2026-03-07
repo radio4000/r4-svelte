@@ -18,7 +18,7 @@
 	<title>{m.auth_create_page_title()}</title>
 </svelte:head>
 
-<article class="constrained constrained--smaller focused">
+<article class="constrained constrained--smaller focused splash">
 	<figure class="logo">
 		<IconR4 />
 	</figure>

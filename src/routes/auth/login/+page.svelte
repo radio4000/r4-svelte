@@ -18,7 +18,7 @@
 	<title>{m.auth_login_page_title()}</title>
 </svelte:head>
 
-<article class="constrained focused">
+<article class="constrained focused splash">
 	<figure class="logo">
 		<IconR4 />
 	</figure>
