@@ -23,23 +23,24 @@
 </script>
 
 <svelte:head>
-	<title>Delete account</title>
+	<title>{m.account_delete_title()}</title>
 </svelte:head>
 
 <article class="constrained">
 	<header>
 		<BackLink href="/settings/account" />
-		<h1>Delete account</h1>
+		<h1>{m.account_delete_title()}</h1>
 	</header>
 
 	{#if !appState.user}
 		<p>{m.account_sign_in_prompt()}</p>
 	{:else}
-		<p>This action is permanent and cannot be undone. Deleting your account will:</p>
+		<p>{m.account_delete_warning_pre()} <strong>{appState.user.email}</strong> {m.account_delete_warning_post()}</p>
+		<p><strong>{m.account_delete_irreversible()}</strong></p>
 		<ul>
-			<li>Delete all your radio channels</li>
-			<li>Delete all your tracks</li>
-			<li>Remove your account and all associated data</li>
+			<li>{m.account_delete_item_channels()}</li>
+			<li>{m.account_delete_item_tracks()}</li>
+			<li>{m.account_delete_item_data()}</li>
 		</ul>
 
 		{#if deleteError}
@@ -47,15 +48,21 @@
 		{/if}
 
 		{#if !confirmDelete}
-			<button onclick={() => (confirmDelete = true)} class="danger">Delete my account</button>
+			<p class="actions">
+				<button onclick={() => (confirmDelete = true)} class="danger stack">
+					<span>{m.account_delete_title()}</span>
+					<small>{appState.user.email}</small>
+				</button>
+			</p>
 		{:else}
-			<p><strong>Are you sure? This cannot be undone.</strong></p>
-			<menu>
-				<button onclick={handleDeleteAccount} disabled={deleting} class="danger">
-					{deleting ? m.common_deleting() : 'Yes, delete everything'}
+			<p><strong>{m.account_delete_confirm()}</strong></p>
+			<p class="actions">
+				<button onclick={handleDeleteAccount} disabled={deleting} class="danger stack">
+					<span>{deleting ? m.common_deleting() : m.account_delete_irreversible()}</span>
+					<small>{appState.user.email}</small>
 				</button>
 				<button onclick={() => (confirmDelete = false)}>{m.common_cancel()}</button>
-			</menu>
+			</p>
 		{/if}
 	{/if}
 </article>
@@ -69,5 +76,25 @@
 	}
 	h1 {
 		margin: 0;
+	}
+	ul {
+		margin-block: 1rem;
+	}
+	.actions {
+		margin-block-start: 1.5rem;
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	.stack {
+		flex-wrap: wrap;
+		padding-block: 0.4rem;
+		gap: 0.25rem;
+
+		small {
+			flex: 1 0 100%;
+			color: inherit;
+			font-weight: 700;
+		}
 	}
 </style>
