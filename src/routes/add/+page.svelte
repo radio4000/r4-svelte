@@ -5,7 +5,16 @@
 	import TrackForm from '$lib/components/track-form.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	const initialUrl = $derived(page?.url?.searchParams?.get('url') || '')
+	const rawUrl = $derived(page?.url?.searchParams?.get('url') || '')
+	const isDiscogsUrl = $derived.by(() => {
+		try {
+			return new URL(rawUrl).hostname.includes('discogs.com')
+		} catch {
+			return false
+		}
+	})
+	const initialUrl = $derived(isDiscogsUrl ? '' : rawUrl)
+	const initialDiscogsUrl = $derived(isDiscogsUrl ? rawUrl : '')
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
 	const canAddTrack = $derived(isSignedIn && channel)
@@ -24,15 +33,33 @@
 	<title>{m.page_title_add_track()}</title>
 </svelte:head>
 
-<div class="constrained">
+<article class="constrained">
 	{#if canAddTrack && channel}
-		<h2>
-			{m.track_add_title()}
-			<a href={`/${channel.slug}`}>{m.track_add_destination({channel: channel.name})}</a>
-		</h2>
+		<h2>{m.track_add_title()} <a href={`/${channel.slug}`}>@{channel.slug}</a></h2>
 
-		<TrackForm mode="create" {channel} url={initialUrl} onsubmit={handleSubmit} />
+		<TrackForm mode="create" {channel} url={initialUrl} discogs_url={initialDiscogsUrl} onsubmit={handleSubmit} />
+
+		<footer>
+			<small><a href="/bookmarklet">Add tracks from any page with the bookmarklet.</a></small>
+		</footer>
 	{:else}
 		<p><a href="/auth">{m.auth_sign_in_to_add()}</a></p>
 	{/if}
-</div>
+</article>
+
+<style>
+	article {
+		margin-inline: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	h2 {
+		margin: 0;
+	}
+
+	footer {
+		color: var(--color-text-2);
+	}
+</style>
