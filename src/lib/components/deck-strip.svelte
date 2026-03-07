@@ -30,7 +30,7 @@
 	const deckScaleStart = 0.95
 </script>
 
-<aside class={['deck-strip', allDecksCompact && 'all-compact', singleVisibleDeck && 'single-visible']}>
+<aside class={['deck-strip', allDecksCompact && 'all-compact', singleVisibleDeck && 'single-visible', appState.embed_mode && 'embed-mode']}>
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
@@ -82,8 +82,8 @@
 			overflow: hidden;
 		}
 
-		/* hide close button when only one deck */
-		&:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
+		/* hide close button in embed mode when only one deck */
+		&.embed-mode:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
 			display: none;
 		}
 

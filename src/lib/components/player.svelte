@@ -615,7 +615,7 @@
 			{#if !isListeningToBroadcast}
 				<VolumeControl {deckId} />
 			{/if}
-			{#if hasMultipleDecks}
+			{#if hasMultipleDecks || !appState.embed_mode}
 				<button
 					onclick={() => toggleDeckCompact(deckId)}
 					aria-label={m.player_tooltip_compact()}
