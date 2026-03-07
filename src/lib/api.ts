@@ -222,8 +222,8 @@ export async function playTrack(
 	if (player) {
 		player.volume = deck.volume
 		player.muted = deck.volume === 0 ? true : (deck.muted ?? false)
+		play(deckId, player)
 	}
-	play(deckId, player)
 }
 
 export async function playChannel(deckId: number, {id, slug}: {id: string; slug: string}, trackId?: string) {
