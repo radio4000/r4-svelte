@@ -379,7 +379,7 @@ dl.meta {
 	h1,
 	h2,
 	h3 {
-		color: initial;
+		color: inherit;
 	}
 
 	h1 {
