@@ -1,7 +1,7 @@
 <script>
 	let {data} = $props()
 
-	let allExpanded = $state(true)
+	let allExpanded = $state(false)
 
 	function toggleAll() {
 		allExpanded = !allExpanded
@@ -118,12 +118,11 @@
 	li {
 		padding-inline-start: 1rem;
 		display: flex;
-		gap: 1rem;
+		flex-wrap: wrap;
+		gap: 0.25rem 1rem;
 	}
 	.name {
 		font-family: monospace;
-		min-width: 40ch;
-		flex-shrink: 0;
 	}
 	.desc {
 		font-style: italic;
