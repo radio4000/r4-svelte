@@ -42,11 +42,7 @@
 	}
 </script>
 
-<article class="constrained focused">
-	<figure class="logo">
-		<IconR4 />
-	</figure>
-
+<article class="constrained focused splash">
 	{#if !appState.user}
 		<p>
 			<a href="/auth?redirect=/create-channel">Sign in to create your channel.</a>
@@ -60,7 +56,6 @@
 	{:else}
 		<header>
 			<h1>{m.channel_create_prompt()}</h1>
-			<p><small>{m.channel_name_changeable()}</small></p>
 		</header>
 
 		{#if error}
@@ -73,24 +68,28 @@
 				<input id="name" name="name" type="text" required oninput={handleNameInput} />
 			</fieldset>
 
-			<fieldset>
-				<label for="slug">Slug</label>
-				<input
-					bind:value={slug}
-					id="slug"
-					name="slug"
-					type="text"
-					required
-					pattern="[a-z0-9\-]+"
-					minlength="3"
-					title={m.channel_slug_hint()}
-					oninput={() => (slugTouched = true)}
-				/>
-			</fieldset>
+			<details>
+				<summary><small>@{slug || '…'}</small></summary>
+				<fieldset>
+					<label for="slug">Slug</label>
+					<input
+						bind:value={slug}
+						id="slug"
+						name="slug"
+						type="text"
+						required
+						pattern="[a-z0-9\-]+"
+						minlength="3"
+						title={m.channel_slug_hint()}
+						oninput={() => (slugTouched = true)}
+					/>
+				</fieldset>
+			</details>
 
 			<button class="primary" type="submit" disabled={submitting}>
 				{submitting ? 'Creating...' : 'Create'}
 			</button>
+			<p><small>{m.channel_name_changeable()}</small></p>
 		</form>
 	{/if}
 </article>
@@ -98,5 +97,15 @@
 <style>
 	header {
 		margin-bottom: 2rem;
+	}
+	details {
+		color: var(--gray-10);
+		summary {
+			cursor: pointer;
+			list-style: none;
+		}
+		fieldset {
+			margin-block-start: 0.5rem;
+		}
 	}
 </style>
