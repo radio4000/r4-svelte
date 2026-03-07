@@ -25,9 +25,13 @@
 	/* approach 2*/
 	align-content: baseline;
 	margin-inline: auto;
-	@media (min-width: 768px) {
-		padding-top: 5vh;
-	}
+}
+
+/* Vertically centered splash pages (welcome, create-channel) */
+.splash {
+	flex: 1;
+	place-content: center;
+	padding: 2rem 1rem;
 }
 
 .focused.constrained {
