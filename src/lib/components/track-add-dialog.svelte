@@ -95,7 +95,7 @@
 
 <Dialog bind:showModal>
 	{#snippet header()}
-		<h2>{m.track_add_title()}</h2>
+		<h2><a href="/add">{m.track_add_title()}</a></h2>
 	{/snippet}
 
 	{#if channel}
