@@ -1,14 +1,17 @@
-<script>
+<script lang="ts">
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
+	import TrackCard from '$lib/components/track-card.svelte'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
+	import type {Track} from '$lib/types'
 
 	let showModal = $state(false)
-	let recentTracks = $state([])
+	let recentTracks = $state<Track[]>([])
 	let trackData = $state({url: '', title: '', description: '', discogs_url: ''})
 
 	const channel = $derived(appState.channel)
@@ -67,8 +70,11 @@
 		const {data, error} = event
 		if (error || !data) return
 
-		recentTracks.unshift(data)
-		if (recentTracks.length > 3) recentTracks.pop()
+		const track = data.id ? tracksCollection.get(data.id) : null
+		if (track) {
+			recentTracks.unshift(track)
+			if (recentTracks.length > 3) recentTracks.pop()
+		}
 
 		trackData = {url: '', title: '', description: '', discogs_url: ''}
 		showModal = false
@@ -113,9 +119,25 @@
 	{#if recentTracks.length > 0}
 		<div class="recent-tracks">
 			<h3>{m.track_recently_saved()}</h3>
-			{#each recentTracks as track, i (i)}
-				<a href="/{channel?.slug}/tracks/{track.id}">{track.title || track.url}</a>
+			{#each recentTracks as track (track.id)}
+				<TrackCard {track} canEdit={false} showImage={false} />
 			{/each}
 		</div>
 	{/if}
 </Dialog>
+
+<style>
+	.recent-tracks {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding-block-start: 1rem;
+		border-block-start: 1px solid var(--color-interface-border);
+	}
+
+	.recent-tracks h3 {
+		margin: 0 0 0.25rem;
+		font-size: var(--font-3);
+		color: var(--color-text-2);
+	}
+</style>
