@@ -5,13 +5,13 @@
 </script>
 
 <svelte:head>
-	<title>Import</title>
+	<title>{m.import_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings" />
-		<h1>Import</h1>
+		<h1>{m.import_title()}</h1>
 	</header>
 
 	<p>{m.local_import_note()}</p>
@@ -19,15 +19,15 @@
 	<menu class="nav-vertical">
 		<a href="/settings/import/backup">
 			<Icon icon="document-download" />
-			From backup file
+			{m.import_backup_label()}
 		</a>
 		<a href="/settings/import/folder">
-			<Icon icon="folder" />
-			From channel folder
+			<Icon icon="document" />
+			{m.import_folder_label()}
 		</a>
 		<a href="/settings/import/m3u">
 			<Icon icon="unordered-list" />
-			From M3U playlist
+			{m.import_m3u_label()}
 		</a>
 	</menu>
 </article>

@@ -4,6 +4,8 @@
 	import {uuid} from '$lib/utils'
 	import {parseM3u, writeImport} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
+	import Dropzone from '$lib/components/dropzone.svelte'
+	import * as m from '$lib/paraglide/messages'
 	import type {Channel, Track} from '$lib/types'
 
 	interface ImportResult {
@@ -14,8 +16,6 @@
 	let error = $state('')
 	let importing = $state(false)
 	let result: ImportResult | null = $state(null)
-	let dragOver = $state(false)
-
 	async function importM3u(file: File) {
 		error = ''
 		result = null
@@ -26,7 +26,7 @@
 			const rawTracks = parseM3u(content)
 
 			if (!rawTracks.length) {
-				error = 'No playable tracks found. Only http(s) URLs are supported.'
+				error = m.import_m3u_error_no_tracks()
 				return
 			}
 
@@ -63,8 +63,6 @@
 	}
 
 	function onDrop(event: DragEvent) {
-		dragOver = false
-		event.preventDefault()
 		const file = event.dataTransfer?.files?.[0]
 		if (file) importM3u(file)
 	}
@@ -76,40 +74,26 @@
 </script>
 
 <svelte:head>
-	<title>Import M3U playlist</title>
+	<title>{m.import_m3u_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings/import" />
-		<h1>Import M3U playlist</h1>
+		<h1>{m.import_m3u_title()}</h1>
 	</header>
 
-	<p>Load a <code>.m3u</code> playlist to browse it locally. Only http(s) tracks are imported — local file paths are skipped.</p>
+	<p>{m.import_m3u_description()}</p>
 
 	{#if !result}
-		<label
-			class="dropzone"
-			class:drag-over={dragOver}
-			ondragover={(e) => {
-				e.preventDefault()
-				dragOver = true
-			}}
-			ondragleave={() => (dragOver = false)}
-			ondrop={onDrop}
-		>
+		<Dropzone ondrop={onDrop}>
 			{#if importing}
-				Importing…
+				{m.import_loading()}
 			{:else}
-				Drop a .m3u file here, or <span class="browse-link">browse</span>
+				{m.import_m3u_dropzone()} <span class="browse-link">{m.import_dropzone_browse()}</span>
 			{/if}
-			<input
-				type="file"
-				accept=".m3u,.m3u8"
-				onchange={onFileChange}
-				disabled={importing}
-			/>
-		</label>
+			<input type="file" accept=".m3u,.m3u8" onchange={onFileChange} disabled={importing} />
+		</Dropzone>
 	{/if}
 
 	{#if error}
@@ -118,36 +102,13 @@
 
 	{#if result}
 		<p>
-			<strong>{result.channel.name}</strong> — {result.imported} tracks imported.
-			<a href="/{result.channel.slug}">Browse it →</a>
+			<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
+			<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
 		</p>
 		<p>
-			<button type="button" onclick={browseImported}>Browse all imported →</button>
-			<button type="button" onclick={() => { result = null; error = '' }}>Import another</button>
+			<button type="button" onclick={browseImported}>{m.import_browse_all()}</button>
+			<button type="button" onclick={() => { result = null; error = '' }}>{m.import_another()}</button>
 		</p>
 	{/if}
 </article>
 
-<style>
-	.dropzone {
-		border: 2px dashed var(--gray-6);
-		border-radius: 0.5rem;
-		padding: 2rem;
-		text-align: center;
-		transition: border-color 0.15s, background 0.15s;
-		cursor: pointer;
-		&:hover,
-		&.drag-over {
-			border-color: var(--accent-9);
-			background: var(--accent-2);
-		}
-	}
-
-	input[type='file'] {
-		display: none;
-	}
-
-	.browse-link {
-		text-decoration: underline;
-	}
-</style>

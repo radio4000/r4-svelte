@@ -5,7 +5,12 @@
 	import {uuid} from '$lib/utils'
 	import {parseTxtFile, parseM3u, parseTrackTxt, validateBackup, importedSlug, buildFromBackup, writeImport} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
+	import Dropzone from '$lib/components/dropzone.svelte'
+	import * as m from '$lib/paraglide/messages'
 	import type {Channel, Track} from '$lib/types'
+
+	// File System Access API not in TypeScript's default lib
+	type DirHandle = FileSystemDirectoryHandle & {entries(): AsyncIterable<[string, FileSystemHandle]>}
 
 	interface FolderImportResult {
 		channel: Channel
@@ -18,6 +23,14 @@
 	let results: FolderImportResult[] = $state([])
 	let errors: string[] = $state([])
 	let done = $state(false)
+
+	const previouslyImported = $derived(
+		appState.local_channel_ids?.length
+			? appState.local_channel_ids
+					.map((id) => channelsCollection.get(id))
+					.filter((c) => c !== undefined)
+			: []
+	)
 
 	async function readFileText(fileHandle: FileSystemFileHandle): Promise<string> {
 		const file = await fileHandle.getFile()
@@ -34,7 +47,7 @@
 		let m3uContent: string | null = null
 		let tracksDir: FileSystemDirectoryHandle | null = null
 
-		for await (const [name, handle] of dirHandle.entries()) {
+		for await (const [name, handle] of (dirHandle as DirHandle).entries()) {
 			if (handle.kind === 'file') {
 				if (name.endsWith('.txt') && channelTxtContent === null) {
 					channelTxtContent = await readFileText(handle as FileSystemFileHandle)
@@ -47,7 +60,6 @@
 			}
 		}
 
-		// Need at least one of: tracks/ folder or tracks.m3u
 		if (!tracksDir && !m3uContent) return null
 
 		const meta = channelTxtContent
@@ -56,7 +68,6 @@
 
 		const slug = importedSlug(meta.slug, meta.id)
 
-		// Check for re-import
 		const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 		if (existing) return {channel: existing, imported: 0, source: 'r4download'}
 
@@ -70,11 +81,10 @@
 		const tracks: Track[] = []
 
 		if (tracksDir) {
-			// Collect audio files and their sidecar .txt files
-			const audioFiles = new Map<string, FileSystemFileHandle>() // basename → handle
-			const txtFiles = new Map<string, FileSystemFileHandle>()   // basename → handle
+			const audioFiles = new Map<string, FileSystemFileHandle>()
+			const txtFiles = new Map<string, FileSystemFileHandle>()
 
-			for await (const [name, handle] of tracksDir.entries()) {
+			for await (const [name, handle] of (tracksDir as DirHandle).entries()) {
 				if (handle.kind !== 'file') continue
 				const ext = name.slice(name.lastIndexOf('.')).toLowerCase()
 				const basename = name.slice(0, name.lastIndexOf('.'))
@@ -106,7 +116,6 @@
 					url: objectUrl,
 					media_id: objectUrl,
 					provider: 'file',
-					// Store original stream URL in description if not already there
 					...(originalUrl && !description.includes(originalUrl)
 						? {description: description ? `${description}\n${originalUrl}` : originalUrl}
 						: {})
@@ -114,16 +123,9 @@
 			}
 		}
 
-		// Fall back to m3u for any channel with no downloaded files
 		if (tracks.length === 0 && m3uContent) {
-			const rawTracks = parseM3u(m3uContent)
-			for (const t of rawTracks) {
-				tracks.push({
-					id: uuid(),
-					slug,
-					title: t.title,
-					url: t.url
-				} as Track)
+			for (const t of parseM3u(m3uContent)) {
+				tracks.push({id: uuid(), slug, title: t.title, url: t.url} as Track)
 			}
 		}
 
@@ -132,16 +134,14 @@
 	}
 
 	async function importJsonBackups(
-		dirHandle: FileSystemDirectoryHandle,
 		jsonHandles: FileSystemFileHandle[]
 	): Promise<FolderImportResult[]> {
-		const results: FolderImportResult[] = []
+		const out: FolderImportResult[] = []
 		for (const handle of jsonHandles) {
 			try {
-				const text = await readFileText(handle)
 				let data: unknown
 				try {
-					data = JSON.parse(text)
+					data = JSON.parse(await readFileText(handle))
 				} catch {
 					errors = [...errors, `${handle.name}: not valid JSON.`]
 					continue
@@ -155,17 +155,17 @@
 				const slug = importedSlug(data.channel.slug, data.channel.id)
 				const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 				if (existing) {
-					results.push({channel: existing, imported: 0, source: 'backup'})
+					out.push({channel: existing, imported: 0, source: 'backup'})
 					continue
 				}
 				const {channel, tracks} = buildFromBackup(data)
 				await writeImport(channel, tracks)
-				results.push({channel, imported: tracks.length, source: 'backup'})
+				out.push({channel, imported: tracks.length, source: 'backup'})
 			} catch (e) {
 				errors = [...errors, `${handle.name}: ${(e as Error).message}`]
 			}
 		}
-		return results
+		return out
 	}
 
 	async function scanDir(dirHandle: FileSystemDirectoryHandle, dirName: string): Promise<FolderImportResult[]> {
@@ -174,7 +174,7 @@
 		let hasTracksDir = false
 		const subdirs: {handle: FileSystemDirectoryHandle; name: string}[] = []
 
-		for await (const [name, handle] of dirHandle.entries()) {
+		for await (const [name, handle] of (dirHandle as DirHandle).entries()) {
 			if (handle.kind === 'file') {
 				if (name === 'tracks.m3u') hasM3u = true
 				if (name.endsWith('.json')) jsonHandles.push(handle as FileSystemFileHandle)
@@ -188,29 +188,23 @@
 			const r = await importR4Download(dirHandle, dirName)
 			return r ? [r] : []
 		}
-
-		if (jsonHandles.length > 0) {
-			return importJsonBackups(dirHandle, jsonHandles)
+		if (jsonHandles.length) {
+			return importJsonBackups(jsonHandles)
 		}
-
-		// Scan one level of subdirectories
 		const subResults: FolderImportResult[] = []
 		for (const {handle, name} of subdirs) {
-			const sub = await scanDir(handle, name)
-			subResults.push(...sub)
+			subResults.push(...(await scanDir(handle, name)))
 		}
 		return subResults
 	}
 
-	async function pickFolder() {
+	async function runScan(dirHandle: FileSystemDirectoryHandle) {
 		errors = []
 		results = []
 		done = false
 		scanning = true
 		try {
-			const dirHandle = await window.showDirectoryPicker({mode: 'read'})
-			const found = await scanDir(dirHandle, dirHandle.name)
-			results = found
+			results = await scanDir(dirHandle, dirHandle.name)
 			done = true
 		} catch (e) {
 			if ((e as Error).name !== 'AbortError') {
@@ -221,10 +215,25 @@
 		}
 	}
 
-	function reset() {
-		results = []
-		errors = []
-		done = false
+	async function pickFolder() {
+		let dirHandle: FileSystemDirectoryHandle
+		try {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		dirHandle = await (window as any).showDirectoryPicker({mode: 'read'})
+		} catch (e) {
+			if ((e as Error).name !== 'AbortError') errors = [(e as Error).message]
+			return
+		}
+		await runScan(dirHandle)
+	}
+
+	async function onDrop(event: DragEvent) {
+		const item = event.dataTransfer?.items?.[0]
+		if (!item) return
+		const handle = await (item as DataTransferItem & {getAsFileSystemHandle?: () => Promise<FileSystemHandle>}).getAsFileSystemHandle?.()
+		if (handle?.kind === 'directory') {
+			await runScan(handle as FileSystemDirectoryHandle)
+		}
 	}
 
 	function browseImported() {
@@ -234,30 +243,35 @@
 </script>
 
 <svelte:head>
-	<title>Import from channel folder</title>
+	<title>{m.import_folder_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings/import" />
-		<h1>Import from channel folder</h1>
+		<h1>{m.import_folder_title()}</h1>
 	</header>
 
 	{#if !supported}
-		<p>
-			Your browser doesn't support folder access. Try Chrome or Edge, or use
-			<a href="/settings/import/backup">import from backup file</a> instead.
-		</p>
+		<p>{m.import_folder_not_supported()}</p>
 	{:else}
-		<p>
-			Pick a folder produced by <code>r4 download &lt;slug&gt;</code>, or a parent folder
-			containing multiple channel download folders.
-		</p>
+		<p>{m.import_folder_description()}</p>
+
+		{#if previouslyImported.length}
+			<p>
+				{m.import_previously_imported({count: previouslyImported.length})}
+				<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
+			</p>
+		{/if}
 
 		{#if !done}
-			<button type="button" onclick={pickFolder} disabled={scanning}>
-				{scanning ? 'Scanning…' : 'Choose folder'}
-			</button>
+			<Dropzone as="button" onclick={pickFolder} disabled={scanning} ondrop={onDrop}>
+				{#if scanning}
+					{m.import_folder_scanning()}
+				{:else}
+					{m.import_folder_dropzone()} <span class="browse-link">{m.import_folder_choose()}</span>
+				{/if}
+			</Dropzone>
 		{/if}
 
 		{#if errors.length}
@@ -270,45 +284,26 @@
 
 		{#if done}
 			{#if results.length === 0}
-				<p>No importable channels found in that folder.</p>
+				<p>{m.import_folder_no_channels()}</p>
 			{:else}
-				<ul class="results">
-					{#each results as r}
-						<li>
-							<strong>{r.channel.name}</strong>
-							{#if r.imported > 0}
-								— {r.imported} tracks imported
-							{:else}
-								— already imported
-							{/if}
-							<a href="/{r.channel.slug}">Browse →</a>
-						</li>
-					{/each}
-				</ul>
+				{#each results as r}
+					<p>
+						{#if r.imported > 0}
+							<strong>{r.channel.name}</strong> — {m.import_result_tracks({count: r.imported})}
+						{:else}
+							<strong>{r.channel.name}</strong> — {m.import_result_already()}
+						{/if}
+						<a href="/{r.channel.slug}">{m.import_browse_channel()}</a>
+					</p>
+				{/each}
 				<p>
-					<button type="button" onclick={browseImported}>Browse all imported →</button>
+					<button type="button" onclick={browseImported}>{m.import_browse_all()}</button>
 				</p>
 			{/if}
 			<p>
-				<button type="button" onclick={reset}>Import another</button>
+				<button type="button" onclick={() => (done = false)}>{m.import_another()}</button>
 			</p>
 		{/if}
 	{/if}
 </article>
 
-<style>
-	.results {
-		list-style: none;
-		padding: 0;
-		margin: 1rem 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-	.results li {
-		display: flex;
-		gap: 0.5rem;
-		align-items: baseline;
-		flex-wrap: wrap;
-	}
-</style>

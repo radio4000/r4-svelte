@@ -5,12 +5,12 @@
 	import {validateBackup, importedSlug, buildFromBackup, writeImport} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
+	import Dropzone from '$lib/components/dropzone.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	let error = $state('')
 	let importing = $state(false)
 	let result: ImportResult | null = $state(null)
-	let dragOver = $state(false)
-
 	const previouslyImported = $derived(
 		appState.local_channel_ids?.length
 			? appState.local_channel_ids
@@ -29,7 +29,7 @@
 			try {
 				data = JSON.parse(await file.text())
 			} catch {
-				error = 'Not valid JSON.'
+				error = m.import_error_invalid_json()
 				return
 			}
 
@@ -61,8 +61,6 @@
 	}
 
 	function onDrop(event: DragEvent) {
-		dragOver = false
-		event.preventDefault()
 		const file = event.dataTransfer?.files?.[0]
 		if (file) importBackup(file)
 	}
@@ -74,51 +72,33 @@
 </script>
 
 <svelte:head>
-	<title>Import backup</title>
+	<title>{m.import_backup_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings/import" />
-		<h1>Import channel data</h1>
+		<h1>{m.import_backup_title()}</h1>
 	</header>
 
-	<p>
-		Load a Radio4000 backup to browse it locally — no account needed. Any JSON with a
-		<code>channel</code> and <code>tracks</code> array works.
-	</p>
+	<p>{m.import_backup_description()}</p>
 
 	{#if previouslyImported.length}
 		<p>
-			{previouslyImported.length}
-			{previouslyImported.length === 1 ? 'channel' : 'channels'} already imported.
-			<button type="button" onclick={browseImported}>Browse them →</button>
+			{m.import_previously_imported({count: previouslyImported.length})}
+			<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
 		</p>
 	{/if}
 
 	{#if !result}
-		<label
-			class="dropzone"
-			class:drag-over={dragOver}
-			ondragover={(e) => {
-				e.preventDefault()
-				dragOver = true
-			}}
-			ondragleave={() => (dragOver = false)}
-			ondrop={onDrop}
-		>
+		<Dropzone ondrop={onDrop}>
 			{#if importing}
-				Importing…
+				{m.import_loading()}
 			{:else}
-				Drop a JSON file here, or <span class="browse-link">browse</span>
+				{m.import_backup_dropzone()} <span class="browse-link">{m.import_dropzone_browse()}</span>
 			{/if}
-			<input
-				type="file"
-				accept=".json,application/json"
-				onchange={onFileChange}
-				disabled={importing}
-			/>
-		</label>
+			<input type="file" accept=".json,application/json" onchange={onFileChange} disabled={importing} />
+		</Dropzone>
 	{/if}
 
 	{#if error}
@@ -128,47 +108,18 @@
 	{#if result}
 		{#if result.alreadyImported}
 			<p>
-				<strong>{result.channel.name}</strong> is already imported.
-				<a href="/{result.channel.slug}">Browse it →</a>
+				<strong>{result.channel.name}</strong> — {m.import_result_already()}
+				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
 			</p>
 		{:else}
 			<p>
-				<strong>{result.channel.name}</strong> — {result.imported} tracks imported.
-				<a href="/{result.channel.slug}">Browse it →</a>
+				<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
+				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
 			</p>
 		{/if}
 		<p>
-			<button
-				type="button"
-				onclick={() => {
-					result = null
-					error = ''
-				}}>Import another</button
-			>
+			<button type="button" onclick={() => { result = null; error = '' }}>{m.import_another()}</button>
 		</p>
 	{/if}
 </article>
 
-<style>
-	.dropzone {
-		border: 2px dashed var(--gray-6);
-		border-radius: 0.5rem;
-		padding: 2rem;
-		text-align: center;
-		transition: border-color 0.15s, background 0.15s;
-		cursor: pointer;
-		&:hover,
-		&.drag-over {
-			border-color: var(--accent-9);
-			background: var(--accent-2);
-		}
-	}
-
-	input[type='file'] {
-		display: none;
-	}
-
-	.browse-link {
-		text-decoration: underline;
-	}
-</style>
