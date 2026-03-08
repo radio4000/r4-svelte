@@ -1,23 +1,10 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
 	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
-	import {uuid} from '$lib/utils'
+	import {validateBackup, importedSlug, buildFromBackup, writeImport} from '$lib/import'
+	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
-	import type {Channel, Track} from '$lib/types'
-
-	interface BackupData {
-		channel: Channel
-		tracks: Track[]
-	}
-
-	interface ImportResult {
-		channel: Channel
-		imported: number
-		alreadyImported?: boolean
-	}
 
 	let error = $state('')
 	let importing = $state(false)
@@ -31,24 +18,6 @@
 					.filter((c) => c !== undefined)
 			: []
 	)
-
-	function validate(data: unknown): asserts data is BackupData {
-		if (!data || typeof data !== 'object') throw new Error('Not a valid JSON object.')
-		const d = data as Record<string, unknown>
-		if (!d.channel || typeof d.channel !== 'object') throw new Error('Missing channel.')
-		const ch = d.channel as Record<string, unknown>
-		if (!ch.id) throw new Error('Missing channel.id.')
-		if (!ch.slug) throw new Error('Missing channel.slug.')
-		if (!ch.name) throw new Error('Missing channel.name.')
-		if (!Array.isArray(d.tracks)) throw new Error('Missing tracks array.')
-		for (let i = 0; i < d.tracks.length; i++) {
-			const t = d.tracks[i]
-			if (!t?.id) throw new Error(`Track ${i}: missing id.`)
-			if (!t?.slug) throw new Error(`Track ${i}: missing slug.`)
-			if (!t?.title) throw new Error(`Track ${i}: missing title.`)
-			if (!t?.url) throw new Error(`Track ${i}: missing url.`)
-		}
-	}
 
 	async function importBackup(file: File) {
 		error = ''
@@ -65,48 +34,21 @@
 			}
 
 			try {
-				validate(data)
+				validateBackup(data)
 			} catch (e) {
 				error = (e as Error).message
 				return
 			}
 
-			const importedSlug = `${data.channel.slug}-import-${data.channel.id.slice(0, 8)}`
-
-			await Promise.all([
-				channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
-				tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
-			])
-
-			// Detect re-import: same file already loaded this session
-			const existingChannel = [...channelsCollection.state.values()].find(
-				(c) => c.slug === importedSlug
-			)
-			if (existingChannel) {
-				result = {channel: existingChannel, imported: 0, alreadyImported: true}
+			const slug = importedSlug(data.channel.slug, data.channel.id)
+			const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
+			if (existing) {
+				result = {channel: existing, imported: 0, alreadyImported: true}
 				return
 			}
 
-			const channelId = uuid()
-			const channel: Channel = {...data.channel, id: channelId, slug: importedSlug}
-			const tracks: Track[] = data.tracks.map((t) => ({...t, id: uuid(), slug: importedSlug}))
-
-			channelsCollection.utils.writeUpsert(channel)
-			queryClient.setQueryData(['channels', channel.slug], [channel])
-
-			const tracksToCache: Track[] = []
-			tracksCollection.utils.writeBatch(() => {
-				for (const t of tracks) {
-					tracksCollection.utils.writeUpsert(t)
-					tracksToCache.push(t)
-				}
-			})
-			queryClient.setQueryData(['tracks', importedSlug], tracksToCache)
-
-			if (!appState.local_channel_ids?.includes(channel.id)) {
-				appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
-			}
-
+			const {channel, tracks} = buildFromBackup(data)
+			await writeImport(channel, tracks)
 			result = {channel, imported: tracks.length}
 		} finally {
 			importing = false
@@ -137,7 +79,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings" />
+		<BackLink href="/settings/import" />
 		<h1>Import channel data</h1>
 	</header>
 
@@ -155,8 +97,7 @@
 	{/if}
 
 	{#if !result}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
+		<label
 			class="dropzone"
 			class:drag-over={dragOver}
 			ondragover={(e) => {
@@ -166,20 +107,18 @@
 			ondragleave={() => (dragOver = false)}
 			ondrop={onDrop}
 		>
-			<label>
-				{#if importing}
-					Importing…
-				{:else}
-					Drop a JSON file here, or <span class="browse-link">browse</span>
-				{/if}
-				<input
-					type="file"
-					accept=".json,application/json"
-					onchange={onFileChange}
-					disabled={importing}
-				/>
-			</label>
-		</div>
+			{#if importing}
+				Importing…
+			{:else}
+				Drop a JSON file here, or <span class="browse-link">browse</span>
+			{/if}
+			<input
+				type="file"
+				accept=".json,application/json"
+				onchange={onFileChange}
+				disabled={importing}
+			/>
+		</label>
 	{/if}
 
 	{#if error}
@@ -211,16 +150,6 @@
 </article>
 
 <style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
-	}
-	h1 {
-		margin: 0;
-	}
-
 	.dropzone {
 		border: 2px dashed var(--gray-6);
 		border-radius: 0.5rem;
@@ -233,11 +162,6 @@
 			border-color: var(--accent-9);
 			background: var(--accent-2);
 		}
-	}
-
-	label {
-		cursor: pointer;
-		display: block;
 	}
 
 	input[type='file'] {
