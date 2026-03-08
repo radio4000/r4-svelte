@@ -118,6 +118,25 @@
 	const channels = $derived(channelsQuery.data ?? [])
 	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
 
+	// Restore imported channels from query cache into the collection when filter is active.
+	// After a full reload the collection is empty but IDB-persisted query cache still has the data.
+	$effect(() => {
+		if (filter !== 'imported') return
+		const ids = appState.local_channel_ids ?? []
+		if (!ids.length) return
+		void (async () => {
+			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+			const missingIds = ids.filter((id) => !channelsCollection.get(id))
+			if (!missingIds.length) return
+			for (const query of queryClient.getQueryCache().getAll()) {
+				if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
+				for (const ch of /** @type {any[]} */ (query.state.data) ?? []) {
+					if (missingIds.includes(ch.id)) channelsCollection.utils.writeUpsert(ch)
+				}
+			}
+		})()
+	})
+
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
 		if (filter === 'imported') return
