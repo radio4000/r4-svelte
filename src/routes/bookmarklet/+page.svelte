@@ -11,9 +11,8 @@
 	<h1>Bookmarklet — add a track in two clicks</h1>
 
 	<p>
-		A bookmarklet works like a bookmark. It sits in your browser's bookmarks bar. Instead of opening
-		a page, it runs a script. This one takes the URL of whatever page you're on and opens
-		Radio4000's add-track form with it pre-filled.
+		A bookmarklet works like a bookmark. It sits in your browser's bookmarks bar. Instead of opening a page, it runs a
+		script. This one takes the URL of whatever page you're on and opens Radio4000's add-track form with it pre-filled.
 	</p>
 
 	<p>Works on YouTube, SoundCloud, Discogs, and anywhere else you find music.</p>
@@ -29,8 +28,8 @@
 		<section>
 			<h2>2. Visit a page with music and click the bookmarklet</h2>
 			<p>
-				Try it on a YouTube video, a SoundCloud track, or a Discogs release — the URL lands in the
-				right field automatically.
+				Try it on a YouTube video, a SoundCloud track, or a Discogs release — the URL lands in the right field
+				automatically.
 			</p>
 		</section>
 	</div>
