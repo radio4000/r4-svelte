@@ -1,6 +1,6 @@
 <script>
 	import {page} from '$app/state'
-	import {canEditChannel} from '$lib/app-state.svelte'
+	import {canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import Icon from '$lib/components/icon.svelte'
@@ -8,7 +8,7 @@
 
 	const slug = $derived(page.params.slug)
 	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
-	const canEdit = $derived(canEditChannel(channel?.id))
+	const canEdit = $derived(canEditChannel(channel?.id) || isLocalChannel(channel?.id))
 
 	let error = $state('')
 	let success = $state(false)
