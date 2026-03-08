@@ -134,6 +134,9 @@
 				</a>
 			{:else}{/if}
 		{/await}
+	</nav>
+
+	<nav class="nav-settings">
 		<a
 			href={resolve('/settings')}
 			class="btn settings-link"
@@ -172,6 +175,10 @@
 
 	.nav-secondary {
 		justify-content: flex-start;
+	}
+
+	.nav-settings {
+		margin-top: auto;
 	}
 
 	.broadcast-dot {
@@ -264,10 +271,6 @@
 		nav {
 			flex-direction: row;
 			justify-content: flex-end;
-		}
-
-		.settings-link {
-			margin-top: 0;
 		}
 
 		/* Active indicator: top bar on mobile */

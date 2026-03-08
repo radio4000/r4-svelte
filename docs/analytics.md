@@ -10,7 +10,7 @@ R5 uses [PostHog](https://posthog.com) for product analytics and web analytics. 
 
 ## Opt-in
 
-The `appState.analytics_opt_in` boolean (default `false`) controls whether data is sent. Users toggle it at `/settings/privacy`.
+The `appState.analytics_opt_in` boolean (default `false`) controls whether data is sent. Users toggle it at `/settings/analytics`.
 
 When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` is called reactively in `+layout.svelte`.
 
@@ -51,3 +51,8 @@ The helper is a no-op when the user has not opted in, so call sites don't need t
 
 - Users who have not opted in
 - Personal data beyond what PostHog collects by default (IP is anonymised by EU hosting)
+
+## Code references
+
+- [Analytics module usage](https://github.com/radio4000/r4-sync-tests/search?q=%22%24lib%2Fanalytics%22+path%3Asrc&type=code)
+- [Tracked analytics events (`capture()` call sites)](https://github.com/radio4000/r4-sync-tests/search?q=%22capture%28%22+path%3Asrc&type=code)

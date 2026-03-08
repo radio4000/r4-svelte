@@ -1,6 +1,6 @@
 # Views
 
-"Views" _describe_ tracks and channels, and how to display them.
+"Views" _describe_ tracks: which to include, from which channels and how to display them. Channel mentions like '@alice' select tracks from those channels, whilst also returning the channels themselves.
 
 Start with a ViewURI string or page URL. `parseView(uri)` or `viewFromUrl(url)` gives you a `View`. Fetch its data with `queryView(view)`.
 

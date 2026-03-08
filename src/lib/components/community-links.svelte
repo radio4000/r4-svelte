@@ -1,7 +1,6 @@
 <script>
 	import {appChatUrl, appDiscordUrl, appSocialUrl} from '$lib/config'
-
-	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
+	import {repoUrl} from '$lib/repo'
 </script>
 
 <nav>

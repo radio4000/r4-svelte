@@ -1,21 +1,25 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
+	import * as m from '$lib/paraglide/messages'
+	import {repoCodeSearchUrl, repoUrl, supportsCodeSearch} from '$lib/repo'
+
+	const analyticsImportSearchUrl = repoCodeSearchUrl('"$lib/analytics" path:src')
+	const analyticsCaptureSearchUrl = repoCodeSearchUrl('"capture(" path:src')
 </script>
 
 <svelte:head>
-	<title>Analytics — Settings</title>
+	<title>{m.settings_analytics_title()} — {m.settings_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings" />
-		<h1>Analytics</h1>
+		<h1>{m.settings_analytics_title()}</h1>
 	</header>
 
 	<p>
-		You can OPTIONALLY send anonymous events to help the Radio4000 developers understand what's going on. No personal
-		data is collected.
+		{m.settings_analytics_intro()}
 	</p>
 
 	<section class="box">
@@ -23,15 +27,36 @@
 			<fieldset>
 				<label>
 					<input type="checkbox" name="analytics_opt_in" bind:checked={appState.analytics_opt_in} />
-					Share usage data
+					{m.settings_analytics_share_usage()}
 				</label>
 			</fieldset>
 		</form>
 	</section>
 	<p>
-		Radio4000 by default does not track any usage. We have very little knowledge of how people (we don't know) use the
-		app.
+		{m.settings_analytics_outro()}
 	</p>
+
+	{#if repoUrl}
+		<p>{m.settings_analytics_code_refs_label()}</p>
+		<ul>
+			{#if supportsCodeSearch}
+				<li>
+					<a href="{analyticsImportSearchUrl}" target="_blank" rel="noreferrer">
+						{m.settings_analytics_code_refs_imports()}
+					</a>
+				</li>
+				<li>
+					<a href="{analyticsCaptureSearchUrl}" target="_blank" rel="noreferrer">
+						{m.settings_analytics_code_refs_events()}
+					</a>
+				</li>
+			{:else}
+				<li>
+					<a href="{repoUrl}" target="_blank" rel="noreferrer">{m.settings_analytics_code_refs_repo()}</a>
+				</li>
+			{/if}
+		</ul>
+	{/if}
 </article>
 
 <style>

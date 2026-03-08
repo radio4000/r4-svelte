@@ -84,6 +84,14 @@
 		}
 	}
 
+	function handleSubmitEmail() {
+		if (password) {
+			signInWithPassword()
+		} else {
+			sendMagicLink()
+		}
+	}
+
 	function handleEmailContinue() {
 		step = 'email'
 	}
@@ -129,16 +137,15 @@
 		<!-- <ButtonFeedback onclick={() => sendMagicLink({rethrow: true})} success={m.auth_resend_success()}>
 			{m.auth_resend()}
 		</ButtonFeedback> -->
-		<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
 	</menu>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button></p>
-{:else if step === 'password'}
+{:else if step === 'email'}
 	<form
 		class="form"
 		onsubmit={(e) => {
 			e.preventDefault()
-			signInWithPassword()
+			handleSubmitEmail()
 		}}
 	>
 		<fieldset>
@@ -158,46 +165,14 @@
 				id="{id}-password"
 				type="password"
 				bind:value={password}
-				required
 				autocomplete="current-password"
-				placeholder="Enter your password…"
-			/>
-		</fieldset>
-		<button type="submit" class="primary" disabled={loading}>
-			{loading ? m.auth_logging_in() : m.auth_log_in()}
-		</button>
-	</form>
-	<menu class="centerwrap">
-		<a href="/auth/reset-password">{m.auth_forgot_password()}</a>
-	</menu>
-	{#if error}<p class="error" role="alert">{error}</p>{/if}
-	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button></p>
-{:else if step === 'email'}
-	<form
-		class="form"
-		onsubmit={(e) => {
-			e.preventDefault()
-			sendMagicLink()
-		}}
-	>
-		<fieldset>
-			<label for="{id}-email">{m.auth_email()}</label>
-			<input
-				id="{id}-email"
-				type="email"
-				bind:value={email}
-				required
-				autocomplete="email"
-				placeholder="Enter your email address…"
+				placeholder="Password (optional)"
 			/>
 		</fieldset>
 		<button type="submit" class="primary" disabled={loading}>
 			{loading ? m.common_sending() : m.auth_continue_with_email()}
 		</button>
 	</form>
-	<menu class="centerwrap">
-		<button type="button" onclick={() => (step = 'password')}>{m.auth_have_password()}</button>
-	</menu>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<p><button type="button" class="link" onclick={() => (step = 'providers')}>← {m.common_back()}</button></p>
 {:else}
