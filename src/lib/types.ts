@@ -87,6 +87,8 @@ export interface AppState {
 	analytics_opt_in?: boolean
 	/** Hides navigation and external links; set by the server on embed domains. */
 	embed_mode?: boolean
+	/** IDs of locally imported channels (not from remote DB) */
+	local_channel_ids?: string[]
 }
 
 export interface UserIdentity {

@@ -44,6 +44,7 @@ export const defaultAppState: AppState = {
 	active_deck_id: 1,
 
 	channels: [],
+	local_channel_ids: [],
 	channel: undefined,
 	custom_css_variables: {},
 	shortcuts: undefined,
@@ -132,9 +133,14 @@ function loadState(): AppState {
 
 export const appState: AppState = $state(loadState())
 
-/** Can the current user edit this channel? */
+/** Can the current user edit this channel? (Supabase-owned only) */
 export function canEditChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)
+}
+
+/** Is this a locally imported channel (not from remote DB)? */
+export function isLocalChannel(channelId: string | undefined): boolean {
+	return !!channelId && !!(appState.local_channel_ids?.includes(channelId))
 }
 
 export const DECK_ACCENTS = [
