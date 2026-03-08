@@ -2,6 +2,8 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
+	import {appState} from '$lib/app-state.svelte'
+	import {uuid} from '$lib/utils'
 	import BackLink from '$lib/components/back-link.svelte'
 	import type {Channel, Track} from '$lib/types'
 
@@ -56,20 +58,26 @@
 			return
 		}
 
-		const date = new Date().toISOString().slice(0, 10)
-		const importedSlug = `${data.channel.slug}-import-${date}`
+		const importedSlug = `${data.channel.slug}-import-${data.channel.id.slice(0, 8)}`
 
-		const channel: Channel = {...data.channel, slug: importedSlug}
-		const tracks: Track[] = data.tracks.map((t) => ({...t, slug: importedSlug}))
+		await Promise.all([
+			channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
+			tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
+		])
 
-		if (!channelsCollection.get(channel.id)) {
+		// Reuse existing ID if already imported (same slug), otherwise generate a fresh one
+		// so imported data never shares IDs with live collection entries
+		const existingChannel = [...channelsCollection.state.values()].find(
+			(c) => c.slug === importedSlug
+		)
+		const channelId = existingChannel?.id ?? uuid()
+		const channel: Channel = {...data.channel, id: channelId, slug: importedSlug}
+		const tracks: Track[] = data.tracks.map((t) => ({...t, id: uuid(), slug: importedSlug}))
+
+		if (!existingChannel) {
 			channelsCollection.utils.writeUpsert(channel)
 			// Seed query cache so useLiveQuery doesn't trigger a remote fetch for this slug
 			queryClient.setQueryData(['channels', channel.slug], [channel])
-		}
-
-		if (!tracksCollection.isReady()) {
-			tracksCollection.startSyncImmediate()
 		}
 
 		let imported = 0
@@ -77,21 +85,18 @@
 		const tracksToCache: Track[] = []
 		tracksCollection.utils.writeBatch(() => {
 			for (const t of tracks) {
-				if (!tracksCollection.get(t.id)) {
-					tracksCollection.utils.writeUpsert(t)
-					tracksToCache.push(t)
-					imported++
-				} else {
-					skipped++
-				}
+				tracksCollection.utils.writeUpsert(t)
+				tracksToCache.push(t)
+				imported++
 			}
 		})
 		// Seed query cache so useLiveQuery doesn't trigger a remote fetch for this slug
-		if (tracksToCache.length) {
-			queryClient.setQueryData(['tracks', importedSlug], tracksToCache)
-		}
+		queryClient.setQueryData(['tracks', importedSlug], tracksToCache)
 
 		result = {channel, imported, skipped}
+		if (!appState.local_channel_ids?.includes(channel.id)) {
+			appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
+		}
 	}
 
 	function onFileChange(event: Event) {
