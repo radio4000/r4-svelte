@@ -7,9 +7,11 @@
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import {appChatUrl, appDiscordUrl} from '$lib/config'
+	import {repoBlobUrl, repoCommitUrl} from '$lib/repo'
 
-	const repoUrl = __REPO_URL__ || __GIT_INFO__.remoteUrl
 	const sha = __GIT_INFO__.sha
+	const changelogHref = repoBlobUrl('CHANGELOG.md')
+	const sourceHref = repoCommitUrl(sha)
 </script>
 
 <svelte:head>
@@ -75,12 +77,12 @@
 			<Icon icon="message-circle" />
 			Matrix
 		</a>
-		<a href="{repoUrl}/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">
+		<a href={changelogHref} target="_blank" rel="noreferrer">
 			<Icon icon="html" />
 			{m.settings_changelog()}
 		</a>
-		{#if sha}
-			<a href="{repoUrl}/commit/{sha}" target="_blank" rel="noreferrer">
+		{#if sha && sourceHref}
+			<a href={sourceHref} target="_blank" rel="noreferrer">
 				<Icon icon="code-branch" />
 				Source code <AppBuildInfo link={false} />
 			</a>
