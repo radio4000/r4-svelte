@@ -1,5 +1,7 @@
 import {describe, test, expect} from 'vitest'
-import {parseTxtFile, parseM3u, parseTrackTxt, validateBackup, importedSlug} from './import'
+import {parseTxtFile, parseM3u, parseTrackTxt, validateBackup, importedSlug, buildFromBackup} from './import'
+import type {BackupData} from './import'
+import type {Channel, Track} from './types'
 
 describe('importedSlug', () => {
 	test('appends -import- and first 8 chars of id', () => {
@@ -20,25 +22,16 @@ Info:
   Latitude: 52.48
   Longitude: 13.41`
 
-	test('parses name from first line', () => {
-		expect(parseTxtFile(sample, 'fallback').name).toBe('ko002 🏝️')
-	})
-
-	test('parses slug from Info block', () => {
-		expect(parseTxtFile(sample, 'fallback').slug).toBe('ko002')
-	})
-
-	test('parses id from Info block', () => {
-		expect(parseTxtFile(sample, 'fallback').id).toBe('e0701ff6-1234-5678-abcd-ef0123456789')
-	})
-
-	test('parses description (lines between separator and Info:)', () => {
-		expect(parseTxtFile(sample, 'fallback').description).toBe('click #am #pm')
+	test('parses all fields from a full channel txt', () => {
+		const result = parseTxtFile(sample, 'fallback')
+		expect(result.name).toBe('ko002 🏝️')
+		expect(result.slug).toBe('ko002')
+		expect(result.id).toBe('e0701ff6-1234-5678-abcd-ef0123456789')
+		expect(result.description).toBe('click #am #pm')
 	})
 
 	test('falls back to fallbackName when no Info block', () => {
-		const minimal = 'My Channel\n========\n'
-		const result = parseTxtFile(minimal, 'my-channel')
+		const result = parseTxtFile('My Channel\n========\n', 'my-channel')
 		expect(result.name).toBe('My Channel')
 		expect(result.slug).toBe('my-channel')
 	})
@@ -53,21 +46,13 @@ https://www.youtube.com/watch?v=vo3uuysToRc
 #EXTINF:-1,Local file
 /home/user/music/track.m4a`
 
-	test('returns http tracks', () => {
+	test('parses http tracks, skips local paths', () => {
 		const tracks = parseM3u(sample)
 		expect(tracks).toHaveLength(2)
-	})
-
-	test('parses title from EXTINF', () => {
-		expect(parseM3u(sample)[0].title).toBe('Crash Bandicoot OST - Invincible')
-	})
-
-	test('parses url', () => {
-		expect(parseM3u(sample)[0].url).toBe('https://www.youtube.com/watch?v=nCh_-en7RWo')
-	})
-
-	test('skips local file paths', () => {
-		const tracks = parseM3u(sample)
+		expect(tracks[0]).toEqual({
+			title: 'Crash Bandicoot OST - Invincible',
+			url: 'https://www.youtube.com/watch?v=nCh_-en7RWo'
+		})
 		expect(tracks.every((t) => t.url.startsWith('http'))).toBe(true)
 	})
 
@@ -77,68 +62,83 @@ https://www.youtube.com/watch?v=vo3uuysToRc
 })
 
 describe('parseTrackTxt', () => {
-	const sample = `02. Funked Up
+	test('parses title, description, and url', () => {
+		const result = parseTrackTxt(`02. Funked Up
 ty -@hardlife #pm #techno light questionning
-  https://youtu.be/6KPLEbCDhXA`
-
-	test('parses title from first line', () => {
-		expect(parseTrackTxt(sample).title).toBe('02. Funked Up')
-	})
-
-	test('parses original url (last http line)', () => {
-		expect(parseTrackTxt(sample).url).toBe('https://youtu.be/6KPLEbCDhXA')
-	})
-
-	test('parses description (lines between title and url)', () => {
-		expect(parseTrackTxt(sample).description).toBe('ty -@hardlife #pm #techno light questionning')
+  https://youtu.be/6KPLEbCDhXA`)
+		expect(result.title).toBe('02. Funked Up')
+		expect(result.description).toBe('ty -@hardlife #pm #techno light questionning')
+		expect(result.url).toBe('https://youtu.be/6KPLEbCDhXA')
 	})
 
 	test('handles track with no description', () => {
-		const minimal = 'Track Title\n  https://youtu.be/abc123'
-		const result = parseTrackTxt(minimal)
-		expect(result.title).toBe('Track Title')
-		expect(result.url).toBe('https://youtu.be/abc123')
-		expect(result.description).toBe('')
+		const result = parseTrackTxt('Track Title\n  https://youtu.be/abc123')
+		expect(result).toEqual({title: 'Track Title', url: 'https://youtu.be/abc123', description: ''})
 	})
 })
 
 describe('validateBackup', () => {
-	const valid = {
-		channel: {id: 'abc', slug: 'my-channel', name: 'My Channel'},
-		tracks: [{id: 't1', url: 'https://youtube.com/watch?v=x', slug: 'my-channel', title: 'T'}]
-	}
+	const ch = {id: 'x', slug: 'x', name: 'x'}
 
 	test('passes for valid backup', () => {
-		expect(() => validateBackup(valid)).not.toThrow()
+		expect(() => validateBackup({channel: ch, tracks: [{url: 'https://y.com/v'}]})).not.toThrow()
 	})
 
-	test('throws for non-object', () => {
-		expect(() => validateBackup('string')).toThrow('Not a valid JSON object.')
+	test.each([
+		['non-object', 'string', 'Not a valid JSON object.'],
+		['missing channel', {tracks: []}, 'Missing channel.'],
+		['missing channel.id', {channel: {slug: 'x', name: 'x'}, tracks: []}, 'Missing channel.id.'],
+		['missing channel.slug', {channel: {id: 'x', name: 'x'}, tracks: []}, 'Missing channel.slug.'],
+		['missing channel.name', {channel: {id: 'x', slug: 'x'}, tracks: []}, 'Missing channel.name.'],
+		['non-array tracks', {channel: ch, tracks: null}, 'Missing tracks array.'],
+		['track missing url', {channel: ch, tracks: [{id: 't1'}]}, 'Track 0: missing url.']
+	])('throws for %s', (_label, data, message) => {
+		expect(() => validateBackup(data)).toThrow(message)
+	})
+})
+
+describe('buildFromBackup', () => {
+	function backup(channel: Partial<Channel> = {}, tracks: Partial<Track>[] = []): BackupData {
+		return {
+			channel: {
+				id: 'e0701ff6-1234-5678-abcd-ef0123456789',
+				slug: 'ko002',
+				name: 'Ko002',
+				created_at: '',
+				updated_at: '',
+				...channel
+			},
+			tracks
+		} as BackupData
+	}
+
+	test('generates new slug with -import- and first 8 chars of original id', () => {
+		expect(buildFromBackup(backup()).channel.slug).toBe('ko002-import-e0701ff6')
 	})
 
-	test('throws for missing channel', () => {
-		expect(() => validateBackup({tracks: []})).toThrow('Missing channel.')
+	test('replaces channel id with a new uuid', () => {
+		const {channel} = buildFromBackup(backup({id: 'original-id'}))
+		expect(channel.id).not.toBe('original-id')
+		expect(channel.id).toBeTruthy()
 	})
 
-	test('throws for missing channel.id', () => {
-		expect(() => validateBackup({channel: {slug: 'x', name: 'x'}, tracks: []})).toThrow('Missing channel.id.')
+	test('replaces track ids and assigns the new slug', () => {
+		const {channel, tracks} = buildFromBackup(
+			backup({}, [
+				{id: 'old-track-id', slug: 'ko002', url: 'https://y.com/a', title: 'A'},
+				{id: 'old-track-id-2', slug: 'ko002', url: 'https://y.com/b', title: 'B'}
+			])
+		)
+		expect(tracks).toHaveLength(2)
+		expect(tracks[0].id).not.toBe('old-track-id')
+		expect(tracks[0].slug).toBe(channel.slug)
+		expect(tracks[1].slug).toBe(channel.slug)
 	})
 
-	test('throws for missing channel.slug', () => {
-		expect(() => validateBackup({channel: {id: 'x', name: 'x'}, tracks: []})).toThrow('Missing channel.slug.')
-	})
-
-	test('throws for missing channel.name', () => {
-		expect(() => validateBackup({channel: {id: 'x', slug: 'x'}, tracks: []})).toThrow('Missing channel.name.')
-	})
-
-	test('throws when tracks is not an array', () => {
-		expect(() => validateBackup({channel: {id: 'x', slug: 'x', name: 'x'}, tracks: null})).toThrow('Missing tracks array.')
-	})
-
-	test('throws for track missing url', () => {
-		expect(() =>
-			validateBackup({channel: {id: 'x', slug: 'x', name: 'x'}, tracks: [{id: 't1'}]})
-		).toThrow('Track 0: missing url.')
+	test('preserves extra track fields like description', () => {
+		const {tracks} = buildFromBackup(
+			backup({}, [{id: 't1', slug: 'ko002', url: 'https://y.com/v', title: 'T', description: 'keep me'}])
+		)
+		expect(tracks[0].description).toBe('keep me')
 	})
 })

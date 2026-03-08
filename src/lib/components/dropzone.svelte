@@ -36,7 +36,9 @@
 		border-radius: 0.5rem;
 		padding: 2rem;
 		text-align: center;
-		transition: border-color 0.15s, background 0.15s;
+		transition:
+			border-color 0.15s,
+			background 0.15s;
 		cursor: pointer;
 		&:hover,
 		&.drag-over {

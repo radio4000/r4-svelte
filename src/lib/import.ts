@@ -2,8 +2,10 @@ import {channelsCollection} from '$lib/collections/channels'
 import {tracksCollection} from '$lib/collections/tracks'
 import {queryClient} from '$lib/collections/query-client'
 import {appState} from '$lib/app-state.svelte'
-import {uuid} from '$lib/utils'
+import {uuid, slugify} from '$lib/utils'
 import type {Channel, Track} from '$lib/types'
+
+const M3U_EXT_RE = /\.m3u8?$/i
 
 export interface BackupData {
 	channel: Channel
@@ -31,7 +33,6 @@ export function validateBackup(data: unknown): asserts data is BackupData {
 	if (!Array.isArray(d.tracks)) throw new Error('Missing tracks array.')
 	for (let i = 0; i < d.tracks.length; i++) {
 		const t = d.tracks[i]
-		if (!t?.id) throw new Error(`Track ${i}: missing id.`)
 		if (!t?.url) throw new Error(`Track ${i}: missing url.`)
 	}
 }
@@ -99,18 +100,58 @@ export async function writeImport(channel: Channel, tracks: Track[]): Promise<vo
 	channelsCollection.utils.writeUpsert(channel)
 	queryClient.setQueryData(['channels', channel.slug], [channel])
 
-	const tracksToCache: Track[] = []
 	tracksCollection.utils.writeBatch(() => {
-		for (const t of tracks) {
-			tracksCollection.utils.writeUpsert(t)
-			tracksToCache.push(t)
-		}
+		for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 	})
-	queryClient.setQueryData(['tracks', channel.slug], tracksToCache)
+	queryClient.setQueryData(['tracks', channel.slug], tracks)
 
 	if (!appState.local_channel_ids?.includes(channel.id)) {
 		appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
 	}
+}
+
+/** Remove a local-only imported channel and its tracks. Reverses writeImport. */
+export function deleteLocalChannel(channelId: string, slug: string) {
+	tracksCollection.utils.writeBatch(() => {
+		for (const t of tracksCollection.toArray) {
+			if (t.slug === slug) tracksCollection.utils.writeDelete(t.id)
+		}
+	})
+	channelsCollection.utils.writeDelete(channelId)
+	queryClient.removeQueries({queryKey: ['tracks', slug]})
+	queryClient.removeQueries({queryKey: ['channels', slug]})
+	appState.local_channel_ids = appState.local_channel_ids?.filter((id) => id !== channelId)
+}
+
+/** Import a JSON backup file. Returns early if already imported. */
+export async function importBackupFile(file: File): Promise<ImportResult> {
+	const data: unknown = JSON.parse(await file.text())
+	validateBackup(data)
+
+	const slug = importedSlug(data.channel.slug, data.channel.id)
+	const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
+	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
+
+	const {channel, tracks} = buildFromBackup(data)
+	await writeImport(channel, tracks)
+	return {channel, imported: tracks.length}
+}
+
+/** Import an M3U playlist file. */
+export async function importM3uFile(file: File): Promise<ImportResult> {
+	const content = await file.text()
+	const rawTracks = parseM3u(content)
+	if (!rawTracks.length) throw new Error('No playable tracks found in playlist.')
+
+	const baseName = file.name.replace(M3U_EXT_RE, '')
+	const channelId = uuid()
+	const slug = importedSlug(slugify(baseName) || 'playlist', channelId)
+
+	const channel = {id: channelId, slug, name: baseName, description: ''} as Channel
+	const tracks: Track[] = rawTracks.map((t) => ({id: uuid(), slug, title: t.title, url: t.url}) as Track)
+
+	await writeImport(channel, tracks)
+	return {channel, imported: tracks.length}
 }
 
 /** Build a Channel + Track[] from a validated BackupData object. */

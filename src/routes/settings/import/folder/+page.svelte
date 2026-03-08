@@ -3,7 +3,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import {uuid} from '$lib/utils'
-	import {parseTxtFile, parseM3u, parseTrackTxt, validateBackup, importedSlug, buildFromBackup, writeImport} from '$lib/import'
+	import {parseTxtFile, parseM3u, parseTrackTxt, importedSlug, importBackupFile, writeImport} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -18,7 +18,7 @@
 		source: 'r4download' | 'backup'
 	}
 
-	let supported = $state(typeof window !== 'undefined' && 'showDirectoryPicker' in window)
+	const supported = typeof window !== 'undefined' && 'showDirectoryPicker' in window
 	let scanning = $state(false)
 	let results: FolderImportResult[] = $state([])
 	let errors: string[] = $state([])
@@ -26,9 +26,7 @@
 
 	const previouslyImported = $derived(
 		appState.local_channel_ids?.length
-			? appState.local_channel_ids
-					.map((id) => channelsCollection.get(id))
-					.filter((c) => c !== undefined)
+			? appState.local_channel_ids.map((id) => channelsCollection.get(id)).filter((c) => c !== undefined)
 			: []
 	)
 
@@ -101,12 +99,16 @@
 				const txtHandle = txtFiles.get(basename)
 				let title = basename
 				let description = ''
-				let originalUrl = ''
 				if (txtHandle) {
 					const parsed = parseTrackTxt(await readFileText(txtHandle))
 					title = parsed.title
-					description = parsed.description
-					originalUrl = parsed.url
+					const originalUrl = parsed.url
+					description =
+						originalUrl && !parsed.description.includes(originalUrl)
+							? parsed.description
+								? `${parsed.description}\n${originalUrl}`
+								: originalUrl
+							: parsed.description
 				}
 				tracks.push({
 					id: uuid(),
@@ -115,10 +117,7 @@
 					description,
 					url: objectUrl,
 					media_id: objectUrl,
-					provider: 'file',
-					...(originalUrl && !description.includes(originalUrl)
-						? {description: description ? `${description}\n${originalUrl}` : originalUrl}
-						: {})
+					provider: 'file'
 				} as Track)
 			}
 		}
@@ -133,34 +132,13 @@
 		return {channel, imported: tracks.length, source: 'r4download'}
 	}
 
-	async function importJsonBackups(
-		jsonHandles: FileSystemFileHandle[]
-	): Promise<FolderImportResult[]> {
+	async function importJsonBackups(jsonHandles: FileSystemFileHandle[]): Promise<FolderImportResult[]> {
 		const out: FolderImportResult[] = []
 		for (const handle of jsonHandles) {
 			try {
-				let data: unknown
-				try {
-					data = JSON.parse(await readFileText(handle))
-				} catch {
-					errors = [...errors, `${handle.name}: not valid JSON.`]
-					continue
-				}
-				try {
-					validateBackup(data)
-				} catch (e) {
-					errors = [...errors, `${handle.name}: ${(e as Error).message}`]
-					continue
-				}
-				const slug = importedSlug(data.channel.slug, data.channel.id)
-				const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
-				if (existing) {
-					out.push({channel: existing, imported: 0, source: 'backup'})
-					continue
-				}
-				const {channel, tracks} = buildFromBackup(data)
-				await writeImport(channel, tracks)
-				out.push({channel, imported: tracks.length, source: 'backup'})
+				const file = await handle.getFile()
+				const result = await importBackupFile(file)
+				out.push({...result, source: 'backup'})
 			} catch (e) {
 				errors = [...errors, `${handle.name}: ${(e as Error).message}`]
 			}
@@ -219,7 +197,7 @@
 		let dirHandle: FileSystemDirectoryHandle
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		dirHandle = await (window as any).showDirectoryPicker({mode: 'read'})
+			dirHandle = await (window as any).showDirectoryPicker({mode: 'read'})
 		} catch (e) {
 			if ((e as Error).name !== 'AbortError') errors = [(e as Error).message]
 			return
@@ -230,7 +208,9 @@
 	async function onDrop(event: DragEvent) {
 		const item = event.dataTransfer?.items?.[0]
 		if (!item) return
-		const handle = await (item as DataTransferItem & {getAsFileSystemHandle?: () => Promise<FileSystemHandle>}).getAsFileSystemHandle?.()
+		const handle = await (
+			item as DataTransferItem & {getAsFileSystemHandle?: () => Promise<FileSystemHandle>}
+		).getAsFileSystemHandle?.()
 		if (handle?.kind === 'directory') {
 			await runScan(handle as FileSystemDirectoryHandle)
 		}
@@ -306,4 +286,3 @@
 		{/if}
 	{/if}
 </article>
-

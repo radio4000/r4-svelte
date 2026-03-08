@@ -81,7 +81,10 @@
 		</header>
 
 		{#if isLocal}
-			<p>This will remove <strong>{channel.name}</strong> and its {trackCount} tracks from your browser. This is local data only — nothing will be deleted from Radio4000.</p>
+			<p>
+				This will remove <strong>{channel.name}</strong> and its {trackCount} tracks from your browser. This is local data
+				only — nothing will be deleted from Radio4000.
+			</p>
 		{:else}
 			<p>
 				This will permanently delete the channel and its {trackCount} tracks from Radio4000. This cannot be undone.

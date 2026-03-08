@@ -1,57 +1,30 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
-	import {uuid} from '$lib/utils'
-	import {parseM3u, writeImport} from '$lib/import'
+	import {importM3uFile} from '$lib/import'
+	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import type {Channel, Track} from '$lib/types'
-
-	interface ImportResult {
-		channel: Channel
-		imported: number
-	}
 
 	let error = $state('')
 	let importing = $state(false)
 	let result: ImportResult | null = $state(null)
+	const previouslyImported = $derived(
+		appState.local_channel_ids?.length
+			? appState.local_channel_ids.map((id) => channelsCollection.get(id)).filter((c) => c !== undefined)
+			: []
+	)
+
 	async function importM3u(file: File) {
 		error = ''
 		result = null
 		importing = true
-
 		try {
-			const content = await file.text()
-			const rawTracks = parseM3u(content)
-
-			if (!rawTracks.length) {
-				error = m.import_m3u_error_no_tracks()
-				return
-			}
-
-			// Derive a slug from the filename (strip extension, sanitize)
-			const baseName = file.name.replace(/\.m3u8?$/i, '')
-			const baseSlug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'playlist'
-			const channelId = uuid()
-			const slug = `${baseSlug}-import-${channelId.slice(0, 8)}`
-
-			const channel: Channel = {
-				id: channelId,
-				slug,
-				name: baseName,
-				description: ''
-			} as Channel
-
-			const tracks: Track[] = rawTracks.map((t) => ({
-				id: uuid(),
-				slug,
-				title: t.title,
-				url: t.url
-			} as Track))
-
-			await writeImport(channel, tracks)
-			result = {channel, imported: tracks.length}
+			result = await importM3uFile(file)
+		} catch (e) {
+			error = (e as Error).message
 		} finally {
 			importing = false
 		}
@@ -85,6 +58,13 @@
 
 	<p>{m.import_m3u_description()}</p>
 
+	{#if previouslyImported.length}
+		<p>
+			{m.import_previously_imported({count: previouslyImported.length})}
+			<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
+		</p>
+	{/if}
+
 	{#if !result}
 		<Dropzone ondrop={onDrop}>
 			{#if importing}
@@ -107,8 +87,13 @@
 		</p>
 		<p>
 			<button type="button" onclick={browseImported}>{m.import_browse_all()}</button>
-			<button type="button" onclick={() => { result = null; error = '' }}>{m.import_another()}</button>
+			<button
+				type="button"
+				onclick={() => {
+					result = null
+					error = ''
+				}}>{m.import_another()}</button
+			>
 		</p>
 	{/if}
 </article>
-
