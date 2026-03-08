@@ -90,6 +90,15 @@ A collection = a typed, in-memory table. Keyed by entity ID (e.g. `track.id`).
 
 Pick one per data type. Don't use both for the same data.
 
+Sync modes control when data loads:
+
+| Mode        | Best for                       | Data size |
+| ----------- | ------------------------------ | --------- |
+| `eager`     | Mostly-static datasets         | <10k rows |
+| `on-demand` | Search, catalogs, large tables | >50k rows |
+
+`on-demand` means `.where()` clauses in live queries trigger fetches — the live query is both reader and fetch trigger. `eager` loads everything upfront.
+
 ### Collection types
 
 Three factory functions, each wrapping `createCollection()` with different behavior:
@@ -109,6 +118,10 @@ Three factory functions, each wrapping `createCollection()` with different behav
 
 Don't confuse `query.data` (reactive result from `useLiveQuery`) with `collection.state` (raw Map, not reactive). `collection.state` and `.toArray` return a **new plain object every call**. Wrapping them in `$derived` does NOT make them reactive — Svelte can't track when the collection's internal data changes. `$derived([...collection.state.values()].filter(...))` only re-runs when other Svelte signals in the expression change (e.g. a route param), not when rows are inserted/updated/deleted. For reactive reads, use `useLiveQuery` and derive from `query.data`.
 
+**Svelte 5 reactivity rules for useLiveQuery:**
+- Don't destructure the return value — `const {data} = useLiveQuery(...)` breaks reactivity. Use `query.data` via dot notation, or wrap with `const {data} = $derived(query)`.
+- Dependency arrays must use getter functions: `[() => channelId]`, not `[channelId]`. Passing values directly captures them at creation time — changes won't trigger re-execution.
+
 **`utils` differ by type:**
 
 - **All types:** `utils.acceptMutations()` — apply external mutations
@@ -116,6 +129,24 @@ Don't confuse `query.data` (reactive result from `useLiveQuery`) with `collectio
 - **localStorage only:** `utils.clearStorage()`, `utils.getStorageSize()`
 
 For local/localStorage collections, use `collection.insert()`/`.update()`/`.delete()` directly — they go through mutation handlers which are auto-configured.
+
+`collection.preload()` starts sync and resolves when the collection reaches "ready" status. Use in SvelteKit loaders to avoid a loading flash:
+
+```ts
+// +page.ts
+export const ssr = false
+export async function load() {
+	await Promise.all([tracksCollection.preload(), channelsCollection.preload()])
+}
+```
+
+Subsequent calls to `preload()` on an already-ready collection return immediately.
+
+**`queryFn` gotchas:**
+- `queryFn` result is treated as **complete server state**. Returning `[]` means "server has no items" and deletes all existing collection data. For filtered fetches, use `on-demand` mode + live query `.where()`, not a filtered `queryFn`.
+- For incremental fetches (e.g. pagination), merge with existing data in `queryFn` — otherwise new results replace everything.
+
+**Schema notes:** schemas must be synchronous (async validation throws `SchemaMustBeSynchronousError`). When a schema transforms types (e.g. string → Date), use `z.union([z.string(), z.date()])` so `TInput` is a superset of `TOutput` — otherwise `update()` fails because the draft has the transformed type but the schema only accepts the raw type. `getKey` must return a defined value for every item (throws `UndefinedKeyError` otherwise). Don't provide both an explicit type parameter and a schema — the schema infers types, adding a generic creates conflicting constraints.
 
 ```
 src/lib/tanstack/collections/
@@ -138,10 +169,38 @@ const recentTracks = useLiveQuery((q) =>
 		.orderBy(({tracks}) => tracks.created_at, 'desc')
 		.limit(50)
 )
-// Also: leftJoin, groupBy, having, distinct, findOne(), count(), sum(), avg()
 ```
 
-`.limit()` or `.offset()` require `.orderBy()` — throws error without it.
+Query builder methods: `from`, `where`, `join`/`leftJoin`/`rightJoin`/`innerJoin`/`fullJoin`, `select`, `fn.select`, `groupBy`, `having`, `orderBy`, `limit`, `offset`, `distinct`, `findOne`.
+
+Operators: `eq`, `gt`, `gte`, `lt`, `lte`, `like`, `ilike`, `inArray`, `isNull`, `isUndefined`, `and`, `or`, `not`. Aggregates: `count`, `sum`, `avg`, `min`, `max`. String: `upper`, `lower`, `length`, `concat`. Math: `add`. Utility: `coalesce`.
+
+All operators are incrementally maintained by the d2ts differential dataflow engine. Prefer them over JS equivalents — `.filter()` / `.map()` on `query.data` re-runs from scratch on every change, while query builder operators only recompute deltas.
+
+Use `$selected` namespace in `having` and `orderBy` to reference fields defined in `select`:
+
+```js
+const topChannels = useLiveQuery((q) =>
+	q
+		.from({t: tracksCollection})
+		.groupBy(({t}) => t.channel_id)
+		.select(({t}) => ({
+			channel_id: t.channel_id,
+			trackCount: count(t.id),
+		}))
+		.having(({$selected}) => gt($selected.trackCount, 10))
+		.orderBy(({$selected}) => $selected.trackCount, 'desc')
+)
+```
+
+IVM constraints (these throw errors, not silent failures):
+- `.limit()` or `.offset()` require `.orderBy()` — non-deterministic pagination can't be incrementally maintained
+- `.distinct()` requires `.select()` — deduplication needs an explicit projection
+- `.having()` requires `.groupBy()` — no groups means nothing to filter
+- Join conditions must use `eq()` only — no `gt()`, `like()`, etc.
+- Use `eq()` not `===` in `.where()` callbacks — JS `===` returns a boolean primitive, not an expression object. Throws `InvalidWhereExpressionError`
+- `fn.select()` cannot be used with `groupBy()` — the compiler must statically analyze select to discover aggregate functions
+- Sources must be wrapped as `{alias: collection}`, not passed directly — `q.from(tracksCollection)` throws
 
 ### Data flow
 
@@ -246,6 +305,31 @@ tracksCollection.utils.writeBatch(() => {
 
 ## Mutations
 
+Unidirectional loop: optimistic mutation → handler persists to backend → sync back → confirmed state. Optimistic state is applied in the current tick and dropped when the handler resolves.
+
+Collection mutations require either (1) `onInsert`/`onUpdate`/`onDelete` handlers on the collection, or (2) an ambient transaction from `createTransaction`/`createOptimisticAction`. Without either, throws `MissingInsertHandlerError`.
+
+### Collection write API
+
+```ts
+// insert — single or batch
+collection.insert({id: crypto.randomUUID(), text: 'hello'})
+collection.insert([item1, item2])
+collection.insert(item, {metadata: {source: 'import'}})
+collection.insert(item, {optimistic: false}) // skip optimistic, wait for server
+
+// update — Immer-style draft proxy, mutate the draft, do NOT reassign it
+collection.update(id, (draft) => { draft.completed = true })
+collection.update([id1, id2], (drafts) => { drafts.forEach(d => { d.done = true }) })
+collection.update(id, {metadata: {reason: 'edit'}}, (draft) => { draft.text = 'new' })
+
+// delete
+collection.delete(id)
+collection.delete([id1, id2])
+```
+
+All three return a `Transaction`. Primary keys are immutable — changing one via `update()` throws `KeyUpdateNotAllowedError`. Inserting a duplicate key throws `DuplicateKeyError`.
+
 ### Collection handlers (tracks, channels)
 
 `collection.insert()` / `.update()` / `.delete()` fire `onInsert` / `onUpdate` / `onDelete` handlers. The handler persists to the server, then an auto-refetch updates `syncedData`.
@@ -322,6 +406,70 @@ collection.utils.refetch() // manually trigger query refresh
 
 Use for: seeding data on login, simple optimistic updates with manual sync, WebSocket updates, pagination.
 
+### createOptimisticAction — intent-based mutations
+
+Use when the optimistic change is a guess at how the server will transform the data, or when mutating multiple collections atomically. `onMutate` must be synchronous (throws `OnMutateMustBeSynchronousError` if it returns a Promise).
+
+```ts
+import {createOptimisticAction} from '@tanstack/svelte-db'
+
+const likeTrack = createOptimisticAction<string>({
+	onMutate: (trackId) => {
+		tracksCollection.update(trackId, (draft) => { draft.likes += 1 })
+	},
+	mutationFn: async (trackId) => {
+		await sdk.tracks.like(trackId)
+		await tracksCollection.utils.refetch()
+	},
+})
+
+const tx = likeTrack(trackId)
+await tx.isPersisted.promise
+```
+
+### createPacedMutations — auto-save with debounce/throttle
+
+```ts
+import {createPacedMutations, debounceStrategy} from '@tanstack/svelte-db'
+
+const autoSaveDescription = createPacedMutations<string>({
+	onMutate: (text) => {
+		channelCollection.update(channelId, (draft) => { draft.description = text })
+	},
+	mutationFn: async ({transaction}) => {
+		const m = transaction.mutations[0]
+		await sdk.channels.update(m.key, m.changes)
+		await channelCollection.utils.refetch()
+	},
+	strategy: debounceStrategy({wait: 500}),
+})
+// Each call resets the debounce timer; mutations merge into one transaction
+```
+
+Other strategies: `throttleStrategy({wait: 200, leading: true, trailing: true})` for evenly spaced (sliders, scroll), `queueStrategy({wait: 0, maxSize: 100})` for sequential FIFO where every mutation persists in order.
+
+### createTransaction — manual batching
+
+```ts
+import {createTransaction} from '@tanstack/svelte-db'
+
+const tx = createTransaction({
+	autoCommit: false,
+	mutationFn: async ({transaction}) => {
+		await api.batchUpdate(transaction.mutations)
+	},
+})
+
+tx.mutate(() => {
+	tracksCollection.update(id1, (d) => { d.status = 'reviewed' })
+	tracksCollection.update(id2, (d) => { d.status = 'reviewed' })
+})
+
+await tx.commit() // or tx.rollback()
+```
+
+Inside `tx.mutate()`, the transaction is pushed onto an ambient stack — any `collection.insert/update/delete` call joins it automatically via `getActiveTransaction()`. Calling `mutate()` after `commit()` or `rollback()` throws `TransactionNotPendingMutateError`.
+
 ### Mutation merging
 
 Within a transaction: insert+update → insert (merged), insert+delete → removed, update+update → update (merged), update+delete → delete.
@@ -352,8 +500,11 @@ Within a transaction: insert+update → insert (merged), insert+delete → remov
 | **Mutation**                       | TanStack | Single change: `insert`, `update`, or `delete`                       |
 | **Transaction**                    | TanStack | Batch of mutations that commit together                              |
 | **Live Query**                     | TanStack | `useLiveQuery()` - reactive query that updates UI                    |
-| **Handler**                        | TanStack | `onInsert`/`onUpdate`/`onDelete` — persists mutation, auto-refetches |
-| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that call `collection.insert/update/delete`     |
+| **Handler**                        | TanStack | `onInsert`/`onUpdate`/`onDelete` — persists mutation, auto-refetches              |
+| **Derived collection**             | TanStack | `createLiveQueryCollection()` — a standalone live query at module scope, itself a collection. Use as source for other queries to cache intermediate results |
+| **Optimistic action**              | TanStack | `createOptimisticAction()` — intent-based mutation with sync `onMutate` + async `mutationFn` |
+| **Paced mutations**                | TanStack | `createPacedMutations()` — auto-save with debounce/throttle/queue strategy       |
+| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that call `collection.insert/update/delete`                  |
 
 ## Packages
 
@@ -403,4 +554,4 @@ Append `.md` for raw markdown.
 - https://tanstack.com/db/latest/docs/collections/query-collection.md
 - https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient.md
 
-For debouncing/throttling mutations, see `usePacedMutations` with `debounceStrategy`/`throttleStrategy` in the mutations guide. For complex multi-collection mutations, see `createOptimisticAction`.
+Skill files for TanStack DB ship in `node_modules/@tanstack/db/skills/` and `node_modules/@tanstack/svelte-db/skills/` — run `bunx @tanstack/intent@latest list` to see them. They target @tanstack/db v0.5.30.
