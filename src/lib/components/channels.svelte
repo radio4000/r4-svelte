@@ -30,6 +30,7 @@
 	const filterLabelMap = {
 		all: () => m.channels_filter_option_all(),
 		broadcasting: () => m.channels_filter_option_broadcasting(),
+		imported: () => m.channels_filter_option_imported(),
 		'10+': () => m.channels_filter_option_10(),
 		'100+': () => m.channels_filter_option_100(),
 		'1000+': () => m.channels_filter_option_1000(),
@@ -96,7 +97,11 @@
 	// Fetch channels driven by the active filter + sort
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
-		if (filter === 'broadcasting') {
+		if (filter === 'imported') {
+			const ids = appState.local_channel_ids ?? []
+			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			return base.where(({ch}) => inArray(ch.id, ids)).orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
 		} else {
@@ -115,6 +120,7 @@
 
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
+		if (filter === 'imported') return
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
 		}
@@ -142,7 +148,7 @@
 
 	async function handleLoadMore() {
 		paginatedLimit += nextPageSize
-		if (paginatedLimit > fetchedUpTo && !loadedAll) {
+		if (filter !== 'imported' && paginatedLimit > fetchedUpTo && !loadedAll) {
 			await fetchUpTo(paginatedLimit)
 		}
 	}
@@ -228,6 +234,14 @@
 					{@attach tooltip({content: m.channels_filter_tooltip_artwork(), position: 'right'})}
 					>{m.channels_filter_option_artwork()}</button
 				>
+				{#if appState.local_channel_ids?.length}
+					<button
+						class:active={filter === 'imported'}
+						onclick={() => setFilter('imported')}
+						{@attach tooltip({content: m.channels_filter_tooltip_imported(), position: 'right'})}
+						>{m.channels_filter_option_imported()}</button
+					>
+				{/if}
 			</menu>
 		</PopoverMenu>
 
