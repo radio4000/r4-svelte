@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {goto} from '$app/navigation'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
@@ -15,11 +16,21 @@
 	interface ImportResult {
 		channel: Channel
 		imported: number
-		skipped: number
+		alreadyImported?: boolean
 	}
 
 	let error = $state('')
+	let importing = $state(false)
 	let result: ImportResult | null = $state(null)
+	let dragOver = $state(false)
+
+	const previouslyImported = $derived(
+		appState.local_channel_ids?.length
+			? appState.local_channel_ids
+					.map((id) => channelsCollection.get(id))
+					.filter((c) => c !== undefined)
+			: []
+	)
 
 	function validate(data: unknown): asserts data is BackupData {
 		if (!data || typeof data !== 'object') throw new Error('Not a valid JSON object.')
@@ -42,66 +53,81 @@
 	async function importBackup(file: File) {
 		error = ''
 		result = null
-
-		let data: unknown
-		try {
-			data = JSON.parse(await file.text())
-		} catch {
-			error = 'Not valid JSON.'
-			return
-		}
+		importing = true
 
 		try {
-			validate(data)
-		} catch (e) {
-			error = (e as Error).message
-			return
-		}
-
-		const importedSlug = `${data.channel.slug}-import-${data.channel.id.slice(0, 8)}`
-
-		await Promise.all([
-			channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
-			tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
-		])
-
-		// Reuse existing ID if already imported (same slug), otherwise generate a fresh one
-		// so imported data never shares IDs with live collection entries
-		const existingChannel = [...channelsCollection.state.values()].find(
-			(c) => c.slug === importedSlug
-		)
-		const channelId = existingChannel?.id ?? uuid()
-		const channel: Channel = {...data.channel, id: channelId, slug: importedSlug}
-		const tracks: Track[] = data.tracks.map((t) => ({...t, id: uuid(), slug: importedSlug}))
-
-		if (!existingChannel) {
-			channelsCollection.utils.writeUpsert(channel)
-			// Seed query cache so useLiveQuery doesn't trigger a remote fetch for this slug
-			queryClient.setQueryData(['channels', channel.slug], [channel])
-		}
-
-		let imported = 0
-		let skipped = 0
-		const tracksToCache: Track[] = []
-		tracksCollection.utils.writeBatch(() => {
-			for (const t of tracks) {
-				tracksCollection.utils.writeUpsert(t)
-				tracksToCache.push(t)
-				imported++
+			let data: unknown
+			try {
+				data = JSON.parse(await file.text())
+			} catch {
+				error = 'Not valid JSON.'
+				return
 			}
-		})
-		// Seed query cache so useLiveQuery doesn't trigger a remote fetch for this slug
-		queryClient.setQueryData(['tracks', importedSlug], tracksToCache)
 
-		result = {channel, imported, skipped}
-		if (!appState.local_channel_ids?.includes(channel.id)) {
-			appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
+			try {
+				validate(data)
+			} catch (e) {
+				error = (e as Error).message
+				return
+			}
+
+			const importedSlug = `${data.channel.slug}-import-${data.channel.id.slice(0, 8)}`
+
+			await Promise.all([
+				channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
+				tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
+			])
+
+			// Detect re-import: same file already loaded this session
+			const existingChannel = [...channelsCollection.state.values()].find(
+				(c) => c.slug === importedSlug
+			)
+			if (existingChannel) {
+				result = {channel: existingChannel, imported: 0, alreadyImported: true}
+				return
+			}
+
+			const channelId = uuid()
+			const channel: Channel = {...data.channel, id: channelId, slug: importedSlug}
+			const tracks: Track[] = data.tracks.map((t) => ({...t, id: uuid(), slug: importedSlug}))
+
+			channelsCollection.utils.writeUpsert(channel)
+			queryClient.setQueryData(['channels', channel.slug], [channel])
+
+			const tracksToCache: Track[] = []
+			tracksCollection.utils.writeBatch(() => {
+				for (const t of tracks) {
+					tracksCollection.utils.writeUpsert(t)
+					tracksToCache.push(t)
+				}
+			})
+			queryClient.setQueryData(['tracks', importedSlug], tracksToCache)
+
+			if (!appState.local_channel_ids?.includes(channel.id)) {
+				appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
+			}
+
+			result = {channel, imported: tracks.length}
+		} finally {
+			importing = false
 		}
 	}
 
 	function onFileChange(event: Event) {
 		const file = (event.currentTarget as HTMLInputElement).files?.[0]
 		if (file) importBackup(file)
+	}
+
+	function onDrop(event: DragEvent) {
+		dragOver = false
+		event.preventDefault()
+		const file = event.dataTransfer?.files?.[0]
+		if (file) importBackup(file)
+	}
+
+	function browseImported() {
+		appState.channels_filter = 'imported'
+		goto('/')
 	}
 </script>
 
@@ -116,17 +142,44 @@
 	</header>
 
 	<p>
-		Load a Radio4000 backup to browse it — no account needed. Any JSON with a <code>channel</code>
-		and <code>tracks</code> array works, not just exports from this app. Bring your own data.
+		Load a Radio4000 backup to browse it locally — no account needed. Any JSON with a
+		<code>channel</code> and <code>tracks</code> array works.
 	</p>
 
-	{#if !result}
+	{#if previouslyImported.length}
 		<p>
-			<label>
-				Choose a JSON file
-				<input type="file" accept=".json,application/json" onchange={onFileChange} />
-			</label>
+			{previouslyImported.length}
+			{previouslyImported.length === 1 ? 'channel' : 'channels'} already imported.
+			<button type="button" onclick={browseImported}>Browse them →</button>
 		</p>
+	{/if}
+
+	{#if !result}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="dropzone"
+			class:drag-over={dragOver}
+			ondragover={(e) => {
+				e.preventDefault()
+				dragOver = true
+			}}
+			ondragleave={() => (dragOver = false)}
+			ondrop={onDrop}
+		>
+			<label>
+				{#if importing}
+					Importing…
+				{:else}
+					Drop a JSON file here, or <span class="browse-link">browse</span>
+				{/if}
+				<input
+					type="file"
+					accept=".json,application/json"
+					onchange={onFileChange}
+					disabled={importing}
+				/>
+			</label>
+		</div>
 	{/if}
 
 	{#if error}
@@ -134,14 +187,17 @@
 	{/if}
 
 	{#if result}
-		<p>
-			{result.imported} tracks imported into
-			<a href="/{result.channel.slug}">@{result.channel.slug}</a>.{#if result.skipped > 0}
-				{result.skipped} already present, left as-is.{/if}
-		</p>
-		<p>
-			<a href="/{result.channel.slug}">Browse @{result.channel.slug} →</a>
-		</p>
+		{#if result.alreadyImported}
+			<p>
+				<strong>{result.channel.name}</strong> is already imported.
+				<a href="/{result.channel.slug}">Browse it →</a>
+			</p>
+		{:else}
+			<p>
+				<strong>{result.channel.name}</strong> — {result.imported} tracks imported.
+				<a href="/{result.channel.slug}">Browse it →</a>
+			</p>
+		{/if}
 		<p>
 			<button
 				type="button"
@@ -164,9 +220,31 @@
 	h1 {
 		margin: 0;
 	}
+
+	.dropzone {
+		border: 2px dashed var(--gray-6);
+		border-radius: 0.5rem;
+		padding: 2rem;
+		text-align: center;
+		transition: border-color 0.15s, background 0.15s;
+		cursor: pointer;
+		&:hover,
+		&.drag-over {
+			border-color: var(--accent-9);
+			background: var(--accent-2);
+		}
+	}
+
 	label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		cursor: pointer;
+		display: block;
+	}
+
+	input[type='file'] {
+		display: none;
+	}
+
+	.browse-link {
+		text-decoration: underline;
 	}
 </style>
