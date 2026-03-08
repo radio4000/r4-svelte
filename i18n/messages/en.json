@@ -331,6 +331,7 @@
 	"home_pulling_radios": "Pulling radios…",
 	"home_title": "Radio4000",
 	"icon_r4_title": "R4",
+	"local_import_note": "Imported channels are local only — not synced to your account.",
 	"media_chrome_autoplay": "Autoplay",
 	"media_chrome_current_state": "Current State",
 	"media_chrome_heading": "Media Chrome Playground",
