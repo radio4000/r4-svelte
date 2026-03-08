@@ -32,8 +32,6 @@
 		if (!channel) return
 		playChannel(appState.active_deck_id, channel)
 	}
-
-
 </script>
 
 <div class="scanner">
@@ -45,13 +43,21 @@
 				<button onclick={play} title="Play this channel"><Icon icon="play-fill" /></button>
 				<button onclick={next} title="Next channel"><Icon icon="next-fill" /></button>
 				<button onclick={seek} title="Jump to random channel"><Icon icon="shuffle" /></button>
-				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay} title="Auto-play on navigation">Auto</button>
+				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay} title="Auto-play on navigation"
+					>Auto</button
+				>
 			</menu>
-		<InputRange bind:value={index} min={0} max={channels.length - 1} step={1} oninput={() => {
-			if (!autoplay) return
-			if (playDebounce) clearTimeout(playDebounce)
-			playDebounce = setTimeout(() => play(), 400)
-		}} />
+			<InputRange
+				bind:value={index}
+				min={0}
+				max={channels.length - 1}
+				step={1}
+				oninput={() => {
+					if (!autoplay) return
+					if (playDebounce) clearTimeout(playDebounce)
+					playDebounce = setTimeout(() => play(), 400)
+				}}
+			/>
 		</header>
 
 		<figure class="spectrum">
@@ -118,7 +124,7 @@
 		padding: 0;
 	}
 
-.spectrum {
+	.spectrum {
 		position: relative;
 		height: 3rem;
 		margin: 0;

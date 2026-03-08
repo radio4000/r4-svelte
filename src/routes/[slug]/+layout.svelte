@@ -5,7 +5,7 @@
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
@@ -47,6 +47,7 @@
 		)
 	)
 	let canEdit = $derived(canEditChannel(channel?.id))
+	let isLocal = $derived(isLocalChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 	// Any auto deck playing this channel, regardless of tag/search filter
@@ -297,6 +298,13 @@
 						<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
 							<Icon icon="document-download" size={16} />
 							Backup
+						</a>
+					</nav>
+				{:else if isLocal}
+					<nav class="channel-nav-secondary" aria-label="Local channel">
+						<a href="/{slug}/delete" class:active={routeId?.startsWith('/[slug]/delete')}>
+							<Icon icon="delete" size={16} />
+							Delete
 						</a>
 					</nav>
 				{/if}

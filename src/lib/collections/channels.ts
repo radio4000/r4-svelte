@@ -101,7 +101,11 @@ export const channelsCollection = createCollection<Channel, string>({
 			if (p.slug) {
 				log.info('channels queryFn (single)', {slug: p.slug})
 				const channel = await fetchChannelBySlug(p.slug)
-				return channel ? [channel] : []
+				if (channel) return [channel]
+				// No remote channel — preserve local imports so they aren't wiped
+				const local = [...channelsCollection.state.values()].find((c) => c?.slug === p.slug)
+				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
+				return []
 			}
 			log.info('channels queryFn', p)
 			const {data, error} = await buildChannelsQuery(p).limit(CHANNELS_PAGE_SIZE)

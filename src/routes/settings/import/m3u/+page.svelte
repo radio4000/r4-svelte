@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
-	import {importBackupFile} from '$lib/import'
+	import {importM3uFile} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
@@ -17,12 +17,12 @@
 			: []
 	)
 
-	async function importBackup(file: File) {
+	async function importM3u(file: File) {
 		error = ''
 		result = null
 		importing = true
 		try {
-			result = await importBackupFile(file)
+			result = await importM3uFile(file)
 		} catch (e) {
 			error = (e as Error).message
 		} finally {
@@ -32,12 +32,12 @@
 
 	function onFileChange(event: Event) {
 		const file = (event.currentTarget as HTMLInputElement).files?.[0]
-		if (file) importBackup(file)
+		if (file) importM3u(file)
 	}
 
 	function onDrop(event: DragEvent) {
 		const file = event.dataTransfer?.files?.[0]
-		if (file) importBackup(file)
+		if (file) importM3u(file)
 	}
 
 	function browseImported() {
@@ -47,16 +47,16 @@
 </script>
 
 <svelte:head>
-	<title>{m.import_backup_title()}</title>
+	<title>{m.import_m3u_title()}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href="/settings/import" />
-		<h1>{m.import_backup_title()}</h1>
+		<h1>{m.import_m3u_title()}</h1>
 	</header>
 
-	<p>{m.import_backup_description()}</p>
+	<p>{m.import_m3u_description()}</p>
 
 	{#if previouslyImported.length}
 		<p>
@@ -70,9 +70,9 @@
 			{#if importing}
 				{m.import_loading()}
 			{:else}
-				{m.import_backup_dropzone()} <span class="browse-link">{m.import_dropzone_browse()}</span>
+				{m.import_m3u_dropzone()} <span class="browse-link">{m.import_dropzone_browse()}</span>
 			{/if}
-			<input type="file" accept=".json,application/json" onchange={onFileChange} disabled={importing} />
+			<input type="file" accept=".m3u,.m3u8" onchange={onFileChange} disabled={importing} />
 		</Dropzone>
 	{/if}
 
@@ -81,18 +81,12 @@
 	{/if}
 
 	{#if result}
-		{#if result.alreadyImported}
-			<p>
-				<strong>{result.channel.name}</strong> — {m.import_result_already()}
-				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
-			</p>
-		{:else}
-			<p>
-				<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
-				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
-			</p>
-		{/if}
 		<p>
+			<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
+			<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
+		</p>
+		<p>
+			<button type="button" onclick={browseImported}>{m.import_browse_all()}</button>
 			<button
 				type="button"
 				onclick={() => {

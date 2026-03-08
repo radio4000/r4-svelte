@@ -62,7 +62,7 @@
 		<li>Export tracks anytime — what is yours is yours</li>
 		<li>Use the R4 CLI to mirror your radio offline</li>
 		<li>Build on the open API to do whatever you need</li>
-<li>No trackers, no ads (except those from YouTube player)</li>
+		<li>No trackers, no ads (except those from YouTube player)</li>
 	</ul>
 </article>
 
@@ -74,15 +74,13 @@
 	<figcaption>Une caverne pendant la nuit — Émile Bayard</figcaption>
 </figure>
 
-
-
 <article class="constrained">
 	<footer>
 		<p>
 			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
 			<a href="/" class="btn">{m.common_start_exploring()}</a>
 		</p>
-</footer>
+	</footer>
 </article>
 
 <style>

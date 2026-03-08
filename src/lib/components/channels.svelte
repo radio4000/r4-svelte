@@ -100,7 +100,10 @@
 		if (filter === 'imported') {
 			const ids = appState.local_channel_ids ?? []
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			return base.where(({ch}) => inArray(ch.id, ids)).orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+			return base
+				.where(({ch}) => inArray(ch.id, ids))
+				.orderBy(({ch}) => ch.created_at, 'desc')
+				.limit(queryLimit)
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))

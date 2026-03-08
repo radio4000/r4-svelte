@@ -140,7 +140,7 @@ export function canEditChannel(channelId: string | undefined): boolean {
 
 /** Is this a locally imported channel (not from remote DB)? */
 export function isLocalChannel(channelId: string | undefined): boolean {
-	return !!channelId && !!(appState.local_channel_ids?.includes(channelId))
+	return !!channelId && !!appState.local_channel_ids?.includes(channelId)
 }
 
 export const DECK_ACCENTS = [
