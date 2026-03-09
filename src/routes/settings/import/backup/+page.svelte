@@ -123,3 +123,11 @@
 		</p>
 	{/if}
 </article>
+
+<style>
+	form {
+		display: flex;
+		gap: 0.5rem;
+		input { flex: 1; }
+	}
+</style>
