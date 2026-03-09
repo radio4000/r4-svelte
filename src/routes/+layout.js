@@ -1,8 +1,5 @@
 import {browser} from '$app/environment'
-import {env} from '$env/dynamic/public'
-const PUBLIC_APP_MODE = env.PUBLIC_APP_MODE
-const PUBLIC_SEED_URLS = env.PUBLIC_SEED_URLS
-import {EMBED_HOSTS} from '$lib/config'
+import {appMode, seedUrls, EMBED_HOSTS} from '$lib/config'
 import {validateListeningState} from '$lib/broadcast.js'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
@@ -36,7 +33,7 @@ export async function load() {
 		await cacheReady
 	}
 
-	const embedMode = !!(PUBLIC_APP_MODE === 'embed' || (browser && EMBED_HOSTS.includes(window.location.hostname)))
+	const embedMode = !!(appMode === 'embed' || (browser && EMBED_HOSTS.includes(window.location.hostname)))
 
 	return {
 		embedMode,
@@ -54,9 +51,9 @@ async function preload() {
 	try {
 		await cacheReady
 
-		if (PUBLIC_APP_MODE === 'standalone') {
+		if (seedUrls) {
 			const {loadSeeds} = await import('$lib/import.js')
-			await loadSeeds(PUBLIC_SEED_URLS).catch((err) => log.warn('seed_load_failed', err))
+			await loadSeeds(seedUrls).catch((err) => log.warn('seed_load_failed', err))
 		}
 
 		validateListeningState().catch((err) => log.error('validate_listening_state_error', err))
