@@ -1,6 +1,9 @@
 import * as child_process from 'node:child_process'
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
-import adapter from '@sveltejs/adapter-cloudflare'
+import adapterCloudflare from '@sveltejs/adapter-cloudflare'
+import adapterStatic from '@sveltejs/adapter-static'
+
+const standalone = process.env.VITE_SVELTE_CONFIG === 'standalone'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,7 +17,7 @@ const config = {
 
 	kit: {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-		adapter: adapter(),
+		adapter: standalone ? adapterStatic({fallback: 'index.html'}) : adapterCloudflare(),
 
 		version: {
 			name: child_process.execSync('git rev-parse HEAD').toString().trim()
