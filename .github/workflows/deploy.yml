@@ -23,8 +23,12 @@ jobs:
       - run: bun install
       - run: bun run build:standalone
         env:
-          PUBLIC_SEED_URLS: ${{ vars.PUBLIC_SEED_URLS }}
           BASE_PATH: ${{ vars.BASE_PATH || format('/{0}', github.event.repository.name) }}
+          PUBLIC_SEED_URLS: ${{ vars.PUBLIC_SEED_URLS }}
+          PUBLIC_APP_NAME: ${{ vars.PUBLIC_APP_NAME }}
+          PUBLIC_APP_SHORT_NAME: ${{ vars.PUBLIC_APP_SHORT_NAME }}
+          PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL }}
+          PUBLIC_APP_DESCRIPTION: ${{ vars.PUBLIC_APP_DESCRIPTION }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
