@@ -1,8 +1,6 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {env} from '$env/dynamic/public'
-	const PUBLIC_APP_MODE = env.PUBLIC_APP_MODE
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
@@ -66,23 +64,21 @@
 		>
 			<Icon icon="search" />
 		</a>
-		{#if PUBLIC_APP_MODE !== 'standalone'}
-			<a
-				href={resolve('/broadcasts')}
-				class="btn"
-				class:active={page.route.id === '/broadcasts'}
-				aria-label={m.nav_broadcasts()}
-				{@attach tooltip({content: m.nav_broadcasts()})}
-			>
-				<Icon icon="cell-signal" />
-				{#if broadcastCount > 0}
-					<span class="count">{broadcastCount}</span>
-				{/if}
-			</a>
-		{/if}
+		<a
+			href={resolve('/broadcasts')}
+			class="btn"
+			class:active={page.route.id === '/broadcasts'}
+			aria-label={m.nav_broadcasts()}
+			{@attach tooltip({content: m.nav_broadcasts()})}
+		>
+			<Icon icon="cell-signal" />
+			{#if broadcastCount > 0}
+				<span class="count">{broadcastCount}</span>
+			{/if}
+		</a>
 
 		{#await preloading then}
-			{#if !userChannel && PUBLIC_APP_MODE !== 'standalone'}
+			{#if !userChannel}
 				<a
 					href={resolve('/welcome')}
 					class="btn"
