@@ -32,7 +32,14 @@ export default defineConfig({
 			manifest: false,
 			registerType: 'autoUpdate',
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,webmanifest}']
+				globPatterns: ['**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
+				runtimeCaching: [
+					{
+						urlPattern: ({request}) => request.mode === 'navigate',
+						handler: 'NetworkFirst',
+						options: {cacheName: 'pages', networkTimeoutSeconds: 5}
+					}
+				]
 			}
 		}),
 		devtoolsJson(),
