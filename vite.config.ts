@@ -31,13 +31,15 @@ export default defineConfig({
 		SvelteKitPWA({
 			manifest: false,
 			registerType: 'autoUpdate',
+			injectRegister: null,
 			workbox: {
-				globPatterns: ['**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
+				clientsClaim: true,
+				globPatterns: ['client/**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
 				runtimeCaching: [
 					{
 						urlPattern: ({request}) => request.mode === 'navigate',
 						handler: 'NetworkFirst',
-						options: {cacheName: 'pages', networkTimeoutSeconds: 5}
+						options: {cacheName: 'pages', networkTimeoutSeconds: 5, expiration: {maxEntries: 50, maxAgeSeconds: 60 * 5}}
 					}
 				]
 			}
