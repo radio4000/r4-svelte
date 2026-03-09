@@ -66,7 +66,7 @@
 		>
 			<Icon icon="search" />
 		</a>
-		{#if !PUBLIC_APP_MODE === 'standalone'}
+		{#if PUBLIC_APP_MODE !== 'standalone'}
 			<a
 				href={resolve('/broadcasts')}
 				class="btn"
@@ -82,7 +82,7 @@
 		{/if}
 
 		{#await preloading then}
-			{#if !userChannel && !PUBLIC_APP_MODE === 'standalone'}
+			{#if !userChannel && PUBLIC_APP_MODE !== 'standalone'}
 				<a
 					href={resolve('/welcome')}
 					class="btn"
