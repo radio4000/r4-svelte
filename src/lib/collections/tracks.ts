@@ -1,6 +1,7 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
 import {sdk} from '@radio4000/sdk'
+import {appMode} from '$lib/config'
 import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
@@ -42,6 +43,20 @@ export const tracksCollection = createCollection<Track, string>({
 			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
 
 			log.info('queryFn', {slugs, tagsIn, ftsEq, createdAfter})
+
+			if (appMode === 'standalone') {
+				const all = [...tracksCollection.state.values()]
+				if (slugs.length) {
+					const set = new Set(slugs)
+					return all.filter((t) => set.has(t.slug))
+				}
+				if (tagsIn?.length) return all.filter((t) => t.tags?.some((tag) => tagsIn.includes(tag)))
+				if (ftsEq) {
+					const q = ftsEq.toLowerCase()
+					return all.filter((t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q))
+				}
+				return all
+			}
 
 			// Slug-based: fetch per channel
 			if (slugs.length) {

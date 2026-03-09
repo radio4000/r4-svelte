@@ -7,6 +7,7 @@ import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
+import {appMode} from '$lib/config'
 
 const log = logger.ns('channels').seal()
 import type {Channel} from '$lib/types'
@@ -98,12 +99,20 @@ export const channelsCollection = createCollection<Channel, string>({
 		staleTime: 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
+			const all = [...channelsCollection.state.values()]
+
+			if (appMode === 'standalone') {
+				const localIds = new Set(appState.local_channel_ids ?? [])
+				if (p.slug) return all.filter((c) => c.slug === p.slug)
+				return all.filter((c) => localIds.has(c.id))
+			}
+
 			if (p.slug) {
 				log.info('channels queryFn (single)', {slug: p.slug})
 				const channel = await fetchChannelBySlug(p.slug)
 				if (channel) return [channel]
 				// No remote channel — preserve local imports so they aren't wiped
-				const local = [...channelsCollection.state.values()].find((c) => c?.slug === p.slug)
+				const local = all.find((c) => c?.slug === p.slug)
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []
 			}
