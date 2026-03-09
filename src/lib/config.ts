@@ -1,9 +1,11 @@
+import {env} from '$env/dynamic/public'
+
 export const EMBED_HOSTS = ['player.radio4000.com', 'r5.i4k.workers.dev']
 
 /** "standalone" | "embed" | undefined */
-export const appMode = import.meta.env.PUBLIC_APP_MODE as string | undefined
+export const appMode = env.PUBLIC_APP_MODE
 /** Comma-separated seed URLs, loaded on startup when set */
-export const seedUrls = import.meta.env.PUBLIC_SEED_URLS as string | undefined
+export const seedUrls = env.PUBLIC_SEED_URLS
 
 export const appName = import.meta.env.PUBLIC_APP_NAME ?? 'Radio4000'
 export const appShortName = import.meta.env.PUBLIC_APP_SHORT_NAME ?? 'R4'
