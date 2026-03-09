@@ -1,6 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
+	import {PUBLIC_STANDALONE} from '$env/static/public'
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
@@ -78,7 +79,7 @@
 		</a>
 
 		{#await preloading then}
-			{#if !userChannel}
+			{#if !userChannel && !PUBLIC_STANDALONE}
 				<a
 					href={resolve('/welcome')}
 					class="btn"
