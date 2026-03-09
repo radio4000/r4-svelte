@@ -13,7 +13,29 @@ For this repository, Cloudflare is configured to deploy automatically:
 
 The standalone build produces a static SPA that works on any web server (nginx, S3, Netlify, GitHub Pages, etc.) with no backend required.
 
-### Setup
+Set `PUBLIC_APP_MODE=standalone` to enable it. This switches the build adapter to `@sveltejs/adapter-static` (SPA mode with `fallback: 404.html`) and disables Supabase auth and remote data fetching.
+
+### GitHub Pages (fork-based)
+
+Fork the repo, then go to Settings → Pages → Source: **GitHub Actions**.
+
+Add these Actions variables (Settings → Secrets and variables → Variables):
+
+| Variable | Required | Example |
+|---|---|---|
+| `PUBLIC_APP_MODE` | yes | `standalone` |
+| `PUBLIC_SEED_URLS` | yes | `https://cdn.example.com/backup.json` |
+| `PUBLIC_APP_NAME` | no | `My Radio` |
+| `PUBLIC_APP_SHORT_NAME` | no | `MR` |
+| `PUBLIC_APP_URL` | no | `https://yourname.github.io/r4-sync-tests` |
+| `PUBLIC_APP_DESCRIPTION` | no | `My personal radio` |
+| `BASE_PATH` | no | auto-detected from repo name |
+
+`BASE_PATH` defaults to `/<repo-name>` automatically. Set it to empty string if deploying to a root domain.
+
+Push to main (or trigger manually via Actions → Deploy to GitHub Pages → Run workflow) to deploy.
+
+### Local build
 
 ```sh
 git clone https://github.com/radio4000/r4-sync-tests
@@ -21,50 +43,46 @@ cd r4-sync-tests
 bun install
 ```
 
-Configure your data sources in `.env` — this file is gitignored and never touched by `git pull`:
+Configure in `.env` — gitignored, never touched by `git pull`:
 
 ```sh
-# .env
 PUBLIC_APP_MODE=standalone
-PUBLIC_SEED_URLS=/data/ko002.txt
+PUBLIC_SEED_URLS=/data/backup.json
 ```
 
-Put your data files in `static/data/` (also gitignored):
+Put data files in `static/data/` (also gitignored):
 
 ```sh
 mkdir static/data
-# Option A — r4 download folder (audio + metadata):
-cp ~/Music/radio4000/ko002/ko002.txt static/data/
-cp ~/Music/radio4000/ko002/tracks.m3u static/data/   # optional, auto-discovered
-# Option B — JSON backup:
 r4 backup <slug> > static/data/backup.json
 ```
 
-Then build and deploy:
+Build and deploy:
 
 ```sh
-bun run build:standalone
+bun run build
 # deploy the build/ folder to any static host
 ```
 
 ### Updating
 
 ```sh
-git pull
-bun run build:standalone
+git pull && bun run build
 ```
 
 Your `.env` and `static/data/` are untouched. No conflicts, ever.
 
-### Multiple channels / remote data
+### Seed data
 
-`PUBLIC_SEED_URLS` is a comma-separated list. Each URL can be relative (served from `static/`) or absolute (remote server):
+`PUBLIC_SEED_URLS` is a comma-separated list of URLs fetched by the browser on first load, imported into IndexedDB. Relative URLs are resolved from the build output; absolute URLs can be remote.
 
 ```sh
-PUBLIC_SEED_URLS=/data/ko002.txt,/data/other-channel.json,https://cdn.example.com/backup.json
+PUBLIC_SEED_URLS=/data/backup.json,https://cdn.example.com/other.json
 ```
 
-### Supported formats
+Remote URLs require the server to send `Access-Control-Allow-Origin: *`.
+
+Supported formats:
 
 | Extension | Source | What's loaded |
 |---|---|---|
@@ -72,17 +90,9 @@ PUBLIC_SEED_URLS=/data/ko002.txt,/data/other-channel.json,https://cdn.example.co
 | `.txt` | `r4 download` | channel metadata + auto-discovers sibling `tracks.m3u` |
 | `.m3u` / `.m3u8` | any M3U playlist | tracks (channel name taken from filename) |
 
-Remote URLs require the server to send `Access-Control-Allow-Origin: *`.
+Imports are deduped — each channel is only parsed once. After first load the app works fully offline.
 
-On first load the app imports all sources into IndexedDB and works fully offline. Imports are deduped — each channel is only parsed once.
-
-**What's different in standalone mode (`PUBLIC_APP_MODE=standalone`):**
-- Adapter: `@sveltejs/adapter-static` with `fallback: index.html` (SPA mode)
-- Auth: Supabase subscription is skipped; auth routes exist but are non-functional (no backend)
-- Seed: `/r4-seed.json` is auto-imported on startup if present
-- All player, queue, and offline (PWA) features work as normal
-
-**What's absent** (no server to serve them):
+**What's absent in standalone** (no server):
 - RSS feeds (`/[slug].rss`)
 - `api/track-meta` endpoint
 - Server-side embed redirect (handled client-side instead)
