@@ -18,6 +18,7 @@ const config = {
 	kit: {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: standalone ? adapterStatic({fallback: '404.html'}) : adapterCloudflare(),
+		paths: standalone ? {base: process.env.BASE_PATH ?? ''} : {},
 
 		version: {
 			name: child_process.execSync('git rev-parse HEAD').toString().trim()

@@ -24,6 +24,7 @@ jobs:
       - run: bun run build:standalone
         env:
           PUBLIC_SEED_URLS: ${{ vars.PUBLIC_SEED_URLS }}
+          BASE_PATH: ${{ vars.BASE_PATH || format('/{0}', github.event.repository.name) }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
