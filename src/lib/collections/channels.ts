@@ -44,6 +44,7 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 export async function loadMoreChannels(
 	params: ChannelQueryParams & {offset: number; limit: number}
 ): Promise<Channel[]> {
+	if (appMode === 'standalone') return []
 	log.info('channels loadMore', {offset: params.offset, limit: params.limit})
 	const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
 	if (error) throw error

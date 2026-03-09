@@ -1,6 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
+	import {appMode} from '$lib/config'
 	import {appState} from '$lib/app-state.svelte'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -42,7 +43,7 @@
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
-	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+')
+	let filter = $derived(appMode === 'standalone' ? 'imported' : (appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+'))
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
