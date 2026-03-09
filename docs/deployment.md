@@ -25,7 +25,7 @@ Configure your data sources in `.env` — this file is gitignored and never touc
 
 ```sh
 # .env
-PUBLIC_STANDALONE=true
+PUBLIC_APP_MODE=standalone
 PUBLIC_SEED_URLS=/data/ko002.txt
 ```
 
@@ -76,17 +76,9 @@ Remote URLs require the server to send `Access-Control-Allow-Origin: *`.
 
 On first load the app imports all sources into IndexedDB and works fully offline. Imports are deduped — each channel is only parsed once.
 
-**To update the app** after upstream changes:
-```sh
-git pull
-bun run build:standalone
-```
-
-Your `static/r4-seed.json` is gitignored and won't be touched.
-
-**What's different in standalone mode (`PUBLIC_STANDALONE=true`):**
+**What's different in standalone mode (`PUBLIC_APP_MODE=standalone`):**
 - Adapter: `@sveltejs/adapter-static` with `fallback: index.html` (SPA mode)
-- Auth: Supabase subscription is skipped; no sign-in UI
+- Auth: Supabase subscription is skipped; auth routes exist but are non-functional (no backend)
 - Seed: `/r4-seed.json` is auto-imported on startup if present
 - All player, queue, and offline (PWA) features work as normal
 
