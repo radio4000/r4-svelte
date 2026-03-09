@@ -1,5 +1,6 @@
 import {browser} from '$app/environment'
-import {PUBLIC_EMBED_MODE, PUBLIC_STANDALONE, PUBLIC_SEED_URLS} from '$env/static/public'
+import {PUBLIC_APP_MODE} from '$env/static/public'
+import {PUBLIC_SEED_URLS} from '$env/dynamic/public'
 import {EMBED_HOSTS} from '$lib/config'
 import {validateListeningState} from '$lib/broadcast.js'
 import {logger} from '$lib/logger'
@@ -34,7 +35,7 @@ export async function load() {
 		await cacheReady
 	}
 
-	const embedMode = !!(PUBLIC_EMBED_MODE || (browser && EMBED_HOSTS.includes(window.location.hostname)))
+	const embedMode = !!(PUBLIC_APP_MODE === 'embed' || (browser && EMBED_HOSTS.includes(window.location.hostname)))
 
 	return {
 		embedMode,
@@ -52,7 +53,7 @@ async function preload() {
 	try {
 		await cacheReady
 
-		if (PUBLIC_STANDALONE) {
+		if (PUBLIC_APP_MODE === 'standalone') {
 			const {loadSeeds} = await import('$lib/import.js')
 			await loadSeeds(PUBLIC_SEED_URLS).catch((err) => log.warn('seed_load_failed', err))
 		}

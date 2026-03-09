@@ -3,7 +3,7 @@ import type {Handle} from '@sveltejs/kit'
 import {EMBED_HOSTS} from '$lib/config'
 
 export const handle: Handle = async ({event, resolve}) => {
-	const isEmbedMode = !!(env.PUBLIC_EMBED_MODE || EMBED_HOSTS.includes(event.url.hostname))
+	const isEmbedMode = !!(env.PUBLIC_APP_MODE === 'embed' || EMBED_HOSTS.includes(event.url.hostname))
 	event.locals.embedMode = isEmbedMode
 	if (isEmbedMode && !event.url.pathname.startsWith('/embed')) {
 		const embedUrl = new URL('/embed', event.url)

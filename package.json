@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"build:standalone": "PUBLIC_STANDALONE=true VITE_SVELTE_CONFIG=standalone vite build",
+		"build:standalone": "PUBLIC_APP_MODE=standalone VITE_SVELTE_CONFIG=standalone vite build",
 		"preview": "vite preview",
 		"format": "prettier --write . --log-level=warn",
 		"biome": "biome check --write .",
