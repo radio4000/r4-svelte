@@ -1,4 +1,6 @@
 import {browser} from '$app/environment'
+import {PUBLIC_EMBED_MODE, PUBLIC_STANDALONE, PUBLIC_SEED_URLS} from '$env/static/public'
+import {EMBED_HOSTS} from '$lib/config'
 import {validateListeningState} from '$lib/broadcast.js'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
@@ -32,7 +34,10 @@ export async function load() {
 		await cacheReady
 	}
 
+	const embedMode = !!(PUBLIC_EMBED_MODE || (browser && EMBED_HOSTS.includes(window.location.hostname)))
+
 	return {
+		embedMode,
 		preloading: preload(),
 		preload
 	}
@@ -46,6 +51,11 @@ async function preload() {
 	log.debug('preloading')
 	try {
 		await cacheReady
+
+		if (PUBLIC_STANDALONE) {
+			const {loadSeeds} = await import('$lib/import.js')
+			await loadSeeds(PUBLIC_SEED_URLS).catch((err) => log.warn('seed_load_failed', err))
+		}
 
 		validateListeningState().catch((err) => log.error('validate_listening_state_error', err))
 
