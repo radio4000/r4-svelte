@@ -43,7 +43,7 @@
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
-	let filter = $derived(appMode === 'standalone' ? 'imported' : (appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+'))
+	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+')
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
@@ -98,6 +98,9 @@
 	// Fetch channels driven by the active filter + sort
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
+		if (appMode === 'standalone') {
+			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+		}
 		if (filter === 'imported') {
 			const ids = appState.local_channel_ids ?? []
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
@@ -143,6 +146,7 @@
 
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
+		if (appMode === 'standalone') return
 		if (filter === 'imported') return
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
