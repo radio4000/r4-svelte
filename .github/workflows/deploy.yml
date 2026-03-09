@@ -23,7 +23,7 @@ jobs:
       - run: bun install
       - run: bun run build:standalone
         env:
-          PUBLIC_SEED_URLS: /data/backup.json
+          PUBLIC_SEED_URLS: ${{ vars.PUBLIC_SEED_URLS }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build
