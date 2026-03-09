@@ -35,11 +35,13 @@ export default defineConfig({
 			workbox: {
 				clientsClaim: true,
 				globPatterns: ['client/**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
+				// Pages are fetched from the network first (always fresh when online).
+				// The cache is only used as an offline fallback or when the network is slow (>5s).
 				runtimeCaching: [
 					{
 						urlPattern: ({request}) => request.mode === 'navigate',
 						handler: 'NetworkFirst',
-						options: {cacheName: 'pages', networkTimeoutSeconds: 5, expiration: {maxEntries: 50, maxAgeSeconds: 60 * 5}}
+						options: {cacheName: 'pages', networkTimeoutSeconds: 5, expiration: {maxEntries: 50, maxAgeSeconds: 60 * 60 * 24}}
 					}
 				]
 			}
