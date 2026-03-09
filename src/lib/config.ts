@@ -1,3 +1,5 @@
+export const EMBED_HOSTS = ['player.radio4000.com', 'r5.i4k.workers.dev']
+
 export const appName = import.meta.env.PUBLIC_APP_NAME ?? 'Radio4000'
 export const appShortName = import.meta.env.PUBLIC_APP_SHORT_NAME ?? 'R4'
 export const appUrl =

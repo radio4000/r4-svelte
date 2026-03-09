@@ -1,7 +1,6 @@
 import {env} from '$env/dynamic/public'
 import type {Handle} from '@sveltejs/kit'
-
-const EMBED_HOSTS = ['player.radio4000.com', 'r5.i4k.workers.dev']
+import {EMBED_HOSTS} from '$lib/config'
 
 export const handle: Handle = async ({event, resolve}) => {
 	const isEmbedMode = !!(env.PUBLIC_EMBED_MODE || EMBED_HOSTS.includes(event.url.hostname))
