@@ -4,6 +4,7 @@ import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {visualizer} from 'rollup-plugin-visualizer'
+import {SvelteKitPWA} from '@vite-pwa/sveltekit'
 import pkg from './package.json'
 
 // Get git info at build time
@@ -26,6 +27,13 @@ export default defineConfig({
 		paraglideVitePlugin({
 			project: './i18n/project.inlang',
 			outdir: './src/lib/paraglide'
+		}),
+		SvelteKitPWA({
+			manifest: false,
+			registerType: 'autoUpdate',
+			workbox: {
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp,webmanifest}']
+			}
 		}),
 		devtoolsJson(),
 		...(process.env.ANALYZE
