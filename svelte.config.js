@@ -3,7 +3,7 @@ import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
 import adapterCloudflare from '@sveltejs/adapter-cloudflare'
 import adapterStatic from '@sveltejs/adapter-static'
 
-const standalone = process.env.VITE_SVELTE_CONFIG === 'standalone'
+const standalone = process.env.PUBLIC_APP_MODE === 'standalone'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
