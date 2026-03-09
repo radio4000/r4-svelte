@@ -208,8 +208,8 @@ async function _importTxtUrl(url: string): Promise<ImportResult> {
  * set in .env — gitignored, survives git pull). Falls back to /r4-seed.json
  * if the env var is not set. Type is inferred from each URL's extension.
  */
-export async function loadSeeds(seedUrls: string): Promise<void> {
-	const urls = seedUrls
+export async function loadSeeds(seedUrls: string | undefined): Promise<void> {
+	const urls = (seedUrls ?? '')
 		.split(',')
 		.map((u) => u.trim())
 		.filter(Boolean)

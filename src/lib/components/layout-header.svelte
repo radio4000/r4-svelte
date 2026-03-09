@@ -1,7 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {PUBLIC_APP_MODE} from '$env/static/public'
+	import {env} from '$env/dynamic/public'
+	const PUBLIC_APP_MODE = env.PUBLIC_APP_MODE
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'

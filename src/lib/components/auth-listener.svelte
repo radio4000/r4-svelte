@@ -1,7 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {goto} from '$app/navigation'
-	import {PUBLIC_APP_MODE} from '$env/static/public'
+	import {env} from '$env/dynamic/public'
+	const PUBLIC_APP_MODE = env.PUBLIC_APP_MODE
 	import {checkUser} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {loadUserFollows} from '$lib/collections/follows'
