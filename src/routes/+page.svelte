@@ -1,6 +1,6 @@
 <script>
-	import {onMount} from 'svelte'
 	import {page} from '$app/state'
+	import {afterNavigate} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import Channels from '$lib/components/channels.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -9,13 +9,15 @@
 
 	const validDisplays = /** @type {const} */ (['grid', 'list', 'map', 'infinite', 'tuner'])
 	const validFilters = /** @type {const} */ (['all', 'broadcasting', 'imported', '10+', '100+', '1000+', 'artwork'])
-	onMount(() => {
+
+	afterNavigate(({from}) => {
 		if (display && validDisplays.includes(/** @type {any} */ (display)) && display !== appState.channels_display) {
 			appState.channels_display = /** @type {typeof validDisplays[number]} */ (display)
 		}
-		const filter = page?.url?.searchParams?.get('filter')
-		if (filter && validFilters.includes(/** @type {any} */ (filter))) {
-			appState.channels_filter = /** @type {typeof validFilters[number]} */ (filter)
+		const toFilter = page?.url?.searchParams?.get('filter')
+		const fromFilter = from?.url?.searchParams?.get('filter')
+		if (toFilter && validFilters.includes(/** @type {any} */ (toFilter)) && toFilter !== fromFilter) {
+			appState.channels_filter = /** @type {typeof validFilters[number]} */ (toFilter)
 		}
 	})
 </script>
