@@ -19,7 +19,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	margin-block: 1rem;
+	margin-block-start: 0.5rem;
 }
 
 /* Vertically center content, a bit, for pages with less content */
@@ -33,6 +33,7 @@
 	/* approach 2*/
 	align-content: baseline;
 	margin-inline: auto;
+	gap: 1rem;
 }
 
 /* Vertically centered splash pages (welcome, create-channel) */
