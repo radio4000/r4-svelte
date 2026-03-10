@@ -342,7 +342,7 @@
 	"import_dropzone_browse": "browse",
 	"import_error_invalid_json": "Not valid JSON.",
 	"import_folder_choose": "choose one",
-	"import_folder_description": "Pick a folder from r4 download, or a parent folder containing multiple channel folders.",
+	"import_folder_description": "Import a folder — r4 download folders (with or without download.json), or any folder of audio files.",
 	"import_folder_dropzone": "Drop a folder here, or",
 	"import_folder_label": "From channel folder",
 	"import_folder_no_channels": "No importable channels found in that folder.",
