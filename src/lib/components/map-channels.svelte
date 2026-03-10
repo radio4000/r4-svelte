@@ -70,15 +70,25 @@
 		return channelsCollection.state.get(channel.id) || channel
 	}
 
-	function resolveCssColor(variableName, fallback = '#888') {
+	const _colorCanvas = document.createElement('canvas')
+	_colorCanvas.width = _colorCanvas.height = 1
+	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (_colorCanvas.getContext('2d'))
+
+	function resolveCssColor(variableName, fallback = '#888888') {
 		const div = document.createElement('div')
 		div.style.color = `var(${variableName})`
 		div.style.visibility = 'hidden'
 		div.style.position = 'absolute'
 		document.body.append(div)
-		const color = getComputedStyle(div).color
+		const raw = getComputedStyle(div).color
 		div.remove()
-		return color || fallback
+		// Normalize to rgb() — getComputedStyle may return oklch() in modern browsers,
+		// which MapLibre's color parser doesn't support. Canvas always gives sRGB bytes.
+		_colorCtx.clearRect(0, 0, 1, 1)
+		_colorCtx.fillStyle = raw || fallback
+		_colorCtx.fillRect(0, 0, 1, 1)
+		const [r, g, b] = _colorCtx.getImageData(0, 0, 1, 1).data
+		return `rgb(${r}, ${g}, ${b})`
 	}
 
 	const palette = $derived.by(() => ({
