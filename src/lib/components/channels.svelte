@@ -6,6 +6,7 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
+	import {cacheReady} from '$lib/query-cache-persistence'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
@@ -134,11 +135,13 @@
 
 	// Restore imported channels from query cache into the collection when filter is active.
 	// After a full reload the collection is empty but IDB-persisted query cache still has the data.
+	// cacheReady ensures the IDB→memory restore has completed before we scan the cache.
 	$effect(() => {
 		if (filter !== 'imported') return
 		const ids = appState.local_channel_ids ?? []
 		if (!ids.length) return
 		void (async () => {
+			await cacheReady
 			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
 			const missingIds = ids.filter((id) => !channelsCollection.get(id))
 			if (!missingIds.length) return
