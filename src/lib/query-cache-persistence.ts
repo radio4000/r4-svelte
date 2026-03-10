@@ -127,8 +127,8 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 const persistOptions = {
 	queryClient,
 	persister: idbPersister,
-	maxAge: 60 * 60 * 1000,
-	buster: '7',
+	maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days — matches gcTime, keeps user import data alive
+	buster: '8',
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 
