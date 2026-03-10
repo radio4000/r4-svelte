@@ -7,7 +7,7 @@ import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
-import {appMode} from '$lib/config'
+import {capabilities} from '$lib/modes'
 
 const log = logger.ns('channels').seal()
 import type {Channel} from '$lib/types'
@@ -44,7 +44,7 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 export async function loadMoreChannels(
 	params: ChannelQueryParams & {offset: number; limit: number}
 ): Promise<Channel[]> {
-	if (appMode === 'standalone') return []
+	if (!capabilities.globalBrowse) return []
 	log.info('channels loadMore', {offset: params.offset, limit: params.limit})
 	const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
 	if (error) throw error
@@ -102,7 +102,7 @@ export const channelsCollection = createCollection<Channel, string>({
 			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
 			const all = [...channelsCollection.state.values()]
 
-			if (appMode === 'standalone') {
+			if (!capabilities.globalBrowse) {
 				const localIds = new Set(appState.local_channel_ids ?? [])
 				if (p.slug) return all.filter((c) => c.slug === p.slug)
 				return all.filter((c) => localIds.has(c.id))
@@ -124,6 +124,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		}
 	}),
 	onInsert: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onInsert', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const metadata = (m.metadata || {}) as Record<string, unknown>
@@ -132,6 +133,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		log.info('channels onInsert done')
 	},
 	onUpdate: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onUpdate', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const serverChannel = await handleChannelUpdate(m.modified.id, m.changes as Record<string, unknown>)
@@ -143,6 +145,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		log.info('channels onUpdate done')
 	},
 	onDelete: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onDelete', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			await handleChannelDelete(m.original.id)

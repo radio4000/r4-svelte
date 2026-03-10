@@ -1,7 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {goto} from '$app/navigation'
-	import {appMode} from '$lib/config'
+	import {capabilities} from '$lib/modes'
 	import {checkUser} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {loadUserFollows} from '$lib/collections/follows'
@@ -9,7 +9,7 @@
 	let unsubscribe = null
 
 	$effect(() => {
-		if (appMode === 'standalone') return
+		if (!capabilities.auth) return
 		if (typeof window === 'undefined') return
 		const hash = window.location.hash.substring(1)
 		if (!hash) return
@@ -28,7 +28,7 @@
 	})
 
 	$effect(() => {
-		if (appMode === 'standalone') return
+		if (!capabilities.auth) return
 		if (unsubscribe) return
 		const {data} = sdk.supabase.auth.onAuthStateChange(handleAuthChange)
 		unsubscribe = data.subscription?.unsubscribe

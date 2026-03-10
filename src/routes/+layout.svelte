@@ -14,7 +14,8 @@
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
-	import {beforeNavigate, afterNavigate} from '$app/navigation'
+	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
+	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '$lib/modes'
 	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
@@ -80,6 +81,9 @@
 	})
 
 	onMount(async () => {
+		if (DISABLED_ROUTES.some((p) => window.location.pathname.startsWith(p))) {
+			goto(DISABLED_ROUTE_FALLBACK, {replaceState: true})
+		}
 		const {registerSW} = await import('virtual:pwa-register')
 		registerSW({immediate: true})
 		trackAppPresence()
@@ -105,10 +109,15 @@
 
 	const scrollPositions = new SvelteMap()
 
-	beforeNavigate(({from}) => {
-		if (!from?.url) return
-		const key = from.url.pathname + from.url.search
-		scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
+	beforeNavigate(({from, to, cancel}) => {
+		if (from?.url) {
+			const key = from.url.pathname + from.url.search
+			scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
+		}
+		if (to?.url && DISABLED_ROUTES.some((p) => to.url.pathname.startsWith(p))) {
+			cancel()
+			goto(DISABLED_ROUTE_FALLBACK)
+		}
 	})
 
 	afterNavigate(({type, to}) => {

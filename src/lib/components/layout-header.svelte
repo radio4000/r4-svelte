@@ -17,6 +17,7 @@
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appName} from '$lib/config'
+	import {capabilities} from '$lib/modes'
 
 	const {preloading} = $props()
 
@@ -46,7 +47,7 @@
 		return userChannelAutoDecks[0]?.id
 	})
 
-	const broadcasts = useLiveQuery(broadcastsCollection)
+	const broadcasts = capabilities.broadcasts ? useLiveQuery(broadcastsCollection) : {data: []}
 	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
 </script>
 
@@ -64,18 +65,20 @@
 		>
 			<Icon icon="search" />
 		</a>
-		<a
-			href={resolve('/broadcasts')}
-			class="btn"
-			class:active={page.route.id === '/broadcasts'}
-			aria-label={m.nav_broadcasts()}
-			{@attach tooltip({content: m.nav_broadcasts()})}
-		>
-			<Icon icon="cell-signal" />
-			{#if broadcastCount > 0}
-				<span class="count">{broadcastCount}</span>
-			{/if}
-		</a>
+		{#if capabilities.broadcasts}
+			<a
+				href={resolve('/broadcasts')}
+				class="btn"
+				class:active={page.route.id === '/broadcasts'}
+				aria-label={m.nav_broadcasts()}
+				{@attach tooltip({content: m.nav_broadcasts()})}
+			>
+				<Icon icon="cell-signal" />
+				{#if broadcastCount > 0}
+					<span class="count">{broadcastCount}</span>
+				{/if}
+			</a>
+		{/if}
 
 		{#await preloading then}
 			{#if !userChannel}

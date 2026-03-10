@@ -1,7 +1,7 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
 import {sdk} from '@radio4000/sdk'
-import {appMode} from '$lib/config'
+import {capabilities} from '$lib/modes'
 import {parseUrl} from 'media-now'
 import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
@@ -44,7 +44,7 @@ export const tracksCollection = createCollection<Track, string>({
 
 			log.info('queryFn', {slugs, tagsIn, ftsEq, createdAfter})
 
-			if (appMode === 'standalone') {
+			if (!capabilities.globalBrowse) {
 				const all = [...tracksCollection.state.values()]
 				if (slugs.length) {
 					const set = new Set(slugs)
@@ -113,6 +113,7 @@ export const tracksCollection = createCollection<Track, string>({
 		}
 	}),
 	onInsert: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('onInsert', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const metadata = (m.metadata || {}) as Record<string, unknown>
@@ -134,6 +135,7 @@ export const tracksCollection = createCollection<Track, string>({
 		log.info('onInsert done')
 	},
 	onUpdate: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('onUpdate', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const serverTrack = await handleTrackUpdate(m.modified.id, m.changes as Record<string, unknown>)
@@ -151,6 +153,7 @@ export const tracksCollection = createCollection<Track, string>({
 		log.info('onUpdate done')
 	},
 	onDelete: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('onDelete', {count: transaction.mutations.length})
 		let slug: string | undefined
 		for (const m of transaction.mutations) {
