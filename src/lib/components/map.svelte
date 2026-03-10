@@ -104,7 +104,12 @@
 
 			themeObserver = new MutationObserver(() => {
 				if (disposed || !map) return
-				map.setStyle(buildStyle(isDarkTheme()))
+				const nextStyle = buildStyle(isDarkTheme())
+				map.setStyle(nextStyle)
+				// setStyle wipes all user-added sources/layers; re-notify once the new style is loaded
+				map.once('styledata', () => {
+					if (!disposed) onready?.(map)
+				})
 			})
 			themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
 		}

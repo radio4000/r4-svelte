@@ -14,8 +14,8 @@
 
 	function handleReady(readyMap) {
 		map = readyMap
-		if (latitude && longitude) {
-				readyMap.addSource('existing-location', {
+		if (latitude && longitude && !readyMap.getSource('existing-location')) {
+			readyMap.addSource('existing-location', {
 				type: 'geojson',
 				data: {
 					type: 'Feature',
