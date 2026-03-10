@@ -21,15 +21,15 @@ Fork the repo, then go to Settings → Pages → Source: **GitHub Actions**.
 
 Add these Actions variables (Settings → Secrets and variables → Variables):
 
-| Variable | Required | Example |
-|---|---|---|
-| `PUBLIC_APP_MODE` | yes | `standalone` |
-| `PUBLIC_SEED_URLS` | yes | `https://cdn.example.com/backup.json` |
-| `PUBLIC_APP_NAME` | no | `My Radio` |
-| `PUBLIC_APP_SHORT_NAME` | no | `MR` |
-| `PUBLIC_APP_URL` | no | `https://yourname.github.io/r4-sync-tests` |
-| `PUBLIC_APP_DESCRIPTION` | no | `My personal radio` |
-| `BASE_PATH` | no | auto-detected from repo name |
+| Variable                 | Required | Example                                    |
+| ------------------------ | -------- | ------------------------------------------ |
+| `PUBLIC_APP_MODE`        | yes      | `standalone`                               |
+| `PUBLIC_SEED_URLS`       | yes      | `https://cdn.example.com/backup.json`      |
+| `PUBLIC_APP_NAME`        | no       | `My Radio`                                 |
+| `PUBLIC_APP_SHORT_NAME`  | no       | `MR`                                       |
+| `PUBLIC_APP_URL`         | no       | `https://yourname.github.io/r4-sync-tests` |
+| `PUBLIC_APP_DESCRIPTION` | no       | `My personal radio`                        |
+| `BASE_PATH`              | no       | auto-detected from repo name               |
 
 `BASE_PATH` defaults to `/<repo-name>` automatically. Set it to empty string if deploying to a root domain.
 
@@ -84,15 +84,16 @@ Remote URLs require the server to send `Access-Control-Allow-Origin: *`.
 
 Supported formats:
 
-| Extension | Source | What's loaded |
-|---|---|---|
-| `.json` | `r4 backup` | channel + all tracks |
-| `.txt` | `r4 download` | channel metadata + auto-discovers sibling `tracks.m3u` |
-| `.m3u` / `.m3u8` | any M3U playlist | tracks (channel name taken from filename) |
+| Extension        | Source           | What's loaded                                          |
+| ---------------- | ---------------- | ------------------------------------------------------ |
+| `.json`          | `r4 backup`      | channel + all tracks                                   |
+| `.txt`           | `r4 download`    | channel metadata + auto-discovers sibling `tracks.m3u` |
+| `.m3u` / `.m3u8` | any M3U playlist | tracks (channel name taken from filename)              |
 
 Imports are deduped — each channel is only parsed once. After first load the app works fully offline.
 
 **What's absent in standalone** (no server):
+
 - RSS feeds (`/[slug].rss`)
 - `api/track-meta` endpoint
 - Server-side embed redirect (handled client-side instead)
@@ -114,11 +115,13 @@ At build time, Workbox precaches the full app shell (JS, CSS, HTML, fonts, image
 Config lives in `vite.config.ts` → `SvelteKitPWA(...)`. The web app manifest is `static/webmanifest.json` (linked in `src/app.html`); `manifest: false` tells the plugin not to generate its own.
 
 What works offline:
+
 - Full app shell (all routes render)
 - Previously synced channels and tracks (IDB)
 - Importing local backup files
 
 What requires network:
+
 - Sign in / account actions
 - Fetching new remote data
 - Media playback (YouTube/SoundCloud streams)

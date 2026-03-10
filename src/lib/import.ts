@@ -190,7 +190,7 @@ async function _importM3uUrl(url: string): Promise<ImportResult> {
 	if (!rawTracks.length) throw new Error('No playable tracks found.')
 	const channelId = uuid()
 	const channel = {id: channelId, slug, name, description: ''} as Channel
-	const tracks = rawTracks.map((t) => ({id: uuid(), slug, title: t.title, url: t.url} as Track))
+	const tracks = rawTracks.map((t) => ({id: uuid(), slug, title: t.title, url: t.url}) as Track)
 	await writeImport(channel, tracks)
 	return {channel, imported: tracks.length}
 }
@@ -212,7 +212,7 @@ async function _importTxtUrl(url: string): Promise<ImportResult> {
 	const channel = {id: channelId, slug: importSlug, name, description} as Channel
 	if (m3uRes?.ok) {
 		const rawTracks = parseM3u(await m3uRes.text())
-		const tracks = rawTracks.map((t) => ({id: uuid(), slug: importSlug, title: t.title, url: t.url} as Track))
+		const tracks = rawTracks.map((t) => ({id: uuid(), slug: importSlug, title: t.title, url: t.url}) as Track)
 		await writeImport(channel, tracks)
 		return {channel, imported: tracks.length}
 	}

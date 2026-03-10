@@ -119,6 +119,7 @@ Three factory functions, each wrapping `createCollection()` with different behav
 Don't confuse `query.data` (reactive result from `useLiveQuery`) with `collection.state` (raw Map, not reactive). `collection.state` and `.toArray` return a **new plain object every call**. Wrapping them in `$derived` does NOT make them reactive — Svelte can't track when the collection's internal data changes. `$derived([...collection.state.values()].filter(...))` only re-runs when other Svelte signals in the expression change (e.g. a route param), not when rows are inserted/updated/deleted. For reactive reads, use `useLiveQuery` and derive from `query.data`.
 
 **Svelte 5 reactivity rules for useLiveQuery:**
+
 - Don't destructure the return value — `const {data} = useLiveQuery(...)` breaks reactivity. Use `query.data` via dot notation, or wrap with `const {data} = $derived(query)`.
 - Dependency arrays must use getter functions: `[() => channelId]`, not `[channelId]`. Passing values directly captures them at creation time — changes won't trigger re-execution.
 
@@ -143,6 +144,7 @@ export async function load() {
 Subsequent calls to `preload()` on an already-ready collection return immediately.
 
 **`queryFn` gotchas:**
+
 - `queryFn` result is treated as **complete server state**. Returning `[]` means "server has no items" and deletes all existing collection data. For filtered fetches, use `on-demand` mode + live query `.where()`, not a filtered `queryFn`.
 - For incremental fetches (e.g. pagination), merge with existing data in `queryFn` — otherwise new results replace everything.
 
@@ -186,7 +188,7 @@ const topChannels = useLiveQuery((q) =>
 		.groupBy(({t}) => t.channel_id)
 		.select(({t}) => ({
 			channel_id: t.channel_id,
-			trackCount: count(t.id),
+			trackCount: count(t.id)
 		}))
 		.having(({$selected}) => gt($selected.trackCount, 10))
 		.orderBy(({$selected}) => $selected.trackCount, 'desc')
@@ -194,6 +196,7 @@ const topChannels = useLiveQuery((q) =>
 ```
 
 IVM constraints (these throw errors, not silent failures):
+
 - `.limit()` or `.offset()` require `.orderBy()` — non-deterministic pagination can't be incrementally maintained
 - `.distinct()` requires `.select()` — deduplication needs an explicit projection
 - `.having()` requires `.groupBy()` — no groups means nothing to filter
@@ -319,9 +322,17 @@ collection.insert(item, {metadata: {source: 'import'}})
 collection.insert(item, {optimistic: false}) // skip optimistic, wait for server
 
 // update — Immer-style draft proxy, mutate the draft, do NOT reassign it
-collection.update(id, (draft) => { draft.completed = true })
-collection.update([id1, id2], (drafts) => { drafts.forEach(d => { d.done = true }) })
-collection.update(id, {metadata: {reason: 'edit'}}, (draft) => { draft.text = 'new' })
+collection.update(id, (draft) => {
+	draft.completed = true
+})
+collection.update([id1, id2], (drafts) => {
+	drafts.forEach((d) => {
+		d.done = true
+	})
+})
+collection.update(id, {metadata: {reason: 'edit'}}, (draft) => {
+	draft.text = 'new'
+})
 
 // delete
 collection.delete(id)
@@ -415,12 +426,14 @@ import {createOptimisticAction} from '@tanstack/svelte-db'
 
 const likeTrack = createOptimisticAction<string>({
 	onMutate: (trackId) => {
-		tracksCollection.update(trackId, (draft) => { draft.likes += 1 })
+		tracksCollection.update(trackId, (draft) => {
+			draft.likes += 1
+		})
 	},
 	mutationFn: async (trackId) => {
 		await sdk.tracks.like(trackId)
 		await tracksCollection.utils.refetch()
-	},
+	}
 })
 
 const tx = likeTrack(trackId)
@@ -434,14 +447,16 @@ import {createPacedMutations, debounceStrategy} from '@tanstack/svelte-db'
 
 const autoSaveDescription = createPacedMutations<string>({
 	onMutate: (text) => {
-		channelCollection.update(channelId, (draft) => { draft.description = text })
+		channelCollection.update(channelId, (draft) => {
+			draft.description = text
+		})
 	},
 	mutationFn: async ({transaction}) => {
 		const m = transaction.mutations[0]
 		await sdk.channels.update(m.key, m.changes)
 		await channelCollection.utils.refetch()
 	},
-	strategy: debounceStrategy({wait: 500}),
+	strategy: debounceStrategy({wait: 500})
 })
 // Each call resets the debounce timer; mutations merge into one transaction
 ```
@@ -457,12 +472,16 @@ const tx = createTransaction({
 	autoCommit: false,
 	mutationFn: async ({transaction}) => {
 		await api.batchUpdate(transaction.mutations)
-	},
+	}
 })
 
 tx.mutate(() => {
-	tracksCollection.update(id1, (d) => { d.status = 'reviewed' })
-	tracksCollection.update(id2, (d) => { d.status = 'reviewed' })
+	tracksCollection.update(id1, (d) => {
+		d.status = 'reviewed'
+	})
+	tracksCollection.update(id2, (d) => {
+		d.status = 'reviewed'
+	})
 })
 
 await tx.commit() // or tx.rollback()
@@ -494,17 +513,17 @@ Within a transaction: insert+update → insert (merged), insert+delete → remov
 
 ## Terminology
 
-| Term                               | Source   | What it is                                                           |
-| ---------------------------------- | -------- | -------------------------------------------------------------------- |
-| **Collection**                     | TanStack | Reactive data store (`tracksCollection`)                             |
-| **Mutation**                       | TanStack | Single change: `insert`, `update`, or `delete`                       |
-| **Transaction**                    | TanStack | Batch of mutations that commit together                              |
-| **Live Query**                     | TanStack | `useLiveQuery()` - reactive query that updates UI                    |
-| **Handler**                        | TanStack | `onInsert`/`onUpdate`/`onDelete` — persists mutation, auto-refetches              |
+| Term                               | Source   | What it is                                                                                                                                                  |
+| ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Collection**                     | TanStack | Reactive data store (`tracksCollection`)                                                                                                                    |
+| **Mutation**                       | TanStack | Single change: `insert`, `update`, or `delete`                                                                                                              |
+| **Transaction**                    | TanStack | Batch of mutations that commit together                                                                                                                     |
+| **Live Query**                     | TanStack | `useLiveQuery()` - reactive query that updates UI                                                                                                           |
+| **Handler**                        | TanStack | `onInsert`/`onUpdate`/`onDelete` — persists mutation, auto-refetches                                                                                        |
 | **Derived collection**             | TanStack | `createLiveQueryCollection()` — a standalone live query at module scope, itself a collection. Use as source for other queries to cache intermediate results |
-| **Optimistic action**              | TanStack | `createOptimisticAction()` — intent-based mutation with sync `onMutate` + async `mutationFn` |
-| **Paced mutations**                | TanStack | `createPacedMutations()` — auto-save with debounce/throttle/queue strategy       |
-| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that call `collection.insert/update/delete`                  |
+| **Optimistic action**              | TanStack | `createOptimisticAction()` — intent-based mutation with sync `onMutate` + async `mutationFn`                                                                |
+| **Paced mutations**                | TanStack | `createPacedMutations()` — auto-save with debounce/throttle/queue strategy                                                                                  |
+| `addTrack/updateTrack/deleteTrack` | **Ours** | Standalone functions that call `collection.insert/update/delete`                                                                                            |
 
 ## Packages
 

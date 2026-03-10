@@ -41,18 +41,18 @@
 		<ul>
 			{#if supportsCodeSearch}
 				<li>
-					<a href="{analyticsImportSearchUrl}" target="_blank" rel="noreferrer">
+					<a href={analyticsImportSearchUrl} target="_blank" rel="noreferrer">
 						{m.settings_analytics_code_refs_imports()}
 					</a>
 				</li>
 				<li>
-					<a href="{analyticsCaptureSearchUrl}" target="_blank" rel="noreferrer">
+					<a href={analyticsCaptureSearchUrl} target="_blank" rel="noreferrer">
 						{m.settings_analytics_code_refs_events()}
 					</a>
 				</li>
 			{:else}
 				<li>
-					<a href="{repoUrl}" target="_blank" rel="noreferrer">{m.settings_analytics_code_refs_repo()}</a>
+					<a href={repoUrl} target="_blank" rel="noreferrer">{m.settings_analytics_code_refs_repo()}</a>
 				</li>
 			{/if}
 		</ul>
