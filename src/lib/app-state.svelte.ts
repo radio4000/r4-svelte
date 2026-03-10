@@ -45,6 +45,7 @@ export const defaultAppState: AppState = {
 
 	channels: [],
 	local_channel_ids: [],
+	local_channel_origins: {},
 	channel: undefined,
 	custom_css_variables: {},
 	shortcuts: undefined,
