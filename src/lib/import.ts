@@ -134,6 +134,17 @@ function urlId(url: string): string {
 	return h.toString(16).padStart(8, '0')
 }
 
+/** YYYYMMDD from an ISO date string, or empty string if missing/invalid. */
+function dateSuffix(isoDate: string | null | undefined): string {
+	if (!isoDate) return ''
+	return new Date(isoDate).toISOString().slice(0, 10).replace(/-/g, '')
+}
+
+/** Ensure channelsCollection is loaded from IDB before reading state. */
+async function ensureChannelsReady(): Promise<void> {
+	if (!channelsCollection.isReady()) await channelsCollection.preload()
+}
+
 /**
  * Import a channel from a URL. Type is inferred from the extension:
  * - `.json` → JSON backup
@@ -152,10 +163,16 @@ async function _importJsonUrl(url: string): Promise<ImportResult> {
 	if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`)
 	const data: unknown = await res.json()
 	validateBackup(data)
-	const slug = importedSlug(data.channel.slug, data.channel.id)
+	// Dedup key is the URL — same URL always maps to the same local channel,
+	// so page refreshes don't re-import. Different files (backup vs download.json)
+	// of the same channel get distinct slugs because their URLs differ.
+	const date = dateSuffix(data.channel.updated_at ?? data.channel.created_at)
+	const suffix = date ? `${date}-${urlId(url).slice(0, 4)}` : urlId(url)
+	const slug = importedSlug(data.channel.slug, suffix)
+	await ensureChannelsReady()
 	const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
-	const {channel, tracks} = buildFromBackup(data)
+	const {channel, tracks} = buildFromBackup(data, slug)
 	await writeImport(channel, tracks)
 	return {channel, imported: tracks.length}
 }
@@ -164,6 +181,7 @@ async function _importM3uUrl(url: string): Promise<ImportResult> {
 	const id = urlId(url)
 	const name = url.split('/').pop()?.replace(M3U_EXT_RE, '') ?? 'playlist'
 	const slug = importedSlug(slugify(name) || 'playlist', id)
+	await ensureChannelsReady()
 	const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
 	const res = await fetch(url)
@@ -181,8 +199,9 @@ async function _importTxtUrl(url: string): Promise<ImportResult> {
 	const res = await fetch(url)
 	if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`)
 	const fallback = url.split('/').pop()?.replace('.txt', '') ?? 'channel'
-	const {name, slug, description, id} = parseTxtFile(await res.text(), fallback)
-	const importSlug = importedSlug(slug, id)
+	const {name, slug, description} = parseTxtFile(await res.text(), fallback)
+	const importSlug = importedSlug(slug, urlId(url))
+	await ensureChannelsReady()
 	const existing = [...channelsCollection.state.values()].find((c) => c.slug === importSlug)
 	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
 	// Look for sibling tracks.m3u in the same directory
@@ -228,16 +247,17 @@ export async function loadSeeds(seedUrls: string | undefined): Promise<void> {
 	}
 }
 
-/** Import a JSON backup file. Returns early if already imported. */
+/** Import a JSON backup file. Always creates a new local channel — no dedup.
+ * The slug suffix uses the backup's updated_at date (human-readable) plus a
+ * short random id so the same channel can be imported multiple times as
+ * distinct entries (e.g. remote backup vs local download.json). */
 export async function importBackupFile(file: File): Promise<ImportResult> {
 	const data: unknown = JSON.parse(await file.text())
 	validateBackup(data)
-
-	const slug = importedSlug(data.channel.slug, data.channel.id)
-	const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
-	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
-
-	const {channel, tracks} = buildFromBackup(data)
+	const date = dateSuffix(data.channel.updated_at ?? data.channel.created_at)
+	const suffix = date ? `${date}-${uuid().slice(0, 4)}` : uuid().slice(0, 8)
+	const slug = importedSlug(data.channel.slug, suffix)
+	const {channel, tracks} = buildFromBackup(data, slug)
 	await writeImport(channel, tracks)
 	return {channel, imported: tracks.length}
 }
@@ -259,9 +279,9 @@ export async function importM3uFile(file: File): Promise<ImportResult> {
 	return {channel, imported: tracks.length}
 }
 
-/** Build a Channel + Track[] from a validated BackupData object. */
-export function buildFromBackup(data: BackupData): {channel: Channel; tracks: Track[]} {
-	const slug = importedSlug(data.channel.slug, data.channel.id)
+/** Build a Channel + Track[] from a validated BackupData object.
+ * Pass a pre-computed slug to control the import identity (e.g. URL-keyed for seeds). */
+export function buildFromBackup(data: BackupData, slug: string): {channel: Channel; tracks: Track[]} {
 	const channelId = uuid()
 	const channel: Channel = {...data.channel, id: channelId, slug}
 	const tracks: Track[] = data.tracks.map((t) => ({...t, id: uuid(), slug}))
