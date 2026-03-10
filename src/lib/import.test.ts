@@ -112,12 +112,13 @@ describe('buildFromBackup', () => {
 		} as BackupData
 	}
 
-	test('generates new slug with -import- and first 8 chars of original id', () => {
-		expect(buildFromBackup(backup()).channel.slug).toBe('ko002-import-e0701ff6')
+	test('uses the provided slug for channel and tracks', () => {
+		const {channel} = buildFromBackup(backup(), 'ko002-import-20240522-ab12')
+		expect(channel.slug).toBe('ko002-import-20240522-ab12')
 	})
 
 	test('replaces channel id with a new uuid', () => {
-		const {channel} = buildFromBackup(backup({id: 'original-id'}))
+		const {channel} = buildFromBackup(backup({id: 'original-id'}), 'ko002-import-abc')
 		expect(channel.id).not.toBe('original-id')
 		expect(channel.id).toBeTruthy()
 	})
@@ -127,7 +128,8 @@ describe('buildFromBackup', () => {
 			backup({}, [
 				{id: 'old-track-id', slug: 'ko002', url: 'https://y.com/a', title: 'A'},
 				{id: 'old-track-id-2', slug: 'ko002', url: 'https://y.com/b', title: 'B'}
-			])
+			]),
+			'ko002-import-abc'
 		)
 		expect(tracks).toHaveLength(2)
 		expect(tracks[0].id).not.toBe('old-track-id')
@@ -137,7 +139,8 @@ describe('buildFromBackup', () => {
 
 	test('preserves extra track fields like description', () => {
 		const {tracks} = buildFromBackup(
-			backup({}, [{id: 't1', slug: 'ko002', url: 'https://y.com/v', title: 'T', description: 'keep me'}])
+			backup({}, [{id: 't1', slug: 'ko002', url: 'https://y.com/v', title: 'T', description: 'keep me'}]),
+			'ko002-import-abc'
 		)
 		expect(tracks[0].description).toBe('keep me')
 	})

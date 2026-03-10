@@ -2,12 +2,21 @@
 	import {goto} from '$app/navigation'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
-	import {uuid} from '$lib/utils'
-	import {parseTxtFile, parseM3u, parseTrackTxt, importedSlug, importBackupFile, writeImport} from '$lib/import'
+	import {SvelteMap} from 'svelte/reactivity'
+	import {uuid, slugify} from '$lib/utils'
+	import {
+		parseTxtFile,
+		parseM3u,
+		parseTrackTxt,
+		importedSlug,
+		importBackupFile,
+		writeImport,
+		validateBackup
+	} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import type {Channel, Track} from '$lib/types'
+	import type {Channel, Track, ImportOrigin} from '$lib/types'
 
 	// File System Access API not in TypeScript's default lib
 	type DirHandle = FileSystemDirectoryHandle & {entries(): AsyncIterable<[string, FileSystemHandle]>}
@@ -15,7 +24,7 @@
 	interface FolderImportResult {
 		channel: Channel
 		imported: number
-		source: 'r4download' | 'backup'
+		source: 'r4download' | 'backup' | 'audio'
 	}
 
 	const supported = typeof window !== 'undefined' && 'showDirectoryPicker' in window
@@ -24,22 +33,18 @@
 	let errors: string[] = $state([])
 	let done = $state(false)
 
-	const previouslyImported = $derived(
-		appState.local_channel_ids?.length
-			? appState.local_channel_ids.map((id) => channelsCollection.get(id)).filter((c) => c !== undefined)
-			: []
-	)
-
 	async function readFileText(fileHandle: FileSystemFileHandle): Promise<string> {
 		const file = await fileHandle.getFile()
 		return file.text()
 	}
 
 	const AUDIO_EXTENSIONS = new Set(['.m4a', '.mp3', '.ogg', '.flac', '.wav', '.opus'])
+	const LOCAL_TRACKS_RE = /^\.?\/tracks\//
 
 	async function importR4Download(
 		dirHandle: FileSystemDirectoryHandle,
-		dirName: string
+		dirName: string,
+		downloadJsonHandle: FileSystemFileHandle | null
 	): Promise<FolderImportResult | null> {
 		let channelTxtContent: string | null = null
 		let m3uContent: string | null = null
@@ -56,6 +61,41 @@
 			} else if (handle.kind === 'directory' && name === 'tracks') {
 				tracksDir = handle as FileSystemDirectoryHandle
 			}
+		}
+
+		if (downloadJsonHandle) {
+			const raw: unknown = JSON.parse(await readFileText(downloadJsonHandle))
+			validateBackup(raw)
+
+			const slug = importedSlug(raw.channel.slug, raw.channel.id)
+			if (!channelsCollection.isReady()) await channelsCollection.preload()
+			const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
+			if (existing) return {channel: existing, imported: 0, source: 'r4download'}
+
+			const channel: Channel = {...raw.channel, id: uuid(), slug}
+			const tracks: Track[] = []
+
+			const audioMap = new SvelteMap<string, FileSystemFileHandle>()
+			if (tracksDir) {
+				for await (const [name, handle] of (tracksDir as DirHandle).entries()) {
+					if (handle.kind === 'file') audioMap.set(name, handle as FileSystemFileHandle)
+				}
+			}
+
+			for (const t of raw.tracks) {
+				let url = t.url
+				const localPath = url.replace(LOCAL_TRACKS_RE, '')
+				if (!url.startsWith('http') && audioMap.has(localPath)) {
+					const file = await audioMap.get(localPath)!.getFile()
+					url = URL.createObjectURL(file)
+					tracks.push({...t, id: uuid(), slug, url, media_id: url, provider: 'file'} as Track)
+				} else {
+					tracks.push({...t, id: uuid(), slug, url} as Track)
+				}
+			}
+
+			await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
+			return {channel, imported: tracks.length, source: 'r4download'}
 		}
 
 		if (!tracksDir && !m3uContent) return null
@@ -79,8 +119,8 @@
 		const tracks: Track[] = []
 
 		if (tracksDir) {
-			const audioFiles = new Map<string, FileSystemFileHandle>()
-			const txtFiles = new Map<string, FileSystemFileHandle>()
+			const audioFiles = new SvelteMap<string, FileSystemFileHandle>()
+			const txtFiles = new SvelteMap<string, FileSystemFileHandle>()
 
 			for await (const [name, handle] of (tracksDir as DirHandle).entries()) {
 				if (handle.kind !== 'file') continue
@@ -128,7 +168,7 @@
 			}
 		}
 
-		await writeImport(channel, tracks)
+		await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
 		return {channel, imported: tracks.length, source: 'r4download'}
 	}
 
@@ -146,8 +186,29 @@
 		return out
 	}
 
+	async function importAudioFolder(
+		audioHandles: FileSystemFileHandle[],
+		dirName: string
+	): Promise<FolderImportResult | null> {
+		if (!audioHandles.length) return null
+		const id = uuid()
+		const slug = importedSlug(slugify(dirName) || 'folder', id)
+		const channel: Channel = {id: uuid(), slug, name: dirName, description: ''} as Channel
+		const tracks: Track[] = []
+		for (const handle of audioHandles) {
+			const file = await handle.getFile()
+			const objectUrl = URL.createObjectURL(file)
+			const title = handle.name.slice(0, handle.name.lastIndexOf('.')) || handle.name
+			tracks.push({id: uuid(), slug, title, url: objectUrl, media_id: objectUrl, provider: 'file'} as Track)
+		}
+		await writeImport(channel, tracks, {type: 'audio-folder', importedAt: new Date().toISOString()} as ImportOrigin)
+		return {channel, imported: tracks.length, source: 'audio'}
+	}
+
 	async function scanDir(dirHandle: FileSystemDirectoryHandle, dirName: string): Promise<FolderImportResult[]> {
 		const jsonHandles: FileSystemFileHandle[] = []
+		let downloadJsonHandle: FileSystemFileHandle | null = null
+		const rootAudioHandles: FileSystemFileHandle[] = []
 		let hasM3u = false
 		let hasTracksDir = false
 		const subdirs: {handle: FileSystemDirectoryHandle; name: string}[] = []
@@ -155,19 +216,28 @@
 		for await (const [name, handle] of (dirHandle as DirHandle).entries()) {
 			if (handle.kind === 'file') {
 				if (name === 'tracks.m3u') hasM3u = true
-				if (name.endsWith('.json')) jsonHandles.push(handle as FileSystemFileHandle)
+				else if (name === 'download.json') downloadJsonHandle = handle as FileSystemFileHandle
+				else if (name.endsWith('.json')) jsonHandles.push(handle as FileSystemFileHandle)
+				else {
+					const ext = name.slice(name.lastIndexOf('.')).toLowerCase()
+					if (AUDIO_EXTENSIONS.has(ext)) rootAudioHandles.push(handle as FileSystemFileHandle)
+				}
 			} else if (handle.kind === 'directory') {
 				if (name === 'tracks') hasTracksDir = true
 				subdirs.push({handle: handle as FileSystemDirectoryHandle, name})
 			}
 		}
 
-		if (hasM3u || hasTracksDir) {
-			const r = await importR4Download(dirHandle, dirName)
+		if (hasM3u || hasTracksDir || downloadJsonHandle) {
+			const r = await importR4Download(dirHandle, dirName, downloadJsonHandle)
 			return r ? [r] : []
 		}
 		if (jsonHandles.length) {
 			return importJsonBackups(jsonHandles)
+		}
+		if (rootAudioHandles.length) {
+			const r = await importAudioFolder(rootAudioHandles, dirName)
+			return r ? [r] : []
 		}
 		const subResults: FolderImportResult[] = []
 		for (const {handle, name} of subdirs) {
@@ -237,13 +307,6 @@
 	{:else}
 		<p>{m.import_folder_description()}</p>
 
-		{#if previouslyImported.length}
-			<p>
-				{m.import_previously_imported({count: previouslyImported.length})}
-				<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
-			</p>
-		{/if}
-
 		{#if !done}
 			<Dropzone as="button" onclick={pickFolder} disabled={scanning} ondrop={onDrop}>
 				{#if scanning}
@@ -256,7 +319,7 @@
 
 		{#if errors.length}
 			<ul role="alert">
-				{#each errors as err}
+				{#each errors as err (err)}
 					<li>{err}</li>
 				{/each}
 			</ul>
@@ -266,7 +329,7 @@
 			{#if results.length === 0}
 				<p>{m.import_folder_no_channels()}</p>
 			{:else}
-				{#each results as r}
+				{#each results as r (r.channel.id)}
 					<p>
 						{#if r.imported > 0}
 							<strong>{r.channel.name}</strong> — {m.import_result_tracks({count: r.imported})}

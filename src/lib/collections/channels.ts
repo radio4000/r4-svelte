@@ -7,6 +7,7 @@ import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
+import {capabilities} from '$lib/modes'
 
 const log = logger.ns('channels').seal()
 import type {Channel} from '$lib/types'
@@ -43,6 +44,7 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 export async function loadMoreChannels(
 	params: ChannelQueryParams & {offset: number; limit: number}
 ): Promise<Channel[]> {
+	if (!capabilities.globalBrowse) return []
 	log.info('channels loadMore', {offset: params.offset, limit: params.limit})
 	const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
 	if (error) throw error
@@ -98,14 +100,34 @@ export const channelsCollection = createCollection<Channel, string>({
 		staleTime: 60 * 60 * 1000,
 		queryFn: async (ctx) => {
 			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
+			const all = [...channelsCollection.state.values()]
+
+			if (!capabilities.globalBrowse) {
+				const localIds = new Set(appState.local_channel_ids ?? [])
+				if (p.slug) return all.filter((c) => c.slug === p.slug)
+				return all.filter((c) => localIds.has(c.id))
+			}
+
 			if (p.slug) {
 				log.info('channels queryFn (single)', {slug: p.slug})
 				const channel = await fetchChannelBySlug(p.slug)
 				if (channel) return [channel]
 				// No remote channel — preserve local imports so they aren't wiped
-				const local = [...channelsCollection.state.values()].find((c) => c?.slug === p.slug)
+				const local = all.find((c) => c?.slug === p.slug)
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []
+			}
+			// Local imported channels are not in Supabase — serve them from appState directly
+			if (p.idIn) {
+				const localIds = new Set(appState.local_channel_ids ?? [])
+				const localMatches = (appState.local_channels ?? []).filter(
+					(c) => p.idIn!.includes(c.id) && localIds.has(c.id)
+				)
+				const remoteIds = p.idIn.filter((id) => !localIds.has(id))
+				if (!remoteIds.length) return localMatches
+				const {data, error} = await buildChannelsQuery({...p, idIn: remoteIds}).limit(remoteIds.length)
+				if (error) throw error
+				return [...localMatches, ...(data || [])] as Channel[]
 			}
 			log.info('channels queryFn', p)
 			const {data, error} = await buildChannelsQuery(p).limit(CHANNELS_PAGE_SIZE)
@@ -114,6 +136,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		}
 	}),
 	onInsert: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onInsert', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const metadata = (m.metadata || {}) as Record<string, unknown>
@@ -122,6 +145,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		log.info('channels onInsert done')
 	},
 	onUpdate: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onUpdate', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			const serverChannel = await handleChannelUpdate(m.modified.id, m.changes as Record<string, unknown>)
@@ -133,6 +157,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		log.info('channels onUpdate done')
 	},
 	onDelete: async ({transaction}) => {
+		if (!capabilities.mutations) return
 		log.info('channels onDelete', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
 			await handleChannelDelete(m.original.id)

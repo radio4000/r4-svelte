@@ -1,8 +1,8 @@
 import posthog from 'posthog-js'
 import {appState} from '$lib/app-state.svelte'
-import {env} from '$env/dynamic/public'
+import {posthogKey} from '$lib/config'
 
-const POSTHOG_KEY = env.PUBLIC_POSTHOG_KEY ?? ''
+const POSTHOG_KEY = posthogKey
 const POSTHOG_HOST = 'https://eu.i.posthog.com'
 
 let initialized = false

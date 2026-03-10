@@ -89,6 +89,20 @@ export interface AppState {
 	embed_mode?: boolean
 	/** IDs of locally imported channels (not from remote DB) */
 	local_channel_ids?: string[]
+	/** Full channel objects for locally imported channels — durable store used by queryFn */
+	local_channels?: Channel[]
+	/** Origin metadata for each locally imported channel, keyed by channel ID */
+	local_channel_origins?: Record<string, ImportOrigin>
+}
+
+/** Where a locally imported channel came from. */
+export interface ImportOrigin {
+	/** How the channel was imported */
+	type: 'url' | 'file' | 'folder' | 'audio-folder'
+	/** Source URL, set for URL-based imports */
+	url?: string
+	/** ISO date string of when the import happened */
+	importedAt: string
 }
 
 export interface UserIdentity {

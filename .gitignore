@@ -21,3 +21,7 @@ rollup-visualizer.html
 .dev.vars
 tmp/
 CLAUDE.local.md
+
+# Standalone seed data (user-provided, not committed)
+/static/r4-seed.json
+/static/data/

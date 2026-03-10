@@ -1,10 +1,12 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
+	import {capabilities} from '$lib/modes'
 	import {appState} from '$lib/app-state.svelte'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
+	import {cacheReady} from '$lib/query-cache-persistence'
 	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
@@ -46,8 +48,15 @@
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
+	const VALID_DISPLAYS = new Set(['grid', 'list', 'map', 'tuner', 'infinite'])
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
-	let display = $derived(appState.channels_display || initialDisplay || 'grid')
+	let display = $derived(
+		VALID_DISPLAYS.has(appState.channels_display)
+			? appState.channels_display
+			: VALID_DISPLAYS.has(initialDisplay)
+				? initialDisplay
+				: 'grid'
+	)
 
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
@@ -97,6 +106,9 @@
 	// Fetch channels driven by the active filter + sort
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
+		if (!capabilities.globalBrowse) {
+			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+		}
 		if (filter === 'imported') {
 			const ids = appState.local_channel_ids ?? []
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
@@ -121,27 +133,53 @@
 	const channels = $derived(channelsQuery.data ?? [])
 	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
 
-	// Restore imported channels from query cache into the collection when filter is active.
-	// After a full reload the collection is empty but IDB-persisted query cache still has the data.
+	// Restore imported channels into the collection on filter activation.
+	// appState.local_channels is the durable source — persisted in localStorage.
+	// Migration: channels imported before local_channels existed are recovered from
+	// the query cache (populated by writeImport via setQueryData).
 	$effect(() => {
 		if (filter !== 'imported') return
 		const ids = appState.local_channel_ids ?? []
 		if (!ids.length) return
 		void (async () => {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			const missingIds = ids.filter((id) => !channelsCollection.get(id))
-			if (!missingIds.length) return
-			for (const query of queryClient.getQueryCache().getAll()) {
-				if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
-				for (const ch of /** @type {any[]} */ (query.state.data) ?? []) {
-					if (missingIds.includes(ch.id)) channelsCollection.utils.writeUpsert(ch)
+			// Migrate: find IDs in local_channel_ids not yet in local_channels
+			const knownIds = new Set((appState.local_channels ?? []).map((c) => c.id))
+			const unmigratedIds = ids.filter((id) => !knownIds.has(id))
+			if (unmigratedIds.length) {
+				await cacheReady
+				/** @type {import('$lib/types').Channel[]} */
+				const migrated = []
+				for (const query of queryClient.getQueryCache().getAll()) {
+					if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
+					for (const ch of /** @type {any[]} */ (query.state.data) ?? []) {
+						if (unmigratedIds.includes(ch.id)) migrated.push(ch)
+					}
 				}
+				if (migrated.length) {
+					appState.local_channels = [...(appState.local_channels ?? []), ...migrated]
+				}
+				// Clean up IDs whose data is unrecoverable (cache expired, data truly gone)
+				const recoveredIds = new Set(migrated.map((c) => c.id))
+				const stillMissing = unmigratedIds.filter((id) => !recoveredIds.has(id))
+				if (stillMissing.length) {
+					const stillMissingSet = new Set(stillMissing)
+					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
+						(id) => !stillMissingSet.has(id)
+					)
+				}
+			}
+			// Write any still-missing channels into the collection
+			const localChannels = appState.local_channels ?? []
+			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+			for (const ch of localChannels) {
+				if (!channelsCollection.get(ch.id)) channelsCollection.utils.writeUpsert(ch)
 			}
 		})()
 	})
 
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
+		if (!capabilities.globalBrowse) return
 		if (filter === 'imported') return
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
@@ -194,10 +232,9 @@
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
 	function setDisplay(value = 'grid') {
-		display = value
-		appState.channels_display = display
+		appState.channels_display = value
 		const query = new URL(page.url).searchParams
-		query.set('display', display)
+		query.set('display', value)
 		// Preserve map params if switching to map view
 		if (value !== 'map') {
 			query.delete('latitude')

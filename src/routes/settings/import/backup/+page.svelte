@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {goto} from '$app/navigation'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {appState} from '$lib/app-state.svelte'
-	import {importBackupFile} from '$lib/import'
+	import {importBackupFile, importFromUrl} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
@@ -11,12 +8,21 @@
 	let error = $state('')
 	let importing = $state(false)
 	let result: ImportResult | null = $state(null)
-	const previouslyImported = $derived(
-		appState.local_channel_ids?.length
-			? appState.local_channel_ids.map((id) => channelsCollection.get(id)).filter((c) => c !== undefined)
-			: []
-	)
+	let url = $state('')
 
+	async function importUrl() {
+		if (!url.trim()) return
+		error = ''
+		result = null
+		importing = true
+		try {
+			result = await importFromUrl(url.trim())
+		} catch (e) {
+			error = (e as Error).message
+		} finally {
+			importing = false
+		}
+	}
 	async function importBackup(file: File) {
 		error = ''
 		result = null
@@ -39,11 +45,6 @@
 		const file = event.dataTransfer?.files?.[0]
 		if (file) importBackup(file)
 	}
-
-	function browseImported() {
-		appState.channels_filter = 'imported'
-		goto('/')
-	}
 </script>
 
 <svelte:head>
@@ -58,14 +59,17 @@
 
 	<p>{m.import_backup_description()}</p>
 
-	{#if previouslyImported.length}
-		<p>
-			{m.import_previously_imported({count: previouslyImported.length})}
-			<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
-		</p>
-	{/if}
-
 	{#if !result}
+		<form
+			onsubmit={(e) => {
+				e.preventDefault()
+				importUrl()
+			}}
+		>
+			<input type="url" bind:value={url} placeholder="https://…  (.json, .txt, .m3u)" disabled={importing} />
+			<button type="submit" disabled={importing || !url.trim()}>Import from URL</button>
+		</form>
+
 		<Dropzone ondrop={onDrop}>
 			{#if importing}
 				{m.import_loading()}
@@ -103,3 +107,13 @@
 		</p>
 	{/if}
 </article>
+
+<style>
+	form {
+		display: flex;
+		gap: 0.5rem;
+		input {
+			flex: 1;
+		}
+	}
+</style>
