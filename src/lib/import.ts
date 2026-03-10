@@ -3,7 +3,7 @@ import {tracksCollection} from '$lib/collections/tracks'
 import {queryClient} from '$lib/collections/query-client'
 import {appState} from '$lib/app-state.svelte'
 import {uuid, slugify} from '$lib/utils'
-import type {Channel, Track} from '$lib/types'
+import type {Channel, Track, ImportOrigin} from '$lib/types'
 
 const M3U_EXT_RE = /\.m3u8?$/i
 
@@ -91,7 +91,7 @@ export function parseTrackTxt(content: string): {title: string; description: str
 }
 
 /** Write a channel + tracks into local collections. */
-export async function writeImport(channel: Channel, tracks: Track[]): Promise<void> {
+export async function writeImport(channel: Channel, tracks: Track[], origin?: ImportOrigin): Promise<void> {
 	await Promise.all([
 		channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
 		tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
@@ -108,6 +108,9 @@ export async function writeImport(channel: Channel, tracks: Track[]): Promise<vo
 	if (!appState.local_channel_ids?.includes(channel.id)) {
 		appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
 	}
+	if (origin) {
+		appState.local_channel_origins = {...(appState.local_channel_origins ?? {}), [channel.id]: origin}
+	}
 }
 
 /** Remove a local-only imported channel and its tracks. Reverses writeImport. */
@@ -121,6 +124,10 @@ export function deleteLocalChannel(channelId: string, slug: string) {
 	queryClient.removeQueries({queryKey: ['tracks', slug]})
 	queryClient.removeQueries({queryKey: ['channels', slug]})
 	appState.local_channel_ids = appState.local_channel_ids?.filter((id) => id !== channelId)
+	if (appState.local_channel_origins) {
+		const {[channelId]: _, ...rest} = appState.local_channel_origins
+		appState.local_channel_origins = rest
+	}
 }
 
 // --- URL-based imports (for auto-seed loading) ---
@@ -173,7 +180,7 @@ async function _importJsonUrl(url: string): Promise<ImportResult> {
 	const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
 	const {channel, tracks} = buildFromBackup(data, slug)
-	await writeImport(channel, tracks)
+	await writeImport(channel, tracks, {type: 'url', url, importedAt: new Date().toISOString()})
 	return {channel, imported: tracks.length}
 }
 
@@ -191,7 +198,7 @@ async function _importM3uUrl(url: string): Promise<ImportResult> {
 	const channelId = uuid()
 	const channel = {id: channelId, slug, name, description: ''} as Channel
 	const tracks = rawTracks.map((t) => ({id: uuid(), slug, title: t.title, url: t.url}) as Track)
-	await writeImport(channel, tracks)
+	await writeImport(channel, tracks, {type: 'url', url, importedAt: new Date().toISOString()})
 	return {channel, imported: tracks.length}
 }
 
@@ -210,13 +217,14 @@ async function _importTxtUrl(url: string): Promise<ImportResult> {
 	const m3uRes = await fetch(siblingUrl).catch(() => null)
 	const channelId = uuid()
 	const channel = {id: channelId, slug: importSlug, name, description} as Channel
+	const origin: ImportOrigin = {type: 'url', url, importedAt: new Date().toISOString()}
 	if (m3uRes?.ok) {
 		const rawTracks = parseM3u(await m3uRes.text())
 		const tracks = rawTracks.map((t) => ({id: uuid(), slug: importSlug, title: t.title, url: t.url}) as Track)
-		await writeImport(channel, tracks)
+		await writeImport(channel, tracks, origin)
 		return {channel, imported: tracks.length}
 	}
-	await writeImport(channel, [])
+	await writeImport(channel, [], origin)
 	return {channel, imported: 0}
 }
 
@@ -258,7 +266,7 @@ export async function importBackupFile(file: File): Promise<ImportResult> {
 	const suffix = date ? `${date}-${uuid().slice(0, 4)}` : uuid().slice(0, 8)
 	const slug = importedSlug(data.channel.slug, suffix)
 	const {channel, tracks} = buildFromBackup(data, slug)
-	await writeImport(channel, tracks)
+	await writeImport(channel, tracks, {type: 'file', importedAt: new Date().toISOString()})
 	return {channel, imported: tracks.length}
 }
 
@@ -275,7 +283,7 @@ export async function importM3uFile(file: File): Promise<ImportResult> {
 	const channel = {id: channelId, slug, name: baseName, description: ''} as Channel
 	const tracks: Track[] = rawTracks.map((t) => ({id: uuid(), slug, title: t.title, url: t.url}) as Track)
 
-	await writeImport(channel, tracks)
+	await writeImport(channel, tracks, {type: 'file', importedAt: new Date().toISOString()})
 	return {channel, imported: tracks.length}
 }
 

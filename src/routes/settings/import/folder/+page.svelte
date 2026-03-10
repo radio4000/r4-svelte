@@ -16,7 +16,7 @@
 	import BackLink from '$lib/components/back-link.svelte'
 	import Dropzone from '$lib/components/dropzone.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import type {Channel, Track} from '$lib/types'
+	import type {Channel, Track, ImportOrigin} from '$lib/types'
 
 	// File System Access API not in TypeScript's default lib
 	type DirHandle = FileSystemDirectoryHandle & {entries(): AsyncIterable<[string, FileSystemHandle]>}
@@ -94,7 +94,7 @@
 				}
 			}
 
-			await writeImport(channel, tracks)
+			await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
 			return {channel, imported: tracks.length, source: 'r4download'}
 		}
 
@@ -168,7 +168,7 @@
 			}
 		}
 
-		await writeImport(channel, tracks)
+		await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
 		return {channel, imported: tracks.length, source: 'r4download'}
 	}
 
@@ -201,7 +201,7 @@
 			const title = handle.name.slice(0, handle.name.lastIndexOf('.')) || handle.name
 			tracks.push({id: uuid(), slug, title, url: objectUrl, media_id: objectUrl, provider: 'file'} as Track)
 		}
-		await writeImport(channel, tracks)
+		await writeImport(channel, tracks, {type: 'audio-folder', importedAt: new Date().toISOString()} as ImportOrigin)
 		return {channel, imported: tracks.length, source: 'audio'}
 	}
 

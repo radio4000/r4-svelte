@@ -356,6 +356,8 @@
 	"import_m3u_label": "From M3U playlist",
 	"import_m3u_title": "Import M3U playlist",
 	"import_previously_imported": "{count} channels already imported.",
+	"import_relink_audio": "Audio files need to be re-opened.",
+	"import_relink_button": "Re-open folder",
 	"import_result_already": "Already imported.",
 	"import_result_tracks": "{count} tracks imported.",
 	"import_title": "Import",
