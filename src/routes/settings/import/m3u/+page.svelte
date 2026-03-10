@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
-	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import {importM3uFile, importFromUrl} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
@@ -26,12 +25,6 @@
 			importing = false
 		}
 	}
-	const previouslyImported = $derived(
-		appState.local_channel_ids?.length
-			? appState.local_channel_ids.map((id) => channelsCollection.get(id)).filter((c) => c !== undefined)
-			: []
-	)
-
 	async function importM3u(file: File) {
 		error = ''
 		result = null
@@ -73,15 +66,13 @@
 
 	<p>{m.import_m3u_description()}</p>
 
-	{#if previouslyImported.length}
-		<p>
-			{m.import_previously_imported({count: previouslyImported.length})}
-			<button type="button" onclick={browseImported}>{m.import_browse_imported()}</button>
-		</p>
-	{/if}
-
 	{#if !result}
-		<form onsubmit={(e) => { e.preventDefault(); importUrl() }}>
+		<form
+			onsubmit={(e) => {
+				e.preventDefault()
+				importUrl()
+			}}
+		>
 			<input type="url" bind:value={url} placeholder="https://…  (.m3u, .m3u8)" disabled={importing} />
 			<button type="submit" disabled={importing || !url.trim()}>Import from URL</button>
 		</form>
@@ -122,6 +113,8 @@
 	form {
 		display: flex;
 		gap: 0.5rem;
-		input { flex: 1; }
+		input {
+			flex: 1;
+		}
 	}
 </style>

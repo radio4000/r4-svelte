@@ -8,9 +8,14 @@
 	const display = $derived(page?.url?.searchParams?.get('display'))
 
 	const validDisplays = /** @type {const} */ (['grid', 'list', 'map', 'infinite', 'tuner'])
+	const validFilters = /** @type {const} */ (['all', 'broadcasting', 'imported', '10+', '100+', '1000+', 'artwork'])
 	onMount(() => {
 		if (display && validDisplays.includes(/** @type {any} */ (display)) && display !== appState.channels_display) {
 			appState.channels_display = /** @type {typeof validDisplays[number]} */ (display)
+		}
+		const filter = page?.url?.searchParams?.get('filter')
+		if (filter && validFilters.includes(/** @type {any} */ (filter))) {
+			appState.channels_filter = /** @type {typeof validFilters[number]} */ (filter)
 		}
 	})
 </script>

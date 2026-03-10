@@ -1,7 +1,10 @@
 <script>
+	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
+
+	const importedCount = $derived(appState.local_channel_ids?.length ?? 0)
 </script>
 
 <svelte:head>
@@ -15,6 +18,10 @@
 	</header>
 
 	<p>{m.local_import_note()}</p>
+
+	{#if importedCount}
+		<p><a href="/?filter=imported">{m.import_previously_imported({count: importedCount})}</a></p>
+	{/if}
 
 	<menu class="nav-vertical">
 		<a href="/settings/import/backup">
@@ -32,8 +39,3 @@
 	</menu>
 </article>
 
-<style>
-	menu {
-		margin: 0;
-	}
-</style>
