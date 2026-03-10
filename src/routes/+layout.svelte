@@ -80,6 +80,8 @@
 	})
 
 	onMount(async () => {
+		const {registerSW} = await import('virtual:pwa-register')
+		registerSW({immediate: true})
 		trackAppPresence()
 		try {
 			await data.preloading
