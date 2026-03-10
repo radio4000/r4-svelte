@@ -89,6 +89,8 @@ export interface AppState {
 	embed_mode?: boolean
 	/** IDs of locally imported channels (not from remote DB) */
 	local_channel_ids?: string[]
+	/** Full channel objects for locally imported channels — durable store used by queryFn */
+	local_channels?: Channel[]
 	/** Origin metadata for each locally imported channel, keyed by channel ID */
 	local_channel_origins?: Record<string, ImportOrigin>
 }

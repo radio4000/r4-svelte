@@ -133,23 +133,46 @@
 	const channels = $derived(channelsQuery.data ?? [])
 	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
 
-	// Restore imported channels from query cache into the collection when filter is active.
-	// After a full reload the collection is empty but IDB-persisted query cache still has the data.
-	// cacheReady ensures the IDB→memory restore has completed before we scan the cache.
+	// Restore imported channels into the collection on filter activation.
+	// appState.local_channels is the durable source — persisted in localStorage.
+	// Migration: channels imported before local_channels existed are recovered from
+	// the query cache (populated by writeImport via setQueryData).
 	$effect(() => {
 		if (filter !== 'imported') return
 		const ids = appState.local_channel_ids ?? []
 		if (!ids.length) return
 		void (async () => {
-			await cacheReady
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			const missingIds = ids.filter((id) => !channelsCollection.get(id))
-			if (!missingIds.length) return
-			for (const query of queryClient.getQueryCache().getAll()) {
-				if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
-				for (const ch of /** @type {any[]} */ (query.state.data) ?? []) {
-					if (missingIds.includes(ch.id)) channelsCollection.utils.writeUpsert(ch)
+			// Migrate: find IDs in local_channel_ids not yet in local_channels
+			const knownIds = new Set((appState.local_channels ?? []).map((c) => c.id))
+			const unmigratedIds = ids.filter((id) => !knownIds.has(id))
+			if (unmigratedIds.length) {
+				await cacheReady
+				/** @type {import('$lib/types').Channel[]} */
+				const migrated = []
+				for (const query of queryClient.getQueryCache().getAll()) {
+					if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
+					for (const ch of /** @type {any[]} */ (query.state.data) ?? []) {
+						if (unmigratedIds.includes(ch.id)) migrated.push(ch)
+					}
 				}
+				if (migrated.length) {
+					appState.local_channels = [...(appState.local_channels ?? []), ...migrated]
+				}
+				// Clean up IDs whose data is unrecoverable (cache expired, data truly gone)
+				const recoveredIds = new Set(migrated.map((c) => c.id))
+				const stillMissing = unmigratedIds.filter((id) => !recoveredIds.has(id))
+				if (stillMissing.length) {
+					const stillMissingSet = new Set(stillMissing)
+					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
+						(id) => !stillMissingSet.has(id)
+					)
+				}
+			}
+			// Write any still-missing channels into the collection
+			const localChannels = appState.local_channels ?? []
+			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+			for (const ch of localChannels) {
+				if (!channelsCollection.get(ch.id)) channelsCollection.utils.writeUpsert(ch)
 			}
 		})()
 	})

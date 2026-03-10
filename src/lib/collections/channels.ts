@@ -117,6 +117,18 @@ export const channelsCollection = createCollection<Channel, string>({
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []
 			}
+			// Local imported channels are not in Supabase — serve them from appState directly
+			if (p.idIn) {
+				const localIds = new Set(appState.local_channel_ids ?? [])
+				const localMatches = (appState.local_channels ?? []).filter(
+					(c) => p.idIn!.includes(c.id) && localIds.has(c.id)
+				)
+				const remoteIds = p.idIn.filter((id) => !localIds.has(id))
+				if (!remoteIds.length) return localMatches
+				const {data, error} = await buildChannelsQuery({...p, idIn: remoteIds}).limit(remoteIds.length)
+				if (error) throw error
+				return [...localMatches, ...(data || [])] as Channel[]
+			}
 			log.info('channels queryFn', p)
 			const {data, error} = await buildChannelsQuery(p).limit(CHANNELS_PAGE_SIZE)
 			if (error) throw error

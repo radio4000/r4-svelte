@@ -4,7 +4,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	const importedCount = $derived(appState.local_channel_ids?.length ?? 0)
+	const importedCount = $derived(appState.local_channels?.length ?? 0)
 </script>
 
 <svelte:head>
@@ -38,4 +38,3 @@
 		</a>
 	</menu>
 </article>
-

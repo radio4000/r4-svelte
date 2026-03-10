@@ -108,6 +108,8 @@ export async function writeImport(channel: Channel, tracks: Track[], origin?: Im
 	if (!appState.local_channel_ids?.includes(channel.id)) {
 		appState.local_channel_ids = [...(appState.local_channel_ids ?? []), channel.id]
 	}
+	const others = (appState.local_channels ?? []).filter((c) => c.id !== channel.id)
+	appState.local_channels = [...others, channel]
 	if (origin) {
 		appState.local_channel_origins = {...(appState.local_channel_origins ?? {}), [channel.id]: origin}
 	}
@@ -124,6 +126,7 @@ export function deleteLocalChannel(channelId: string, slug: string) {
 	queryClient.removeQueries({queryKey: ['tracks', slug]})
 	queryClient.removeQueries({queryKey: ['channels', slug]})
 	appState.local_channel_ids = appState.local_channel_ids?.filter((id) => id !== channelId)
+	appState.local_channels = appState.local_channels?.filter((c) => c.id !== channelId)
 	if (appState.local_channel_origins) {
 		const {[channelId]: _, ...rest} = appState.local_channel_origins
 		appState.local_channel_origins = rest
