@@ -1,7 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {appMode} from '$lib/config'
+	import {capabilities} from '$lib/modes'
 	import {appState} from '$lib/app-state.svelte'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -47,8 +47,15 @@
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
+	const VALID_DISPLAYS = new Set(['grid', 'list', 'map', 'tuner', 'infinite'])
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
-	let display = $derived(appState.channels_display || initialDisplay || 'grid')
+	let display = $derived(
+		VALID_DISPLAYS.has(appState.channels_display)
+			? appState.channels_display
+			: VALID_DISPLAYS.has(initialDisplay)
+				? initialDisplay
+				: 'grid'
+	)
 
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
@@ -98,7 +105,7 @@
 	// Fetch channels driven by the active filter + sort
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
-		if (appMode === 'standalone') {
+		if (!capabilities.globalBrowse) {
 			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
 		}
 		if (filter === 'imported') {
@@ -146,7 +153,7 @@
 
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
-		if (appMode === 'standalone') return
+		if (!capabilities.globalBrowse) return
 		if (filter === 'imported') return
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
@@ -199,10 +206,9 @@
 
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
 	function setDisplay(value = 'grid') {
-		display = value
-		appState.channels_display = display
+		appState.channels_display = value
 		const query = new URL(page.url).searchParams
-		query.set('display', display)
+		query.set('display', value)
 		// Preserve map params if switching to map view
 		if (value !== 'map') {
 			query.delete('latitude')
