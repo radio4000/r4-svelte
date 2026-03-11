@@ -2,6 +2,7 @@
 	import {onMount} from 'svelte'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {viewFromUrl, viewLabel, type View} from '$lib/views'
 	import {queryView} from '$lib/views.svelte'
@@ -53,7 +54,7 @@
 			const href = link.getAttribute('href')
 			if (!href || href.startsWith('#')) return
 			const url = new URL(link.href, window.location.href)
-			if (url.origin !== window.location.origin || !url.pathname.startsWith('/embed')) {
+			if (url.origin !== window.location.origin || !url.pathname.startsWith(resolve('/embed'))) {
 				event.preventDefault()
 				event.stopPropagation()
 			}

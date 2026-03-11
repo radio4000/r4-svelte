@@ -1,5 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
+	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -18,7 +20,7 @@
 			return
 		}
 		await sdk.auth.signOut()
-		window.location.href = '/'
+		goto(resolve('/'))
 	}
 </script>
 
@@ -28,7 +30,7 @@
 
 <article class="constrained">
 	<header>
-		<BackLink href="/settings/account" />
+		<BackLink href={resolve('/settings/account')} />
 		<h1>{m.account_delete_title()}</h1>
 	</header>
 

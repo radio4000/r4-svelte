@@ -1,6 +1,8 @@
 <script>
 	import 'leaflet/dist/leaflet.css'
 	import L from 'leaflet'
+	import {page} from '$app/state'
+	import {replaceState} from '$app/navigation'
 
 	let {latitude = null, longitude = null, zoom = null, onclick = null, onready = null, syncUrl = false} = $props()
 
@@ -29,10 +31,9 @@
 
 	function setup(node) {
 		let disposed = false
-		const params = new URLSearchParams(location.search)
-		const lat = latitude ?? (syncUrl ? Number(params.get('latitude')) || 20 : 20)
-		const lng = longitude ?? (syncUrl ? Number(params.get('longitude')) || 0 : 0)
-		const z = zoom ?? (syncUrl ? Number(params.get('zoom')) || 2 : 2)
+		const lat = latitude ?? (syncUrl ? Number(page.url.searchParams.get('latitude')) || 20 : 20)
+		const lng = longitude ?? (syncUrl ? Number(page.url.searchParams.get('longitude')) || 0 : 0)
+		const z = zoom ?? (syncUrl ? Number(page.url.searchParams.get('zoom')) || 2 : 2)
 
 		const worldBounds = L.latLngBounds(L.latLng(-85.05112878, -180), L.latLng(85.05112878, 180))
 		const map = L.map(node, {
@@ -66,11 +67,11 @@
 					if (!map || !map._loaded || !map._mapPane) return
 					const {lat, lng} = map.getCenter()
 					const z = map.getZoom()
-					const url = new URL(location.href)
+					const url = new URL(page.url.href)
 					url.searchParams.set('latitude', lat.toFixed(4))
 					url.searchParams.set('longitude', lng.toFixed(4))
 					url.searchParams.set('zoom', z)
-					history.replaceState(null, '', url)
+					replaceState(url, {})
 				}, 300)
 			})
 		}

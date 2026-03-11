@@ -15,6 +15,7 @@
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
+	import {page} from '$app/state'
 	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '$lib/modes'
 	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
 	// import {setChannelsCtx} from '$lib/contexts'
@@ -81,7 +82,7 @@
 	})
 
 	onMount(async () => {
-		if (DISABLED_ROUTES.some((p) => window.location.pathname.startsWith(p))) {
+		if (DISABLED_ROUTES.some((p) => page.route.id?.startsWith(p))) {
 			goto(DISABLED_ROUTE_FALLBACK, {replaceState: true})
 		}
 		const {registerSW} = await import('virtual:pwa-register')
@@ -114,7 +115,7 @@
 			const key = from.url.pathname + from.url.search
 			scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
 		}
-		if (to?.url && DISABLED_ROUTES.some((p) => to.url.pathname.startsWith(p))) {
+		if (to?.url && DISABLED_ROUTES.some((p) => to.route?.id?.startsWith(p))) {
 			cancel()
 			goto(DISABLED_ROUTE_FALLBACK)
 		}
