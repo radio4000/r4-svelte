@@ -1,6 +1,7 @@
 <script>
 	import Tag from '$lib/components/tag.svelte'
 	import {ENTITY_REGEX} from '$lib/utils'
+	import {base} from '$app/paths'
 	import {page} from '$app/state'
 
 	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void}} */
@@ -35,16 +36,16 @@
 			const isMention = entity.startsWith('@')
 			let href
 			if (isMention) {
-				href = `/${encodeURIComponent(entity.slice(1))}`
+				href = `${base}/${encodeURIComponent(entity.slice(1))}`
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
 				const tagName = entity.slice(1).toLowerCase()
 				const next = urlTags.includes(tagName) ? urlTags.filter((t) => t !== tagName) : [...urlTags, tagName]
 				href = next.length
-					? `/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
-					: `/${encodeURIComponent(slug)}/tracks`
+					? `${base}/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
+					: `${base}/${encodeURIComponent(slug)}/tracks`
 			} else {
-				href = `/search?q=${encodeURIComponent(entity)}`
+				href = `${base}/search?q=${encodeURIComponent(entity)}`
 			}
 
 			parts.push({
