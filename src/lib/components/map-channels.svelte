@@ -652,7 +652,7 @@
 <div class="map-root">
 	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
 	<div class="map-controls">
-		<div class="maplibregl-ctrl maplibregl-ctrl-group controls-row">
+		<menu class="nav-grouped">
 			<button
 				type="button"
 				class:active={globeMode}
@@ -684,7 +684,7 @@
 				<option value="topo">Topo</option>
 				<option value="satellite">Sat</option>
 			</select>
-		</div>
+		</menu>
 	</div>
 </div>
 
@@ -697,74 +697,12 @@
 		position: relative;
 	}
 
-	/* Single horizontal row of controls at bottom-left */
+	/* Single horizontal row of controls below map filters */
 	.map-controls {
 		position: absolute;
-		bottom: 0;
-		left: 0;
+		top: 2.9rem;
+		left: 0.5rem;
 		z-index: 10;
-		padding: 0 0 10px 10px;
-		pointer-events: none;
-	}
-
-	.controls-row {
-		display: flex;
-		flex-direction: row;
-		align-items: stretch;
-		pointer-events: all;
-		border: 1px solid light-dark(var(--gray-5), var(--gray-6));
-		border-radius: var(--border-radius);
-		overflow: hidden;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-		background: light-dark(var(--gray-1), var(--gray-3));
-	}
-
-	.map-controls button {
-		width: 36px;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 0;
-		color: light-dark(var(--gray-12), var(--gray-11));
-		flex-shrink: 0;
-		touch-action: manipulation;
-	}
-
-	.map-controls button:hover {
-		background: light-dark(var(--gray-2), var(--gray-4));
-	}
-
-	.map-controls button.active {
-		color: var(--accent-11);
-		background: light-dark(var(--accent-3), var(--accent-4));
-	}
-
-	.map-controls .sep {
-		width: 1px;
-		background: light-dark(var(--gray-4), var(--gray-5));
-		margin: 6px 0;
-		flex-shrink: 0;
-	}
-
-	.map-controls select {
-		height: 36px;
-		padding: 0 var(--space-2);
-		background: transparent;
-		border: none;
-		color: light-dark(var(--gray-12), var(--gray-11));
-		font-size: var(--font-2);
-		cursor: pointer;
-		outline: none;
-		-webkit-appearance: auto;
-		flex-shrink: 0;
-	}
-
-	.map-controls select:hover {
-		background: light-dark(var(--gray-2), var(--gray-4));
 	}
 
 	:global(.map-popup) {

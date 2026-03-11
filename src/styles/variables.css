@@ -18,7 +18,7 @@
 	/* typography */
 	--sans-serif: firava, system-ui, sans-serif;
 	--font-system: system-ui, sans-serif;
-	--monospace: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+	--monospace: ui-monospace, monospace;
 	--font-1: 0.6875rem;
 	--font-2: 0.75rem;
 	--font-3: 0.8125rem;
@@ -39,7 +39,7 @@
 	--aside-bg: var(--gray-1);
 	--footer-bg: var(--color-interface);
 
-	/* breakpoints */
+	/* media queries can't use variables, but still, nice to declare what we use */
 	--breakpoint-xs: 520px;
 	--breakpoint-sm: 768px;
 	--breakpoint-md: 1024px;
