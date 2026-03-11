@@ -302,6 +302,12 @@
 			</menu>
 		</PopoverMenu>
 
+		{#if display === 'map' && hasMore}
+			<button class="btn" onclick={handleLoadMore} disabled={loadingMore}>
+				{loadingMore ? '…' : `+${nextPageSize}`}
+			</button>
+		{/if}
+
 		<PopoverMenu
 			id="channels-display"
 			closeOnClick={false}
