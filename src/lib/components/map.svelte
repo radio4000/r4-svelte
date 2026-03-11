@@ -173,7 +173,7 @@
 	/* Keep zoom above attribution in bottom-right corner. */
 	.map :global(.maplibregl-ctrl-bottom-right) {
 		display: flex;
-		flex-direction: column;
+		flex-direction: column-reverse;
 		align-items: flex-end;
 		gap: 0.25rem;
 	}

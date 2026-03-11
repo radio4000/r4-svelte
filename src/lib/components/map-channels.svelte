@@ -7,6 +7,7 @@
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
+	import {BroadcastLayer} from './map-broadcast-layer.js'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
@@ -27,6 +28,8 @@
 	/** @type {maplibregl.Map | null} */
 	let map = $state(null)
 	let mapReady = $state(false)
+	/** @type {BroadcastLayer | null} */
+	let broadcastLayer = null
 	let globeMode = $state(false)
 	let popupNavigationInFlight = false
 	let pendingPopupLinkNavigationTimer = null
@@ -213,7 +216,7 @@
 				m.getCanvas().style.cursor = ''
 			})
 		} else {
-			/** @type {GeoJSONSource} */ (m.getSource('channels-source')).setData(fc)
+			/** @type {GeoJSONSource} */ ;(m.getSource('channels-source')).setData(fc)
 		}
 	}
 
@@ -326,10 +329,20 @@
 		currentPopup = popup
 	}
 
+	function updateBroadcastLayer() {
+		if (!broadcastLayer || !mapReady) return
+		broadcastLayer.setChannels(
+			mapChannels.filter((c) => broadcastingIds.has(c.id)).map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
+		)
+	}
+
 	function handleReady(m) {
 		map = m
 		mapReady = true
 		setupLayers(m)
+		if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
+		if (!m.getLayer('broadcast-3d')) m.addLayer(broadcastLayer)
+		updateBroadcastLayer()
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 	}
 
@@ -405,6 +418,12 @@
 		void inDeckSlugs
 		void palette
 		refreshMarkerStyles()
+	})
+
+	$effect(() => {
+		void broadcastingIds
+		void mapChannels
+		updateBroadcastLayer()
 	})
 
 	$effect(() => {
