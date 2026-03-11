@@ -434,10 +434,17 @@
 			coords.push([lng, (Math.atan(-Math.cos(ha) / tanDec) * 180) / Math.PI])
 		}
 
-		// Build a CCW polygon: reversed terminator → night-pole corners → close
+		// Build a CCW polygon (GeoJSON right-hand rule).
+		// Verified via shoelace: for dec≥0 (summer N) south pole is in night → reversed terminator;
+		// for dec<0 (winter N / current spring) north pole is in night → original (W→E) terminator.
 		const nightPole = decDeg >= 0 ? -90 : 90
-		const rev = [...coords].reverse()
-		const ring = [...rev, [-180, nightPole], [180, nightPole], rev[0]]
+		let ring
+		if (decDeg >= 0) {
+			const rev = [...coords].reverse()
+			ring = [...rev, [-180, nightPole], [180, nightPole], rev[0]]
+		} else {
+			ring = [...coords, [180, nightPole], [-180, nightPole], coords[0]]
+		}
 		return {
 			type: 'FeatureCollection',
 			features: [{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}]
@@ -487,11 +494,6 @@
 	}
 
 	function handleReady(m) {
-		// If a custom tile is active but map.svelte's theme observer reverted to carto, re-apply it.
-		if (tileStyle !== 'carto' && !m.getSource(tileStyle)) {
-			m.setStyle(buildMapStyle(tileStyle))
-			return // handleReady will fire again via styledata
-		}
 		map = m
 		mapReady = true
 		setupOverlays(m)
@@ -596,36 +598,39 @@
 		map.setProjection({type: globeMode ? 'globe' : 'mercator'})
 	})
 
-	// Tile style switcher: apply when user changes, skip if already active
+	// Tile style switcher: apply when user changes, re-add all layers via styledata callback.
+	// map.svelte only hooks styledata on theme changes — we must do it ourselves here.
 	$effect(() => {
 		const style = tileStyle
 		if (!map || !mapReady) return
 		const sourceId = style === 'carto' ? 'carto' : style
 		if (map.getSource(sourceId)) return // already applied
-		map.setStyle(buildMapStyle(style))
+		mapReady = false // block other effects during transition
+		const m = map
+		m.setStyle(buildMapStyle(style))
+		m.once('styledata', () => {
+			setupOverlays(m)
+			setupLayers(m)
+			if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
+			if (!m.getLayer('broadcast-3d')) m.addLayer(broadcastLayer)
+			updateBroadcastLayer()
+			mapReady = true
+		})
 	})
 
 	// Graticule visibility toggle
 	$effect(() => {
 		const vis = showGraticules ? 'visible' : 'none'
 		if (!map || !mapReady) return
-		try {
-			map.setLayoutProperty('graticule-equator', 'visibility', vis)
-			map.setLayoutProperty('graticule-other', 'visibility', vis)
-		} catch {
-			/* layers not yet added */
-		}
+		if (map.getLayer('graticule-equator')) map.setLayoutProperty('graticule-equator', 'visibility', vis)
+		if (map.getLayer('graticule-other')) map.setLayoutProperty('graticule-other', 'visibility', vis)
 	})
 
 	// Day/night visibility + 1-min update timer
 	$effect(() => {
 		const vis = showDayNight ? 'visible' : 'none'
 		if (!map || !mapReady) return
-		try {
-			map.setLayoutProperty('night-layer', 'visibility', vis)
-		} catch {
-			/* layer not yet added */
-		}
+		if (map.getLayer('night-layer')) map.setLayoutProperty('night-layer', 'visibility', vis)
 		if (!showDayNight) return
 		updateNightLayer()
 		const id = setInterval(updateNightLayer, 60_000)
@@ -646,23 +651,22 @@
 
 <div class="map-root">
 	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
-	<div class="map-controls maplibregl-ctrl-bottom-left">
-		<div class="maplibregl-ctrl maplibregl-ctrl-group">
+	<div class="map-controls">
+		<div class="maplibregl-ctrl maplibregl-ctrl-group controls-row">
 			<button
 				type="button"
 				class:active={globeMode}
 				onclick={() => (globeMode = !globeMode)}
-				{@attach tooltip({content: globeMode ? 'Switch to flat map' : 'Switch to globe', placement: 'right'})}
+				title={globeMode ? 'Switch to flat map' : 'Switch to globe'}
 			>
 				<Icon icon={globeMode ? 'map' : 'globe'} size={16} />
 			</button>
-		</div>
-		<div class="maplibregl-ctrl maplibregl-ctrl-group">
+			<span class="sep"></span>
 			<button
 				type="button"
 				class:active={showGraticules}
 				onclick={() => (showGraticules = !showGraticules)}
-				{@attach tooltip({content: 'Tropics & poles', placement: 'right'})}
+				title="Tropics & poles"
 			>
 				<Icon icon="grid" size={16} />
 			</button>
@@ -670,30 +674,16 @@
 				type="button"
 				class:active={showDayNight}
 				onclick={() => (showDayNight = !showDayNight)}
-				{@attach tooltip({content: 'Day / night', placement: 'right'})}
+				title="Day / night"
 			>
 				<Icon icon="sun" size={16} />
 			</button>
-		</div>
-		<div class="maplibregl-ctrl maplibregl-ctrl-group tile-btns">
-			<button
-				type="button"
-				class:active={tileStyle === 'carto'}
-				onclick={() => (tileStyle = 'carto')}
-				{@attach tooltip({content: 'Cartographic tiles', placement: 'right'})}
-			>Map</button>
-			<button
-				type="button"
-				class:active={tileStyle === 'topo'}
-				onclick={() => (tileStyle = 'topo')}
-				{@attach tooltip({content: 'Topographic tiles', placement: 'right'})}
-			>Topo</button>
-			<button
-				type="button"
-				class:active={tileStyle === 'satellite'}
-				onclick={() => (tileStyle = 'satellite')}
-				{@attach tooltip({content: 'Satellite imagery', placement: 'right'})}
-			>Sat</button>
+			<span class="sep"></span>
+			<select bind:value={tileStyle} title="Map tiles" aria-label="Map tiles">
+				<option value="carto">Map</option>
+				<option value="topo">Topo</option>
+				<option value="satellite">Sat</option>
+			</select>
 		</div>
 	</div>
 </div>
@@ -707,35 +697,41 @@
 		position: relative;
 	}
 
-	/* Mirror MapLibre's bottom-left control positioning */
+	/* Single horizontal row of controls at bottom-left */
 	.map-controls {
 		position: absolute;
 		bottom: 0;
 		left: 0;
 		z-index: 10;
+		padding: 0 0 10px 10px;
 		pointer-events: none;
 	}
 
-	.map-controls .maplibregl-ctrl {
+	.controls-row {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
 		pointer-events: all;
-		margin: 0 0 10px 10px;
 		border: 1px solid light-dark(var(--gray-5), var(--gray-6));
 		border-radius: var(--border-radius);
 		overflow: hidden;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		background: light-dark(var(--gray-1), var(--gray-3));
 	}
 
 	.map-controls button {
-		width: 29px;
-		height: 29px;
+		width: 36px;
+		height: 36px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: light-dark(var(--gray-1), var(--gray-3));
+		background: transparent;
 		border: none;
 		cursor: pointer;
 		padding: 0;
 		color: light-dark(var(--gray-12), var(--gray-11));
+		flex-shrink: 0;
+		touch-action: manipulation;
 	}
 
 	.map-controls button:hover {
@@ -744,21 +740,31 @@
 
 	.map-controls button.active {
 		color: var(--accent-11);
-		background: light-dark(var(--gray-2), var(--gray-4));
+		background: light-dark(var(--accent-3), var(--accent-4));
 	}
 
-	/* Separator between stacked buttons within a group */
-	.map-controls .maplibregl-ctrl-group button + button {
-		border-top: 1px solid light-dark(var(--gray-4), var(--gray-5));
+	.map-controls .sep {
+		width: 1px;
+		background: light-dark(var(--gray-4), var(--gray-5));
+		margin: 6px 0;
+		flex-shrink: 0;
 	}
 
-	/* Tile-style buttons are text labels, not icons */
-	.tile-btns button {
-		width: auto;
+	.map-controls select {
+		height: 36px;
 		padding: 0 var(--space-2);
+		background: transparent;
+		border: none;
+		color: light-dark(var(--gray-12), var(--gray-11));
 		font-size: var(--font-2);
-		font-weight: 500;
-		letter-spacing: 0.02em;
+		cursor: pointer;
+		outline: none;
+		-webkit-appearance: auto;
+		flex-shrink: 0;
+	}
+
+	.map-controls select:hover {
+		background: light-dark(var(--gray-2), var(--gray-4));
 	}
 
 	:global(.map-popup) {
