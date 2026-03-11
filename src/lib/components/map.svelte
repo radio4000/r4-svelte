@@ -1,110 +1,126 @@
 <script>
-	import 'leaflet/dist/leaflet.css'
-	import L from 'leaflet'
-	import {page} from '$app/state'
+	import 'maplibre-gl/dist/maplibre-gl.css'
+	import maplibregl from 'maplibre-gl'
 	import {replaceState} from '$app/navigation'
+	import {resolve} from '$app/paths'
+	import {page} from '$app/state'
+	/** @import { StyleSpecification } from 'maplibre-gl' */
 
-	let {latitude = null, longitude = null, zoom = null, onclick = null, onready = null, syncUrl = false} = $props()
+	let {
+		latitude = null,
+		longitude = null,
+		zoom = null,
+		onclick = null,
+		onready = null,
+		syncUrl = false,
+		projection = 'mercator'
+	} = $props()
 
-	const TILES = {
-		light: {
-			url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-			attribution: '&copy; OpenStreetMap &copy; CARTO'
-		},
-		dark: {
-			url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-			attribution: '&copy; OpenStreetMap &copy; CARTO'
-		}
+	const TILE_URLS = {
+		light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+		dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 	}
 
 	function isDarkTheme() {
 		return document.documentElement.classList.contains('dark')
 	}
 
-	function createTileLayer() {
-		const tile = isDarkTheme() ? TILES.dark : TILES.light
-		return L.tileLayer(tile.url, {
-			attribution: tile.attribution,
-			noWrap: true
-		})
+	/** @returns {StyleSpecification} */
+	function buildStyle(dark = false) {
+		const url = dark ? TILE_URLS.dark : TILE_URLS.light
+		return {
+			version: 8,
+			sources: {
+				carto: {
+					type: 'raster',
+					tiles: [url.replace('{s}', 'a'), url.replace('{s}', 'b'), url.replace('{s}', 'c')],
+					tileSize: 256,
+					attribution:
+						'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+				}
+			},
+			layers: [{id: 'carto', type: 'raster', source: 'carto'}]
+		}
 	}
 
 	function setup(node) {
 		let disposed = false
+		/** @type {maplibregl.Map | null} */
+		let map = null
+		let debounce
+		let themeObserver = null
+
 		const lat = latitude ?? (syncUrl ? Number(page.url.searchParams.get('latitude')) || 20 : 20)
 		const lng = longitude ?? (syncUrl ? Number(page.url.searchParams.get('longitude')) || 0 : 0)
 		const z = zoom ?? (syncUrl ? Number(page.url.searchParams.get('zoom')) || 2 : 2)
 
-		const worldBounds = L.latLngBounds(L.latLng(-85.05112878, -180), L.latLng(85.05112878, 180))
-		const map = L.map(node, {
-			zoomControl: false,
-			attributionControl: false,
-			doubleClickZoom: false,
-			worldCopyJump: false,
-			maxBounds: worldBounds,
-			maxBoundsViscosity: 1.0
-		}).setView([lat, lng], z)
-		L.control.zoom({position: 'bottomright'}).addTo(map)
-		L.control.attribution({position: 'bottomright'}).addTo(map)
-		map.setMaxBounds(worldBounds)
-		const worldMinZoom = map.getBoundsZoom(worldBounds, true)
-		map.setMinZoom(worldMinZoom)
-		if (map.getZoom() < worldMinZoom) map.setZoom(worldMinZoom, {animate: false})
-		map.panInsideBounds(worldBounds, {animate: false})
+		function initMap() {
+			if (disposed || map) return
 
-		let tileLayer = createTileLayer().addTo(map)
-
-		if (onclick) {
-			map.on('click', (e) => onclick({lat: e.latlng.lat, lng: e.latlng.lng}))
-		}
-
-		let debounce
-		if (syncUrl) {
-			map.on('moveend', () => {
-				clearTimeout(debounce)
-				debounce = setTimeout(() => {
-					if (disposed) return
-					if (!map || !map._loaded || !map._mapPane) return
-					const {lat, lng} = map.getCenter()
-					const z = map.getZoom()
-					const url = new URL(page.url.href)
-					url.searchParams.set('latitude', lat.toFixed(4))
-					url.searchParams.set('longitude', lng.toFixed(4))
-					url.searchParams.set('zoom', z)
-					replaceState(url, {})
-				}, 300)
+			map = new maplibregl.Map({
+				container: node,
+				style: buildStyle(isDarkTheme()),
+				center: [lng, lat],
+				zoom: z,
+				doubleClickZoom: false,
+				attributionControl: false
 			})
+
+			map.addControl(new maplibregl.NavigationControl({showCompass: false}), 'bottom-right')
+			map.addControl(new maplibregl.AttributionControl({compact: true}), 'bottom-right')
+
+			const m = map
+			m.on('load', () => {
+				if (disposed) return
+				m.setProjection({type: projection})
+				onready?.(m)
+			})
+
+			if (onclick) {
+				map.on('click', (e) => onclick({lat: e.lngLat.lat, lng: e.lngLat.lng}))
+			}
+
+			if (syncUrl) {
+				map.on('moveend', () => {
+					clearTimeout(debounce)
+					debounce = setTimeout(() => {
+						if (disposed || !map) return
+						const {lat, lng} = map.getCenter()
+						const z = map.getZoom()
+						const searchParams = new URLSearchParams(page.url.search)
+						searchParams.set('latitude', lat.toFixed(4))
+						searchParams.set('longitude', lng.toFixed(4))
+						searchParams.set('zoom', String(z))
+						const queryString = searchParams.size ? `?${searchParams}` : ''
+						replaceState(
+							page.route.id
+								? resolve(page.route.id, page.params) + queryString
+								: page.url.pathname + queryString,
+							{}
+						)
+					}, 300)
+				})
+			}
+
+			themeObserver = new MutationObserver(() => {
+				if (disposed || !map) return
+				const nextStyle = buildStyle(isDarkTheme())
+				map.setStyle(nextStyle)
+				// setStyle wipes all user-added sources/layers; re-notify once the new style is loaded
+				map.once('styledata', () => {
+					if (!disposed) onready?.(map)
+				})
+			})
+			themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
 		}
 
-		map.on('resize', () => {
-			const nextWorldMinZoom = map.getBoundsZoom(worldBounds, true)
-			map.setMinZoom(nextWorldMinZoom)
-			if (map.getZoom() < nextWorldMinZoom) map.setZoom(nextWorldMinZoom, {animate: false})
-			map.panInsideBounds(worldBounds, {animate: false})
-		})
-
-		onready?.(map)
-
-		const observer = new MutationObserver(() => {
-			const next = createTileLayer()
-			map.removeLayer(tileLayer)
-			next.addTo(map)
-			tileLayer = next
-			map.panInsideBounds(worldBounds, {animate: false})
-		})
-		observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
+		initMap()
 
 		return () => {
 			disposed = true
-			observer.disconnect()
+			themeObserver?.disconnect()
 			clearTimeout(debounce)
-			try {
-				map.stop()
-				map.off()
-			} catch {
-				// ignore
-			}
-			map.remove()
+			map?.remove()
 		}
 	}
 </script>
@@ -120,39 +136,53 @@
 		background: var(--body-bg);
 	}
 
-	.map :global(.leaflet-container) {
+	.map :global(.maplibregl-canvas-container) {
 		background: light-dark(var(--gray-2), var(--gray-12));
 	}
 
-	:global(html.dark) .map :global(.leaflet-tile-pane),
-	:global(html.dark) .map :global(.leaflet-tile-container),
-	:global(html.dark) .map :global(.leaflet-pane) {
-		background: var(--gray-12);
-	}
-
-	.map :global(.leaflet-tile) {
-		background: transparent;
-	}
-
-	.map :global(.leaflet-control-zoom a),
-	.map :global(.leaflet-control-attribution) {
+	.map :global(.maplibregl-ctrl button),
+	.map :global(.maplibregl-ctrl-attrib) {
 		background: light-dark(var(--gray-1), var(--gray-3));
 		color: light-dark(var(--gray-12), var(--gray-11));
+	}
+
+	.map :global(.maplibregl-ctrl-group) {
+		/* Override MapLibre's hardcoded background:#fff */
+		background: light-dark(var(--gray-1), var(--gray-3));
+		border: 1px solid light-dark(var(--gray-5), var(--gray-6));
+		border-radius: var(--border-radius);
+		overflow: hidden;
+	}
+
+	.map :global(.maplibregl-ctrl-group button) {
 		border-color: light-dark(var(--gray-5), var(--gray-6));
 	}
 
-	/* Keep zoom controls above credits in bottom-right corner. */
-	.map :global(.leaflet-bottom.leaflet-right) {
+	/* Zoom +/− and close icons are SVG background-images with hardcoded dark fill.
+	   Invert them in dark mode so they're visible on the dark control background. */
+	:global(html.dark) .map :global(.maplibregl-ctrl-icon) {
+		filter: invert(1);
+	}
+
+	.map :global(.maplibregl-ctrl-attrib) {
+		border: 1px solid light-dark(var(--gray-5), var(--gray-6));
+		border-radius: var(--border-radius);
+	}
+
+	.map :global(.maplibregl-ctrl-attrib a) {
+		color: light-dark(var(--gray-11), var(--gray-9));
+	}
+
+	/* Hide the MapLibre logo — attribution is shown via our AttributionControl. */
+	.map :global(.maplibregl-ctrl-logo) {
+		display: none;
+	}
+
+	/* Keep zoom above attribution in bottom-right corner. */
+	.map :global(.maplibregl-ctrl-bottom-right) {
 		display: flex;
-		flex-direction: column;
+		flex-direction: column-reverse;
 		align-items: flex-end;
-	}
-
-	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-zoom) {
-		order: 1;
-	}
-
-	.map :global(.leaflet-bottom.leaflet-right .leaflet-control-attribution) {
-		order: 2;
+		gap: 0.25rem;
 	}
 </style>
