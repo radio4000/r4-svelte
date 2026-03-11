@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import * as m from '$lib/paraglide/messages'
 	import AuthLogin from '$lib/components/auth-login.svelte'
@@ -31,7 +32,7 @@
 
 	{#if !isCheckEmail}
 		<footer>
-			<p>{m.auth_new_to_r4_intro()} <a href="/auth/create-account">{m.auth_card_create_title()}</a></p>
+			<p>{m.auth_new_to_r4_intro()} <a href={resolve('/auth/create-account')}>{m.auth_card_create_title()}</a></p>
 		</footer>
 	{/if}
 </article>

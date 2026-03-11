@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import * as m from '$lib/paraglide/messages'
 
@@ -40,7 +41,7 @@
 
 <article class="constrained focused splash">
 	<header>
-		<p><a href="/auth">{m.auth_page_title()}</a> / {m.auth_set_new_password()}</p>
+		<p><a href={resolve('/auth')}>{m.auth_page_title()}</a> / {m.auth_set_new_password()}</p>
 	</header>
 
 	<h1>{m.auth_set_new_password()}</h1>
@@ -49,7 +50,7 @@
 		<section>
 			<p><strong>{m.auth_password_reset_complete()}</strong></p>
 			<menu>
-				<a href="/settings"><button class="primary">{m.settings_page_title()}</button></a>
+				<a href={resolve('/settings')}><button class="primary">{m.settings_page_title()}</button></a>
 			</menu>
 		</section>
 	{:else}

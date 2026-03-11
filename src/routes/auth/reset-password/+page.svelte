@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import R4PasswordReset from '$lib/components/r4-password-reset.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {appChatUrl} from '$lib/config'
@@ -19,7 +20,7 @@
 
 <article class="constrained focused splash">
 	<header>
-		<p><a href="/auth">{m.auth_page_title()}</a> / {m.auth_reset_page_title()}</p>
+		<p><a href={resolve('/auth')}>{m.auth_page_title()}</a> / {m.auth_reset_page_title()}</p>
 	</header>
 
 	<h1>{m.auth_reset_heading()}</h1>

@@ -2,6 +2,7 @@
 	import {sdk} from '@radio4000/sdk'
 	import {logger} from '$lib/logger'
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
@@ -68,9 +69,9 @@
 
 		<menu class="nav-vertical">
 			{#if !userChannelsQuery.data?.length}
-				<a href="/create-channel">{m.auth_create_radio_cta()}</a>
+				<a href={resolve('/create-channel')}>{m.auth_create_radio_cta()}</a>
 			{/if}
-			<a href="/settings">Settings</a>
+			<a href={resolve('/settings')}>Settings</a>
 			<button type="button" onclick={handleSignOut}>{m.auth_log_out()}</button>
 		</menu>
 
@@ -79,16 +80,16 @@
 		{/if}
 	{:else}
 		<menu class="nav-options">
-			<a href="/auth/create-account{redirectParam}">
+			<a href={resolve('/auth/create-account') + redirectParam}>
 				<h3>{m.auth_card_create_title()}</h3>
 				<p>{m.auth_card_create_description()}</p>
 			</a>
-			<a href="/auth/login{redirectParam}">
+			<a href={resolve('/auth/login') + redirectParam}>
 				<h3>{m.auth_card_login_title()}</h3>
 				<p>{m.auth_card_login_description()}</p>
 			</a>
 		</menu>
-		<a href="/welcome" class="welcome-link">What is Radio4000?</a>
+		<a href={resolve('/welcome')} class="welcome-link">What is Radio4000?</a>
 	{/if}
 </article>
 
