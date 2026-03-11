@@ -1,18 +1,19 @@
 <script>
 	import {page} from '$app/state'
+	import {base, resolve} from '$app/paths'
 
 	let {data, children} = $props()
 
-	const currentSlug = $derived(page.url.pathname.replace('/docs/', '').replace('/docs', '') || 'index')
+	const currentSlug = $derived(page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index')
 </script>
 
 <div class="docs-layout">
 	<nav class="docs-sidebar">
-		<a href="/docs" aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
-		<a href="/docs/reference" aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a>
+		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
+		<a href={resolve('/docs/reference')} aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a>
 		<hr />
 		{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
-			<a href="/docs/{doc}" aria-current={currentSlug === doc ? 'page' : undefined}>{doc}</a>
+			<a href="{base}/docs/{doc}" aria-current={currentSlug === doc ? 'page' : undefined}>{doc}</a>
 		{/each}
 	</nav>
 

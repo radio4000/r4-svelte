@@ -1,11 +1,12 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {appChatUrl, appDiscordUrl, appSocialUrl} from '$lib/config'
 	import {repoUrl} from '$lib/repo'
 </script>
 
 <nav>
 	<a href={repoUrl} target="_blank" rel="noreferrer">Source <small>how it's built</small></a> &rarr;
-	<a href="/docs">Docs <small>how things work</small></a>
+	<a href={resolve('/docs')}>Docs <small>how things work</small></a>
 </nav>
 
 <nav>
@@ -15,7 +16,8 @@
 </nav>
 <nav>
 	&nbsp; &nbsp; &nbsp;
-	<a href="/" class="ghost">Explore radios</a> or more <a href="/about" class="ghost">about Radio4000&hellip;</a>
+	<a href={resolve('/')} class="ghost">Explore radios</a> or more
+	<a href={resolve('/about')} class="ghost">about Radio4000&hellip;</a>
 </nav>
 
 <style>

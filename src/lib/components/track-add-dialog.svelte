@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
@@ -20,11 +21,11 @@
 	/** @param {{track?: import('$lib/types').Track, url?: string}} [data] */
 	function open(data = {}) {
 		if (!isSignedIn) {
-			goto('/auth')
+			goto(resolve('/auth'))
 			return
 		}
 		if (!channel) {
-			goto('/create-channel')
+			goto(resolve('/create-channel'))
 			return
 		}
 		const track = data.track
@@ -101,7 +102,7 @@
 
 <Dialog bind:showModal>
 	{#snippet header()}
-		<h2><a href="/add">{m.track_add_title()}</a></h2>
+		<h2><a href={resolve('/add')}>{m.track_add_title()}</a></h2>
 	{/snippet}
 
 	{#if channel}

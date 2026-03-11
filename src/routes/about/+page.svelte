@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import * as m from '$lib/paraglide/messages'
 	import BackLink from '$lib/components/back-link.svelte'
 </script>
@@ -9,7 +10,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings" />
+		<BackLink href={resolve('/settings')} />
 		<h1>About Radio4000</h1>
 	</header>
 </article>
@@ -77,8 +78,8 @@
 <article class="constrained">
 	<footer>
 		<p>
-			<a href="/create-channel" class="btn primary">{m.channel_create_title()}</a>
-			<a href="/" class="btn">{m.common_start_exploring()}</a>
+			<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
+			<a href={resolve('/')} class="btn">{m.common_start_exploring()}</a>
 		</p>
 	</footer>
 </article>
