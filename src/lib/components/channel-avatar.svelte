@@ -1,5 +1,6 @@
 <script>
 	import {channelAvatarUrl} from '$lib/utils'
+	import Icon from '$lib/components/icon.svelte'
 	/* keep 250 please, since it is what cloudinary has already generated */
 	let {id, alt = '', size = 250} = $props()
 </script>
@@ -7,15 +8,31 @@
 {#if id}
 	<img loading="lazy" src={channelAvatarUrl(id, size)} {alt} />
 {:else}
-	<img loading="lazy" src="/placeholder.png" {alt} />
+	<span class="fallback" role={alt ? 'img' : undefined} aria-label={alt || undefined}>
+		<Icon icon="user" />
+	</span>
 {/if}
 
 <style>
-	img {
+	img,
+	.fallback {
 		width: 100%;
 		max-width: 100%;
 		border-radius: var(--media-radius);
 		flex: 1;
 		aspect-ratio: 1;
+	}
+
+	.fallback {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--gray-3);
+		color: var(--gray-11);
+	}
+
+	.fallback :global(svg) {
+		width: 55%;
+		height: 55%;
 	}
 </style>
