@@ -31,6 +31,10 @@
 	/** @type {BroadcastLayer | null} */
 	let broadcastLayer = null
 	let globeMode = $state(false)
+	let showGraticules = $state(false)
+	let showDayNight = $state(false)
+	/** @type {'carto' | 'topo' | 'satellite'} */
+	let tileStyle = $state('carto')
 	let popupNavigationInFlight = false
 	let pendingPopupLinkNavigationTimer = null
 	let lastAutoOpenedToken = null
@@ -100,7 +104,10 @@
 		favoriteStroke: resolveCssColor('--accent-9'),
 		favoriteFill: resolveCssColor('--accent-6'),
 		activeStroke: resolveCssColor('--accent-11'),
-		activeFill: resolveCssColor('--accent-9')
+		activeFill: resolveCssColor('--accent-9'),
+		// broadcasting: light accent fill (same var as channel-card's .playing bg) + thick stroke
+		broadcastingStroke: resolveCssColor('--accent-11'),
+		broadcastingFill: resolveCssColor('--accent-3')
 	}))
 
 	function getChannelState(channel) {
@@ -115,19 +122,18 @@
 
 	function getMarkerStyle(channel) {
 		const state = getChannelState(channel)
-		const stroke = state.isActive
-			? palette.activeStroke
-			: state.isFavorite
-				? palette.favoriteStroke
-				: palette.normalStroke
-		const fill = state.isActive ? palette.activeFill : state.isFavorite ? palette.favoriteFill : palette.normalFill
-		const radius = state.isActive ? 8 : state.isFavorite ? 7 : 6
-		return {
-			radius,
-			strokeColor: stroke,
-			fillColor: fill,
-			strokeWidth: state.isActive || state.isFavorite ? 2 : 1.5
+		// 4-tier visual hierarchy: broadcasting > active > favorite > normal
+		// mirrors the channel card: .playing uses --accent-3 bg, broadcasting shows a live badge
+		if (state.isBroadcasting) {
+			return {radius: 9, strokeColor: palette.broadcastingStroke, fillColor: palette.broadcastingFill, strokeWidth: 3}
 		}
+		if (state.isActive) {
+			return {radius: 8, strokeColor: palette.activeStroke, fillColor: palette.activeFill, strokeWidth: 2}
+		}
+		if (state.isFavorite) {
+			return {radius: 7, strokeColor: palette.favoriteStroke, fillColor: palette.favoriteFill, strokeWidth: 2}
+		}
+		return {radius: 5, strokeColor: palette.normalStroke, fillColor: palette.normalFill, strokeWidth: 1.5}
 	}
 
 	/** @returns {GeoJSON.FeatureCollection} */
@@ -336,9 +342,159 @@
 		)
 	}
 
+	// ── Tile styles ────────────────────────────────────────────────────────────
+
+	/** @param {'carto'|'topo'|'satellite'} name @returns {import('maplibre-gl').StyleSpecification} */
+	function buildMapStyle(name) {
+		const dark = document.documentElement.classList.contains('dark')
+		if (name === 'topo') {
+			return {
+				version: 8,
+				sources: {
+					topo: {
+						type: 'raster',
+						tiles: ['https://tile.opentopomap.org/{z}/{x}/{y}.png'],
+						tileSize: 256,
+						maxzoom: 17,
+						attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
+					}
+				},
+				layers: [{id: 'topo', type: 'raster', source: 'topo'}]
+			}
+		}
+		if (name === 'satellite') {
+			return {
+				version: 8,
+				sources: {
+					satellite: {
+						type: 'raster',
+						tiles: ['https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+						tileSize: 256,
+						maxzoom: 19,
+						attribution: 'Powered by Esri'
+					}
+				},
+				layers: [{id: 'satellite', type: 'raster', source: 'satellite'}]
+			}
+		}
+		// carto – mirrors map.svelte's buildStyle
+		const base = dark
+			? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+			: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+		return {
+			version: 8,
+			sources: {
+				carto: {
+					type: 'raster',
+					tiles: [base.replace('{s}', 'a'), base.replace('{s}', 'b'), base.replace('{s}', 'c')],
+					tileSize: 256,
+					attribution:
+						'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+				}
+			},
+			layers: [{id: 'carto', type: 'raster', source: 'carto'}]
+		}
+	}
+
+	// ── Overlay GeoJSON builders ─────────────────────────────────────────────
+
+	/** Lines at equator, tropics of Cancer/Capricorn, Arctic/Antarctic circles. */
+	function buildGraticuleGeoJSON() {
+		/** @type {{id: string, lat: number}[]} */
+		const lines = [
+			{id: 'equator', lat: 0},
+			{id: 'tropic-cancer', lat: 23.4368},
+			{id: 'tropic-capricorn', lat: -23.4368},
+			{id: 'arctic', lat: 66.563},
+			{id: 'antarctic', lat: -66.563}
+		]
+		return {
+			type: 'FeatureCollection',
+			features: lines.map(({id, lat}) => ({
+				type: 'Feature',
+				geometry: {type: 'LineString', coordinates: [[-180, lat], [180, lat]]},
+				properties: {id}
+			}))
+		}
+	}
+
+	/** Night-side polygon computed from current solar position. */
+	function buildNightGeoJSON() {
+		const now = new Date()
+		const dayOfYear = Math.round((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000)
+		const decDeg = -23.45 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10))
+		const dec = decDeg * Math.PI / 180
+		// Small epsilon avoids tan(0) singularity at equinoxes
+		const tanDec = Math.abs(dec) < 0.002 ? 0.002 * Math.sign(dec || 1) : Math.tan(dec)
+		const noonLng = (12 - (now.getUTCHours() + now.getUTCMinutes() / 60)) * 15
+
+		const coords = []
+		for (let lng = -180; lng <= 180; lng += 2) {
+			const ha = ((lng - noonLng) * Math.PI) / 180
+			coords.push([lng, (Math.atan(-Math.cos(ha) / tanDec) * 180) / Math.PI])
+		}
+
+		// Build a CCW polygon: reversed terminator → night-pole corners → close
+		const nightPole = decDeg >= 0 ? -90 : 90
+		const rev = [...coords].reverse()
+		const ring = [...rev, [-180, nightPole], [180, nightPole], rev[0]]
+		return {
+			type: 'FeatureCollection',
+			features: [{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}]
+		}
+	}
+
+	// ── Overlay layer setup ──────────────────────────────────────────────────
+
+	/** Add night-fill + graticule line layers. Called before channels-layer so they render beneath. */
+	function setupOverlays(m) {
+		if (!m.getSource('night-source')) {
+			m.addSource('night-source', {type: 'geojson', data: buildNightGeoJSON()})
+			m.addLayer({
+				id: 'night-layer',
+				type: 'fill',
+				source: 'night-source',
+				paint: {'fill-color': '#0a0a2e', 'fill-opacity': 0.45},
+				layout: {visibility: showDayNight ? 'visible' : 'none'}
+			})
+		}
+		if (!m.getSource('graticule-source')) {
+			m.addSource('graticule-source', {type: 'geojson', data: buildGraticuleGeoJSON()})
+			// Equator: solid red
+			m.addLayer({
+				id: 'graticule-equator',
+				type: 'line',
+				source: 'graticule-source',
+				filter: ['==', ['get', 'id'], 'equator'],
+				paint: {'line-color': '#cc4444', 'line-width': 1.5, 'line-opacity': 0.75},
+				layout: {visibility: showGraticules ? 'visible' : 'none'}
+			})
+			// Tropics & polar circles: dashed blue-gray
+			m.addLayer({
+				id: 'graticule-other',
+				type: 'line',
+				source: 'graticule-source',
+				filter: ['!=', ['get', 'id'], 'equator'],
+				paint: {'line-color': '#6699bb', 'line-width': 1, 'line-opacity': 0.6, 'line-dasharray': [4, 4]},
+				layout: {visibility: showGraticules ? 'visible' : 'none'}
+			})
+		}
+	}
+
+	function updateNightLayer() {
+		if (!map || !mapReady) return
+		/** @type {any} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
+	}
+
 	function handleReady(m) {
+		// If a custom tile is active but map.svelte's theme observer reverted to carto, re-apply it.
+		if (tileStyle !== 'carto' && !m.getSource(tileStyle)) {
+			m.setStyle(buildMapStyle(tileStyle))
+			return // handleReady will fire again via styledata
+		}
 		map = m
 		mapReady = true
+		setupOverlays(m)
 		setupLayers(m)
 		if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
 		if (!m.getLayer('broadcast-3d')) m.addLayer(broadcastLayer)
@@ -440,6 +596,42 @@
 		map.setProjection({type: globeMode ? 'globe' : 'mercator'})
 	})
 
+	// Tile style switcher: apply when user changes, skip if already active
+	$effect(() => {
+		const style = tileStyle
+		if (!map || !mapReady) return
+		const sourceId = style === 'carto' ? 'carto' : style
+		if (map.getSource(sourceId)) return // already applied
+		map.setStyle(buildMapStyle(style))
+	})
+
+	// Graticule visibility toggle
+	$effect(() => {
+		const vis = showGraticules ? 'visible' : 'none'
+		if (!map || !mapReady) return
+		try {
+			map.setLayoutProperty('graticule-equator', 'visibility', vis)
+			map.setLayoutProperty('graticule-other', 'visibility', vis)
+		} catch {
+			/* layers not yet added */
+		}
+	})
+
+	// Day/night visibility + 1-min update timer
+	$effect(() => {
+		const vis = showDayNight ? 'visible' : 'none'
+		if (!map || !mapReady) return
+		try {
+			map.setLayoutProperty('night-layer', 'visibility', vis)
+		} catch {
+			/* layer not yet added */
+		}
+		if (!showDayNight) return
+		updateNightLayer()
+		const id = setInterval(updateNightLayer, 60_000)
+		return () => clearInterval(id)
+	})
+
 	onDestroy(() => {
 		clearAutoOpenRetry()
 		clearPendingPopupLinkNavigation()
@@ -464,6 +656,44 @@
 			>
 				<Icon icon={globeMode ? 'map' : 'globe'} size={16} />
 			</button>
+		</div>
+		<div class="maplibregl-ctrl maplibregl-ctrl-group">
+			<button
+				type="button"
+				class:active={showGraticules}
+				onclick={() => (showGraticules = !showGraticules)}
+				{@attach tooltip({content: 'Tropics & poles', placement: 'right'})}
+			>
+				<Icon icon="grid" size={16} />
+			</button>
+			<button
+				type="button"
+				class:active={showDayNight}
+				onclick={() => (showDayNight = !showDayNight)}
+				{@attach tooltip({content: 'Day / night', placement: 'right'})}
+			>
+				<Icon icon="sun" size={16} />
+			</button>
+		</div>
+		<div class="maplibregl-ctrl maplibregl-ctrl-group tile-btns">
+			<button
+				type="button"
+				class:active={tileStyle === 'carto'}
+				onclick={() => (tileStyle = 'carto')}
+				{@attach tooltip({content: 'Cartographic tiles', placement: 'right'})}
+			>Map</button>
+			<button
+				type="button"
+				class:active={tileStyle === 'topo'}
+				onclick={() => (tileStyle = 'topo')}
+				{@attach tooltip({content: 'Topographic tiles', placement: 'right'})}
+			>Topo</button>
+			<button
+				type="button"
+				class:active={tileStyle === 'satellite'}
+				onclick={() => (tileStyle = 'satellite')}
+				{@attach tooltip({content: 'Satellite imagery', placement: 'right'})}
+			>Sat</button>
 		</div>
 	</div>
 </div>
@@ -515,6 +745,20 @@
 	.map-controls button.active {
 		color: var(--accent-11);
 		background: light-dark(var(--gray-2), var(--gray-4));
+	}
+
+	/* Separator between stacked buttons within a group */
+	.map-controls .maplibregl-ctrl-group button + button {
+		border-top: 1px solid light-dark(var(--gray-4), var(--gray-5));
+	}
+
+	/* Tile-style buttons are text labels, not icons */
+	.tile-btns button {
+		width: auto;
+		padding: 0 var(--space-2);
+		font-size: var(--font-2);
+		font-weight: 500;
+		letter-spacing: 0.02em;
 	}
 
 	:global(.map-popup) {
