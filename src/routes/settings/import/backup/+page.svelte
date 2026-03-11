@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {resolve} from '$app/paths'
 	import {importBackupFile, importFromUrl} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -53,7 +54,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings/import" />
+		<BackLink href={resolve('/settings/import')} />
 		<h1>{m.import_backup_title()}</h1>
 	</header>
 
@@ -88,12 +89,12 @@
 		{#if result.alreadyImported}
 			<p>
 				<strong>{result.channel.name}</strong> — {m.import_result_already()}
-				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
+				<a href={resolve('/[slug]', {slug: result.channel.slug})}>{m.import_browse_channel()}</a>
 			</p>
 		{:else}
 			<p>
 				<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
-				<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
+				<a href={resolve('/[slug]', {slug: result.channel.slug})}>{m.import_browse_channel()}</a>
 			</p>
 		{/if}
 		<p>

@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -41,7 +42,7 @@
 
 <article class="constrained">
 	<header>
-		<BackLink href="/settings/account" />
+		<BackLink href={resolve('/settings/account')} />
 		<h1>{m.account_change_email()}</h1>
 	</header>
 
@@ -53,7 +54,7 @@
 	{/if}
 
 	{#if !appState.user}
-		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
+		<p><a href={resolve('/auth')}>{m.account_sign_in_prompt()}</a></p>
 	{:else}
 		{#if success}
 			<p class="success">{m.account_email_confirmation_sent()}</p>

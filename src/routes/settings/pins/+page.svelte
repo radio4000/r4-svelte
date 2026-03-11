@@ -8,6 +8,7 @@
 		type SavedView
 	} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {resolve} from '$app/paths'
 	import BackLink from '$lib/components/back-link.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -57,7 +58,7 @@
 
 <article class="constrained">
 	<header>
-		<BackLink href="/settings" />
+		<BackLink href={resolve('/settings')} />
 		<h1>Pins</h1>
 	</header>
 	<p><small>Pretty neat for quick access</small></p>
@@ -104,7 +105,7 @@
 				</li>
 			{/each}
 		</menu>
-		<p><a href="/search">{m.views_create_more()}</a></p>
+		<p><a href={resolve('/search')}>{m.views_create_more()}</a></p>
 	{/if}
 </article>
 

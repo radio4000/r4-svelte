@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import {SvelteMap} from 'svelte/reactivity'
@@ -298,7 +299,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings/import" />
+		<BackLink href={resolve('/settings/import')} />
 		<h1>{m.import_folder_title()}</h1>
 	</header>
 
@@ -336,7 +337,7 @@
 						{:else}
 							<strong>{r.channel.name}</strong> — {m.import_result_already()}
 						{/if}
-						<a href="/{r.channel.slug}">{m.import_browse_channel()}</a>
+						<a href={resolve('/[slug]', {slug: r.channel.slug})}>{m.import_browse_channel()}</a>
 					</p>
 				{/each}
 				<p>
