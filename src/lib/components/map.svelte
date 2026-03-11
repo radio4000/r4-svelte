@@ -147,6 +147,8 @@
 	}
 
 	.map :global(.maplibregl-ctrl-group) {
+		/* Override MapLibre's hardcoded background:#fff */
+		background: light-dark(var(--gray-1), var(--gray-3));
 		border: 1px solid light-dark(var(--gray-5), var(--gray-6));
 		border-radius: var(--border-radius);
 		overflow: hidden;
@@ -154,6 +156,12 @@
 
 	.map :global(.maplibregl-ctrl-group button) {
 		border-color: light-dark(var(--gray-5), var(--gray-6));
+	}
+
+	/* Zoom +/− and close icons are SVG background-images with hardcoded dark fill.
+	   Invert them in dark mode so they're visible on the dark control background. */
+	:global(html.dark) .map :global(.maplibregl-ctrl-icon) {
+		filter: invert(1);
 	}
 
 	.map :global(.maplibregl-ctrl-attrib) {
