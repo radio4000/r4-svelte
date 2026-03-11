@@ -21,6 +21,7 @@
 
 	const {preloading} = $props()
 
+	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
 	const isBroadcasting = $derived(
 		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
@@ -88,7 +89,7 @@
 					class:active={page.route.id === '/welcome'}
 					{@attach tooltip({content: m.header_start_your_radio()})}
 				>
-					<Icon icon="sparkles" />
+					<Icon icon="circle-info" />
 				</a>
 			{/if}
 		{/await}
@@ -110,19 +111,12 @@
 					/>
 				</span>
 			{/if}
-			<AddTrackDialog />
+			{#if isSignedIn}
+				<AddTrackDialog />
+			{/if}
 			<EditTrackDialog />
 			<ShareDialog />
 			<ShortcutsDialog />
-			<a
-				href={resolve('/history')}
-				class="btn"
-				class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
-				aria-label={m.nav_history()}
-				{@attach tooltip({content: m.nav_history()})}
-			>
-				<Icon icon="history" />
-			</a>
 			{#if userChannel}
 				<a
 					href={resolve(`/${userChannel.slug}`)}
@@ -135,11 +129,30 @@
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
+			{:else if !isSignedIn}
+				<a
+					href={resolve('/auth')}
+					class="btn"
+					class:active={page.route.id?.startsWith('/auth')}
+					aria-label={m.auth_create_or_signin()}
+					{@attach tooltip({content: m.auth_create_or_signin()})}
+				>
+					<Icon icon="user" />
+				</a>
 			{:else}{/if}
 		{/await}
 	</nav>
 
 	<nav class="nav-settings">
+		<a
+			href={resolve('/history')}
+			class="btn"
+			class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
+			aria-label={m.nav_history()}
+			{@attach tooltip({content: m.nav_history()})}
+		>
+			<Icon icon="history" />
+		</a>
 		<a
 			href={resolve('/settings')}
 			class="btn settings-link"
