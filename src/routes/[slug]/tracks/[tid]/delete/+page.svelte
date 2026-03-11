@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {eq} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -45,7 +46,7 @@
 
 		try {
 			await deleteTrack({id: channel.id, slug: channel.slug}, track.id)
-			goto(`/${data.slug}`)
+			goto(resolve('/[slug]', {slug: data.slug}))
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || 'Failed to delete track'
 			deleting = false
@@ -65,7 +66,10 @@
 	{:else if canDelete}
 		<header>
 			<h1>{m.common_delete()} track</h1>
-			<p><a href="/{channel.slug}">@{channel.slug}</a> / <a href="/{data.slug}/tracks/{data.tid}">{track.title}</a></p>
+			<p>
+				<a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a> /
+				<a href={resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid})}>{track.title}</a>
+			</p>
 		</header>
 
 		<p>This will permanently delete this track.</p>
@@ -86,9 +90,9 @@
 			</button>
 		</form>
 
-		<p><a href="/{data.slug}/tracks/{data.tid}/edit">Cancel</a></p>
+		<p><a href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}>Cancel</a></p>
 	{:else if !isSignedIn}
-		<p><a href="/auth">{m.auth_sign_in_to_edit()}</a></p>
+		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}
 		<p>You don't have permission to delete this track.</p>
 	{/if}

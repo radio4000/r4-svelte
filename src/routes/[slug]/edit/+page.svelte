@@ -1,5 +1,6 @@
 <script>
 	import {replaceState} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection, updateChannel} from '$lib/collections/channels'
@@ -72,7 +73,7 @@
 			success = true
 			// Update URL if slug changed (shallow routing)
 			if (newSlug !== oldSlug) {
-				replaceState(`/${newSlug}/edit`, {})
+				replaceState(resolve('/[slug]/edit', {slug: newSlug}), {})
 			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || 'Failed to update channel'
@@ -167,9 +168,9 @@
 			</button>
 		</form>
 
-		<p><a href={`/${channel.slug}/delete`}>{m.common_delete()} channel</a></p>
+		<p><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.common_delete()} channel</a></p>
 	{:else if !isSignedIn}
-		<p><a href="/auth">{m.auth_sign_in_to_edit()}</a></p>
+		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}
 		<p>Loading...</p>
 	{/if}

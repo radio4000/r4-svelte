@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -186,7 +187,7 @@
 			{:else if tracksQuery.isReady && allTracks.length === 0}
 				{#if canEdit}
 					<p class="empty">
-						<a href="/add">Add your first track (tip: press "c")</a>
+						<a href={resolve('/add')}>Add your first track (tip: press "c")</a>
 					</p>
 				{:else}
 					<p class="empty">No tracks yet</p>

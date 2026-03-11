@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import * as m from '$lib/paraglide/messages'
 	import AuthSignup from '$lib/components/auth-signup.svelte'
@@ -31,7 +32,7 @@
 
 	{#if !isCheckEmail}
 		<footer>
-			<p>{m.auth_already_have_account_intro()} <a href="/auth/login">{m.auth_card_login_title()}</a></p>
+			<p>{m.auth_already_have_account_intro()} <a href={resolve('/auth/login')}>{m.auth_card_login_title()}</a></p>
 		</footer>
 	{/if}
 </article>

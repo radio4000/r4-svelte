@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {importM3uFile, importFromUrl} from '$lib/import'
 	import type {ImportResult} from '$lib/import'
@@ -60,7 +61,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings/import" />
+		<BackLink href={resolve('/settings/import')} />
 		<h1>{m.import_m3u_title()}</h1>
 	</header>
 
@@ -94,7 +95,7 @@
 	{#if result}
 		<p>
 			<strong>{result.channel.name}</strong> — {m.import_result_tracks({count: result.imported})}
-			<a href="/{result.channel.slug}">{m.import_browse_channel()}</a>
+			<a href={resolve('/[slug]', {slug: result.channel.slug})}>{m.import_browse_channel()}</a>
 		</p>
 		<p>
 			<button type="button" onclick={browseImported}>{m.import_browse_all()}</button>

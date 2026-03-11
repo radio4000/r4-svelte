@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 	import {DEFAULT_KEY_BINDINGS} from '$lib/keyboard'
@@ -45,7 +46,7 @@
 	</dl>
 
 	<footer>
-		<a href="/settings/keyboard" onclick={() => (showModal = false)}>{m.shortcuts_edit()}</a>
+		<a href={resolve('/settings/keyboard')} onclick={() => (showModal = false)}>{m.shortcuts_edit()}</a>
 	</footer>
 </Dialog>
 

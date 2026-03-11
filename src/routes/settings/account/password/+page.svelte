@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -45,12 +46,12 @@
 
 <article class="constrained">
 	<header>
-		<BackLink href="/settings/account" />
+		<BackLink href={resolve('/settings/account')} />
 		<h1>{m.account_change_password()}</h1>
 	</header>
 
 	{#if !appState.user}
-		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
+		<p><a href={resolve('/auth')}>{m.account_sign_in_prompt()}</a></p>
 	{:else}
 		<form class="form" onsubmit={updatePassword}>
 			<fieldset>

@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import * as m from '$lib/paraglide/messages'
 	import {resetLocalData} from '$lib/api'
 
@@ -11,7 +12,7 @@
 	}
 
 	function reload() {
-		location.href = '/'
+		location.href = resolve('/')
 	}
 </script>
 
@@ -44,7 +45,7 @@
 	<hr />
 
 	<menu>
-		<a href="/">{m.recovery_go_home()}</a>
+		<a href={resolve('/')}>{m.recovery_go_home()}</a>
 	</menu>
 </article>
 

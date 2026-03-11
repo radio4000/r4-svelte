@@ -1,18 +1,18 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {children} = $props()
-	const pathname = $derived(page.url.pathname)
 </script>
 
 <nav class="tabs constrained">
-	<a href="/history" class:active={pathname === '/history'}>
+	<a href={resolve('/history')} class:active={page.route.id === '/history'}>
 		<Icon icon="history" />
 		{m.nav_history()}
 	</a>
-	<a href="/history/stats" class:active={pathname === '/history/stats'}>
+	<a href={resolve('/history/stats')} class:active={page.route.id === '/history/stats'}>
 		<Icon icon="chart-scatter" />
 		{m.nav_stats()}
 	</a>

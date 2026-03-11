@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
 	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
 	import {eq} from '@tanstack/db'
@@ -30,7 +31,7 @@
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
-	let rssHref = $derived(`/${slug}.rss`)
+	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
@@ -228,7 +229,7 @@
 		<div class="channel-sticky">
 			<header>
 				<div class="avatar">
-					<a href="/{slug}/image" tabindex="-1">
+					<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
 						<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
 					</a>
 				</div>
@@ -315,32 +316,32 @@
 
 			<div class="tabs channel-nav">
 				<nav aria-label={m.nav_tracks()}>
-					<a href="/{slug}" class:active={routeId === '/[slug]'}>
+					<a href={resolve('/[slug]', {slug})} class:active={routeId === '/[slug]'}>
 						<Icon icon="circle-info" size={16} />
 						Info
 					</a>
-					<a href="/{slug}/tracks" class:active={routeId?.startsWith('/[slug]/tracks')}>
+					<a href={resolve('/[slug]/tracks', {slug})} class:active={routeId?.startsWith('/[slug]/tracks')}>
 						<Icon icon="unordered-list" size={16} />
 						{m.nav_tracks()} ({allChannelTracks.length})
 					</a>
-					<a href="/{slug}/tags" class:active={routeId?.startsWith('/[slug]/tags')}>
+					<a href={resolve('/[slug]/tags', {slug})} class:active={routeId?.startsWith('/[slug]/tags')}>
 						<Icon icon="hash" size={16} />
 						{m.channel_tags_link()}
 					</a>
-					<a href="/{slug}/mentions" class:active={routeId?.startsWith('/[slug]/mentions')}>
+					<a href={resolve('/[slug]/mentions', {slug})} class:active={routeId?.startsWith('/[slug]/mentions')}>
 						<Icon icon="user" size={16} />
 						Mentions
 					</a>
-					<a href="/{slug}/following" class:active={routeId?.startsWith('/[slug]/following')}>
+					<a href={resolve('/[slug]/following', {slug})} class:active={routeId?.startsWith('/[slug]/following')}>
 						<Icon icon="sparkles" size={16} />
 						{m.nav_following()}
 					</a>
-					<a href="/{slug}/followers" class:active={routeId?.startsWith('/[slug]/followers')}>
+					<a href={resolve('/[slug]/followers', {slug})} class:active={routeId?.startsWith('/[slug]/followers')}>
 						<Icon icon="users" size={16} />
 						{m.nav_followers()}
 					</a>
 					{#if channel.longitude && channel.latitude}
-						<a href="/{slug}/map" class:active={routeId?.startsWith('/[slug]/map')}>
+						<a href={resolve('/[slug]/map', {slug})} class:active={routeId?.startsWith('/[slug]/map')}>
 							<Icon icon="map" size={16} />
 							{m.nav_map()}
 						</a>
@@ -348,22 +349,22 @@
 				</nav>
 				{#if canEdit}
 					<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
-						<a href="/{slug}/edit" class:active={routeId?.startsWith('/[slug]/edit')}>
+						<a href={resolve('/[slug]/edit', {slug})} class:active={routeId?.startsWith('/[slug]/edit')}>
 							<Icon icon="settings" size={16} />
 							{m.common_edit()}
 						</a>
-						<a href="/{slug}/batch-edit" class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+						<a href={resolve('/[slug]/batch-edit', {slug})} class:active={routeId?.startsWith('/[slug]/batch-edit')}>
 							<Icon icon="unordered-list" size={16} />
 							{m.batch_edit_nav_label()}
 						</a>
-						<a href="/{slug}/backup" class:active={routeId?.startsWith('/[slug]/backup')}>
+						<a href={resolve('/[slug]/backup', {slug})} class:active={routeId?.startsWith('/[slug]/backup')}>
 							<Icon icon="document-download" size={16} />
 							Backup
 						</a>
 					</nav>
 				{:else if isLocal}
 					<nav class="channel-nav-secondary" aria-label="Local channel">
-						<a href="/{slug}/delete" class:active={routeId?.startsWith('/[slug]/delete')}>
+						<a href={resolve('/[slug]/delete', {slug})} class:active={routeId?.startsWith('/[slug]/delete')}>
 							<Icon icon="delete" size={16} />
 							Delete
 						</a>

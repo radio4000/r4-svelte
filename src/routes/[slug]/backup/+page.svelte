@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
@@ -61,6 +62,6 @@
 			</button>
 		</p>
 	{:else}
-		<p><a href="/auth">{m.channel_backup_sign_in()}</a></p>
+		<p><a href={resolve('/auth')}>{m.channel_backup_sign_in()}</a></p>
 	{/if}
 </article>

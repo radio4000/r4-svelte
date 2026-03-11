@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {startBroadcast, stopBroadcast, getBroadcastingChannelId, isUserBroadcasting} from '$lib/broadcast'
 	import {getMediaPlayer} from '$lib/api'
@@ -103,7 +104,7 @@
 		{/if}
 	</div>
 {:else}
-	<a class="btn" href="/auth" class:compact title={m.broadcast_login_prompt()}>
+	<a class="btn" href={resolve('/auth')} class:compact title={m.broadcast_login_prompt()}>
 		<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 		{#if !compact}{m.broadcast_login_prompt()}{/if}
 	</a>

@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {gsap, Draggable, InertiaPlugin} from '$lib/animations.js'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -83,7 +84,7 @@
 				{#if item.content.channel}
 					<!-- <ChannelHero channel={item.content.channel} /> -->
 					<figure>
-						<a href="/{item.content.channel.slug}">
+						<a href={resolve('/[slug]', {slug: item.content.channel.slug})}>
 							<ChannelAvatar id={item.content.channel.image} alt={item.content.channel.name} size={64} />
 						</a>
 					</figure>

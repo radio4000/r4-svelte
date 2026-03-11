@@ -1,5 +1,6 @@
 <script>
 	import InlineEditCell from './inline-edit-cell.svelte'
+	import {resolve} from '$app/paths'
 	import {formatDuration} from '$lib/dates.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -48,7 +49,7 @@
 
 	<div class="col-link">
 		<a
-			href="/{slug}/tracks/{track.id}"
+			href={resolve('/[slug]/tracks/[tid]', {slug, tid: track.id})}
 			target="_blank"
 			rel="noopener noreferrer"
 			title={m.batch_edit_track_link_title()}

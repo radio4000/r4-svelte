@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -23,12 +24,12 @@
 
 	<menu class="nav-vertical">
 		{#if !appState.user}
-			<a href="/auth">
+			<a href={resolve('/auth')}>
 				<Icon icon="user" />
 				{m.auth_create_or_signin()}
 			</a>
 		{:else}
-			<a href="/settings/account">
+			<a href={resolve('/settings/account')}>
 				<Icon icon="user" />
 				{m.settings_account()}
 				<small>{appState.user.email}</small>
@@ -41,30 +42,30 @@
 	</menu>
 
 	<menu class="nav-vertical">
-		<a href="/settings/appearance">
+		<a href={resolve('/settings/appearance')}>
 			<Icon icon="palette" />
 			{m.settings_appearance()}
 		</a>
-		<a href="/settings/player">
+		<a href={resolve('/settings/player')}>
 			<Icon icon="tv" />
 			{m.settings_player()}
 		</a>
-		<a href="/settings/keyboard">
+		<a href={resolve('/settings/keyboard')}>
 			<Icon icon="keyboard" />
 			{m.settings_keyboard()}
 		</a>
-		<a href="/settings/analytics">
+		<a href={resolve('/settings/analytics')}>
 			<Icon icon="eye" />
 			Analytics
 		</a>
-		<a href="/settings/import">
+		<a href={resolve('/settings/import')}>
 			<Icon icon="document-download" />
 			Import
 		</a>
 	</menu>
 
 	<menu class="nav-vertical">
-		<a href="/about">
+		<a href={resolve('/about')}>
 			<Icon icon="circle-info" />
 			{m.nav_about()}
 			<AppPresenceCount />
@@ -87,7 +88,7 @@
 				Source code <AppBuildInfo link={false} />
 			</a>
 		{/if}
-		<a href="/docs">
+		<a href={resolve('/docs')}>
 			<Icon icon="document" />
 			Docs
 		</a>

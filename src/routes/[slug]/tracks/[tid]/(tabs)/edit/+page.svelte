@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {getTrackDetailCtx} from '$lib/contexts'
 	import TrackForm from '$lib/components/track-form.svelte'
@@ -14,7 +15,7 @@
 
 	function handleSubmit(event) {
 		if (event.error) return
-		goto(`/${data.slug}/tracks/${data.tid}`)
+		goto(resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid}))
 	}
 </script>
 
@@ -32,7 +33,7 @@
 		onsubmit={handleSubmit}
 	/>
 {:else if !isSignedIn}
-	<p><a href="/auth">{m.auth_sign_in_to_edit()}</a></p>
+	<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 {:else}
 	<p>You don't have permission to edit this track.</p>
 {/if}

@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import TrackForm from '$lib/components/track-form.svelte'
@@ -24,7 +25,7 @@
 		const {data, error} = event
 		if (error || !data) return
 		if (channel) {
-			goto(`/${channel.slug}`)
+			goto(resolve('/[slug]', {slug: channel.slug}))
 		}
 	}
 </script>
@@ -35,15 +36,15 @@
 
 <article class="constrained">
 	{#if canAddTrack && channel}
-		<h2>{m.track_add_title()} <a href={`/${channel.slug}`}>@{channel.slug}</a></h2>
+		<h2>{m.track_add_title()} <a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a></h2>
 
 		<TrackForm mode="create" {channel} url={initialUrl} discogs_url={initialDiscogsUrl} onsubmit={handleSubmit} />
 
 		<footer>
-			<small><a href="/bookmarklet">Add tracks from any page with the bookmarklet.</a></small>
+			<small><a href={resolve('/bookmarklet')}>Add tracks from any page with the bookmarklet.</a></small>
 		</footer>
 	{:else}
-		<p><a href="/auth">{m.auth_sign_in_to_add()}</a></p>
+		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_add()}</a></p>
 	{/if}
 </article>
 

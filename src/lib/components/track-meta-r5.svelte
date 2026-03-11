@@ -44,7 +44,7 @@
 		<MetaDefinitionList>
 			{#if data.slug}
 				<dt><Icon icon="radio" size={14} /> {m.track_meta_channel()}</dt>
-				<dd><a href={resolve(`/${data.slug}`)}>@{data.slug}</a></dd>
+				<dd><a href={resolve('/[slug]', {slug: data.slug})}>@{data.slug}</a></dd>
 			{/if}
 
 			{#if data.title}
@@ -76,7 +76,9 @@
 				<dt><Icon icon="tag" size={14} /> {m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
-						<Tag href="/search?q={encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}">#{tag}</Tag>
+						<Tag href={resolve('/search') + '?q=' + encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}
+							>#{tag}</Tag
+						>
 					{/each}
 				</dd>
 			{/if}
@@ -85,7 +87,7 @@
 				<dt><Icon icon="users" size={14} /> {m.track_meta_mentions()}</dt>
 				<dd class="mentions">
 					{#each data.mentions as mention (mention)}
-						<Tag href="/{mention}">@{mention}</Tag>
+						<Tag href={resolve('/[slug]', {slug: mention})}>@{mention}</Tag>
 					{/each}
 				</dd>
 			{/if}

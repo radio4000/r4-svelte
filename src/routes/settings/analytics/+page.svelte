@@ -1,5 +1,6 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
+	import {resolve} from '$app/paths'
 	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {repoCodeSearchUrl, repoUrl, supportsCodeSearch} from '$lib/repo'
@@ -14,7 +15,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings" />
+		<BackLink href={resolve('/settings')} />
 		<h1>{m.settings_analytics_title()}</h1>
 	</header>
 

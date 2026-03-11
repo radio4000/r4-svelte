@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -67,12 +68,12 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href="/settings" />
+		<BackLink href={resolve('/settings')} />
 		<h1>{m.settings_account()}</h1>
 	</header>
 
 	{#if !appState.user}
-		<p><a href="/auth">{m.account_sign_in_prompt()}</a></p>
+		<p><a href={resolve('/auth')}>{m.account_sign_in_prompt()}</a></p>
 	{:else}
 		{#if providerError}
 			<p class="error" role="alert">{providerError}</p>
@@ -86,8 +87,8 @@
 						<small>{appState.user.email}</small>
 					</p>
 					<menu>
-						<a class="btn" href="/settings/account/password">{m.account_change_password()}</a>
-						<a class="btn" href="/settings/account/email">{m.account_change_email()}</a>
+						<a class="btn" href={resolve('/settings/account/password')}>{m.account_change_password()}</a>
+						<a class="btn" href={resolve('/settings/account/email')}>{m.account_change_email()}</a>
 					</menu>
 				</div>
 				{#each providers as provider (provider)}
@@ -139,7 +140,7 @@
 			<menu class="nav-vertical">
 				<div>
 					<p><span>{m.account_delete_title()}</span></p>
-					<a class="btn" href="/settings/account/delete">{m.account_delete_link()}</a>
+					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link()}</a>
 				</div>
 			</menu>
 		</section>

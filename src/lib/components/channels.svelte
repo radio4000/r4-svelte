@@ -163,9 +163,7 @@
 				const stillMissing = unmigratedIds.filter((id) => !recoveredIds.has(id))
 				if (stillMissing.length) {
 					const stillMissingSet = new Set(stillMissing)
-					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
-						(id) => !stillMissingSet.has(id)
-					)
+					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter((id) => !stillMissingSet.has(id))
 				}
 			}
 			// Write any still-missing channels into the collection

@@ -1,5 +1,6 @@
 <script>
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {afterNavigate} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import Channels from '$lib/components/channels.svelte'
@@ -28,7 +29,7 @@
 
 {#if !appState.user && appState.show_welcome_hint !== false}
 	<p class="welcome">
-		Welcome! <a href="/welcome">Learn about Radio4000</a> or <a href="/auth/login">sign in</a>
+		Welcome! <a href={resolve('/welcome')}>Learn about Radio4000</a> or <a href={resolve('/auth/login')}>sign in</a>
 		<button class="link" onclick={() => (appState.show_welcome_hint = false)}>
 			<small>(dismiss)</small>
 		</button>
