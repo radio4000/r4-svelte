@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {page} from '$app/state'
+	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -241,13 +242,15 @@
 						virtual={false}
 						playContext={true}
 					/>
-					<footer><a href="/{slug}/tracks">{m.channel_see_all_tracks({count: allTracks.length})}</a></footer>
+					<footer>
+						<a href={resolve('/[slug]/tracks', {slug})}>{m.channel_see_all_tracks({count: allTracks.length})}</a>
+					</footer>
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
 				{:else if tracksQuery.isReady && allTracks.length === 0}
 					<p class="empty">
 						{#if canEdit}
-							<a href="/add">{m.channel_first_track_cta()}</a>
+							<a href={resolve('/add')}>{m.channel_first_track_cta()}</a>
 						{:else}
 							{m.channel_no_tracks()}
 						{/if}
@@ -306,7 +309,7 @@
 						playContext={true}
 					/>
 					<footer>
-						<a href="/{slug}/tracks?tags={section.tag}"
+						<a href={resolve('/[slug]/tracks', {slug}) + '?tags=' + section.tag}
 							>{m.channel_see_all_tag({count: section.tracks.length, tag: section.tag})}</a
 						>
 					</footer>

@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {deleteChannel} from '$lib/collections/channels'
@@ -77,7 +78,7 @@
 <article class="constrained focused">
 	{#if canDelete && channel}
 		<header>
-			<h1>Delete <a href={`/${channel.slug}`}>{channel.name}</a></h1>
+			<h1>Delete <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
 		</header>
 
 		{#if isLocal}
@@ -108,9 +109,9 @@
 			</button>
 		</form>
 
-		<p><a href={`/${channel.slug}`}>Cancel</a></p>
+		<p><a href={resolve('/[slug]', {slug: channel.slug})}>Cancel</a></p>
 	{:else if !isSignedIn && !isLocal}
-		<p><a href="/auth">Sign in</a></p>
+		<p><a href={resolve('/auth')}>Sign in</a></p>
 	{:else}
 		<p>Loading…</p>
 	{/if}

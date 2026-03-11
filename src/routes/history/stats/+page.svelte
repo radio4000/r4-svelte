@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale} from '$lib/paraglide/runtime'
 	import {playHistoryCollection} from '$lib/collections/play-history'
@@ -256,9 +257,9 @@
 			<ol>
 				{#each mostReplayedTrack as track (track.track_id)}
 					<li>
-						<a href="/{track.slug}">@{track.slug}</a>
+						<a href={resolve('/[slug]', {slug: track.slug})}>@{track.slug}</a>
 						&rarr;
-						<a href={`/${track.slug}/${track.track_id}`}>
+						<a href={resolve('/[slug]/tracks/[tid]', {slug: track.slug, tid: track.track_id})}>
 							<em>{track.title}</em>
 						</a>
 						• {m.stats_play_count({count: track.play_count})}
@@ -276,9 +277,9 @@
 			<ol>
 				{#each recentlyPlayed as track (track.id)}
 					<li>
-						<a href="/{track.slug}">@{track.slug}</a>
+						<a href={resolve('/[slug]', {slug: track.slug})}>@{track.slug}</a>
 						&rarr;
-						<a href={`/${track.slug}/${track.id}`}>
+						<a href={resolve('/[slug]/tracks/[tid]', {slug: track.slug, tid: track.id})}>
 							<em>{track.title}</em>
 						</a>
 					</li>

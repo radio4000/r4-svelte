@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import * as m from '$lib/paraglide/messages'
 
 	let {relatedTracks = []} = $props()
@@ -9,12 +10,12 @@
 	<dl>
 		{#each relatedTracks as related (related.id)}
 			<dt>
-				<a href="/{related.slug}/tracks/{related.id}">
+				<a href={resolve('/[slug]/tracks/[tid]', {slug: related.slug, tid: related.id})}>
 					{related.title}
 				</a>
 			</dt>
 			<dd>
-				{m.track_related_by()} <a href="/{related.slug}">@{related.slug}</a>
+				{m.track_related_by()} <a href={resolve('/[slug]', {slug: related.slug})}>@{related.slug}</a>
 			</dd>
 		{/each}
 	</dl>

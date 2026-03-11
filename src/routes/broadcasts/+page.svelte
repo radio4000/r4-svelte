@@ -10,6 +10,7 @@
 	import {timeAgo} from '$lib/utils'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {sdk} from '@radio4000/sdk'
+	import {resolve} from '$app/paths'
 	import * as m from '$lib/paraglide/messages'
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const activeBroadcasts = $derived((broadcasts.data ?? []).filter((row) => row.channel_id && row.channels))
@@ -92,7 +93,7 @@
 						{/if}
 						{#if primaryLabel}
 							<em>{primaryLabel}</em> via
-							<a href="/{broadcast.channels.slug}">@{broadcast.channels.slug}</a>
+							<a href={resolve('/[slug]', {slug: broadcast.channels.slug})}>@{broadcast.channels.slug}</a>
 						{:else}
 							<em>...</em>
 						{/if}
