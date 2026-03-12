@@ -182,7 +182,7 @@
 		{/if}
 
 		{#if channelsLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching channels…</p>
+			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_channels()}</p>
 		{:else if channels.length}
 			<section>
 				<h2>
@@ -199,7 +199,7 @@
 		{/if}
 
 		{#if tracksLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> Searching tracks…</p>
+			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_tracks()}</p>
 		{:else if tracks.length}
 			<section class="track-results">
 				<header>
@@ -210,17 +210,23 @@
 					</h2>
 					<menu>
 						<ButtonFeedback onclick={playSearchResults}>
-							{#snippet successChildren()}<Icon icon="play-fill" size={16} /> Playing {tracks.length}{/snippet}
-							<Icon icon="play-fill" size={16} />{multiDeck ? `Play on ${deckLabel}` : m.search_play_all()}
+							{#snippet successChildren()}<Icon icon="play-fill" size={16} />
+								{m.search_playing({count: tracks.length})}{/snippet}
+							<Icon icon="play-fill" size={16} />{multiDeck
+								? m.search_play_on_deck({deck: deckLabel})
+								: m.search_play_all()}
 						</ButtonFeedback>
 						<ButtonFeedback onclick={queueSearchResults}>
-							{#snippet successChildren()}<Icon icon="next-fill" size={16} /> Queued {tracks.length}{/snippet}
-							<Icon icon="next-fill" size={16} />{multiDeck ? `Add to ${deckLabel}` : m.search_queue_all()}
+							{#snippet successChildren()}<Icon icon="next-fill" size={16} />
+								{m.search_queued({count: tracks.length})}{/snippet}
+							<Icon icon="next-fill" size={16} />{multiDeck
+								? m.search_add_to_deck({deck: deckLabel})
+								: m.search_queue_all()}
 						</ButtonFeedback>
 						{#if canShowAutoRadio}
 							<AutoRadioButton
 								synced={isSearchAutoActive && !isSearchAutoDrifted}
-								title={isSearchAutoDrifted ? m.auto_radio_resync() : 'Auto radio this search'}
+								title={isSearchAutoDrifted ? m.auto_radio_resync() : m.search_auto_radio_this()}
 								size={16}
 								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
 							/>

@@ -1,6 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appChatUrl, appDiscordUrl, appSocialUrl} from '$lib/config'
+	import {appChatUrl, appDiscordUrl, appName, appSocialUrl} from '$lib/config'
 	import {repoUrl} from '$lib/repo'
 </script>
 
@@ -17,7 +17,7 @@
 <nav>
 	&nbsp; &nbsp; &nbsp;
 	<a href={resolve('/')} class="ghost">Explore radios</a> or more
-	<a href={resolve('/about')} class="ghost">about Radio4000&hellip;</a>
+	<a href={resolve('/about')} class="ghost">about {appName}&hellip;</a>
 </nav>
 
 <style>

@@ -48,7 +48,7 @@
 			await deleteTrack({id: channel.id, slug: channel.slug}, track.id)
 			goto(resolve('/[slug]', {slug: data.slug}))
 		} catch (err) {
-			error = /** @type {Error} */ (err).message || 'Failed to delete track'
+			error = /** @type {Error} */ (err).message || m.track_delete_failed()
 			deleting = false
 		}
 	}
@@ -60,20 +60,20 @@
 
 <article class="constrained focused">
 	{#if isLoading}
-		<p>Loading...</p>
+		<p>{m.common_loading()}</p>
 	{:else if !track || !channel}
-		<p>Track not found</p>
+		<p>{m.track_not_found()}</p>
 	{:else if canDelete}
 		<header>
-			<h1>{m.common_delete()} track</h1>
+			<h1>{m.track_delete_heading()}</h1>
 			<p>
 				<a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a> /
 				<a href={resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid})}>{track.title}</a>
 			</p>
 		</header>
 
-		<p>This will permanently delete this track.</p>
-		<p>This cannot be undone.</p>
+		<p>{m.track_delete_warning()}</p>
+		<p>{m.account_delete_irreversible()}</p>
 
 		{#if error}
 			<p class="error" role="alert">{m.common_error()}: {error}</p>
@@ -81,7 +81,7 @@
 
 		<form class="form" onsubmit={handleDelete}>
 			<fieldset>
-				<label for="confirm">Type <code>{track.title}</code> to confirm</label>
+				<label for="confirm">{m.track_delete_confirm_input({title: track.title})}</label>
 				<input id="confirm" type="text" bind:value={confirmTitle} autocomplete="off" />
 			</fieldset>
 
@@ -90,10 +90,12 @@
 			</button>
 		</form>
 
-		<p><a href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}>Cancel</a></p>
+		<p>
+			<a href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}>{m.common_cancel()}</a>
+		</p>
 	{:else if !isSignedIn}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}
-		<p>You don't have permission to delete this track.</p>
+		<p>{m.track_delete_no_permission()}</p>
 	{/if}
 </article>

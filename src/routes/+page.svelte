@@ -3,6 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {afterNavigate} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import Channels from '$lib/components/channels.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -24,14 +25,17 @@
 </script>
 
 <svelte:head>
-	<title>{m.home_title()}</title>
+	<title>{m.home_title({appName})}</title>
 </svelte:head>
 
 {#if !appState.user && appState.show_welcome_hint !== false}
 	<p class="welcome">
-		Welcome! <a href={resolve('/welcome')}>Learn about Radio4000</a> or <a href={resolve('/auth/login')}>sign in</a>
+		{m.home_welcome_hint()}
+		<a href={resolve('/welcome')}>{m.home_welcome_learn()}</a>
+		{m.common_or()}
+		<a href={resolve('/auth/login')}>{m.home_welcome_sign_in()}</a>
 		<button class="link" onclick={() => (appState.show_welcome_hint = false)}>
-			<small>(dismiss)</small>
+			<small>({m.home_welcome_dismiss()})</small>
 		</button>
 	</p>
 {/if}

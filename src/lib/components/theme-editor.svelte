@@ -170,7 +170,7 @@
 	<section class="box">
 		<form class="form">
 			<fieldset>
-				<p>Theme</p>
+				<p>{m.theme_theme_label()}</p>
 				<ThemeToggle />
 			</fieldset>
 			<fieldset>
@@ -217,12 +217,12 @@
 			</fieldset>
 
 			<fieldset>
-				<label for={`${uid}-pointer-cursor`}>Use pointer cursor on interactive elements</label>
+				<label for={`${uid}-pointer-cursor`}>{m.theme_pointer_cursor_label()}</label>
 				<input type="checkbox" bind:checked={appState.use_pointer_cursor} id={`${uid}-pointer-cursor`} />
 			</fieldset>
 
 			<fieldset>
-				<label for={`${uid}-font-family`}>Font</label>
+				<label for={`${uid}-font-family`}>{m.theme_font_label()}</label>
 				<select
 					id={`${uid}-font-family`}
 					value={appState.font_family || ''}

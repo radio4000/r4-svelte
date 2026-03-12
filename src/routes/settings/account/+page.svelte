@@ -2,6 +2,7 @@
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -83,7 +84,7 @@
 			<menu class="nav-vertical">
 				<div>
 					<p>
-						<span>Email</span>
+						<span>{m.auth_email()}</span>
 						<small>{appState.user.email}</small>
 					</p>
 					<menu>
@@ -122,11 +123,11 @@
 			<menu class="nav-vertical">
 				<div>
 					<p>
-						<span>Share presence</span>
-						<small>Show others that you're listening (mode &amp; channel)</small>
+						<span>{m.account_share_presence()}</span>
+						<small>{m.account_share_presence_note()}</small>
 					</p>
 					<button onclick={toggleSharePresence} disabled={presenceLoading} aria-pressed={sharePresence}>
-						{sharePresence ? 'On' : 'Off'}
+						{sharePresence ? m.common_on() : m.common_off()}
 					</button>
 				</div>
 				<div>
@@ -140,7 +141,7 @@
 			<menu class="nav-vertical">
 				<div>
 					<p><span>{m.account_delete_title()}</span></p>
-					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link()}</a>
+					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link({appName})}</a>
 				</div>
 			</menu>
 		</section>

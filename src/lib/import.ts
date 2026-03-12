@@ -6,6 +6,9 @@ import {uuid, slugify} from '$lib/utils'
 import type {Channel, Track, ImportOrigin} from '$lib/types'
 
 const M3U_EXT_RE = /\.m3u8?$/i
+const TXT_INFO_LINE_RE = /^\s+(\w+):\s+(.+)$/
+const DASH_RE = /-/g
+const LAST_PATH_SEGMENT_RE = /[^/]+$/
 
 export interface BackupData {
 	channel: Channel
@@ -51,7 +54,7 @@ export function parseTxtFile(
 	let id: string = uuid()
 	if (infoLineIdx !== -1) {
 		for (const line of lines.slice(infoLineIdx + 1)) {
-			const m = line.match(/^\s+(\w+):\s+(.+)$/)
+			const m = line.match(TXT_INFO_LINE_RE)
 			if (m) {
 				if (m[1] === 'Slug') slug = m[2].trim()
 				if (m[1] === 'ID') id = m[2].trim()
@@ -70,7 +73,7 @@ export function parseM3u(content: string): {title: string; url: string}[] {
 			const commaIdx = lines[i].indexOf(',')
 			const title = commaIdx !== -1 ? lines[i].slice(commaIdx + 1).trim() : 'Untitled'
 			const url = lines[i + 1]
-			if (url && url.startsWith('http')) {
+			if (url?.startsWith('http')) {
 				tracks.push({title, url})
 				i++ // skip URL line
 			}
@@ -83,7 +86,7 @@ export function parseM3u(content: string): {title: string; url: string}[] {
 export function parseTrackTxt(content: string): {title: string; description: string; url: string} {
 	const lines = content.split('\n')
 	const title = lines[0]?.trim() || 'Untitled'
-	const urlLine = [...lines].reverse().find((l) => l.trim().startsWith('http'))
+	const urlLine = lines.toReversed().find((l) => l.trim().startsWith('http'))
 	const url = urlLine?.trim() || ''
 	const urlLineIdx = urlLine ? lines.lastIndexOf(urlLine) : lines.length
 	const description = lines.slice(1, urlLineIdx).join('\n').trim()
@@ -128,8 +131,9 @@ export function deleteLocalChannel(channelId: string, slug: string) {
 	appState.local_channel_ids = appState.local_channel_ids?.filter((id) => id !== channelId)
 	appState.local_channels = appState.local_channels?.filter((c) => c.id !== channelId)
 	if (appState.local_channel_origins) {
-		const {[channelId]: _, ...rest} = appState.local_channel_origins
-		appState.local_channel_origins = rest
+		const nextOrigins = {...appState.local_channel_origins}
+		delete nextOrigins[channelId]
+		appState.local_channel_origins = nextOrigins
 	}
 }
 
@@ -147,7 +151,7 @@ function urlId(url: string): string {
 /** YYYYMMDD from an ISO date string, or empty string if missing/invalid. */
 function dateSuffix(isoDate: string | null | undefined): string {
 	if (!isoDate) return ''
-	return new Date(isoDate).toISOString().slice(0, 10).replace(/-/g, '')
+	return new Date(isoDate).toISOString().slice(0, 10).replace(DASH_RE, '')
 }
 
 /** Ensure channelsCollection is loaded from IDB before reading state. */
@@ -216,7 +220,7 @@ async function _importTxtUrl(url: string): Promise<ImportResult> {
 	if (existing) return {channel: existing, imported: 0, alreadyImported: true}
 	// Look for sibling tracks.m3u in the same directory
 	const siblingUrl = new URL(url, location.href)
-	siblingUrl.pathname = siblingUrl.pathname.replace(/[^/]+$/, 'tracks.m3u')
+	siblingUrl.pathname = siblingUrl.pathname.replace(LAST_PATH_SEGMENT_RE, 'tracks.m3u')
 	const m3uRes = await fetch(siblingUrl).catch(() => null)
 	const channelId = uuid()
 	const channel = {id: channelId, slug: importSlug, name, description} as Channel

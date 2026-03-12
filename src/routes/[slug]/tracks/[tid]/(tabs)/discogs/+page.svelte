@@ -85,5 +85,5 @@
 		autoload={true}
 	/>
 {:else}
-	<p>No Discogs information.</p>
+	<p>{m.track_meta_no_discogs()}</p>
 {/if}

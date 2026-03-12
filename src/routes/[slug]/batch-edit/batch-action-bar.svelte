@@ -154,12 +154,12 @@
 			disabled={selectedIds.length === 0}
 			{@attach tooltip({content: m.batch_edit_action_append_description()})}
 		>
-			Append text...
+			{m.batch_edit_append_button()}
 		</button>
 		<button
 			onclick={() => (showRemoveTag = true)}
 			disabled={selectedTracksTags.length === 0}
-			{@attach tooltip({content: m.batch_edit_action_remove_tag()})}>Remove tag...</button
+			{@attach tooltip({content: m.batch_edit_action_remove_tag()})}>{m.batch_edit_remove_tag_button()}</button
 		>
 	{:else}
 		&nbsp;
@@ -168,7 +168,7 @@
 
 {#if showAppend}
 	<dialog open>
-		<h3>Append to {selectedIds.length} tracks</h3>
+		<h3>{m.batch_edit_append_dialog_title({count: selectedIds.length})}</h3>
 		<form
 			class="form"
 			onsubmit={(e) => {
@@ -177,7 +177,7 @@
 			}}
 		>
 			<fieldset>
-				<label for="{uid}-append" class="visually-hidden">Text to append</label>
+				<label for="{uid}-append" class="visually-hidden">{m.batch_edit_append_label()}</label>
 				<input
 					id="{uid}-append"
 					type="text"
@@ -196,8 +196,8 @@
 				</menu>
 			{/if}
 			<footer>
-				<button type="button" onclick={closeDialogs}>Cancel</button>
-				<button type="submit" disabled={!appendText.trim()}>Append</button>
+				<button type="button" onclick={closeDialogs}>{m.common_cancel()}</button>
+				<button type="submit" disabled={!appendText.trim()}>{m.batch_edit_append_submit()}</button>
 			</footer>
 		</form>
 	</dialog>
@@ -205,14 +205,14 @@
 
 {#if showRemoveTag}
 	<dialog open>
-		<h3>Remove tag from {selectedIds.length} tracks</h3>
+		<h3>{m.batch_edit_remove_tag_dialog_title({count: selectedIds.length})}</h3>
 		<menu>
 			{#each selectedTracksTags as { value, count } (value)}
 				<button onclick={() => removeTag(value)}>#{value} ({count})</button>
 			{/each}
 		</menu>
 		<footer>
-			<button onclick={closeDialogs}>Cancel</button>
+			<button onclick={closeDialogs}>{m.common_cancel()}</button>
 		</footer>
 	</dialog>
 {/if}

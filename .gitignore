@@ -8,8 +8,12 @@ rollup-visualizer.html
 # inlang generated artifacts
 ./i18n/project.inlang/cache/
 ./i18n/project.inlang/project_id
+<<<<<<< chore/i18n-strings
+i18n/batches/*.json
+=======
 
 # oskars arbe tests..
+>>>>>>> main
 .arbe/events.db
 .arbe/events.db-shm
 .arbe/events.db-wal

@@ -9,6 +9,7 @@
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import type {Track} from '$lib/types'
+	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug ?? '')
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
@@ -82,30 +83,34 @@
 </script>
 
 <svelte:head>
-	<title>{channel ? `${channel.name} mentions` : 'Mentions'}</title>
+	<title>{channel ? m.mentions_title({name: channel.name}) : m.mentions_title_fallback()}</title>
 </svelte:head>
 
 <section>
 	<header>
 		{#if tracks.length > 0}
 			<menu class="row mentions-actions">
-				<small class="mentions-count">{tracks.length} tracks mentioning @{slug}</small>
-				<button type="button" onclick={playMentionTracks}><Icon icon="play-fill" size={16} />Play all</button>
-				<button type="button" onclick={queueMentionTracks}><Icon icon="next-fill" size={16} />Queue all</button>
+				<small class="mentions-count">{m.mentions_count({count: tracks.length, handle: `@${slug}`})}</small>
+				<button type="button" onclick={playMentionTracks}
+					><Icon icon="play-fill" size={16} />{m.search_play_all()}</button
+				>
+				<button type="button" onclick={queueMentionTracks}
+					><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button
+				>
 			</menu>
 		{/if}
 	</header>
 
 	{#if mentionsQuery.isPending}
-		<p class="empty"><rough-spinner spinner="14" interval="150"></rough-spinner> Loading mentions…</p>
+		<p class="empty"><rough-spinner spinner="14" interval="150"></rough-spinner> {m.mentions_loading()}</p>
 	{:else if tracks.length > 0}
 		<Tracklist {tracks} playlistTracks={tracks} {playlistTitle} grouped={false} playContext={true} showSlug={true} />
 	{:else}
-		<p class="empty">No tracks from other channels mention @{slug} yet.</p>
+		<p class="empty">{m.mentions_empty({handle: `@${slug}`})}</p>
 	{/if}
 
 	{#if mentionsQuery.isError}
-		<p class="empty">Could not load mentions right now.</p>
+		<p class="empty">{m.mentions_error()}</p>
 	{/if}
 </section>
 

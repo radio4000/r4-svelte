@@ -63,5 +63,5 @@
 {:else if error}
 	<p>{m.track_meta_error({message: error})}</p>
 {:else}
-	<p>No YouTube information.</p>
+	<p>{m.track_meta_no_youtube()}</p>
 {/if}

@@ -2,7 +2,7 @@
 	import {resolve} from '$app/paths'
 	import R4PasswordReset from '$lib/components/r4-password-reset.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {appChatUrl} from '$lib/config'
+	import {appChatUrl, appName} from '$lib/config'
 
 	let emailSent = $state(false)
 
@@ -24,7 +24,7 @@
 	</header>
 
 	<h1>{m.auth_reset_heading()}</h1>
-	<p>{m.auth_reset_prompt_email()}</p>
+	<p>{m.auth_reset_prompt_email({appName})}</p>
 	<br />
 	<p>{m.auth_reset_instruction()}</p>
 	<br />

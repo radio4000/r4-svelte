@@ -76,7 +76,7 @@
 				replaceState(resolve('/[slug]/edit', {slug: newSlug}), {})
 			}
 		} catch (err) {
-			error = /** @type {Error} */ (err).message || 'Failed to update channel'
+			error = /** @type {Error} */ (err).message || m.channel_edit_failed()
 		} finally {
 			submitting = false
 		}
@@ -105,27 +105,27 @@
 
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>
-				<label for="name">Name</label>
+				<label for="name">{m.common_name()}</label>
 				<input id="name" name="name" type="text" value={channel.name ?? ''} required />
 			</fieldset>
 
 			<fieldset>
-				<label for="slug">Slug</label>
+				<label for="slug">{m.channel_edit_slug_label()}</label>
 				<input id="slug" name="slug" type="text" value={channel.slug ?? ''} required />
 			</fieldset>
 
 			<fieldset>
-				<label for="description">Description</label>
+				<label for="description">{m.common_description()}</label>
 				<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
 			</fieldset>
 
 			<fieldset>
-				<label for="url">URL</label>
-				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder="https://..." />
+				<label for="url">{m.common_url()}</label>
+				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder={m.track_form_url_placeholder()} />
 			</fieldset>
 
 			<fieldset>
-				<legend>Location</legend>
+				<legend>{m.common_location()}</legend>
 				<div class="location-inputs">
 					<input
 						name="latitude"
@@ -134,7 +134,7 @@
 						step="any"
 						min="-90"
 						max="90"
-						placeholder="Latitude"
+						placeholder={m.common_latitude()}
 						onchange={(e) => (pickedLat = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
 					/>
 					<input
@@ -144,11 +144,11 @@
 						step="any"
 						min="-180"
 						max="180"
-						placeholder="Longitude"
+						placeholder={m.common_longitude()}
 						onchange={(e) => (pickedLng = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
 					/>
 					<button type="button" onclick={() => (showMap = !showMap)}>
-						{showMap ? 'Hide map' : 'Pick on map'}
+						{showMap ? m.channel_edit_hide_map() : m.channel_edit_pick_on_map()}
 					</button>
 				</div>
 				{#if showMap}
@@ -159,7 +159,7 @@
 			</fieldset>
 
 			<fieldset>
-				<legend>Image</legend>
+				<legend>{m.common_image()}</legend>
 				<R4AvatarUpload slug={channel.slug} channelId={channel.id} />
 			</fieldset>
 
@@ -168,11 +168,11 @@
 			</button>
 		</form>
 
-		<p><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.common_delete()} channel</a></p>
+		<p><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
 	{:else if !isSignedIn}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}
-		<p>Loading...</p>
+		<p>{m.common_loading()}</p>
 	{/if}
 </article>
 

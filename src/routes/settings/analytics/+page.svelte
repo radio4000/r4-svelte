@@ -1,6 +1,7 @@
 <script>
 	import {appState} from '$lib/app-state.svelte'
 	import {resolve} from '$app/paths'
+	import {appName} from '$lib/config'
 	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {repoCodeSearchUrl, repoUrl, supportsCodeSearch} from '$lib/repo'
@@ -20,7 +21,7 @@
 	</header>
 
 	<p>
-		{m.settings_analytics_intro()}
+		{m.settings_analytics_intro({appName})}
 	</p>
 
 	<section class="box">
@@ -34,7 +35,7 @@
 		</form>
 	</section>
 	<p>
-		{m.settings_analytics_outro()}
+		{m.settings_analytics_outro({appName})}
 	</p>
 
 	{#if repoUrl}

@@ -41,7 +41,7 @@
 		<TrackForm mode="create" {channel} url={initialUrl} discogs_url={initialDiscogsUrl} onsubmit={handleSubmit} />
 
 		<footer>
-			<small><a href={resolve('/bookmarklet')}>Add tracks from any page with the bookmarklet.</a></small>
+			<small><a href={resolve('/bookmarklet')}>{m.track_add_bookmarklet()}</a></small>
 		</footer>
 	{:else}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_add()}</a></p>

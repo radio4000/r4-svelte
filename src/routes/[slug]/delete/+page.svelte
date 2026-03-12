@@ -3,6 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import {deleteChannel} from '$lib/collections/channels'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
@@ -65,31 +66,26 @@
 				goto('/')
 			}
 		} catch (err) {
-			error = /** @type {Error} */ (err).message || 'Failed to delete channel'
+			error = /** @type {Error} */ (err).message || m.channel_delete_failed()
 			deleting = false
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Delete {channel?.name || 'channel'}</title>
+	<title>{m.channel_delete_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
 <article class="constrained focused">
 	{#if canDelete && channel}
 		<header>
-			<h1>Delete <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
+			<h1>{m.channel_delete_heading()} <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
 		</header>
 
 		{#if isLocal}
-			<p>
-				This will remove <strong>{channel.name}</strong> and its {trackCount} tracks from your browser. This is local data
-				only — nothing will be deleted from Radio4000.
-			</p>
+			<p>{m.channel_delete_local_warning({name: channel.name, count: trackCount, appName})}</p>
 		{:else}
-			<p>
-				This will permanently delete the channel and its {trackCount} tracks from Radio4000. This cannot be undone.
-			</p>
+			<p>{m.channel_delete_remote_warning({count: trackCount, appName})}</p>
 		{/if}
 
 		{#if error}
@@ -99,7 +95,7 @@
 		<form class="form" onsubmit={handleDelete}>
 			{#if !isLocal}
 				<fieldset>
-					<label for="confirm">Type <code>{channel.slug}</code> to confirm</label>
+					<label for="confirm">{m.channel_delete_confirm_slug({slug: channel.slug})}</label>
 					<input id="confirm" type="text" bind:value={confirmSlug} autocomplete="off" />
 				</fieldset>
 			{/if}
@@ -109,11 +105,11 @@
 			</button>
 		</form>
 
-		<p><a href={resolve('/[slug]', {slug: channel.slug})}>Cancel</a></p>
+		<p><a href={resolve('/[slug]', {slug: channel.slug})}>{m.common_cancel()}</a></p>
 	{:else if !isSignedIn && !isLocal}
-		<p><a href={resolve('/auth')}>Sign in</a></p>
+		<p><a href={resolve('/auth')}>{m.auth_log_in()}</a></p>
 	{:else}
-		<p>Loading…</p>
+		<p>{m.common_loading()}</p>
 	{/if}
 </article>
 

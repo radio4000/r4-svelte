@@ -151,14 +151,20 @@
 			{#if visibleTracks.length > 0}
 				<menu class="row filter-actions">
 					<small class="filter-count"
-						>{isFiltering ? `${filteredTracks.length} selected` : `${allTracks.length} tracks`}</small
+						>{isFiltering
+							? m.tracks_selected_count({count: filteredTracks.length})
+							: m.tracks_total_count({count: allTracks.length})}</small
 					>
-					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" size={16} />Play</button>
-					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" size={16} />Queue</button>
+					<button type="button" onclick={playFilteredTracks}
+						><Icon icon="play-fill" size={16} />{m.common_play()}</button
+					>
+					<button type="button" onclick={queueFilteredTracks}
+						><Icon icon="next-fill" size={16} />{m.common_queue()}</button
+					>
 					{#if channel && canShowFilteredAutoRadio}
 						<AutoRadioButton
 							synced={isFilteredAutoActive && !isFilteredAutoDrifted}
-							title={isFilteredAutoDrifted ? m.auto_radio_resync() : 'Auto radio this selection'}
+							title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
 							size={16}
 							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
 						/>
@@ -181,16 +187,16 @@
 
 		<footer>
 			{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
-				<p class="empty">No tracks match your filter</p>
+				<p class="empty">{m.tracks_empty_filter()}</p>
 			{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 				<p class="empty">{m.channel_loading_tracks()}</p>
 			{:else if tracksQuery.isReady && allTracks.length === 0}
 				{#if canEdit}
 					<p class="empty">
-						<a href={resolve('/add')}>Add your first track (tip: press "c")</a>
+						<a href={resolve('/add')}>{m.channel_first_track_cta()}</a>
 					</p>
 				{:else}
-					<p class="empty">No tracks yet</p>
+					<p class="empty">{m.channel_no_tracks()}</p>
 				{/if}
 			{/if}
 		</footer>

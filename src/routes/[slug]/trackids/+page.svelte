@@ -24,7 +24,7 @@
 </svelte:head>
 
 {#if tracksQuery.isLoading}
-	<p>Loading…</p>
+	<p>{m.common_loading()}</p>
 {:else}
 	<pre>{trackUrls.join('\n')}</pre>
 {/if}

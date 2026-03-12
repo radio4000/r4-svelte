@@ -302,7 +302,7 @@
 						</a>
 					</nav>
 				{:else if isLocal}
-					<nav class="channel-nav-secondary" aria-label="Local channel">
+					<nav class="channel-nav-secondary" aria-label={m.channel_local_nav_label()}>
 						<a href={resolve('/[slug]/delete', {slug})} class:active={routeId?.startsWith('/[slug]/delete')}>
 							<Icon icon="delete" size={16} />
 							Delete

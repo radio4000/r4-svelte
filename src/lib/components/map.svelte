@@ -4,6 +4,7 @@
 	import {replaceState} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
+	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	/** @import { StyleSpecification } from 'maplibre-gl' */
 
 	let {
@@ -87,15 +88,13 @@
 						if (disposed || !map) return
 						const {lat, lng} = map.getCenter()
 						const z = map.getZoom()
-						const searchParams = new URLSearchParams(page.url.search)
+						const searchParams = new SvelteURLSearchParams(page.url.search)
 						searchParams.set('latitude', lat.toFixed(4))
 						searchParams.set('longitude', lng.toFixed(4))
 						searchParams.set('zoom', String(z))
 						const queryString = searchParams.size ? `?${searchParams}` : ''
 						replaceState(
-							page.route.id
-								? resolve(page.route.id, page.params) + queryString
-								: page.url.pathname + queryString,
+							page.route.id ? resolve(page.route.id, page.params) + queryString : page.url.pathname + queryString,
 							{}
 						)
 					}, 300)

@@ -1,12 +1,13 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
 </script>
 
 <svelte:head>
-	<title>Welcome to Radio4000</title>
+	<title>{m.welcome_title({appName})}</title>
 </svelte:head>
 
 <article class="constrained focused splash">

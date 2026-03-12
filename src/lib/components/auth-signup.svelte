@@ -192,7 +192,7 @@
 				bind:value={email}
 				required
 				autocomplete="email"
-				placeholder="Enter your email address…"
+				placeholder={m.auth_email_placeholder()}
 			/>
 		</fieldset>
 		<fieldset>
@@ -204,7 +204,7 @@
 				required
 				autocomplete="new-password"
 				minlength="6"
-				placeholder="Choose a password…"
+				placeholder={m.auth_password_choose_placeholder()}
 			/>
 		</fieldset>
 		<button type="submit" class="primary" disabled={loading}>
@@ -229,7 +229,7 @@
 				bind:value={email}
 				required
 				autocomplete="email"
-				placeholder="Enter your email address…"
+				placeholder={m.auth_email_placeholder()}
 			/>
 		</fieldset>
 		<button type="submit" class="primary" disabled={loading}>
