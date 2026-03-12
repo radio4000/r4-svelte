@@ -8,7 +8,11 @@ rollup-visualizer.html
 # inlang generated artifacts
 ./i18n/project.inlang/cache/
 ./i18n/project.inlang/project_id
+
+# oskars arbe tests..
 .arbe/events.db
+.arbe/events.db-shm
+.arbe/events.db-wal
 
 # OS
 .DS_Store
