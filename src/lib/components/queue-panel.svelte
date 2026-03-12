@@ -78,7 +78,7 @@
 		/>
 		{#if searchQuery !== ''}
 			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: m.queue_clear_search()})}>
-				<Icon icon="close" size={16} />
+				<Icon icon="close" />
 			</button>
 		{/if}
 		{#if trackIds.length > 1}
@@ -88,11 +88,11 @@
 				{@attach tooltip({content: m.player_tooltip_shuffle()})}
 				title={m.player_tooltip_shuffle()}
 			>
-				<Icon icon="shuffle" size={16} />
+				<Icon icon="shuffle" />
 			</button>
 			{#if !appState.embed_mode}
 				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
-					<Icon icon="delete" size={16} />
+					<Icon icon="delete" />
 				</button>
 			{/if}
 		{/if}

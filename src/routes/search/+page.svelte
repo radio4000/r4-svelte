@@ -210,24 +210,19 @@
 					</h2>
 					<menu>
 						<ButtonFeedback onclick={playSearchResults}>
-							{#snippet successChildren()}<Icon icon="play-fill" size={16} />
+							{#snippet successChildren()}<Icon icon="play-fill" />
 								{m.search_playing({count: tracks.length})}{/snippet}
-							<Icon icon="play-fill" size={16} />{multiDeck
-								? m.search_play_on_deck({deck: deckLabel})
-								: m.search_play_all()}
+							<Icon icon="play-fill" />{multiDeck ? m.search_play_on_deck({deck: deckLabel}) : m.search_play_all()}
 						</ButtonFeedback>
 						<ButtonFeedback onclick={queueSearchResults}>
-							{#snippet successChildren()}<Icon icon="next-fill" size={16} />
+							{#snippet successChildren()}<Icon icon="next-fill" />
 								{m.search_queued({count: tracks.length})}{/snippet}
-							<Icon icon="next-fill" size={16} />{multiDeck
-								? m.search_add_to_deck({deck: deckLabel})
-								: m.search_queue_all()}
+							<Icon icon="next-fill" />{multiDeck ? m.search_add_to_deck({deck: deckLabel}) : m.search_queue_all()}
 						</ButtonFeedback>
 						{#if canShowAutoRadio}
 							<AutoRadioButton
 								synced={isSearchAutoActive && !isSearchAutoDrifted}
 								title={isSearchAutoDrifted ? m.auto_radio_resync() : m.search_auto_radio_this()}
-								size={16}
 								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
 							/>
 						{/if}

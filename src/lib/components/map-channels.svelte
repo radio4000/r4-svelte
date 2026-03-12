@@ -666,7 +666,7 @@
 				onclick={() => (globeMode = !globeMode)}
 				title={globeMode ? m.map_switch_to_flat() : m.map_switch_to_globe()}
 			>
-				<Icon icon={globeMode ? 'map' : 'globe'} size={16} />
+				<Icon icon={globeMode ? 'map' : 'globe'} />
 			</button>
 			<span class="sep"></span>
 			<button
@@ -675,7 +675,7 @@
 				onclick={() => (showGraticules = !showGraticules)}
 				title={m.map_toggle_graticules()}
 			>
-				<Icon icon="grid" size={16} />
+				<Icon icon="grid" />
 			</button>
 			<button
 				type="button"
@@ -683,7 +683,7 @@
 				onclick={() => (showDayNight = !showDayNight)}
 				title={m.map_toggle_day_night()}
 			>
-				<Icon icon="sun" size={16} />
+				<Icon icon="sun" />
 			</button>
 			<span class="sep"></span>
 			<select bind:value={tileStyle} title={m.map_tiles_label()} aria-label={m.map_tiles_label()}>

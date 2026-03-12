@@ -232,7 +232,6 @@
 								synced={anyChannelAutoActive && !anyChannelAutoDrifted}
 								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
 								ariaLabel={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
-								size={16}
 								onclick={() => {
 									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
 									else if (channel)
@@ -256,32 +255,32 @@
 			<div class="tabs channel-nav">
 				<nav aria-label={m.nav_tracks()}>
 					<a href={resolve('/[slug]', {slug})} class:active={routeId === '/[slug]'}>
-						<Icon icon="circle-info" size={16} />
+						<Icon icon="circle-info" />
 						Info
 					</a>
 					<a href={resolve('/[slug]/tracks', {slug})} class:active={routeId?.startsWith('/[slug]/tracks')}>
-						<Icon icon="unordered-list" size={16} />
+						<Icon icon="unordered-list" />
 						{m.nav_tracks()} ({allChannelTracks.length})
 					</a>
 					<a href={resolve('/[slug]/tags', {slug})} class:active={routeId?.startsWith('/[slug]/tags')}>
-						<Icon icon="hash" size={16} />
+						<Icon icon="hash" />
 						{m.channel_tags_link()}
 					</a>
 					<a href={resolve('/[slug]/mentions', {slug})} class:active={routeId?.startsWith('/[slug]/mentions')}>
-						<Icon icon="user" size={16} />
+						<Icon icon="user" />
 						Mentions
 					</a>
 					<a href={resolve('/[slug]/following', {slug})} class:active={routeId?.startsWith('/[slug]/following')}>
-						<Icon icon="sparkles" size={16} />
+						<Icon icon="sparkles" />
 						{m.nav_following()}
 					</a>
 					<a href={resolve('/[slug]/followers', {slug})} class:active={routeId?.startsWith('/[slug]/followers')}>
-						<Icon icon="users" size={16} />
+						<Icon icon="users" />
 						{m.nav_followers()}
 					</a>
 					{#if channel.longitude && channel.latitude}
 						<a href={resolve('/[slug]/map', {slug})} class:active={routeId?.startsWith('/[slug]/map')}>
-							<Icon icon="map" size={16} />
+							<Icon icon="map" />
 							{m.nav_map()}
 						</a>
 					{/if}
@@ -289,22 +288,22 @@
 				{#if canEdit}
 					<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
 						<a href={resolve('/[slug]/edit', {slug})} class:active={routeId?.startsWith('/[slug]/edit')}>
-							<Icon icon="settings" size={16} />
+							<Icon icon="settings" />
 							{m.common_edit()}
 						</a>
 						<a href={resolve('/[slug]/batch-edit', {slug})} class:active={routeId?.startsWith('/[slug]/batch-edit')}>
-							<Icon icon="unordered-list" size={16} />
+							<Icon icon="unordered-list" />
 							{m.batch_edit_nav_label()}
 						</a>
 						<a href={resolve('/[slug]/backup', {slug})} class:active={routeId?.startsWith('/[slug]/backup')}>
-							<Icon icon="document-download" size={16} />
+							<Icon icon="document-download" />
 							Backup
 						</a>
 					</nav>
 				{:else if isLocal}
 					<nav class="channel-nav-secondary" aria-label={m.channel_local_nav_label()}>
 						<a href={resolve('/[slug]/delete', {slug})} class:active={routeId?.startsWith('/[slug]/delete')}>
-							<Icon icon="delete" size={16} />
+							<Icon icon="delete" />
 							Delete
 						</a>
 					</nav>

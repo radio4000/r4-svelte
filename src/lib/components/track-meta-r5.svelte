@@ -35,7 +35,7 @@
 			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
 			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
 		>
-			<Icon icon="code" size={16} />
+			<Icon icon="code" />
 		</button>
 	</menu>
 	{#if showRaw}

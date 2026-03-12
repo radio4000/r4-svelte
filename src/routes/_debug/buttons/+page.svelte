@@ -103,23 +103,23 @@
 		<p><small>Links with icons (<code>div.tabs &gt; nav &gt; a</code>)</small></p>
 		<div class="tabs">
 			<nav>
-				<a href="#a" class="active"><Icon icon="circle-info" size={16} /> Info</a>
-				<a href="#b"><Icon icon="unordered-list" size={16} /> Tracks</a>
-				<a href="#c"><Icon icon="hash" size={16} /> Tags</a>
-				<a href="#d"><Icon icon="sparkles" size={16} /> Related</a>
+				<a href="#a" class="active"><Icon icon="circle-info" /> Info</a>
+				<a href="#b"><Icon icon="unordered-list" /> Tracks</a>
+				<a href="#c"><Icon icon="hash" /> Tags</a>
+				<a href="#d"><Icon icon="sparkles" /> Related</a>
 			</nav>
 		</div>
 
 		<p><small>With secondary nav (<code>.track-tabs</code> pattern)</small></p>
 		<div class="tabs" style="border-bottom: 1px solid var(--gray-5);">
 			<nav>
-				<a href="#a" class="active"><Icon icon="circle-info" size={16} /> R5</a>
-				<a href="#b"><Icon icon="play-fill" size={16} /> YouTube</a>
-				<a href="#c"><Icon icon="code-branch" size={16} /> MusicBrainz</a>
-				<a href="#d"><Icon icon="tag" size={16} /> Discogs</a>
+				<a href="#a" class="active"><Icon icon="circle-info" /> R5</a>
+				<a href="#b"><Icon icon="play-fill" /> YouTube</a>
+				<a href="#c"><Icon icon="code-branch" /> MusicBrainz</a>
+				<a href="#d"><Icon icon="tag" /> Discogs</a>
 			</nav>
 			<nav style="margin-left: auto;">
-				<a href="#e"><Icon icon="settings" size={16} /> Edit</a>
+				<a href="#e"><Icon icon="settings" /> Edit</a>
 			</nav>
 		</div>
 	</section>

@@ -85,7 +85,7 @@
 			<ButtonFollow {channel} class="ghost" />
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
-					<Icon icon="options-horizontal" size={16} />
+					<Icon icon="options-horizontal" />
 				{/snippet}
 				<menu>
 					<button
@@ -94,24 +94,22 @@
 						onclick={() =>
 							isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
 					>
-						<Icon icon={isPlaying ? 'pause' : 'play-fill'} size={16} />
+						<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
 						{isPlaying ? m.common_pause() : m.common_play()}
 					</button>
 					{#if isBroadcasting}
 						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-							<Icon icon="cell-signal" size={16} />
+							<Icon icon="cell-signal" />
 							{m.channel_card_join_broadcast()}
 						</button>
 					{/if}
 					<button type="button" role="menuitem" onclick={share}>
-						<Icon icon="share" size={16} />
+						<Icon icon="share" />
 						{m.channel_card_share()}
 					</button>
 				</menu>
 				<menu class="nav-vertical">
-					<a class="btn" href={cardHref} role="menuitem"
-						><Icon icon="circle-info" size={16} /> {m.channel_card_visit()}</a
-					>
+					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" /> {m.channel_card_visit()}</a>
 				</menu>
 			</PopoverMenu>
 		</div>

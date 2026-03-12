@@ -143,13 +143,13 @@
 	</div>
 	<PopoverMenu
 		bind:this={menu}
-		btnClass="ghost"
+		btnClass="ghost trackcard-contextBtn"
 		onclose={() => (showDeleteConfirm = false)}
 		align={menuAlign}
 		valign={menuValign}
 	>
 		{#snippet trigger()}
-			<Icon icon="options-horizontal" size={16} />
+			<Icon icon="options-horizontal" />
 		{/snippet}
 		{#if showDeleteConfirm}
 			<p>{m.track_delete_confirm({title: track.title})}</p>
@@ -170,7 +170,7 @@
 							playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
 						}
 						menu?.close()
-					}}><Icon icon="play-fill" size={16} /></button
+					}}><Icon icon="play-fill" /></button
 				>
 				{#if !appState.embed_mode}
 					<button
@@ -180,7 +180,7 @@
 						onclick={() => {
 							playNext(deckId ?? appState.active_deck_id, track.id)
 							menu?.close()
-						}}><Icon icon="next-fill" size={16} /></button
+						}}><Icon icon="next-fill" /></button
 					>
 				{/if}
 				<button
@@ -190,19 +190,19 @@
 					onclick={async () => {
 						await playTrackInNewDeck(track.id, track.slug ?? undefined)
 						menu?.close()
-					}}><Icon icon="sidebar-fill-right" size={16} /></button
+					}}><Icon icon="sidebar-fill-right" /></button
 				>
 				{#if !appState.embed_mode}
 					<button
 						type="button"
 						role="menuitem"
 						{@attach tooltip({content: m.track_add_to_radio()})}
-						onclick={addToRadio}><Icon icon="add" size={16} /></button
+						onclick={addToRadio}><Icon icon="add" /></button
 					>
 				{/if}
 				{#if isRealTrack}
 					<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
-						><Icon icon="share" size={16} /></button
+						><Icon icon="share" /></button
 					>
 				{/if}
 			</menu>
@@ -372,5 +372,12 @@
 
 	.discogs {
 		font-size: var(--font-3);
+	}
+
+	:global(.trackcard-contextBtn) {
+		color: var(--gray-9);
+		article:hover & {
+			color: initial;
+		}
 	}
 </style>

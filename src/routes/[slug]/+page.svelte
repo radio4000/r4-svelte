@@ -170,7 +170,7 @@
 						title={m.share_native()}
 						aria-label={m.share_native()}
 					>
-						<Icon icon="share" size={16} />
+						<Icon icon="share" />
 					</button>
 				</p>
 			</div>
@@ -219,16 +219,15 @@
 									activeDeck?.is_playing ? togglePlayPause(appState.active_deck_id) : playTracks(allTracks)}
 								title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
 							>
-								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} size={16} />{m.common_play()}
+								<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} />{m.common_play()}
 							</button>
 							<button type="button" onclick={() => queueTracks(allTracks)} title={m.search_queue_all()}>
-								<Icon icon="next-fill" size={16} />{m.common_queue()}
+								<Icon icon="next-fill" />{m.common_queue()}
 							</button>
 							{#if hasAutoRadioCoverage(allTracks)}
 								<AutoRadioButton
 									synced={isAutoActive && !isAutoDrifted}
 									title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-									size={16}
 									onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(allTracks), autoView)}
 								/>
 							{/if}
@@ -273,14 +272,14 @@
 									? m.channel_pause_tag({tag: section.tag})
 									: m.channel_play_tag({tag: section.tag})}
 							>
-								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} size={16} />{m.common_play()}
+								<Icon icon={isTagPlaying(section.tag) ? 'pause' : 'play-fill'} />{m.common_play()}
 							</button>
 							<button
 								type="button"
 								onclick={() => queueTracks(section.tracks)}
 								title={m.channel_queue_tag({tag: section.tag})}
 							>
-								<Icon icon="next-fill" size={16} />{m.common_queue()}
+								<Icon icon="next-fill" />{m.common_queue()}
 							</button>
 							{#if channel}
 								{@const autoTagTracks = toAutoTracks(section.tracks)}
@@ -292,7 +291,6 @@
 									<AutoRadioButton
 										synced={isAutoTagActive && !isAutoTagDrifted}
 										title={isAutoTagDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-										size={16}
 										onclick={() => autoTagView && joinAutoRadio(appState.active_deck_id, autoTagTracks, autoTagView)}
 									/>
 								{/if}
@@ -397,26 +395,24 @@
 
 	.track-section {
 		border-top: 1px solid var(--gray-4);
-	}
 
-	.track-section > header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.4rem 0.5rem 0.2rem;
-		gap: 0.5rem;
-	}
+		> header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0.5rem;
+			gap: 0.5rem;
+		}
 
-	.track-section > header menu {
-		display: flex;
-		align-items: center;
-		gap: 0.2rem;
-		margin-left: auto;
-	}
+		> header menu {
+			align-items: center;
+			margin-left: auto;
+		}
 
-	.track-section footer {
-		padding: 1rem 0.4rem 0.4rem;
-		text-align: center;
+		footer {
+			padding: 1rem 0.5rem 0.5rem;
+			text-align: center;
+		}
 	}
 
 	.empty {

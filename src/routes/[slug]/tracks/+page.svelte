@@ -155,17 +155,12 @@
 							? m.tracks_selected_count({count: filteredTracks.length})
 							: m.tracks_total_count({count: allTracks.length})}</small
 					>
-					<button type="button" onclick={playFilteredTracks}
-						><Icon icon="play-fill" size={16} />{m.common_play()}</button
-					>
-					<button type="button" onclick={queueFilteredTracks}
-						><Icon icon="next-fill" size={16} />{m.common_queue()}</button
-					>
+					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" />{m.common_play()}</button>
+					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" />{m.common_queue()}</button>
 					{#if channel && canShowFilteredAutoRadio}
 						<AutoRadioButton
 							synced={isFilteredAutoActive && !isFilteredAutoDrifted}
 							title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
-							size={16}
 							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
 						/>
 					{/if}

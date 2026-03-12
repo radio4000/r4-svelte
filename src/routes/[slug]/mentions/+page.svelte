@@ -91,26 +91,22 @@
 		{#if tracks.length > 0}
 			<menu class="row mentions-actions">
 				<small class="mentions-count">{m.mentions_count({count: tracks.length, handle: `@${slug}`})}</small>
-				<button type="button" onclick={playMentionTracks}
-					><Icon icon="play-fill" size={16} />{m.search_play_all()}</button
-				>
-				<button type="button" onclick={queueMentionTracks}
-					><Icon icon="next-fill" size={16} />{m.search_queue_all()}</button
-				>
+				<button type="button" onclick={playMentionTracks}><Icon icon="play-fill" />{m.search_play_all()}</button>
+				<button type="button" onclick={queueMentionTracks}><Icon icon="next-fill" />{m.search_queue_all()}</button>
 			</menu>
 		{/if}
 	</header>
 
 	{#if mentionsQuery.isPending}
-		<p class="empty"><rough-spinner spinner="14" interval="150"></rough-spinner> {m.mentions_loading()}</p>
+		<p class="empty container"><rough-spinner spinner="14" interval="150"></rough-spinner> {m.mentions_loading()}</p>
 	{:else if tracks.length > 0}
 		<Tracklist {tracks} playlistTracks={tracks} {playlistTitle} grouped={false} playContext={true} showSlug={true} />
 	{:else}
-		<p class="empty">{m.mentions_empty({handle: `@${slug}`})}</p>
+		<p class="empty container">{m.mentions_empty({handle: `@${slug}`})}</p>
 	{/if}
 
 	{#if mentionsQuery.isError}
-		<p class="empty">{m.mentions_error()}</p>
+		<p class="empty container">{m.mentions_error()}</p>
 	{/if}
 </section>
 

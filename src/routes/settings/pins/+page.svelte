@@ -78,7 +78,7 @@
 							class:invisible={!item.isPinned}
 							aria-label={m.views_move_up()}
 						>
-							<Icon icon="arrow-up" size={16} />
+							<Icon icon="arrow-up" />
 						</button>
 						<button
 							class="btn"
@@ -87,7 +87,7 @@
 							class:invisible={!item.isPinned}
 							aria-label={m.views_move_down()}
 						>
-							<Icon icon="arrow-down" size={16} />
+							<Icon icon="arrow-down" />
 						</button>
 						{#if !item.isPinned}
 							<button
@@ -95,7 +95,7 @@
 								onclick={() => confirm(m.views_delete_confirm({name: item.sv.name})) && deleteView(item.sv.id)}
 								aria-label={m.views_delete_label()}
 							>
-								<Icon icon="delete" size={16} />
+								<Icon icon="delete" />
 							</button>
 						{/if}
 						<button
@@ -103,7 +103,7 @@
 							onclick={() => togglePin(item.sv)}
 							aria-label={item.isPinned ? m.views_unpin() : m.views_pin()}
 						>
-							<Icon icon={item.isPinned ? 'eye' : 'eye-close'} size={16} />
+							<Icon icon={item.isPinned ? 'eye' : 'eye-close'} />
 						</button>
 					</span>
 				</li>

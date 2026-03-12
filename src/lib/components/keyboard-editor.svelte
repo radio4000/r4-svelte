@@ -120,7 +120,7 @@
 						{/each}
 					</select>
 					<button type="button" onclick={() => removeKeyBinding(key)}>
-						<Icon icon="delete" size={16} />
+						<Icon icon="delete" />
 					</button>
 				</fieldset>
 			{/each}

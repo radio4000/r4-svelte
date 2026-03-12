@@ -92,7 +92,7 @@
 
 		{#if canNativeShare()}
 			<button type="button" onclick={share}>
-				<Icon icon="share" size={16} />
+				<Icon icon="share" />
 				{m.channel_card_share()}
 			</button>
 		{/if}

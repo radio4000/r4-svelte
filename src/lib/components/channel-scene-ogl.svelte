@@ -110,7 +110,7 @@
 	<div class="canvas-container" bind:this={container}></div>
 
 	<button class="controls-info-btn" type="button" onclick={openControls} title="3D controls">
-		<Icon icon="circle-info" size={16} />
+		<Icon icon="circle-info" />
 	</button>
 
 	<Dialog bind:showModal={showControlsModal}>
@@ -119,15 +119,15 @@
 		{/snippet}
 		<div class="controls-modal-content">
 			<div class="controls-row">
-				<Icon icon="hand-pointer" size={16} />
+				<Icon icon="hand-pointer" />
 				<div>Drag to pan · Tap/click cards to interact</div>
 			</div>
 			<div class="controls-row">
-				<Icon icon="mouse" size={16} />
+				<Icon icon="mouse" />
 				<div><kbd>scroll</kbd> zoom</div>
 			</div>
 			<div class="controls-row">
-				<Icon icon="keyboard" size={16} />
+				<Icon icon="keyboard" />
 				<div>
 					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move ·
 					<kbd>Q</kbd><kbd>E</kbd> up/down

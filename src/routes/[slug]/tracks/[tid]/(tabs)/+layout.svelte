@@ -112,14 +112,14 @@
 						href={resolve(`/${data.slug}/tracks/${data.tid}`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}`}
 					>
-						<Icon icon="circle-info" size={16} />
+						<Icon icon="circle-info" />
 						{m.track_detail_nav_r5()}
 					</a>
 					<a
 						href={resolve(`/${data.slug}/tracks/${data.tid}/related`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
 					>
-						<Icon icon="sparkles" size={16} />
+						<Icon icon="sparkles" />
 						{m.track_detail_nav_related()}
 					</a>
 					{#if isYoutubeTrack || hasYoutubeInfo}
@@ -127,7 +127,7 @@
 							href={resolve(`/${data.slug}/tracks/${data.tid}/youtube`)}
 							class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
 						>
-							<Icon icon="play-fill" size={16} />
+							<Icon icon="play-fill" />
 							{m.track_detail_nav_youtube()}
 						</a>
 					{/if}
@@ -135,14 +135,14 @@
 						href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
 					>
-						<Icon icon="tag" size={16} />
+						<Icon icon="tag" />
 						{m.track_detail_nav_discogs()}
 					</a>
 					<a
 						href={resolve(`/${data.slug}/tracks/${data.tid}/musicbrainz`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
 					>
-						<Icon icon="code-branch" size={16} />
+						<Icon icon="code-branch" />
 						{m.track_detail_nav_musicbrainz()}
 					</a>
 				</nav>
@@ -152,7 +152,7 @@
 							href={resolve(`/${data.slug}/tracks/${data.tid}/edit`)}
 							class:active={pathname === `/${data.slug}/tracks/${data.tid}/edit`}
 						>
-							<Icon icon="settings" size={16} />
+							<Icon icon="settings" />
 							{m.common_edit()}
 						</a>
 					</nav>

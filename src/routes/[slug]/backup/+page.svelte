@@ -57,7 +57,7 @@
 
 		<p>
 			<button type="button" onclick={downloadBackup}>
-				<Icon icon="document-download" size={16} />
+				<Icon icon="document-download" />
 				{m.channel_backup_download()}
 			</button>
 		</p>

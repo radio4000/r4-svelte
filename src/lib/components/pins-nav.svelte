@@ -36,7 +36,7 @@
 			{@attach tooltip({content: 'Pin views to sidebar'})}
 			aria-label={m.views_pin_label()}
 		>
-			<Icon icon="pin" size={16} />
+			<Icon icon="pin" />
 		</a>
 	{/if}
 {/each}
