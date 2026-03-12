@@ -19,6 +19,8 @@ Set `PUBLIC_APP_MODE=standalone` to enable it. This switches the build adapter t
 
 Fork the repo, then go to Settings → Pages → Source: **GitHub Actions**.
 
+The Pages workflow only runs when `PUBLIC_APP_MODE=standalone` is configured. If it is unset or set to anything else, the workflow jobs are skipped.
+
 Add these Actions variables (Settings → Secrets and variables → Variables):
 
 | Variable                 | Required | Example                                    |

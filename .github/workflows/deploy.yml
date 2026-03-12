@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ vars.PUBLIC_APP_MODE == 'standalone' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,7 @@ jobs:
           path: build
 
   deploy:
+    if: ${{ vars.PUBLIC_APP_MODE == 'standalone' }}
     needs: build
     runs-on: ubuntu-latest
     environment:
