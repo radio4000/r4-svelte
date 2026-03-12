@@ -21,13 +21,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
-	import {SvelteMap} from 'svelte/reactivity'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
-
-	// File System Access API not in TypeScript's default lib
-	/** @typedef {FileSystemDirectoryHandle & {entries(): AsyncIterable<[string, FileSystemHandle]>}} DirHandle */
-
-	const AUDIO_EXTENSIONS = new Set(['.m4a', '.mp3', '.ogg', '.flac', '.wav', '.opus'])
 
 	let {children} = $props()
 	let slug = $derived(page.params.slug)
@@ -161,61 +155,6 @@
 	let allChannelTracks = $derived(tracksQuery.data ?? [])
 	let autoRadioTracks = $derived(toAutoTracks(allChannelTracks))
 	let canShowAutoRadio = $derived(hasAutoRadioCoverage(allChannelTracks))
-
-	// Dead blob URL detection — local audio files don't survive a page reload
-	let hasDeadAudio = $state(false)
-	let relinking = $state(false)
-
-	$effect(() => {
-		const audioTrack = allChannelTracks.find((t) => t?.provider === 'file')
-		if (!audioTrack) {
-			hasDeadAudio = false
-			return
-		}
-		fetch(audioTrack.url)
-			.then(() => {
-				hasDeadAudio = false
-			})
-			.catch(() => {
-				hasDeadAudio = true
-			})
-	})
-
-	async function relinkFolder() {
-		relinking = true
-		try {
-			/** @type {DirHandle} */
-			const dirHandle = await /** @type {any} */ (window).showDirectoryPicker({mode: 'read'})
-			const fileMap = new SvelteMap()
-			for await (const [name, handle] of dirHandle.entries()) {
-				if (handle.kind === 'file') {
-					fileMap.set(name, await handle.getFile())
-				} else if (handle.kind === 'directory' && name === 'tracks') {
-					for await (const [tname, thandle] of handle.entries()) {
-						if (thandle.kind === 'file') fileMap.set(tname, await thandle.getFile())
-					}
-				}
-			}
-			tracksCollection.utils.writeBatch(() => {
-				for (const track of allChannelTracks) {
-					if (track.provider !== 'file') continue
-					for (const ext of AUDIO_EXTENSIONS) {
-						const file = fileMap.get(`${track.title}${ext}`)
-						if (file) {
-							if (track.url?.startsWith('blob:')) URL.revokeObjectURL(track.url)
-							const url = URL.createObjectURL(file)
-							tracksCollection.utils.writeUpsert({...track, url, media_id: url})
-							break
-						}
-					}
-				}
-			})
-		} catch (e) {
-			if (/** @type {any} */ (e)?.name !== 'AbortError') console.error(e)
-		} finally {
-			relinking = false
-		}
-	}
 </script>
 
 <svelte:head>
@@ -374,14 +313,6 @@
 		</div>
 
 		<main>
-			{#if hasDeadAudio}
-				<p class="relink-note">
-					{m.import_relink_audio()}
-					<button type="button" onclick={relinkFolder} disabled={relinking}>
-						{relinking ? '…' : m.import_relink_button()}
-					</button>
-				</p>
-			{/if}
 			{@render children()}
 		</main>
 	</div>
@@ -390,14 +321,6 @@
 {/if}
 
 <style>
-	.relink-note {
-		padding: 0.5rem 1rem;
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		border-bottom: 1px solid var(--gray-4);
-	}
-
 	.channel-layout {
 		display: flex;
 		flex-direction: column;
