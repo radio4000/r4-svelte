@@ -26,7 +26,7 @@
 	"account_delete_item_channels": "すべてのラジオチャンネルが削除されます",
 	"account_delete_item_data": "アカウントと関連するすべてのデータが削除されます",
 	"account_delete_item_tracks": "すべてのトラックが削除されます",
-	"account_delete_link": "アカウントを削除したい",
+	"account_delete_link": "私の{appName}アカウントを削除",
 	"account_delete_title": "アカウントを削除",
 	"account_delete_warning_post": "と、そのすべてのデータ:",
 	"account_delete_warning_pre": "この操作はアカウントを完全に削除します",
