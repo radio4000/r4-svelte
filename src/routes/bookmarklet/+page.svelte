@@ -1,4 +1,5 @@
 <script>
+	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
 	let {data} = $props()
@@ -6,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.bookmarklet_title()}</title>
+	<title>{m.bookmarklet_title({appName})}</title>
 </svelte:head>
 
 <article class="constrained">
@@ -19,7 +20,9 @@
 	<div class="steps">
 		<section>
 			<h2>{m.bookmarklet_step_one()}</h2>
-			<a class="btn primary bookmarklet" href={bookmarkletHref} data-sveltekit-reload>{m.bookmarklet_button()}</a>
+			<a class="btn primary bookmarklet" href={bookmarkletHref} data-sveltekit-reload
+				>{m.bookmarklet_button({appName})}</a
+			>
 			<p class="tip">{m.bookmarklet_tip()}</p>
 		</section>
 

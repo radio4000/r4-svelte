@@ -2,6 +2,7 @@
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import BackLink from '$lib/components/back-link.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -140,7 +141,7 @@
 			<menu class="nav-vertical">
 				<div>
 					<p><span>{m.account_delete_title()}</span></p>
-					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link()}</a>
+					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link({appName})}</a>
 				</div>
 			</menu>
 		</section>

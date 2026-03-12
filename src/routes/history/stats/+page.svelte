@@ -1,5 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
+	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale} from '$lib/paraglide/runtime'
 	import {playHistoryCollection} from '$lib/collections/play-history'
@@ -366,7 +367,7 @@
 			</div>
 			<header>
 				<h2 style="text-align:right">
-					{m.stats_timeline_heading({count: totalChannelsInDb.toLocaleString()})}
+					{m.stats_timeline_heading({count: totalChannelsInDb.toLocaleString(), appName})}
 				</h2>
 			</header>
 		</section>

@@ -1,5 +1,6 @@
 <script>
 	import {getTrackDetailCtx} from '$lib/contexts'
+	import {appShortName} from '$lib/config'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
 	import {useLiveQuery} from '@tanstack/svelte-db'
@@ -49,5 +50,5 @@
 		{/each}
 	</ul>
 {:else}
-	<p>{m.track_related_empty()}</p>
+	<p>{m.track_related_empty({appShortName})}</p>
 {/if}

@@ -3,6 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {afterNavigate} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import Channels from '$lib/components/channels.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -24,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.home_title()}</title>
+	<title>{m.home_title({appName})}</title>
 </svelte:head>
 
 {#if !appState.user && appState.show_welcome_hint !== false}

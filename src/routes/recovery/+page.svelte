@@ -1,5 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
+	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	import {resetLocalData} from '$lib/api'
 
@@ -25,7 +26,7 @@
 		<p>{m.recovery_reset_will()}</p>
 		<ul>
 			<li>{m.recovery_reset_point_1()}</li>
-			<li>{m.recovery_reset_point_2()}</li>
+			<li>{m.recovery_reset_point_2({appName})}</li>
 			<li>{m.recovery_reset_point_3()}</li>
 		</ul>
 		<p><small>{m.recovery_note()}</small></p>

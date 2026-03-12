@@ -1,5 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
+	import {appShortName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
 	let {relatedTracks = []} = $props()
@@ -20,7 +21,7 @@
 		{/each}
 	</dl>
 {:else}
-	<p>{m.track_related_empty()}</p>
+	<p>{m.track_related_empty({appShortName})}</p>
 {/if}
 
 <style>

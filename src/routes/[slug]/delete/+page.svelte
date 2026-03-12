@@ -3,6 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
+	import {appName} from '$lib/config'
 	import {deleteChannel} from '$lib/collections/channels'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
@@ -82,9 +83,9 @@
 		</header>
 
 		{#if isLocal}
-			<p>{m.channel_delete_local_warning({name: channel.name, count: trackCount})}</p>
+			<p>{m.channel_delete_local_warning({name: channel.name, count: trackCount, appName})}</p>
 		{:else}
-			<p>{m.channel_delete_remote_warning({count: trackCount})}</p>
+			<p>{m.channel_delete_remote_warning({count: trackCount, appName})}</p>
 		{/if}
 
 		{#if error}

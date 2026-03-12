@@ -83,7 +83,7 @@
 		<menu class="nav-options">
 			<a href={resolve('/auth/create-account') + redirectParam}>
 				<h3>{m.auth_card_create_title()}</h3>
-				<p>{m.auth_card_create_description()}</p>
+				<p>{m.auth_card_create_description({appName})}</p>
 			</a>
 			<a href={resolve('/auth/login') + redirectParam}>
 				<h3>{m.auth_card_login_title()}</h3>

@@ -1,17 +1,18 @@
 <script>
 	import {resolve} from '$app/paths'
+	import {appName, appShortName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	import BackLink from '$lib/components/back-link.svelte'
 </script>
 
 <svelte:head>
-	<title>{m.about_title()}</title>
+	<title>{m.about_title({appName})}</title>
 </svelte:head>
 
 <article class="focused constrained">
 	<header>
 		<BackLink href={resolve('/settings')} />
-		<h1>{m.about_title()}</h1>
+		<h1>{m.about_title({appName})}</h1>
 	</header>
 </article>
 
@@ -48,7 +49,7 @@
 	<ul>
 		<li>{m.about_feature_web()}</li>
 		<li>{m.about_feature_export()}</li>
-		<li>{m.about_feature_cli()}</li>
+		<li>{m.about_feature_cli({appShortName})}</li>
 		<li>{m.about_feature_api()}</li>
 		<li>{m.about_feature_no_trackers()}</li>
 	</ul>

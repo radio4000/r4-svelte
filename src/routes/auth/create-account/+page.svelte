@@ -2,6 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
+	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	import AuthSignup from '$lib/components/auth-signup.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
@@ -25,7 +26,7 @@
 	</figure>
 
 	{#if !isCheckEmail}
-		<h1>{m.auth_create_account_title()}</h1>
+		<h1>{m.auth_create_account_title({appName})}</h1>
 	{/if}
 
 	<AuthSignup {redirect} bind:step onSuccess={handleSuccess} />
