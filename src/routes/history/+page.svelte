@@ -58,14 +58,22 @@
 		await playTrack(appState.active_deck_id, play.track_id, null, 'user_click_track')
 	}
 
-	const startReasons: Partial<Record<PlayStartReason, {icon: string; label: () => string}>> = {
+	type StartReasonMeta = {icon: string; label: () => string}
+
+	const startReasons = {
 		play_channel: {icon: 'radio', label: m.history_reason_play_channel},
 		play_search: {icon: 'search', label: m.history_reason_play_search},
-		user_click_track: {icon: 'hand-pointer', label: m.history_reason_user_click},
+		user_click_track: {icon: 'hand-pointer', label: m.history_reason_user_click_track},
 		user_next: {icon: 'next-fill', label: m.history_reason_user_next},
 		user_prev: {icon: 'previous-fill', label: m.history_reason_user_prev},
 		auto_next: {icon: 'next-fill', label: m.history_reason_auto_next},
-		broadcast_sync: {icon: 'signal', label: m.history_reason_broadcast}
+		broadcast_sync: {icon: 'signal', label: m.history_reason_broadcast_sync},
+		track_error: {icon: 'warning', label: m.history_reason_track_error}
+	} satisfies Partial<Record<PlayStartReason, StartReasonMeta>>
+
+	function getStartReason(reasonStart?: string): StartReasonMeta | null {
+		if (!reasonStart || !Object.hasOwn(startReasons, reasonStart)) return null
+		return startReasons[reasonStart as keyof typeof startReasons] ?? null
 	}
 
 	let confirmClear = $state(false)
@@ -112,12 +120,12 @@
 			<h2>{dayLabel(day.plays[0].started_at, locale)}</h2>
 			<ul class="list">
 				{#each day.plays as play (play.id)}
-					{@const reason = startReasons[play.reason_start as PlayStartReason]}
+					{@const reason = getStartReason(play.reason_start)}
 					<li>
 						<small class="play-time">
 							<DateTime date={play.started_at} {locale} />
 						</small>
-						<span class="reason-icon" title={reason?.label()}>
+						<span class="reason-icon" title={reason?.label?.()}>
 							{#if reason}<Icon icon={reason.icon} size={13} />{/if}
 						</span>
 						<TrackCard track={toTrack(play)} showSlug={true} onPlay={() => playHistoryTrack(play)}>
