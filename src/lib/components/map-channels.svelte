@@ -708,7 +708,7 @@
 	.map-controls {
 		position: absolute;
 		top: 2.9rem;
-		left: 0.5rem;
+		right: 0.5rem;
 		z-index: 10;
 	}
 

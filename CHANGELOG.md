@@ -1,5 +1,10 @@
 # Changelog
 
+## March 2026
+
+- #Map New globe view with day/night overlay, graticule lines, tile switching, and animated broadcast rings on channels
+- #Channels Standalone mode — import channels and tracks from local files and browse them alongside the main database
+
 ## February 2026
 
 - #Broadcast Listener presence — live counts per channel, per deck, and app-wide, with opt-in sharing in settings

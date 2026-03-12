@@ -234,7 +234,7 @@
 		height: 30px;
 		overflow: hidden;
 		max-width: 36px;
-		padding: 1px;
+
 		@media (min-width: 768px) {
 			height: auto;
 		}
