@@ -4,13 +4,18 @@
 	import Icon from '$lib/components/icon.svelte'
 	import {channelUrl, trackUrl, channelEmbed, copyToClipboard, canNativeShare, nativeShare} from '$lib/share'
 	import type {Track, Channel} from '$lib/types'
+	import * as m from '$lib/paraglide/messages'
 
 	let showModal = $state(false)
 	let copiedField = $state<string | null>(null)
 	let data = $state<{track?: Track; channel: Channel} | null>(null)
 
 	const isTrack = $derived(!!data?.track)
-	const title = $derived(isTrack ? `Share track → ${data?.track?.title}` : `Share channel → ${data?.channel?.name}`)
+	const title = $derived(
+		isTrack
+			? m.share_track_title({title: data?.track?.title ?? ''})
+			: m.share_channel_title({name: data?.channel?.name ?? ''})
+	)
 	const url = $derived(data ? (data.track ? trackUrl(data.channel, data.track) : channelUrl(data.channel)) : '')
 	const mediaUrl = $derived(data?.track?.url ?? '')
 	const embed = $derived(data?.channel ? channelEmbed(data.channel) : '')
@@ -52,22 +57,22 @@
 
 	<form class="form">
 		<fieldset>
-			<label for="share-url">URL</label>
+			<label for="share-url">{m.common_url()}</label>
 			<div class="row">
 				<input id="share-url" type="text" readonly value={url} onfocus={selectAll} />
 				<button type="button" onclick={() => copy(url, 'url')}>
-					{copiedField === 'url' ? 'Copied!' : 'Copy'}
+					{copiedField === 'url' ? m.share_copied() : m.share_copy()}
 				</button>
 			</div>
 		</fieldset>
 
 		{#if isTrack && mediaUrl}
 			<fieldset>
-				<label for="share-media">Media URL</label>
+				<label for="share-media">{m.share_media_url_label()}</label>
 				<div class="row">
 					<input id="share-media" type="text" readonly value={mediaUrl} onfocus={selectAll} />
 					<button type="button" onclick={() => copy(mediaUrl, 'media')}>
-						{copiedField === 'media' ? 'Copied!' : 'Copy'}
+						{copiedField === 'media' ? m.share_copied() : m.share_copy()}
 					</button>
 				</div>
 			</fieldset>
@@ -75,11 +80,11 @@
 
 		{#if !isTrack}
 			<fieldset>
-				<label for="share-embed">Embed</label>
+				<label for="share-embed">{m.share_embed_label()}</label>
 				<div class="row">
 					<input id="share-embed" type="text" readonly value={embed} onfocus={selectAll} />
 					<button type="button" onclick={() => copy(embed, 'embed')}>
-						{copiedField === 'embed' ? 'Copied!' : 'Copy'}
+						{copiedField === 'embed' ? m.share_copied() : m.share_copy()}
 					</button>
 				</div>
 			</fieldset>
@@ -88,7 +93,7 @@
 		{#if canNativeShare()}
 			<button type="button" onclick={share}>
 				<Icon icon="share" size={16} />
-				Share
+				{m.channel_card_share()}
 			</button>
 		{/if}
 	</form>

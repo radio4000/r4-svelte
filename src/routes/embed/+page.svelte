@@ -9,6 +9,7 @@
 	import {appState, createDefaultDeck} from '$lib/app-state.svelte'
 	import {setPlaylist} from '$lib/api'
 	import {ensureTracksLoaded} from '$lib/collections/tracks'
+	import * as m from '$lib/paraglide/messages'
 
 	/*
 		This page basically takes a View from the ?q url param,
@@ -119,15 +120,22 @@
 </script>
 
 {#if !hasView}
-	<p>Did you forget to add <code>/embed?q=@slug</code>?</p>
+	<p>{m.embed_missing_prefix()} <code>/embed?q=@slug</code>{m.embed_missing_suffix()}</p>
 {/if}
 
 <details hidden>
-	<summary>debug</summary>
+	<summary>{m.embed_debug()}</summary>
 	<form onsubmit={navigate}>
 		<input bind:value={inputQ} placeholder="@ko002 @oskar #jazz; @good-time-radio" size="40" />
-		<input bind:value={inputLimit} placeholder="limit" type="number" min="1" max="4000" style="width:5rem" />
-		<button type="submit">Load</button>
+		<input
+			bind:value={inputLimit}
+			placeholder={m.embed_limit_placeholder()}
+			type="number"
+			min="1"
+			max="4000"
+			style="width:5rem"
+		/>
+		<button type="submit">{m.embed_load()}</button>
 	</form>
 	<pre>{JSON.stringify(rawView, null, 2)}</pre>
 </details>

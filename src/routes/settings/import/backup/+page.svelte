@@ -67,8 +67,8 @@
 				importUrl()
 			}}
 		>
-			<input type="url" bind:value={url} placeholder="https://…  (.json, .txt, .m3u)" disabled={importing} />
-			<button type="submit" disabled={importing || !url.trim()}>Import from URL</button>
+			<input type="url" bind:value={url} placeholder={m.import_backup_url_placeholder()} disabled={importing} />
+			<button type="submit" disabled={importing || !url.trim()}>{m.import_from_url()}</button>
 		</form>
 
 		<Dropzone ondrop={onDrop}>

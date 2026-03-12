@@ -20,7 +20,7 @@
 </script>
 
 {#if !track || !channel}
-	<p>Track not found</p>
+	<p>{m.track_not_found()}</p>
 {:else if canEdit}
 	<TrackForm
 		mode="edit"
@@ -35,5 +35,5 @@
 {:else if !isSignedIn}
 	<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 {:else}
-	<p>You don't have permission to edit this track.</p>
+	<p>{m.track_edit_no_permission()}</p>
 {/if}

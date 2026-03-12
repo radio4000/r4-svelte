@@ -4,7 +4,6 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {createChannel} from '$lib/collections/channels'
 	import {slugify} from '$lib/utils'
-	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let error = $state('')
@@ -36,7 +35,7 @@
 			appState.channel = channel
 			await goto(resolve('/[slug]', {slug: channel.slug}))
 		} catch (err) {
-			error = /** @type {Error} */ (err).message || 'Failed to create channel'
+			error = /** @type {Error} */ (err).message || m.channel_create_failed()
 		} finally {
 			submitting = false
 		}
@@ -46,18 +45,14 @@
 <article class="constrained focused splash">
 	{#if !appState.user}
 		<p>
-			<a href={resolve('/auth') + '?redirect=' + resolve('/create-channel')}>Sign in to create your channel.</a>
+			<a href={resolve('/auth') + '?redirect=' + resolve('/create-channel')}>{m.auth_sign_in_to_create()}</a>
 		</p>
 	{:else if appState.channels?.length}
 		<p>
-			You already have a channel: <a href={resolve('/[slug]', {slug: appState.channel?.slug ?? ''})}
-				>@{appState.channel?.slug}</a
-			>
+			{m.channel_you_have()}
+			<a href={resolve('/[slug]', {slug: appState.channel?.slug ?? ''})}>@{appState.channel?.slug}</a>
 		</p>
-		<p>
-			Everyone gets a single channel. Constraints can be freeing. When you like a track, add it! Use #tags in your track
-			descriptions to organize as you want: highs and lows, ebbs and flows.
-		</p>
+		<p>{m.channel_single_channel_note()}</p>
 	{:else}
 		<header>
 			<h1>{m.channel_create_prompt()}</h1>
@@ -69,14 +64,14 @@
 
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>
-				<label for="name">Name</label>
+				<label for="name">{m.common_name()}</label>
 				<input id="name" name="name" type="text" required oninput={handleNameInput} />
 			</fieldset>
 
 			<details>
 				<summary><small>@{slug || '…'}</small></summary>
 				<fieldset>
-					<label for="slug">Slug</label>
+					<label for="slug">{m.channel_edit_slug_label()}</label>
 					<input
 						bind:value={slug}
 						id="slug"
@@ -92,7 +87,7 @@
 			</details>
 
 			<button class="primary" type="submit" disabled={submitting}>
-				{submitting ? 'Creating...' : 'Create'}
+				{submitting ? m.channel_creating() : m.channel_create_button()}
 			</button>
 			<p><small>{m.channel_name_changeable()}</small></p>
 		</form>

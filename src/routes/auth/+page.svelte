@@ -9,6 +9,7 @@
 	import {useLiveQuery} from '@tanstack/svelte-db'
 	import {inArray} from '@tanstack/db'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
 	const redirect = page.url.searchParams.get('redirect')
@@ -71,7 +72,7 @@
 			{#if !userChannelsQuery.data?.length}
 				<a href={resolve('/create-channel')}>{m.auth_create_radio_cta()}</a>
 			{/if}
-			<a href={resolve('/settings')}>Settings</a>
+			<a href={resolve('/settings')}>{m.settings_title()}</a>
 			<button type="button" onclick={handleSignOut}>{m.auth_log_out()}</button>
 		</menu>
 
@@ -89,7 +90,7 @@
 				<p>{m.auth_card_login_description()}</p>
 			</a>
 		</menu>
-		<a href={resolve('/welcome')} class="welcome-link">What is Radio4000?</a>
+		<a href={resolve('/welcome')} class="welcome-link">{appName}?</a>
 	{/if}
 </article>
 

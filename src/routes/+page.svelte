@@ -29,9 +29,12 @@
 
 {#if !appState.user && appState.show_welcome_hint !== false}
 	<p class="welcome">
-		Welcome! <a href={resolve('/welcome')}>Learn about Radio4000</a> or <a href={resolve('/auth/login')}>sign in</a>
+		{m.home_welcome_hint()}
+		<a href={resolve('/welcome')}>{m.home_welcome_learn()}</a>
+		{m.common_or()}
+		<a href={resolve('/auth/login')}>{m.home_welcome_sign_in()}</a>
 		<button class="link" onclick={() => (appState.show_welcome_hint = false)}>
-			<small>(dismiss)</small>
+			<small>({m.home_welcome_dismiss()})</small>
 		</button>
 	</p>
 {/if}

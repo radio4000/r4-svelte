@@ -78,10 +78,10 @@
 		month: () => m.tags_period_months()
 	}
 
-	const sortLabelMap = {count: 'Count', alpha: 'A–Z'}
+	const sortLabelMap = {count: m.tags_sort_count(), alpha: m.tags_sort_alpha()}
 
 	const displayIconMap = {list: 'unordered-list', cloud: 'tag'}
-	const displayLabelMap = {list: 'List', cloud: 'Cloud'}
+	const displayLabelMap = {list: m.tags_display_list(), cloud: m.tags_display_cloud()}
 
 	// Date range from tracks
 	let dateRange = $derived.by(() => {
@@ -268,7 +268,7 @@
 {:else}
 	<main>
 		<menu class="filtermenu">
-			<SearchInput bind:value={search} placeholder="Search tags…" />
+			<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
 
 			<PopoverMenu id="tags-data" closeOnClick={false}>
 				{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
@@ -295,8 +295,8 @@
 				{/snippet}
 				<div class="row">
 					<select bind:value={sort} aria-label={m.sort_order_label()}>
-						<option value="count">{sortLabelMap.count}</option>
-						<option value="alpha">{sortLabelMap.alpha}</option>
+						<option value="count">{m.tags_sort_count()}</option>
+						<option value="alpha">{m.tags_sort_alpha()}</option>
 					</select>
 					<button
 						type="button"
@@ -315,10 +315,10 @@
 				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]}{/snippet}
 				<menu class="view-modes">
 					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
-						<Icon icon="unordered-list" /><small>List</small>
+						<Icon icon="unordered-list" /><small>{m.tags_display_list()}</small>
 					</button>
 					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
-						<Icon icon="tag" /><small>Cloud</small>
+						<Icon icon="tag" /><small>{m.tags_display_cloud()}</small>
 					</button>
 				</menu>
 			</PopoverMenu>

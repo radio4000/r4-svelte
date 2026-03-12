@@ -6,6 +6,7 @@
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)
@@ -39,7 +40,7 @@
 	)
 </script>
 
-<p>Other tracks on Radio4000 sharing the same media:</p>
+<p>{m.track_related_heading()}</p>
 
 {#if relatedTracks.length > 0}
 	<ul class="list">
@@ -48,5 +49,5 @@
 		{/each}
 	</ul>
 {:else}
-	<p>No related information.</p>
+	<p>{m.track_related_empty()}</p>
 {/if}

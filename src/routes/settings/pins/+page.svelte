@@ -53,18 +53,18 @@
 </script>
 
 <svelte:head>
-	<title>Pins</title>
+	<title>{m.views_pins_title()}</title>
 </svelte:head>
 
 <article class="constrained">
 	<header>
 		<BackLink href={resolve('/settings')} />
-		<h1>Pins</h1>
+		<h1>{m.views_pins_title()}</h1>
 	</header>
-	<p><small>Pretty neat for quick access</small></p>
+	<p><small>{m.views_pins_intro()}</small></p>
 
 	{#if !savedViews.length}
-		<p>{m.views_no_saved()} <a href="/_debug/views">Create some first</a>.</p>
+		<p>{m.views_no_saved()} <a href="/_debug/views">{m.views_create_first()}</a>.</p>
 	{:else}
 		<menu class="nav-vertical">
 			{#each sortedViews() as item (item.sv.id)}
@@ -98,7 +98,11 @@
 								<Icon icon="delete" size={16} />
 							</button>
 						{/if}
-						<button class="btn" onclick={() => togglePin(item.sv)} aria-label={item.isPinned ? 'Unpin' : 'Pin'}>
+						<button
+							class="btn"
+							onclick={() => togglePin(item.sv)}
+							aria-label={item.isPinned ? m.views_unpin() : m.views_pin()}
+						>
 							<Icon icon={item.isPinned ? 'eye' : 'eye-close'} size={16} />
 						</button>
 					</span>

@@ -97,12 +97,9 @@
 />
 
 {#if isLoading}
-	<p>Loading...</p>
+	<p>{m.common_loading()}</p>
 {:else if !track || !channel}
-	<p>
-		Track not found (tid: {data.tid}, slug: {data.slug}, tracks loaded: {tracksQuery.data?.length ?? 0}, first track id: {tracksQuery
-			.data?.[0]?.id})
-	</p>
+	<p>{m.track_not_found()}</p>
 {:else}
 	<ul class="list track-current" class:playing={isTrackPlaying}>
 		<li><TrackCard {track} {canEdit} /></li>

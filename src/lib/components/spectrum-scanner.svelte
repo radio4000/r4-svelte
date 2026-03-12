@@ -4,6 +4,7 @@
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import InputRange from './input-range.svelte'
+	import * as m from '$lib/paraglide/messages'
 
 	const {channels = []} = $props()
 
@@ -39,12 +40,12 @@
 		<header>
 			<p class="slug">{channel ? `@${channel.slug}` : ''}</p>
 			<menu>
-				<button onclick={prev} title="Previous channel"><Icon icon="previous-fill" /></button>
-				<button onclick={play} title="Play this channel"><Icon icon="play-fill" /></button>
-				<button onclick={next} title="Next channel"><Icon icon="next-fill" /></button>
-				<button onclick={seek} title="Jump to random channel"><Icon icon="shuffle" /></button>
-				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay} title="Auto-play on navigation"
-					>Auto</button
+				<button onclick={prev} title={m.scanner_previous_channel()}><Icon icon="previous-fill" /></button>
+				<button onclick={play} title={m.scanner_play_channel()}><Icon icon="play-fill" /></button>
+				<button onclick={next} title={m.scanner_next_channel()}><Icon icon="next-fill" /></button>
+				<button onclick={seek} title={m.scanner_random_channel()}><Icon icon="shuffle" /></button>
+				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay} title={m.scanner_autoplay_navigation()}
+					>{m.scanner_auto()}</button
 				>
 			</menu>
 			<InputRange
@@ -55,7 +56,7 @@
 				oninput={() => {
 					if (!autoplay) return
 					if (playDebounce) clearTimeout(playDebounce)
-					playDebounce = setTimeout(() => play(), 400)
+					playDebounce = setTimeout(play, 400)
 				}}
 			/>
 		</header>

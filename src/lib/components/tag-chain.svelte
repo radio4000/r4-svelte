@@ -3,6 +3,7 @@
 	import {setPlaylist, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track} from '$lib/types'
+	import * as m from '$lib/paraglide/messages'
 
 	interface Props {
 		channelSlug?: string
@@ -28,16 +29,16 @@
 				<button
 					class="chip active"
 					onclick={() => (tags = tags.filter((t) => t.toLowerCase() !== tag.toLowerCase()))}
-					aria-label="Remove {tag}">{tag}</button
+					aria-label={m.tag_chain_remove({tag})}>{tag}</button
 				>
 			{/each}
 		</menu>
 		<menu class="actions">
 			<a href={resolve('/[slug]/tracks', {slug: channelSlug}) + `?tags=${tags.map(encodeURIComponent).join(',')}`}>
-				See {matchingTracks.length} tracks
+				{m.tag_chain_see_tracks({count: matchingTracks.length})}
 			</a>
-			<button class="primary" onclick={playChain} disabled={matchingTracks.length === 0}>▶ Play</button>
-			<button onclick={() => (tags = [])} aria-label="Clear chain">✕</button>
+			<button class="primary" onclick={playChain} disabled={matchingTracks.length === 0}>▶ {m.common_play()}</button>
+			<button onclick={() => (tags = [])} aria-label={m.tag_chain_clear()}>✕</button>
 		</menu>
 	</div>
 {/if}

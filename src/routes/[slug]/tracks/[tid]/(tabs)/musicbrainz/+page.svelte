@@ -59,5 +59,5 @@
 {:else if error}
 	<p>{m.track_meta_error({message: error})}</p>
 {:else}
-	<p>No MusicBrainz information.</p>
+	<p>{m.track_meta_no_musicbrainz()}</p>
 {/if}

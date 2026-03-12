@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Welcome to Radio4000</title>
+	<title>{m.welcome_title()}</title>
 </svelte:head>
 
 <article class="constrained focused splash">

@@ -1,36 +1,31 @@
 <script>
+	import * as m from '$lib/paraglide/messages'
+
 	let {data} = $props()
 	const bookmarkletHref = `javascript:(function(){window.open('${data.origin}/add?url='+encodeURIComponent(location.href))})();`
 </script>
 
 <svelte:head>
-	<title>Bookmarklet — Radio4000</title>
+	<title>{m.bookmarklet_title()}</title>
 </svelte:head>
 
 <article class="constrained">
-	<h1>Bookmarklet — add a track in two clicks</h1>
+	<h1>{m.bookmarklet_heading()}</h1>
 
-	<p>
-		A bookmarklet works like a bookmark. It sits in your browser's bookmarks bar. Instead of opening a page, it runs a
-		script. This one takes the URL of whatever page you're on and opens Radio4000's add-track form with it pre-filled.
-	</p>
+	<p>{m.bookmarklet_intro()}</p>
 
-	<p>Works on YouTube, SoundCloud, Discogs, and anywhere else you find music.</p>
+	<p>{m.bookmarklet_supports()}</p>
 
 	<div class="steps">
 		<section>
-			<h2>1. Drag this into your bookmarks bar</h2>
-			<!-- svelte-ignore a11y_invalid_attribute -->
-			<a class="btn primary bookmarklet" href={bookmarkletHref} data-sveltekit-reload>Add to Radio4000</a>
-			<p class="tip">Or right-click and choose "Bookmark this link".</p>
+			<h2>{m.bookmarklet_step_one()}</h2>
+			<a class="btn primary bookmarklet" href={bookmarkletHref} data-sveltekit-reload>{m.bookmarklet_button()}</a>
+			<p class="tip">{m.bookmarklet_tip()}</p>
 		</section>
 
 		<section>
-			<h2>2. Visit a page with music and click the bookmarklet</h2>
-			<p>
-				Try it on a YouTube video, a SoundCloud track, or a Discogs release — the URL lands in the right field
-				automatically.
-			</p>
+			<h2>{m.bookmarklet_step_two()}</h2>
+			<p>{m.bookmarklet_step_two_body()}</p>
 		</section>
 	</div>
 </article>

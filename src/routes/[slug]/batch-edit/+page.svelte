@@ -306,9 +306,9 @@
 </svelte:head>
 
 {#if channelCtx.isLoading}
-	<p style="padding: 1rem;">Loading...</p>
+	<p style="padding: 1rem;">{m.common_loading()}</p>
 {:else if !channel}
-	<p style="padding: 1rem;">Channel not found</p>
+	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {:else}
 	<header>
 		<!-- <p class="hint">
@@ -318,27 +318,43 @@
 		<menu class="controls">
 			<PopoverMenu>
 				{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabels[filter]}{/snippet}
-				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>All tracks</button>
+				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>{m.batch_edit_filter_all()}</button>
 				<button class:active={filter === 'missing-description'} onclick={() => (filter = 'missing-description')}
-					>Missing description</button
+					>{m.batch_edit_filter_missing_description()}</button
 				>
-				<button class:active={filter === 'no-tags'} onclick={() => (filter = 'no-tags')}>No tags</button>
-				<button class:active={filter === 'single-tag'} onclick={() => (filter = 'single-tag')}>Single tag</button>
-				<button class:active={filter === 'no-meta'} onclick={() => (filter = 'no-meta')}>No metadata</button>
-				<button class:active={filter === 'has-meta'} onclick={() => (filter = 'has-meta')}>Has metadata</button>
-				<button class:active={filter === 'has-t-param'} onclick={() => (filter = 'has-t-param')}>Has &t= param</button>
-				<button class:active={filter === 'has-error'} onclick={() => (filter = 'has-error')}>Has error</button>
-				<button class:active={filter === 'has-duration'} onclick={() => (filter = 'has-duration')}>Has duration</button>
-				<button class:active={filter === 'no-duration'} onclick={() => (filter = 'no-duration')}>No duration</button>
+				<button class:active={filter === 'no-tags'} onclick={() => (filter = 'no-tags')}
+					>{m.batch_edit_filter_no_tags()}</button
+				>
+				<button class:active={filter === 'single-tag'} onclick={() => (filter = 'single-tag')}
+					>{m.batch_edit_filter_single_tag()}</button
+				>
+				<button class:active={filter === 'no-meta'} onclick={() => (filter = 'no-meta')}
+					>{m.batch_edit_filter_no_meta()}</button
+				>
+				<button class:active={filter === 'has-meta'} onclick={() => (filter = 'has-meta')}
+					>{m.batch_edit_filter_has_meta()}</button
+				>
+				<button class:active={filter === 'has-t-param'} onclick={() => (filter = 'has-t-param')}
+					>{m.batch_edit_filter_has_t_param()}</button
+				>
+				<button class:active={filter === 'has-error'} onclick={() => (filter = 'has-error')}
+					>{m.batch_edit_filter_has_error()}</button
+				>
+				<button class:active={filter === 'has-duration'} onclick={() => (filter = 'has-duration')}
+					>{m.batch_edit_filter_has_duration()}</button
+				>
+				<button class:active={filter === 'no-duration'} onclick={() => (filter = 'no-duration')}
+					>{m.batch_edit_filter_no_duration()}</button
+				>
 				<button class:active={filter === 'meta-no-duration'} onclick={() => (filter = 'meta-no-duration')}
-					>Meta but no duration</button
+					>{m.batch_edit_filter_meta_no_duration()}</button
 				>
 			</PopoverMenu>
 
 			{#if allTags.length > 0}
 				<PopoverMenu>
-					{#snippet trigger()}<Icon icon="tag" /> {tagFilter || 'Tags'}{/snippet}
-					<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>All tags</button>
+					{#snippet trigger()}<Icon icon="tag" /> {tagFilter || m.batch_edit_tags_label()}{/snippet}
+					<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>{m.batch_edit_all_tags()}</button>
 					{#each allTags as { value, count } (value)}
 						<button class:active={tagFilter === value} onclick={() => (tagFilter = value)}>{value} ({count})</button>
 					{/each}
@@ -347,8 +363,10 @@
 
 			{#if allMentions.length > 0}
 				<PopoverMenu>
-					{#snippet trigger()}<Icon icon="user" /> {mentionFilter || 'Mentions'}{/snippet}
-					<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}>All mentions</button>
+					{#snippet trigger()}<Icon icon="user" /> {mentionFilter || m.batch_edit_mentions_label()}{/snippet}
+					<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}
+						>{m.batch_edit_all_mentions()}</button
+					>
 					{#each allMentions as { value, count } (value)}
 						<button class:active={mentionFilter === value} onclick={() => (mentionFilter = value)}
 							>{value} ({count})</button
@@ -363,23 +381,29 @@
 				<button
 					onclick={fetchAllMeta}
 					disabled={fetchingMeta}
-					title="Fetch YouTube metadata for {targetTracksMissingMeta.length} {hasSelection ? 'selected' : ''} tracks"
+					title={m.batch_edit_fetch_meta_title({
+						count: targetTracksMissingMeta.length,
+						selected: hasSelection ? m.batch_edit_fetch_meta_selected() : ''
+					})}
 				>
 					{fetchingMeta
-						? `Fetching... (${fetchProgress.current}/${fetchProgress.total})`
-						: `Fetch meta (${targetTracksMissingMeta.length}${hasSelection ? ' sel' : ''})`}
+						? m.batch_edit_fetching_progress({current: fetchProgress.current, total: fetchProgress.total})
+						: m.batch_edit_fetch_meta_button({
+								count: targetTracksMissingMeta.length,
+								selected: hasSelection ? m.batch_edit_fetch_meta_short_selected() : ''
+							})}
 				</button>
 			{/if}
 
 			<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-				{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} /> Display{/snippet}
+				{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} /> {m.batch_edit_display_label()}{/snippet}
 				<div class="sort-row">
 					<select bind:value={sortBy}>
-						<option value={null}>Sort by...</option>
-						<option value="title">Title</option>
-						<option value="created_at">Created</option>
-						<option value="updated_at">Updated</option>
-						<option value="duration">Duration</option>
+						<option value={null}>{m.batch_edit_sort_placeholder()}</option>
+						<option value="title">{m.batch_edit_sort_title()}</option>
+						<option value="created_at">{m.batch_edit_sort_created()}</option>
+						<option value="updated_at">{m.batch_edit_sort_updated()}</option>
+						<option value="duration">{m.batch_edit_sort_duration()}</option>
 					</select>
 					<button onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}>
 						<Icon icon={sortDir === 'asc' ? 'arrow-up' : 'arrow-down'} />
@@ -418,7 +442,7 @@
 		</menu>
 
 		{#if !canEdit}
-			<p class="hint warn">(READ ONLY, you do not have edit access)</p>
+			<p class="hint warn">({m.batch_edit_read_only()})</p>
 		{/if}
 	</header>
 
@@ -429,7 +453,7 @@
 	<main class="tracks-container">
 		<section class="tracks">
 			{#if tracksQuery.isLoading}
-				<p>Loading tracks...</p>
+				<p>{m.batch_edit_loading_tracks()}</p>
 			{:else if filteredTracks.length === 0}
 				<p>{m.batch_edit_no_tracks()}</p>
 			{:else}

@@ -8,9 +8,9 @@
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import {BroadcastLayer} from './map-broadcast-layer.js'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	import * as m from '$lib/paraglide/messages'
 	const channelActivity = $derived(getChannelActivity())
 
 	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
@@ -222,7 +222,7 @@
 				m.getCanvas().style.cursor = ''
 			})
 		} else {
-			/** @type {GeoJSONSource} */ ;(m.getSource('channels-source')).setData(fc)
+			/** @type {GeoJSONSource} */ m.getSource('channels-source').setData(fc)
 		}
 	}
 
@@ -412,7 +412,13 @@
 			type: 'FeatureCollection',
 			features: lines.map(({id, lat}) => ({
 				type: 'Feature',
-				geometry: {type: 'LineString', coordinates: [[-180, lat], [180, lat]]},
+				geometry: {
+					type: 'LineString',
+					coordinates: [
+						[-180, lat],
+						[180, lat]
+					]
+				},
 				properties: {id}
 			}))
 		}
@@ -422,8 +428,8 @@
 	function buildNightGeoJSON() {
 		const now = new Date()
 		const dayOfYear = Math.round((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000)
-		const decDeg = -23.45 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10))
-		const dec = decDeg * Math.PI / 180
+		const decDeg = -23.45 * Math.cos(((2 * Math.PI) / 365) * (dayOfYear + 10))
+		const dec = (decDeg * Math.PI) / 180
 		// Small epsilon avoids tan(0) singularity at equinoxes
 		const tanDec = Math.abs(dec) < 0.002 ? 0.002 * Math.sign(dec || 1) : Math.tan(dec)
 		const noonLng = (12 - (now.getUTCHours() + now.getUTCMinutes() / 60)) * 15
@@ -440,7 +446,7 @@
 		const nightPole = decDeg >= 0 ? -90 : 90
 		let ring
 		if (decDeg >= 0) {
-			const rev = [...coords].reverse()
+			const rev = coords.toReversed()
 			ring = [...rev, [-180, nightPole], [180, nightPole], rev[0]]
 		} else {
 			ring = [...coords, [180, nightPole], [-180, nightPole], coords[0]]
@@ -490,7 +496,8 @@
 
 	function updateNightLayer() {
 		if (!map || !mapReady) return
-		/** @type {any} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
+		/** @type {any} */
+		map.getSource('night-source')?.setData(buildNightGeoJSON())
 	}
 
 	function handleReady(m) {
@@ -657,7 +664,7 @@
 				type="button"
 				class:active={globeMode}
 				onclick={() => (globeMode = !globeMode)}
-				title={globeMode ? 'Switch to flat map' : 'Switch to globe'}
+				title={globeMode ? m.map_switch_to_flat() : m.map_switch_to_globe()}
 			>
 				<Icon icon={globeMode ? 'map' : 'globe'} size={16} />
 			</button>
@@ -666,7 +673,7 @@
 				type="button"
 				class:active={showGraticules}
 				onclick={() => (showGraticules = !showGraticules)}
-				title="Tropics & poles"
+				title={m.map_toggle_graticules()}
 			>
 				<Icon icon="grid" size={16} />
 			</button>
@@ -674,15 +681,15 @@
 				type="button"
 				class:active={showDayNight}
 				onclick={() => (showDayNight = !showDayNight)}
-				title="Day / night"
+				title={m.map_toggle_day_night()}
 			>
 				<Icon icon="sun" size={16} />
 			</button>
 			<span class="sep"></span>
-			<select bind:value={tileStyle} title="Map tiles" aria-label="Map tiles">
-				<option value="carto">Map</option>
-				<option value="topo">Topo</option>
-				<option value="satellite">Sat</option>
+			<select bind:value={tileStyle} title={m.map_tiles_label()} aria-label={m.map_tiles_label()}>
+				<option value="carto">{m.map_tiles_map()}</option>
+				<option value="topo">{m.map_tiles_topo()}</option>
+				<option value="satellite">{m.map_tiles_satellite()}</option>
 			</select>
 		</menu>
 	</div>

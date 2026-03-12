@@ -15,7 +15,7 @@
 	const broadcasts = useLiveQuery(broadcastsCollection)
 	const activeBroadcasts = $derived((broadcasts.data ?? []).filter((row) => row.channel_id && row.channels))
 	const loading = $derived(broadcasts.isLoading)
-	const loadingError = $derived(broadcasts.isError ? 'Failed to load broadcasts' : null)
+	const loadingError = $derived(broadcasts.isError ? m.broadcasts_loading_failed() : null)
 
 	const deckStatesByChannel = new SvelteMap()
 	const stateChannels = new SvelteMap()
@@ -92,7 +92,8 @@
 							{broadcast.track_played_at ? timeAgo(broadcast.track_played_at) : '...'}
 						{/if}
 						{#if primaryLabel}
-							<em>{primaryLabel}</em> via
+							<em>{primaryLabel}</em>
+							{m.broadcasts_via()}
 							<a href={resolve('/[slug]', {slug: broadcast.channels.slug})}>@{broadcast.channels.slug}</a>
 						{:else}
 							<em>...</em>
@@ -103,7 +104,7 @@
 							{#each deckStatesByChannel.get(broadcast.channel_id) as deckState, i (i)}
 								{@const label = getTrackLabel(deckState?.track_id)}
 								<li>
-									Deck {i + 1}:
+									{m.broadcasts_deck_label({number: i + 1})}:
 									{#if label}
 										<em>{label}</em>
 									{:else}
@@ -135,7 +136,7 @@
 			</div>
 		{:else}
 			{#if loading}
-				<p class="scanning"><rough-spinner spinner="14" interval="150"></rough-spinner> Scanning the airwaves…</p>
+				<p class="scanning"><rough-spinner spinner="14" interval="150"></rough-spinner> {m.broadcasts_scanning()}</p>
 			{:else}
 				<p>{m.broadcasts_none()}</p>
 			{/if}

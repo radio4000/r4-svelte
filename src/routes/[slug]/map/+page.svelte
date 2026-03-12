@@ -14,7 +14,7 @@
 	{:else if !channel}
 		<p>{m.channel_not_found()}</p>
 	{:else if !hasLocation}
-		<p>Channel has no location.</p>
+		<p>{m.map_channel_no_location()}</p>
 	{:else}
 		<div class="map-fill fill-height">
 			<MapChannels

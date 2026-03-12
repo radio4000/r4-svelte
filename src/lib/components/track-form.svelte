@@ -125,7 +125,7 @@
 					discogs_url: discogs_url || undefined
 				})
 			} else {
-				if (!trackId) throw new Error('Track ID required for update')
+				if (!trackId) throw new Error(m.track_form_update_id_required())
 
 				const hasChanges =
 					url !== initialUrl ||
@@ -148,7 +148,7 @@
 				form?.reset()
 			}
 		} catch (err) {
-			error = (err as Error).message || 'Failed to save track'
+			error = (err as Error).message || m.track_form_save_failed()
 			onsubmit?.({data: null, error: err as Error})
 		} finally {
 			submitting = false
@@ -175,7 +175,7 @@
 
 <form class="form" onsubmit={handleSubmit}>
 	<fieldset>
-		<label for="{uid}-url">URL</label>
+		<label for="{uid}-url">{m.track_form_url_label()}</label>
 		<!-- svelte-ignore a11y_autofocus -->
 		<input
 			bind:this={urlInput}
@@ -186,12 +186,12 @@
 			oninput={handleUrlInput}
 			required
 			autofocus
-			placeholder="https://..."
+			placeholder={m.track_form_url_placeholder()}
 		/>
 	</fieldset>
 
 	<fieldset>
-		<label for="{uid}-title">Title {fetchingTitle ? '...' : ''}</label>
+		<label for="{uid}-title">{m.track_form_title_label()} {fetchingTitle ? '...' : ''}</label>
 		<input
 			bind:this={titleInput}
 			bind:value={liveTitle}
@@ -204,7 +204,7 @@
 	</fieldset>
 
 	<fieldset>
-		<label for="{uid}-description">Description</label>
+		<label for="{uid}-description">{m.track_form_description_label()}</label>
 		<textarea
 			bind:this={descriptionInput}
 			id="{uid}-description"
@@ -216,7 +216,7 @@
 
 	<fieldset>
 		<label for="{uid}-discogs_url">
-			Discogs URL
+			{m.track_form_discogs_label()}
 			{#if mode === 'create' && discogsActionUrl}
 				(
 				<a

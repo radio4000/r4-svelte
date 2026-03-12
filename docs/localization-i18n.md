@@ -12,6 +12,30 @@
 
 Do **not** add the new keys manually to other language files — they stay absent until translated, and Paraglide falls back to English in the meantime.
 
+## Audit checklist
+
+When doing an English-source coverage pass, check these user-visible surfaces:
+
+- Route titles in `<svelte:head>`
+- Button text, labels, legends, empty states, helper copy, and dialog copy
+- `title`, `aria-label`, and `placeholder` attributes
+- Shared components reused across pages
+- Browser-visible errors that are shown in the UI
+
+Usually out of scope:
+
+- `_debug` routes
+- Console logs and internal-only thrown errors
+- User content such as channel names, track titles, tags, and URLs
+
+Useful grep for a first pass:
+
+```bash
+rg -n '<title>|placeholder=|aria-label=|title=|>[^<{]*[A-Za-z][^<{]*<' src/routes src/lib/components --glob '!src/routes/_debug/**'
+```
+
+Review the matches manually. The grep is only for discovery; it will also catch examples, slugs, and non-copy literals.
+
 ## Tools
 
 Each script does one thing. Locale argument is always optional and positional.

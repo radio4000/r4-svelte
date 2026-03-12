@@ -156,7 +156,7 @@
 				bind:value={email}
 				required
 				autocomplete="email"
-				placeholder="Enter your email address…"
+				placeholder={m.auth_email_placeholder()}
 			/>
 		</fieldset>
 		<fieldset>
@@ -166,7 +166,7 @@
 				type="password"
 				bind:value={password}
 				autocomplete="current-password"
-				placeholder="Password (optional)"
+				placeholder={m.auth_password_optional_placeholder()}
 			/>
 		</fieldset>
 		<button type="submit" class="primary" disabled={loading}>
