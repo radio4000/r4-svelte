@@ -620,7 +620,7 @@
 	"track_edit_title": "ट्रैक संपादित करें",
 	"track_form_description_label": "विवरण",
 	"track_form_description_placeholder": "वैकल्पिक विवरण",
-	"track_form_discogs_label": "Discogs URL",
+	"track_form_discogs_label": "Discogs यूआरएल",
 	"track_form_discogs_placeholder": "उदा.: https://discogs.com/release/...",
 	"track_form_save_failed": "ट्रैक सहेजा नहीं जा सका",
 	"track_form_title_label": "शीर्षक",

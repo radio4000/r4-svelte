@@ -175,7 +175,7 @@
 	"broadcast_requires_track": "Yayın başlatmak için bir parçanın çalıyor olması gerekir. Bir şey çalın.",
 	"broadcast_start_button": "Yayını başlat",
 	"broadcast_stop_button": "Yayını durdur",
-	"broadcasts_deck_label": "Deck {number}",
+	"broadcasts_deck_label": "{number}. deck",
 	"broadcasts_error": "Yayınlar yüklenemedi.",
 	"broadcasts_join": "Birlikte dinle",
 	"broadcasts_leave": "Yayından ayrıl",
