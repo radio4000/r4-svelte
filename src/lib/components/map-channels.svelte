@@ -707,9 +707,13 @@
 	/* Single horizontal row of controls below map filters */
 	.map-controls {
 		position: absolute;
-		top: 2.9rem;
-		right: 0.5rem;
+		bottom: 0.5rem;
+		left: 0.5rem;
 		z-index: 10;
+	}
+
+	.map-controls menu.nav-grouped {
+		margin: 0;
 	}
 
 	:global(.map-popup) {
