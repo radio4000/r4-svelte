@@ -19,6 +19,8 @@
 		"i18n:stats": "node i18n/stats.js",
 		"i18n:extract": "node i18n/extract.js",
 		"i18n:review": "node i18n/review.js",
+		"i18n:check": "node i18n/check.js",
+		"i18n:prune-unused": "node i18n/prune-unused.js",
 		"i18n:apply": "node i18n/apply-batch.js"
 	},
 	"devDependencies": {

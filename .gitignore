@@ -8,6 +8,7 @@ rollup-visualizer.html
 # inlang generated artifacts
 ./i18n/project.inlang/cache/
 ./i18n/project.inlang/project_id
+i18n/batches/*.json
 .arbe/events.db
 
 # OS
