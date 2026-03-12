@@ -179,9 +179,16 @@
 
 	/* Keep zoom above attribution in bottom-right corner. */
 	.map :global(.maplibregl-ctrl-bottom-right) {
+		right: 0.5rem;
+		bottom: 0.5rem;
 		display: flex;
 		flex-direction: column-reverse;
 		align-items: flex-end;
 		gap: 0.25rem;
+	}
+
+	.map :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl),
+	.map :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib) {
+		margin: 0;
 	}
 </style>
