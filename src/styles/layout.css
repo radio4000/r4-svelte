@@ -1,13 +1,13 @@
 /* Limit width to readable line length */
 .constrained {
 	width: 100%;
-	max-width: 80ch;
+	max-width: 44rem;
 	margin-block: 0.5rem;
 	padding-inline: 0.5rem;
 }
 
 .constrained--smaller {
-	max-width: 40ch;
+	max-width: 22rem;
 }
 
 .container {

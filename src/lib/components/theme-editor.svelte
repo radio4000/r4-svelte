@@ -344,4 +344,5 @@
 	.inactive {
 		display: none;
 	}
+
 </style>

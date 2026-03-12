@@ -9,8 +9,8 @@
 	<title>{m.settings_appearance_title()}</title>
 </svelte:head>
 
-<article class="focused constrained">
-	<header>
+<article>
+	<header class="focused constrained">
 		<BackLink href={resolve('/settings')} />
 		<h1>{m.theme_heading()}</h1>
 	</header>
