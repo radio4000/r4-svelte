@@ -79,8 +79,11 @@ export function analyzeChannel(channel, tracks = []) {
 		musicTerms: []
 	}
 
-	// Check for music terms (counter-evidence)
-	const foundMusicTerms = musicTerms.filter((term) => text.includes(term.toLowerCase()))
+	// Check for music terms (counter-evidence) — word boundaries to avoid "rap" in "photography" etc.
+	const foundMusicTerms = musicTerms.filter((term) => {
+		const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+		return new RegExp(`\\b${escaped}\\b`).test(text)
+	})
 	evidence.musicTerms = foundMusicTerms
 
 	// Check for spam keywords (increased weight for multiple matches) - use word boundaries for short words

@@ -1,20 +1,37 @@
 <script>
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {analyzeChannel} from './spam-detector.js'
-	import {channelsCollection} from '$lib/collections/channels'
+	import {sdk} from '@radio4000/sdk'
 	import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
 	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {createQuery} from '@tanstack/svelte-query'
 
-	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
+	const MAX_TRACK_COUNT = 10
+
+	const channelsQuery = createQuery(() => ({
+		queryKey: ['spam-angel', 'channels', MAX_TRACK_COUNT],
+		queryFn: async () => {
+			const {data, error} = await sdk.supabase
+				.from('channels_with_tracks')
+				.select('*')
+				.lt('track_count', MAX_TRACK_COUNT)
+				.order('created_at', {ascending: false})
+			if (error) throw error
+			return data ?? []
+		},
+		staleTime: 5 * 60 * 1000
+	}))
+
 	const allChannels = $derived(channelsQuery.data ?? [])
+	const loading = $derived(channelsQuery.isPending)
+	const error = $derived(channelsQuery.error?.message ?? null)
 
 	const decisionsQuery = useLiveQuery((q) => q.from({d: spamDecisionsCollection}))
 	const decisions = $derived(decisionsQuery.data ?? [])
 
-	// Channels with 0 tracks AND spam signals, sorted by confidence (highest first)
+	// Channels with spam signals, sorted by confidence (highest first)
 	const candidates = $derived(
 		allChannels
-			.filter((ch) => (ch.track_count ?? 0) === 0)
 			.map((ch) => {
 				const decision = decisions.find((d) => d.channelId === ch.id)
 				return {
@@ -23,7 +40,7 @@
 					decision: decision?.spam
 				}
 			})
-			.filter((ch) => ch.analysis.confidence > 0)
+			.filter((ch) => ch.analysis.confidence >= 0.2)
 			.sort((a, b) => b.analysis.confidence - a.analysis.confidence)
 	)
 
@@ -98,12 +115,18 @@
 		</menu>
 		<div>
 			<h1>Spam Angel</h1>
-			<p>Triage suspected spam channels for deletion.</p>
+			<p>Review and mark suspected spam channels. Nothing is deleted here — use the generated SQL to act.</p>
 		</div>
 		<menu>
 			<button onclick={clearAll} disabled={toDelete.length === 0 && toKeep.length === 0}>Clear all</button>
 		</menu>
 	</header>
+
+	{#if loading}
+		<p>Loading channels…</p>
+	{:else if error}
+		<p>Error: {error}</p>
+	{/if}
 
 	<div class="triage">
 		<!-- For Review (top, full width) -->
@@ -150,7 +173,7 @@
 								</span>
 
 								<menu class="actions">
-									<button class="danger" onclick={() => setDecision(channel.id, true)}>Delete</button>
+									<button class="danger" onclick={() => setDecision(channel.id, true)}>Spam</button>
 									<button onclick={() => setDecision(channel.id, false)}>Keep</button>
 								</menu>
 							</div>
@@ -173,7 +196,7 @@
 		<section class="column" data-column="delete">
 			<details open>
 				<summary>
-					<span>To Delete ({toDelete.length})</span>
+					<span>Marked as spam ({toDelete.length})</span>
 					<button onclick={copySQL} disabled={toDelete.length === 0}>Copy SQL</button>
 				</summary>
 				<ul class="list">
