@@ -154,10 +154,6 @@ button[type='submit'] {
 
 a.btn {
 	text-decoration: none;
-}
-
-a.btn:link,
-a.btn:visited {
 	color: var(--button-color, var(--gray-12));
 }
 
@@ -235,12 +231,14 @@ button.chip.active:hover,
 .chip-group {
 	display: inline-flex;
 	align-items: stretch;
-}
 
-.chip-group .chip {
+.chip {
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 	border-right: 0;
+}
+
+
 }
 
 .chip-delete {

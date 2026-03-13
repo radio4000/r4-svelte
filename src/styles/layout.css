@@ -222,7 +222,6 @@ menu.nav-options {
 	gap: 1rem;
 	margin-top: 1rem;
 	text-align: center;
-	font-size: var(--font-6);
 
 	> a {
 		text-decoration: none;
@@ -234,15 +233,6 @@ menu.nav-options {
 			background: var(--accent-3);
 			border-color: var(--accent-9);
 		}
-	}
-
-	h3 {
-		margin: 0;
-	}
-
-	p {
-		margin: 0;
-		font-size: var(--font-2);
 	}
 }
 
