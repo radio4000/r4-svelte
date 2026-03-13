@@ -202,7 +202,7 @@
 		flex-direction: column;
 		min-width: 0;
 		flex: 1;
-		padding: 0.2rem;
+		margin-top: 0.5rem;
 	}
 
 	.actions {

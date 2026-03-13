@@ -54,7 +54,6 @@ button:focus,
 /* 	} */
 /* } */
 
-select:focus,
 button:disabled,
 .btn:disabled {
 	color: var(--gray-8);
