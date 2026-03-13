@@ -18,7 +18,7 @@ export const appShortName = env.PUBLIC_APP_SHORT_NAME ?? 'R4'
 export const appUrl =
 	env.PUBLIC_APP_URL ?? (import.meta.env.DEV ? 'http://localhost:5173' : 'https://beta.radio4000.com')
 export const appDescription = env.PUBLIC_APP_DESCRIPTION ?? 'Collect, curate, play and share your own radio channel'
-export const appPlayerUrl = env.PUBLIC_APP_PLAYER_URL ?? 'https://r5.i4k.workers.dev'
+export const appPlayerUrl = env.PUBLIC_APP_PLAYER_URL ?? 'https://player.radio4000.com'
 export const appCloudinaryUrl = env.PUBLIC_APP_CLOUDINARY_URL ?? 'https://res.cloudinary.com/radio4000'
 export const appLegalUrl = env.PUBLIC_APP_LEGAL_URL ?? 'https://legal.radio4000.com'
 export const appChatUrl = env.PUBLIC_APP_CHAT_URL ?? 'https://matrix.to/#/#radio4000:matrix.org'
