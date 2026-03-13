@@ -6,7 +6,7 @@ export const channelUrl = (channel: Channel) => `${appUrl}/${channel.slug}`
 export const trackUrl = (channel: Channel, track: Track) => `${appUrl}/${channel.slug}/tracks/${track.id}`
 
 export const channelEmbed = (channel: Channel) =>
-	`<iframe src="${appPlayerUrl}/?slug=${channel.slug}" width="320" height="500"></iframe>`
+	`<iframe src="${appPlayerUrl}/embed?q=@${channel.slug}" width="320" height="500"></iframe>`
 
 export const copyToClipboard = (text: string) =>
 	navigator.clipboard.writeText(text).then(
