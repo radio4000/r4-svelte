@@ -357,7 +357,7 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 			const countMismatch = remoteCount !== cachedTracks.length
 			const outdated = countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
 
-			log.info('freshness', {
+			log.debug('freshness', {
 				slug,
 				cached: cachedTracks.length,
 				remote: remoteCount,

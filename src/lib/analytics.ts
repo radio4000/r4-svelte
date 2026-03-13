@@ -1,6 +1,9 @@
 import posthog from 'posthog-js'
 import {appState} from '$lib/app-state.svelte'
 import {posthogKey} from '$lib/config'
+import {logger} from '$lib/logger'
+
+const log = logger.ns('analytics').seal()
 
 const POSTHOG_KEY = posthogKey
 const POSTHOG_HOST = 'https://eu.i.posthog.com'
@@ -33,8 +36,10 @@ export function syncAnalyticsConsent(optIn: boolean) {
 			identified = true
 			posthog.identify(user.id)
 		}
+		log.debug('opted in to analytics')
 	} else {
 		if (initialized) posthog.opt_out_capturing()
+		log.debug('opted out of analytics')
 	}
 }
 

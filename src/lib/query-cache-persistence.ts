@@ -92,7 +92,7 @@ const idbPersister = {
 			const result = await get<PersistedClient>(IDB_KEYS.queryCache, store)
 			const ms = (performance.now() - t0).toFixed(1)
 			const queries = result?.clientState?.queries?.length ?? 0
-			log.log('restoreClient', {queries, ms: `${ms}ms`})
+			log.debug('restoreClient', {queries, ms: `${ms}ms`})
 			return result
 		} catch (err) {
 			await resetStore(`restoreClient: ${err}`)
