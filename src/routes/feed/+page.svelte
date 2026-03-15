@@ -19,25 +19,25 @@
 		return DAY_OPTIONS.includes(n) ? n : 30
 	})
 
-	const {isLoading: followsLoading, followedIds, followedChannels} = getFollowedChannels()
+	const follows = getFollowedChannels()
 
 	// Fetch tracks: only when requesting a wider window than already loaded
 	let maxLoadedDays = $state(0)
 	$effect(() => {
-		if (!followedChannels.length || days <= maxLoadedDays) return
+		if (!follows.followedChannels.length || days <= maxLoadedDays) return
 		maxLoadedDays = days
 		const since = new Date(Date.now() - days * 86400000).toISOString()
 		fetchRecentTracksForSlugs(
-			followedChannels.map((ch) => ch.slug),
+			follows.followedChannels.map((ch) => ch.slug),
 			since
 		)
 	})
 
 	// Feed: tracks from followed channels within selected window, grouped by day
 	const feedTracks = $derived.by(() => {
-		if (!followedChannels.length) return []
+		if (!follows.followedChannels.length) return []
 		const since = new Date(Date.now() - days * 86400000).toISOString()
-		const slugSet = new Set(followedChannels.map((ch) => ch.slug))
+		const slugSet = new Set(follows.followedChannels.map((ch) => ch.slug))
 		// Access .size so this derived re-runs when tracks are upserted into the collection
 		void tracksCollection.state.size
 		return groupByDay(
@@ -87,9 +87,9 @@
 				{/each}
 			</ul>
 		{/each}
-	{:else if followsLoading || (followedIds.length > 0 && maxLoadedDays === 0)}
+	{:else if follows.isLoading || (follows.followedIds.length > 0 && maxLoadedDays === 0)}
 		<p class="empty">…</p>
-	{:else if followedIds.length === 0}
+	{:else if follows.followedIds.length === 0}
 		<p class="empty">{m.home_feed_no_follows()}</p>
 	{:else}
 		<p class="empty">{m.home_feed_empty({days})}</p>
@@ -107,7 +107,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin: 0.5rem 0 1rem;
+		margin: 0 0 1rem;
 		z-index: 1;
 	}
 

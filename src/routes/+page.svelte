@@ -22,7 +22,7 @@
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
 
-	const {followedChannels} = getFollowedChannels()
+	const follows = getFollowedChannels()
 
 	// Featured channels (not logged in, or no channel)
 	let featuredPool = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
@@ -146,10 +146,10 @@
 			</section>
 		{/if}
 
-		{#if followedChannels.length > 0}
+		{#if follows.followedChannels.length > 0}
 			<section class="section">
 				<ol class="grid">
-					{#each followedChannels as channel (channel.id)}
+					{#each follows.followedChannels as channel (channel.id)}
 						<li><ChannelCard {channel} /></li>
 					{/each}
 				</ol>
@@ -279,15 +279,11 @@
 
 <style>
 	.homepage {
-		padding: 0;
+		padding: 0.5rem;
 
-		> * {
-			margin-inline: 0.5rem;
-		}
-
-		/* grids manage their own margin */
+		/* grids manage their own horizontal spacing */
 		:global(.grid) {
-			margin-inline: 0;
+			margin-inline: -0.5rem;
 		}
 	}
 
@@ -297,7 +293,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin: 0.5rem 0 1rem;
+		margin: 0 0 1rem;
 		z-index: 1;
 	}
 
