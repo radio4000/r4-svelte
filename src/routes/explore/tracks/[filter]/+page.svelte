@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
 	import {tracksCollection, fetchRecentTracks} from '$lib/collections/tracks'
