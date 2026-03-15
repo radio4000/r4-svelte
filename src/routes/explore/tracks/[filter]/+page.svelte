@@ -1,18 +1,26 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
-	import {tracksCollection, fetchRecentTracks, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {channelsCollection, loadMoreChannels} from '$lib/collections/channels'
-	import {featuredScore, groupByDay} from '$lib/utils'
+	import {tracksCollection, fetchRecentTracks} from '$lib/collections/tracks'
+	import {loadFeaturedChannelTracks} from '$lib/collections/featured'
+	import {groupByDay} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const {data} = $props()
+
+	let search = $state('')
+	$effect(() => {
+		const q = search.trim()
+		if (!q) return
+		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replaceState: true})
+	})
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
@@ -23,13 +31,8 @@
 	let loadingMore = $state(false)
 	let loaded = $state(false)
 	let currentOffset = $state(0)
-	let featuredChannels = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
 
 	const filterParam = $derived(data.filter)
-
-	const isChannelsTab = $derived(page.route.id?.startsWith('/explore/channels'))
-	const isTracksTab = $derived(page.route.id?.startsWith('/explore/tracks'))
-	const isTagsTab = $derived(page.route.id?.startsWith('/explore/tags'))
 
 	$effect(() => {
 		const f = filterParam
@@ -58,28 +61,10 @@
 	}
 
 	async function loadFeatured() {
-		await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-		await loadMoreChannels({
-			trackCountGte: 10,
-			imageNotNull: true,
-			limit: 200,
-			offset: 0,
-			orderColumn: 'latest_track_at',
-			ascending: false
-		})
+		const picked = await loadFeaturedChannelTracks(FEATURED_COUNT, FEATURED_DAYS)
 		const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-		const pool = [...channelsCollection.state.values()].filter(
-			(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= featuredSince
-		)
-		const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
-		featuredChannels = picked
-		if (picked.length) {
-			await fetchRecentTracksForSlugs(
-				picked.map((ch) => ch.slug),
-				featuredSince
-			)
-		}
-		const slugSet = new Set(featuredChannels.map((ch) => ch.slug))
+		const slugSet = new Set(picked.map((ch) => ch.slug))
+		// Access .size so this derived re-runs when tracks are upserted into the collection
 		void tracksCollection.state.size
 		tracks = [...tracksCollection.state.values()]
 			.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= featuredSince)
@@ -110,15 +95,7 @@
 
 <div class="layout">
 	<menu class="filtermenu">
-		<a href={resolve('/explore/channels/featured')} class="btn" class:active={isChannelsTab}>
-			{m.explore_tab_channels()}
-		</a>
-		<a href={resolve('/explore/tracks/recent')} class="btn" class:active={isTracksTab}>
-			{m.explore_tab_tracks()}
-		</a>
-		<a href={resolve('/explore/tags/featured')} class="btn" class:active={isTagsTab}>
-			{m.explore_tab_tags()}
-		</a>
+		<ExploreSectionMenu />
 
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}
@@ -134,6 +111,8 @@
 				>
 			</menu>
 		</PopoverMenu>
+
+		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} style="margin-left: auto;" />
 	</menu>
 
 	{#if groupedTracks.length}
@@ -174,6 +153,10 @@
 		gap: 0.5rem;
 		margin: 0 0 1rem;
 		z-index: 1;
+
+		:global(.search-input) {
+			max-width: 10rem;
+		}
 	}
 
 	.day-header {

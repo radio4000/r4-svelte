@@ -25,6 +25,7 @@
 	import Dialog from './dialog.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
+	import SearchInput from './search-input.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -35,8 +36,16 @@
 		defaultFilter = 'featured',
 		filter: filterProp = undefined,
 		filterBasePath = undefined,
+		searchHref = undefined,
 		tabs
 	} = $props()
+
+	let searchValue = $state('')
+	$effect(() => {
+		const q = searchValue.trim()
+		if (!q || !searchHref) return
+		goto(`${searchHref}?q=${encodeURIComponent(q)}`, {replaceState: true})
+	})
 
 	const filterSlugMap = {
 		featured: 'featured',
@@ -439,7 +448,7 @@
 			</button>
 		{/if}
 
-		{#if isPaged && filter !== 'featured'}
+		{#if isPaged && filter !== 'featured' && (hasPrevPage || hasNextPage || totalPages > 1)}
 			<span class="pagination">
 				<button onclick={() => setPage(currentPage - 1)} disabled={!hasPrevPage} aria-label="Previous page">←</button>
 				<button
@@ -458,7 +467,7 @@
 			<Dialog bind:showModal={showPaginationDialog}>
 				<div class="pagination-dialog">
 					<label>
-						<span>Page</span>
+						<span>{m.channels_pagination_page()}</span>
 						<input
 							type="number"
 							min="1"
@@ -475,7 +484,7 @@
 						/>
 					</label>
 					<label>
-						<span>Per page</span>
+						<span>{m.channels_pagination_per_page()}</span>
 						<input
 							type="number"
 							min="1"
@@ -486,6 +495,10 @@
 					</label>
 				</div>
 			</Dialog>
+		{/if}
+
+		{#if searchHref}
+			<SearchInput bind:value={searchValue} debounce={300} placeholder={m.search_placeholder()} />
 		{/if}
 
 		<PopoverMenu
@@ -632,6 +645,10 @@
 		justify-content: center;
 		gap: 0.5rem;
 		margin: 2rem 0.5rem 1rem;
+	}
+
+	:global(.search-input) {
+		max-width: 10rem;
 	}
 
 	.pagination {

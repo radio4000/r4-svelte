@@ -3,19 +3,20 @@
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
-	import {tracksCollection, fetchRecentTracks, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {channelsCollection, loadMoreChannels} from '$lib/collections/channels'
-	import {featuredScore, getChannelTags} from '$lib/utils'
+	import {tracksCollection, fetchRecentTracks} from '$lib/collections/tracks'
+	import {loadFeaturedChannelTracks} from '$lib/collections/featured'
+	import {getChannelTags} from '$lib/utils'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const {data} = $props()
 
 	const FEATURED_DAYS = 30
-	const FEATURED_COUNT = 3
+	const FEATURED_COUNT = 20
 	const RECENT_LIMIT = 200
 
 	let tracks = $state(/** @type {import('$lib/types').Track[]} */ ([]))
@@ -23,9 +24,6 @@
 	let search = $state('')
 
 	const filterParam = $derived(data.filter)
-	const isChannelsTab = $derived(page.route.id?.startsWith('/explore/channels'))
-	const isTracksTab = $derived(page.route.id?.startsWith('/explore/tracks'))
-	const isTagsTab = $derived(page.route.id?.startsWith('/explore/tags'))
 
 	const displayParam = $derived(page.url.searchParams.get('display') === 'cloud' ? 'cloud' : 'list')
 	const sortParam = $derived(page.url.searchParams.get('sort') === 'alpha' ? 'alpha' : 'count')
@@ -42,28 +40,9 @@
 			if (filter === 'recent') {
 				tracks = await fetchRecentTracks({limit: RECENT_LIMIT, offset: 0})
 			} else {
-				// featured channels' tracks
-				await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-				await loadMoreChannels({
-					trackCountGte: 10,
-					imageNotNull: true,
-					limit: 200,
-					offset: 0,
-					orderColumn: 'latest_track_at',
-					ascending: false
-				})
-				const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-				const pool = [...channelsCollection.state.values()].filter(
-					(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= featuredSince
-				)
-				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
-				if (picked.length) {
-					await fetchRecentTracksForSlugs(
-						picked.map((ch) => ch.slug),
-						featuredSince
-					)
-				}
+				const picked = await loadFeaturedChannelTracks(FEATURED_COUNT, FEATURED_DAYS)
 				const slugSet = new Set(picked.map((ch) => ch.slug))
+				// Access .size so callers' $derived blocks re-run when tracks are upserted
 				void tracksCollection.state.size
 				tracks = [...tracksCollection.state.values()].filter((t) => t?.slug && slugSet.has(t.slug))
 			}
@@ -102,7 +81,7 @@
 
 	/** @param {string} tag */
 	function tagSearchHref(tag) {
-		return resolve('/search') + `?q=${encodeURIComponent('#' + tag)}`
+		return resolve('/search/tracks') + `?q=${encodeURIComponent('#' + tag)}`
 	}
 </script>
 
@@ -112,15 +91,7 @@
 
 <div class="layout">
 	<menu class="filtermenu">
-		<a href={resolve('/explore/channels/featured')} class="btn" class:active={isChannelsTab}>
-			{m.explore_tab_channels()}
-		</a>
-		<a href={resolve('/explore/tracks/recent')} class="btn" class:active={isTracksTab}>
-			{m.explore_tab_tracks()}
-		</a>
-		<a href={resolve('/explore/tags/featured')} class="btn" class:active={isTagsTab}>
-			{m.explore_tab_tags()}
-		</a>
+		<ExploreSectionMenu />
 
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}
