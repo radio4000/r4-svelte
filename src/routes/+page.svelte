@@ -102,7 +102,7 @@
 		featuredLoaded = true
 		void (async () => {
 			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			await loadMoreChannels({trackCountGte: 10, imageNotNull: true, limit: 200, offset: 0})
+			await loadMoreChannels({trackCountGte: 10, imageNotNull: true, limit: 200, offset: 0, orderColumn: 'latest_track_at', ascending: false})
 			const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
 			featuredPool = [...channelsCollection.state.values()].filter(
 				(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= featuredSince
@@ -114,6 +114,7 @@
 	// Recent tracks from featured channels, sorted by date, top 30, grouped by day
 	const featuredTracks = $derived.by(() => {
 		if (!featuredChannels.length) return []
+		void tracksCollection.state.size // track size so derived re-runs when tracks are upserted
 		const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
 		const slugSet = new Set(featuredChannels.map((ch) => ch.slug))
 		return groupByDay(
