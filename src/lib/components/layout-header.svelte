@@ -58,6 +58,15 @@
 			<IconR4 />
 		</a>
 		<a
+			href={resolve('/explore')}
+			class="btn"
+			class:active={page.route.id === '/explore'}
+			aria-label={m.nav_explore()}
+			{@attach tooltip({content: m.nav_explore()})}
+		>
+			<Icon icon="globe" />
+		</a>
+		<a
 			href={resolve('/search')}
 			class="btn"
 			class:active={page.route.id === '/search'}

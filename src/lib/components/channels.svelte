@@ -19,7 +19,9 @@
 		handleCanvasDoubleClick
 	} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
+	import {featuredScore} from '$lib/utils'
 	import ChannelCard from './channel-card.svelte'
+	import Dialog from './dialog.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
@@ -27,7 +29,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	const {display: initialDisplay} = $props()
+	const {display: initialDisplay, defaultFilter = 'featured'} = $props()
 
 	const filterLabelMap = {
 		all: () => m.channels_filter_option_all(),
@@ -36,15 +38,18 @@
 		'10+': () => m.channels_filter_option_10(),
 		'100+': () => m.channels_filter_option_100(),
 		'1000+': () => m.channels_filter_option_1000(),
-		artwork: () => m.channels_filter_option_artwork()
+		artwork: () => m.channels_filter_option_artwork(),
+		featured: () => m.channels_filter_option_featured()
 	}
+
+	let showFeaturedInfo = $state(false)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
-	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+')
+	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : defaultFilter)
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
@@ -60,7 +65,7 @@
 
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
-	const queryLimit = $derived(Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit))
+	const queryLimit = $derived(filter === 'featured' ? 50 : Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit))
 
 	// Reactive broadcast IDs for the broadcasting filter
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
@@ -85,11 +90,12 @@
 	/** Map UI filter/sort state → ChannelQueryParams for loadMoreChannels */
 	const channelQueryParams = $derived.by(() => ({
 		idIn: filter === 'broadcasting' && broadcastIds.length ? broadcastIds : undefined,
-		trackCountGte: filterMinTracks[filter],
-		imageNotNull: filter === 'artwork',
-		shuffle: order === 'shuffle',
-		orderColumn: sortColumns[order],
-		ascending: (orderDirection || 'desc') === 'asc'
+		trackCountGte: filter === 'featured' ? 10 : filterMinTracks[filter],
+		imageNotNull: filter === 'artwork' || filter === 'featured',
+		shuffle: filter !== 'featured' && order === 'shuffle',
+		orderColumn: filter === 'featured' ? sortColumns['updated'] : sortColumns[order],
+		ascending: (orderDirection || 'desc') === 'asc',
+		limit: filter === 'featured' ? 50 : undefined
 	}))
 
 	// Reset pagination when filter/sort changes
@@ -119,19 +125,32 @@
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
+		} else if (filter === 'featured') {
+			base = base
+				.where(({ch}) => gte(ch.track_count, 10))
+				.where(({ch}) => not(isNull(ch.image)))
+				.orderBy(({ch}) => ch.latest_track_at, 'desc')
 		} else {
 			const minTracks = filterMinTracks[filter]
 			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
 			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
 		}
-		const col = sortColumns[order]
-		if (col) {
-			base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+		if (filter !== 'featured') {
+			const col = sortColumns[order]
+			if (col) {
+				base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+			}
 		}
 		return base.limit(queryLimit)
 	})
-	const channels = $derived(channelsQuery.data ?? [])
-	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
+	const channelsRaw = $derived(channelsQuery.data ?? [])
+	// For the featured filter, score and take top 12 client-side
+	const channels = $derived(
+		filter === 'featured'
+			? channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+			: channelsRaw
+	)
+	const hasMore = $derived(filter !== 'featured' && !loadedAll && channelsRaw.length >= paginatedLimit)
 
 	// Restore imported channels into the collection on filter activation.
 	// appState.local_channels is the durable source — persisted in localStorage.
@@ -253,6 +272,12 @@
 			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
 			<menu class="nav-vertical">
 				<button
+					class:active={filter === 'featured'}
+					onclick={() => setFilter('featured')}
+					{@attach tooltip({content: m.channels_filter_tooltip_featured(), position: 'right'})}
+					>{m.channels_filter_option_featured()}</button
+				>
+				<button
 					class:active={filter === 'all'}
 					onclick={() => setFilter('all')}
 					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
@@ -302,6 +327,21 @@
 			</menu>
 		</PopoverMenu>
 
+		{#if filter === 'featured'}
+			<button
+				class="btn ghost"
+				onclick={() => (showFeaturedInfo = true)}
+				aria-label={m.channels_featured_info_label()}
+				{@attach tooltip({content: m.channels_featured_info_label()})}
+			>
+				<Icon icon="circle-info" />
+			</button>
+			<Dialog bind:showModal={showFeaturedInfo}>
+				{#snippet header()}<h2>{m.channels_featured_info_title()}</h2>{/snippet}
+				<p>{m.channels_featured_info_body()}</p>
+			</Dialog>
+		{/if}
+
 		{#if display === 'map' && hasMore}
 			<button class="btn" onclick={handleLoadMore} disabled={loadingMore}>
 				{loadingMore ? '…' : `+${nextPageSize}`}
@@ -348,19 +388,21 @@
 					><Icon icon="box-3d" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</menu>
-			<SortControls
-				bind:order={appState.channels_order}
-				bind:direction={appState.channels_order_direction}
-				onreshuffle={() => {
-					paginatedLimit = CHANNELS_PAGE_SIZE
-					fetchedUpTo = CHANNELS_PAGE_SIZE
-					loadedAll = false
-					nextPageSize = CHANNELS_PAGE_SIZE
-					queryClient.invalidateQueries({
-						predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
-					})
-				}}
-			/>
+			{#if filter !== 'featured'}
+				<SortControls
+					bind:order={appState.channels_order}
+					bind:direction={appState.channels_order_direction}
+					onreshuffle={() => {
+						paginatedLimit = CHANNELS_PAGE_SIZE
+						fetchedUpTo = CHANNELS_PAGE_SIZE
+						loadedAll = false
+						nextPageSize = CHANNELS_PAGE_SIZE
+						queryClient.invalidateQueries({
+							predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
+						})
+					}}
+				/>
+			{/if}
 		</PopoverMenu>
 	</menu>
 
