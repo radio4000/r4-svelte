@@ -25,7 +25,7 @@
 	const uid = $props.id()
 
 	// --- Smart input (local, ephemeral) ---
-	let inputValue = $state('')
+	let inputValue = $state(page.url.searchParams.get('q') ?? '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
 	// --- URL is the single source of truth ---
@@ -48,7 +48,7 @@
 	}
 
 	// --- Sync input from URL on landing + browser back/forward ---
-	let inputSeeded = false
+	let inputSeeded = !!(page.url.searchParams.get('q'))
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		const seeded = page.url.searchParams.get('q') ?? ''
@@ -262,7 +262,7 @@
 	}
 
 	.search-header form {
-		flex: 1;
+		flex: 1 1 0;
 		min-width: min(200px, 100%);
 	}
 

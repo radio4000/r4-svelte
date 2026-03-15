@@ -14,10 +14,10 @@
 
 	const uid = $props.id()
 
-	let inputValue = $state('')
+	let inputValue = $state(page.url.searchParams.get('q') ?? '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
-	let inputSeeded = false
+	let inputSeeded = !!(page.url.searchParams.get('q'))
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		const q = page.url.searchParams.get('q') ?? ''
@@ -131,7 +131,7 @@
 	}
 
 	.search-header form {
-		flex: 1;
+		flex: 1 1 0;
 		min-width: min(200px, 100%);
 	}
 
