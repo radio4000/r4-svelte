@@ -1,15 +1,18 @@
 <script>
 	import {resolve} from '$app/paths'
+	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {appName} from '$lib/config'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {followsCollection} from '$lib/collections/follows'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {featuredScore} from '$lib/utils'
+	import {groupByDay} from '$lib/utils'
 	import {loadMoreChannels} from '$lib/collections/channels'
 	import {playChannel, togglePlayPause} from '$lib/api'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {appPresence} from '$lib/presence.svelte'
+	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -18,40 +21,8 @@
 	const FEATURED_COUNT = 3
 	const FEATURED_DAYS = 30
 
-	/** @param {string} iso YYYY-MM-DD */
-	function formatDay(iso) {
-		const date = new Date(iso + 'T00:00:00')
-		const today = new Date()
-		const todayIso = today.toISOString().slice(0, 10)
-		const yesterdayIso = new Date(today - 86400000).toISOString().slice(0, 10)
-		if (iso === todayIso) return m.day_today()
-		if (iso === yesterdayIso) return m.day_yesterday()
-		/** @type {Intl.DateTimeFormatOptions} */
-		const opts = {month: 'long', day: 'numeric'}
-		if (iso.slice(0, 4) !== todayIso.slice(0, 4)) opts.year = 'numeric'
-		return date.toLocaleDateString(undefined, opts)
-	}
-
-	/**
-	 * @param {import('$lib/types').Track[]} tracks
-	 * @returns {{label: string, tracks: import('$lib/types').Track[]}[]}
-	 */
-	function groupByDay(tracks) {
-		/** @type {Map<string, import('$lib/types').Track[]>} */
-		const map = new Map()
-		for (const track of tracks) {
-			const day = track.created_at?.slice(0, 10) ?? ''
-			if (!map.has(day)) map.set(day, [])
-			map.get(day)?.push(track)
-		}
-		return [...map.entries()].map(([day, items]) => ({label: day ? formatDay(day) : '—', tracks: items}))
-	}
-
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
-
-	// Tabs: 'home' | 'feed'
-	let activeTab = $state('home')
 
 	// Follows — IDs only
 	const followsQuery = useLiveQuery((q) => q.from({f: followsCollection}))
@@ -94,7 +65,10 @@
 		const shuffled = featuredPool.toSorted(() => Math.random() - 0.5)
 		const picked = shuffled.slice(0, FEATURED_COUNT)
 		featuredChannels = picked
-		fetchRecentTracksForSlugs(picked.map((ch) => ch.slug), featuredSince)
+		fetchRecentTracksForSlugs(
+			picked.map((ch) => ch.slug),
+			featuredSince
+		)
 	}
 
 	$effect(() => {
@@ -102,7 +76,14 @@
 		featuredLoaded = true
 		void (async () => {
 			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			await loadMoreChannels({trackCountGte: 10, imageNotNull: true, limit: 200, offset: 0, orderColumn: 'latest_track_at', ascending: false})
+			await loadMoreChannels({
+				trackCountGte: 10,
+				imageNotNull: true,
+				limit: 200,
+				offset: 0,
+				orderColumn: 'latest_track_at',
+				ascending: false
+			})
 			const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
 			featuredPool = [...channelsCollection.state.values()].filter(
 				(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= featuredSince
@@ -125,28 +106,15 @@
 		)
 	})
 
-	// Feed: tracks from followed channels in local DB, last 7 days, top 50, grouped by day
-	const feedTracks = $derived.by(() => {
-		if (!followedChannels.length) return []
-		const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-		const slugSet = new Set(followedChannels.map((ch) => ch.slug))
-		return groupByDay(
-			[...tracksCollection.state.values()]
-				.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= sevenDaysAgo)
-				.toSorted((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
-				.slice(0, 50)
-		)
-	})
-
 	const featuredFirst = $derived(featuredChannels[0] ?? null)
 	const featuredIsPlaying = $derived(
-		!!featuredFirst &&
-			Object.values(appState.decks).some((d) => d.playlist_slug === featuredFirst.slug && d.is_playing)
+		!!featuredFirst && Object.values(appState.decks).some((d) => d.playlist_slug === featuredFirst.slug && d.is_playing)
 	)
 
 	function toggleFeaturedPlay() {
 		if (!featuredFirst) return
-		featuredIsPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, featuredFirst)
+		if (featuredIsPlaying) togglePlayPause(appState.active_deck_id)
+		else playChannel(appState.active_deck_id, featuredFirst)
 	}
 
 	// Live broadcasts — top 10, sorted by most recently active, reactive via realtime
@@ -157,15 +125,23 @@
 			.slice(0, 10)
 	)
 
-	// On first feed tab visit: fetch last 7 days of tracks for all followed channels in one query
-	let feedEagerLoaded = $state(false)
+	// Stats for not-logged-in users
+	let channelCount = $state(0)
+	let trackCount = $state(0)
 	$effect(() => {
-		if (activeTab !== 'feed' || !followedChannels.length) return
-		if (feedEagerLoaded) return
-		feedEagerLoaded = true
-		const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-		const slugs = followedChannels.map((ch) => ch.slug)
-		fetchRecentTracksForSlugs(slugs, sevenDaysAgo)
+		if (isSignedIn) return
+		void sdk.supabase
+			.from('channels_with_tracks')
+			.select('*', {count: 'exact', head: true})
+			.then(({count}) => {
+				if (count) channelCount = count
+			})
+		void sdk.supabase
+			.from('channel_tracks')
+			.select('*', {count: 'exact', head: true})
+			.then(({count}) => {
+				if (count) trackCount = count
+			})
 	})
 </script>
 
@@ -174,173 +150,185 @@
 </svelte:head>
 
 <div class="homepage">
-	{#if isSignedIn && followedIds.length > 0}
-		<nav class="tabs">
-			<button type="button" class:active={activeTab === 'home'} onclick={() => (activeTab = 'home')}>
-				{m.home_tab_home()}
-			</button>
-			<button type="button" class:active={activeTab === 'feed'} onclick={() => (activeTab = 'feed')}>
-				{m.home_tab_feed()}
-			</button>
-		</nav>
+	{#if isSignedIn}
+		<menu class="filtermenu">
+			<a href={resolve('/')} class="btn" class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
+			<a href={resolve('/feed')} class="btn">{m.home_tab_feed()}</a>
+		</menu>
 	{/if}
 
-	{#if activeTab === 'home'}
-		{#if isSignedIn && userChannel}
-			<!-- Logged in with channel -->
-			{#if activeBroadcasts.length}
-				<section class="section">
-					<h2 class="section-title">{m.home_broadcasting()}</h2>
-					<ol class="grid grid--scroll">
-						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-							<li><ChannelCard channel={broadcast.channels} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
+	{#if isSignedIn && userChannel}
+		<!-- Logged in with channel -->
+		{#if activeBroadcasts.length}
 			<section class="section">
-				<ol class="list">
-					<li><ChannelCard channel={userChannel} /></li>
+				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<ol class="grid grid--scroll">
+					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
+					{/each}
 				</ol>
 			</section>
+		{/if}
 
-			{#if followedChannels.length > 0}
-				<section class="section">
-					<ol class="grid">
-						{#each followedChannels as channel (channel.id)}
-							<li><ChannelCard {channel} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
+		<section class="section">
+			<ol class="list">
+				<li><ChannelCard channel={userChannel} /></li>
+			</ol>
+		</section>
 
+		{#if followedChannels.length > 0}
+			<section class="section">
+				<ol class="grid">
+					{#each followedChannels as channel (channel.id)}
+						<li><ChannelCard {channel} /></li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+
+		<p class="explore-link">
+			<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
+		</p>
+	{:else if isSignedIn}
+		<!-- Logged in but no channel -->
+		<p class="cta">
+			<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
+		</p>
+
+		{#if activeBroadcasts.length}
+			<section class="section">
+				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<ol class="grid grid--scroll">
+					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+
+		{#if featuredChannels.length}
+			<section class="section">
+				<header class="section-header">
+					<h2 class="section-title">{m.home_featured()}</h2>
+					<menu>
+						{#if featuredFirst}
+							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
+								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
+							</button>
+						{/if}
+						{#if featuredPool.length > FEATURED_COUNT}
+							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
+								<Icon icon="shuffle" />
+							</button>
+						{/if}
+					</menu>
+				</header>
+				<ol class="grid grid--scroll">
+					{#each featuredChannels as channel (channel.id)}
+						<li><ChannelCard {channel} /></li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+
+		{#if featuredLoaded}
 			<p class="explore-link">
 				<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
 			</p>
-		{:else if isSignedIn}
-			<!-- Logged in but no channel -->
-			<p class="cta">
-				<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
-			</p>
-
-			{#if activeBroadcasts.length}
-				<section class="section">
-					<h2 class="section-title">{m.home_broadcasting()}</h2>
-					<ol class="grid grid--scroll">
-						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-							<li><ChannelCard channel={broadcast.channels} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
-			{#if featuredChannels.length}
-				<section class="section">
-					<header class="section-header">
-						<h2 class="section-title">{m.home_featured()}</h2>
-						<menu>
-							{#if featuredFirst}
-								<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
-									<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
-								</button>
-							{/if}
-							{#if featuredPool.length > FEATURED_COUNT}
-								<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
-									<Icon icon="shuffle" />
-								</button>
-							{/if}
-						</menu>
-					</header>
-					<ol class="grid grid--scroll">
-						{#each featuredChannels as channel (channel.id)}
-							<li><ChannelCard {channel} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
-			{#if featuredLoaded}
-				<p class="explore-link">
-					<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
-				</p>
-			{/if}
-		{:else}
-			<!-- Not logged in -->
-			{#if featuredChannels.length}
-				<section class="section">
-					<header class="section-header">
-						<h2 class="section-title">{m.home_featured()}</h2>
-						<menu>
-							{#if featuredFirst}
-								<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
-									<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
-								</button>
-							{/if}
-							{#if featuredPool.length > FEATURED_COUNT}
-								<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
-									<Icon icon="shuffle" />
-								</button>
-							{/if}
-						</menu>
-					</header>
-					<ol class="grid grid--scroll">
-						{#each featuredChannels as channel (channel.id)}
-							<li><ChannelCard {channel} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
-			{#if featuredTracks.length}
-				<section class="section">
-					<h2 class="section-title">{m.home_featured_tracks()}</h2>
-					{#each featuredTracks as group (group.label)}
-						<p class="day-header">{group.label}</p>
-						<ul class="list">
-							{#each group.tracks as track (track.id)}
-								<li><TrackCard {track} showSlug={true} /></li>
-							{/each}
-						</ul>
-					{/each}
-				</section>
-			{/if}
-
-			{#if featuredLoaded}
-				<p class="explore-link">
-					<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
-				</p>
-			{/if}
 		{/if}
-	{:else if activeTab === 'feed'}
-		{#if feedTracks.length}
-			{#each feedTracks as group (group.label)}
-				<p class="day-header">{group.label}</p>
-				<ul class="list">
-					{#each group.tracks as track (track.id)}
-						<li><TrackCard {track} showSlug={true} /></li>
+	{:else}
+		<!-- Not logged in -->
+		{#if activeBroadcasts.length}
+			<section class="section">
+				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<ol class="grid grid--scroll">
+					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
-				</ul>
-			{/each}
-		{:else}
-			<p class="empty">{m.home_feed_loading()}</p>
+				</ol>
+			</section>
+		{/if}
+
+		{#if featuredChannels.length}
+			<section class="section">
+				<header class="section-header">
+					<h2 class="section-title">{m.home_featured()}</h2>
+					<menu>
+						{#if featuredFirst}
+							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
+								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
+							</button>
+						{/if}
+						{#if featuredPool.length > FEATURED_COUNT}
+							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
+								<Icon icon="shuffle" />
+							</button>
+						{/if}
+					</menu>
+				</header>
+				<ol class="grid grid--scroll">
+					{#each featuredChannels as channel (channel.id)}
+						<li><ChannelCard {channel} /></li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+
+		{#if featuredTracks.length}
+			<section class="section">
+				<h2 class="section-title">{m.home_featured_tracks()}</h2>
+				{#each featuredTracks as group (group.label)}
+					<p class="day-header">{group.label}</p>
+					<ul class="list">
+						{#each group.tracks as track (track.id)}
+							<li><TrackCard {track} showSlug={true} /></li>
+						{/each}
+					</ul>
+				{/each}
+			</section>
+		{/if}
+
+		{#if featuredLoaded}
+			{#if channelCount || trackCount || appPresence.count}
+				<p class="stats">
+					{#if channelCount}<a href={resolve('/explore/channels/all')}
+							>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
+						>{/if}
+					{#if trackCount}<a href={resolve('/explore/tracks/recent')}
+							>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
+						>{/if}
+					{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
+				</p>
+			{/if}
+			<p class="explore-link">
+				<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
+			</p>
 		{/if}
 	{/if}
 </div>
 
 <style>
 	.homepage {
-		padding: 0.5rem;
+		padding: 0;
+
+		> * {
+			margin-inline: 0.5rem;
+		}
+
+		/* grids manage their own margin */
+		:global(.grid) {
+			margin-inline: 0;
+		}
 	}
 
-	nav.tabs {
+	.filtermenu {
 		position: sticky;
-		top: 0;
+		top: 0.5rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0.5rem 0 1rem;
 		z-index: 1;
-		padding: 0.5rem 0.5rem 0;
-		border-bottom: 1px solid var(--gray-4);
-		margin: -0.5rem -0.5rem 1rem;
-		background: var(--gray-1);
 	}
 
 	.section {
@@ -363,7 +351,6 @@
 		font-weight: 600;
 		margin-bottom: 0.5rem;
 		color: light-dark(var(--gray-11), var(--gray-9));
-		text-align: center;
 	}
 
 	.explore-link {
@@ -387,13 +374,20 @@
 		color: light-dark(var(--gray-10), var(--gray-9));
 	}
 
-	.day-header {
-		font-size: var(--font-4);
-		font-weight: 600;
-		color: light-dark(var(--gray-11), var(--gray-9));
-		margin: 1rem 0 0.25rem;
-		&:first-child {
-			margin-top: 0;
+	.stats {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		margin: 0.5rem 0;
+		font-size: var(--font-3);
+		color: light-dark(var(--gray-10), var(--gray-8));
+
+		a {
+			color: inherit;
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 </style>
