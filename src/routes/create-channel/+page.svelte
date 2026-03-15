@@ -11,6 +11,7 @@
 
 	let slug = $state('')
 	let slugTouched = $state(false)
+	let currentChannelSlug = $derived(appState.channel?.slug)
 
 	function handleNameInput(event) {
 		const name = /** @type {HTMLInputElement} */ (event.target).value
@@ -31,7 +32,6 @@
 
 		try {
 			const channel = await createChannel({name, slug})
-			appState.channels = [...(appState.channels || []), channel.id]
 			appState.channel = channel
 			await goto(resolve('/[slug]', {slug: channel.slug}))
 		} catch (err) {
@@ -50,7 +50,11 @@
 	{:else if appState.channels?.length}
 		<p>
 			{m.channel_you_have()}
-			<a href={resolve('/[slug]', {slug: appState.channel?.slug ?? ''})}>@{appState.channel?.slug}</a>
+			{#if currentChannelSlug}
+				<a href={resolve('/[slug]', {slug: currentChannelSlug})}>@{currentChannelSlug}</a>
+			{:else}
+				<span>{m.common_loading()}</span>
+			{/if}
 		</p>
 		<p>{m.channel_single_channel_note()}</p>
 	{:else}

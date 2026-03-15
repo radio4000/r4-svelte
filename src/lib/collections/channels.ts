@@ -182,7 +182,7 @@ async function handleChannelInsert(channel: Channel, metadata: Record<string, un
 	}
 	const data = 'data' in response ? (response.data as {id: string} | null) : null
 	log.info('channel_insert_done', {clientId: channel.id, serverId: data?.id})
-	if (data?.id) {
+	if (data?.id && !appState.channels?.includes(data.id)) {
 		appState.channels = [...(appState.channels || []), data.id]
 	}
 }

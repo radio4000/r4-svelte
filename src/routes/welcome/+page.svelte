@@ -4,6 +4,8 @@
 	import {appName} from '$lib/config'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
+
+	const currentChannelSlug = $derived(appState.channel?.slug)
 </script>
 
 <svelte:head>
@@ -27,10 +29,10 @@
 
 	<menu>
 		{#if appState.user}
-			{#if appState.channels?.length}
-				<a href={resolve('/[slug]', {slug: appState.channel?.slug ?? ''})} class="btn primary"
-					>{m.channel_go_to_radio()}</a
-				>
+			{#if currentChannelSlug}
+				<a href={resolve('/[slug]', {slug: currentChannelSlug})} class="btn primary">{m.channel_go_to_radio()}</a>
+			{:else if appState.channels?.length}
+				<button class="btn primary" type="button" disabled>{m.common_loading()}</button>
 			{:else}
 				<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_radio()}</a>
 			{/if}
@@ -74,10 +76,5 @@
 			font-size: var(--font-5);
 			padding: 0.5rem 1rem;
 		}
-	}
-
-	p.center {
-		text-align: center;
-		font-size: 1rem;
 	}
 </style>
