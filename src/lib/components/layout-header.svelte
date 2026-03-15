@@ -105,16 +105,6 @@
 				</a>
 				<AddTrackDialog />
 			{/if}
-			{#if userChannelHasAuto}
-				<span {@attach tooltip({content: m.auto_radio_resync()})}>
-					<AutoRadioButton
-						className="btn resync-link"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-					/>
-				</span>
-			{/if}
 			{#if !isSignedIn}
 				<a
 					href={resolve('/auth')}
@@ -130,6 +120,28 @@
 	</nav>
 
 	<nav class="nav-settings">
+		{#await preloading then}
+			{#if isBroadcasting}
+				<a
+					href={resolve(`/${userChannel?.slug}`)}
+					class="btn active"
+					aria-label={m.status_broadcasting()}
+					{@attach tooltip({content: m.status_broadcasting()})}
+				>
+					<Icon icon="cell-signal" />
+				</a>
+			{/if}
+			{#if userChannelHasAuto}
+				<span {@attach tooltip({content: m.auto_radio_resync()})}>
+					<AutoRadioButton
+						className="btn resync-link"
+						synced={!userChannelHasAutoDrifted}
+						title={m.auto_radio_resync()}
+						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					/>
+				</span>
+			{/if}
+		{/await}
 		<a
 			href={resolve('/history')}
 			class="btn"
@@ -228,25 +240,6 @@
 			min-width: var(--track-artwork-size);
 			height: 32px;
 		}
-	}
-
-	.count {
-		position: absolute;
-		top: -7px;
-		right: -5px;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		border-radius: 50%;
-		font-size: var(--font-1);
-		min-width: 1.2rem;
-		height: 1.2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.btn:has(.count) {
-		position: relative;
 	}
 
 	/* Active indicator: left bar on desktop instead of background fill */
