@@ -149,9 +149,12 @@
 		featuredIsPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, featuredFirst)
 	}
 
-	// Live broadcasts — top 10, reactive via realtime subscription in broadcastsCollection
+	// Live broadcasts — top 10, sorted by most recently active, reactive via realtime
 	const activeBroadcasts = $derived.by(() =>
-		[...broadcastsCollection.state.values()].filter((b) => b.channel_id && b.channels).slice(0, 10)
+		[...broadcastsCollection.state.values()]
+			.filter((b) => b.channel_id && b.channels)
+			.toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
+			.slice(0, 10)
 	)
 
 	// On first feed tab visit: fetch last 7 days of tracks for all followed channels in one query
@@ -185,8 +188,18 @@
 	{#if activeTab === 'home'}
 		{#if isSignedIn && userChannel}
 			<!-- Logged in with channel -->
+			{#if activeBroadcasts.length}
+				<section class="section">
+					<h2 class="section-title">{m.home_broadcasting()}</h2>
+					<ol class="grid grid--scroll">
+						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+							<li><ChannelCard channel={broadcast.channels} /></li>
+						{/each}
+					</ol>
+				</section>
+			{/if}
+
 			<section class="section">
-				<h2 class="section-title">{m.home_your_channel()}</h2>
 				<ol class="list">
 					<li><ChannelCard channel={userChannel} /></li>
 				</ol>
@@ -194,21 +207,9 @@
 
 			{#if followedChannels.length > 0}
 				<section class="section">
-					<h2 class="section-title">{m.home_following()}</h2>
 					<ol class="grid">
 						{#each followedChannels as channel (channel.id)}
 							<li><ChannelCard {channel} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
-			{#if activeBroadcasts.length}
-				<section class="section">
-					<h2 class="section-title">{m.home_broadcasting()}</h2>
-					<ol class="grid grid--scroll">
-						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-							<li><ChannelCard channel={broadcast.channels} /></li>
 						{/each}
 					</ol>
 				</section>
@@ -266,17 +267,6 @@
 			{/if}
 		{:else}
 			<!-- Not logged in -->
-			{#if activeBroadcasts.length}
-				<section class="section">
-					<h2 class="section-title">{m.home_broadcasting()}</h2>
-					<ol class="grid grid--scroll">
-						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-							<li><ChannelCard channel={broadcast.channels} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
 			{#if featuredChannels.length}
 				<section class="section">
 					<header class="section-header">
@@ -344,9 +334,13 @@
 	}
 
 	nav.tabs {
+		position: sticky;
+		top: 0;
+		z-index: 1;
 		padding: 0.5rem 0.5rem 0;
 		border-bottom: 1px solid var(--gray-4);
-		margin-bottom: 1rem;
+		margin: -0.5rem -0.5rem 1rem;
+		background: var(--gray-1);
 	}
 
 	.section {
