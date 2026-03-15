@@ -3,15 +3,12 @@
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {loadMoreChannels} from '$lib/collections/channels'
 	import {groupByDay} from '$lib/utils'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const DAY_OPTIONS = [7, 30, 90, 180]
@@ -22,37 +19,9 @@
 		return DAY_OPTIONS.includes(n) ? n : 30
 	})
 
-	// Follows — IDs only
-	const followsQuery = useLiveQuery((q) => q.from({f: followsCollection}))
-	const followedIds = $derived((followsQuery.data ?? []).map((f) => /** @type {{id: string}} */ (f).id))
+	const {isLoading: followsLoading, followedIds, followedChannels} = getFollowedChannels()
 
-	// Fetch followed channels into channelsCollection once followedIds are known
-	let followedChannelsFetched = $state(false)
-	$effect(() => {
-		if (!followedIds.length || followedChannelsFetched) return
-		followedChannelsFetched = true
-		void (async () => {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			loadMoreChannels({idIn: followedIds.slice(), offset: 0, limit: followedIds.length})
-		})()
-	})
-
-	// Resolve followed channels from channelsCollection, sorted by most recently active
-	const followedChannels = $derived.by(() => {
-		if (!followedIds.length) return []
-		const idSet = new Set(followedIds)
-		return /** @type {import('$lib/types').Channel[]} */ (
-			[...channelsCollection.state.values()]
-				.filter((ch) => ch && idSet.has(ch.id))
-				.toSorted((a, b) => {
-					const ta = a.latest_track_at ? new Date(a.latest_track_at).getTime() : 0
-					const tb = b.latest_track_at ? new Date(b.latest_track_at).getTime() : 0
-					return tb - ta
-				})
-		)
-	})
-
-	// Fetch: only when requesting a wider window than already loaded
+	// Fetch tracks: only when requesting a wider window than already loaded
 	let maxLoadedDays = $state(0)
 	$effect(() => {
 		if (!followedChannels.length || days <= maxLoadedDays) return
@@ -69,6 +38,8 @@
 		if (!followedChannels.length) return []
 		const since = new Date(Date.now() - days * 86400000).toISOString()
 		const slugSet = new Set(followedChannels.map((ch) => ch.slug))
+		// Access .size so this derived re-runs when tracks are upserted into the collection
+		void tracksCollection.state.size
 		return groupByDay(
 			[...tracksCollection.state.values()]
 				.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= since)
@@ -116,8 +87,12 @@
 				{/each}
 			</ul>
 		{/each}
+	{:else if followsLoading || (followedIds.length > 0 && maxLoadedDays === 0)}
+		<p class="empty">…</p>
+	{:else if followedIds.length === 0}
+		<p class="empty">{m.home_feed_no_follows()}</p>
 	{:else}
-		<p class="empty">{m.home_feed_loading()}</p>
+		<p class="empty">{m.home_feed_empty({days})}</p>
 	{/if}
 </div>
 

@@ -3,14 +3,12 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {appName} from '$lib/config'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {groupByDay} from '$lib/utils'
-	import {loadMoreChannels} from '$lib/collections/channels'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {groupByDay, featuredScore} from '$lib/utils'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
+	import {getFeaturedPool} from '$lib/collections/featured'
 	import {playChannel, togglePlayPause} from '$lib/api'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {appPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -24,50 +22,23 @@
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
 
-	// Follows — IDs only
-	const followsQuery = useLiveQuery((q) => q.from({f: followsCollection}))
-	const followedIds = $derived((followsQuery.data ?? []).map((f) => /** @type {{id: string}} */ (f).id))
-
-	// Fetch followed channels into channelsCollection once followedIds are known
-	let followedChannelsFetched = $state(false)
-	$effect(() => {
-		if (!followedIds.length || followedChannelsFetched) return
-		followedChannelsFetched = true
-		void (async () => {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			loadMoreChannels({idIn: followedIds.slice(), offset: 0, limit: followedIds.length})
-		})()
-	})
-
-	// Resolve followed channels from channelsCollection.state, sorted by most recently active
-	const followedChannels = $derived.by(() => {
-		if (!followedIds.length) return []
-		const idSet = new Set(followedIds)
-		return /** @type {import('$lib/types').Channel[]} */ (
-			[...channelsCollection.state.values()]
-				.filter((ch) => ch && idSet.has(ch.id))
-				.toSorted((a, b) => {
-					const ta = a.latest_track_at ? new Date(a.latest_track_at).getTime() : 0
-					const tb = b.latest_track_at ? new Date(b.latest_track_at).getTime() : 0
-					return tb - ta
-				})
-		)
-	})
+	const {followedChannels} = getFollowedChannels()
 
 	// Featured channels (not logged in, or no channel)
 	let featuredPool = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
 	let featuredChannels = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
 	let featuredLoaded = $state(false)
 
+	// Shuffle button: random pick from the quality pool for variety
 	function pickFeatured() {
 		if (!featuredPool.length) return
-		const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
 		const shuffled = featuredPool.toSorted(() => Math.random() - 0.5)
 		const picked = shuffled.slice(0, FEATURED_COUNT)
 		featuredChannels = picked
-		fetchRecentTracksForSlugs(
+		const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
+		void fetchRecentTracksForSlugs(
 			picked.map((ch) => ch.slug),
-			featuredSince
+			since
 		)
 	}
 
@@ -75,27 +46,26 @@
 		if (featuredLoaded) return
 		featuredLoaded = true
 		void (async () => {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			await loadMoreChannels({
-				trackCountGte: 10,
-				imageNotNull: true,
-				limit: 200,
-				offset: 0,
-				orderColumn: 'latest_track_at',
-				ascending: false
-			})
-			const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-			featuredPool = [...channelsCollection.state.values()].filter(
-				(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= featuredSince
-			)
-			pickFeatured()
+			const pool = await getFeaturedPool(FEATURED_DAYS)
+			featuredPool = pool
+			// Initial pick: by score, consistent with explore pages
+			const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
+			featuredChannels = picked
+			if (picked.length) {
+				const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
+				void fetchRecentTracksForSlugs(
+					picked.map((ch) => ch.slug),
+					since
+				)
+			}
 		})()
 	})
 
 	// Recent tracks from featured channels, sorted by date, top 30, grouped by day
 	const featuredTracks = $derived.by(() => {
 		if (!featuredChannels.length) return []
-		void tracksCollection.state.size // track size so derived re-runs when tracks are upserted
+		// Access .size so this derived re-runs when tracks are upserted into the collection
+		void tracksCollection.state.size
 		const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
 		const slugSet = new Set(featuredChannels.map((ch) => ch.slug))
 		return groupByDay(
@@ -159,6 +129,12 @@
 
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
+		<section class="section">
+			<ol class="list">
+				<li><ChannelCard channel={userChannel} /></li>
+			</ol>
+		</section>
+
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">{m.home_broadcasting()}</h2>
@@ -169,12 +145,6 @@
 				</ol>
 			</section>
 		{/if}
-
-		<section class="section">
-			<ol class="list">
-				<li><ChannelCard channel={userChannel} /></li>
-			</ol>
-		</section>
 
 		{#if followedChannels.length > 0}
 			<section class="section">
