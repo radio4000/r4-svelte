@@ -100,9 +100,6 @@
 					/>
 				</span>
 			{/if}
-			{#if isSignedIn}
-				<AddTrackDialog />
-			{/if}
 			<EditTrackDialog />
 			<ShareDialog />
 			<ShortcutsDialog />
@@ -118,6 +115,7 @@
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
+				<AddTrackDialog />
 			{:else if !isSignedIn}
 				<a
 					href={resolve('/auth')}
