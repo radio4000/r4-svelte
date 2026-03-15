@@ -43,8 +43,6 @@
 		}
 		return userChannelAutoDecks[0]?.id
 	})
-
-
 </script>
 
 <header>
@@ -55,7 +53,7 @@
 		<a
 			href={resolve('/explore')}
 			class="btn"
-			class:active={page.route.id === '/explore'}
+			class:active={page.route.id?.startsWith('/explore')}
 			aria-label={m.nav_explore()}
 			{@attach tooltip({content: m.nav_explore()})}
 		>
@@ -70,7 +68,7 @@
 		>
 			<Icon icon="search" />
 		</a>
-{#await preloading then}
+		{#await preloading then}
 			{#if !userChannel}
 				<a
 					href={resolve('/welcome')}
@@ -90,16 +88,6 @@
 
 	<nav class="user">
 		{#await preloading then}
-			{#if userChannelHasAuto}
-				<span {@attach tooltip({content: m.auto_radio_resync()})}>
-					<AutoRadioButton
-						className="btn resync-link"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-					/>
-				</span>
-			{/if}
 			<EditTrackDialog />
 			<ShareDialog />
 			<ShortcutsDialog />
@@ -116,7 +104,18 @@
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
 				<AddTrackDialog />
-			{:else if !isSignedIn}
+			{/if}
+			{#if userChannelHasAuto}
+				<span {@attach tooltip({content: m.auto_radio_resync()})}>
+					<AutoRadioButton
+						className="btn resync-link"
+						synced={!userChannelHasAutoDrifted}
+						title={m.auto_radio_resync()}
+						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					/>
+				</span>
+			{/if}
+			{#if !isSignedIn}
 				<a
 					href={resolve('/auth')}
 					class="btn"
@@ -126,7 +125,7 @@
 				>
 					<Icon icon="user" />
 				</a>
-			{:else}{/if}
+			{/if}
 		{/await}
 	</nav>
 
