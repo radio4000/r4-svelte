@@ -40,6 +40,23 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 	return query.order(params.orderColumn ?? 'created_at', {ascending: params.ascending ?? true})
 }
 
+/** Fetch total count of channels matching the given params (HEAD request, no data). */
+export async function fetchChannelCount(params: ChannelQueryParams = {}): Promise<number> {
+	if (!capabilities.globalBrowse) return 0
+	const view = params.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
+	let query = sdk.supabase.from(view).select('*', {count: 'exact', head: true})
+	if (params.idIn?.length) {
+		query = query.in('id', params.idIn)
+	} else if (params.imageNotNull && params.trackCountGte) {
+		query = query.not('image', 'is', null).gte('track_count', params.trackCountGte)
+	} else if (params.trackCountGte) {
+		query = query.gte('track_count', params.trackCountGte)
+	}
+	const {count, error} = await query
+	if (error) return 0
+	return count ?? 0
+}
+
 /** Fetch the next page of channels and upsert into the collection. */
 export async function loadMoreChannels(
 	params: ChannelQueryParams & {offset: number; limit: number}

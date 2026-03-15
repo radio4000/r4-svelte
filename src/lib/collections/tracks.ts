@@ -407,6 +407,38 @@ export async function fetchRecentTracksForSlugs(slugs: string[], createdAfter: s
 	}
 }
 
+/**
+ * Fetch the most recently added tracks globally, ordered by created_at DESC.
+ * Results are upserted into tracksCollection.
+ */
+export async function fetchRecentTracks({
+	limit = 50,
+	offset = 0
+}: {
+	limit?: number
+	offset?: number
+} = {}): Promise<Track[]> {
+	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
+	const {data, error} = await sdk.supabase
+		.from('channel_tracks')
+		.select('*')
+		.order('created_at', {ascending: false})
+		.range(offset, offset + limit - 1)
+	if (error) throw error
+	const tracks = ((data || []) as Track[]).map((track) => {
+		const parsed = track.url ? parseUrl(track.url) : null
+		return {
+			...track,
+			provider: track.provider ?? parsed?.provider ?? null,
+			media_id: track.media_id ?? parsed?.id ?? null
+		}
+	})
+	tracksCollection.utils.writeBatch(() => {
+		for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+	})
+	return tracks
+}
+
 export async function ensureTracksLoaded(slug: string): Promise<void> {
 	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (existing.length) {
