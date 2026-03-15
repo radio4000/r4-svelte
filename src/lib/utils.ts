@@ -214,6 +214,28 @@ export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }
 
+/**
+ * Score a channel for "featured" ranking.
+ * Higher = more interesting. Used client-side to sort a quality pool.
+ */
+export function featuredScore(channel: {
+	followers?: unknown[] | null
+	track_count?: number | null
+	latest_track_at?: string | null
+}): number {
+	const followers = Array.isArray(channel.followers) ? channel.followers.length : 0
+	const tracks = channel.track_count ?? 0
+	const latest = channel.latest_track_at
+	let recency = 0
+	if (latest) {
+		const days = (Date.now() - new Date(latest).getTime()) / 86400000
+		if (days <= 30) recency = 3
+		else if (days <= 90) recency = 2
+		else if (days <= 180) recency = 1
+	}
+	return followers * 3 + Math.log(tracks + 1) * 2 + recency
+}
+
 /** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */
 export function dedupeById<T extends {id: string | null}>(rows: T[]): T[] {
 	const seen = new Map<string, T>()
