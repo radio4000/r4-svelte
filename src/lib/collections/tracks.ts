@@ -376,6 +376,37 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 	})
 }
 
+/**
+ * Fetch tracks created after `createdAfter` for multiple channel slugs in one query.
+ * Results are upserted into tracksCollection. Batches slugs to stay within URL limits.
+ */
+export async function fetchRecentTracksForSlugs(slugs: string[], createdAfter: string): Promise<void> {
+	if (!slugs.length) return
+	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
+	const BATCH = 50
+	for (let i = 0; i < slugs.length; i += BATCH) {
+		const batch = slugs.slice(i, i + BATCH)
+		const {data, error} = await sdk.supabase
+			.from('channel_tracks')
+			.select('*')
+			.in('slug', batch)
+			.gt('created_at', createdAfter)
+			.order('created_at', {ascending: false})
+		if (error) throw error
+		const tracks = ((data || []) as Track[]).map((track) => {
+			const parsed = track.url ? parseUrl(track.url) : null
+			return {
+				...track,
+				provider: track.provider ?? parsed?.provider ?? null,
+				media_id: track.media_id ?? parsed?.id ?? null
+			}
+		})
+		tracksCollection.utils.writeBatch(() => {
+			for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+		})
+	}
+}
+
 export async function ensureTracksLoaded(slug: string): Promise<void> {
 	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 	if (existing.length) {
