@@ -113,7 +113,7 @@
 			</menu>
 		</PopoverMenu>
 
-		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} style="margin-left: auto;" />
+		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
 	</menu>
 
 	{#if groupedTracks.length}
@@ -154,10 +154,11 @@
 		gap: 0.5rem;
 		margin: 0 0 1rem;
 		z-index: 1;
+	}
 
-		:global(.search-input) {
-			max-width: 10rem;
-		}
+	.filtermenu :global(.search-input) {
+		flex: 1 1 0;
+		min-width: 6rem;
 	}
 
 	.day-header {

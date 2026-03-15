@@ -71,6 +71,8 @@
 	}
 
 	input[type='search'] {
+		flex: 1;
+		min-width: 0;
 		padding-left: 1.5rem;
 		padding-right: 1.5rem;
 

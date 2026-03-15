@@ -110,7 +110,7 @@
 
 		<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
 
-		<PopoverMenu style="margin-left: auto;" triggerAttachment={tooltip({content: m.tags_display_list()})}>
+		<PopoverMenu triggerAttachment={tooltip({content: m.tags_display_list()})}>
 			{#snippet trigger()}
 				<Icon icon={displayParam === 'cloud' ? 'tag' : 'unordered-list'} />
 			{/snippet}
@@ -185,7 +185,8 @@
 	}
 
 	.filtermenu :global(.search-input) {
-		max-width: 10rem;
+		flex: 1 1 0;
+		min-width: 6rem;
 	}
 
 	.tag-list {
