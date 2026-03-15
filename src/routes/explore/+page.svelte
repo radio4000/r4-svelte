@@ -1,6 +1,5 @@
 <script>
 	import {page} from '$app/state'
-	import {afterNavigate} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
 	import {appName} from '$lib/config'
 	import Channels from '$lib/components/channels.svelte'
@@ -8,7 +7,6 @@
 
 	const display = $derived(page?.url?.searchParams?.get('display'))
 
-	const validDisplays = /** @type {const} */ (['grid', 'list', 'map', 'infinite', 'tuner'])
 	const validFilters = /** @type {const} */ ([
 		'all',
 		'broadcasting',
@@ -20,14 +18,11 @@
 		'featured'
 	])
 
-	afterNavigate(({from}) => {
-		if (display && validDisplays.includes(/** @type {any} */ (display)) && display !== appState.channels_display) {
-			appState.channels_display = /** @type {typeof validDisplays[number]} */ (display)
-		}
-		const toFilter = page?.url?.searchParams?.get('filter')
-		const fromFilter = from?.url?.searchParams?.get('filter')
-		if (toFilter && validFilters.includes(/** @type {any} */ (toFilter)) && toFilter !== fromFilter) {
-			appState.channels_filter = /** @type {typeof validFilters[number]} */ (toFilter)
+	// Sync URL → appState reactively (handles initial load + back/forward navigation)
+	$effect(() => {
+		const f = page.url.searchParams.get('filter')
+		if (f && validFilters.includes(/** @type {any} */ (f))) {
+			appState.channels_filter = /** @type {typeof validFilters[number]} */ (f)
 		}
 	})
 </script>

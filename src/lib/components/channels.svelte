@@ -263,6 +263,9 @@
 
 	function setFilter(value) {
 		appState.channels_filter = value
+		const query = new URL(page.url).searchParams
+		query.set('filter', value)
+		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 	}
 </script>
 
