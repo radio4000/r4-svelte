@@ -40,18 +40,18 @@ Review the matches manually. The grep is only for discovery; it will also catch 
 
 Each script does one thing. Locale argument is always optional and positional.
 
-| Command                         | What it does                              |
-| ------------------------------- | ----------------------------------------- |
-| `bun run i18n`                  | Sync + recompile Paraglide                |
-| `bun run i18n:stats`            | Per-locale coverage table                 |
-| `bun run i18n:stats da`         | Coverage for one locale                   |
-| `bun run i18n:extract`          | Missing keys → stdout JSON (all locales)  |
-| `bun run i18n:extract da`       | Missing keys → stdout JSON (one locale)   |
-| `bun run i18n:check`            | Fail if locale keys/placeholders drift    |
-| `bun run i18n:check da`         | Check one locale against English          |
+| Command                         | What it does                                          |
+| ------------------------------- | ----------------------------------------------------- |
+| `bun run i18n`                  | Sync + recompile Paraglide                            |
+| `bun run i18n:stats`            | Per-locale coverage table                             |
+| `bun run i18n:stats da`         | Coverage for one locale                               |
+| `bun run i18n:extract`          | Missing keys → stdout JSON (all locales)              |
+| `bun run i18n:extract da`       | Missing keys → stdout JSON (one locale)               |
+| `bun run i18n:check`            | Fail if locale keys/placeholders drift                |
+| `bun run i18n:check da`         | Check one locale against English                      |
 | `bun run i18n:prune-unused`     | Remove dead keys from `en.json` via `src/` usage scan |
-| `bun run i18n:review da`        | Missing keys + review flags → stdout JSON |
-| `bun run i18n:apply batch.json` | Apply a batch file to locale files        |
+| `bun run i18n:review da`        | Missing keys + review flags → stdout JSON             |
+| `bun run i18n:apply batch.json` | Apply a batch file to locale files                    |
 
 All output goes to stdout (pipe to a file if you want one). Stats goes to stdout too — no stderr/stdout mixing.
 

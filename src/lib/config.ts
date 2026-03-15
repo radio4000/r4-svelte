@@ -27,4 +27,3 @@ export const appSocialUrl = env.PUBLIC_APP_SOCIAL_URL ?? 'https://bsky.app/profi
 export const posthogKey = env.PUBLIC_POSTHOG_KEY ?? 'phc_hjAzrJR1oqwdWF2chYKVdAkAQAXtTgd576iTuMTfuEO'
 export const posthogHost = env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com'
 export const youtubeApiKey = env.PUBLIC_YOUTUBE_KEY ?? 'AIzaSyDCLAKtHqvRA8ucWLnFtLEPq6qC2fWomQk'
-
