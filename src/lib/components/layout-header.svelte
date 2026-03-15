@@ -11,13 +11,9 @@
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appName} from '$lib/config'
-	import {capabilities} from '$lib/modes'
 
 	const {preloading} = $props()
 
@@ -48,8 +44,7 @@
 		return userChannelAutoDecks[0]?.id
 	})
 
-	const broadcasts = capabilities.broadcasts ? useLiveQuery(broadcastsCollection) : {data: []}
-	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
+
 </script>
 
 <header>
@@ -75,22 +70,7 @@
 		>
 			<Icon icon="search" />
 		</a>
-		{#if capabilities.broadcasts}
-			<a
-				href={resolve('/broadcasts')}
-				class="btn"
-				class:active={page.route.id === '/broadcasts'}
-				aria-label={m.nav_broadcasts()}
-				{@attach tooltip({content: m.nav_broadcasts()})}
-			>
-				<Icon icon="cell-signal" />
-				{#if broadcastCount > 0}
-					<span class="count">{broadcastCount}</span>
-				{/if}
-			</a>
-		{/if}
-
-		{#await preloading then}
+{#await preloading then}
 			{#if !userChannel}
 				<a
 					href={resolve('/welcome')}
