@@ -429,7 +429,7 @@
 
 		{#if filter === 'featured'}
 			<button
-				class="btn ghost"
+				class="btn"
 				onclick={() => (showFeaturedInfo = true)}
 				aria-label={m.channels_featured_info_label()}
 				{@attach tooltip({content: m.channels_featured_info_label()})}
@@ -647,8 +647,9 @@
 		margin: 2rem 0.5rem 1rem;
 	}
 
-	:global(.search-input) {
-		max-width: 10rem;
+	.filtermenu :global(.search-input) {
+		flex: 1 1 0;
+		min-width: 6rem;
 	}
 
 	.pagination {
