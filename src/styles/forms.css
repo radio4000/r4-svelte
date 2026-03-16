@@ -59,17 +59,13 @@ input[type='range'] {
 
 	&::-webkit-slider-runnable-track {
 		background: var(--gray-4);
-		border-radius: 99px;
-		height: 4px;
 	}
 
 	&::-moz-range-track {
 		background: var(--gray-4);
-		border-radius: 99px;
-		height: 4px;
 	}
 
-	&:disabled {
+&:disabled {
 		opacity: 0.4;
 		cursor: default;
 	}

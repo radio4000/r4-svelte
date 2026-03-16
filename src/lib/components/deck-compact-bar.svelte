@@ -268,15 +268,7 @@
 
 	.progress-range {
 		width: 100%;
-		height: 10px;
-
-		&::-webkit-slider-runnable-track {
-			height: 10px;
-		}
-
-		&::-moz-range-track {
-			height: 10px;
-		}
+		height: 0.6rem;
 	}
 
 	.controls {
