@@ -30,33 +30,43 @@
 	let featuredLoaded = $state(false)
 
 	// Shuffle button: random pick from the quality pool for variety
-	function pickFeatured() {
-		if (!featuredPool.length) return
-		const shuffled = featuredPool.toSorted(() => Math.random() - 0.5)
-		const picked = shuffled.slice(0, FEATURED_COUNT)
-		featuredChannels = picked
-		const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-		void fetchRecentTracksForSlugs(
-			picked.map((ch) => ch.slug),
-			since
-		)
+	let shuffling = $state(false)
+	async function pickFeatured() {
+		if (!featuredPool.length || shuffling) return
+		shuffling = true
+		try {
+			const shuffled = featuredPool.toSorted(() => Math.random() - 0.5)
+			const picked = shuffled.slice(0, FEATURED_COUNT)
+			featuredChannels = picked
+			const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
+			await fetchRecentTracksForSlugs(
+				picked.map((ch) => ch.slug),
+				since
+			)
+		} finally {
+			shuffling = false
+		}
 	}
 
 	$effect(() => {
 		if (featuredLoaded) return
 		featuredLoaded = true
 		void (async () => {
-			const pool = await getFeaturedPool(FEATURED_DAYS)
-			featuredPool = pool
-			// Initial pick: by score, consistent with explore pages
-			const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
-			featuredChannels = picked
-			if (picked.length) {
-				const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-				void fetchRecentTracksForSlugs(
-					picked.map((ch) => ch.slug),
-					since
-				)
+			try {
+				const pool = await getFeaturedPool(FEATURED_DAYS)
+				featuredPool = pool
+				// Initial pick: by score, consistent with explore pages
+				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
+				featuredChannels = picked
+				if (picked.length) {
+					const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
+					await fetchRecentTracksForSlugs(
+						picked.map((ch) => ch.slug),
+						since
+					)
+				}
+			} catch (e) {
+				console.warn('[homepage] failed to load featured channels', e)
 			}
 		})()
 	})
@@ -187,7 +197,7 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > FEATURED_COUNT}
-							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
+							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
 								<Icon icon="shuffle" />
 							</button>
 						{/if}
@@ -230,7 +240,7 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > FEATURED_COUNT}
-							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured}>
+							<button type="button" class="icon-btn" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
 								<Icon icon="shuffle" />
 							</button>
 						{/if}
