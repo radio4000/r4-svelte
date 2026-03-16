@@ -811,6 +811,7 @@
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
+		gap: 0.4rem;
 		border-top: 1px solid var(--gray-6);
 	}
 
