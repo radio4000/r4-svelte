@@ -144,11 +144,6 @@
 		</div>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
-		{#if displayTrack}
-			<div class="track-panel">
-				<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
-			</div>
-		{/if}
 		<div class="channel-panel">
 			{#if headerChannel}
 				{#if appState.embed_mode}
@@ -186,6 +181,11 @@
 				/>
 			</div>
 		</div>
+		{#if displayTrack}
+			<div class="track-panel">
+				<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+			</div>
+		{/if}
 	</div>
 	<div class="row-controls">
 		<menu class="controls">
@@ -235,9 +235,9 @@
 			'progress'
 			'info'
 			'controls';
-		row-gap: 0.2rem;
-		gap: 0.5rem;
-		padding: 0.5rem 0.5rem;
+		row-gap: 0.4rem;
+		gap: 0.75rem;
+		padding: 0;
 		/*border: 1px solid var(--gray-6);*/
 		border-top: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
@@ -249,7 +249,7 @@
 	.row-controls {
 		display: flex;
 		align-items: center;
-		gap: 0.2rem;
+		gap: 0.4rem;
 		grid-area: controls;
 		flex: 1 1 100%;
 		margin-left: 0;
@@ -273,7 +273,7 @@
 
 	.controls {
 		align-items: center;
-		flex: 1;
+		flex: 0 0 auto;
 	}
 
 	.header-info {
@@ -281,7 +281,7 @@
 		display: flex;
 		align-items: stretch;
 		flex-direction: column;
-		gap: 0.2rem;
+		gap: 0.4rem;
 		min-width: 0;
 		flex: 1 1 auto;
 		width: 100%;
@@ -311,7 +311,7 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.1rem;
+		gap: 0.2rem;
 		flex: 1 1 auto;
 		line-height: 1.2;
 	}
