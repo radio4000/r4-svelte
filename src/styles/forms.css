@@ -61,7 +61,7 @@ input[type='range'] {
 		background: linear-gradient(
 			to right,
 			var(--accent-9) var(--range-fill, 0%),
-			var(--gray-3) var(--range-fill, 0%)
+			transparent var(--range-fill, 0%)
 		);
 	}
 
@@ -75,7 +75,7 @@ input[type='range'] {
 	}
 
 	&::-moz-range-track {
-		background: var(--gray-3);
+		background: transparent;
 	}
 
 	&::-moz-range-progress {
