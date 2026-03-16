@@ -250,7 +250,7 @@
 	.row-controls {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.2rem;
 		grid-area: controls;
 		flex: 1 1 100%;
 		margin-left: 0;
