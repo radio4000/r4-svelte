@@ -73,6 +73,7 @@
 	}
 
 	.range[data-muted] {
+		--range-color: var(--gray-7);
 		accent-color: var(--gray-7);
 	}
 

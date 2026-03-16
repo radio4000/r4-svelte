@@ -61,18 +61,18 @@ input[type='range'] {
 	&::-webkit-slider-runnable-track {
 		background: linear-gradient(
 			to right,
-			var(--accent-9) var(--range-fill, 0%),
+			var(--range-color, var(--accent-9)) var(--range-fill, 0%),
 			var(--gray-4) var(--range-fill, 0%)
 		);
 	}
 
 	&::-webkit-slider-thumb {
-		background: var(--accent-9);
+		background: var(--range-color, var(--accent-9));
 	}
 
 	&::-moz-range-thumb {
-		background: var(--accent-9);
-		border-color: var(--accent-9);
+		background: var(--range-color, var(--accent-9));
+		border-color: var(--range-color, var(--accent-9));
 	}
 
 	&::-moz-range-track {
@@ -80,7 +80,7 @@ input[type='range'] {
 	}
 
 	&::-moz-range-progress {
-		background: var(--accent-9);
+		background: var(--range-color, var(--accent-9));
 	}
 
 	&:disabled {
