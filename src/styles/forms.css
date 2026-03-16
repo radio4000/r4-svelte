@@ -56,6 +56,7 @@ input[type='checkbox'] {
 input[type='range'] {
 	margin: 0;
 	accent-color: var(--accent-9);
+	background: transparent;
 
 	&::-webkit-slider-runnable-track {
 		background: linear-gradient(
