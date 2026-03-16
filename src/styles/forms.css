@@ -57,7 +57,23 @@ input[type='range'] {
 	margin: 0;
 	accent-color: var(--accent-9);
 
-&:disabled {
+	&::-webkit-slider-runnable-track {
+		background: linear-gradient(
+			to right,
+			var(--accent-9) var(--range-fill, 0%),
+			var(--gray-3) var(--range-fill, 0%)
+		);
+	}
+
+	&::-moz-range-track {
+		background: var(--gray-3);
+	}
+
+	&::-moz-range-progress {
+		background: var(--accent-9);
+	}
+
+	&:disabled {
 		opacity: 0.4;
 		cursor: default;
 	}

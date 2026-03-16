@@ -140,6 +140,7 @@
 				}}
 				class="progress-range"
 				disabled={!Number.isFinite(mediaDuration)}
+				style="--range-fill: {Number.isFinite(mediaDuration) && mediaDuration > 0 ? ((mediaCurrentTime / mediaDuration) * 100).toFixed(1) : 0}%"
 			/>
 		</div>
 	{/if}

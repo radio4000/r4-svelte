@@ -37,6 +37,7 @@
 		max="1"
 		step="0.01"
 		value={deck?.volume ?? 1}
+		style="--range-fill: {((deck?.volume ?? 1) * 100).toFixed(1)}%"
 		oninput={(e) => {
 			const val = Number(e.currentTarget.value)
 			if (deck) deck.volume = val
