@@ -88,7 +88,7 @@
 			</ul>
 		{/each}
 	{:else if follows.isLoading || (follows.followedIds.length > 0 && maxLoadedDays === 0)}
-		<p class="empty">…</p>
+		<p class="empty">{m.common_loading()}</p>
 	{:else if follows.followedIds.length === 0}
 		<p class="empty">{m.home_feed_no_follows()}</p>
 	{:else}
