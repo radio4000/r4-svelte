@@ -855,7 +855,8 @@
 
 	.progress-range {
 		width: 100%;
-		height: 10px;
+		height: 0.6rem;
+		z-index: 1;
 	}
 
 	.header-footer {
