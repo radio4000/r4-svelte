@@ -848,13 +848,14 @@
 	}
 
 	.progress-row {
-		padding: 0 0.45rem 0.08rem;
+		padding: 0;
+		margin-top: -0.4rem;
 		line-height: 0;
 	}
 
 	.progress-range {
 		width: 100%;
-		height: 0.6rem;
+		height: 0.25rem;
 		z-index: 1;
 	}
 

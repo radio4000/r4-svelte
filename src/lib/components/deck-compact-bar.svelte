@@ -277,11 +277,12 @@
 		width: 100%;
 		min-width: 0;
 		z-index: 1;
+		margin-top: -0.4rem;
 	}
 
 	.progress-range {
 		width: 100%;
-		height: 0.6rem;
+		height: 0.25rem;
 		z-index: 1;
 	}
 
