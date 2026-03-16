@@ -242,7 +242,7 @@
 		/*border: 1px solid var(--gray-6);*/
 		border-top: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
-		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 6%, var(--header-bg));
+		background: var(--header-bg);
 		min-width: 0;
 		overflow: hidden;
 	}
