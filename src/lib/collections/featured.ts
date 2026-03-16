@@ -9,14 +9,18 @@ import type {Channel} from '$lib/types'
  */
 export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 	await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-	await loadMoreChannels({
-		trackCountGte: 10,
-		imageNotNull: true,
-		limit: 200,
-		offset: 0,
-		orderColumn: 'latest_track_at',
-		ascending: false
-	})
+	try {
+		await loadMoreChannels({
+			trackCountGte: 10,
+			imageNotNull: true,
+			limit: 200,
+			offset: 0,
+			orderColumn: 'latest_track_at',
+			ascending: false
+		})
+	} catch (e) {
+		console.warn('[featured] failed to load channel pool', e)
+	}
 	const since = new Date(Date.now() - days * 86400000).toISOString()
 	return [...channelsCollection.state.values()].filter(
 		(ch) => (ch.track_count ?? 0) >= 10 && ch.image && ch.latest_track_at && ch.latest_track_at >= since
