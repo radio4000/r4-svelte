@@ -65,6 +65,15 @@ input[type='range'] {
 		);
 	}
 
+	&::-webkit-slider-thumb {
+		background: var(--accent-9);
+	}
+
+	&::-moz-range-thumb {
+		background: var(--accent-9);
+		border-color: var(--accent-9);
+	}
+
 	&::-moz-range-track {
 		background: var(--gray-3);
 	}
