@@ -25,7 +25,7 @@
 
 	const tracksQuery = getTracksQueryCtx()
 
-	let slug = $derived(page.params.slug)
+	let slug = $derived(page.params.slug as string)
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let allTracks = $derived(tracksQuery.data || [])
 	let previewTracks = $derived(allTracks.slice(0, PREVIEW_LIMIT))

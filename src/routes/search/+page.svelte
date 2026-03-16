@@ -48,7 +48,7 @@
 	}
 
 	// --- Sync input from URL on landing + browser back/forward ---
-	let inputSeeded = !!(page.url.searchParams.get('q'))
+	let inputSeeded = !!page.url.searchParams.get('q')
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		const seeded = page.url.searchParams.get('q') ?? ''

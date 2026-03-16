@@ -3,7 +3,6 @@
 youtube-video,
 soundcloud-player {
 	aspect-ratio: 16 / 9;
-	height: auto;
 	height: 100%;
 	min-width: 200px;
 

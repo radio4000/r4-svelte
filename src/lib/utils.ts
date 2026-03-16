@@ -239,7 +239,7 @@ export function featuredScore(channel: {
 
 /** Format a YYYY-MM-DD ISO date string as a human-readable day label. */
 export function formatDay(iso: string): string {
-	const date = new Date(iso + 'T00:00:00')
+	const date = new Date(`${iso}T00:00:00`)
 	const today = new Date()
 	const todayIso = today.toISOString().slice(0, 10)
 	const yesterdayIso = new Date(today.getTime() - 86400000).toISOString().slice(0, 10)
@@ -256,7 +256,7 @@ export function groupByDay<T extends {created_at?: string | null}>(tracks: T[]):
 	for (const track of tracks) {
 		const day = track.created_at?.slice(0, 10) ?? ''
 		if (!map.has(day)) map.set(day, [])
-		map.get(day)!.push(track)
+		map.get(day)?.push(track)
 	}
 	return Array.from(map.entries(), ([day, items]) => ({label: day ? formatDay(day) : '—', tracks: items}))
 }

@@ -33,7 +33,7 @@ export const tracksCollection = createCollection<Track, string>({
 		queryClient,
 		getKey: (item) => item.id,
 		staleTime: 24 * 60 * 60 * 1000,
-		queryFn: async (ctx) => {
+		queryFn: async (ctx): Promise<Track[]> => {
 			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
 			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
 			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value

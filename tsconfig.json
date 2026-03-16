@@ -15,7 +15,7 @@
 		// to relax it a bit
 		"noImplicitAny": false,
 		"useUnknownInCatchVariables": false,
-		"types": ["vite-plugin-pwa/client"]
+		"types": ["vite-plugin-pwa/client", "youtube"]
 	}
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files

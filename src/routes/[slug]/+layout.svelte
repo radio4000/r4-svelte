@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
@@ -24,7 +24,7 @@
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
 
 	let {children} = $props()
-	let slug = $derived(page.params.slug)
+	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)

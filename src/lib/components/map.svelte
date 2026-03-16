@@ -94,7 +94,9 @@
 						searchParams.set('zoom', String(z))
 						const queryString = searchParams.size ? `?${searchParams}` : ''
 						replaceState(
-							page.route.id ? resolve(page.route.id, page.params) + queryString : page.url.pathname + queryString,
+							page.route.id
+								? resolve(/** @type {any} */ (page.route.id), page.params) + queryString
+								: page.url.pathname + queryString,
 							{}
 						)
 					}, 300)

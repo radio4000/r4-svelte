@@ -18,8 +18,7 @@
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
 
-	/** @param {{track?: import('$lib/types').Track, url?: string}} [data] */
-	function open(data = {}) {
+	function open(data: {track?: Track; url?: string} = {}) {
 		if (!isSignedIn) {
 			goto(resolve('/auth'))
 			return

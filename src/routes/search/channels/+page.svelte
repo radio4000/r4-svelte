@@ -17,7 +17,7 @@
 	let inputValue = $state(page.url.searchParams.get('q') ?? '')
 	const debouncedInput = new Debounced(() => inputValue, 300)
 
-	let inputSeeded = !!(page.url.searchParams.get('q'))
+	let inputSeeded = !!page.url.searchParams.get('q')
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		const q = page.url.searchParams.get('q') ?? ''

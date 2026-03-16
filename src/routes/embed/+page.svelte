@@ -141,45 +141,47 @@
 </details>
 
 <style>
-	:global(.layout > header) {
-		display: none !important;
-	}
-
-	:global(.embed-mode .content) {
-		&:has(.deck:not(.compact)) .scroll-area {
-			display: none;
+	:global {
+		.layout > header {
+			display: none !important;
 		}
 
-		.deck-strip {
-			width: 100%;
-			max-width: none;
-			flex: 1 1 auto;
-
-			.local {
-				flex: 1 1 auto;
-				min-width: 0;
+		.embed-mode .content {
+			&:has(.deck:not(.compact)) .scroll-area {
+				display: none;
 			}
 
-			.deck-item {
-				flex: 1 1 0;
-				min-width: 0;
-			}
-
-			.deck {
+			.deck-strip {
 				width: 100%;
-				min-width: 0;
-				flex: 1 1 0;
+				max-width: none;
+				flex: 1 1 auto;
 
-				&.listening {
+				.local {
+					flex: 1 1 auto;
+					min-width: 0;
+				}
+
+				.deck-item {
+					flex: 1 1 0;
+					min-width: 0;
+				}
+
+				.deck {
 					width: 100%;
 					min-width: 0;
 					flex: 1 1 0;
-				}
-			}
 
-			.broadcasts {
-				min-width: 0;
-				width: 100%;
+					&.listening {
+						width: 100%;
+						min-width: 0;
+						flex: 1 1 0;
+					}
+				}
+
+				.broadcasts {
+					min-width: 0;
+					width: 100%;
+				}
 			}
 		}
 	}

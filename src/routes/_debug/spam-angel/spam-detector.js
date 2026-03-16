@@ -57,7 +57,7 @@ const musicTerms = [
 
 /**
  * Analyze a channel for spam indicators
- * @param {{name?: string, description?: string | null, created_at?: string | null}} channel
+ * @param {{name?: string | null, description?: string | null, created_at?: string | null}} channel
  * @param {Array<import('$lib/types').Track>} [tracks] - Optional track data for enhanced analysis
  * @returns {{isSpam: boolean, confidence: number, reasons: string[], evidence: {keywords: string[], phrases: string[], locations: string[], patterns: string[], musicTerms: string[]}}}
  */

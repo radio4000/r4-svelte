@@ -115,7 +115,7 @@ export const channelsCollection = createCollection<Channel, string>({
 		queryClient,
 		getKey: (item) => item.id,
 		staleTime: 60 * 60 * 1000,
-		queryFn: async (ctx) => {
+		queryFn: async (ctx): Promise<Channel[]> => {
 			const p = parseChannelParams(ctx.meta?.loadSubsetOptions)
 			const all = [...channelsCollection.state.values()]
 
@@ -137,7 +137,7 @@ export const channelsCollection = createCollection<Channel, string>({
 			// Local imported channels are not in Supabase — serve them from appState directly
 			if (p.idIn) {
 				const localIds = new Set(appState.local_channel_ids ?? [])
-				const localMatches = (appState.local_channels ?? []).filter((c) => p.idIn!.includes(c.id) && localIds.has(c.id))
+				const localMatches = (appState.local_channels ?? []).filter((c) => p.idIn?.includes(c.id) && localIds.has(c.id))
 				const remoteIds = p.idIn.filter((id) => !localIds.has(id))
 				if (!remoteIds.length) return localMatches
 				const {data, error} = await buildChannelsQuery({...p, idIn: remoteIds}).limit(remoteIds.length)

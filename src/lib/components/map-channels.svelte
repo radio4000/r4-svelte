@@ -222,7 +222,7 @@
 				m.getCanvas().style.cursor = ''
 			})
 		} else {
-			/** @type {GeoJSONSource} */ m.getSource('channels-source').setData(fc)
+			;/** @type {GeoJSONSource} */ (m.getSource('channels-source')).setData(fc)
 		}
 	}
 
@@ -425,6 +425,7 @@
 	}
 
 	/** Night-side polygon computed from current solar position. */
+	/** @returns {import('geojson').FeatureCollection} */
 	function buildNightGeoJSON() {
 		const now = new Date()
 		const dayOfYear = Math.round((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000)
@@ -496,8 +497,7 @@
 
 	function updateNightLayer() {
 		if (!map || !mapReady) return
-		/** @type {any} */
-		map.getSource('night-source')?.setData(buildNightGeoJSON())
+		;/** @type {GeoJSONSource | undefined} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
 	}
 
 	function handleReady(m) {
@@ -506,7 +506,7 @@
 		setupOverlays(m)
 		setupLayers(m)
 		if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
-		if (!m.getLayer('broadcast-3d')) m.addLayer(broadcastLayer)
+		if (!m.getLayer('broadcast-3d')) m.addLayer(/** @type {any} */ (broadcastLayer))
 		updateBroadcastLayer()
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 	}
@@ -619,7 +619,7 @@
 			setupOverlays(m)
 			setupLayers(m)
 			if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
-			if (!m.getLayer('broadcast-3d')) m.addLayer(broadcastLayer)
+			if (!m.getLayer('broadcast-3d')) m.addLayer(/** @type {any} */ (broadcastLayer))
 			updateBroadcastLayer()
 			mapReady = true
 		})

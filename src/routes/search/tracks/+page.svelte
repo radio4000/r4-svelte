@@ -40,7 +40,7 @@
 		return str ? `/search/tracks?${str}` : '/search/tracks'
 	}
 
-	let inputSeeded = !!(page.url.searchParams.get('q'))
+	let inputSeeded = !!page.url.searchParams.get('q')
 	afterNavigate(({type}) => {
 		if (type === 'goto') return
 		const seeded = page.url.searchParams.get('q') ?? ''

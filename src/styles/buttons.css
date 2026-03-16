@@ -132,6 +132,7 @@ button.ghost.active,
 button.auto-live-btn.ghost .oi-infinite .oi-vector,
 .btn.auto-live-btn.ghost .oi-infinite .oi-vector {
 	stroke: var(--accent-9);
+	/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback — color for browsers that don't support gradient URLs */
 	stroke: url('#r5-auto-live-gradient');
 }
 

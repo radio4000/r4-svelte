@@ -2,7 +2,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {showModal = $bindable(), header, children} = $props()
+	let {showModal = $bindable(), header = undefined, children} = $props()
 
 	let dialog = $state()
 	let mousedownTarget = $state()

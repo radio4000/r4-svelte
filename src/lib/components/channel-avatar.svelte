@@ -1,8 +1,8 @@
-<script>
+<script lang="ts">
 	import {channelAvatarUrl} from '$lib/utils'
 	import Icon from '$lib/components/icon.svelte'
 	/* keep 250 please, since it is what cloudinary has already generated */
-	let {id, alt = '', size = 250} = $props()
+	let {id, alt = '', size = 250}: {id?: string | null; alt?: string | null; size?: number} = $props()
 </script>
 
 {#if id}
