@@ -265,6 +265,7 @@
 		flex: 1 0 100%;
 		width: 100%;
 		min-width: 0;
+		z-index: 1;
 	}
 
 	.progress-range {
