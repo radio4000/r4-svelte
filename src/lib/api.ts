@@ -420,17 +420,31 @@ export function openSearch(event) {
 }
 
 /** @param {number} deckId */
-export function togglePlayPause(deckId) {
-	const player = getMediaPlayer(deckId)
+export async function togglePlayPause(deckId) {
 	const deck = getDeck(deckId)
-	if (player) {
-		if (player.paused) {
-			if (deck) deck.is_playing = true
-			player.play()
-		} else {
+	let player = getMediaPlayer(deckId)
+	if (!player) {
+		// Media element not in DOM yet (track data still loading from IDB).
+		// Optimistically mark as playing and wait for the element to appear.
+		if (deck) deck.is_playing = true
+		setUserInitiatedPlay(deckId, true)
+		player = await waitForMediaPlayer(deckId, 5000)
+		if (!player) {
 			if (deck) deck.is_playing = false
-			player.pause()
+			log.warn('togglePlayPause: timed out waiting for media player')
+			return
 		}
+		// User intent was to play — always play once the element is ready
+		player.play()
+		maybeBroadcastNotify()
+		return
+	}
+	if (player.paused) {
+		if (deck) deck.is_playing = true
+		player.play()
+	} else {
+		if (deck) deck.is_playing = false
+		player.pause()
 	}
 	maybeBroadcastNotify()
 }
