@@ -852,6 +852,7 @@
 	.progress-row {
 		padding: 0 0.45rem 0.3rem;
 		line-height: 0;
+		z-index: 1;
 	}
 
 	.progress-range {
