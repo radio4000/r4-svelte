@@ -849,7 +849,7 @@
 
 	.progress-row {
 		padding: 0;
-		margin-top: -0.4rem;
+		margin-top: -0.1rem;
 		line-height: 0;
 	}
 
