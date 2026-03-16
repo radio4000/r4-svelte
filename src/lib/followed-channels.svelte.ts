@@ -16,8 +16,12 @@ export function getFollowedChannels() {
 		if (!followedIds.length || fetched) return
 		fetched = true
 		void (async () => {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			loadMoreChannels({idIn: followedIds.slice(), offset: 0, limit: followedIds.length})
+			try {
+				await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+				loadMoreChannels({idIn: followedIds.slice(), offset: 0, limit: followedIds.length})
+			} catch (e) {
+				console.warn('[followed-channels] failed to load channels', e)
+			}
 		})()
 	})
 
