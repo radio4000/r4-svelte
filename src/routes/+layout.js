@@ -67,9 +67,11 @@ async function preload() {
 		if (deckSlugs.size) {
 			log.debug('ensuring_tracks_for_decks', {slugs: [...deckSlugs]})
 		}
-		for (const slug of /** @type {Set<string>} */ (deckSlugs)) {
-			ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
-		}
+		await Promise.all(
+			[.../** @type {Set<string>} */ (deckSlugs)].map((slug) =>
+				ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
+			)
+		)
 
 		// For debugging and console experimentation
 		// @ts-expect-error debugging
