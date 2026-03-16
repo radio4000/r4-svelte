@@ -356,6 +356,7 @@
 
 	.compact-deck-item {
 		min-width: 0;
+		margin: 0.6rem;
 	}
 
 	.compact-decks:empty {
