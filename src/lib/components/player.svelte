@@ -611,6 +611,7 @@
 					value={mediaCurrentTime}
 					oninput={(e) => {
 						const val = Number(e.currentTarget.value)
+						mediaCurrentTime = val
 						if (mediaElement) mediaElement.currentTime = val
 						if (deck) {
 							deck.seeked_at = new Date().toISOString()

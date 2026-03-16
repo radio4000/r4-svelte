@@ -89,7 +89,13 @@
 
 	$effect(() => {
 		const currentTrackId = deck?.playlist_track
-		if (!currentTrackId) return
+		if (!currentTrackId) {
+			mediaDuration = NaN
+			mediaCurrentTime = 0
+			return
+		}
+		mediaDuration = NaN
+		mediaCurrentTime = 0
 		let stopped = false
 		let rafId = 0
 		let cleanup = () => {}
@@ -140,6 +146,7 @@
 				value={mediaCurrentTime}
 				oninput={(e) => {
 					const val = Number(e.currentTarget.value)
+					mediaCurrentTime = val
 					const mediaElement = getMediaPlayer(deckId)
 					if (mediaElement) mediaElement.currentTime = val
 				}}
