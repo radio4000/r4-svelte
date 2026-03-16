@@ -527,30 +527,6 @@
 	{@render children?.()}
 
 	<section class="bottom-chrome">
-		{#if appState.show_track_range_control !== false && displayTrack}
-			<div class="progress-row">
-				<input
-					type="range"
-					min="0"
-					max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
-					step="any"
-					value={mediaCurrentTime}
-					oninput={(e) => {
-						const val = Number(e.currentTarget.value)
-						if (mediaElement) mediaElement.currentTime = val
-						if (deck) {
-							deck.seeked_at = new Date().toISOString()
-							deck.seek_position = val
-						}
-						const broadcastingChannelId = getBroadcastingChannelId()
-						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
-					}}
-					class="progress-range"
-					disabled={!Number.isFinite(mediaDuration)}
-				/>
-			</div>
-		{/if}
-
 		<!-- 4. Channel/track info + deck toggle -->
 		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
@@ -625,6 +601,29 @@
 				</button>
 			{/if}
 		</menu>
+		{#if appState.show_track_range_control !== false && displayTrack}
+			<div class="progress-row">
+				<input
+					type="range"
+					min="0"
+					max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
+					step="any"
+					value={mediaCurrentTime}
+					oninput={(e) => {
+						const val = Number(e.currentTarget.value)
+						if (mediaElement) mediaElement.currentTime = val
+						if (deck) {
+							deck.seeked_at = new Date().toISOString()
+							deck.seek_position = val
+						}
+						const broadcastingChannelId = getBroadcastingChannelId()
+						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+					}}
+					class="progress-range"
+					disabled={!Number.isFinite(mediaDuration)}
+				/>
+			</div>
+		{/if}
 	</section>
 </div>
 

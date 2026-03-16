@@ -244,9 +244,9 @@
 		display: grid;
 		grid-template-columns: 1fr;
 		grid-template-areas:
-			'progress'
 			'info'
-			'controls';
+			'controls'
+			'progress';
 		row-gap: 0.4rem;
 		gap: 0.75rem;
 		padding: 0;
@@ -384,23 +384,23 @@
 			flex-wrap: wrap;
 		}
 
-		.progress {
-			order: 1;
-		}
-
 		.header-info {
-			order: 2;
+			order: 1;
 			flex: 1 1 42rem;
 			width: auto;
 			min-height: 0;
 		}
 
 		.row-controls {
-			order: 3;
+			order: 2;
 			flex: 1 1 20rem;
 			width: auto;
 			justify-content: flex-end;
 			flex-wrap: nowrap;
+		}
+
+		.progress {
+			order: 3;
 		}
 
 		.progress :global(media-time-range) {
