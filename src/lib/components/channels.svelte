@@ -1,5 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {capabilities} from '$lib/modes'
 	import {appState} from '$lib/app-state.svelte'
@@ -7,7 +8,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
 	import {cacheReady} from '$lib/query-cache-persistence'
-	import {loadMoreChannels, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
+	import {loadMoreChannels, fetchChannelCount, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
@@ -19,15 +20,47 @@
 		handleCanvasDoubleClick
 	} from '$lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
+	import {featuredScore} from '$lib/utils'
 	import ChannelCard from './channel-card.svelte'
+	import Dialog from './dialog.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
+	import SearchInput from './search-input.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	const {display: initialDisplay} = $props()
+	const {
+		display: initialDisplay = undefined,
+		defaultFilter = 'featured',
+		filter: filterProp = undefined,
+		filterBasePath = undefined,
+		searchHref = undefined,
+		tabs
+	} = $props()
+
+	let searchValue = $state('')
+	$effect(() => {
+		const q = searchValue.trim()
+		if (!q || !searchHref) return
+		goto(`${searchHref}?q=${encodeURIComponent(q)}`, {replaceState: true})
+	})
+
+	const filterSlugMap = {
+		featured: 'featured',
+		all: 'all',
+		broadcasting: 'broadcasting',
+		artwork: 'with-artwork',
+		imported: 'imported',
+		'10+': 'with-more-than-10-tracks',
+		'100+': 'with-more-than-100-tracks',
+		'1000+': 'with-more-than-1000-tracks'
+	}
+
+	function slugFor(f) {
+		return filterSlugMap[f] ?? f
+	}
 
 	const filterLabelMap = {
 		all: () => m.channels_filter_option_all(),
@@ -36,15 +69,29 @@
 		'10+': () => m.channels_filter_option_10(),
 		'100+': () => m.channels_filter_option_100(),
 		'1000+': () => m.channels_filter_option_1000(),
-		artwork: () => m.channels_filter_option_artwork()
+		artwork: () => m.channels_filter_option_artwork(),
+		featured: () => m.channels_filter_option_featured()
 	}
+
+	let showFeaturedInfo = $state(false)
+	let showPaginationDialog = $state(false)
+	let paginationInitialPage = $state(1)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
 	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
-	let filter = $derived(appState.channels_filter in filterLabelMap ? appState.channels_filter : '10+')
+
+	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
+	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
+	let filter = $derived(
+		filterProp && filterProp in filterLabelMap
+			? filterProp
+			: appState.channels_filter in filterLabelMap
+				? appState.channels_filter
+				: defaultFilter
+	)
 	let order = $derived(appState.channels_order || 'shuffle')
 	let orderDirection = $derived(appState.channels_order_direction)
 
@@ -58,9 +105,15 @@
 				: 'grid'
 	)
 
+	const isPaged = $derived(display === 'grid' || display === 'list')
+
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
-	const queryLimit = $derived(Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit))
+	const queryLimit = $derived(
+		filter === 'featured'
+			? 50
+			: Math.max(VIEW_MIN_LIMIT[display] ?? 0, isPaged ? currentPage * pageSize : paginatedLimit)
+	)
 
 	// Reactive broadcast IDs for the broadcasting filter
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
@@ -85,11 +138,12 @@
 	/** Map UI filter/sort state → ChannelQueryParams for loadMoreChannels */
 	const channelQueryParams = $derived.by(() => ({
 		idIn: filter === 'broadcasting' && broadcastIds.length ? broadcastIds : undefined,
-		trackCountGte: filterMinTracks[filter],
-		imageNotNull: filter === 'artwork',
-		shuffle: order === 'shuffle',
-		orderColumn: sortColumns[order],
-		ascending: (orderDirection || 'desc') === 'asc'
+		trackCountGte: filter === 'featured' ? 10 : filterMinTracks[filter],
+		imageNotNull: filter === 'artwork' || filter === 'featured',
+		shuffle: filter !== 'featured' && order === 'shuffle',
+		orderColumn: filter === 'featured' ? sortColumns['updated'] : sortColumns[order],
+		ascending: (orderDirection || 'desc') === 'asc',
+		limit: filter === 'featured' ? 50 : undefined
 	}))
 
 	// Reset pagination when filter/sort changes
@@ -119,19 +173,60 @@
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
+		} else if (filter === 'featured') {
+			base = base
+				.where(({ch}) => gte(ch.track_count, 10))
+				.where(({ch}) => not(isNull(ch.image)))
+				.orderBy(({ch}) => ch.latest_track_at, 'desc')
 		} else {
 			const minTracks = filterMinTracks[filter]
 			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
 			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
 		}
-		const col = sortColumns[order]
-		if (col) {
-			base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+		if (filter !== 'featured') {
+			const col = sortColumns[order]
+			if (col) {
+				base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+			}
 		}
 		return base.limit(queryLimit)
 	})
-	const channels = $derived(channelsQuery.data ?? [])
-	const hasMore = $derived(!loadedAll && channels.length >= paginatedLimit)
+	const channelsRaw = $derived(channelsQuery.data ?? [])
+	// For featured: score and take top 12; for paged views: slice to current page; otherwise all
+	const channels = $derived.by(() => {
+		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+		return channelsRaw
+	})
+	const hasMore = $derived(filter !== 'featured' && !loadedAll && channelsRaw.length >= paginatedLimit)
+
+	// Server-side total count for pagination (N/M display)
+	let serverCount = $state(0)
+	$effect(() => {
+		if (!isPaged || filter === 'broadcasting' || filter === 'imported' || filter === 'featured') {
+			serverCount = 0
+			return
+		}
+		serverCount = 0
+		const params = channelQueryParams
+		void fetchChannelCount(params)
+			.then((n) => {
+				serverCount = n
+			})
+			.catch(() => {})
+	})
+	const totalCount = $derived(
+		filter === 'broadcasting'
+			? broadcastIds.length
+			: filter === 'imported'
+				? (appState.local_channel_ids?.length ?? 0)
+				: serverCount
+	)
+	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
+	const hasNextPage = $derived(
+		isPaged && filter !== 'featured' && (totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
+	)
+	const hasPrevPage = $derived(isPaged && currentPage > 1)
 
 	// Restore imported channels into the collection on filter activation.
 	// appState.local_channels is the durable source — persisted in localStorage.
@@ -233,6 +328,7 @@
 		appState.channels_display = value
 		const query = new URL(page.url).searchParams
 		query.set('display', value)
+		query.delete('page')
 		// Preserve map params if switching to map view
 		if (value !== 'map') {
 			query.delete('latitude')
@@ -243,15 +339,46 @@
 	}
 
 	function setFilter(value) {
+		if (filterBasePath) {
+			goto(resolve(filterBasePath + '/' + slugFor(value)))
+			return
+		}
 		appState.channels_filter = value
+		const query = new URL(page.url).searchParams
+		query.set('filter', value)
+		query.delete('page')
+		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+	}
+
+	function setPage(n) {
+		const query = new URL(page.url).searchParams
+		if (n <= 1) query.delete('page')
+		else query.set('page', String(n))
+		goto(`?${query.toString()}`, {keepFocus: true})
+	}
+
+	function setPageSize(n) {
+		const size = Math.max(1, Math.min(200, n || 12))
+		const query = new URL(page.url).searchParams
+		if (size === 12) query.delete('per')
+		else query.set('per', String(size))
+		query.delete('page')
+		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 	}
 </script>
 
 <div class={`layout layout--${display}`}>
 	<menu class="filtermenu">
+		{#if tabs}{@render tabs()}{/if}
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
 			<menu class="nav-vertical">
+				<button
+					class:active={filter === 'featured'}
+					onclick={() => setFilter('featured')}
+					{@attach tooltip({content: m.channels_filter_tooltip_featured(), position: 'right'})}
+					>{m.channels_filter_option_featured()}</button
+				>
 				<button
 					class:active={filter === 'all'}
 					onclick={() => setFilter('all')}
@@ -302,10 +429,78 @@
 			</menu>
 		</PopoverMenu>
 
+		{#if filter === 'featured'}
+			<button
+				class="btn"
+				onclick={() => (showFeaturedInfo = true)}
+				aria-label={m.channels_featured_info_label()}
+				{@attach tooltip({content: m.channels_featured_info_label()})}
+			>
+				<Icon icon="circle-info" />
+			</button>
+			<Dialog bind:showModal={showFeaturedInfo}>
+				{#snippet header()}<h2>{m.channels_featured_info_title()}</h2>{/snippet}
+				<p>{m.channels_featured_info_body()}</p>
+			</Dialog>
+		{/if}
+
 		{#if display === 'map' && hasMore}
 			<button class="btn" onclick={handleLoadMore} disabled={loadingMore}>
 				{loadingMore ? '…' : `+${nextPageSize}`}
 			</button>
+		{/if}
+
+		{#if isPaged && filter !== 'featured' && (hasPrevPage || hasNextPage || totalPages > 1)}
+			<span class="pagination">
+				<button onclick={() => setPage(currentPage - 1)} disabled={!hasPrevPage} aria-label="Previous page">←</button>
+				<button
+					class="page-label"
+					onclick={() => {
+						paginationInitialPage = currentPage
+						showPaginationDialog = true
+					}}
+					aria-label="Go to page"
+					>{currentPage}{#if totalPages > 0}/{totalPages}{/if}</button
+				>
+				<button onclick={() => setPage(currentPage + 1)} disabled={!hasNextPage} aria-label="Next page"
+					>{loadingMore ? '…' : '→'}</button
+				>
+			</span>
+			<Dialog bind:showModal={showPaginationDialog}>
+				<div class="pagination-dialog">
+					<label>
+						<span>{m.channels_pagination_page()}</span>
+						<input
+							type="number"
+							min="1"
+							max={totalPages || undefined}
+							value={paginationInitialPage}
+							autofocus
+							onchange={(e) => {
+								const n = parseInt(/** @type {HTMLInputElement} */ (e.target).value)
+								if (n >= 1) {
+									setPage(n)
+									showPaginationDialog = false
+								}
+							}}
+						/>
+					</label>
+					<label>
+						<span>{m.channels_pagination_per_page()}</span>
+						<input
+							type="number"
+							min="1"
+							max="200"
+							value={pageSize}
+							onchange={(e) => setPageSize(parseInt(/** @type {HTMLInputElement} */ (e.target).value))}
+						/>
+					</label>
+				</div>
+			</Dialog>
+		{/if}
+
+		{#if searchHref}
+			<SearchInput bind:value={searchValue} debounce={300} placeholder={m.search_placeholder()} />
 		{/if}
 
 		<PopoverMenu
@@ -348,19 +543,21 @@
 					><Icon icon="box-3d" /><small>{m.channels_view_label_infinite()}</small></button
 				>
 			</menu>
-			<SortControls
-				bind:order={appState.channels_order}
-				bind:direction={appState.channels_order_direction}
-				onreshuffle={() => {
-					paginatedLimit = CHANNELS_PAGE_SIZE
-					fetchedUpTo = CHANNELS_PAGE_SIZE
-					loadedAll = false
-					nextPageSize = CHANNELS_PAGE_SIZE
-					queryClient.invalidateQueries({
-						predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
-					})
-				}}
-			/>
+			{#if filter !== 'featured'}
+				<SortControls
+					bind:order={appState.channels_order}
+					bind:direction={appState.channels_order_direction}
+					onreshuffle={() => {
+						paginatedLimit = CHANNELS_PAGE_SIZE
+						fetchedUpTo = CHANNELS_PAGE_SIZE
+						loadedAll = false
+						nextPageSize = CHANNELS_PAGE_SIZE
+						queryClient.invalidateQueries({
+							predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
+						})
+					}}
+				/>
+			{/if}
 		</PopoverMenu>
 	</menu>
 
@@ -391,21 +588,23 @@
 				</li>
 			{/each}
 		</ol>
-		<footer>
-			{#if orderedChannels.length > 0}
-				<p>
-					{m.channels_summary({
-						visible: orderedChannels.length,
-						total: channels.length
-					})}
-					{#if hasMore}
-						<button onclick={handleLoadMore} disabled={loadingMore}>
-							{loadingMore ? '...' : m.channels_load_more({count: nextPageSize})}
-						</button>
-					{/if}
-				</p>
-			{/if}
-		</footer>
+		{#if !isPaged}
+			<footer>
+				{#if orderedChannels.length > 0}
+					<p>
+						{m.channels_summary({
+							visible: orderedChannels.length,
+							total: channels.length
+						})}
+						{#if hasMore}
+							<button onclick={handleLoadMore} disabled={loadingMore}>
+								{loadingMore ? '...' : m.channels_load_more({count: nextPageSize})}
+							</button>
+						{/if}
+					</p>
+				{/if}
+			</footer>
+		{/if}
 	{/if}
 </div>
 
@@ -437,6 +636,7 @@
 		top: 0.5rem;
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 		margin: 0.5rem 0.5rem 1rem;
 		z-index: 1;
@@ -448,5 +648,55 @@
 		justify-content: center;
 		gap: 0.5rem;
 		margin: 2rem 0.5rem 1rem;
+	}
+
+	.filtermenu :global(.search-input) {
+		flex: 1 1 0;
+		min-width: 6rem;
+	}
+
+	.pagination {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+
+		.page-label {
+			min-width: 2rem;
+			text-align: center;
+			font-variant-numeric: tabular-nums;
+			font-size: var(--font-2);
+			background: none;
+			border: none;
+			cursor: pointer;
+			padding: 0.1rem 0.3rem;
+			border-radius: var(--border-radius, 4px);
+			&:hover {
+				background: var(--gray-3);
+			}
+		}
+	}
+
+	.pagination-dialog {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 0.5rem 0;
+
+		label {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+
+			span {
+				min-width: 4rem;
+				font-size: var(--font-3);
+				color: light-dark(var(--gray-10), var(--gray-8));
+			}
+
+			input[type='number'] {
+				width: 5rem;
+				text-align: center;
+			}
+		}
 	}
 </style>

@@ -33,6 +33,10 @@ const followQuery = useLiveQuery((q) =>
 let following = $derived(followQuery.data?.length > 0)
 ```
 
+## Feed
+
+The homepage `/` shows a **Feed tab** when the user follows at least one channel. It displays recent tracks from followed channels sorted by `created_at` desc. See [homepage.md](homepage.md) for details on how the feed loads data and its limitations.
+
 ## Pages
 
 Followers/following pages fetch directly via SDK (not from collection). Display settings (list/grid view) persist across visits.

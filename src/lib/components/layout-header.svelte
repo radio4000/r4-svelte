@@ -11,13 +11,9 @@
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-
 	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appName} from '$lib/config'
-	import {capabilities} from '$lib/modes'
 
 	const {preloading} = $props()
 
@@ -47,15 +43,21 @@
 		}
 		return userChannelAutoDecks[0]?.id
 	})
-
-	const broadcasts = capabilities.broadcasts ? useLiveQuery(broadcastsCollection) : {data: []}
-	const broadcastCount = $derived(broadcasts.data?.length ?? 0)
 </script>
 
 <header>
 	<nav class="nav-secondary">
 		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={appName}>
 			<IconR4 />
+		</a>
+		<a
+			href={resolve('/explore')}
+			class="btn"
+			class:active={page.route.id?.startsWith('/explore')}
+			aria-label={m.nav_explore()}
+			{@attach tooltip({content: m.nav_explore()})}
+		>
+			<Icon icon="globe" />
 		</a>
 		<a
 			href={resolve('/search')}
@@ -66,21 +68,6 @@
 		>
 			<Icon icon="search" />
 		</a>
-		{#if capabilities.broadcasts}
-			<a
-				href={resolve('/broadcasts')}
-				class="btn"
-				class:active={page.route.id === '/broadcasts'}
-				aria-label={m.nav_broadcasts()}
-				{@attach tooltip({content: m.nav_broadcasts()})}
-			>
-				<Icon icon="cell-signal" />
-				{#if broadcastCount > 0}
-					<span class="count">{broadcastCount}</span>
-				{/if}
-			</a>
-		{/if}
-
 		{#await preloading then}
 			{#if !userChannel}
 				<a
@@ -101,19 +88,6 @@
 
 	<nav class="user">
 		{#await preloading then}
-			{#if userChannelHasAuto}
-				<span {@attach tooltip({content: m.auto_radio_resync()})}>
-					<AutoRadioButton
-						className="btn resync-link"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-					/>
-				</span>
-			{/if}
-			{#if isSignedIn}
-				<AddTrackDialog />
-			{/if}
 			<EditTrackDialog />
 			<ShareDialog />
 			<ShortcutsDialog />
@@ -129,7 +103,9 @@
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
-			{:else if !isSignedIn}
+				<AddTrackDialog />
+			{/if}
+			{#if !isSignedIn}
 				<a
 					href={resolve('/auth')}
 					class="btn"
@@ -139,11 +115,33 @@
 				>
 					<Icon icon="user" />
 				</a>
-			{:else}{/if}
+			{/if}
 		{/await}
 	</nav>
 
 	<nav class="nav-settings">
+		{#await preloading then}
+			{#if isBroadcasting}
+				<a
+					href={resolve(`/${userChannel?.slug}`)}
+					class="btn active"
+					aria-label={m.status_broadcasting()}
+					{@attach tooltip({content: m.status_broadcasting()})}
+				>
+					<Icon icon="cell-signal" />
+				</a>
+			{/if}
+			{#if userChannelHasAuto}
+				<span {@attach tooltip({content: m.auto_radio_resync()})}>
+					<AutoRadioButton
+						className="btn resync-link"
+						synced={!userChannelHasAutoDrifted}
+						title={m.auto_radio_resync()}
+						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+					/>
+				</span>
+			{/if}
+		{/await}
 		<a
 			href={resolve('/history')}
 			class="btn"
@@ -242,25 +240,6 @@
 			min-width: var(--track-artwork-size);
 			height: 32px;
 		}
-	}
-
-	.count {
-		position: absolute;
-		top: -7px;
-		right: -5px;
-		background: var(--accent-9);
-		color: var(--gray-1);
-		border-radius: 50%;
-		font-size: var(--font-1);
-		min-width: 1.2rem;
-		height: 1.2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.btn:has(.count) {
-		position: relative;
 	}
 
 	/* Active indicator: left bar on desktop instead of background fill */

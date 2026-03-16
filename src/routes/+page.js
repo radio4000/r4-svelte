@@ -1,10 +1,7 @@
 export const ssr = false
 
 /** @type {import('./$types').PageLoad} */
-export async function load({parent, url}) {
+export async function load({parent}) {
 	await parent()
-
-	const display = url.searchParams.get('display')
-
-	return {display}
+	return {}
 }

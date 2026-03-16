@@ -1,4 +1,5 @@
 import {appCloudinaryUrl} from '$lib/config'
+import * as m from '$lib/paraglide/messages'
 
 export function uuid() {
 	return crypto.randomUUID()
@@ -212,6 +213,52 @@ export function countStrings(strings: string[]): Array<{value: string; count: nu
 /** Aggregate and count tags from an array of tracks. */
 export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{value: string; count: number}> {
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
+}
+
+/**
+ * Score a channel for "featured" ranking.
+ * Higher = more interesting. Used client-side to sort a quality pool.
+ */
+export function featuredScore(channel: {
+	followers?: unknown[] | null
+	track_count?: number | null
+	latest_track_at?: string | null
+}): number {
+	const followers = Array.isArray(channel.followers) ? channel.followers.length : 0
+	const tracks = channel.track_count ?? 0
+	const latest = channel.latest_track_at
+	let recency = 0
+	if (latest) {
+		const days = (Date.now() - new Date(latest).getTime()) / 86400000
+		if (days <= 30) recency = 3
+		else if (days <= 90) recency = 2
+		else if (days <= 180) recency = 1
+	}
+	return followers * 3 + Math.log(tracks + 1) * 2 + recency
+}
+
+/** Format a YYYY-MM-DD ISO date string as a human-readable day label. */
+export function formatDay(iso: string): string {
+	const date = new Date(iso + 'T00:00:00')
+	const today = new Date()
+	const todayIso = today.toISOString().slice(0, 10)
+	const yesterdayIso = new Date(today.getTime() - 86400000).toISOString().slice(0, 10)
+	if (iso === todayIso) return m.day_today()
+	if (iso === yesterdayIso) return m.day_yesterday()
+	const opts: Intl.DateTimeFormatOptions = {month: 'long', day: 'numeric'}
+	if (iso.slice(0, 4) !== todayIso.slice(0, 4)) opts.year = 'numeric'
+	return date.toLocaleDateString(undefined, opts)
+}
+
+/** Group an array of tracks by creation day, returning [{label, tracks}]. */
+export function groupByDay<T extends {created_at?: string | null}>(tracks: T[]): {label: string; tracks: T[]}[] {
+	const map = new Map<string, T[]>()
+	for (const track of tracks) {
+		const day = track.created_at?.slice(0, 10) ?? ''
+		if (!map.has(day)) map.set(day, [])
+		map.get(day)!.push(track)
+	}
+	return Array.from(map.entries(), ([day, items]) => ({label: day ? formatDay(day) : '—', tracks: items}))
 }
 
 /** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */

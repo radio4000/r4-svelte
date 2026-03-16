@@ -232,13 +232,11 @@ button.chip.active:hover,
 	display: inline-flex;
 	align-items: stretch;
 
-.chip {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-	border-right: 0;
-}
-
-
+	.chip {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		border-right: 0;
+	}
 }
 
 .chip-delete {

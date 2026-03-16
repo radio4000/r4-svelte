@@ -52,7 +52,7 @@ export const defaultAppState: AppState = {
 	shortcuts: undefined,
 
 	channels_display: 'grid',
-	channels_filter: '10+',
+	channels_filter: 'featured',
 	channels_order: 'shuffle',
 	channels_order_direction: 'desc',
 

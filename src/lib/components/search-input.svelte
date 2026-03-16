@@ -2,6 +2,7 @@
 	import {Debounced} from 'runed'
 	import Icon from '$lib/components/icon.svelte'
 	import {afterNavigate} from '$app/navigation'
+	import * as m from '$lib/paraglide/messages'
 
 	/* A normal input, but with a search icon "inside" (on top) */
 	let {value = $bindable(''), placeholder = 'Search...', debounce = 0, ...restProps} = $props()
@@ -37,11 +38,22 @@
 			to_focus?.focus()
 		}
 	})
+
+	function clear() {
+		inputValue = ''
+		value = ''
+		lastExternalValue = ''
+	}
 </script>
 
 <div class="search-input">
 	<Icon icon="search" />
 	<input type="search" {placeholder} bind:value={inputValue} {...restProps} />
+	{#if inputValue}
+		<button class="clear" title={m.common_clear()} onclick={clear} type="button">
+			<Icon icon="close" />
+		</button>
+	{/if}
 </div>
 
 <style>
@@ -59,6 +71,31 @@
 	}
 
 	input[type='search'] {
+		flex: 1;
+		min-width: 0;
 		padding-left: 1.5rem;
+		padding-right: 1.5rem;
+
+		/* hide browser default clear button */
+		&::-webkit-search-cancel-button {
+			display: none;
+		}
+	}
+
+	.clear {
+		position: absolute;
+		right: 0.25rem;
+		display: flex;
+		align-items: center;
+		padding: 0.15rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		opacity: 0.5;
+		color: inherit;
+
+		&:hover {
+			opacity: 1;
+		}
 	}
 </style>
