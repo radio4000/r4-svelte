@@ -209,9 +209,11 @@
 		}
 		serverCount = 0
 		const params = channelQueryParams
-		void fetchChannelCount(params).then((n) => {
-			serverCount = n
-		})
+		void fetchChannelCount(params)
+			.then((n) => {
+				serverCount = n
+			})
+			.catch(() => {})
 	})
 	const totalCount = $derived(
 		filter === 'broadcasting'
