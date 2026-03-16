@@ -70,6 +70,11 @@
 		})
 	)
 	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
+	let trackHref = $derived(
+		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
+			? resolve(`/${displayTrack.slug}/tracks/${displayTrack.id}`)
+			: undefined
+	)
 	let provider = $derived(
 		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
 	)
@@ -184,7 +189,13 @@
 		</div>
 		{#if displayTrack}
 			<div class="track-panel">
-				<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+				{#if trackHref}
+					<a class="track-link" href={trackHref}>
+						<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+					</a>
+				{:else}
+					<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+				{/if}
 			</div>
 		{/if}
 	</div>
@@ -323,6 +334,12 @@
 		min-width: 0;
 		width: 100%;
 		flex: 1 1 auto;
+	}
+
+	.track-link {
+		display: contents;
+		text-decoration: none;
+		color: inherit;
 	}
 
 	.track-panel :global(article) {
