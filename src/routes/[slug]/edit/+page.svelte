@@ -95,6 +95,7 @@
 		</header>
 		-->
 
+		<div class="card">
 		{#if error}
 			<p class="error" role="alert">{m.common_error()}: {error}</p>
 		{/if}
@@ -104,6 +105,11 @@
 		{/if}
 
 		<form class="form" onsubmit={handleSubmit}>
+			<fieldset>
+				<legend>{m.common_image()}</legend>
+				<R4AvatarUpload slug={channel.slug} channelId={channel.id} image={channel.image} />
+			</fieldset>
+
 			<fieldset>
 				<label for="name">{m.common_name()}</label>
 				<input id="name" name="name" type="text" value={channel.name ?? ''} required />
@@ -117,11 +123,6 @@
 			<fieldset>
 				<label for="description">{m.common_description()}</label>
 				<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
-			</fieldset>
-
-			<fieldset>
-				<label for="url">{m.common_url()}</label>
-				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder={m.track_form_url_placeholder()} />
 			</fieldset>
 
 			<fieldset>
@@ -159,14 +160,15 @@
 			</fieldset>
 
 			<fieldset>
-				<legend>{m.common_image()}</legend>
-				<R4AvatarUpload slug={channel.slug} channelId={channel.id} />
+				<label for="url">{m.common_url()}</label>
+				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder={m.track_form_url_placeholder()} />
 			</fieldset>
 
 			<button class="primary" type="submit" disabled={submitting}>
 				{submitting ? m.common_save() + '...' : m.common_save()}
 			</button>
 		</form>
+		</div>
 
 		<p class="delete-link"><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
 	{:else if !isSignedIn}
@@ -179,6 +181,16 @@
 <style>
 	article {
 		padding: 1rem 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.card {
+		background: var(--color-interface-elevated);
+		border: 1px solid var(--color-interface-border);
+		border-radius: var(--border-radius);
+		padding: 1.25rem;
 	}
 
 	.form {
@@ -205,8 +217,6 @@
 	}
 
 	.delete-link {
-		margin-top: 1.5rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--gray-4);
+		font-size: var(--font-3);
 	}
 </style>
