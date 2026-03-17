@@ -87,7 +87,7 @@
 	<title>{m.channel_edit_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
-<article class="constrained">
+<article>
 	{#if canEdit && channel}
 		<!--
 		<header>
@@ -168,7 +168,7 @@
 			</button>
 		</form>
 
-		<p><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
+		<p class="delete-link"><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
 	{:else if !isSignedIn}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}
@@ -177,9 +177,14 @@
 </article>
 
 <style>
-	.form {
-		margin-block: 0rem 4rem;
+	article {
+		padding: 1rem 1.5rem;
 	}
+
+	.form {
+		gap: 1.25rem;
+	}
+
 	.location-inputs {
 		display: flex;
 		gap: 0.5rem;
@@ -189,6 +194,7 @@
 		flex: 1;
 		min-width: 8rem;
 	}
+
 	.map-container {
 		margin-top: 0.5rem;
 		height: 300px;
@@ -196,5 +202,11 @@
 	}
 	.map-container :global(.map) {
 		height: 100%;
+	}
+
+	.delete-link {
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--gray-4);
 	}
 </style>
