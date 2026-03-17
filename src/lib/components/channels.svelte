@@ -395,15 +395,16 @@
 					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
 					>{m.channels_filter_option_all()}</button
 				>
+				{#if broadcastsCollection.state.size}
 				<button
 					class:active={filter === 'broadcasting'}
 					onclick={() => setFilter('broadcasting')}
 					{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
-					>{m.channels_filter_option_broadcasting()}{#if broadcastsCollection.state.size}
-						<span class="channel-badge" style:background="var(--color-red)" style:color="white"
-							>{broadcastsCollection.state.size}</span
-						>{/if}</button
+					>{m.channels_filter_option_broadcasting()}<span class="channel-badge" style:background="var(--color-red)" style:color="white"
+						>{broadcastsCollection.state.size}</span
+					></button
 				>
+			{/if}
 				<button
 					class:active={filter === '10+'}
 					onclick={() => setFilter('10+')}
