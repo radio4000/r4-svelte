@@ -7,9 +7,10 @@
 	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
 	import {parseUrl} from 'media-now/parse-url'
 	import {parseTitle} from 'media-now/parse-title'
+	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {data} = $props()
+	let {data, channel = undefined} = $props()
 	let showRaw = $state(false)
 	const sourceProvider = $derived(data?.provider || (data?.url ? parseUrl(data.url)?.provider : null) || null)
 	const parsedTitle = $derived(data?.title ? parseTitle(data.title) : null)
@@ -29,6 +30,16 @@
 
 {#if data}
 	<menu class="meta-toolbar">
+		{#if channel && data}
+			<button
+				type="button"
+				onclick={() => (appState.modal_share = {track: data, channel})}
+				title={m.channel_card_share()}
+				aria-label={m.channel_card_share()}
+			>
+				<Icon icon="share" />
+			</button>
+		{/if}
 		<button
 			type="button"
 			onclick={() => (showRaw = !showRaw)}

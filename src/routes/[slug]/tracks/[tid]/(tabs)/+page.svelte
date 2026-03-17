@@ -4,6 +4,7 @@
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)
+	const channel = $derived(detail.channel)
 </script>
 
-<TrackMetaR5 data={track} />
+<TrackMetaR5 data={track} {channel} />
