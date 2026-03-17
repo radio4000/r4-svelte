@@ -76,36 +76,38 @@
 	<title>{m.channel_delete_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
-<article class="constrained focused">
+<article>
 	{#if canDelete && channel}
-		<header>
-			<h1>{m.channel_delete_heading()} <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
-		</header>
+		<div class="card">
+			<header>
+				<h1>{m.channel_delete_heading()} <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
+			</header>
 
-		{#if isLocal}
-			<p>{m.channel_delete_local_warning({name: channel.name, count: trackCount, appName})}</p>
-		{:else}
-			<p>{m.channel_delete_remote_warning({count: trackCount, appName})}</p>
-		{/if}
-
-		{#if error}
-			<p class="error" role="alert">{error}</p>
-		{/if}
-
-		<form class="form" onsubmit={handleDelete}>
-			{#if !isLocal}
-				<fieldset>
-					<label for="confirm">{m.channel_delete_confirm_slug({slug: channel.slug})}</label>
-					<input id="confirm" type="text" bind:value={confirmSlug} autocomplete="off" />
-				</fieldset>
+			{#if isLocal}
+				<p>{m.channel_delete_local_warning({name: channel.name, count: trackCount, appName})}</p>
+			{:else}
+				<p>{m.channel_delete_remote_warning({count: trackCount, appName})}</p>
 			{/if}
 
-			<button type="submit" disabled={(!isLocal && !confirmed) || deleting}>
-				{deleting ? m.common_deleting() : m.channel_delete_button()}
-			</button>
-		</form>
+			{#if error}
+				<p class="error" role="alert">{error}</p>
+			{/if}
 
-		<p><a href={resolve('/[slug]', {slug: channel.slug})}>{m.common_cancel()}</a></p>
+			<form class="form" onsubmit={handleDelete}>
+				{#if !isLocal}
+					<fieldset>
+						<label for="confirm">{m.channel_delete_confirm_slug({slug: channel.slug})}</label>
+						<input id="confirm" type="text" bind:value={confirmSlug} autocomplete="off" />
+					</fieldset>
+				{/if}
+
+				<button class="danger" type="submit" disabled={(!isLocal && !confirmed) || deleting}>
+					{deleting ? m.common_deleting() : m.channel_delete_button()}
+				</button>
+			</form>
+		</div>
+
+		<p class="cancel-link"><a href={resolve('/[slug]', {slug: channel.slug})}>{m.common_cancel()}</a></p>
 	{:else if !isSignedIn && !isLocal}
 		<p><a href={resolve('/auth')}>{m.auth_log_in()}</a></p>
 	{:else}
@@ -115,6 +117,28 @@
 
 <style>
 	article {
+		padding: 1rem 1.5rem;
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
+	}
+
+	.card {
+		background: var(--color-interface-elevated);
+		border: 1px solid var(--color-interface-border);
+		border-radius: var(--border-radius);
+		padding: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	h1 {
+		font-size: var(--font-5);
+		margin: 0;
+	}
+
+	.cancel-link {
+		font-size: var(--font-3);
 	}
 </style>
