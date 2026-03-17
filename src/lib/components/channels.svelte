@@ -97,18 +97,27 @@
 
 	const VALID_DISPLAYS = new Set(['grid', 'list', 'map', 'tuner', 'infinite'])
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
-	let display = $derived(
-		VALID_DISPLAYS.has(appState.channels_display)
-			? appState.channels_display
-			: VALID_DISPLAYS.has(initialDisplay)
-				? initialDisplay
-				: 'grid'
-	)
+	let display = $derived.by(() => {
+		const urlDisplay = page.url.searchParams.get('display')
+		if (VALID_DISPLAYS.has(urlDisplay)) return /** @type {any} */ (urlDisplay)
+		if (VALID_DISPLAYS.has(appState.channels_display)) return appState.channels_display
+		if (VALID_DISPLAYS.has(initialDisplay)) return initialDisplay
+		return 'grid'
+	})
+
+	// Keep display in URL in sync
+	$effect(() => {
+		if (!page.url.searchParams.has('display')) {
+			const query = new URL(page.url).searchParams
+			query.set('display', display)
+			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		}
+	})
 
 	const isPaged = $derived(display === 'grid' || display === 'list')
 
 	/** Minimum channel count for views that need a dense dataset */
-	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400}
+	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: Infinity}
 	const queryLimit = $derived(
 		filter === 'featured'
 			? 50
@@ -161,15 +170,16 @@
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
 		if (!capabilities.globalBrowse) {
-			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+			const q = base.orderBy(({ch}) => ch.created_at, 'desc')
+			return queryLimit === Infinity ? q : q.limit(queryLimit)
 		}
 		if (filter === 'imported') {
 			const ids = appState.local_channel_ids ?? []
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			return base
+			const q = base
 				.where(({ch}) => inArray(ch.id, ids))
 				.orderBy(({ch}) => ch.created_at, 'desc')
-				.limit(queryLimit)
+			return queryLimit === Infinity ? q : q.limit(queryLimit)
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
@@ -189,7 +199,7 @@
 				base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
 			}
 		}
-		return base.limit(queryLimit)
+		return queryLimit === Infinity ? base : base.limit(queryLimit)
 	})
 	const channelsRaw = $derived(channelsQuery.data ?? [])
 	// For featured: score and take top 12; for paged views: slice to current page; otherwise all
@@ -292,7 +302,7 @@
 				})
 				fetchedUpTo += batch
 				if (result.length < batch) loadedAll = true
-				nextPageSize *= 2
+				nextPageSize = Math.min(nextPageSize * 2, 500)
 			}
 		} finally {
 			loadingMore = false
@@ -563,7 +573,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default {channels} {openSlug} />
+			<MapChannels.default {channels} {openSlug} loading={loadingMore} />
 		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner {channels} />
