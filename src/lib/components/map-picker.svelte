@@ -5,6 +5,11 @@
 
 	const {latitude = null, longitude = null, onselect = () => {}} = $props()
 
+	// Capture initial position once — prop changes from picking should not re-fly the map
+	const initialLat = latitude
+	const initialLng = longitude
+	const initialZoom = latitude && longitude ? 10 : 2
+
 	/** @type {maplibregl.Map | null} */
 	let map = null
 	/** @type {maplibregl.Marker | null} */
@@ -61,9 +66,9 @@
 </script>
 
 <MapComponent
-	latitude={latitude ?? undefined}
-	longitude={longitude ?? undefined}
-	zoom={latitude && longitude ? 10 : 2}
+	latitude={initialLat ?? undefined}
+	longitude={initialLng ?? undefined}
+	zoom={initialZoom}
 	onclick={handleClick}
 	onready={handleReady}
 />
