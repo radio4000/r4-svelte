@@ -2,7 +2,6 @@
 	import {goto} from '$app/navigation'
 	import maplibregl from 'maplibre-gl'
 	/** @import { GeoJSONSource } from 'maplibre-gl' */
-	import {SvelteMap} from 'svelte/reactivity'
 	import {mount, onDestroy, unmount, untrack} from 'svelte'
 	import MapComponent from './map.svelte'
 	import ChannelCard from './channel-card.svelte'
@@ -13,9 +12,10 @@
 	import * as m from '$lib/paraglide/messages'
 	const channelActivity = $derived(getChannelActivity())
 
-	/** @type {{channels?: any[], latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
+	/** @type {{channels?: any[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
 	const {
 		channels = [],
+		loading = false,
 		latitude = null,
 		longitude = null,
 		zoom = null,
@@ -50,7 +50,7 @@
 	const playingSlugs = $derived(channelActivity.playingChannelSlugs)
 	const inDeckSlugs = $derived(channelActivity.inDeckChannelSlugs)
 	const mapChannels = $derived.by(() => {
-		const byId = new SvelteMap()
+		const byId = new Map()
 		for (const channel of channels) {
 			const lat = Number(channel?.latitude)
 			const lng = Number(channel?.longitude)
@@ -66,12 +66,12 @@
 		}
 		return [...byId.values()]
 	})
-	const markerDataKey = $derived(
-		mapChannels
-			.map((channel) => `${channel.id}:${channel.slug}:${channel.latitude}:${channel.longitude}`)
-			.sort()
-			.join('|')
-	)
+	// GeoJSON derived from channel data — only recomputes when mapChannels changes,
+	// not on mapReady toggles (tile style changes etc.)
+	const cachedGeoJSON = $derived.by(() => {
+		if (loading) return null
+		return buildGeoJSON()
+	})
 
 	function getLatestChannel(channel) {
 		return channelsCollection.state.get(channel.id) || channel
@@ -165,7 +165,7 @@
 		return {
 			type: 'FeatureCollection',
 			features: mapChannels.map((c) => {
-				const style = getMarkerStyle(c)
+				const style = untrack(() => getMarkerStyle(c))
 				/** @type {GeoJSON.Feature} */
 				return {
 					type: 'Feature',
@@ -184,10 +184,9 @@
 		}
 	}
 
-	/** @param {maplibregl.Map} m */
-	function setupLayers(m) {
-		const fc = untrack(buildGeoJSON)
-
+	/** @param {maplibregl.Map} m @param {any} fc */
+	function setupLayers(m, fc) {
+		if (!fc) return
 		if (!m.getSource('channels-source')) {
 			m.addSource('channels-source', {type: 'geojson', data: fc})
 			m.addLayer({
@@ -502,12 +501,11 @@
 
 	function handleReady(m) {
 		map = m
-		mapReady = true
 		setupOverlays(m)
-		setupLayers(m)
 		if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
 		if (!m.getLayer('broadcast-3d')) m.addLayer(/** @type {any} */ (broadcastLayer))
 		updateBroadcastLayer()
+		mapReady = true // triggers the map-ready effect below
 		maybeAutoOpenSlug(openSlug, openRequestKey)
 	}
 
@@ -515,7 +513,7 @@
 		if (!map || !mapReady) return
 		const source = /** @type {GeoJSONSource | undefined} */ (map.getSource('channels-source'))
 		if (!source) return
-		source.setData(buildStyledGeoJSON())
+		source.setData(untrack(buildStyledGeoJSON))
 	}
 
 	function clearAutoOpenRetry() {
@@ -562,18 +560,31 @@
 		}, 120)
 	}
 
+	// Effect 1: channel data changed → render all markers at once
 	$effect(() => {
-		void markerDataKey
-		if (!map || !mapReady) return
-		const shouldRestoreSticky = Date.now() < stickyPopupUntil
-		const restoreSlug = shouldRestoreSticky ? stickyPopupSlug : null
-		setupLayers(map)
-		if (restoreSlug) {
-			requestAnimationFrame(() => {
-				const channel = mapChannels.find((c) => c.slug === restoreSlug)
-				if (channel) openPopupForChannel(channel, [channel.longitude, channel.latitude])
-			})
-		}
+		const fc = cachedGeoJSON // reactive: fires when channels load or loading flips
+		untrack(() => {
+			if (!map || !mapReady || !fc) return
+			const shouldRestoreSticky = Date.now() < stickyPopupUntil
+			const restoreSlug = shouldRestoreSticky ? stickyPopupSlug : null
+			setupLayers(map, fc)
+			if (restoreSlug) {
+				requestAnimationFrame(() => {
+					const channel = mapChannels.find((c) => c.slug === restoreSlug)
+					if (channel) openPopupForChannel(channel, [channel.longitude, channel.latitude])
+				})
+			}
+		})
+	})
+
+	// Effect 2: map became ready (initial load or tile style change) → re-apply cached data
+	$effect(() => {
+		if (!mapReady) return // reactive: fires when mapReady becomes true
+		untrack(() => {
+			const fc = cachedGeoJSON
+			if (!map || !fc) return
+			setupLayers(map, fc)
+		})
 	})
 
 	$effect(() => {
@@ -617,11 +628,10 @@
 		m.setStyle(buildMapStyle(style))
 		m.once('styledata', () => {
 			setupOverlays(m)
-			setupLayers(m)
 			if (!broadcastLayer) broadcastLayer = new BroadcastLayer()
 			if (!m.getLayer('broadcast-3d')) m.addLayer(/** @type {any} */ (broadcastLayer))
 			updateBroadcastLayer()
-			mapReady = true
+			mapReady = true // triggers the map-ready effect below
 		})
 	})
 
@@ -658,6 +668,9 @@
 
 <div class="map-root">
 	<MapComponent onready={handleReady} {latitude} {longitude} {zoom} {syncUrl} />
+	{#if loading}
+		<div class="map-loading">loading {channels.length}…</div>
+	{/if}
 	<div class="map-controls">
 		<menu class="nav-grouped">
 			<button
@@ -702,6 +715,19 @@
 		min-height: 0;
 		height: 100%;
 		position: relative;
+	}
+
+	.map-loading {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: var(--gray-1);
+		padding: 0.5rem 1rem;
+		border-radius: var(--border-radius);
+		font-size: var(--font-3);
+		pointer-events: none;
+		z-index: 10;
 	}
 
 	/* Single horizontal row of controls below map filters */
