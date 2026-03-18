@@ -59,7 +59,7 @@
 		<a
 			href={resolve('/search')}
 			class="btn"
-			class:active={page.route.id === '/search'}
+			class:active={page.route.id?.startsWith('/search')}
 			aria-label={m.nav_search()}
 			{@attach tooltip({content: m.nav_search()})}
 		>
@@ -77,6 +77,7 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
+				<AddTrackDialog />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
@@ -88,7 +89,6 @@
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
-				<AddTrackDialog />
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
@@ -97,7 +97,7 @@
 					aria-label={m.home_create_channel()}
 					{@attach tooltip({content: m.home_create_channel()})}
 				>
-					<Icon icon="plus" />
+					<Icon icon="add" />
 				</a>
 			{/if}
 			{#if !isSignedIn}
@@ -186,7 +186,7 @@
 		justify-content: flex-start;
 	}
 
-	.nav-settings {
+	.user {
 		margin-top: auto;
 	}
 
