@@ -68,18 +68,6 @@
 		>
 			<Icon icon="search" />
 		</a>
-		{#await preloading then}
-			{#if !userChannel}
-				<a
-					href={resolve('/welcome')}
-					class="btn"
-					class:active={page.route.id === '/welcome'}
-					{@attach tooltip({content: m.header_start_your_radio()})}
-				>
-					<Icon icon="circle-info" />
-				</a>
-			{/if}
-		{/await}
 	</nav>
 
 	<!-- <nav class="pins">

@@ -90,7 +90,7 @@
 				<p>{m.auth_card_login_description()}</p>
 			</a>
 		</menu>
-		<a href={resolve('/welcome')} class="welcome-link">{appName}?</a>
+		<a href={resolve('/')} class="welcome-link">{appName}?</a>
 	{/if}
 </article>
 
