@@ -15,15 +15,7 @@
 	const isTags = $derived(page.route.id?.startsWith('/tags'))
 
 	const activeIcon = $derived(
-		isHome
-			? 'radio'
-			: isFeed
-				? 'history'
-				: isChannels
-					? 'cell-signal'
-					: isTracks
-						? 'play-fill'
-						: 'tag'
+		isHome ? 'radio' : isFeed ? 'history' : isChannels ? 'cell-signal' : isTracks ? 'play-fill' : 'tag'
 	)
 	const activeLabel = $derived(
 		isHome
