@@ -216,6 +216,13 @@
 					</a>
 				{/if}
 				{#if userChannelTrackCount > 0}
+					{#if userChannelIsPlaying}
+						<BroadcastControls
+							deckId={userChannelLoadedDeckId}
+							channelId={userChannel.id}
+							channelSlug={userChannel.slug}
+						/>
+					{/if}
 					<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
 						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
 						<span class="mini-play-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
@@ -228,14 +235,6 @@
 						title={m.auto_radio_resync()}
 						onclick={toggleUserChannelAutoRadio}
 					/>
-					{#if userChannelIsPlaying}
-						<BroadcastControls
-							deckId={userChannelLoadedDeckId}
-							channelId={userChannel.id}
-							channelSlug={userChannel.slug}
-							compact
-						/>
-					{/if}
 				{/if}
 			</div>
 		{/if}
