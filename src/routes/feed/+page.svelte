@@ -3,14 +3,13 @@
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
-	import {appState} from '$lib/app-state.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
 	import {groupByDay} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const DAY_OPTIONS = [7, 30, 90, 180]
@@ -64,16 +63,8 @@
 
 <div class="feed">
 	<div class="sticky-header">
-		{#if appState.channel}
-			<ol class="list">
-				<li><ChannelCard channel={appState.channel} /></li>
-			</ol>
-		{/if}
 		<div class="feed-nav">
-			<nav class="tabs">
-				<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
-				<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
-			</nav>
+			<ExploreSectionMenu />
 
 			<PopoverMenu style="margin-left: auto;">
 				{#snippet trigger()}

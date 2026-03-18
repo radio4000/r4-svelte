@@ -99,10 +99,10 @@
 				{filterParam === 'recent' ? m.explore_tracks_filter_recent() : m.explore_tracks_filter_featured()}
 			{/snippet}
 			<menu class="nav-vertical">
-				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/explore/tags/featured'))}>
+				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/tags/featured'))}>
 					{m.explore_tracks_filter_featured()}
 				</button>
-				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/explore/tags/recent'))}>
+				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/tags/recent'))}>
 					{m.explore_tracks_filter_recent()}
 				</button>
 			</menu>

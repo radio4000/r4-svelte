@@ -1,8 +1,7 @@
-export const ssr = false
+import {redirect} from '@sveltejs/kit'
 
 const VALID = new Set(['featured', 'recent'])
 
 export function load({params}) {
-	const filter = VALID.has(params.filter) ? params.filter : 'featured'
-	return {filter}
+	redirect(307, VALID.has(params.filter) ? `/tags/${params.filter}` : '/tags/featured')
 }

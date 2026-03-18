@@ -1,17 +1,21 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {appName} from '$lib/config'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
-	import {playChannel, togglePlayPause} from '$lib/api'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {toAutoTracks} from '$lib/player/auto-radio'
+	import {playChannel, togglePlayPause, resyncAutoRadio, joinAutoRadio} from '$lib/api'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
+	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
+	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -23,7 +27,6 @@
 	const userChannel = $derived(appState.channel)
 
 	const follows = getFollowedChannels()
-
 
 	// Todo checklist: show when channel exists but onboarding is incomplete
 	const showOnboarding = $derived(
@@ -86,6 +89,55 @@
 			.toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
 			.slice(0, 10)
 	)
+	const userChannelIsBroadcasting = $derived(
+		!!userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
+	)
+
+	// User channel play state
+	const userChannelPlayingDeckId = $derived.by(() => {
+		if (!userChannel?.slug) return undefined
+		return Object.values(appState.decks).find((d) => d.playlist_slug === userChannel.slug && d.is_playing)?.id
+	})
+	const userChannelIsPlaying = $derived(!!userChannelPlayingDeckId)
+	function toggleUserChannelPlay() {
+		if (!userChannel) return
+		if (userChannelPlayingDeckId) togglePlayPause(userChannelPlayingDeckId)
+		else playChannel(appState.active_deck_id, userChannel)
+	}
+
+	// Auto radio state for user's channel
+	const userChannelAutoDecks = $derived.by(() => {
+		if (!userChannel?.slug) return []
+		return Object.values(appState.decks).filter(
+			(d) =>
+				d.auto_radio && (d.view?.sources[0]?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
+		)
+	})
+	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
+	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	const userChannelResyncDeckId = $derived.by(() => {
+		if (!userChannel?.slug || !userChannelHasAuto) return undefined
+		const activeDeck = appState.decks[appState.active_deck_id]
+		if (
+			activeDeck?.id &&
+			activeDeck.auto_radio &&
+			(activeDeck.view?.sources[0]?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
+		) {
+			return activeDeck.id
+		}
+		return userChannelAutoDecks[0]?.id
+	})
+
+	async function toggleUserChannelAutoRadio() {
+		if (!userChannel) return
+		if (userChannelHasAuto && userChannelResyncDeckId) {
+			resyncAutoRadio(userChannelResyncDeckId)
+		} else {
+			await ensureTracksLoaded(userChannel.slug)
+			const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === userChannel.slug)
+			joinAutoRadio(appState.active_deck_id, toAutoTracks(tracks), {sources: [{channels: [userChannel.slug]}]})
+		}
+	}
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -112,23 +164,35 @@
 </svelte:head>
 
 <div class="homepage">
-	{#if isSignedIn && userChannel}
-		<!-- Sticky header: channel card + tabs -->
-		<div class="sticky-header">
-			<ol class="list">
-				<li><ChannelCard channel={userChannel} /></li>
-			</ol>
-			<nav class="tabs">
-				<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
-				<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
-			</nav>
-		</div>
-	{:else if isSignedIn}
-		<nav class="tabs">
-			<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
-			<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
-		</nav>
-	{/if}
+	<menu class="filtermenu">
+		<ExploreSectionMenu />
+		{#if userChannel}
+			<div class="channel-play">
+				{#if userChannelIsBroadcasting}
+					<a
+						href={resolve(`/${userChannel.slug}`)}
+						class="channel-badge live-link"
+						title={m.status_broadcasting()}
+						aria-label={m.status_broadcasting()}
+					>
+						{m.status_live_short()}
+					</a>
+				{/if}
+				<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
+					<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
+					<span class="mini-play-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
+					>
+					<span class="mini-play-slug">{userChannel.slug}</span>
+				</button>
+				<AutoRadioButton
+					className="btn{userChannelHasAuto ? ' active' : ''}"
+					synced={!userChannelHasAutoDrifted}
+					title={m.auto_radio_resync()}
+					onclick={toggleUserChannelAutoRadio}
+				/>
+			</div>
+		{/if}
+	</menu>
 
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
@@ -145,7 +209,7 @@
 					</li>
 					<li>
 						<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
-						<a href={resolve('/explore')}>{m.home_onboarding_follow_radio()}</a>
+						<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
 					</li>
 				</ol>
 			</section>
@@ -154,7 +218,7 @@
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="grid grid--scroll">
+				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
@@ -171,37 +235,33 @@
 				</ol>
 			</section>
 		{/if}
-
-		<p class="explore-link">
-			<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
-		</p>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
 		{#if appState.show_welcome_hint}
-		<section class="section welcome-section dismissible">
-			<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
-				<Icon icon="close" />
-			</button>
-			<h1>{m.welcome_title({appName})}</h1>
-			<p class="tagline">{m.welcome_tagline_channel()}</p>
-			<p class="tagline">{m.welcome_tagline_metadata()}</p>
-			<ul class="feature-list">
-				<li>{m.welcome_feature_archive()}</li>
-				<li>{m.welcome_feature_decks()}</li>
-				<li>{m.welcome_feature_follow()}</li>
-				<li>{m.welcome_feature_open()}</li>
-			</ul>
-			<menu class="welcome-menu">
-				<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
-				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
-			</menu>
-		</section>
+			<section class="section welcome-section dismissible">
+				<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
+					<Icon icon="close" />
+				</button>
+				<h1>{m.welcome_title({appName})}</h1>
+				<p class="tagline">{m.welcome_tagline_channel()}</p>
+				<p class="tagline">{m.welcome_tagline_metadata()}</p>
+				<ul class="feature-list">
+					<li>{m.welcome_feature_archive()}</li>
+					<li>{m.welcome_feature_decks()}</li>
+					<li>{m.welcome_feature_follow()}</li>
+					<li>{m.welcome_feature_open()}</li>
+				</ul>
+				<menu class="welcome-menu">
+					<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
+					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
+				</menu>
+			</section>
 		{/if}
 
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="grid grid--scroll">
+				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
@@ -239,18 +299,12 @@
 				</ol>
 			</section>
 		{/if}
-
-		{#if featuredLoaded}
-			<p class="explore-link">
-				<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
-			</p>
-		{/if}
 	{:else}
 		<!-- Not logged in -->
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="grid grid--scroll">
+				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
@@ -259,33 +313,33 @@
 		{/if}
 
 		{#if appState.show_welcome_hint}
-		<section class="section welcome-section dismissible">
-			<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
-				<Icon icon="close" />
-			</button>
-			<h1>{m.welcome_title({appName})}</h1>
-			<p class="tagline">{m.welcome_tagline_channel()}</p>
-			<p class="tagline">{m.welcome_tagline_metadata()}</p>
-			<ul class="feature-list">
-				<li>{m.welcome_feature_archive()}</li>
-				<li>{m.welcome_feature_decks()}</li>
-				<li>{m.welcome_feature_follow()}</li>
-				<li>{m.welcome_feature_open()}</li>
-			</ul>
-			<menu class="welcome-menu">
-				<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
-					>{m.header_start_your_radio()}</a
-				>
-				<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
-				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
-			</menu>
-		</section>
+			<section class="section welcome-section dismissible">
+				<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
+					<Icon icon="close" />
+				</button>
+				<h1>{m.welcome_title({appName})}</h1>
+				<p class="tagline">{m.welcome_tagline_channel()}</p>
+				<p class="tagline">{m.welcome_tagline_metadata()}</p>
+				<ul class="feature-list">
+					<li>{m.welcome_feature_archive()}</li>
+					<li>{m.welcome_feature_decks()}</li>
+					<li>{m.welcome_feature_follow()}</li>
+					<li>{m.welcome_feature_open()}</li>
+				</ul>
+				<menu class="welcome-menu">
+					<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
+						>{m.header_start_your_radio()}</a
+					>
+					<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
+					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
+				</menu>
+			</section>
 		{/if}
 
 		{#if featuredChannels.length}
 			<section class="section">
 				<header class="section-header">
-					<h2 class="section-title"><a href={resolve('/explore/channels/featured')}>{m.home_featured()}</a></h2>
+					<h2 class="section-title"><a href={resolve('/channels/featured')}>{m.home_featured()}</a></h2>
 					<menu>
 						{#if featuredFirst}
 							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
@@ -315,16 +369,15 @@
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<p class="stats">
-				{#if channelCount}<a href={resolve('/explore/channels/all')}
+				{#if channelCount}<a href={resolve('/channels/all')}
 						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
 					>{/if}
-				{#if trackCount}<a href={resolve('/explore/tracks/recent')}
+				{#if trackCount}<a href={resolve('/tracks/recent')}
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
 				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
 			</p>
 		{/if}
-
 	{/if}
 </div>
 
@@ -338,17 +391,66 @@
 		}
 	}
 
-	.sticky-header {
+	.filtermenu {
 		position: sticky;
-		top: 0;
-		z-index: 3;
-		background: var(--color-interface);
-		padding-bottom: 0.25rem;
-		margin-inline: -0.5rem;
-		padding-inline: 0.5rem;
+		top: 0.5rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 1rem;
+		z-index: 1;
+	}
 
-		:global(.list) {
-			margin: 0;
+	.channel-play {
+		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.mini-play {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+		height: 2rem;
+		font-size: var(--font-3);
+		max-width: 9rem;
+	}
+
+	.mini-play-avatar {
+		width: 1.25rem;
+		height: 1.25rem;
+		flex-shrink: 0;
+		overflow: hidden;
+		border-radius: var(--border-radius);
+
+		:global(img, svg) {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			border-radius: inherit;
+		}
+	}
+
+	.mini-play-slug {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.live-link {
+		text-decoration: none;
+		animation: live-pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes live-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
 		}
 	}
 
@@ -372,23 +474,6 @@
 		font-weight: 600;
 		margin-bottom: 0.5rem;
 		color: light-dark(var(--gray-11), var(--gray-9));
-	}
-
-	.explore-link {
-		margin-top: 0.5rem;
-		text-align: center;
-
-		a {
-			color: var(--accent-9);
-			text-decoration: none;
-			&:hover {
-				text-decoration: underline;
-			}
-		}
-	}
-
-	.empty {
-		color: light-dark(var(--gray-10), var(--gray-9));
 	}
 
 	.stats {

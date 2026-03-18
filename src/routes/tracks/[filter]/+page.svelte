@@ -1,7 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {page} from '$app/state'
 	import {appName} from '$lib/config'
 	import {tracksCollection, fetchRecentTracks} from '$lib/collections/tracks'
 	import {loadFeaturedChannelTracks} from '$lib/collections/featured'
@@ -104,10 +103,10 @@
 				{filterParam === 'recent' ? m.explore_tracks_filter_recent() : m.explore_tracks_filter_featured()}
 			{/snippet}
 			<menu class="nav-vertical">
-				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/explore/tracks/recent'))}
+				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/tracks/recent'))}
 					>{m.explore_tracks_filter_recent()}</button
 				>
-				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/explore/tracks/featured'))}
+				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/tracks/featured'))}
 					>{m.explore_tracks_filter_featured()}</button
 				>
 			</menu>

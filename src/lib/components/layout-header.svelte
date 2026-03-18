@@ -47,17 +47,14 @@
 
 <header>
 	<nav class="nav-secondary">
-		<a href={resolve('/')} class="btn home-link" class:active={page.route.id === '/'} aria-label={appName}>
-			<IconR4 />
-		</a>
 		<a
-			href={resolve('/explore')}
-			class="btn"
-			class:active={page.route.id?.startsWith('/explore')}
-			aria-label={m.nav_explore()}
-			{@attach tooltip({content: m.nav_explore()})}
+			href={resolve('/')}
+			class="btn home-link"
+			class:active={page.route.id === '/'}
+			aria-label={appName}
+			{@attach tooltip({content: appName})}
 		>
-			<Icon icon="globe" />
+			<IconR4 />
 		</a>
 		<a
 			href={resolve('/search')}
@@ -92,6 +89,16 @@
 					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
 				<AddTrackDialog />
+			{:else if isSignedIn}
+				<a
+					href={resolve('/create-channel')}
+					class="btn"
+					class:active={page.route.id?.startsWith('/create-channel')}
+					aria-label={m.home_create_channel()}
+					{@attach tooltip({content: m.home_create_channel()})}
+				>
+					<Icon icon="plus" />
+				</a>
 			{/if}
 			{#if !isSignedIn}
 				<a
@@ -218,6 +225,9 @@
 	.channel-link {
 		padding: 0.15rem;
 		overflow: hidden;
+		width: 2rem;
+		height: 2rem;
+		flex-shrink: 0;
 
 		:global(img, svg) {
 			width: 100%;
