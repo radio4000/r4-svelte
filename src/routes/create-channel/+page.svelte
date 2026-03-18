@@ -13,9 +13,15 @@
 	let slugTouched = $state(false)
 	let currentChannelSlug = $derived(appState.channel?.slug)
 
+	let name = $state('')
+
 	function handleNameInput(event) {
-		const name = /** @type {HTMLInputElement} */ (event.target).value
+		name = /** @type {HTMLInputElement} */ (event.target).value
 		if (!slugTouched) slug = slugify(name)
+	}
+
+	function handleSlugFocus() {
+		if (!slug) slug = slugify(name)
 	}
 
 	/** @param {SubmitEvent} event */
@@ -85,6 +91,7 @@
 						pattern="[a-z0-9\-]+"
 						minlength="3"
 						title={m.channel_slug_hint()}
+						onfocus={handleSlugFocus}
 						oninput={() => (slugTouched = true)}
 					/>
 				</fieldset>
