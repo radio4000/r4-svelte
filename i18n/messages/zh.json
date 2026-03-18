@@ -39,7 +39,6 @@
 	"account_share_presence": "分享在线状态",
 	"account_share_presence_note": "让别人看到你正在收听什么（模式和频道）",
 	"account_sign_in_prompt": "请登录以管理您的账户",
-	"app_loading": "准备",
 	"app_version": "版本 {sha}",
 	"auth_already_have_account_intro": "已有账户？",
 	"auth_card_create_description": "我是 {appName} 的新用户",

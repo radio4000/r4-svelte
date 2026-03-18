@@ -39,7 +39,6 @@
 	"account_share_presence": "Del tilstedeværelse",
 	"account_share_presence_note": "Vis andre, at du lytter (tilstand og kanal)",
 	"account_sign_in_prompt": "Log venligst ind for at administrere din konto",
-	"app_loading": "Forbereder",
 	"app_version": "Version {sha}",
 	"auth_already_have_account_intro": "Har du allerede en konto?",
 	"auth_card_create_description": "Jeg er ny på {appName}",

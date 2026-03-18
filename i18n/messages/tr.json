@@ -39,7 +39,6 @@
 	"account_share_presence": "Varligi paylas",
 	"account_share_presence_note": "Digerlerine dinledigini goster (mod ve kanal)",
 	"account_sign_in_prompt": "Hesabınızı yönetmek için lütfen oturum açın",
-	"app_loading": "hazırlanıyor",
 	"app_version": "Sürüm {sha}",
 	"auth_already_have_account_intro": "Zaten hesabınız var mı?",
 	"auth_card_create_description": "{appName}’da yeniyim",

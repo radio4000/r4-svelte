@@ -39,7 +39,6 @@
 	"account_share_presence": "Ділитися присутністю",
 	"account_share_presence_note": "Показувати іншим, що ви слухаєте (режим і канал)",
 	"account_sign_in_prompt": "Увійдіть, щоб керувати обліковим записом",
-	"app_loading": "Підготовка",
 	"app_version": "Версія {sha}",
 	"auth_already_have_account_intro": "Вже маєте обліковий запис?",
 	"auth_card_create_description": "Я новачок у {appName}",

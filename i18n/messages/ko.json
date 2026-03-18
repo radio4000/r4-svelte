@@ -39,7 +39,6 @@
 	"account_share_presence": "접속 상태 공유",
 	"account_share_presence_note": "다른 사람에게 지금 듣고 있는 상태를 보여줍니다(모드와 채널)",
 	"account_sign_in_prompt": "계정을 관리하려면 로그인하세요",
-	"app_loading": "준비 중",
 	"app_version": "버전 {sha}",
 	"auth_already_have_account_intro": "이미 계정이 있나요?",
 	"auth_card_create_description": "{appName}이 처음이에요",

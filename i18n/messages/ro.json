@@ -39,7 +39,6 @@
 	"account_share_presence": "Partajează prezența",
 	"account_share_presence_note": "Arată altora că asculți (modul și canalul)",
 	"account_sign_in_prompt": "Te rugăm să te autentifici pentru a-ți gestiona contul",
-	"app_loading": "Pregătim",
 	"app_version": "Versiunea {sha}",
 	"auth_already_have_account_intro": "Ai deja un cont?",
 	"auth_card_create_description": "Sunt nou pe {appName}",

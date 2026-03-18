@@ -39,7 +39,6 @@
 	"account_share_presence": "Kunhavigi ĉeeston",
 	"account_share_presence_note": "Montri al aliaj, ke vi aŭskultas (reĝimo kaj kanalo)",
 	"account_sign_in_prompt": "Bonvolu ensaluti por administri vian konton",
-	"app_loading": "Preparante",
 	"app_version": "Versio {sha}",
 	"auth_already_have_account_intro": "Ĉu vi jam havas konton?",
 	"auth_card_create_description": "Mi estas nova en {appName}",

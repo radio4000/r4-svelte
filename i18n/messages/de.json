@@ -39,7 +39,6 @@
 	"account_share_presence": "Präsenz teilen",
 	"account_share_presence_note": "Zeige anderen, dass du gerade hörst (Modus und Kanal)",
 	"account_sign_in_prompt": "Bitte melde dich an, um dein Konto zu verwalten",
-	"app_loading": "wird vorbereitet",
 	"app_version": "Version {sha}",
 	"auth_already_have_account_intro": "Schon ein Konto?",
 	"auth_card_create_description": "Ich bin neu bei {appName}",

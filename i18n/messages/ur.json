@@ -39,7 +39,6 @@
 	"account_share_presence": "موجودگی شیئر کریں",
 	"account_share_presence_note": "دوسروں کو دکھائیں کہ آپ سن رہے ہیں (موڈ اور چینل)",
 	"account_sign_in_prompt": "اپنا اکاؤنٹ منظم کرنے کے لیے سائن اِن کریں",
-	"app_loading": "تیار کیا جا رہا ہے",
 	"app_version": "ورژن {sha}",
 	"auth_already_have_account_intro": "پہلے سے اکاؤنٹ ہے؟",
 	"auth_card_create_description": "میں {appName} پر نیا ہوں",

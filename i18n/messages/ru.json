@@ -39,7 +39,6 @@
 	"account_share_presence": "Делиться присутствием",
 	"account_share_presence_note": "Показывать другим, что вы слушаете (режим и канал)",
 	"account_sign_in_prompt": "Войдите, чтобы управлять аккаунтом",
-	"app_loading": "Подготовка",
 	"app_version": "Версия {sha}",
 	"auth_already_have_account_intro": "Уже есть аккаунт?",
 	"auth_card_create_description": "Я новичок в {appName}",

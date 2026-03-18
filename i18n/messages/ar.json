@@ -39,7 +39,6 @@
 	"account_share_presence": "مشاركة الحضور",
 	"account_share_presence_note": "إظهار للآخرين أنك تستمع الآن (الوضع والقناة)",
 	"account_sign_in_prompt": "يرجى تسجيل الدخول لإدارة حسابك",
-	"app_loading": "جاري تجهيز",
 	"app_version": "الإصدار {sha}",
 	"auth_already_have_account_intro": "هل لديك حساب بالفعل؟",
 	"auth_card_create_description": "أنا جديد في {appName}",

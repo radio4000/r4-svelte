@@ -39,7 +39,6 @@
 	"account_share_presence": "在席状況を共有",
 	"account_share_presence_note": "何を聴いているかを他の人にも表示します（モードとチャンネル）",
 	"account_sign_in_prompt": "アカウントを管理するにはログインしてください",
-	"app_loading": "を準備しています",
 	"app_version": "バージョン {sha}",
 	"auth_already_have_account_intro": "すでにアカウントをお持ちですか？",
 	"auth_card_create_description": "{appName} を初めて利用します",

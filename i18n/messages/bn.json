@@ -39,7 +39,6 @@
 	"account_share_presence": "উপস্থিতি শেয়ার করুন",
 	"account_share_presence_note": "অন্যদের দেখান যে আপনি শুনছেন (মোড এবং চ্যানেল)",
 	"account_sign_in_prompt": "আপনার অ্যাকাউন্ট পরিচালনা করতে সাইন ইন করুন",
-	"app_loading": "প্রস্তুত করা হচ্ছে",
 	"app_version": "সংস্করণ {sha}",
 	"auth_already_have_account_intro": "ইতোমধ্যে অ্যাকাউন্ট আছে?",
 	"auth_card_create_description": "আমি {appName}-এ নতুন",

@@ -39,7 +39,6 @@
 	"account_share_presence": "Chia sẻ trạng thái hiện diện",
 	"account_share_presence_note": "Cho người khác thấy bạn đang nghe gì (chế độ và kênh)",
 	"account_sign_in_prompt": "Vui lòng đăng nhập để quản lý tài khoản",
-	"app_loading": "Đang chuẩn bị",
 	"app_version": "Phiên bản {sha}",
 	"auth_already_have_account_intro": "Đã có tài khoản?",
 	"auth_card_create_description": "Tôi mới dùng {appName}",

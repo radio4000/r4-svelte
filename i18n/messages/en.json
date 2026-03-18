@@ -39,7 +39,6 @@
 	"account_share_presence": "Share presence",
 	"account_share_presence_note": "Show others that you're listening (mode and channel)",
 	"account_sign_in_prompt": "Please sign in to manage your account",
-	"app_loading": "Preparing",
 	"app_version": "Version {sha}",
 	"auth_already_have_account_intro": "Already have an account?",
 	"auth_card_create_description": "I'm new to {appName}",
@@ -381,6 +380,8 @@
 	"home_feed_loading": "No tracks added in the last 7 days by channels you follow.",
 	"home_feed_no_follows": "Follow channels to see their tracks here.",
 	"home_following": "Channels you follow",
+	"home_onboarding_add_track": "Add your first track",
+	"home_onboarding_follow_radio": "Follow a radio channel",
 	"home_stats_channels": "{count} channels",
 	"home_stats_listeners": "{count} online",
 	"home_stats_tracks": "{count} tracks",
@@ -508,6 +509,7 @@
 	"search_auto_radio_this": "Auto radio this search",
 	"search_channel_one": "{count} channel",
 	"search_channel_other": "{count} channels",
+	"search_examples": "e.g.",
 	"search_loading_channels": "Searching channels…",
 	"search_loading_tracks": "Searching tracks…",
 	"search_no_results": "No results for",
@@ -759,5 +761,5 @@
 	"welcome_feature_open": "Free and open source — no ads, no tracking.",
 	"welcome_tagline_channel": "Your personal web radio is a collection of media links.",
 	"welcome_tagline_metadata": "Create tracks from any media URL. Add a title, notes, and tags.",
-	"welcome_title": "Welcome to {appName}"
+	"welcome_title": "Welcome to {appName}!"
 }
