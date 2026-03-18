@@ -1,6 +1,6 @@
 :root {
 	/* layout */
-	--scaling: 1;
+	--scaling: 1.15;
 	--space-1: calc(0.2rem * var(--scaling));
 	--space-2: calc(0.5rem * var(--scaling));
 	--space-3: calc(1rem * var(--scaling));
