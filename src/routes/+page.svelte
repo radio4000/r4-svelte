@@ -24,8 +24,6 @@
 
 	const follows = getFollowedChannels()
 
-	let welcomeDismissed = $state(false)
-	let onboardingDismissed = $state(false)
 
 	// Todo checklist: show when channel exists but onboarding is incomplete
 	const showOnboarding = $derived(
@@ -135,9 +133,9 @@
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
 
-		{#if showOnboarding && !onboardingDismissed}
+		{#if showOnboarding && appState.show_onboarding_hint}
 			<section class="section onboarding dismissible">
-				<button class="dismiss-btn" onclick={() => (onboardingDismissed = true)} aria-label="Close">
+				<button class="dismiss-btn" onclick={() => (appState.show_onboarding_hint = false)} aria-label="Close">
 					<Icon icon="close" />
 				</button>
 				<ol class="todo-list">
@@ -179,9 +177,9 @@
 		</p>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
-		{#if !welcomeDismissed}
+		{#if appState.show_welcome_hint}
 		<section class="section welcome-section dismissible">
-			<button class="dismiss-btn" onclick={() => (welcomeDismissed = true)} aria-label="Close">
+			<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
 				<Icon icon="close" />
 			</button>
 			<h1>{m.welcome_title({appName})}</h1>
@@ -260,9 +258,9 @@
 			</section>
 		{/if}
 
-		{#if !welcomeDismissed}
+		{#if appState.show_welcome_hint}
 		<section class="section welcome-section dismissible">
-			<button class="dismiss-btn" onclick={() => (welcomeDismissed = true)} aria-label="Close">
+			<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
 				<Icon icon="close" />
 			</button>
 			<h1>{m.welcome_title({appName})}</h1>

@@ -74,6 +74,7 @@ export const defaultAppState: AppState = {
 	modal_track_edit: null,
 	modal_shortcuts: false,
 	show_welcome_hint: true,
+	show_onboarding_hint: true,
 	analytics_opt_in: false
 }
 

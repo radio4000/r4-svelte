@@ -84,6 +84,7 @@ export interface AppState {
 	modal_share?: {track?: Track; channel: Channel} | null
 	modal_shortcuts?: boolean
 	show_welcome_hint?: boolean
+	show_onboarding_hint?: boolean
 	analytics_opt_in?: boolean
 	/** Hides navigation and external links; set by the server on embed domains. */
 	embed_mode?: boolean
