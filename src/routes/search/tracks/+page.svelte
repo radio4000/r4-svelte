@@ -1,6 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {Debounced} from 'runed'
 	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
 	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
@@ -8,6 +9,8 @@
 	import TrackCard from '$lib/components/track-card.svelte'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -16,6 +19,7 @@
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
+	import {getChannelTags} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
@@ -103,6 +107,24 @@
 	const searchAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), view))
 	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
+	const featuredChannelSlugs = $derived.by(() => {
+		return [...channelsCollection.state.values()]
+			.filter((channel) => channel?.slug)
+			.toSorted(
+				(a, b) =>
+					(b.track_count ?? 0) - (a.track_count ?? 0) ||
+					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
+			)
+			.slice(0, 6)
+			.map((channel) => channel.slug)
+	})
+	const featuredTags = $derived.by(() => {
+		const tracks = [...tracksCollection.state.values()]
+		if (!tracks.length) return []
+		return getChannelTags(tracks)
+			.slice(0, 12)
+			.map((tag) => tag.value)
+	})
 </script>
 
 <svelte:head>
@@ -162,11 +184,33 @@
 			</section>
 		{/if}
 	{:else}
-		<p><small>{m.search_tip_slug()}</small></p>
+		<div class="empty-tip">
+			<p><small>{m.search_tip_slug()}</small></p>
+			{#if featuredChannelSlugs.length || featuredTags.length}
+				<p class="featured-tags">
+					<small>{m.search_examples()}</small>
+					{#each featuredChannelSlugs as slug (`channel-${slug}`)}
+						<a href={resolve('/search/tracks') + `?q=${encodeURIComponent('@' + slug)}`}>@{slug}</a>
+					{/each}
+					{#each featuredTags as tag (`tag-${tag}`)}
+						<a href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + tag)}`}>#{tag}</a>
+					{/each}
+				</p>
+			{/if}
+			<p class="browse-links">
+				<a href={resolve('/tracks/recent')}>All {m.explore_tab_tracks()}</a>
+			</p>
+		</div>
 	{/if}
 </article>
 
 <style>
+	article {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+
 	.search-header {
 		position: sticky;
 		top: 0;
@@ -196,8 +240,7 @@
 		flex-shrink: 0;
 	}
 
-	article > p,
-	section > h2 {
+	article > p {
 		margin-inline: 0.5rem;
 	}
 
@@ -217,5 +260,32 @@
 	menu,
 	section {
 		margin-bottom: 1rem;
+	}
+
+	.empty-tip {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		margin: 0;
+	}
+
+	.featured-tags,
+	.browse-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		justify-content: center;
+		color: light-dark(var(--gray-9), var(--gray-8));
+
+		a {
+			color: var(--accent-9);
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
 	}
 </style>

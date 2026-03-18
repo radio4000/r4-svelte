@@ -120,11 +120,24 @@
 	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
 
-	// --- Featured tags for empty state ---
+	// --- Featured examples for empty state ---
+	const featuredChannelSlugs = $derived.by(() => {
+		return [...channelsCollection.state.values()]
+			.filter((channel) => channel?.slug)
+			.toSorted(
+				(a, b) =>
+					(b.track_count ?? 0) - (a.track_count ?? 0) ||
+					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
+			)
+			.slice(0, 6)
+			.map((channel) => channel.slug)
+	})
 	const featuredTags = $derived.by(() => {
 		const tracks = [...tracksCollection.state.values()]
 		if (!tracks.length) return []
-		return getChannelTags(tracks).slice(0, 12).map((t) => t.value)
+		return getChannelTags(tracks)
+			.slice(0, 12)
+			.map((t) => t.value)
 	})
 
 	// --- Channel results (parallel, outside View) ---
@@ -251,14 +264,21 @@
 	{:else}
 		<div class="empty-tip">
 			<p><small>{m.search_tip_slug()}</small></p>
-			{#if featuredTags.length}
+			{#if featuredChannelSlugs.length || featuredTags.length}
 				<p class="featured-tags">
 					<small>{m.search_examples()}</small>
-					{#each featuredTags as tag}
+					{#each featuredChannelSlugs as slug (`channel-${slug}`)}
+						<a href={resolve('/search') + `?q=${encodeURIComponent('@' + slug)}`}>@{slug}</a>
+					{/each}
+					{#each featuredTags as tag (`tag-${tag}`)}
 						<a href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + tag)}`}>#{tag}</a>
 					{/each}
 				</p>
 			{/if}
+			<p class="browse-links">
+				<a href={resolve('/channels/all')}>All {m.explore_tab_channels()}</a>
+				<a href={resolve('/tracks/recent')}>All {m.explore_tab_tracks()}</a>
+			</p>
 		</div>
 	{/if}
 </article>
@@ -339,6 +359,21 @@
 		gap: 0.25rem 0.5rem;
 		justify-content: center;
 		color: light-dark(var(--gray-9), var(--gray-8));
+
+		a {
+			color: var(--accent-9);
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+
+	.browse-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		justify-content: center;
 
 		a {
 			color: var(--accent-9);

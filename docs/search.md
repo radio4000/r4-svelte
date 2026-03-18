@@ -39,6 +39,11 @@ Two input paths that write the same URL format:
 
 When ViewsBar changes something, the smart input syncs to reflect the current view. When the smart input resolves a query, ViewsBar picks it up from the URL.
 
+Dedicated routes keep the same search model, trimmed to one result type:
+
+- `/search/channels` searches channels only. It accepts plain text and exact `@slug` mentions.
+- `/search/tracks` searches tracks only and still accepts the same `@channel`, `#tag`, and free-text view syntax as `/search`.
+
 ## FTS details
 
 We don't use the SDK's built-in search — it only does websearch-style matching (whole words). `buildFtsFilter` adds prefix matching: `jazz house` becomes `jazz:* & house:*`, giving type-as-you-search behavior.
