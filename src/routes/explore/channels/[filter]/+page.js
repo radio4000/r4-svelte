@@ -15,6 +15,6 @@ const slugToFilter = {
 
 export function load({params}) {
 	const filter = slugToFilter[params.filter]
-	if (!filter) redirect(307, '/explore/channels/featured')
+	if (!filter) redirect(307, '/explore/channels/all')
 	return {filter}
 }
