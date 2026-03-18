@@ -185,7 +185,7 @@
 			</ul>
 			<menu class="welcome-menu">
 				<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
-				<a href={resolve('/about')}>{m.nav_about()}</a>
+				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 			</menu>
 		</section>
 
@@ -264,7 +264,7 @@
 					>{m.header_start_your_radio()}</a
 				>
 				<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
-				<a href={resolve('/about')}>{m.nav_about()}</a>
+				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 			</menu>
 		</section>
 
