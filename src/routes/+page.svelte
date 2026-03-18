@@ -216,7 +216,7 @@
 					</a>
 				{/if}
 				{#if userChannelTrackCount > 0}
-					{#if userChannelIsPlaying}
+					{#if userChannelIsPlaying || userChannelIsBroadcasting}
 						<BroadcastControls
 							deckId={userChannelLoadedDeckId}
 							channelId={userChannel.id}
