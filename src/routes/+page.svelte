@@ -271,10 +271,6 @@
 								</li>
 							</ol>
 						</div>
-					{:else}
-						<button class="btn icon-btn onboarding-toggle" onclick={() => (appState.show_onboarding_hint = true)} title="Show getting started">
-							<Icon icon="circle-info" />
-						</button>
 					{/if}
 				{/if}
 				{#if showTrackWidget}
@@ -345,6 +341,13 @@
 					</a>
 				{/if}
 			</div>
+			{#if showOnboarding && !appState.show_onboarding_hint}
+				<div class="onboarding-toggle-row">
+					<button class="btn icon-btn onboarding-toggle" onclick={() => (appState.show_onboarding_hint = true)} title="Show getting started">
+						<Icon icon="circle-info" />
+					</button>
+				</div>
+			{/if}
 		</section>
 
 		{#if showBroadcastCountWidget}
@@ -455,9 +458,11 @@
 				</menu>
 			</section>
 		{:else}
-			<button class="btn icon-btn" onclick={() => (appState.show_welcome_hint = true)} title={m.welcome_title({appName})}>
-				<Icon icon="circle-info" />
-			</button>
+			<menu class="filtermenu">
+				<button class="btn icon-btn" style="margin-left: auto" onclick={() => (appState.show_welcome_hint = true)} title={m.welcome_title({appName})}>
+					<Icon icon="circle-info" />
+				</button>
+			</menu>
 		{/if}
 
 		{#if featuredChannels.length}
@@ -762,6 +767,11 @@
 		margin-block: 1rem 0;
 		gap: 0.5rem;
 		justify-content: center;
+	}
+
+	.onboarding-toggle-row {
+		display: flex;
+		justify-content: flex-end;
 	}
 
 	.onboarding {
