@@ -238,7 +238,7 @@
 		{#if featuredChannels.length}
 			<section class="section">
 				<header class="section-header">
-					<h2 class="section-title">{m.home_featured()}</h2>
+					<h2 class="section-title"><a href={resolve('/explore/channels/featured')}>{m.home_featured()}</a></h2>
 					<menu>
 						{#if featuredFirst}
 							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
@@ -268,7 +268,7 @@
 
 		{#if featuredTracks.length}
 			<section class="section">
-				<h2 class="section-title">{m.home_featured_tracks()}</h2>
+				<h2 class="section-title"><a href={resolve('/explore/tracks/featured')}>{m.home_featured_tracks()}</a></h2>
 				{#each featuredTracks as group (group.label)}
 					<p class="day-header">{group.label}</p>
 					<ul class="list">
