@@ -216,17 +216,14 @@
 	}
 
 	.channel-link {
-		padding: 0;
-		height: 30px;
+		padding: 0.15rem;
 		overflow: hidden;
-		max-width: 36px;
 
-		@media (min-width: 768px) {
-			height: auto;
-		}
-		@media (max-width: 768px) {
-			min-width: var(--track-artwork-size);
-			height: 32px;
+		:global(img, svg) {
+			width: 100%;
+			height: 100%;
+			border-radius: calc(var(--border-radius) - 0.15rem);
+			object-fit: cover;
 		}
 	}
 
