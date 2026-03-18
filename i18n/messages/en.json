@@ -355,7 +355,7 @@
 	"followers_empty": "No followers yet.",
 	"followers_search_placeholder": "Search {count} followers",
 	"following_empty": "Not following any radios",
-	"following_search_placeholder": "Search {count} following",
+	"following_search_placeholder": "Search {count} channels you follow",
 	"header_go_to_channel": "Go to your channel",
 	"header_search_placeholder": "Search radios & tracks",
 	"header_start_your_radio": "Start your radio",
