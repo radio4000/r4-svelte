@@ -249,6 +249,25 @@
 			</section>
 		{/if}
 
+		<section class="section welcome-section">
+			<h1>{m.welcome_title({appName})}</h1>
+			<p class="tagline">{m.welcome_tagline_channel()}</p>
+			<p class="tagline">{m.welcome_tagline_metadata()}</p>
+			<ul class="feature-list">
+				<li>{m.welcome_feature_archive()}</li>
+				<li>{m.welcome_feature_decks()}</li>
+				<li>{m.welcome_feature_follow()}</li>
+				<li>{m.welcome_feature_open()}</li>
+			</ul>
+			<menu class="welcome-menu">
+				<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
+					>{m.header_start_your_radio()}</a
+				>
+				<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
+				<a href={resolve('/about')}>{m.nav_about()}</a>
+			</menu>
+		</section>
+
 		{#if featuredChannels.length}
 			<section class="section">
 				<header class="section-header">
@@ -279,25 +298,6 @@
 				</ol>
 			</section>
 		{/if}
-
-		<section class="section welcome-section">
-			<h1>{m.welcome_title({appName})}</h1>
-			<p class="tagline">{m.welcome_tagline_channel()}</p>
-			<p class="tagline">{m.welcome_tagline_metadata()}</p>
-			<ul class="feature-list">
-				<li>{m.welcome_feature_archive()}</li>
-				<li>{m.welcome_feature_decks()}</li>
-				<li>{m.welcome_feature_follow()}</li>
-				<li>{m.welcome_feature_open()}</li>
-			</ul>
-			<menu class="welcome-menu">
-				<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
-					>{m.header_start_your_radio()}</a
-				>
-				<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
-				<a href={resolve('/about')}>{m.nav_about()}</a>
-			</menu>
-		</section>
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<p class="stats">
