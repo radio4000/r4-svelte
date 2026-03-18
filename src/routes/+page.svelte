@@ -33,7 +33,7 @@
 	const showOnboarding = $derived(
 		!follows.isLoading &&
 			!!userChannel &&
-			((userChannel.track_count ?? 0) === 0 || follows.followedChannels.length === 0)
+			((userChannel.track_count ?? 0) === 0 || follows.followedChannels.length === 0 || !userChannel.image)
 	)
 
 	// Featured channels (not logged in, or no channel)
@@ -105,10 +105,14 @@
 		if (!userChannel?.slug) return undefined
 		return Object.values(appState.decks).find((d) => d.playlist_slug === userChannel.slug && d.is_playing)?.id
 	})
+	const userChannelLoadedDeckId = $derived.by(() => {
+		if (!userChannel?.slug) return undefined
+		return Object.values(appState.decks).find((d) => d.playlist_slug === userChannel.slug)?.id
+	})
 	const userChannelIsPlaying = $derived(!!userChannelPlayingDeckId)
 	function toggleUserChannelPlay() {
 		if (!userChannel) return
-		if (userChannelPlayingDeckId) togglePlayPause(userChannelPlayingDeckId)
+		if (userChannelLoadedDeckId) togglePlayPause(userChannelLoadedDeckId)
 		else playChannel(appState.active_deck_id, userChannel)
 	}
 
@@ -210,42 +214,26 @@
 						{m.status_live_short()}
 					</a>
 				{/if}
-				<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
-					<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-					<span class="mini-play-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
-					>
-					<span class="mini-play-slug">{userChannel.slug}</span>
-				</button>
-				<AutoRadioButton
-					className="btn{userChannelHasAuto ? ' active' : ''}"
-					synced={!userChannelHasAutoDrifted}
-					title={m.auto_radio_resync()}
-					onclick={toggleUserChannelAutoRadio}
-				/>
+				{#if userChannelTrackCount > 0}
+					<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
+						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
+						<span class="mini-play-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
+						>
+						<span class="mini-play-slug">{userChannel.slug}</span>
+					</button>
+					<AutoRadioButton
+						className="btn{userChannelHasAuto ? ' active' : ''}"
+						synced={!userChannelHasAutoDrifted}
+						title={m.auto_radio_resync()}
+						onclick={toggleUserChannelAutoRadio}
+					/>
+				{/if}
 			</div>
 		{/if}
 	</menu>
 
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
-
-		{#if showOnboarding && appState.show_onboarding_hint}
-			<section class="section onboarding dismissible">
-				<button class="dismiss-btn" onclick={() => (appState.show_onboarding_hint = false)} aria-label="Close">
-					<Icon icon="close" />
-				</button>
-				<ol class="todo-list">
-					<li>
-						<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
-						<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>{m.home_onboarding_add_track()}</a>
-					</li>
-					<li>
-						<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
-						<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
-					</li>
-				</ol>
-			</section>
-		{/if}
 
 		<section class="section dashboard-section">
 			<div class="dashboard-grid">
@@ -254,6 +242,33 @@
 						<li><ChannelCard channel={userChannel} /></li>
 					</ol>
 				</div>
+				{#if showOnboarding}
+					{#if appState.show_onboarding_hint}
+						<div class="dashboard-card onboarding dismissible">
+							<button class="dismiss-btn" onclick={() => (appState.show_onboarding_hint = false)} aria-label="Close">
+								<Icon icon="close" />
+							</button>
+							<ol class="todo-list">
+								<li>
+									<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
+									<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>{m.home_onboarding_add_track()}</a>
+								</li>
+								<li>
+									<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
+									<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+								</li>
+								<li>
+									<input type="checkbox" disabled checked={!!userChannel.image} />
+									<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}>{m.home_onboarding_add_image()}</a>
+								</li>
+							</ol>
+						</div>
+					{:else}
+						<button class="btn icon-btn onboarding-toggle" onclick={() => (appState.show_onboarding_hint = true)} title="Show getting started">
+							<Icon icon="circle-info" />
+						</button>
+					{/if}
+				{/if}
 				{#if showTrackWidget}
 					<a class="dashboard-card dashboard-card--link" href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>
 						<span class="dashboard-label dashboard-label--with-icon">
@@ -351,32 +366,9 @@
 		{/if}
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
-		{#if appState.show_welcome_hint}
-			<section class="section welcome-section dismissible">
-				<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
-					<Icon icon="close" />
-				</button>
-				<h1>{m.welcome_title({appName})}</h1>
-				<p class="tagline">{m.welcome_tagline_channel()}</p>
-				<p class="tagline">{m.welcome_tagline_metadata()}</p>
-				<ol class="todo-list">
-					<li>
-						<input type="checkbox" disabled checked={false} />
-						<a href={resolve('/create-channel')}>{m.home_create_channel()}</a>
-					</li>
-				</ol>
-				<ul class="feature-list">
-					<li>{m.welcome_feature_archive()}</li>
-					<li>{m.welcome_feature_decks()}</li>
-					<li>{m.welcome_feature_follow()}</li>
-					<li>{m.welcome_feature_open()}</li>
-				</ul>
-				<menu class="welcome-menu">
-					<a href={resolve('/create-channel')} class="btn primary"><Icon icon="add" />{m.home_create_channel()}</a>
-					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
-				</menu>
-			</section>
-		{/if}
+		<section class="section">
+			<a href={resolve('/create-channel')} class="btn primary"><Icon icon="add" />{m.home_create_channel()}</a>
+		</section>
 
 		{#if activeBroadcasts.length}
 			<section class="section">
@@ -761,6 +753,8 @@
 	}
 
 	.onboarding {
+		grid-column: 1 / -1;
+
 		.todo-list {
 			list-style: none;
 			padding: 0;

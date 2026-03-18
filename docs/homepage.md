@@ -34,6 +34,7 @@ The homepage adapts to who is logged in and what they follow.
 **Logged in with a channel:**
 
 - Dashboard widgets for their channel, tracks, favorites, live radios, audience, broadcast status, and auto-radio status
+- If their channel is still incomplete (no tracks, no follows, or no image), show a dismissible onboarding checklist inside the dashboard until all steps are done
 - Their own channel card in list display
 - Favorite channels currently broadcasting (list)
 - **Feed tab** visible only when signed in
