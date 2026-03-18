@@ -15,6 +15,7 @@
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
+	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -227,6 +228,14 @@
 						title={m.auto_radio_resync()}
 						onclick={toggleUserChannelAutoRadio}
 					/>
+					{#if userChannelIsPlaying}
+						<BroadcastControls
+							deckId={userChannelLoadedDeckId}
+							channelId={userChannel.id}
+							channelSlug={userChannel.slug}
+							compact
+						/>
+					{/if}
 				{/if}
 			</div>
 		{/if}
