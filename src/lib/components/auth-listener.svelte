@@ -60,7 +60,7 @@
 			await checkUser()
 			loadUserFollows()
 		} else if (event === 'INITIAL_SESSION' && user) {
-			checkUser()
+			await checkUser()
 			loadUserFollows()
 		}
 	}

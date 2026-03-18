@@ -135,6 +135,9 @@ function loadState(): AppState {
 
 export const appState: AppState = $state(loadState())
 
+/** Non-persisted runtime auth status. channelChecked becomes true after the first checkUser() resolves. */
+export const authStatus = $state({channelChecked: false})
+
 /** Can the current user edit this channel? (Supabase-owned only) */
 export function canEditChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.user && !!appState.channels?.includes(channelId)

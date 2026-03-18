@@ -1,6 +1,6 @@
 import {tick} from 'svelte'
 import {goto} from '$app/navigation'
-import {appState, addDeck} from '$lib/app-state.svelte'
+import {appState, authStatus, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
 import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
 import {logger} from '$lib/logger'
@@ -106,11 +106,20 @@ export async function checkUser() {
 
 		// Store IDs - collection handles fetching when needed
 		appState.channels = channels.map((c) => c.id)
-		appState.channel = channels[0] as Channel | undefined
+		// readUserChannels() queries the base `channels` table which lacks track_count.
+		// Fetch from channels_with_tracks view to get the full object.
+		if (channels[0]) {
+			const {data: fullChannel} = await sdk.channels.readChannel(channels[0].slug)
+			appState.channel = (fullChannel ?? channels[0]) as Channel | undefined
+		} else {
+			appState.channel = undefined
+		}
 
 		return user
 	} catch (err) {
 		log.warn('check_user_error', err)
+	} finally {
+		authStatus.channelChecked = true
 	}
 }
 
