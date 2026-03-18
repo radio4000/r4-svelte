@@ -3,20 +3,20 @@
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
 	import {appName} from '$lib/config'
-	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {groupByDay, featuredScore} from '$lib/utils'
+	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
 	import {playChannel, togglePlayPause} from '$lib/api'
+	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import TrackCard from '$lib/components/track-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const FEATURED_COUNT = 3
+	const FEATURED_COUNT_LOGGEDOUT = 6
 	const FEATURED_DAYS = 30
 
 	const isSignedIn = $derived(!!appState.user)
@@ -24,10 +24,19 @@
 
 	const follows = getFollowedChannels()
 
+	// Todo checklist: show when channel exists but onboarding is incomplete
+	const showOnboarding = $derived(
+		!follows.isLoading &&
+			!!userChannel &&
+			((userChannel.track_count ?? 0) === 0 || follows.followedChannels.length === 0)
+	)
+
 	// Featured channels (not logged in, or no channel)
 	let featuredPool = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
 	let featuredChannels = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
 	let featuredLoaded = $state(false)
+
+	const featuredPickCount = $derived(!isSignedIn ? FEATURED_COUNT_LOGGEDOUT : FEATURED_COUNT)
 
 	// Shuffle button: random pick from the quality pool for variety
 	let shuffling = $state(false)
@@ -35,14 +44,8 @@
 		if (!featuredPool.length || shuffling) return
 		shuffling = true
 		try {
-			const shuffled = featuredPool.toSorted(() => Math.random() - 0.5)
-			const picked = shuffled.slice(0, FEATURED_COUNT)
+			const picked = featuredPool.toSorted(() => Math.random() - 0.5).slice(0, featuredPickCount)
 			featuredChannels = picked
-			const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-			await fetchRecentTracksForSlugs(
-				picked.map((ch) => ch.slug),
-				since
-			)
 		} finally {
 			shuffling = false
 		}
@@ -56,34 +59,12 @@
 				const pool = await getFeaturedPool(FEATURED_DAYS)
 				featuredPool = pool
 				// Initial pick: by score, consistent with explore pages
-				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, FEATURED_COUNT)
+				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, featuredPickCount)
 				featuredChannels = picked
-				if (picked.length) {
-					const since = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-					await fetchRecentTracksForSlugs(
-						picked.map((ch) => ch.slug),
-						since
-					)
-				}
 			} catch (e) {
 				console.warn('[homepage] failed to load featured channels', e)
 			}
 		})()
-	})
-
-	// Recent tracks from featured channels, sorted by date, top 30, grouped by day
-	const featuredTracks = $derived.by(() => {
-		if (!featuredChannels.length) return []
-		// Access .size so this derived re-runs when tracks are upserted into the collection
-		void tracksCollection.state.size
-		const featuredSince = new Date(Date.now() - FEATURED_DAYS * 86400000).toISOString()
-		const slugSet = new Set(featuredChannels.map((ch) => ch.slug))
-		return groupByDay(
-			[...tracksCollection.state.values()]
-				.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= featuredSince)
-				.toSorted((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
-				.slice(0, 30)
-		)
 	})
 
 	const featuredFirst = $derived(featuredChannels[0] ?? null)
@@ -130,7 +111,18 @@
 </svelte:head>
 
 <div class="homepage">
-	{#if isSignedIn}
+	{#if isSignedIn && userChannel}
+		<!-- Sticky header: channel card + tabs -->
+		<div class="sticky-header">
+			<ol class="list">
+				<li><ChannelCard channel={userChannel} /></li>
+			</ol>
+			<nav class="tabs">
+				<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
+				<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
+			</nav>
+		</div>
+	{:else if isSignedIn}
 		<nav class="tabs">
 			<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
 			<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
@@ -139,11 +131,21 @@
 
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
-		<section class="section">
-			<ol class="list">
-				<li><ChannelCard channel={userChannel} /></li>
-			</ol>
-		</section>
+
+		{#if showOnboarding}
+			<section class="section onboarding">
+				<ol class="todo-list">
+					<li>
+						<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
+						<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>{m.home_onboarding_add_track()}</a>
+					</li>
+					<li>
+						<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
+						<a href={resolve('/explore')}>{m.home_onboarding_follow_radio()}</a>
+					</li>
+				</ol>
+			</section>
+		{/if}
 
 		{#if activeBroadcasts.length}
 			<section class="section">
@@ -169,11 +171,23 @@
 		<p class="explore-link">
 			<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
 		</p>
-	{:else if isSignedIn}
+	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
-		<p class="cta">
-			<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
-		</p>
+		<section class="section welcome-section">
+			<h1>{m.welcome_title({appName})}</h1>
+			<p class="tagline">{m.welcome_tagline_channel()}</p>
+			<p class="tagline">{m.welcome_tagline_metadata()}</p>
+			<ul class="feature-list">
+				<li>{m.welcome_feature_archive()}</li>
+				<li>{m.welcome_feature_decks()}</li>
+				<li>{m.welcome_feature_follow()}</li>
+				<li>{m.welcome_feature_open()}</li>
+			</ul>
+			<menu class="welcome-menu">
+				<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
+				<a href={resolve('/about')}>{m.nav_about()}</a>
+			</menu>
+		</section>
 
 		{#if activeBroadcasts.length}
 			<section class="section">
@@ -196,7 +210,7 @@
 								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 						{/if}
-						{#if featuredPool.length > FEATURED_COUNT}
+						{#if featuredPool.length > featuredPickCount}
 							<button
 								type="button"
 								class="icon-btn"
@@ -245,7 +259,7 @@
 								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 						{/if}
-						{#if featuredPool.length > FEATURED_COUNT}
+						{#if featuredPool.length > featuredPickCount}
 							<button
 								type="button"
 								class="icon-btn"
@@ -266,36 +280,37 @@
 			</section>
 		{/if}
 
-		{#if featuredTracks.length}
-			<section class="section">
-				<h2 class="section-title"><a href={resolve('/explore/tracks/featured')}>{m.home_featured_tracks()}</a></h2>
-				{#each featuredTracks as group (group.label)}
-					<p class="day-header">{group.label}</p>
-					<ul class="list">
-						{#each group.tracks as track (track.id)}
-							<li><TrackCard {track} showSlug={true} /></li>
-						{/each}
-					</ul>
-				{/each}
-			</section>
-		{/if}
+		<section class="section welcome-section">
+			<h1>{m.welcome_title({appName})}</h1>
+			<p class="tagline">{m.welcome_tagline_channel()}</p>
+			<p class="tagline">{m.welcome_tagline_metadata()}</p>
+			<ul class="feature-list">
+				<li>{m.welcome_feature_archive()}</li>
+				<li>{m.welcome_feature_decks()}</li>
+				<li>{m.welcome_feature_follow()}</li>
+				<li>{m.welcome_feature_open()}</li>
+			</ul>
+			<menu class="welcome-menu">
+				<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
+					>{m.header_start_your_radio()}</a
+				>
+				<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
+				<a href={resolve('/about')}>{m.nav_about()}</a>
+			</menu>
+		</section>
 
-		{#if featuredLoaded}
-			{#if channelCount || trackCount || appPresence.count}
-				<p class="stats">
-					{#if channelCount}<a href={resolve('/explore/channels/all')}
-							>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
-						>{/if}
-					{#if trackCount}<a href={resolve('/explore/tracks/recent')}
-							>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
-						>{/if}
-					{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
-				</p>
-			{/if}
-			<p class="explore-link">
-				<a href={resolve('/explore')}>{m.home_explore_all()} →</a>
+		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
+			<p class="stats">
+				{#if channelCount}<a href={resolve('/explore/channels/all')}
+						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
+					>{/if}
+				{#if trackCount}<a href={resolve('/explore/tracks/recent')}
+						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
+					>{/if}
+				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
 			</p>
 		{/if}
+
 	{/if}
 </div>
 
@@ -309,7 +324,17 @@
 		}
 	}
 
-.section {
+	.sticky-header {
+		position: sticky;
+		top: 0;
+		z-index: 3;
+		background: var(--color-interface);
+		padding-bottom: 0.25rem;
+		margin-inline: -0.5rem;
+		padding-inline: 0.5rem;
+	}
+
+	.section {
 		margin-bottom: 1.5rem;
 	}
 
@@ -325,7 +350,7 @@
 	}
 
 	.section-title {
-		font-size: var(--font-5);
+		font-size: var(--font-7);
 		font-weight: 600;
 		margin-bottom: 0.5rem;
 		color: light-dark(var(--gray-11), var(--gray-9));
@@ -344,10 +369,6 @@
 		}
 	}
 
-	.cta {
-		margin-bottom: 1.5rem;
-	}
-
 	.empty {
 		color: light-dark(var(--gray-10), var(--gray-9));
 	}
@@ -356,7 +377,8 @@
 		display: flex;
 		gap: 1rem;
 		justify-content: center;
-		margin: 0.5rem 0;
+		margin: 0.5rem auto;
+		max-width: 56rem;
 		font-size: var(--font-3);
 		color: light-dark(var(--gray-10), var(--gray-8));
 
@@ -365,6 +387,68 @@
 			text-decoration: none;
 			&:hover {
 				text-decoration: underline;
+			}
+		}
+	}
+
+	.welcome-section {
+		max-width: 56rem;
+		margin-inline: auto;
+		padding: 1.5rem;
+		border-radius: 0.75rem;
+		background: light-dark(var(--gray-2), var(--gray-2));
+		border: 1px solid light-dark(var(--gray-4), var(--gray-4));
+
+		h1 {
+			font-size: var(--font-8);
+			margin-bottom: 0.75rem;
+		}
+
+		.tagline {
+			font-size: var(--font-6);
+			margin-bottom: 0.25rem;
+		}
+
+		.feature-list {
+			margin-block: 1rem;
+			font-size: var(--font-5);
+			padding-left: 1.25rem;
+
+			li {
+				margin-block: 0.3rem;
+			}
+		}
+	}
+
+	.welcome-menu {
+		margin-block: 1rem 0;
+		gap: 0.5rem;
+		justify-content: center;
+	}
+
+	.onboarding {
+		.todo-list {
+			list-style: none;
+			padding: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			font-size: var(--font-5);
+
+			li {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				color: light-dark(var(--gray-11), var(--gray-9));
+
+				&:has(input:checked) {
+					color: light-dark(var(--gray-8), var(--gray-7));
+					text-decoration: line-through;
+
+					a {
+						color: inherit;
+					}
+				}
 			}
 		}
 	}
