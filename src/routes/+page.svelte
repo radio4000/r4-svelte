@@ -131,10 +131,10 @@
 
 <div class="homepage">
 	{#if isSignedIn}
-		<menu class="filtermenu">
-			<a href={resolve('/')} class="btn" class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
-			<a href={resolve('/feed')} class="btn">{m.home_tab_feed()}</a>
-		</menu>
+		<nav class="tabs">
+			<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
+			<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
+		</nav>
 	{/if}
 
 	{#if isSignedIn && userChannel}
@@ -309,17 +309,7 @@
 		}
 	}
 
-	.filtermenu {
-		position: sticky;
-		top: 0.5rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin: 0 0 1rem;
-		z-index: 1;
-	}
-
-	.section {
+.section {
 		margin-bottom: 1.5rem;
 	}
 

@@ -61,9 +61,11 @@
 </svelte:head>
 
 <div class="feed">
-	<menu class="filtermenu">
-		<a href={resolve('/')} class="btn">{m.home_tab_home()}</a>
-		<a href={resolve('/feed')} class="btn" class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
+	<div class="feed-nav">
+		<nav class="tabs">
+			<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
+			<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
+		</nav>
 
 		<PopoverMenu style="margin-left: auto;">
 			{#snippet trigger()}
@@ -76,7 +78,7 @@
 				{/each}
 			</menu>
 		</PopoverMenu>
-	</menu>
+	</div>
 
 	{#if feedTracks.length}
 		{#each feedTracks as group (group.label)}
@@ -101,14 +103,9 @@
 		padding: 0.5rem;
 	}
 
-	.filtermenu {
-		position: sticky;
-		top: 0.5rem;
+	.feed-nav {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		margin: 0 0 1rem;
-		z-index: 1;
 	}
 
 	.day-header {
@@ -122,6 +119,7 @@
 	}
 
 	.empty {
+		margin-top: 1rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 	}
 </style>
