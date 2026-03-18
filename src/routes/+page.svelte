@@ -10,7 +10,7 @@
 	import {toAutoTracks} from '$lib/player/auto-radio'
 	import {playChannel, togglePlayPause, resyncAutoRadio, joinAutoRadio} from '$lib/api'
 	import {authStatus} from '$lib/app-state.svelte'
-	import {appPresence} from '$lib/presence.svelte'
+	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -27,6 +27,7 @@
 	const userChannel = $derived(appState.channel)
 
 	const follows = getFollowedChannels()
+	const favoriteChannelIds = $derived(new Set(follows.followedIds))
 
 	// Todo checklist: show when channel exists but onboarding is incomplete
 	const showOnboarding = $derived(
@@ -82,13 +83,19 @@
 		else playChannel(appState.active_deck_id, featuredFirst)
 	}
 
-	// Live broadcasts — top 10, sorted by most recently active, reactive via realtime
-	const activeBroadcasts = $derived.by(() =>
+	// Live broadcasts — sorted by most recently active, reactive via realtime
+	const broadcastRows = $derived.by(() =>
 		[...broadcastsCollection.state.values()]
 			.filter((b) => b.channel_id && b.channels)
 			.toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
-			.slice(0, 10)
 	)
+	const activeBroadcasts = $derived(broadcastRows.slice(0, 10))
+	const favoriteBroadcastRows = $derived.by(() =>
+		broadcastRows.filter((broadcast) => favoriteChannelIds.has(broadcast.channel_id))
+	)
+	const favoriteBroadcasts = $derived.by(() => favoriteBroadcastRows.slice(0, 10))
+	const broadcastCount = $derived(broadcastRows.length)
+	const favoriteBroadcastCount = $derived(favoriteBroadcastRows.length)
 	const userChannelIsBroadcasting = $derived(
 		!!userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
@@ -138,6 +145,31 @@
 			joinAutoRadio(appState.active_deck_id, toAutoTracks(tracks), {sources: [{channels: [userChannel.slug]}]})
 		}
 	}
+
+	$effect(() => {
+		const slug = userChannel?.slug
+		if (!slug) return
+		watchPresence(slug)
+		return () => unwatchPresence(slug)
+	})
+
+	const userChannelPresence = $derived(
+		userChannel?.slug ? (channelPresence[userChannel.slug] ?? {total: 0, broadcast: 0, autoRadio: 0, byUri: {}}) : null
+	)
+	const userChannelListenerTotal = $derived(userChannelPresence?.total ?? 0)
+	const userChannelBroadcastListeners = $derived(userChannelPresence?.broadcast ?? 0)
+	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
+	const showTrackWidget = $derived(userChannelTrackCount > 0)
+	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
+	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
+	const showBroadcastCountWidget = $derived(broadcastCount > 0)
+	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
+	const showAutoRadioWidget = $derived(userChannelHasAuto)
+	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
+	const userBroadcastStatusLabel = $derived(userChannelIsBroadcasting ? m.status_live_short() : m.status_offline())
+	const userAutoRadioStatusLabel = $derived(
+		userChannelHasAuto ? (userChannelHasAutoDrifted ? m.status_drifted() : m.status_synced()) : m.common_off()
+	)
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -215,22 +247,104 @@
 			</section>
 		{/if}
 
-		{#if activeBroadcasts.length}
-			<section class="section">
-				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="list">
-					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-						<li><ChannelCard channel={broadcast.channels} /></li>
-					{/each}
-				</ol>
+		<section class="section dashboard-section">
+			<div class="dashboard-grid">
+				<div class="dashboard-card dashboard-card--channel">
+					<ol class="list">
+						<li><ChannelCard channel={userChannel} /></li>
+					</ol>
+				</div>
+				{#if showTrackWidget}
+					<a class="dashboard-card dashboard-card--link" href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="unordered-list" size={16} />
+							{m.home_dashboard_tracks()}
+						</span>
+						<strong class="dashboard-value">{userChannelTrackCount.toLocaleString()}</strong>
+					</a>
+				{/if}
+				{#if showFavoritesWidget}
+					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/favorites')}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="favorite-fill" size={16} />
+							{m.home_dashboard_favorites()}
+						</span>
+						<strong class="dashboard-value">{follows.followedChannels.length.toLocaleString()}</strong>
+					</a>
+				{/if}
+				{#if showFavoriteBroadcastWidget}
+					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="cell-signal" size={16} />
+							{m.home_dashboard_favorites_broadcasting()}
+						</span>
+						<strong class="dashboard-value">{favoriteBroadcastCount.toLocaleString()}</strong>
+					</a>
+				{/if}
+				{#if showBroadcastStatusWidget}
+					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve(`/${userChannel.slug}`)}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="cell-signal" size={16} />
+							{m.home_dashboard_broadcast()}
+						</span>
+						<strong class="dashboard-value">{userBroadcastStatusLabel}</strong>
+					</a>
+				{/if}
+				{#if showAutoRadioWidget}
+					<button
+						class="dashboard-card dashboard-card--button"
+						class:dashboard-card--alert={userChannelHasAutoDrifted}
+						type="button"
+						onclick={toggleUserChannelAutoRadio}
+					>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="infinite" size={16} />
+							{m.home_dashboard_auto_radio()}
+						</span>
+						<strong class="dashboard-value">{userAutoRadioStatusLabel}</strong>
+					</button>
+				{/if}
+				{#if showAudienceWidget}
+					<a class="dashboard-card dashboard-card--link" href={resolve(`/${userChannel.slug}`)}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="users" size={16} />
+							{m.home_dashboard_audience()}
+						</span>
+						<strong class="dashboard-value">{userChannelListenerTotal.toLocaleString()}</strong>
+						<small class="dashboard-meta"
+							><Icon icon="cell-signal" size={12} />
+							{m.home_dashboard_live_listeners({count: userChannelBroadcastListeners.toLocaleString()})}</small
+						>
+						<small class="dashboard-meta"
+							><Icon icon="users" size={12} />
+							{m.home_dashboard_total_listeners({count: userChannelListenerTotal.toLocaleString()})}</small
+						>
+					</a>
+				{/if}
+			</div>
+		</section>
+
+		{#if showBroadcastCountWidget}
+			<section class="section dashboard-section">
+				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
+				<div class="dashboard-grid">
+					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="signal" size={16} />
+							{m.home_dashboard_live_radios()}
+						</span>
+						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
+					</a>
+				</div>
 			</section>
 		{/if}
 
-		{#if follows.followedChannels.length > 0}
+		{#if favoriteBroadcasts.length}
 			<section class="section">
-				<ol class="grid">
-					{#each follows.followedChannels as channel (channel.id)}
-						<li><ChannelCard {channel} /></li>
+				<h2 class="section-title">{m.home_favorites_broadcasting()}</h2>
+				<ol class="list">
+					{#each favoriteBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
 				</ol>
 			</section>
@@ -245,6 +359,12 @@
 				<h1>{m.welcome_title({appName})}</h1>
 				<p class="tagline">{m.welcome_tagline_channel()}</p>
 				<p class="tagline">{m.welcome_tagline_metadata()}</p>
+				<ol class="todo-list">
+					<li>
+						<input type="checkbox" disabled checked={false} />
+						<a href={resolve('/create-channel')}>{m.home_create_channel()}</a>
+					</li>
+				</ol>
 				<ul class="feature-list">
 					<li>{m.welcome_feature_archive()}</li>
 					<li>{m.welcome_feature_decks()}</li>
@@ -252,7 +372,7 @@
 					<li>{m.welcome_feature_open()}</li>
 				</ul>
 				<menu class="welcome-menu">
-					<a href={resolve('/create-channel')} class="btn primary">{m.home_create_channel()}</a>
+					<a href={resolve('/create-channel')} class="btn primary"><Icon icon="add" />{m.home_create_channel()}</a>
 					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 				</menu>
 			</section>
@@ -260,7 +380,7 @@
 
 		{#if activeBroadcasts.length}
 			<section class="section">
-				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
 				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
@@ -287,7 +407,7 @@
 								onclick={pickFeatured}
 								disabled={shuffling}
 							>
-								<Icon icon="shuffle" />
+								<Icon icon="rotate" />
 							</button>
 						{/if}
 					</menu>
@@ -354,12 +474,12 @@
 								onclick={pickFeatured}
 								disabled={shuffling}
 							>
-								<Icon icon="shuffle" />
+								<Icon icon="rotate" />
 							</button>
 						{/if}
 					</menu>
 				</header>
-				<ol class="grid grid--scroll">
+				<ol class="grid">
 					{#each featuredChannels as channel (channel.id)}
 						<li><ChannelCard {channel} /></li>
 					{/each}
@@ -368,7 +488,7 @@
 		{/if}
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
-			<p class="stats">
+			<footer class="stats footer-stats">
 				{#if channelCount}<a href={resolve('/channels/all')}
 						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
 					>{/if}
@@ -376,7 +496,7 @@
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
 				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
-			</p>
+			</footer>
 		{/if}
 	{/if}
 </div>
@@ -458,6 +578,91 @@
 		margin-bottom: 1.5rem;
 	}
 
+	.dashboard-section {
+		:global(.list) {
+			margin: 0;
+		}
+	}
+
+	.dashboard-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+		gap: 0.75rem;
+	}
+
+	.dashboard-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.75rem;
+		border: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
+		background: light-dark(var(--gray-1), var(--gray-2));
+		min-width: 0;
+	}
+
+	.dashboard-card--channel {
+		padding: 0.5rem;
+		grid-column: 1 / -1;
+	}
+
+	.dashboard-card--link,
+	.dashboard-card--button {
+		color: inherit;
+		text-align: left;
+		text-decoration: none;
+		transition:
+			background 0.1s,
+			border-color 0.1s;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--gray-2);
+			border-color: var(--accent-7);
+			outline: none;
+		}
+	}
+
+	.dashboard-card--button {
+		cursor: pointer;
+	}
+
+	.dashboard-label {
+		font-size: var(--font-2);
+		color: light-dark(var(--gray-10), var(--gray-9));
+	}
+
+	.dashboard-label--with-icon {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.dashboard-value {
+		font-size: var(--font-7);
+		font-weight: 600;
+		line-height: 1.1;
+		color: light-dark(var(--gray-12), var(--gray-11));
+	}
+
+	.dashboard-meta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: var(--font-1);
+		color: light-dark(var(--gray-10), var(--gray-8));
+	}
+
+	.dashboard-card--live {
+		border-color: var(--accent-7);
+		background: var(--accent-2);
+	}
+
+	.dashboard-card--alert {
+		border-color: var(--red-7, #d44);
+		background: light-dark(var(--red-2, #fee), var(--red-3, #442));
+	}
+
 	.section-header {
 		display: flex;
 		align-items: center;
@@ -478,6 +683,7 @@
 
 	.stats {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 1rem;
 		justify-content: center;
 		margin: 0.5rem auto;
@@ -492,6 +698,11 @@
 				text-decoration: underline;
 			}
 		}
+	}
+
+	.footer-stats {
+		padding-top: 1rem;
+		border-top: 1px solid var(--gray-4);
 	}
 
 	.dismissible {

@@ -2,14 +2,15 @@
 
 ## Routes
 
-| Route         | Purpose                                                       |
-| ------------- | ------------------------------------------------------------- |
-| `/`           | Personalized homepage — your channel, followed channels, feed |
-| `/feed`       | Reverse-chronological track timeline from followed channels   |
-| `/channels/*` | Channel browser                                               |
-| `/tracks/*`   | Track browser                                                 |
-| `/tags/*`     | Tag browser                                                   |
-| `/explore/*`  | Legacy URLs redirecting to the routes above                   |
+| Route                 | Purpose                                                       |
+| --------------------- | ------------------------------------------------------------- |
+| `/`                   | Personalized homepage — your channel, followed channels, feed |
+| `/feed`               | Reverse-chronological track timeline from followed channels   |
+| `/channels/favorites` | Signed-in favorites filter in the channel browser             |
+| `/channels/*`         | Channel browser                                               |
+| `/tracks/*`           | Track browser                                                 |
+| `/tags/*`             | Tag browser                                                   |
+| `/explore/*`          | Legacy URLs redirecting to the routes above                   |
 
 ---
 
@@ -19,9 +20,10 @@ The homepage adapts to who is logged in and what they follow.
 
 **Not logged in:**
 
-- 3 featured channels (algorithmically ranked)
+- Featured channels in a taller grid section
 - Link to `/channels/featured`
 - Welcome hint with sign in / learn more
+- App stats shown as a footer-style summary below featured channels
 
 **Logged in, no channel yet:**
 
@@ -31,11 +33,12 @@ The homepage adapts to who is logged in and what they follow.
 
 **Logged in with a channel:**
 
-- Their own channel (list display — one card, horizontal)
-- Channels they follow (grid)
-- Link to `/channels/featured`
-- **Feed tab** visible when following at least one channel
+- Dashboard widgets for their channel, tracks, favorites, live radios, audience, broadcast status, and auto-radio status
+- Their own channel card in list display
+- Favorite channels currently broadcasting (list)
+- **Feed tab** visible only when signed in
 - Sticky browse header can show quick controls for your channel: play/pause, live badge while broadcasting, auto-radio state
+- Homepage audience widget uses realtime `channelPresence` and shows both total listeners and live broadcast listeners for the user's channel
 
 ### Feed tab
 

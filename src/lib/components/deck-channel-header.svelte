@@ -73,8 +73,9 @@
 			<span class="title-link">{title}</span>
 		{/if}
 		{#if isBroadcasting}
-			<span class="title-icon" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
+			<span class="channel-badge live-pill" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
 				<Icon icon="cell-signal" size={14} />
+				{m.status_live_short()}
 			</span>
 		{/if}
 	</svelte:element>
@@ -170,10 +171,10 @@
 		min-width: 0;
 	}
 
-	.title-icon {
+	.live-pill {
 		display: inline-flex;
 		align-items: center;
-		justify-content: center;
+		gap: 0.2rem;
 		flex-shrink: 0;
 	}
 

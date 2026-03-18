@@ -53,7 +53,10 @@
 				<a href={cardHref} data-sveltekit-preload-data="false">
 					{channel.name}
 					{#if isBroadcasting}
-						<span class="channel-badge">{m.status_live_short()}</span>
+						<span class="channel-badge live-pill">
+							<Icon icon="cell-signal" size={12} />
+							{m.status_live_short()}
+						</span>
 					{/if}
 				</a>
 			</h3>
@@ -270,6 +273,12 @@
 
 	h3 :global(.channel-badge) {
 		animation: live-pulse 2s ease-in-out infinite;
+	}
+
+	.live-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
 	}
 
 	@keyframes live-pulse {
