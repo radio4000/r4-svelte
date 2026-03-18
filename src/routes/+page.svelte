@@ -332,6 +332,10 @@
 		padding-bottom: 0.25rem;
 		margin-inline: -0.5rem;
 		padding-inline: 0.5rem;
+
+		:global(.list) {
+			margin: 0;
+		}
 	}
 
 	.section {
