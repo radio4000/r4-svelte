@@ -52,12 +52,6 @@
 			<h3>
 				<a href={cardHref} data-sveltekit-preload-data="false">
 					{channel.name}
-					{#if isBroadcasting}
-						<span class="channel-badge live-pill">
-							<Icon icon="cell-signal" size={12} />
-							{m.status_live_short()}
-						</span>
-					{/if}
 				</a>
 			</h3>
 			<small class="slug"
@@ -85,6 +79,12 @@
 			</div>
 		</div>
 		<div class="actions">
+			{#if isBroadcasting}
+				<span class="channel-badge live-pill">
+					<Icon icon="cell-signal" size={12} />
+					{m.status_live_short()}
+				</span>
+			{/if}
 			<ButtonFollow {channel} class="ghost" />
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
@@ -271,8 +271,9 @@
 		overflow-wrap: break-word;
 	}
 
-	h3 :global(.channel-badge) {
+	.actions :global(.channel-badge) {
 		animation: live-pulse 2s ease-in-out infinite;
+		margin-left: 0;
 	}
 
 	.live-pill {
