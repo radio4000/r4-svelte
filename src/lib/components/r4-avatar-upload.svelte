@@ -77,9 +77,12 @@
 		border: 2px dashed var(--gray-6);
 		overflow: hidden;
 		cursor: pointer;
-		transition: border-color 0.15s, opacity 0.15s;
+		transition:
+			border-color 0.15s,
+			opacity 0.15s;
 
-		&:hover, &:focus-within {
+		&:hover,
+		&:focus-within {
 			border-color: var(--accent-9);
 		}
 

@@ -176,9 +176,7 @@
 		if (filter === 'imported') {
 			const ids = appState.local_channel_ids ?? []
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			const q = base
-				.where(({ch}) => inArray(ch.id, ids))
-				.orderBy(({ch}) => ch.created_at, 'desc')
+			const q = base.where(({ch}) => inArray(ch.id, ids)).orderBy(({ch}) => ch.created_at, 'desc')
 			return queryLimit === Infinity ? q : q.limit(queryLimit)
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
@@ -396,15 +394,17 @@
 					>{m.channels_filter_option_all()}</button
 				>
 				{#if broadcastsCollection.state.size}
-				<button
-					class:active={filter === 'broadcasting'}
-					onclick={() => setFilter('broadcasting')}
-					{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
-					>{m.channels_filter_option_broadcasting()}<span class="channel-badge" style:background="var(--color-red)" style:color="white"
-						>{broadcastsCollection.state.size}</span
-					></button
-				>
-			{/if}
+					<button
+						class:active={filter === 'broadcasting'}
+						onclick={() => setFilter('broadcasting')}
+						{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
+						>{m.channels_filter_option_broadcasting()}<span
+							class="channel-badge"
+							style:background="var(--color-red)"
+							style:color="white">{broadcastsCollection.state.size}</span
+						></button
+					>
+				{/if}
 				<button
 					class:active={filter === '10+'}
 					onclick={() => setFilter('10+')}

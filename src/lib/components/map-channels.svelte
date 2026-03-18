@@ -221,7 +221,7 @@
 				m.getCanvas().style.cursor = ''
 			})
 		} else {
-			;/** @type {GeoJSONSource} */ (m.getSource('channels-source')).setData(fc)
+			/** @type {GeoJSONSource} */ m.getSource('channels-source').setData(fc)
 		}
 	}
 
@@ -496,7 +496,8 @@
 
 	function updateNightLayer() {
 		if (!map || !mapReady) return
-		;/** @type {GeoJSONSource | undefined} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
+		/** @type {GeoJSONSource | undefined} */
+		map.getSource('night-source')?.setData(buildNightGeoJSON())
 	}
 
 	function handleReady(m) {
