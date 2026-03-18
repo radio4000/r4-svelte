@@ -10,6 +10,9 @@
 	import {searchChannels} from '$lib/search-fts'
 	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {getChannelTags} from '$lib/utils'
+	import {resolve} from '$app/paths'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
@@ -116,6 +119,13 @@
 	const searchAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), view))
 	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
+
+	// --- Featured tags for empty state ---
+	const featuredTags = $derived.by(() => {
+		const tracks = [...tracksCollection.state.values()]
+		if (!tracks.length) return []
+		return getChannelTags(tracks).slice(0, 12).map((t) => t.value)
+	})
 
 	// --- Channel results (parallel, outside View) ---
 	/** @type {import('$lib/types.ts').Channel[]} */
@@ -239,7 +249,17 @@
 			</section>
 		{/if}
 	{:else}
-		<p class="empty-tip"><small>{m.search_tip_slug()}</small></p>
+		<div class="empty-tip">
+			<p><small>{m.search_tip_slug()}</small></p>
+			{#if featuredTags.length}
+				<p class="featured-tags">
+					<small>{m.search_examples()}</small>
+					{#each featuredTags as tag}
+						<a href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + tag)}`}>#{tag}</a>
+					{/each}
+				</p>
+			{/if}
+		</div>
 	{/if}
 </article>
 
@@ -263,7 +283,7 @@
 		gap: 0.5rem;
 	}
 
-	.search-header :global(.search-tabs) {
+	.search-header :global(.popover-menu) {
 		flex-shrink: 0;
 	}
 
@@ -306,8 +326,26 @@
 	.empty-tip {
 		flex: 1;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+		gap: 0.5rem;
 		margin: 0;
+	}
+
+	.featured-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		justify-content: center;
+		color: light-dark(var(--gray-9), var(--gray-8));
+
+		a {
+			color: var(--accent-9);
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
 	}
 </style>
