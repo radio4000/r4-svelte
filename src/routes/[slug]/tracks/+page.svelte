@@ -7,7 +7,6 @@
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
-	import AddTrackHint from '$lib/components/add-track-hint.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -120,11 +119,7 @@
 		empty={tracksQuery.isReady && allTracks.length === 0}
 	>
 		{#snippet emptyChildren()}
-			{#if canEdit}
-				<AddTrackHint />
-			{:else}
-				<p>{m.channel_no_tracks()}</p>
-			{/if}
+			<p>{m.channel_no_tracks()}</p>
 		{/snippet}
 		<section>
 			<header>

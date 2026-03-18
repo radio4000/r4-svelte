@@ -19,7 +19,6 @@
 	import {getAutoDecksForView} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Seo from '$lib/components/seo.svelte'
-	import AddTrackHint from '$lib/components/add-track-hint.svelte'
 
 	const PREVIEW_LIMIT = 8
 	const FEATURED_LIMIT = 10
@@ -248,11 +247,7 @@
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
 				{:else if tracksQuery.isReady && allTracks.length === 0}
-					{#if canEdit}
-						<AddTrackHint />
-					{:else}
-						<p class="empty">{m.channel_no_tracks()}</p>
-					{/if}
+					<p class="empty">{m.channel_no_tracks()}</p>
 				{/if}
 			{:else}
 				{@const section =
