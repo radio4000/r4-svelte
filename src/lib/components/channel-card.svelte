@@ -190,6 +190,7 @@
 		:global(.list) & {
 			grid-column: 2 / -1;
 			align-items: center;
+			flex-wrap: wrap;
 		}
 	}
 
@@ -207,6 +208,11 @@
 		align-items: center;
 		gap: 0.2rem;
 		flex-shrink: 0;
+
+		:global(.list) & {
+			flex-direction: row;
+			margin-left: auto;
+		}
 	}
 
 	.meta {
