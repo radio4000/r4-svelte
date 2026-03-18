@@ -98,7 +98,7 @@
 
 	{#if hasFilter}
 		{#if channelsLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_channels()}</p>
+			<p>{m.search_loading_channels()}</p>
 		{:else if channels.length}
 			<ul class="list">
 				{#each channels as channel (channel.id)}

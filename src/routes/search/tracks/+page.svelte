@@ -125,7 +125,7 @@
 		{/if}
 
 		{#if tracksLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_tracks()}</p>
+			<p>{m.search_loading_tracks()}</p>
 		{:else if tracks.length}
 			<section class="track-results">
 				<header>
