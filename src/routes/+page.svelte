@@ -24,6 +24,9 @@
 
 	const follows = getFollowedChannels()
 
+	let welcomeDismissed = $state(false)
+	let onboardingDismissed = $state(false)
+
 	// Todo checklist: show when channel exists but onboarding is incomplete
 	const showOnboarding = $derived(
 		!follows.isLoading &&
@@ -132,8 +135,11 @@
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
 
-		{#if showOnboarding}
-			<section class="section onboarding">
+		{#if showOnboarding && !onboardingDismissed}
+			<section class="section onboarding dismissible">
+				<button class="dismiss-btn" onclick={() => (onboardingDismissed = true)} aria-label="Close">
+					<Icon icon="close" />
+				</button>
 				<ol class="todo-list">
 					<li>
 						<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
@@ -173,7 +179,11 @@
 		</p>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
-		<section class="section welcome-section">
+		{#if !welcomeDismissed}
+		<section class="section welcome-section dismissible">
+			<button class="dismiss-btn" onclick={() => (welcomeDismissed = true)} aria-label="Close">
+				<Icon icon="close" />
+			</button>
 			<h1>{m.welcome_title({appName})}</h1>
 			<p class="tagline">{m.welcome_tagline_channel()}</p>
 			<p class="tagline">{m.welcome_tagline_metadata()}</p>
@@ -188,6 +198,7 @@
 				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 			</menu>
 		</section>
+		{/if}
 
 		{#if activeBroadcasts.length}
 			<section class="section">
@@ -249,7 +260,11 @@
 			</section>
 		{/if}
 
-		<section class="section welcome-section">
+		{#if !welcomeDismissed}
+		<section class="section welcome-section dismissible">
+			<button class="dismiss-btn" onclick={() => (welcomeDismissed = true)} aria-label="Close">
+				<Icon icon="close" />
+			</button>
 			<h1>{m.welcome_title({appName})}</h1>
 			<p class="tagline">{m.welcome_tagline_channel()}</p>
 			<p class="tagline">{m.welcome_tagline_metadata()}</p>
@@ -267,6 +282,7 @@
 				<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 			</menu>
 		</section>
+		{/if}
 
 		{#if featuredChannels.length}
 			<section class="section">
@@ -392,6 +408,26 @@
 			&:hover {
 				text-decoration: underline;
 			}
+		}
+	}
+
+	.dismissible {
+		position: relative;
+	}
+
+	.dismiss-btn {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		padding: 0.2rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: light-dark(var(--gray-9), var(--gray-8));
+		line-height: 0;
+
+		&:hover {
+			color: light-dark(var(--gray-11), var(--gray-10));
 		}
 	}
 
