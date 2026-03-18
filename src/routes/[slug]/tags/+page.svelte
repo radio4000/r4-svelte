@@ -12,6 +12,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import Subpage from '$lib/components/subpage.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug ?? '')
@@ -21,6 +22,7 @@
 
 	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
 	let tracks = $derived(tracksQuery.data || [])
+	let allTags = $derived(getChannelTags(tracks))
 
 	const filterValues = ['all', 'single-use', 'frequent', 'rare']
 	const periodValues = ['year', 'solstice', 'month']
@@ -266,154 +268,161 @@
 {#if !channel}
 	<p style="padding: 1rem;">{m.channel_not_found()}</p>
 {:else}
-	<main>
-		<menu class="filtermenu">
-			<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
+	<Subpage
+		title={m.channel_tags_link()}
+		loading={tracksQuery.isLoading}
+		empty={allTags.length === 0}
+		emptyText={m.tags_no_tags()}
+	>
+		<main>
+			<menu class="filtermenu">
+				<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
 
-			<PopoverMenu id="tags-data" closeOnClick={false}>
-				{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
-				<menu class="nav-vertical">
-					<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>
-						{filterLabelMap.all()}
-					</button>
-					<button class:active={filter === 'single-use'} onclick={() => (filter = 'single-use')}>
-						{filterLabelMap['single-use']()}
-					</button>
-					<button class:active={filter === 'frequent'} onclick={() => (filter = 'frequent')}>
-						{filterLabelMap.frequent()}
-					</button>
-					<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}>
-						{filterLabelMap.rare()}
-					</button>
-				</menu>
-			</PopoverMenu>
+				<PopoverMenu id="tags-data" closeOnClick={false}>
+					{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
+					<menu class="nav-vertical">
+						<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>
+							{filterLabelMap.all()}
+						</button>
+						<button class:active={filter === 'single-use'} onclick={() => (filter = 'single-use')}>
+							{filterLabelMap['single-use']()}
+						</button>
+						<button class:active={filter === 'frequent'} onclick={() => (filter = 'frequent')}>
+							{filterLabelMap.frequent()}
+						</button>
+						<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}>
+							{filterLabelMap.rare()}
+						</button>
+					</menu>
+				</PopoverMenu>
 
-			<PopoverMenu id="tags-order" closeOnClick={false}>
-				{#snippet trigger()}
-					<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
-					{sortLabelMap[sort]}
-				{/snippet}
-				<div class="row">
-					<select bind:value={sort} aria-label={m.sort_order_label()}>
-						<option value="count">{m.tags_sort_count()}</option>
-						<option value="alpha">{m.tags_sort_alpha()}</option>
-					</select>
-					<button
-						type="button"
-						onclick={() => {
-							direction = direction === 'asc' ? 'desc' : 'asc'
-						}}
-						title={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
-						aria-label={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
-					>
+				<PopoverMenu id="tags-order" closeOnClick={false}>
+					{#snippet trigger()}
 						<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
-					</button>
-				</div>
-			</PopoverMenu>
-
-			<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
-				{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]}{/snippet}
-				<menu class="view-modes">
-					<button class:active={display === 'list'} onclick={() => (display = 'list')}>
-						<Icon icon="unordered-list" /><small>{m.tags_display_list()}</small>
-					</button>
-					<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
-						<Icon icon="tag" /><small>{m.tags_display_cloud()}</small>
-					</button>
-				</menu>
-			</PopoverMenu>
-		</menu>
-
-		{#if periods.length > 0}
-			<div class="scrubber">
-				<h3>
-					<span>{currentPeriodLabel}</span>
-					<span class="scrubber-meta">
-						<span class="count">({Math.round(tagCount.current)})</span>
-						<select
-							bind:value={timePeriod}
-							onchange={() => {
-								currentPeriod = 0
-							}}
-							aria-label={m.tags_period_label()}
-						>
-							<option value="year">{periodLabelMap.year()}</option>
-							<option value="solstice">{periodLabelMap.solstice()}</option>
-							<option value="month">{periodLabelMap.month()}</option>
+						{sortLabelMap[sort]}
+					{/snippet}
+					<div class="row">
+						<select bind:value={sort} aria-label={m.sort_order_label()}>
+							<option value="count">{m.tags_sort_count()}</option>
+							<option value="alpha">{m.tags_sort_alpha()}</option>
 						</select>
-					</span>
-				</h3>
-				<InputRange
-					min={0}
-					max={periods.length}
-					step={1}
-					visualStep={timePeriod === 'year'
-						? 1
-						: timePeriod === 'solstice'
-							? Math.max(1, Math.ceil(periods.length / 15))
-							: Math.max(1, Math.ceil(periods.length / 25))}
-					bind:value={currentPeriod}
-					title={m.tags_scrub_title()}
-				/>
-				<div class="scrubber-labels">
-					<span>{m.tags_all_time()}</span>
-					{#if periods.length < 20}
-						{#each periods as period, i (period.label)}
-							<span class:active={currentPeriod === i + 1}>{period.label}</span>
-						{/each}
-					{:else}
-						<span>{periods[0]?.label}</span>
-						<span>...</span>
-						<span>{periods.at(-1)?.label}</span>
-					{/if}
-				</div>
-			</div>
-		{/if}
+						<button
+							type="button"
+							onclick={() => {
+								direction = direction === 'asc' ? 'desc' : 'asc'
+							}}
+							title={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
+							aria-label={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
+						>
+							<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+						</button>
+					</div>
+				</PopoverMenu>
 
-		{#if tracksQuery.isLoading}
-			<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
-		{:else if display === 'cloud'}
-			<div class="cloud">
-				{#each visibleTags as { value, count } (value)}
-					<span
-						style="font-size: calc(0.8rem + {maxVisibleTagCount
-							? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
-							: '0.0'}rem)"
-					>
-						<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
-							{value}
-						</a>
-					</span>
-				{/each}
-			</div>
-		{:else}
-			<TagChain bind:tags={chainTags} {matchingTracks} channelSlug={channel.slug} />
-			{#if visibleTags.length > 0}
-				<ol class="list">
-					{#each visibleTags as { value, count } (value)}
-						<li>
-							<button
-								class="ghost row"
-								class:selected={chainLower.includes(value.toLowerCase())}
-								onclick={() => toggleTag(value)}
+				<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
+					{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]}{/snippet}
+					<menu class="view-modes">
+						<button class:active={display === 'list'} onclick={() => (display = 'list')}>
+							<Icon icon="unordered-list" /><small>{m.tags_display_list()}</small>
+						</button>
+						<button class:active={display === 'cloud'} onclick={() => (display = 'cloud')}>
+							<Icon icon="tag" /><small>{m.tags_display_cloud()}</small>
+						</button>
+					</menu>
+				</PopoverMenu>
+			</menu>
+
+			{#if periods.length > 0}
+				<div class="scrubber">
+					<h3>
+						<span>{currentPeriodLabel}</span>
+						<span class="scrubber-meta">
+							<span class="count">({Math.round(tagCount.current)})</span>
+							<select
+								bind:value={timePeriod}
+								onchange={() => {
+									currentPeriod = 0
+								}}
+								aria-label={m.tags_period_label()}
 							>
-								<span class="tag-value">{value}</span>
-								<span class="count">{count} / {visibleTrackCount}</span>
-								<span
-									class="bar"
-									style="--pct: {visibleTrackCount ? ((count / visibleTrackCount) * 100).toFixed(1) : '0.0'}%"
-								></span>
-							</button>
-						</li>
-					{/each}
-				</ol>
-			{:else}
-				<p style="margin: 1rem; text-align: center;">
-					{m.tags_empty()}
-				</p>
+								<option value="year">{periodLabelMap.year()}</option>
+								<option value="solstice">{periodLabelMap.solstice()}</option>
+								<option value="month">{periodLabelMap.month()}</option>
+							</select>
+						</span>
+					</h3>
+					<InputRange
+						min={0}
+						max={periods.length}
+						step={1}
+						visualStep={timePeriod === 'year'
+							? 1
+							: timePeriod === 'solstice'
+								? Math.max(1, Math.ceil(periods.length / 15))
+								: Math.max(1, Math.ceil(periods.length / 25))}
+						bind:value={currentPeriod}
+						title={m.tags_scrub_title()}
+					/>
+					<div class="scrubber-labels">
+						<span>{m.tags_all_time()}</span>
+						{#if periods.length < 20}
+							{#each periods as period, i (period.label)}
+								<span class:active={currentPeriod === i + 1}>{period.label}</span>
+							{/each}
+						{:else}
+							<span>{periods[0]?.label}</span>
+							<span>...</span>
+							<span>{periods.at(-1)?.label}</span>
+						{/if}
+					</div>
+				</div>
 			{/if}
-		{/if}
-	</main>
+
+			{#if tracksQuery.isLoading}
+				<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
+			{:else if display === 'cloud'}
+				<div class="cloud">
+					{#each visibleTags as { value, count } (value)}
+						<span
+							style="font-size: calc(0.8rem + {maxVisibleTagCount
+								? ((count / maxVisibleTagCount) * 0.9).toFixed(2)
+								: '0.0'}rem)"
+						>
+							<a href={resolve('/[slug]/tracks', {slug}) + `?tags=${encodeURIComponent(value)}`}>
+								{value}
+							</a>
+						</span>
+					{/each}
+				</div>
+			{:else}
+				<TagChain bind:tags={chainTags} {matchingTracks} channelSlug={channel.slug} />
+				{#if visibleTags.length > 0}
+					<ol class="list">
+						{#each visibleTags as { value, count } (value)}
+							<li>
+								<button
+									class="ghost row"
+									class:selected={chainLower.includes(value.toLowerCase())}
+									onclick={() => toggleTag(value)}
+								>
+									<span class="tag-value">{value}</span>
+									<span class="count">{count} / {visibleTrackCount}</span>
+									<span
+										class="bar"
+										style="--pct: {visibleTrackCount ? ((count / visibleTrackCount) * 100).toFixed(1) : '0.0'}%"
+									></span>
+								</button>
+							</li>
+						{/each}
+					</ol>
+				{:else}
+					<p style="margin: 1rem; text-align: center;">
+						{m.tags_empty()}
+					</p>
+				{/if}
+			{/if}
+		</main>
+	</Subpage>
 {/if}
 
 <style>
@@ -425,15 +434,6 @@
 		position: sticky;
 		top: 0.5rem;
 		z-index: 1;
-	}
-
-	.filtermenu :global(.search-input) {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.filtermenu :global(.search-input input) {
-		width: 100%;
 	}
 
 	.scrubber {

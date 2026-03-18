@@ -5,6 +5,8 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {dedupeById} from '$lib/utils'
 	import ChannelsView from '$lib/components/channels-view.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
+	import Subpage from '$lib/components/subpage.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let display = $state(appState.channels_display || 'grid')
@@ -23,8 +25,13 @@
 	const channelCtx = getChannelCtx()
 	let channel = $derived(channelCtx.data)
 
+	let q = $state('')
 	let followers = $state([])
 	let loading = $state(true)
+
+	const matches = (/** @type {any} */ c, /** @type {string} */ q) =>
+		!q || c.name?.toLowerCase().includes(q.toLowerCase()) || c.slug?.toLowerCase().includes(q.toLowerCase())
+	let filteredFollowers = $derived(followers.filter((c) => matches(c, q)))
 
 	$effect(() => {
 		if (!channel?.id) return
@@ -57,20 +64,13 @@
 </svelte:head>
 
 <article class="channels-page fill-height">
-	{#if loading}
-		<header>
-			<h1>{m.nav_followers()}</h1>
-			<p>{m.common_loading()}</p>
-		</header>
-	{:else if followers.length === 0}
-		<header>
-			<h1>{m.nav_followers()} <small>({followers.length})</small></h1>
-		</header>
-	{:else}
-		<ChannelsView channels={followers} bind:display bind:order bind:direction>
-			{#snippet header()}<h1>{m.nav_followers()} <small>({followers.length})</small></h1>{/snippet}
+	<Subpage title={m.nav_followers()} {loading} empty={followers.length === 0} emptyText={m.followers_empty()}>
+		<ChannelsView channels={filteredFollowers} bind:display bind:order bind:direction>
+			{#snippet header()}
+				<SearchInput bind:value={q} placeholder={m.followers_search_placeholder({count: followers.length})} />
+			{/snippet}
 		</ChannelsView>
-	{/if}
+	</Subpage>
 </article>
 
 <style>
@@ -80,12 +80,5 @@
 
 	.channels-page :global(.layout--map) {
 		min-height: 100%;
-	}
-
-	header {
-		padding: 0.5rem;
-		min-height: 30px;
-		display: flex;
-		align-items: center;
 	}
 </style>
