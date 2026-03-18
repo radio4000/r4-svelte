@@ -262,9 +262,14 @@
 		}
 	}
 	@media (min-width: 768px) {
-		/* Square buttons when vertical */
+		header {
+			overflow-y: auto;
+		}
+
+		/* Square buttons when vertical, capped at 2rem */
 		nav :global(.btn) {
 			aspect-ratio: 1/1;
+			max-width: 2rem;
 		}
 	}
 </style>
