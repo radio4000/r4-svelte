@@ -249,6 +249,16 @@
 							</a>
 						{/if}
 					</span>
+					<span>
+						<button
+							type="button"
+							onclick={() => (appState.modal_share = {channel})}
+							title={m.share_native()}
+							aria-label={m.share_native()}
+						>
+							<Icon icon="share" />
+						</button>
+					</span>
 				</menu>
 			</header>
 

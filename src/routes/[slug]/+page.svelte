@@ -163,15 +163,6 @@
 				{/if}
 				<p class="dates">
 					<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
-					<button
-						type="button"
-						class="meta-share"
-						onclick={() => (appState.modal_share = {channel})}
-						title={m.share_native()}
-						aria-label={m.share_native()}
-					>
-						<Icon icon="share" />
-					</button>
 				</p>
 			</div>
 		</div>
@@ -382,11 +373,7 @@
 		color: inherit;
 	}
 
-	.meta-share {
-		flex-shrink: 0;
-	}
-
-	.track-section {
+.track-section {
 		border-top: 1px solid var(--gray-4);
 
 		> header {
