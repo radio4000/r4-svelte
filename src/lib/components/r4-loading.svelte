@@ -1,4 +1,6 @@
 <script>
+	import IconR4 from '$lib/components/icon-r4.svelte'
+
 	/** @type {{text?: string, value?: number, max?: number}} */
 	let {text, value, max} = $props()
 
@@ -40,10 +42,25 @@
 </script>
 
 <div class="r4-loading">
+	<span class="logo"><IconR4 size={48} /></span>
+	{displayText}
 	{#if value && max}
 		<progress {value} {max}></progress>
 	{:else}
 		<progress></progress>
 	{/if}
-	{displayText}
 </div>
+
+<style>
+	.r4-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+
+		.logo {
+			display: flex;
+			color: var(--accent-9);
+		}
+	}
+</style>

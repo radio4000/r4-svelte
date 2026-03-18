@@ -221,7 +221,6 @@
 	<svelte:boundary>
 		{#await data.preloading}
 			<div class="loader">
-				<p>{m.app_loading()}</p>
 				<R4Loading />
 				<p class="app-version"><AppBuildInfo /></p>
 			</div>
