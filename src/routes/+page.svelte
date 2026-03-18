@@ -301,10 +301,6 @@
 
 <style>
 	.homepage {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
 		padding: 0.5rem;
 
 		/* grids manage their own horizontal spacing */
