@@ -67,16 +67,16 @@
 
 <div class="deck-channel-header">
 	<svelte:element this={titleElement} class={titleClassNames}>
-		{#if titleHref}
-			<a href={titleHref} class="title-link">{title}</a>
-		{:else}
-			<span class="title-link">{title}</span>
-		{/if}
 		{#if isBroadcasting}
 			<span class="channel-badge live-pill" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
 				<Icon icon="cell-signal" size={14} />
 				{m.status_live_short()}
 			</span>
+		{/if}
+		{#if titleHref}
+			<a href={titleHref} class="title-link">{title}</a>
+		{:else}
+			<span class="title-link">{title}</span>
 		{/if}
 	</svelte:element>
 
