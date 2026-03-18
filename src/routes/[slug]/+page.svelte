@@ -334,7 +334,6 @@
 	}
 
 	.channel-meta {
-		margin: 0.75rem;
 		padding: 0.75rem;
 		display: flex;
 		flex-direction: column;
