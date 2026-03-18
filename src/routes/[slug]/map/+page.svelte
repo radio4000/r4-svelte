@@ -1,6 +1,7 @@
 <script>
 	import {getChannelCtx} from '$lib/contexts'
 	import MapChannels from '$lib/components/map-channels.svelte'
+	import Subpage from '$lib/components/subpage.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
@@ -9,13 +10,12 @@
 </script>
 
 <article class="map-page fill-height">
-	{#if channelCtx.isLoading}
-		<p>{m.common_loading()}</p>
-	{:else if !channel}
-		<p>{m.channel_not_found()}</p>
-	{:else if !hasLocation}
-		<p>{m.map_channel_no_location()}</p>
-	{:else}
+	<Subpage
+		title={m.nav_map()}
+		loading={channelCtx.isLoading}
+		empty={!hasLocation}
+		emptyText={m.map_channel_no_location()}
+	>
 		<div class="map-fill fill-height">
 			<MapChannels
 				channels={[channel]}
@@ -26,13 +26,17 @@
 				linkToMap="global"
 			/>
 		</div>
-	{/if}
+	</Subpage>
 </article>
 
 <style>
 	.map-page {
 		flex-direction: column;
 		position: relative;
+	}
+
+	header {
+		padding: 0.5rem;
 	}
 
 	.map-fill {

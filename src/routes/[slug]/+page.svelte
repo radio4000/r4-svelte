@@ -163,15 +163,6 @@
 				{/if}
 				<p class="dates">
 					<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
-					<button
-						type="button"
-						class="meta-share"
-						onclick={() => (appState.modal_share = {channel})}
-						title={m.share_native()}
-						aria-label={m.share_native()}
-					>
-						<Icon icon="share" />
-					</button>
 				</p>
 			</div>
 		</div>
@@ -247,13 +238,7 @@
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
 				{:else if tracksQuery.isReady && allTracks.length === 0}
-					<p class="empty">
-						{#if canEdit}
-							<a href={resolve('/add')}>{m.channel_first_track_cta()}</a>
-						{:else}
-							{m.channel_no_tracks()}
-						{/if}
-					</p>
+					<p class="empty">{m.channel_no_tracks()}</p>
 				{/if}
 			{:else}
 				{@const section =
@@ -340,7 +325,6 @@
 	}
 
 	.channel-meta {
-		margin: 0.75rem;
 		padding: 0.75rem;
 		display: flex;
 		flex-direction: column;
@@ -389,11 +373,7 @@
 		color: inherit;
 	}
 
-	.meta-share {
-		flex-shrink: 0;
-	}
-
-	.track-section {
+.track-section {
 		border-top: 1px solid var(--gray-4);
 
 		> header {

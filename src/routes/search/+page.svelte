@@ -185,7 +185,7 @@
 		{/if}
 
 		{#if channelsLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_channels()}</p>
+			<p>{m.search_loading_channels()}</p>
 		{:else if channels.length}
 			<section>
 				<h2>
@@ -193,7 +193,7 @@
 						? m.search_channel_one({count: channels.length})
 						: m.search_channel_other({count: channels.length})}
 				</h2>
-				<ul class="grid grid--scroll">
+				<ul class={channels.length < 3 ? 'list' : 'grid grid--scroll'}>
 					{#each channels as channel (channel.id)}
 						<li><ChannelCard {channel} /></li>
 					{/each}
@@ -202,7 +202,7 @@
 		{/if}
 
 		{#if tracksLoading}
-			<p><rough-spinner spinner="14" interval="150"></rough-spinner> {m.search_loading_tracks()}</p>
+			<p>{m.search_loading_tracks()}</p>
 		{:else if tracks.length}
 			<section class="track-results">
 				<header>
@@ -239,11 +239,17 @@
 			</section>
 		{/if}
 	{:else}
-		<p><small>{m.search_tip_slug()}</small></p>
+		<p class="empty-tip"><small>{m.search_tip_slug()}</small></p>
 	{/if}
 </article>
 
 <style>
+	article {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+
 	.search-header {
 		position: sticky;
 		top: 0;
@@ -295,5 +301,13 @@
 	menu,
 	section {
 		margin-bottom: 1rem;
+	}
+
+	.empty-tip {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0;
 	}
 </style>

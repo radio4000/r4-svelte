@@ -1,12 +1,12 @@
 <script lang="ts">
 	import {page} from '$app/state'
-	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
+	import Subpage from '$lib/components/subpage.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -113,89 +113,94 @@
 </script>
 
 {#if channel}
-	<section>
-		<header>
-			<menu class="row">
-				{#if aggregatedTags.length > 0}
-					<PopoverMenu>
-						{#snippet trigger()}
-							Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-						{/snippet}
-						<menu class="tags-menu">
-							{#each aggregatedTags as { value, count } (value)}
-								<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
-									{value} <span class="tag-count">({count})</span>
-								</button>
-							{/each}
-						</menu>
-					</PopoverMenu>
-				{/if}
-				<SearchInput bind:value={searchInput} placeholder={m.tracks_filter_placeholder()} debounce={150} />
-				<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-					{#snippet trigger()}<Icon
-							icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
-							strokeWidth={1.5}
-						/>{/snippet}
-					<SortControls bind:order bind:direction />
-				</PopoverMenu>
-			</menu>
-			{#if isFiltering && selectedTags.length > 0}
-				<menu class="row filter-tags">
-					{#each selectedTags as tag (tag)}
-						<button type="button" class="chip" onclick={() => toggleTag(tag)}>
-							{tag} ×
-						</button>
-					{/each}
-				</menu>
-			{/if}
-			{#if visibleTracks.length > 0}
-				<menu class="row filter-actions">
-					<small class="filter-count"
-						>{isFiltering
-							? m.tracks_selected_count({count: filteredTracks.length})
-							: m.tracks_total_count({count: allTracks.length})}</small
-					>
-					<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" />{m.common_play()}</button>
-					<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" />{m.common_queue()}</button>
-					{#if channel && canShowFilteredAutoRadio}
-						<AutoRadioButton
-							synced={isFilteredAutoActive && !isFilteredAutoDrifted}
-							title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
-							onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
-						/>
+	<Subpage
+		title={m.nav_tracks()}
+		loading={tracksQuery.isLoading && allTracks.length === 0}
+		empty={tracksQuery.isReady && allTracks.length === 0}
+	>
+		{#snippet emptyChildren()}
+			<p>{m.channel_no_tracks()}</p>
+		{/snippet}
+		<section>
+			<header>
+				<menu class="row">
+					{#if aggregatedTags.length > 0}
+						<PopoverMenu>
+							{#snippet trigger()}
+								Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
+							{/snippet}
+							<menu class="tags-menu">
+								{#each aggregatedTags as { value, count } (value)}
+									<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+										{value} <span class="tag-count">({count})</span>
+									</button>
+								{/each}
+							</menu>
+						</PopoverMenu>
 					{/if}
+					<SearchInput
+						bind:value={searchInput}
+						placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
+						debounce={150}
+					/>
+					<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+						{#snippet trigger()}<Icon
+								icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+								strokeWidth={1.5}
+							/>{/snippet}
+						<SortControls bind:order bind:direction />
+					</PopoverMenu>
 				</menu>
-			{/if}
-		</header>
-
-		{#if tracksQuery.isReady && visibleTracks.length > 0}
-			<Tracklist
-				tracks={visibleTracks}
-				playlistTitle={isFiltering ? filteredPlaylistTitle : undefined}
-				{canEdit}
-				grouped={!isFiltering}
-				virtual={false}
-				playContext={true}
-				onTagClick={toggleTag}
-			/>
-		{/if}
-
-		<footer>
-			{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
-				<p class="empty">{m.tracks_empty_filter()}</p>
-			{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
-				<p class="empty">{m.channel_loading_tracks()}</p>
-			{:else if tracksQuery.isReady && allTracks.length === 0}
-				{#if canEdit}
-					<p class="empty">
-						<a href={resolve('/add')}>{m.channel_first_track_cta()}</a>
-					</p>
-				{:else}
-					<p class="empty">{m.channel_no_tracks()}</p>
+				{#if isFiltering && selectedTags.length > 0}
+					<menu class="row filter-tags">
+						{#each selectedTags as tag (tag)}
+							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
+								{tag} ×
+							</button>
+						{/each}
+					</menu>
 				{/if}
+				{#if visibleTracks.length > 0}
+					<menu class="row filter-actions">
+						<small class="filter-count"
+							>{isFiltering
+								? m.tracks_selected_count({count: filteredTracks.length})
+								: m.tracks_total_count({count: allTracks.length})}</small
+						>
+						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" />{m.common_play()}</button>
+						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" />{m.common_queue()}</button>
+						{#if channel && canShowFilteredAutoRadio}
+							<AutoRadioButton
+								synced={isFilteredAutoActive && !isFilteredAutoDrifted}
+								title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
+								onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+							/>
+						{/if}
+					</menu>
+				{/if}
+			</header>
+
+			{#if tracksQuery.isReady && visibleTracks.length > 0}
+				<Tracklist
+					tracks={visibleTracks}
+					playlistTitle={isFiltering ? filteredPlaylistTitle : undefined}
+					{canEdit}
+					grouped={!isFiltering}
+					virtual={false}
+					playContext={true}
+					onTagClick={toggleTag}
+				/>
 			{/if}
-		</footer>
-	</section>
+
+			<footer>
+				{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
+					<p class="empty">{m.tracks_empty_filter()}</p>
+				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
+					<p class="empty">{m.channel_loading_tracks()}</p>
+				{/if}
+			</footer>
+		</section>
+	</Subpage>
 {/if}
 
 <style>
@@ -212,15 +217,6 @@
 
 	header :global(input[type='search']) {
 		flex: 1;
-	}
-
-	header :global(.search-input) {
-		flex: 1;
-		min-width: 0;
-	}
-
-	header :global(.search-input input[type='search']) {
-		width: 100%;
 	}
 
 	.tag-count {

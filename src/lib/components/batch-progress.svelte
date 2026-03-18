@@ -51,7 +51,7 @@
 		</span>
 		{#if running || isDone}
 			<span class="elapsed">
-				{#if running}<rough-spinner spinner="9" interval="200"></rough-spinner>{:else}✓{/if}
+				{running ? '…' : '✓'}
 				{elapsedStr}
 			</span>
 		{/if}
@@ -71,7 +71,7 @@
 				title="{size} items"
 			>
 				{#if status === 'fetching' || status === 'saving'}
-					<rough-spinner spinner="14" interval="120"></rough-spinner>
+					…
 				{:else if status === 'done'}
 					{size}
 				{:else if status === 'error'}

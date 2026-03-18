@@ -96,78 +96,84 @@
 		-->
 
 		<div class="card">
-		{#if error}
-			<p class="error" role="alert">{m.common_error()}: {error}</p>
-		{/if}
+			{#if error}
+				<p class="error" role="alert">{m.common_error()}: {error}</p>
+			{/if}
 
-		{#if success}
-			<p class="success">{m.channel_updated_success()}</p>
-		{/if}
+			{#if success}
+				<p class="success">{m.channel_updated_success()}</p>
+			{/if}
 
-		<form class="form" onsubmit={handleSubmit}>
-			<fieldset>
-				<legend>{m.common_image()}</legend>
-				<R4AvatarUpload slug={channel.slug} channelId={channel.id} image={channel.image} />
-			</fieldset>
+			<form class="form" onsubmit={handleSubmit}>
+				<fieldset>
+					<legend>{m.common_image()}</legend>
+					<R4AvatarUpload slug={channel.slug} channelId={channel.id} image={channel.image} />
+				</fieldset>
 
-			<fieldset>
-				<label for="name">{m.common_name()}</label>
-				<input id="name" name="name" type="text" value={channel.name ?? ''} required />
-			</fieldset>
+				<fieldset>
+					<label for="name">{m.common_name()}</label>
+					<input id="name" name="name" type="text" value={channel.name ?? ''} required />
+				</fieldset>
 
-			<fieldset>
-				<label for="slug">{m.channel_edit_slug_label()}</label>
-				<input id="slug" name="slug" type="text" value={channel.slug ?? ''} required />
-			</fieldset>
+				<fieldset>
+					<label for="slug">{m.channel_edit_slug_label()}</label>
+					<input id="slug" name="slug" type="text" value={channel.slug ?? ''} required />
+				</fieldset>
 
-			<fieldset>
-				<label for="description">{m.common_description()}</label>
-				<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
-			</fieldset>
+				<fieldset>
+					<label for="description">{m.common_description()}</label>
+					<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
+				</fieldset>
 
-			<fieldset>
-				<legend>{m.common_location()}</legend>
-				<div class="location-inputs">
-					<input
-						name="latitude"
-						type="number"
-						value={locationLat ?? ''}
-						step="any"
-						min="-90"
-						max="90"
-						placeholder={m.common_latitude()}
-						onchange={(e) => (pickedLat = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
-					/>
-					<input
-						name="longitude"
-						type="number"
-						value={locationLng ?? ''}
-						step="any"
-						min="-180"
-						max="180"
-						placeholder={m.common_longitude()}
-						onchange={(e) => (pickedLng = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
-					/>
-					<button type="button" onclick={() => (showMap = !showMap)}>
-						{showMap ? m.channel_edit_hide_map() : m.channel_edit_pick_on_map()}
-					</button>
-				</div>
-				{#if showMap}
-					<div class="map-container">
-						<MapPicker latitude={locationLat} longitude={locationLng} onselect={handleLocationSelect} />
+				<fieldset>
+					<legend>{m.common_location()}</legend>
+					<div class="location-inputs">
+						<input
+							name="latitude"
+							type="number"
+							value={locationLat ?? ''}
+							step="any"
+							min="-90"
+							max="90"
+							placeholder={m.common_latitude()}
+							onchange={(e) => (pickedLat = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
+						/>
+						<input
+							name="longitude"
+							type="number"
+							value={locationLng ?? ''}
+							step="any"
+							min="-180"
+							max="180"
+							placeholder={m.common_longitude()}
+							onchange={(e) => (pickedLng = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
+						/>
+						<button type="button" onclick={() => (showMap = !showMap)}>
+							{showMap ? m.channel_edit_hide_map() : m.channel_edit_pick_on_map()}
+						</button>
 					</div>
-				{/if}
-			</fieldset>
+					{#if showMap}
+						<div class="map-container">
+							<MapPicker latitude={locationLat} longitude={locationLng} onselect={handleLocationSelect} />
+						</div>
+					{/if}
+				</fieldset>
 
-			<fieldset>
-				<label for="url">{m.common_url()}</label>
-				<input id="url" name="url" type="url" value={channel.url ?? ''} placeholder={m.track_form_url_placeholder()} />
-			</fieldset>
+				<fieldset>
+					<label for="url">{m.common_url()}</label>
+					<input
+						id="url"
+						name="url"
+						type="url"
+						value={channel.url ?? ''}
+						placeholder={m.track_form_url_placeholder()}
+					/>
+				</fieldset>
 
-			<button class="primary" type="submit" disabled={submitting}>
-				{submitting ? m.common_save() + '...' : m.common_save()}
-			</button>
-		</form>
+				<button class="primary" type="submit" disabled={submitting}>
+					{submitting ? m.common_save() + '...' : m.common_save()}
+				</button>
+			</form>
 		</div>
 
 		<p class="delete-link"><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
