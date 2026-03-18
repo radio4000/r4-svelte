@@ -421,6 +421,7 @@
 	:global(.r4-loading) {
 		display: flex;
 		flex-flow: column;
+		align-items: center;
 		text-align: center;
 	}
 </style>
