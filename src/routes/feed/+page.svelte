@@ -3,6 +3,8 @@
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {appName} from '$lib/config'
+	import {appState} from '$lib/app-state.svelte'
+	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
 	import {groupByDay} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
@@ -61,23 +63,30 @@
 </svelte:head>
 
 <div class="feed">
-	<div class="feed-nav">
-		<nav class="tabs">
-			<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
-			<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
-		</nav>
+	<div class="sticky-header">
+		{#if appState.channel}
+			<ol class="list">
+				<li><ChannelCard channel={appState.channel} /></li>
+			</ol>
+		{/if}
+		<div class="feed-nav">
+			<nav class="tabs">
+				<a href={resolve('/')} class:active={page.route.id === '/'}>{m.home_tab_home()}</a>
+				<a href={resolve('/feed')} class:active={page.route.id === '/feed'}>{m.home_tab_feed()}</a>
+			</nav>
 
-		<PopoverMenu style="margin-left: auto;">
-			{#snippet trigger()}
-				<Icon icon="history" />
-				{days}d
-			{/snippet}
-			<menu class="nav-vertical">
-				{#each DAY_OPTIONS as n (n)}
-					<button class:active={days === n} onclick={() => setDays(n)}>{n} days</button>
-				{/each}
-			</menu>
-		</PopoverMenu>
+			<PopoverMenu style="margin-left: auto;">
+				{#snippet trigger()}
+					<Icon icon="history" />
+					{days}d
+				{/snippet}
+				<menu class="nav-vertical">
+					{#each DAY_OPTIONS as n (n)}
+						<button class:active={days === n} onclick={() => setDays(n)}>{n} days</button>
+					{/each}
+				</menu>
+			</PopoverMenu>
+		</div>
 	</div>
 
 	{#if feedTracks.length}
@@ -101,6 +110,16 @@
 <style>
 	.feed {
 		padding: 0.5rem;
+	}
+
+	.sticky-header {
+		position: sticky;
+		top: 0;
+		z-index: 3;
+		background: var(--color-interface);
+		padding-bottom: 0.25rem;
+		margin-inline: -0.5rem;
+		padding-inline: 0.5rem;
 	}
 
 	.feed-nav {
