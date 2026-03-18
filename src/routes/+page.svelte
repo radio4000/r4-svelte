@@ -399,7 +399,7 @@
 								onclick={pickFeatured}
 								disabled={shuffling}
 							>
-								<Icon icon="rotate" />
+								<Icon icon="switch-alt" />
 							</button>
 						{/if}
 					</menu>
@@ -446,6 +446,10 @@
 					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 				</menu>
 			</section>
+		{:else}
+			<button class="btn icon-btn" onclick={() => (appState.show_welcome_hint = true)} title={m.welcome_title({appName})}>
+				<Icon icon="circle-info" />
+			</button>
 		{/if}
 
 		{#if featuredChannels.length}
@@ -466,7 +470,7 @@
 								onclick={pickFeatured}
 								disabled={shuffling}
 							>
-								<Icon icon="rotate" />
+								<Icon icon="switch-alt" />
 							</button>
 						{/if}
 					</menu>
