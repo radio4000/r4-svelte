@@ -4,6 +4,7 @@
 	import {page} from '$app/state'
 	import {capabilities} from '$lib/modes'
 	import {appState} from '$lib/app-state.svelte'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
@@ -41,6 +42,7 @@
 	} = $props()
 
 	let searchValue = $state('')
+	const follows = getFollowedChannels()
 	$effect(() => {
 		const q = searchValue.trim()
 		if (!q || !searchHref) return
@@ -50,6 +52,7 @@
 	const filterSlugMap = {
 		featured: 'featured',
 		all: 'all',
+		favorites: 'favorites',
 		broadcasting: 'broadcasting',
 		artwork: 'with-artwork',
 		imported: 'imported',
@@ -64,6 +67,7 @@
 
 	const filterLabelMap = {
 		all: () => m.channels_filter_option_all(),
+		favorites: () => m.nav_favorites(),
 		broadcasting: () => m.channels_filter_option_broadcasting(),
 		imported: () => m.channels_filter_option_imported(),
 		'10+': () => m.channels_filter_option_10(),
@@ -123,6 +127,7 @@
 			? 50
 			: Math.max(VIEW_MIN_LIMIT[display] ?? 0, isPaged ? currentPage * pageSize : paginatedLimit)
 	)
+	const favoriteIds = $derived(follows.followedIds)
 
 	// Reactive broadcast IDs for the broadcasting filter
 	const broadcastsQuery = useLiveQuery((q) => q.from({b: broadcastsCollection}))
@@ -146,7 +151,12 @@
 
 	/** Map UI filter/sort state → ChannelQueryParams for loadMoreChannels */
 	const channelQueryParams = $derived.by(() => ({
-		idIn: filter === 'broadcasting' && broadcastIds.length ? broadcastIds : undefined,
+		idIn:
+			filter === 'broadcasting' && broadcastIds.length
+				? broadcastIds
+				: filter === 'favorites' && favoriteIds.length
+					? favoriteIds
+					: undefined,
 		trackCountGte: filter === 'featured' ? 10 : filterMinTracks[filter],
 		imageNotNull: filter === 'artwork' || filter === 'featured',
 		shuffle: filter !== 'featured' && order === 'shuffle',
@@ -178,6 +188,8 @@
 			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			const q = base.where(({ch}) => inArray(ch.id, ids)).orderBy(({ch}) => ch.created_at, 'desc')
 			return queryLimit === Infinity ? q : q.limit(queryLimit)
+		} else if (filter === 'favorites') {
+			return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 		} else if (filter === 'broadcasting') {
 			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
 			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
@@ -199,7 +211,7 @@
 		}
 		return queryLimit === Infinity ? base : base.limit(queryLimit)
 	})
-	const channelsRaw = $derived(channelsQuery.data ?? [])
+	const channelsRaw = $derived(filter === 'favorites' ? follows.followedChannels : (channelsQuery.data ?? []))
 	// For featured: score and take top 12; for paged views: slice to current page; otherwise all
 	const channels = $derived.by(() => {
 		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
@@ -211,7 +223,13 @@
 	// Server-side total count for pagination (N/M display)
 	let serverCount = $state(0)
 	$effect(() => {
-		if (!isPaged || filter === 'broadcasting' || filter === 'imported' || filter === 'featured') {
+		if (
+			!isPaged ||
+			filter === 'broadcasting' ||
+			filter === 'imported' ||
+			filter === 'featured' ||
+			filter === 'favorites'
+		) {
 			serverCount = 0
 			return
 		}
@@ -226,9 +244,11 @@
 	const totalCount = $derived(
 		filter === 'broadcasting'
 			? broadcastIds.length
-			: filter === 'imported'
-				? (appState.local_channel_ids?.length ?? 0)
-				: serverCount
+			: filter === 'favorites'
+				? favoriteIds.length
+				: filter === 'imported'
+					? (appState.local_channel_ids?.length ?? 0)
+					: serverCount
 	)
 	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
 	const hasNextPage = $derived(
@@ -281,7 +301,7 @@
 	// Auto-fetch from supabase when the query needs more data than we have
 	$effect(() => {
 		if (!capabilities.globalBrowse) return
-		if (filter === 'imported') return
+		if (filter === 'imported' || filter === 'favorites') return
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
 		}
@@ -393,6 +413,13 @@
 					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
 					>{m.channels_filter_option_all()}</button
 				>
+				{#if follows.followedIds.length}
+					<button
+						class:active={filter === 'favorites'}
+						onclick={() => setFilter('favorites')}
+						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}>{m.nav_favorites()}</button
+					>
+				{/if}
 				{#if broadcastsCollection.state.size}
 					<button
 						class:active={filter === 'broadcasting'}

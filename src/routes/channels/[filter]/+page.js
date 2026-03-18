@@ -5,6 +5,7 @@ export const ssr = false
 const slugToFilter = {
 	featured: 'featured',
 	all: 'all',
+	favorites: 'favorites',
 	broadcasting: 'broadcasting',
 	'with-artwork': 'artwork',
 	imported: 'imported',
