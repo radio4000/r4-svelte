@@ -373,7 +373,7 @@
 		color: inherit;
 	}
 
-.track-section {
+	.track-section {
 		border-top: 1px solid var(--gray-4);
 
 		> header {
