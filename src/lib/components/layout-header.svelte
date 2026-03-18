@@ -82,7 +82,7 @@
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
-					class:active={userChannelHasAuto}
+					class:active={userChannelHasAuto || page.params?.slug === userChannel.slug}
 					{@attach tooltip({content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
@@ -97,7 +97,7 @@
 					aria-label={m.home_create_channel()}
 					{@attach tooltip({content: m.home_create_channel()})}
 				>
-					<Icon icon="add" />
+					<Icon icon="user" />
 				</a>
 			{/if}
 			{#if !isSignedIn}
