@@ -442,10 +442,6 @@
 		padding: 0.5rem;
 		border-radius: var(--border-radius);
 
-		:global(input[type='range']) {
-			accent-color: var(--accent-9);
-		}
-
 		h3 {
 			display: flex;
 			place-items: center;

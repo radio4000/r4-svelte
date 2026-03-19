@@ -72,8 +72,10 @@ input[type='range'] {
 	margin: 0;
 	accent-color: var(--accent-9);
 	background: transparent;
+	-webkit-appearance: none;
 
 	&::-webkit-slider-runnable-track {
+	  height: 0.2rem;
 		background: linear-gradient(
 			to right,
 			var(--range-color, var(--accent-9)) var(--range-fill, 0%),
@@ -83,6 +85,8 @@ input[type='range'] {
 
 	&::-webkit-slider-thumb {
 		background: var(--range-color, var(--accent-9));
+		position: relative;
+		top: -0.4rem;
 	}
 
 	&::-moz-range-thumb {

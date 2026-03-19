@@ -24,11 +24,8 @@
 
 	input[type='range'] {
 		flex: 1;
-		margin: 0;
-		background: transparent;
 		position: relative;
 		z-index: 2;
-		accent-color: var(--gray-9);
 	}
 
 	.marks {
