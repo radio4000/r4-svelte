@@ -99,7 +99,7 @@
 	}
 
 	const palette = $derived.by(() => ({
-		normalStroke: resolveCssColor('--gray-6'),
+		normalStroke: resolveCssColor('--accent-6'),
 		normalFill: resolveCssColor('--gray-8'),
 		favoriteStroke: resolveCssColor('--accent-9'),
 		favoriteFill: resolveCssColor('--accent-6'),
@@ -745,6 +745,8 @@
 
 	:global(.map-popup) {
 		width: 14.5rem;
+		/* overwrite maplibre */
+		font-family: var(--sans-serif);
 	}
 
 	:global(.maplibregl-popup-content) {

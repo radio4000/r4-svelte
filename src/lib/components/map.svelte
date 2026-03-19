@@ -193,4 +193,10 @@
 	.map :global(.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib) {
 		margin: 0;
 	}
+
+	.map :global(.maplibregl-map),
+	.map-popup {
+		font-family: inherit;
+	}
+
 </style>
