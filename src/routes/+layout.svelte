@@ -229,43 +229,45 @@
 			<KeyboardShortcuts />
 			<ToolTip />
 
-			{#key uiLocale}
-				<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
-					{#if !appState.embed_mode}
+			<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
+				{#if !appState.embed_mode}
+					{#key uiLocale}
 						<LayoutHeader preloading={data.preloading} />
-					{/if}
+					{/key}
+				{/if}
 
-					<div class="content-wrapper">
-						<section class="content">
-							<div class="scroll-area">
+				<div class="content-wrapper">
+					<section class="content">
+						<div class="scroll-area">
+							{#key uiLocale}
 								<main>
 									{@render children()}
 								</main>
+							{/key}
+						</div>
+
+						<DeckStrip />
+					</section>
+					<section class="compact-decks" aria-label={m.decks_compact_label()}>
+						{#each compactDeckIds as deckId (deckId)}
+							<div
+								class="compact-deck-item"
+								style:--deck-accent={deckAccent(allDeckIds, deckId)}
+								in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
+								out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
+							>
+								<DeckCompactBar {deckId} />
 							</div>
-
-							<DeckStrip />
-						</section>
-						<section class="compact-decks" aria-label={m.decks_compact_label()}>
-							{#each compactDeckIds as deckId (deckId)}
-								<div
-									class="compact-deck-item"
-									style:--deck-accent={deckAccent(allDeckIds, deckId)}
-									in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
-									out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
-								>
-									<DeckCompactBar {deckId} />
-								</div>
-							{/each}
-						</section>
-					</div>
-
-					{#if chatPanelVisible}
-						<DraggablePanel title={m.chat_panel_title()}>
-							<LiveChat />
-						</DraggablePanel>
-					{/if}
+						{/each}
+					</section>
 				</div>
-			{/key}
+
+				{#if chatPanelVisible}
+					<DraggablePanel title={m.chat_panel_title()}>
+						<LiveChat />
+					</DraggablePanel>
+				{/if}
+			</div>
 		{:catch}
 			<p>{m.common_loading()}</p>
 		{/await}
