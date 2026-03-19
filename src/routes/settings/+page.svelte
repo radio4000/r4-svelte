@@ -9,6 +9,7 @@
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import {appChatUrl, appDiscordUrl} from '$lib/config'
 	import {repoBlobUrl, repoCommitUrl} from '$lib/repo'
+	import BackLink from '$lib/components/back-link.svelte'
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')
@@ -20,7 +21,10 @@
 </svelte:head>
 
 <article class="focused constrained">
-	<h1>{m.settings_title()}</h1>
+	<header>
+		<BackLink href={resolve('/menu')} />
+		<h1>{m.settings_title()}</h1>
+	</header>
 
 	<menu class="nav-vertical">
 		{#if !appState.user}
@@ -66,41 +70,20 @@
 		</a>
 	</menu>
 
-	<menu class="nav-vertical">
-		<a href={resolve('/about')}>
-			<Icon icon="circle-info" />
-			{m.nav_about()}
-			<AppPresenceCount />
-		</a>
-		<a href={appDiscordUrl} target="_blank" rel="noreferrer">
-			<Icon icon="message-circle" />
-			Discord
-		</a>
-		<a href={appChatUrl} rel="noreferrer">
-			<Icon icon="message-circle" />
-			Matrix
-		</a>
-		<a href={changelogHref} target="_blank" rel="noreferrer">
-			<Icon icon="html" />
-			{m.settings_changelog()}
-		</a>
-		{#if sha && sourceHref}
-			<a href={sourceHref} target="_blank" rel="noreferrer">
-				<Icon icon="code-branch" />
-				Source code <AppBuildInfo link={false} />
-			</a>
-		{/if}
-		<a href={resolve('/docs')}>
-			<Icon icon="document" />
-			Docs
-		</a>
-	</menu>
 </article>
 
 <style>
-	h1 {
+	header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
 		margin-block: 0.5rem 1rem;
 	}
+
+	h1 {
+		margin: 0;
+	}
+
 	menu {
 		margin: 0 0 1rem;
 	}

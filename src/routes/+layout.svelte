@@ -337,9 +337,9 @@
 	}
 
 	.app-version {
-		margin: 0.25rem 0.5rem 0.5rem;
+		margin: 0;
 		font-size: var(--font-2);
-		text-align: right;
+		text-align: center;
 	}
 
 	.compact-decks {
@@ -417,6 +417,7 @@
 		place-items: center;
 		max-width: 40ch;
 		margin: 0 auto;
+		gap: 1rem;
 	}
 
 	:global(.r4-loading) {

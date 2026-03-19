@@ -1,4 +1,5 @@
 <script>
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'

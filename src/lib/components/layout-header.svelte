@@ -147,13 +147,13 @@
 			<Icon icon="history" />
 		</a>
 		<a
-			href={resolve('/settings')}
+			href={resolve('/menu')}
 			class="btn settings-link"
-			class:active={page.route.id?.startsWith('/settings')}
-			aria-label={m.nav_settings()}
-			{@attach tooltip({content: m.nav_settings()})}
+			class:active={page.route.id?.startsWith('/menu') || page.route.id?.startsWith('/settings')}
+			aria-label="Menu"
+			{@attach tooltip({content: 'Menu'})}
 		>
-			<Icon icon="settings" />
+			<Icon icon="menu" />
 		</a>
 	</nav>
 </header>

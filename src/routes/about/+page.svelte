@@ -11,7 +11,7 @@
 
 <article class="focused constrained">
 	<header>
-		<BackLink href={resolve('/settings')} />
+		<BackLink href={resolve('/menu')} />
 		<h1>{m.about_title({appName})}</h1>
 	</header>
 </article>

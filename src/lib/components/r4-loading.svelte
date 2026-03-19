@@ -59,11 +59,12 @@
 		gap: 1rem;
 
 		.logo {
-			display: flex;
+			display: contents;
 			color: var(--accent-9);
 			:global(svg) {
 				width: 2rem;
 				height: auto;
+				display: block;
 			}
 		}
 	}
