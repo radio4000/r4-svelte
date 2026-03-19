@@ -298,8 +298,7 @@
 <style>
 	h3 {
 		line-height: 1.2;
-		margin-left: 0.5rem;
-		text-align: left;
+		text-align: center;
 		text-transform: capitalize;
 		font-weight: bold;
 		font-size: var(--font-5);

@@ -120,7 +120,7 @@
 		{#if aggregatedTags.length > 0}
 			<PopoverMenu>
 				{#snippet trigger()}
-					Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
+					<Icon icon="hash" />{selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
 				{/snippet}
 				<menu class="tags-menu">
 					{#each aggregatedTags as { value, count } (value)}

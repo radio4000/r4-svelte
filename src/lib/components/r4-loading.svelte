@@ -61,7 +61,7 @@
 
 		.logo {
 			display: contents;
-			color: var(--accent-9);
+			color: currentColor;
 			:global(svg) {
 				width: 2rem;
 				height: auto;
