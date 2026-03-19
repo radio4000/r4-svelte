@@ -79,6 +79,7 @@ export async function pullYouTube(tracks, {signal, onProgress} = {}) {
 	}
 
 	const videos = []
+	const errors = []
 	const chunkSize = 50
 	const totalBatches = Math.ceil(toUpdate.length / chunkSize)
 	let currentBatch = 0
@@ -92,6 +93,7 @@ export async function pullYouTube(tracks, {signal, onProgress} = {}) {
 
 		if (!result.ok) {
 			log.warn('batch failed:', result.error.message)
+			errors.push(result.error)
 			if (onProgress) {
 				await onProgress({current: currentBatch, total: totalBatches, videos: []})
 			}
@@ -122,5 +124,10 @@ export async function pullYouTube(tracks, {signal, onProgress} = {}) {
 	}
 
 	log.info(`processed ${toUpdate.length} media_ids, got ${videos.length} videos`)
+
+	if (videos.length === 0 && errors.length > 0) {
+		throw errors[0]
+	}
+
 	return videos
 }
