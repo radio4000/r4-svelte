@@ -77,6 +77,26 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
+				{#if userChannelHasAuto}
+					<span {@attach tooltip({content: m.auto_radio_resync()})}>
+						<AutoRadioButton
+							className="btn resync-link"
+							synced={!userChannelHasAutoDrifted}
+							title={m.auto_radio_resync()}
+							onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
+						/>
+					</span>
+				{/if}
+				{#if isBroadcasting}
+					<a
+						href={resolve(`/${userChannel.slug}`)}
+						class="btn ghost broadcasting-btn"
+						aria-label={m.status_broadcasting()}
+						{@attach tooltip({content: m.status_broadcasting()})}
+					>
+						<Icon icon="cell-signal" />
+					</a>
+				{/if}
 				<AddTrackDialog />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
@@ -115,28 +135,6 @@
 	</nav>
 
 	<nav class="nav-settings">
-		{#await preloading then}
-			{#if isBroadcasting}
-				<a
-					href={resolve(`/${userChannel?.slug}`)}
-					class="btn active"
-					aria-label={m.status_broadcasting()}
-					{@attach tooltip({content: m.status_broadcasting()})}
-				>
-					<Icon icon="cell-signal" />
-				</a>
-			{/if}
-			{#if userChannelHasAuto}
-				<span {@attach tooltip({content: m.auto_radio_resync()})}>
-					<AutoRadioButton
-						className="btn resync-link"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-					/>
-				</span>
-			{/if}
-		{/await}
 		<a
 			href={resolve('/history')}
 			class="btn"
@@ -153,7 +151,7 @@
 			aria-label="Menu"
 			{@attach tooltip({content: 'Menu'})}
 		>
-			<Icon icon="menu" />
+			<Icon icon="options-vertical-encircled" />
 		</a>
 	</nav>
 </header>
@@ -180,6 +178,10 @@
 
 	nav :global(.btn svg) {
 		color: currentColor;
+	}
+
+	nav :global(.broadcasting-btn svg) {
+		color: var(--accent-9);
 	}
 
 	.nav-secondary {
