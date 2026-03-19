@@ -7,6 +7,20 @@ select {
 
 select {
 	color: var(--gray-12);
+	&:focus {
+		outline: none;
+		border-color: var(--gray-12);
+	}
+	&:hover,
+	&:active {
+		outline: none;
+		border-color: var(--gray-7);
+	}
+}
+
+select option {
+	color: var(--gray-12);
+	background: var(--gray-2);
 }
 
 select,

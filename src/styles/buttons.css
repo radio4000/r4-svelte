@@ -40,7 +40,6 @@ button:hover,
 	border-color: var(--accent-9);
 }
 
-select:active,
 button:focus,
 .btn:focus {
 	outline: 2px solid var(--accent-9);
@@ -54,7 +53,6 @@ button:focus,
 /* 	} */
 /* } */
 
-select:focus,
 button:disabled,
 .btn:disabled {
 	color: var(--gray-8);
@@ -258,4 +256,9 @@ button.chip.active:hover,
 .chip.active + .chip-delete:hover {
 	background: var(--color-red);
 	color: white;
+}
+
+/* Select should use normal text color, not the customizable --button-color */
+select {
+	color: var(--gray-12);
 }
