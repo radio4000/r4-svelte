@@ -34,6 +34,7 @@ export default defineConfig({
 			injectRegister: null,
 			workbox: {
 				clientsClaim: true,
+				navigateFallback: null,
 				globPatterns: ['client/**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
 				globIgnores: ['**/*.html'],
 				// Pages are fetched from the network first (always fresh when online).
