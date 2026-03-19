@@ -357,9 +357,8 @@
 
 		{#if showBroadcastCountWidget}
 			<section class="section dashboard-section">
-				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
-				<div class="dashboard-grid">
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+				<div class="dashboard-grid" style="width: fit-content;">
+					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/broadcasting')}>
 						<span class="dashboard-label dashboard-label--with-icon">
 							<Icon icon="signal" size={16} />
 							{m.home_dashboard_live_radios()}
