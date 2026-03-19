@@ -53,6 +53,13 @@ body {
 	scrollbar-color: var(--gray-7) var(--gray-1);
 }
 
+img {
+	/* Keep alt text subtle and centered while images are loading */
+	font-size: var(--font-1);
+	color: var(--gray-5);
+	text-align: center;
+}
+
 h1,
 h2,
 h3,
