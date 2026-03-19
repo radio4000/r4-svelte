@@ -129,14 +129,14 @@
 					(b.track_count ?? 0) - (a.track_count ?? 0) ||
 					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
 			)
-			.slice(0, 6)
+			.slice(0, 3)
 			.map((channel) => channel.slug)
 	})
 	const featuredTags = $derived.by(() => {
 		const tracks = [...tracksCollection.state.values()]
 		if (!tracks.length) return []
 		return getChannelTags(tracks)
-			.slice(0, 12)
+			.slice(0, 6)
 			.map((t) => t.value)
 	})
 
