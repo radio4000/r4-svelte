@@ -20,6 +20,7 @@ export type ChannelQueryParams = {
 	idIn?: string[]
 	trackCountGte?: number
 	imageNotNull?: boolean
+	coordinatesNotNull?: boolean
 	orderColumn?: string
 	ascending?: boolean
 	shuffle?: boolean
@@ -35,6 +36,9 @@ function buildChannelsQuery(params: ChannelQueryParams) {
 		query = query.not('image', 'is', null).gte('track_count', params.trackCountGte)
 	} else if (params.trackCountGte) {
 		query = query.gte('track_count', params.trackCountGte)
+	}
+	if (params.coordinatesNotNull) {
+		query = query.not('latitude', 'is', null).not('longitude', 'is', null)
 	}
 	if (params.shuffle) return query
 	return query.order(params.orderColumn ?? 'created_at', {ascending: params.ascending ?? true})
@@ -52,28 +56,45 @@ export async function fetchChannelCount(params: ChannelQueryParams = {}): Promis
 	} else if (params.trackCountGte) {
 		query = query.gte('track_count', params.trackCountGte)
 	}
+	if (params.coordinatesNotNull) {
+		query = query.not('latitude', 'is', null).not('longitude', 'is', null)
+	}
 	const {count, error} = await query
 	if (error) return 0
 	return count ?? 0
 }
 
-/** Fetch the next page of channels and upsert into the collection. */
+/** Fetch the next page of channels, routing through QueryClient cache so staleTime applies. */
 export async function loadMoreChannels(
 	params: ChannelQueryParams & {offset: number; limit: number}
 ): Promise<Channel[]> {
 	if (!capabilities.globalBrowse) return []
-	log.info('channels loadMore', {offset: params.offset, limit: params.limit})
-	const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
-	if (error) throw error
-	const channels = (data || []) as Channel[]
-	if (channels.length) {
+	const sortKey = params.shuffle
+		? 'shuffle'
+		: `${params.orderColumn ?? 'created_at'}_${params.ascending ? 'asc' : 'desc'}`
+	const queryKey: (string | number)[] = ['channels']
+	if (params.coordinatesNotNull) queryKey.push('geo')
+	if (params.imageNotNull && params.trackCountGte) queryKey.push('artwork', sortKey)
+	else if (params.trackCountGte) queryKey.push('minTracks', params.trackCountGte, sortKey)
+	else queryKey.push(sortKey)
+	if (params.idIn?.length) queryKey.push('ids', ...params.idIn.toSorted())
+	queryKey.push('offset', params.offset, 'limit', params.limit)
+	log.info('channels loadMore', {queryKey})
+	const data = await queryClient.fetchQuery({
+		queryKey,
+		staleTime: 60 * 60 * 1000,
+		queryFn: async () => {
+			const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
+			if (error) throw error
+			return (data ?? []) as Channel[]
+		}
+	})
+	if (data.length) {
 		channelsCollection.utils.writeBatch(() => {
-			channels.forEach((ch) => {
-				channelsCollection.utils.writeUpsert(ch)
-			})
+			data.forEach((ch) => channelsCollection.utils.writeUpsert(ch))
 		})
 	}
-	return channels
+	return data
 }
 
 const defaultChannelParams = {
@@ -81,6 +102,7 @@ const defaultChannelParams = {
 	idIn: undefined as string[] | undefined,
 	trackCountGte: undefined as number | undefined,
 	imageNotNull: false,
+	coordinatesNotNull: false,
 	shuffle: false,
 	orderColumn: 'created_at' as string | undefined,
 	ascending: true,
@@ -103,6 +125,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 	const imageNotNull = options.filters.some(
 		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
 	)
+	const coordinatesNotNull = options.filters.some((f) => f.field[0] === 'latitude')
 	const sort = options.sorts[0]
 	const shuffle = sort?.field[0] === 'shuffle'
 	return {
@@ -110,6 +133,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		idIn,
 		trackCountGte,
 		imageNotNull,
+		coordinatesNotNull,
 		shuffle,
 		orderColumn: shuffle ? undefined : ((sort?.field[0] as string) ?? 'created_at'),
 		ascending: sort ? sort.direction === 'asc' : true,
@@ -120,12 +144,14 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 export const channelsCollection = createCollection<Channel, string>({
 	...queryCollectionOptions({
 		queryKey: (opts) => {
-			const {slug, idIn, trackCountGte, imageNotNull, sortKey} = parseChannelParams(opts)
+			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey} = parseChannelParams(opts)
 			if (slug) return ['channels', slug]
 			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
-			if (imageNotNull && trackCountGte) return ['channels', 'artwork', sortKey]
-			if (trackCountGte) return ['channels', 'minTracks', trackCountGte, sortKey]
-			return ['channels', sortKey]
+			const segments: (string | number)[] = ['channels']
+			if (coordinatesNotNull) segments.push('geo')
+			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey]
+			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey]
+			return [...segments, sortKey]
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -161,7 +187,8 @@ export const channelsCollection = createCollection<Channel, string>({
 				return [...localMatches, ...(data || [])] as Channel[]
 			}
 			log.info('channels queryFn', p)
-			const {data, error} = await buildChannelsQuery(p).limit(CHANNELS_PAGE_SIZE)
+			const limit = p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE
+			const {data, error} = await buildChannelsQuery(p).limit(limit)
 			if (error) throw error
 			return (data || []) as Channel[]
 		}

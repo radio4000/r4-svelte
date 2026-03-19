@@ -1,5 +1,5 @@
 <script>
-	import { untrack } from 'svelte'
+	import {untrack} from 'svelte'
 	import maplibregl from 'maplibre-gl'
 	import * as m from '$lib/paraglide/messages'
 	import MapComponent from '$lib/components/map.svelte'

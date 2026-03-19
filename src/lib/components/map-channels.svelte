@@ -186,7 +186,7 @@
 
 	/** @param {maplibregl.Map} m @param {any} fc */
 	function setupLayers(m, fc) {
-		if (!fc) return
+		if (!m || !fc) return
 		if (!m.getSource('channels-source')) {
 			m.addSource('channels-source', {type: 'geojson', data: fc})
 			m.addLayer({
@@ -561,31 +561,22 @@
 		}, 120)
 	}
 
-	// Effect 1: channel data changed → render all markers at once
+	// Render markers when map is ready AND data is available.
+	// setupLayers is idempotent (creates source on first call, updates on subsequent).
 	$effect(() => {
-		const fc = cachedGeoJSON // reactive: fires when channels load or loading flips
-		untrack(() => {
-			if (!map || !mapReady || !fc) return
-			const shouldRestoreSticky = Date.now() < stickyPopupUntil
-			const restoreSlug = shouldRestoreSticky ? stickyPopupSlug : null
-			setupLayers(map, fc)
-			if (restoreSlug) {
-				requestAnimationFrame(() => {
-					const channel = mapChannels.find((c) => c.slug === restoreSlug)
-					if (channel) openPopupForChannel(channel, [channel.longitude, channel.latitude])
-				})
-			}
-		})
-	})
-
-	// Effect 2: map became ready (initial load or tile style change) → re-apply cached data
-	$effect(() => {
-		if (!mapReady) return // reactive: fires when mapReady becomes true
-		untrack(() => {
-			const fc = cachedGeoJSON
-			if (!map || !fc) return
-			setupLayers(map, fc)
-		})
+		const fc = cachedGeoJSON
+		const m = map
+		const ready = mapReady
+		if (!m || !ready || !fc) return
+		setupLayers(m, fc)
+		// Restore sticky popup after data refresh
+		if (Date.now() < stickyPopupUntil && stickyPopupSlug) {
+			const slug = stickyPopupSlug
+			requestAnimationFrame(() => {
+				const channel = mapChannels.find((c) => c.slug === slug)
+				if (channel) openPopupForChannel(channel, [channel.longitude, channel.latitude])
+			})
+		}
 	})
 
 	$effect(() => {

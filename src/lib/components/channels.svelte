@@ -159,6 +159,7 @@
 					: undefined,
 		trackCountGte: filter === 'featured' ? 10 : filterMinTracks[filter],
 		imageNotNull: filter === 'artwork' || filter === 'featured',
+		coordinatesNotNull: display === 'map',
 		shuffle: filter !== 'featured' && order === 'shuffle',
 		orderColumn: filter === 'featured' ? sortColumns['updated'] : sortColumns[order],
 		ascending: (orderDirection || 'desc') === 'asc',
@@ -302,10 +303,27 @@
 	$effect(() => {
 		if (!capabilities.globalBrowse) return
 		if (filter === 'imported' || filter === 'favorites') return
+		if (display === 'map' && !loadedAll && !loadingMore) {
+			fetchAllForMap()
+			return
+		}
 		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
 			fetchUpTo(queryLimit)
 		}
 	})
+
+	/** For map display: single bulk fetch (cached via QueryClient, respects staleTime) */
+	async function fetchAllForMap() {
+		loadingMore = true
+		const params = channelQueryParams
+		try {
+			const result = await loadMoreChannels({...params, offset: 0, limit: 5000})
+			fetchedUpTo = result.length
+			loadedAll = result.length < 5000
+		} finally {
+			loadingMore = false
+		}
+	}
 
 	/** Fetch from supabase until we have at least `target` rows (or exhaust the dataset) */
 	async function fetchUpTo(target) {
@@ -334,7 +352,11 @@
 		}
 	}
 
-	const orderedChannels = $derived(channels)
+	let stableChannels = $state(/** @type {typeof channels} */ ([]))
+	$effect(() => {
+		if (!loadingMore) stableChannels = channels
+	})
+	const orderedChannels = $derived(isPaged ? stableChannels : channels)
 
 	const canvasMedia = $derived(orderedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 
@@ -699,18 +721,10 @@
 		gap: 0.25rem;
 
 		.page-label {
-			min-width: 2rem;
-			text-align: center;
+			min-width: 2.6rem;
 			font-variant-numeric: tabular-nums;
 			font-size: var(--font-2);
-			background: none;
-			border: none;
-			cursor: pointer;
-			padding: 0.1rem 0.3rem;
-			border-radius: var(--border-radius, 4px);
-			&:hover {
-				background: var(--gray-3);
-			}
+			padding: 0.1rem 0.2rem;
 		}
 	}
 

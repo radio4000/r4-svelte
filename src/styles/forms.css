@@ -75,7 +75,7 @@ input[type='range'] {
 	-webkit-appearance: none;
 
 	&::-webkit-slider-runnable-track {
-	  height: 0.2rem;
+		height: 0.2rem;
 		background: linear-gradient(
 			to right,
 			var(--range-color, var(--accent-9)) var(--range-fill, 0%),

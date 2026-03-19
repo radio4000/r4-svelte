@@ -225,7 +225,8 @@
 					{/if}
 					<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
 						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-						<span class="mini-play-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
+						<span class="mini-play-avatar"
+							><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
 						>
 						<span class="mini-play-slug">{userChannel.slug}</span>
 					</button>
@@ -343,7 +344,11 @@
 			</div>
 			{#if showOnboarding && !appState.show_onboarding_hint}
 				<div class="onboarding-toggle-row">
-					<button class="btn icon-btn onboarding-toggle" onclick={() => (appState.show_onboarding_hint = true)} title="Show getting started">
+					<button
+						class="btn icon-btn onboarding-toggle"
+						onclick={() => (appState.show_onboarding_hint = true)}
+						title="Show getting started"
+					>
 						<Icon icon="circle-info" />
 					</button>
 				</div>
@@ -470,7 +475,12 @@
 			</section>
 		{:else}
 			<menu class="filtermenu">
-				<button class="btn icon-btn" style="margin-left: auto" onclick={() => (appState.show_welcome_hint = true)} title={m.welcome_title({appName})}>
+				<button
+					class="btn icon-btn"
+					style="margin-left: auto"
+					onclick={() => (appState.show_welcome_hint = true)}
+					title={m.welcome_title({appName})}
+				>
 					<Icon icon="circle-info" />
 				</button>
 			</menu>
@@ -534,9 +544,7 @@
 	.filtermenu {
 		position: sticky;
 		top: 0.5rem;
-		display: flex;
 		align-items: center;
-		gap: 0.5rem;
 		margin: 0 0 1rem;
 		z-index: 1;
 	}
@@ -733,16 +741,6 @@
 		position: absolute;
 		top: 0.5rem;
 		right: 0.5rem;
-		padding: 0.2rem;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: light-dark(var(--gray-9), var(--gray-8));
-		line-height: 0;
-
-		&:hover {
-			color: light-dark(var(--gray-11), var(--gray-10));
-		}
 	}
 
 	.welcome-section {
@@ -755,12 +753,11 @@
 
 		h1 {
 			font-size: var(--font-8);
-			margin-bottom: 0.75rem;
+			margin-bottom: 1rem;
 		}
 
 		.tagline {
 			font-size: var(--font-6);
-			margin-bottom: 0.25rem;
 		}
 
 		.feature-list {

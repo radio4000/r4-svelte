@@ -26,12 +26,7 @@
 	}
 
 	img:not(.loaded) {
-		background: linear-gradient(
-			110deg,
-			var(--gray-3) 30%,
-			var(--gray-4) 50%,
-			var(--gray-3) 70%
-		);
+		background: linear-gradient(110deg, var(--gray-3) 30%, var(--gray-4) 50%, var(--gray-3) 70%);
 		background-size: 200% 100%;
 		animation: wave 2.4s ease-in-out infinite;
 	}

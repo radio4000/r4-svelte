@@ -198,5 +198,4 @@
 	.map-popup {
 		font-family: inherit;
 	}
-
 </style>
