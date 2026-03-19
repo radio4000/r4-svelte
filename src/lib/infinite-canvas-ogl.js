@@ -377,6 +377,7 @@ export class InfiniteCanvasOGL {
 		this.infoTextureCache = new Map()
 		this.backgroundProgramCache = new Map()
 		this.tagBadgeTextureCache = new Map()
+		this.logoTextureCache = new Map()
 		this.disposed = false
 		this.hoveredItem = null
 		this.hoveredId = null
@@ -384,6 +385,7 @@ export class InfiniteCanvasOGL {
 		this.singlePointer = vec2()
 		this.singleCardRotation = vec2()
 		this.singleCardRotationTarget = vec2()
+		this.singleCardVelocity = vec2()
 		this.isSingleCardRotating = false
 		this.singleCardRotateDistance = 0
 		this.ctrlPanPressed = false
@@ -603,6 +605,20 @@ export class InfiniteCanvasOGL {
 			transparent: true,
 			depthTest: true,
 			depthWrite: false
+		})
+		this.logoOverlayProgram = new Program(this.gl, {
+			vertex: texturedVertexShader,
+			fragment: infoFragmentShader,
+			uniforms: {
+				tMap: {value: new Texture(this.gl, {image: this._placeholder, generateMipmaps: false})},
+				uCameraZ: {value: INITIAL_CAMERA_Z},
+				uOpacity: {value: 1},
+				uReveal: {value: 1}
+			},
+			transparent: true,
+			depthTest: true,
+			depthWrite: false,
+			cullFace: null
 		})
 		this.liveSphereProgram = new Program(this.gl, {
 			vertex: liveSphereVertexShader,
@@ -971,6 +987,67 @@ export class InfiniteCanvasOGL {
 		return result
 	}
 
+	getLogoTexture(color = '#ffffff') {
+		const cached = this.logoTextureCache.get(color)
+		if (cached) return cached
+		if (!this.gl) return null
+		const W = 300
+		const H = 260
+		const canvas = document.createElement('canvas')
+		canvas.width = W
+		canvas.height = H
+		const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'))
+		if (!ctx) return null
+		ctx.clearRect(0, 0, W, H)
+		// Pre-mirror horizontally so the texture reads correctly when rendered on the back face (rotated 180° around Y)
+		ctx.translate(W, 0)
+		ctx.scale(-1, 1)
+		ctx.fillStyle = color
+		const p1 = new Path2D(
+			'M125 217.53h108.86V260h40.19l-.005-42.47H300v-39.887h-25.955V38.147h-64.868L125 177.597v39.934zm34.215-40.066l87.847-70.16v70.16h-87.847z'
+		)
+		const p2 = new Path2D(
+			'M0 184.71h32.246v-75.302h42.91l50.088 75.302h24.554l-51.726-78.633c33.72-3.96 58.928-20.32 58.928-52.51C157 16.36 127.863 0 81.376 0H0v184.71zm15.156-91.56V50.796h53.627c27.23 0 47.792 5.052 47.792 21.25S94.068 93.15 69.34 93.15H15.155z'
+		)
+		ctx.fill(p1)
+		ctx.fill(p2)
+		const texture = new Texture(this.gl, {
+			image: canvas,
+			generateMipmaps: false,
+			minFilter: this.gl.LINEAR,
+			magFilter: this.gl.LINEAR
+		})
+		const result = {texture, aspect: W / H}
+		this.logoTextureCache.set(color, result)
+		return result
+	}
+
+	updateMeshLogoOverlay(bezelBack, group) {
+		if (!this.gl || !this.logoOverlayProgram || !bezelBack?.userData?.targetScale) return
+		const ts = bezelBack.userData.targetScale
+		let logo = bezelBack.userData.logoOverlay
+		if (!logo) {
+			logo = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: this.logoOverlayProgram})
+			logo.userData = {isLogoOverlay: true, mainMesh: bezelBack}
+			logo.setParent(group)
+			bezelBack.userData.logoOverlay = logo
+		}
+		logo.renderOrder = 15
+		const logoTex = this.getLogoTexture(this.infoTextColor)
+		if (!logoTex) return
+		const prog = this.logoOverlayProgram
+		logo.onBeforeRender(() => {
+			if (!prog) return
+			prog.uniforms.tMap.value = logoTex.texture
+			prog.uniforms.uOpacity.value = 0.5
+			prog.uniforms.uReveal.value = 1
+		})
+		const logoW = ts.x * 0.28
+		const logoH = logoW / logoTex.aspect
+		logo.scale.set(logoW, logoH, 1)
+		logo.position.set(bezelBack.position.x, bezelBack.position.y, bezelBack.position.z + 0.02)
+	}
+
 	bindEvents() {
 		if (!this.gl?.canvas) return
 		const canvas = this.gl.canvas
@@ -1016,6 +1093,8 @@ export class InfiniteCanvasOGL {
 					startedSingleRotate = true
 					this.isSingleCardRotating = true
 					this.singleCardRotateDistance = 0
+					this.singleCardVelocity.x = 0
+					this.singleCardVelocity.y = 0
 					this.lastMouse = {x: e.clientX, y: e.clientY}
 					canvas.style.cursor = 'grabbing'
 				}
@@ -1087,6 +1166,8 @@ export class InfiniteCanvasOGL {
 				const dy = e.clientY - this.lastMouse.y
 				this.singleCardRotateDistance += Math.abs(dx) + Math.abs(dy)
 				const s = this.singleSceneCardRotateSensitivity
+				this.singleCardVelocity.x = dy * s
+				this.singleCardVelocity.y = dx * s
 				this.singleCardRotationTarget.y += dx * s
 				this.singleCardRotationTarget.x += dy * s
 				this.lastMouse = {x: e.clientX, y: e.clientY}
@@ -1174,6 +1255,22 @@ export class InfiniteCanvasOGL {
 		}
 
 		const onTouchStart = (e) => {
+			if (this.sceneMode === 'single' && this.singleSceneCardDragRotate) {
+				e.preventDefault()
+				const touches = [...e.touches]
+				lastTouches = touches
+				if (touches.length === 1) {
+					this.isSingleCardRotating = true
+					this.singleCardRotateDistance = 0
+					this.singleCardVelocity.x = 0
+					this.singleCardVelocity.y = 0
+					this.lastMouse = {x: touches[0].clientX, y: touches[0].clientY}
+				} else if (touches.length >= 2) {
+					this.isSingleCardRotating = false
+					lastTouchDist = getTouchDistance(touches)
+				}
+				return
+			}
 			if (this.disableNavigation) return
 			e.preventDefault()
 			lastTouches = [...e.touches]
@@ -1184,6 +1281,28 @@ export class InfiniteCanvasOGL {
 			}
 		}
 		const onTouchMove = (e) => {
+			if (this.isSingleCardRotating) {
+				e.preventDefault()
+				const touches = [...e.touches]
+				if (touches.length === 1) {
+					const dx = touches[0].clientX - this.lastMouse.x
+					const dy = touches[0].clientY - this.lastMouse.y
+					this.singleCardRotateDistance += Math.abs(dx) + Math.abs(dy)
+					const s = this.singleSceneCardRotateSensitivity
+					this.singleCardVelocity.x = dy * s
+					this.singleCardVelocity.y = dx * s
+					this.singleCardRotationTarget.x += dy * s
+					this.singleCardRotationTarget.y += dx * s
+					this.lastMouse = {x: touches[0].clientX, y: touches[0].clientY}
+				} else if (touches.length >= 2 && lastTouchDist > 0) {
+					const dist = getTouchDistance(touches)
+					this.scrollAccum += (lastTouchDist - dist) * 0.006
+					lastTouchDist = dist
+					this.isSingleCardRotating = false
+				}
+				lastTouches = touches
+				return
+			}
 			if (this.disableNavigation) return
 			e.preventDefault()
 			const touches = [...e.touches]
@@ -1201,6 +1320,16 @@ export class InfiniteCanvasOGL {
 			lastTouches = touches
 		}
 		const onTouchEnd = (e) => {
+			if (this.isSingleCardRotating) {
+				if (this.singleCardRotateDistance < 10 && this.onClick) {
+					const t = e.changedTouches?.[0]
+					if (t) this.handleClick({clientX: t.clientX, clientY: t.clientY})
+				}
+				this.isSingleCardRotating = false
+				lastTouches = [...e.touches]
+				lastTouchDist = getTouchDistance(lastTouches)
+				return
+			}
 			if (this.disableNavigation) return
 			if (touchStartPos && touchDragDistance < 10 && this.onClick) {
 				this.handleClick({clientX: touchStartPos.x, clientY: touchStartPos.y})
@@ -2316,6 +2445,7 @@ export class InfiniteCanvasOGL {
 			back.setParent(group)
 			// @ts-expect-error custom field
 			mesh.userData.bezelBack = back
+			this.updateMeshLogoOverlay(back, group)
 		}
 
 		if (!mediaItem?.url) return
@@ -2541,6 +2671,7 @@ export class InfiniteCanvasOGL {
 		if (this.texturedProgram) this.texturedProgram.uniforms.uCameraZ.value = camZ
 		if (this.infoProgram) this.infoProgram.uniforms.uCameraZ.value = camZ
 		if (this.badgeProgram) this.badgeProgram.uniforms.uCameraZ.value = camZ
+		if (this.logoOverlayProgram) this.logoOverlayProgram.uniforms.uCameraZ.value = camZ
 		if (this.liveSphereProgram) {
 			this.liveSphereProgram.uniforms.uCameraZ.value = camZ
 			const cameraPos = this.liveSphereProgram.uniforms.uCameraPos.value
@@ -2550,6 +2681,12 @@ export class InfiniteCanvasOGL {
 		}
 
 		if (this.sceneMode === 'single') {
+			if (!this.isSingleCardRotating) {
+				this.singleCardRotationTarget.x += this.singleCardVelocity.x
+				this.singleCardRotationTarget.y += this.singleCardVelocity.y
+				this.singleCardVelocity.x *= 0.9
+				this.singleCardVelocity.y *= 0.9
+			}
 			this.singleCardRotation.x = lerp(this.singleCardRotation.x, this.singleCardRotationTarget.x, 0.15)
 			this.singleCardRotation.y = lerp(this.singleCardRotation.y, this.singleCardRotationTarget.y, 0.15)
 			const singleGroup = this.chunks.get(SINGLE_SCENE_KEY)
@@ -2810,6 +2947,8 @@ export class InfiniteCanvasOGL {
 			this.singleCardRotation.y = 0
 			this.singleCardRotationTarget.x = 0
 			this.singleCardRotationTarget.y = 0
+			this.singleCardVelocity.x = 0
+			this.singleCardVelocity.y = 0
 
 			if (singleGroup) {
 				for (const mesh of singleGroup.children) {
@@ -2987,10 +3126,15 @@ export class InfiniteCanvasOGL {
 			if (entry?.texture?.texture && this.gl) this.gl.deleteTexture(entry.texture.texture)
 		}
 		this.tagBadgeTextureCache.clear()
+		for (const entry of this.logoTextureCache.values()) {
+			if (entry?.texture?.texture && this.gl) this.gl.deleteTexture(entry.texture.texture)
+		}
+		this.logoTextureCache.clear()
 		this.backgroundProgramCache.clear()
 		this.texturedProgram = null
 		this.infoProgram = null
 		this.badgeProgram = null
+		this.logoOverlayProgram = null
 		this.liveSphereProgram = null
 		this.colorPrograms = null
 		this.borderPrograms = null
