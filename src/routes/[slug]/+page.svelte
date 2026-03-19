@@ -2,11 +2,10 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
-	import {getTracksQueryCtx} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
@@ -23,10 +22,11 @@
 	const SECTION_TRACK_LIMIT = 50
 	const FEATURED_LIMIT = 10
 
+	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
 
 	let slug = $derived(page.params.slug as string)
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	let channel = $derived(channelCtx.data)
 	let allTracks = $derived(tracksQuery.data || [])
 	let previewTracks = $derived(allTracks.slice(0, SECTION_TRACK_LIMIT))
 	let canEdit = $derived(canEditChannel(channel?.id))

@@ -2,14 +2,15 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
+	import {getChannelCtx} from '$lib/contexts'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
+	const channelCtx = getChannelCtx()
 	const slug = $derived(page.params.slug)
-	const channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	const channel = $derived(channelCtx.data)
 	const canEdit = $derived(canEditChannel(channel?.id) || isLocalChannel(channel?.id))
 
 	let error = $state('')

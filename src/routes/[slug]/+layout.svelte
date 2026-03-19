@@ -33,7 +33,6 @@
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
-	let routeId = $derived(page.route.id)
 
 	// Resolve channel: slug → ID on first hit, then query by stable ID.
 	// This prevents "not found" flashes when the slug changes (edit, sync).

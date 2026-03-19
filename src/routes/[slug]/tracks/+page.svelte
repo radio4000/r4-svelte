@@ -1,9 +1,8 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {getTracksQueryCtx} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
@@ -19,6 +18,7 @@
 	import type {View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
 
+	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
 
 	let searchInput = $state(page.url.searchParams.get('q') ?? '')
@@ -41,7 +41,7 @@
 	})
 
 	let slug = $derived(page.params.slug)
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	let channel = $derived(channelCtx.data)
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let aggregatedTags = $derived(getChannelTags(allTracks))

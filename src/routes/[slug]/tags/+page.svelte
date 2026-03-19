@@ -5,7 +5,7 @@
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
-	import {channelsCollection} from '$lib/collections/channels'
+	import {getChannelCtx} from '$lib/contexts'
 	import {getChannelTags} from '$lib/utils'
 	import InputRange from '$lib/components/input-range.svelte'
 	import TagChain from '$lib/components/tag-chain.svelte'
@@ -21,7 +21,8 @@
 	// Get tracks from layout (query stays alive during navigation)
 	const tracksQuery = getTracksQueryCtx()
 
-	let channel = $derived([...channelsCollection.state.values()].find((c) => c.slug === slug))
+	const channelCtx = getChannelCtx()
+	let channel = $derived(channelCtx.data)
 	let tracks = $derived(tracksQuery.data || [])
 	let allTags = $derived(getChannelTags(tracks))
 
