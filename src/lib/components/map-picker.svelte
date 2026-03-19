@@ -1,4 +1,5 @@
 <script>
+	import { untrack } from 'svelte'
 	import maplibregl from 'maplibre-gl'
 	import * as m from '$lib/paraglide/messages'
 	import MapComponent from '$lib/components/map.svelte'
@@ -6,9 +7,9 @@
 	const {latitude = null, longitude = null, onselect = () => {}} = $props()
 
 	// Capture initial position once — prop changes from picking should not re-fly the map
-	const initialLat = latitude
-	const initialLng = longitude
-	const initialZoom = latitude && longitude ? 10 : 2
+	const initialLat = untrack(() => latitude)
+	const initialLng = untrack(() => longitude)
+	const initialZoom = untrack(() => (latitude && longitude ? 10 : 2))
 
 	/** @type {maplibregl.Map | null} */
 	let map = null
