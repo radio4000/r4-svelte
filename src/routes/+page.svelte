@@ -167,11 +167,25 @@
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
 	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
-	const showBroadcastCountWidget = $derived(broadcastCount > 0)
+	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
 	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
 	const showAutoRadioWidget = $derived(userChannelHasAuto)
 	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
 	const userBroadcastStatusLabel = $derived(userChannelIsBroadcasting ? m.status_live_short() : m.status_offline())
+
+	const broadcastingDecks = $derived.by(() => {
+		if (!userChannel) return []
+		return Object.values(appState.decks)
+			.filter((d) => d.broadcasting_channel_id === userChannel.id)
+			.map((deck) => {
+				const currentId = deck.playlist_track
+				const tracks = deck.playlist_tracks
+				const currentIdx = currentId ? tracks.indexOf(currentId) : -1
+				const nextId = currentIdx >= 0 ? tracks[currentIdx + 1] : tracks[0]
+				const getTrack = (id) => (id ? tracksCollection.state.get(id) : undefined)
+				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
+			})
+	})
 	const userAutoRadioStatusLabel = $derived(
 		userChannelHasAuto ? (userChannelHasAutoDrifted ? m.status_drifted() : m.status_synced()) : m.common_off()
 	)
@@ -203,9 +217,21 @@
 <div class="homepage">
 	<menu class="filtermenu">
 		<ExploreSectionMenu />
+		{#if isSignedIn && authStatus.channelChecked && !userChannel}
+			<a href={resolve('/create-channel')} class="btn primary create-channel-action">
+				<Icon icon="add" />{m.home_create_channel()}
+			</a>
+		{/if}
 		{#if userChannel}
 			<div class="channel-play">
 				{#if userChannelIsBroadcasting}
+					<span
+						class="channel-badge audience-badge"
+						title={m.home_dashboard_live_listeners({count: userChannelBroadcastListeners.toLocaleString()})}
+					>
+						<Icon icon="users" size={12} />
+						{userChannelBroadcastListeners.toLocaleString()}
+					</span>
 					<a
 						href={resolve(`/${userChannel.slug}`)}
 						class="channel-badge live-link"
@@ -246,6 +272,41 @@
 
 		<section class="section dashboard-section">
 			<div class="dashboard-grid">
+				{#if showBroadcastStatusWidget}
+					{#each broadcastingDecks as { deck, current, next }}
+						<div class="dashboard-card broadcast-deck-card">
+							<span class="dashboard-label dashboard-label--with-icon">
+								<Icon icon="cell-signal" size={16} />
+								{m.home_dashboard_broadcast()}
+							</span>
+							<div class="broadcast-track">
+								<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
+								<span class="broadcast-track-title">{current?.title ?? '—'}</span>
+							</div>
+							{#if next}
+								<div class="broadcast-track broadcast-track--next">
+									<Icon icon="next-fill" size={14} />
+									<span class="broadcast-track-title">{next.title}</span>
+								</div>
+							{/if}
+						</div>
+					{/each}
+				{/if}
+				{#if showAutoRadioWidget}
+					<button
+						class="dashboard-card dashboard-card--button auto-live-btn"
+						class:dashboard-card--alert={userChannelHasAutoDrifted}
+						class:ghost={!userChannelHasAutoDrifted}
+						type="button"
+						onclick={toggleUserChannelAutoRadio}
+					>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="infinite" size={16} />
+							{m.home_dashboard_auto_radio()}
+						</span>
+						<strong class="dashboard-value">{userAutoRadioStatusLabel}</strong>
+					</button>
+				{/if}
 				<div class="dashboard-card dashboard-card--channel">
 					<ol class="list">
 						<li><ChannelCard channel={userChannel} /></li>
@@ -300,29 +361,6 @@
 						</span>
 						<strong class="dashboard-value">{favoriteBroadcastCount.toLocaleString()}</strong>
 					</a>
-				{/if}
-				{#if showBroadcastStatusWidget}
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve(`/${userChannel.slug}`)}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="cell-signal" size={16} />
-							{m.home_dashboard_broadcast()}
-						</span>
-						<strong class="dashboard-value">{userBroadcastStatusLabel}</strong>
-					</a>
-				{/if}
-				{#if showAutoRadioWidget}
-					<button
-						class="dashboard-card dashboard-card--button"
-						class:dashboard-card--alert={userChannelHasAutoDrifted}
-						type="button"
-						onclick={toggleUserChannelAutoRadio}
-					>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="infinite" size={16} />
-							{m.home_dashboard_auto_radio()}
-						</span>
-						<strong class="dashboard-value">{userAutoRadioStatusLabel}</strong>
-					</button>
 				{/if}
 				{#if showAudienceWidget}
 					<a class="dashboard-card dashboard-card--link" href={resolve(`/${userChannel.slug}`)}>
@@ -381,10 +419,6 @@
 		{/if}
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
-		<section class="section">
-			<a href={resolve('/create-channel')} class="btn primary"><Icon icon="add" />{m.home_create_channel()}</a>
-		</section>
-
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
@@ -555,6 +589,17 @@
 		gap: 0.25rem;
 	}
 
+	.create-channel-action {
+		margin-left: auto;
+	}
+
+	.audience-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-left: 0;
+	}
+
 	.mini-play {
 		display: flex;
 		align-items: center;
@@ -683,6 +728,29 @@
 	.dashboard-card--live {
 		border-color: var(--accent-7);
 		background: var(--accent-2);
+	}
+
+	.broadcast-deck-card {
+		border-color: var(--accent-7);
+		background: var(--accent-2);
+	}
+
+	.broadcast-track {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: var(--font-2);
+		overflow: hidden;
+	}
+
+	.broadcast-track--next {
+		opacity: 0.6;
+	}
+
+	.broadcast-track-title {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.dashboard-card--alert {
