@@ -3,6 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
 	import {getTracksQueryCtx} from '$lib/contexts'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import Tracklist from '$lib/components/tracklist.svelte'
@@ -147,12 +148,14 @@
 	type="music.radio_station"
 />
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	<SearchInput bind:value={searchInput} placeholder={m.channel_tracks_search_placeholder()} debounce={300} />
+{/snippet}
+
 {#if channel}
 	<article>
-		<div class="search-bar">
-			<SearchInput bind:value={searchInput} placeholder={m.channel_tracks_search_placeholder()} debounce={300} />
-		</div>
-
 		<div class="channel-meta">
 			{#if channel.description}
 				<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
@@ -233,7 +236,9 @@
 						playContext={true}
 					/>
 					<footer>
-						<a href={resolve('/[slug]/tracks', {slug})}>{m.channel_see_all_tracks({count: allTracks.length})}</a>
+						<a href={resolve('/[slug]/tracks', {slug})} class="btn"
+							>{m.channel_see_all_tracks({count: allTracks.length})}</a
+						>
 					</footer>
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
@@ -292,7 +297,7 @@
 						playContext={true}
 					/>
 					<footer>
-						<a href={resolve('/[slug]/tracks', {slug}) + '?tags=' + section.tag}
+						<a href={resolve('/[slug]/tracks', {slug}) + '?tags=' + section.tag} class="btn"
 							>{m.channel_see_all_tag({count: section.tracks.length, tag: section.tag})}</a
 						>
 					</footer>
@@ -325,22 +330,10 @@
 	}
 
 	.channel-meta {
-		padding: 0.75rem;
+		padding: 0.5rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
-	}
-
-	.search-bar {
-		padding: 0.5rem 0.5rem;
-	}
-
-	.search-bar :global(.search-input) {
-		width: 100%;
-	}
-
-	.search-bar :global(input[type='search']) {
-		width: 100%;
 	}
 
 	.meta-row {

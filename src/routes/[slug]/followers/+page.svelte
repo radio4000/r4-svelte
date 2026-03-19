@@ -5,8 +5,10 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {dedupeById} from '$lib/utils'
 	import ChannelsView from '$lib/components/channels-view.svelte'
+	import ChannelsViewControls from '$lib/components/channels-view-controls.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let display = $state(appState.channels_display || 'grid')
@@ -59,17 +61,20 @@
 	})
 </script>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	<SearchInput bind:value={q} placeholder={m.followers_search_placeholder({count: followers.length})} />
+	<ChannelsViewControls bind:display bind:order bind:direction />
+{/snippet}
+
 <svelte:head>
 	<title>{m.nav_followers()} - {channel?.name}</title>
 </svelte:head>
 
 <article class="channels-page fill-height">
 	<Subpage title={m.nav_followers()} {loading} empty={followers.length === 0} emptyText={m.followers_empty()}>
-		<ChannelsView channels={filteredFollowers} bind:display bind:order bind:direction>
-			{#snippet header()}
-				<SearchInput bind:value={q} placeholder={m.followers_search_placeholder({count: followers.length})} />
-			{/snippet}
-		</ChannelsView>
+		<ChannelsView channels={filteredFollowers} bind:display bind:order bind:direction showToolbar={false} />
 	</Subpage>
 </article>
 

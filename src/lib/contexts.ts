@@ -1,4 +1,5 @@
 import {createContext} from 'svelte'
+import type {Snippet} from 'svelte'
 import type {Channel, Track} from '$lib/types'
 
 /* I never liked context, but sometimes it's useful to avoid re-computing shared values that aren't stored on appState. */
@@ -40,3 +41,8 @@ export type TrackDetailCtx = {
 }
 
 export const [getTrackDetailCtx, setTrackDetailCtx] = createContext<TrackDetailCtx>()
+
+/** Channel nav controls — subpages inject a Snippet into the right zone of channel-nav */
+export const [getChannelNavCtx, setChannelNavCtx] = createContext<{
+	setControls: (s: Snippet | undefined) => void
+}>()

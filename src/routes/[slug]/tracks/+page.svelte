@@ -11,6 +11,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
@@ -112,6 +113,37 @@
 	}
 </script>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	{#if aggregatedTags.length > 0}
+		<PopoverMenu>
+			{#snippet trigger()}
+				Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
+			{/snippet}
+			<menu class="tags-menu">
+				{#each aggregatedTags as { value, count } (value)}
+					<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+						{value} <span class="tag-count">({count})</span>
+					</button>
+				{/each}
+			</menu>
+		</PopoverMenu>
+	{/if}
+	<SearchInput
+		bind:value={searchInput}
+		placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
+		debounce={150}
+	/>
+	<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+		{#snippet trigger()}<Icon
+				icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+				strokeWidth={1.5}
+			/>{/snippet}
+		<SortControls bind:order bind:direction />
+	</PopoverMenu>
+{/snippet}
+
 {#if channel}
 	<Subpage
 		title={m.nav_tracks()}
@@ -123,34 +155,6 @@
 		{/snippet}
 		<section>
 			<header>
-				<menu class="row">
-					{#if aggregatedTags.length > 0}
-						<PopoverMenu>
-							{#snippet trigger()}
-								Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-							{/snippet}
-							<menu class="tags-menu">
-								{#each aggregatedTags as { value, count } (value)}
-									<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
-										{value} <span class="tag-count">({count})</span>
-									</button>
-								{/each}
-							</menu>
-						</PopoverMenu>
-					{/if}
-					<SearchInput
-						bind:value={searchInput}
-						placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
-						debounce={150}
-					/>
-					<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-						{#snippet trigger()}<Icon
-								icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
-								strokeWidth={1.5}
-							/>{/snippet}
-						<SortControls bind:order bind:direction />
-					</PopoverMenu>
-				</menu>
 				{#if isFiltering && selectedTags.length > 0}
 					<menu class="row filter-tags">
 						{#each selectedTags as tag (tag)}
@@ -162,11 +166,6 @@
 				{/if}
 				{#if visibleTracks.length > 0}
 					<menu class="row filter-actions">
-						<small class="filter-count"
-							>{isFiltering
-								? m.tracks_selected_count({count: filteredTracks.length})
-								: m.tracks_total_count({count: allTracks.length})}</small
-						>
 						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" />{m.common_play()}</button>
 						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" />{m.common_queue()}</button>
 						{#if channel && canShowFilteredAutoRadio}
@@ -211,14 +210,6 @@
 		gap: 0.35rem;
 	}
 
-	header :global(.popover-menu > button) {
-		white-space: nowrap;
-	}
-
-	header :global(input[type='search']) {
-		flex: 1;
-	}
-
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
@@ -226,10 +217,6 @@
 
 	.filter-actions {
 		align-items: center;
-	}
-
-	.filter-count {
-		margin-right: auto;
 	}
 
 	.filter-tags {

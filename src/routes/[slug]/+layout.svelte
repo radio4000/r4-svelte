@@ -3,7 +3,8 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
-	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
+	import {setChannelCtx, setTracksQueryCtx, setChannelNavCtx} from '$lib/contexts'
+	import type {Snippet} from 'svelte'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
@@ -19,12 +20,19 @@
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import Icon from '$lib/components/icon.svelte'
+	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
 
 	let {children} = $props()
+	let channelNavControls = $state<Snippet | undefined>(undefined)
+	setChannelNavCtx({
+		setControls: (s) => {
+			channelNavControls = s
+		}
+	})
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
@@ -194,9 +202,9 @@
 	{/if}
 </svelte:head>
 
-{#if channel}
-	<div class="channel-layout fill-height">
-		<div class="channel-sticky">
+<div class="channel-layout fill-height">
+	<div class="channel-sticky">
+		{#if channel}
 			<header>
 				<div class="avatar">
 					<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
@@ -292,73 +300,26 @@
 					</span>
 				</menu>
 			</header>
+		{/if}
 
-			<div class="tabs channel-nav">
-				<nav aria-label={m.nav_tracks()}>
-					<a href={resolve('/[slug]', {slug})} class:active={routeId === '/[slug]'}>
-						<Icon icon="circle-info" />
-						Info
-					</a>
-					<a href={resolve('/[slug]/tracks', {slug})} class:active={routeId?.startsWith('/[slug]/tracks')}>
-						<Icon icon="unordered-list" />
-						{m.nav_tracks()} ({allChannelTracks.length})
-					</a>
-					<a href={resolve('/[slug]/tags', {slug})} class:active={routeId?.startsWith('/[slug]/tags')}>
-						<Icon icon="hash" />
-						{m.channel_tags_link()}
-					</a>
-					<a href={resolve('/[slug]/mentions', {slug})} class:active={routeId?.startsWith('/[slug]/mentions')}>
-						<Icon icon="user" />
-						Mentions
-					</a>
-					<a href={resolve('/[slug]/following', {slug})} class:active={routeId?.startsWith('/[slug]/following')}>
-						<Icon icon="sparkles" />
-						{m.nav_following()}
-					</a>
-					<a href={resolve('/[slug]/followers', {slug})} class:active={routeId?.startsWith('/[slug]/followers')}>
-						<Icon icon="users" />
-						{m.nav_followers()}
-					</a>
-					{#if channel.longitude && channel.latitude}
-						<a href={resolve('/[slug]/map', {slug})} class:active={routeId?.startsWith('/[slug]/map')}>
-							<Icon icon="map" />
-							{m.nav_map()}
-						</a>
-					{/if}
-				</nav>
-				{#if canEdit}
-					<nav class="channel-nav-secondary" aria-label={m.common_edit()}>
-						<a href={resolve('/[slug]/edit', {slug})} class:active={routeId?.startsWith('/[slug]/edit')}>
-							<Icon icon="settings" />
-							{m.common_edit()}
-						</a>
-						<a href={resolve('/[slug]/batch-edit', {slug})} class:active={routeId?.startsWith('/[slug]/batch-edit')}>
-							<Icon icon="unordered-list" />
-							{m.batch_edit_nav_label()}
-						</a>
-						<a href={resolve('/[slug]/backup', {slug})} class:active={routeId?.startsWith('/[slug]/backup')}>
-							<Icon icon="document-download" />
-							Backup
-						</a>
-					</nav>
-				{:else if isLocal}
-					<nav class="channel-nav-secondary" aria-label={m.channel_local_nav_label()}>
-						<a href={resolve('/[slug]/delete', {slug})} class:active={routeId?.startsWith('/[slug]/delete')}>
-							<Icon icon="delete" />
-							Delete
-						</a>
-					</nav>
-				{/if}
-			</div>
-		</div>
-
-		<main>
-			{@render children()}
-		</main>
+		<menu class="channel-nav">
+			<ChannelSectionMenu {slug} {channel} {canEdit} {isLocal} trackCount={allChannelTracks.length} />
+			{#if channelNavControls}
+				<div class="channel-nav-controls">
+					{@render channelNavControls()}
+				</div>
+			{/if}
+		</menu>
 	</div>
-{:else if channelBySlugQuery.isReady}
-	<p style="padding: 1rem;">{m.channel_not_found()}</p>
-{/if}
+
+	<main>
+		{#if channelBySlugQuery.isReady && !channel}
+			<p style="padding: 1rem;">{m.channel_not_found()}</p>
+		{:else}
+			{@render children()}
+		{/if}
+	</main>
+</div>
 
 <style>
 	.channel-layout {
@@ -437,21 +398,19 @@
 
 	.channel-nav {
 		display: flex;
-		flex-wrap: nowrap;
-		overflow-x: auto;
+		align-items: center;
 		background: var(--gray-1);
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
-		align-items: stretch;
-		gap: 0;
+		padding: 0.4rem;
 	}
 
-	.channel-nav nav {
-		align-items: stretch;
-		flex-shrink: 0;
-		min-width: max-content;
-	}
-
-	.channel-nav-secondary {
-		margin-left: auto;
+	.channel-nav-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		padding: 0 0.5rem;
 	}
 </style>

@@ -4,18 +4,9 @@
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
-	import {
-		viewIconMap,
-		viewLabelMap,
-		handleCanvasClick as onCanvasClick,
-		handleCanvasDoubleClick
-	} from '$lib/components/channels-view-shared.js'
+	import {handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
-	import Icon from './icon.svelte'
-	import PopoverMenu from './popover-menu.svelte'
-	import SortControls from './sort-controls.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import ChannelsViewControls from './channels-view-controls.svelte'
 
 	let {
 		channels = [],
@@ -23,7 +14,8 @@
 		direction = $bindable('desc'),
 		/** @type {'grid' | 'list' | 'map' | 'infinite'} */
 		display = $bindable('grid'),
-		header,
+		header = undefined,
+		showToolbar = true,
 		syncToUrl = false
 	} = $props()
 
@@ -81,48 +73,12 @@
 </script>
 
 <div class={`layout layout--${display} fill-height`}>
-	<header class="row toolbar">
-		{#if header}{@render header()}{/if}
-		<PopoverMenu
-			id="channels-view"
-			closeOnClick={false}
-			triggerAttachment={tooltip({content: m.channels_view_mode({mode: viewLabelMap[display]()})})}
-		>
-			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
-				{viewLabelMap[display]()}{/snippet}
-			<menu class="view-modes">
-				<button
-					class:active={display === 'grid'}
-					onclick={() => setDisplay('grid')}
-					{@attach tooltip({content: m.channels_tooltip_grid()})}
-				>
-					<Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small>
-				</button>
-				<button
-					class:active={display === 'list'}
-					onclick={() => setDisplay('list')}
-					{@attach tooltip({content: m.channels_tooltip_list()})}
-				>
-					<Icon icon="unordered-list" /><small>{m.channels_view_label_list()}</small>
-				</button>
-				<button
-					class:active={display === 'map'}
-					onclick={() => setDisplay('map')}
-					{@attach tooltip({content: m.channels_tooltip_map()})}
-				>
-					<Icon icon="map" strokeWidth={1.7} /><small>{m.channels_view_label_map()}</small>
-				</button>
-				<button
-					class:active={display === 'infinite'}
-					onclick={() => setDisplay('infinite')}
-					{@attach tooltip({content: m.channels_tooltip_infinite()})}
-				>
-					<Icon icon="box-3d" /><small>{m.channels_view_label_infinite()}</small>
-				</button>
-			</menu>
-			<SortControls bind:order bind:direction />
-		</PopoverMenu>
-	</header>
+	{#if showToolbar}
+		<header class="row toolbar">
+			{#if header}{@render header()}{/if}
+			<ChannelsViewControls bind:display bind:order bind:direction {setDisplay} />
+		</header>
+	{/if}
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}

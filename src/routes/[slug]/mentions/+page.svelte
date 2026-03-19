@@ -8,6 +8,7 @@
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import type {Track} from '$lib/types'
 	import * as m from '$lib/paraglide/messages'
@@ -90,6 +91,14 @@
 	<title>{m.mentions_title({handle: slug})}</title>
 </svelte:head>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	<SearchInput bind:value={q} placeholder={m.mentions_search_placeholder({count: tracks.length, handle: `@${slug}`})} />
+	<button type="button" onclick={playMentionTracks}><Icon icon="play-fill" />{m.search_play_all()}</button>
+	<button type="button" onclick={queueMentionTracks}><Icon icon="next-fill" />{m.search_queue_all()}</button>
+{/snippet}
+
 <section>
 	<Subpage
 		title={m.mentions_title({handle: slug})}
@@ -99,14 +108,6 @@
 		empty={tracks.length === 0}
 		emptyText={m.mentions_empty({handle: `@${slug}`})}
 	>
-		<header class="row">
-			<SearchInput
-				bind:value={q}
-				placeholder={m.mentions_search_placeholder({count: tracks.length, handle: `@${slug}`})}
-			/>
-			<button type="button" onclick={playMentionTracks}><Icon icon="play-fill" />{m.search_play_all()}</button>
-			<button type="button" onclick={queueMentionTracks}><Icon icon="next-fill" />{m.search_queue_all()}</button>
-		</header>
 		<Tracklist
 			tracks={filteredTracks}
 			playlistTracks={tracks}
@@ -117,10 +118,3 @@
 		/>
 	</Subpage>
 </section>
-
-<style>
-	header {
-		padding: 0.5rem;
-		align-items: center;
-	}
-</style>

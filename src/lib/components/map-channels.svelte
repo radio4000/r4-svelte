@@ -12,8 +12,8 @@
 	import * as m from '$lib/paraglide/messages'
 	const channelActivity = $derived(getChannelActivity())
 
-	/** @type {{channels?: any[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global'}} */
-	const {
+	/** @type {{channels?: any[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global', showControls?: boolean, globeMode?: boolean, showGraticules?: boolean, showDayNight?: boolean, tileStyle?: 'carto' | 'topo' | 'satellite'}} */
+	let {
 		channels = [],
 		loading = false,
 		latitude = null,
@@ -22,7 +22,12 @@
 		syncUrl = true,
 		openSlug = null,
 		openRequestKey = null,
-		linkToMap = true
+		linkToMap = true,
+		showControls = true,
+		globeMode = $bindable(false),
+		showGraticules = $bindable(false),
+		showDayNight = $bindable(false),
+		tileStyle = $bindable('carto')
 	} = $props()
 
 	/** @type {maplibregl.Map | null} */
@@ -30,11 +35,6 @@
 	let mapReady = $state(false)
 	/** @type {BroadcastLayer | null} */
 	let broadcastLayer = null
-	let globeMode = $state(false)
-	let showGraticules = $state(false)
-	let showDayNight = $state(false)
-	/** @type {'carto' | 'topo' | 'satellite'} */
-	let tileStyle = $state('carto')
 	let popupNavigationInFlight = false
 	let pendingPopupLinkNavigationTimer = null
 	let lastAutoOpenedToken = null
@@ -672,41 +672,43 @@
 	{#if loading}
 		<div class="map-loading">loading {channels.length}…</div>
 	{/if}
-	<div class="map-controls">
-		<menu class="nav-grouped">
-			<button
-				type="button"
-				class:active={globeMode}
-				onclick={() => (globeMode = !globeMode)}
-				title={globeMode ? m.map_switch_to_flat() : m.map_switch_to_globe()}
-			>
-				<Icon icon={globeMode ? 'map' : 'globe'} />
-			</button>
-			<span class="sep"></span>
-			<button
-				type="button"
-				class:active={showGraticules}
-				onclick={() => (showGraticules = !showGraticules)}
-				title={m.map_toggle_graticules()}
-			>
-				<Icon icon="grid" />
-			</button>
-			<button
-				type="button"
-				class:active={showDayNight}
-				onclick={() => (showDayNight = !showDayNight)}
-				title={m.map_toggle_day_night()}
-			>
-				<Icon icon="sun" />
-			</button>
-			<span class="sep"></span>
-			<select bind:value={tileStyle} title={m.map_tiles_label()} aria-label={m.map_tiles_label()}>
-				<option value="carto">{m.map_tiles_map()}</option>
-				<option value="topo">{m.map_tiles_topo()}</option>
-				<option value="satellite">{m.map_tiles_satellite()}</option>
-			</select>
-		</menu>
-	</div>
+	{#if showControls}
+		<div class="map-controls">
+			<menu class="nav-grouped">
+				<button
+					type="button"
+					class:active={globeMode}
+					onclick={() => (globeMode = !globeMode)}
+					title={globeMode ? m.map_switch_to_flat() : m.map_switch_to_globe()}
+				>
+					<Icon icon={globeMode ? 'map' : 'globe'} />
+				</button>
+				<span class="sep"></span>
+				<button
+					type="button"
+					class:active={showGraticules}
+					onclick={() => (showGraticules = !showGraticules)}
+					title={m.map_toggle_graticules()}
+				>
+					<Icon icon="grid" />
+				</button>
+				<button
+					type="button"
+					class:active={showDayNight}
+					onclick={() => (showDayNight = !showDayNight)}
+					title={m.map_toggle_day_night()}
+				>
+					<Icon icon="sun" />
+				</button>
+				<span class="sep"></span>
+				<select bind:value={tileStyle} title={m.map_tiles_label()} aria-label={m.map_tiles_label()}>
+					<option value="carto">{m.map_tiles_map()}</option>
+					<option value="topo">{m.map_tiles_topo()}</option>
+					<option value="satellite">{m.map_tiles_satellite()}</option>
+				</select>
+			</menu>
+		</div>
+	{/if}
 </div>
 
 <style>

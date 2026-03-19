@@ -5,6 +5,7 @@
 	import {updateChannel} from '$lib/collections/channels'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
@@ -21,47 +22,68 @@
 	let pickedLat = $state(/** @type {number|null} */ (null))
 	let pickedLng = $state(/** @type {number|null} */ (null))
 
+	// Form field state — initialized from channel once it loads
+	let fieldName = $state('')
+	let fieldSlug = $state('')
+	let fieldDescription = $state('')
+	let fieldUrl = $state('')
+	let initialized = $state(false)
+
+	$effect(() => {
+		if (channel && !initialized) {
+			fieldName = channel.name ?? ''
+			fieldSlug = channel.slug ?? ''
+			fieldDescription = channel.description ?? ''
+			fieldUrl = channel.url ?? ''
+			pickedLat = channel.latitude ?? null
+			pickedLng = channel.longitude ?? null
+			initialized = true
+		}
+	})
+
 	const locationLat = $derived(pickedLat ?? channel?.latitude ?? null)
 	const locationLng = $derived(pickedLng ?? channel?.longitude ?? null)
+
+	const hasChanges = $derived.by(() => {
+		if (!channel || !initialized) return false
+		return (
+			fieldName !== (channel.name ?? '') ||
+			fieldSlug !== (channel.slug ?? '') ||
+			fieldDescription !== (channel.description ?? '') ||
+			fieldUrl !== (channel.url ?? '') ||
+			pickedLat !== (channel.latitude ?? null) ||
+			pickedLng !== (channel.longitude ?? null)
+		)
+	})
 
 	function handleLocationSelect({latitude, longitude}) {
 		pickedLat = latitude
 		pickedLng = longitude
 	}
 
-	/** @param {SubmitEvent} event */
 	async function handleSubmit(event) {
-		event.preventDefault()
-		if (!channel || submitting) return
-
-		const formData = new FormData(/** @type {HTMLFormElement} */ (event.target))
-		const name = /** @type {string} */ (formData.get('name'))
-		const newSlug = /** @type {string} */ (formData.get('slug'))
-		const description = /** @type {string} */ (formData.get('description'))
-		const url = formData.get('url') || null
-		const latitude = formData.get('latitude') ? Number(formData.get('latitude')) : null
-		const longitude = formData.get('longitude') ? Number(formData.get('longitude')) : null
+		event?.preventDefault()
+		if (!channel || submitting || !hasChanges) return
 
 		error = ''
 		success = false
 		submitting = true
 
 		try {
-			const hasChanges =
-				name !== (channel.name ?? '') ||
-				newSlug !== (channel.slug ?? '') ||
-				description !== (channel.description ?? '') ||
-				url !== channel.url ||
-				latitude !== channel.latitude ||
-				longitude !== channel.longitude
-
-			if (!hasChanges) {
-				success = true
-				return
-			}
-
-			await updateChannel(channel.id, {name, slug: newSlug, description, url, latitude, longitude})
+			const oldSlug = channel.slug
+			await updateChannel(channel.id, {
+				name: fieldName,
+				slug: fieldSlug,
+				description: fieldDescription,
+				url: fieldUrl || null,
+				latitude: pickedLat,
+				longitude: pickedLng
+			})
 			success = true
+			initialized = false // re-sync after save so hasChanges resets
+			if (fieldSlug !== oldSlug) {
+				await goto(resolve('/[slug]/edit', {slug: fieldSlug}), {replaceState: true})
+			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_edit_failed()
 		} finally {
@@ -74,14 +96,16 @@
 	<title>{m.channel_edit_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	<button class="primary" type="button" onclick={handleSubmit} disabled={!hasChanges || submitting}>
+		{submitting ? m.common_save() + '…' : m.common_save()}
+	</button>
+{/snippet}
+
 <article>
 	{#if canEdit && channel}
-		<!--
-		<header>
-			<h1>{m.channel_edit_title()} <a href={`/${channel.slug}`}>{channel.name}</a></h1>
-		</header>
-		-->
-
 		<div class="card">
 			{#if error}
 				<p class="error" role="alert">{m.common_error()}: {error}</p>
@@ -99,17 +123,17 @@
 
 				<fieldset>
 					<label for="name">{m.common_name()}</label>
-					<input id="name" name="name" type="text" value={channel.name ?? ''} required />
+					<input id="name" name="name" type="text" bind:value={fieldName} required />
 				</fieldset>
 
 				<fieldset>
 					<label for="slug">{m.channel_edit_slug_label()}</label>
-					<input id="slug" name="slug" type="text" value={channel.slug ?? ''} required />
+					<input id="slug" name="slug" type="text" bind:value={fieldSlug} required />
 				</fieldset>
 
 				<fieldset>
 					<label for="description">{m.common_description()}</label>
-					<textarea id="description" name="description" rows="4">{channel.description ?? ''}</textarea>
+					<textarea id="description" name="description" rows="4" bind:value={fieldDescription}></textarea>
 				</fieldset>
 
 				<fieldset>
@@ -148,18 +172,8 @@
 
 				<fieldset>
 					<label for="url">{m.common_url()}</label>
-					<input
-						id="url"
-						name="url"
-						type="url"
-						value={channel.url ?? ''}
-						placeholder={m.track_form_url_placeholder()}
-					/>
+					<input id="url" name="url" type="url" bind:value={fieldUrl} placeholder={m.track_form_url_placeholder()} />
 				</fieldset>
-
-				<button class="primary" type="submit" disabled={submitting}>
-					{submitting ? m.common_save() + '...' : m.common_save()}
-				</button>
 			</form>
 		</div>
 
