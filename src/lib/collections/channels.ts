@@ -268,7 +268,12 @@ export function updateChannel(id: string, changes: Record<string, unknown>) {
 		.update(id, (draft) => {
 			Object.assign(draft, changes)
 		})
-		.isPersisted.promise.then(() => {})
+		.isPersisted.promise.then(() => {
+			// Keep appState.channel in sync so the header link etc. reflect the change
+			if (appState.channel?.id === id) {
+				appState.channel = {...appState.channel, ...changes} as typeof appState.channel
+			}
+		})
 }
 
 export function deleteChannel(id: string) {

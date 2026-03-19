@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {page} from '$app/state'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
 	import {setChannelCtx, setTracksQueryCtx} from '$lib/contexts'
@@ -29,16 +30,47 @@
 	let tid = $derived(page.params.tid)
 	let routeId = $derived(page.route.id)
 
-	// Fetch channel by slug (triggers on-demand fetch)
+	// Resolve channel: slug → ID on first hit, then query by stable ID.
+	// This prevents "not found" flashes when the slug changes (edit, sync).
 	const channelBySlugQuery = useLiveQuery((q) =>
 		q
 			.from({channels: channelsCollection})
 			.where(({channels}) => eq(channels.slug, slug))
 			.findOne()
 	)
-	let channel = $derived(
-		/** @type {import('$lib/types').Channel | undefined} */ (/** @type {unknown} */ (channelBySlugQuery.data))
+	let channelId = $state('')
+	$effect(() => {
+		const found = /** @type {import('$lib/types').Channel | undefined} */ (
+			/** @type {unknown} */ (channelBySlugQuery.data)
+		)
+		if (found?.id && found.id !== channelId) channelId = found.id
+	})
+
+	// Reactive query by stable ID — survives slug changes
+	const channelByIdQuery = useLiveQuery((q) =>
+		channelId
+			? q
+					.from({channels: channelsCollection})
+					.where(({channels}) => eq(channels.id, channelId))
+					.findOne()
+			: q
+					.from({channels: channelsCollection})
+					.orderBy(({channels}) => channels.id, 'asc')
+					.limit(0)
 	)
+	let channel = $derived(
+		/** @type {import('$lib/types').Channel | undefined} */ (
+			/** @type {unknown} */ (channelByIdQuery.data ?? channelBySlugQuery.data)
+		)
+	)
+
+	// Redirect when the channel's slug drifts from the URL (e.g. after editing)
+	$effect(() => {
+		if (channel?.slug && channel.slug !== slug) {
+			const subpath = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
+			goto(subpath, {replaceState: true})
+		}
+	})
 	let isListeningToChannel = $derived(
 		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
 	)
@@ -124,7 +156,6 @@
 	)
 
 	// Channel-specific broadcast live query so "Live" state updates on this page
-	let channelId = $derived(channel?.id)
 	const channelBroadcastQuery = useLiveQuery((q) =>
 		channelId
 			? q

@@ -1,24 +1,16 @@
 <script>
-	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {channelsCollection, updateChannel} from '$lib/collections/channels'
+	import {updateChannel} from '$lib/collections/channels'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
 
-	// Lock to channel ID from context (ID never changes, slug might during editing)
-	let channelId = $state('')
-	$effect(() => {
-		const found = channelCtx.data
-		if (found?.id && !channelId) channelId = found.id
-	})
-
-	// Read by ID so the form stays stable when the user changes the slug
-	const channel = $derived(channelId ? channelsCollection.get(channelId) : channelCtx.data)
+	// Layout provides a reactive ID-based query — stable across slug changes
+	const channel = $derived(channelCtx.data)
 	const isSignedIn = $derived(!!appState.user)
 	const canEdit = $derived(canEditChannel(channel?.id))
 
@@ -68,13 +60,8 @@
 				return
 			}
 
-			const oldSlug = channel.slug
 			await updateChannel(channel.id, {name, slug: newSlug, description, url, latitude, longitude})
 			success = true
-			// Navigate to new URL if slug changed so the route params re-resolve
-			if (newSlug !== oldSlug) {
-				await goto(resolve('/[slug]/edit', {slug: newSlug}), {replaceState: true})
-			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_edit_failed()
 		} finally {
