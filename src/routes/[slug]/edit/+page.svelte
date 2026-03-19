@@ -1,5 +1,5 @@
 <script>
-	import {replaceState} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {getChannelCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -71,9 +71,9 @@
 			const oldSlug = channel.slug
 			await updateChannel(channel.id, {name, slug: newSlug, description, url, latitude, longitude})
 			success = true
-			// Update URL if slug changed (shallow routing)
+			// Navigate to new URL if slug changed so the route params re-resolve
 			if (newSlug !== oldSlug) {
-				replaceState(resolve('/[slug]/edit', {slug: newSlug}), {})
+				await goto(resolve('/[slug]/edit', {slug: newSlug}), {replaceState: true})
 			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_edit_failed()
