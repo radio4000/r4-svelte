@@ -76,9 +76,25 @@ export async function loadMoreChannels(
 	return channels
 }
 
+const defaultChannelParams = {
+	slug: undefined as string | undefined,
+	idIn: undefined as string[] | undefined,
+	trackCountGte: undefined as number | undefined,
+	imageNotNull: false,
+	shuffle: false,
+	orderColumn: 'created_at' as string | undefined,
+	ascending: true,
+	sortKey: 'default'
+}
+
 /** Parse d2ts loadSubsetOptions into domain params. Shared by queryKey and queryFn. */
 function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) {
-	const options = parseLoadSubsetOptions(opts)
+	let options: ReturnType<typeof parseLoadSubsetOptions>
+	try {
+		options = parseLoadSubsetOptions(opts)
+	} catch {
+		return defaultChannelParams
+	}
 	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined
 	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as string[] | undefined
 	const trackCountGte = options.filters.find((f) => f.field[0] === 'track_count' && f.operator === 'gte')?.value as
