@@ -3,7 +3,7 @@
 	import {page} from '$app/state'
 	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '@tanstack/svelte-db'
-	import {eq} from '@tanstack/db'
+	import {eq, and} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import TrackCard from '$lib/components/track-card.svelte'
@@ -35,7 +35,7 @@
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => eq(meta.media_id, trackMediaId || '') && eq(meta.provider, trackProvider))
+			.where(({meta}) => and(eq(meta.media_id, trackMediaId || ''), eq(meta.provider, trackProvider)))
 			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
