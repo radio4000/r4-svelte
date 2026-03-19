@@ -258,7 +258,7 @@
 			'progress';
 		row-gap: 0.4rem;
 		gap: 0.75rem;
-		padding: 0.5rem 0.5rem 0;
+		padding: 0rem 0.5rem 0;
 		/*border: 1px solid var(--gray-6);*/
 		border-top: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);

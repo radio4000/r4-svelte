@@ -17,7 +17,6 @@
 		{value: 'Rosario', label: 'Rosario'},
 		{value: 'Radio Canada', label: 'Radio Canada'},
 		{value: 'Recursive', label: 'Recursive'},
-		{value: 'OutputSansVariable', label: 'Output Sans'},
 		{value: 'Epilogue', label: 'Epilogue'},
 		{value: 'Sono', label: 'Sono'},
 		{value: 'var(--font-system)', label: 'System'}
