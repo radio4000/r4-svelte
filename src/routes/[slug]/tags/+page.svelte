@@ -269,6 +269,7 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
+	{#if allTags.length}
 	<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
 	<PopoverMenu id="tags-data" closeOnClick={false}>
 		{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
@@ -316,6 +317,7 @@
 			</button>
 		</menu>
 	</PopoverMenu>
+	{/if}
 {/snippet}
 
 {#if !channel}
@@ -347,7 +349,8 @@
 							</select>
 						</span>
 					</h3>
-					<InputRange
+					{#if periods.length > 1}
+				<InputRange
 						min={0}
 						max={periods.length}
 						step={1}
@@ -359,6 +362,7 @@
 						bind:value={currentPeriod}
 						title={m.tags_scrub_title()}
 					/>
+				{/if}
 					<div class="scrubber-labels">
 						<span>{m.tags_all_time()}</span>
 						{#if periods.length < 20}

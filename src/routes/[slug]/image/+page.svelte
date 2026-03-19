@@ -14,12 +14,15 @@
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
+	import Icon from '$lib/components/icon.svelte'
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
 	let channel = $derived(channelCtx.data ?? null)
 	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
+	let showControlsModal = $state(false)
 	const imageBase = $derived(channel?.image ? {url: channelAvatarUrl(channel.image, 1024, 'webp', 90)} : undefined)
 	const isChannelLive = $derived.by(() => {
 		const channelId = channel?.id
@@ -88,6 +91,14 @@
 	}
 </script>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	<button type="button" class="btn" title="3D controls" onclick={() => (showControlsModal = true)}>
+		<Icon icon="circle-info" />
+	</button>
+{/snippet}
+
 {#if mediaItem}
 	<div class="image-page">
 		<ChannelScene
@@ -104,6 +115,8 @@
 			minCameraZ={26}
 			maxCameraZ={70}
 			onnavigate={handleNavigate}
+			showInfoButton={false}
+			bind:showControlsModal
 		/>
 	</div>
 {/if}

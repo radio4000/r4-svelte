@@ -64,8 +64,10 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: following.length})} />
-	<ChannelsViewControls bind:display bind:order bind:direction />
+	{#if following.length}
+		<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: following.length})} />
+		<ChannelsViewControls bind:display bind:order bind:direction />
+	{/if}
 {/snippet}
 
 <svelte:head>

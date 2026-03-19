@@ -26,6 +26,8 @@
 		minCameraZ = 1,
 		maxCameraZ = 500,
 		backgroundColor = null,
+		showInfoButton = true,
+		showControlsModal = $bindable(false),
 		onclick,
 		ondoubleclick,
 		onnavigate
@@ -35,7 +37,6 @@
 	let container
 	/** @type {InfiniteCanvasOGL} */
 	let canvas
-	let showControlsModal = $state(false)
 
 	function openControls() {
 		canvas?.resetView({duration: 0.7, rebuildScene: true})
@@ -109,9 +110,11 @@
 <div class="canvas-wrapper">
 	<div class="canvas-container" bind:this={container}></div>
 
-	<button class="controls-info-btn" type="button" onclick={openControls} title="3D controls">
-		<Icon icon="circle-info" />
-	</button>
+	{#if showInfoButton}
+		<button class="controls-info-btn" type="button" onclick={openControls} title="3D controls">
+			<Icon icon="circle-info" />
+		</button>
+	{/if}
 
 	<Dialog bind:showModal={showControlsModal}>
 		{#snippet header()}

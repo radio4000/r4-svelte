@@ -5,6 +5,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import Icon from '$lib/components/icon.svelte'
+	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const slug = $derived(page.params.slug)
@@ -39,12 +40,18 @@
 	<title>{m.channel_backup_page_title({handle: `@${slug}`})}</title>
 </svelte:head>
 
+<ChannelNavControlsPortal controls={navControls} />
+
+{#snippet navControls()}
+	{#if canEdit}
+		<button type="button" title={m.channel_backup_download()} onclick={downloadBackup}>
+			<Icon icon="document-download" />
+		</button>
+	{/if}
+{/snippet}
+
 <article class="constrained">
 	{#if canEdit}
-		<header>
-			<h1>{m.channel_backup_title()}</h1>
-		</header>
-
 		<p>{m.channel_backup_description()}</p>
 
 		{#if error}
@@ -54,13 +61,6 @@
 		{#if success}
 			<p class="success">{m.channel_backup_success()}</p>
 		{/if}
-
-		<p>
-			<button type="button" onclick={downloadBackup}>
-				<Icon icon="document-download" />
-				{m.channel_backup_download()}
-			</button>
-		</p>
 	{:else}
 		<p><a href={resolve('/auth')}>{m.channel_backup_sign_in()}</a></p>
 	{/if}

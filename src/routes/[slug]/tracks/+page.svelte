@@ -116,32 +116,45 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	{#if aggregatedTags.length > 0}
-		<PopoverMenu>
-			{#snippet trigger()}
-				Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-			{/snippet}
-			<menu class="tags-menu">
-				{#each aggregatedTags as { value, count } (value)}
-					<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
-						{value} <span class="tag-count">({count})</span>
-					</button>
-				{/each}
-			</menu>
+	{#if allTracks.length}
+		{#if aggregatedTags.length > 0}
+			<PopoverMenu>
+				{#snippet trigger()}
+					Tags {selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
+				{/snippet}
+				<menu class="tags-menu">
+					{#each aggregatedTags as { value, count } (value)}
+						<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+							{value} <span class="tag-count">({count})</span>
+						</button>
+					{/each}
+				</menu>
+			</PopoverMenu>
+		{/if}
+		<SearchInput
+			bind:value={searchInput}
+			placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
+			debounce={150}
+		/>
+		{#if visibleTracks.length}
+			<button type="button" title={m.common_play()} onclick={playFilteredTracks}><Icon icon="play-fill" /></button>
+			<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}><Icon icon="next-fill" /></button>
+			{#if channel && canShowFilteredAutoRadio}
+				<AutoRadioButton
+					synced={isFilteredAutoActive && !isFilteredAutoDrifted}
+					title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
+					onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+				/>
+			{/if}
+		{/if}
+		<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+			{#snippet trigger()}<Icon
+					icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+					strokeWidth={1.5}
+				/>{/snippet}
+			<SortControls bind:order bind:direction />
 		</PopoverMenu>
 	{/if}
-	<SearchInput
-		bind:value={searchInput}
-		placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
-		debounce={150}
-	/>
-	<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-		{#snippet trigger()}<Icon
-				icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
-				strokeWidth={1.5}
-			/>{/snippet}
-		<SortControls bind:order bind:direction />
-	</PopoverMenu>
 {/snippet}
 
 {#if channel}
@@ -164,20 +177,7 @@
 						{/each}
 					</menu>
 				{/if}
-				{#if visibleTracks.length > 0}
-					<menu class="row filter-actions">
-						<button type="button" onclick={playFilteredTracks}><Icon icon="play-fill" />{m.common_play()}</button>
-						<button type="button" onclick={queueFilteredTracks}><Icon icon="next-fill" />{m.common_queue()}</button>
-						{#if channel && canShowFilteredAutoRadio}
-							<AutoRadioButton
-								synced={isFilteredAutoActive && !isFilteredAutoDrifted}
-								title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
-								onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
-							/>
-						{/if}
-					</menu>
-				{/if}
-			</header>
+				</header>
 
 			{#if tracksQuery.isReady && visibleTracks.length > 0}
 				<Tracklist
@@ -213,10 +213,6 @@
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
-	}
-
-	.filter-actions {
-		align-items: center;
 	}
 
 	.filter-tags {
