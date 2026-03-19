@@ -18,7 +18,7 @@
 
 <figure>
 	<img
-		src="https://upload.wikimedia.org/wikipedia/commons/3/30/The_Burning_of_the_Library_at_Alexandria_in_391_AD.jpg"
+		src="/images/illustrations/the-burning-of-the-library-alexandria-391-ad.webp"
 		alt={m.about_alexandria_alt()}
 		width="1836"
 		height="1552"
