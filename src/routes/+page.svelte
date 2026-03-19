@@ -171,7 +171,6 @@
 	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
 	const showAutoRadioWidget = $derived(userChannelHasAuto)
 	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
-	const userBroadcastStatusLabel = $derived(userChannelIsBroadcasting ? m.status_live_short() : m.status_offline())
 
 	const broadcastingDecks = $derived.by(() => {
 		if (!userChannel) return []
@@ -273,7 +272,7 @@
 		<section class="section dashboard-section">
 			<div class="dashboard-grid">
 				{#if showBroadcastStatusWidget}
-					{#each broadcastingDecks as { deck, current, next }}
+					{#each broadcastingDecks as { deck, current, next } (deck.id)}
 						<div class="dashboard-card broadcast-deck-card">
 							<span class="dashboard-label dashboard-label--with-icon">
 								<Icon icon="cell-signal" size={16} />

@@ -182,10 +182,6 @@ menu.centerwrap {
 	justify-content: center;
 }
 
-menu + menu.nav-vertical {
-	margin-top: 0.2rem;
-}
-
 menu.nav-vertical {
 	flex-flow: column;
 	border: 1px solid var(--gray-6);
@@ -205,6 +201,10 @@ menu.nav-vertical {
 
 	& > :not(:last-child) {
 		border-bottom: 1px solid var(--gray-4);
+	}
+
+	& + & {
+		margin-top: 0.2rem;
 	}
 }
 

@@ -66,7 +66,7 @@ async function preload() {
 			log.debug('ensuring_tracks_for_decks', {slugs: [...deckSlugs]})
 		}
 		await Promise.all(
-			[.../** @type {Set<string>} */ (deckSlugs)].map((slug) =>
+			Array.from(/** @type {Set<string>} */ (deckSlugs), (slug) =>
 				ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
 			)
 		)

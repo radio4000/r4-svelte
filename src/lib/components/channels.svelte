@@ -103,7 +103,7 @@
 	/** @type {'grid' | 'list' | 'map' | 'tuner' | 'infinite'}*/
 	let display = $derived.by(() => {
 		const urlDisplay = page.url.searchParams.get('display')
-		if (VALID_DISPLAYS.has(urlDisplay)) return /** @type {any} */ (urlDisplay)
+		if (urlDisplay && VALID_DISPLAYS.has(urlDisplay)) return /** @type {any} */ (urlDisplay)
 		if (VALID_DISPLAYS.has(appState.channels_display)) return appState.channels_display
 		if (VALID_DISPLAYS.has(initialDisplay)) return initialDisplay
 		return 'grid'

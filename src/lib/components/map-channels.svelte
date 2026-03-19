@@ -50,6 +50,7 @@
 	const playingSlugs = $derived(channelActivity.playingChannelSlugs)
 	const inDeckSlugs = $derived(channelActivity.inDeckChannelSlugs)
 	const mapChannels = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt inside $derived.by, no mutation after creation
 		const byId = new Map()
 		for (const channel of channels) {
 			const lat = Number(channel?.latitude)
@@ -221,7 +222,8 @@
 				m.getCanvas().style.cursor = ''
 			})
 		} else {
-			/** @type {GeoJSONSource} */ m.getSource('channels-source').setData(fc)
+			const source = /** @type {GeoJSONSource | undefined} */ (m.getSource('channels-source'))
+			source?.setData(fc)
 		}
 	}
 
@@ -496,8 +498,7 @@
 
 	function updateNightLayer() {
 		if (!map || !mapReady) return
-		/** @type {GeoJSONSource | undefined} */
-		map.getSource('night-source')?.setData(buildNightGeoJSON())
+		/** @type {GeoJSONSource | undefined} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
 	}
 
 	function handleReady(m) {

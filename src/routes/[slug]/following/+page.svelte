@@ -14,10 +14,10 @@
 
 	const FEATURED_LIMIT = 10
 
-	let display = $state(appState.channels_display || 'grid')
-	const validOrders = ['updated', 'created', 'name', 'tracks']
-	/** @type {import('$lib/types').AppState['channels_order']} */
-	let order = $state(validOrders.includes(appState.channels_order) ? appState.channels_order : 'updated')
+	const d = appState.channels_display
+	let display = $state(d === 'grid' || d === 'list' || d === 'map' || d === 'infinite' ? d : 'grid')
+	const o = appState.channels_order
+	let order = $state(o === 'updated' || o === 'created' || o === 'name' || o === 'tracks' ? o : 'updated')
 	/** @type {'asc' | 'desc'} */
 	let direction = $state(appState.channels_order_direction || 'desc')
 

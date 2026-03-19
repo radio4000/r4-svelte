@@ -21,7 +21,8 @@
 		success = false
 		loading = true
 		try {
-			const res = await sdk.channels.createImage(file, slug)
+			// SDK types file as string but the runtime API accepts File for uploads
+			const res = await sdk.channels.createImage(/** @type {any} */ (file), slug)
 			if (!res.ok) {
 				const body = await res.json().catch(() => null)
 				throw new Error(body?.message || body?.error || `${m.avatar_upload_failed()} (${res.status})`)

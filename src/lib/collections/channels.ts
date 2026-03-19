@@ -81,6 +81,7 @@ export async function loadMoreChannels(
 	queryKey.push('offset', params.offset, 'limit', params.limit)
 	log.info('channels loadMore', {queryKey})
 	const data = await queryClient.fetchQuery({
+		// eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryKey is built dynamically from params above
 		queryKey,
 		staleTime: 60 * 60 * 1000,
 		queryFn: async () => {
@@ -91,7 +92,7 @@ export async function loadMoreChannels(
 	})
 	if (data.length) {
 		channelsCollection.utils.writeBatch(() => {
-			data.forEach((ch) => channelsCollection.utils.writeUpsert(ch))
+			for (const ch of data) channelsCollection.utils.writeUpsert(ch)
 		})
 	}
 	return data

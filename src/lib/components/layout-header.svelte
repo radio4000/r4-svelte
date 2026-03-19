@@ -56,6 +56,17 @@
 		>
 			<IconR4 />
 		</a>
+		<!--
+		<a
+			href={resolve('/channels')}
+			class="btn"
+			class:active={page.route.id === '/channels'}
+			aria-label={appName}
+			{@attach tooltip({content: 'Channels'})}
+		>
+			Channels
+		</a>
+		-->
 		<a
 			href={resolve('/search')}
 			class="btn"

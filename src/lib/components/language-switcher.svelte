@@ -1,7 +1,6 @@
 <script>
 	import {getLocale, setLocale, locales} from '$lib/paraglide/runtime'
 	import {appState} from '$lib/app-state.svelte'
-	import * as m from '$lib/paraglide/messages'
 
 	let selectedLocale = $state(appState.language ?? getLocale())
 	const languageNames =

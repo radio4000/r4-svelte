@@ -8,11 +8,11 @@
 	import ChannelCard from './channel-card.svelte'
 	import ChannelsViewControls from './channels-view-controls.svelte'
 
+	/** @type {{channels?: any[], order?: string, direction?: 'asc' | 'desc', display?: 'grid' | 'list' | 'map' | 'infinite', header?: import('svelte').Snippet, showToolbar?: boolean, syncToUrl?: boolean}} */
 	let {
 		channels = [],
 		order = $bindable('updated'),
 		direction = $bindable('desc'),
-		/** @type {'grid' | 'list' | 'map' | 'infinite'} */
 		display = $bindable('grid'),
 		header = undefined,
 		showToolbar = true,

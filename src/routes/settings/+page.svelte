@@ -3,17 +3,9 @@
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import AppPresenceCount from '$lib/components/app-presence-count.svelte'
-	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
-	import {appChatUrl, appDiscordUrl} from '$lib/config'
-	import {repoBlobUrl, repoCommitUrl} from '$lib/repo'
 	import BackLink from '$lib/components/back-link.svelte'
-
-	const sha = __GIT_INFO__.sha
-	const changelogHref = repoBlobUrl('CHANGELOG.md')
-	const sourceHref = repoCommitUrl(sha)
 </script>
 
 <svelte:head>

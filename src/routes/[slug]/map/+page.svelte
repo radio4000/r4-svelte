@@ -63,6 +63,7 @@
 		emptyText={m.map_channel_no_location()}
 	>
 		<div class="map-fill fill-height">
+			{#if channel}
 			<MapChannels
 				channels={[channel]}
 				latitude={channel.latitude}
@@ -76,6 +77,7 @@
 				bind:showDayNight
 				bind:tileStyle
 			/>
+			{/if}
 		</div>
 	</Subpage>
 </article>

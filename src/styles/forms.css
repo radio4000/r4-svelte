@@ -117,6 +117,12 @@ fieldset {
 	margin: 0;
 	border: 0;
 	padding: 0;
+
+	label,
+	legend {
+		font-size: var(--font-3);
+		font-weight: 500;
+	}
 }
 
 form.form,
@@ -145,13 +151,5 @@ form.form,
 
 	legend {
 		padding: 0;
-	}
-}
-
-fieldset {
-	label,
-	legend {
-		font-size: var(--font-3);
-		font-weight: 500;
 	}
 }

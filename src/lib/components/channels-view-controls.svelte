@@ -6,13 +6,13 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	/** @type {{display?: $bindable<'grid' | 'list' | 'map' | 'infinite'>, order?: $bindable<string>, direction?: $bindable<'asc' | 'desc'>, setDisplay?: (v: string) => void}} */
+	/** @type {{display?: 'grid' | 'list' | 'map' | 'infinite', order?: string, direction?: 'asc' | 'desc', setDisplay?: (value: 'grid' | 'list' | 'map' | 'infinite') => void}} */
 	let {
 		display = $bindable('grid'),
 		order = $bindable('updated'),
 		direction = $bindable('desc'),
-		setDisplay = (v) => {
-			display = v
+		setDisplay = (/** @type {'grid' | 'list' | 'map' | 'infinite'} */ value) => {
+			display = value
 		}
 	} = $props()
 </script>
