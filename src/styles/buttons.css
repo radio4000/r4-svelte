@@ -175,11 +175,11 @@ button[role='primary'],
 button.primary,
 .btn.primary {
 	color: light-dark(var(--gray-1), var(--gray-12));
-	background: var(--accent-7);
-	border-color: var(--accent-8);
+	background: light-dark(var(--accent-9), var(--accent-7));
+	border-color: light-dark(var(--accent-10), var(--accent-8));
 
 	&:hover {
-		background: var(--accent-8);
+		border-color: light-dark(var(--accent-12), var(--accent-9));
 	}
 }
 
