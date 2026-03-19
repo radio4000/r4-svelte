@@ -5,45 +5,46 @@
 	let {text, value, max} = $props()
 
 	const sentences = [
-		'Unu momenton, mi petas',
-		'Un momento por favor',
-		'لحظة واحدة من فضلك',
-		'Один момент, пожалуйста',
-		'Une batez, mesedez',
-		'এক মিনিট, প্লিজ',
-		'稍等一会儿',
-		'Et øjeblik',
-		'Een ogenblik alstublieft',
-		'Unu momenton, bonvolu',
-		'Hetkinen',
-		"Un instant s'il vous plaît",
-		'Einen Moment bitte',
-		'Μια στιγμή παρακαλώ',
-		'Yon sèl moman, tanpri',
-		'कृपया एक क्षण',
-		'Nóiméad amháin, le do thoil',
-		'Un momento per favore',
-		'少々お待ちください',
-		'Uno momento, placet',
-		'Един момент моля',
-		'Et øyeblikk',
-		'Chwileczkę',
-		'Um momento por favor',
-		'Wakati mmoja, tafadhali',
-		'Ett ögonblick tack',
-		'กรุณารอสักครู่',
-		'Bir dakika lütfen',
-		'Un funud, os gwelwch yn dda',
-		'Omunye mzuzu, sicela'
+		{text: 'Unu momenton, mi petas', lang: 'Esperanto'},
+		{text: 'Un momento por favor', lang: 'Spanish'},
+		{text: 'لحظة واحدة من فضلك', lang: 'Arabic'},
+		{text: 'Один момент, пожалуйста', lang: 'Russian'},
+		{text: 'Une batez, mesedez', lang: 'Basque'},
+		{text: 'এক মিনিট, প্লিজ', lang: 'Bengali'},
+		{text: '稍等一会儿', lang: 'Chinese'},
+		{text: 'Et øjeblik', lang: 'Danish'},
+		{text: 'Een ogenblik alstublieft', lang: 'Dutch'},
+		{text: 'Unu momenton, bonvolu', lang: 'Esperanto'},
+		{text: 'Hetkinen', lang: 'Finnish'},
+		{text: "Un instant s'il vous plaît", lang: 'French'},
+		{text: 'Einen Moment bitte', lang: 'German'},
+		{text: 'Μια στιγμή παρακαλώ', lang: 'Greek'},
+		{text: 'Yon sèl moman, tanpri', lang: 'Haitian Creole'},
+		{text: 'कृपया एक क्षण', lang: 'Hindi'},
+		{text: 'Nóiméad amháin, le do thoil', lang: 'Irish'},
+		{text: 'Un momento per favore', lang: 'Italian'},
+		{text: '少々お待ちください', lang: 'Japanese'},
+		{text: 'Uno momento, placet', lang: 'Latin'},
+		{text: 'Един момент моля', lang: 'Bulgarian'},
+		{text: 'Et øyeblikk', lang: 'Norwegian'},
+		{text: 'Chwileczkę', lang: 'Polish'},
+		{text: 'Um momento por favor', lang: 'Portuguese'},
+		{text: 'Wakati mmoja, tafadhali', lang: 'Swahili'},
+		{text: 'Ett ögonblick tack', lang: 'Swedish'},
+		{text: 'กรุณารอสักครู่', lang: 'Thai'},
+		{text: 'Bir dakika lütfen', lang: 'Turkish'},
+		{text: 'Un funud, os gwelwch yn dda', lang: 'Welsh'},
+		{text: 'Omunye mzuzu, sicela', lang: 'Zulu'},
 	]
 
-	const randomSentence = sentences[Math.floor(Math.random() * sentences.length)]
-	const displayText = $derived(text || randomSentence)
+	const random = sentences[Math.floor(Math.random() * sentences.length)]
+	const displayText = $derived(text || random.text)
+	const displayLang = $derived(text ? undefined : random.lang)
 </script>
 
 <div class="r4-loading">
 	<span class="logo"><IconR4 /></span>
-	{displayText}
+	<span title={displayLang}>{displayText}</span>
 	{#if value && max}
 		<progress {value} {max}></progress>
 	{:else}
