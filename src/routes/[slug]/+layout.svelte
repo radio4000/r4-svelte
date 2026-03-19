@@ -14,7 +14,6 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
@@ -22,8 +21,6 @@
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
 
 	let {children} = $props()
@@ -97,17 +94,6 @@
 			(d) => d.auto_radio && (d.view?.sources[0]?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
 		)
 	)
-	let anyChannelAutoActive = $derived(anyChannelAutoDecks.length > 0)
-	let anyChannelAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	let channelAutoResyncId = $derived.by(() => {
-		const active = appState.decks[appState.active_deck_id]
-		if (
-			active?.auto_radio &&
-			(active?.view?.sources[0]?.channels?.[0] === channel?.slug || active?.playlist_slug === channel?.slug)
-		)
-			return active.id
-		return anyChannelAutoDecks[0]?.id
-	})
 	let channelPlayingDeck = $derived.by(() => {
 		if (!channel?.slug) return undefined
 		const active = appState.decks[appState.active_deck_id]
@@ -192,8 +178,6 @@
 	setTracksQueryCtx(tracksQuery)
 
 	let allChannelTracks = $derived(tracksQuery.data ?? [])
-	let autoRadioTracks = $derived(toAutoTracks(allChannelTracks))
-	let canShowAutoRadio = $derived(hasAutoRadioCoverage(allChannelTracks))
 </script>
 
 <svelte:head>
@@ -266,18 +250,6 @@
 					{/if}
 					<span>
 						<ButtonPlay {channel} trackId={tid} />
-						{#if canShowAutoRadio}
-							<AutoRadioButton
-								synced={anyChannelAutoActive && !anyChannelAutoDrifted}
-								title={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
-								ariaLabel={anyChannelAutoActive ? m.auto_radio_resync() : m.auto_radio_join()}
-								onclick={() => {
-									if (anyChannelAutoActive && channelAutoResyncId) resyncAutoRadio(channelAutoResyncId)
-									else if (channel)
-										joinAutoRadio(appState.active_deck_id, autoRadioTracks, {sources: [{channels: [channel.slug]}]})
-								}}
-							/>
-						{/if}
 					</span>
 					<span>
 						{#if hasChannel}
