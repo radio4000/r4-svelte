@@ -186,6 +186,16 @@
 		justify-content: flex-start;
 	}
 
+	.home-link {
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		:global(svg) {
+			width: 1.1rem;
+			height: auto;
+		}
+	}
+
 	.user {
 		margin-top: auto;
 	}

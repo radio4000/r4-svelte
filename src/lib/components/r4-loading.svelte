@@ -42,7 +42,7 @@
 </script>
 
 <div class="r4-loading">
-	<span class="logo"><IconR4 size={48} /></span>
+	<span class="logo"><IconR4 /></span>
 	{displayText}
 	{#if value && max}
 		<progress {value} {max}></progress>
@@ -61,6 +61,10 @@
 		.logo {
 			display: flex;
 			color: var(--accent-9);
+			:global(svg) {
+				width: 2rem;
+				height: auto;
+			}
 		}
 	}
 </style>
