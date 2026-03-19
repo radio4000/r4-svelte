@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
+	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {playTrack, playNext, playTrackInNewDeck} from '$lib/api'
 	import {deleteTrack} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -79,6 +81,11 @@
 	}
 
 	const addToRadio = () => {
+		if (!appState.user) {
+			const addPath = resolve('/add') + (track.url ? `?url=${encodeURIComponent(track.url)}` : '')
+			goto(resolve('/auth') + `?redirect=${encodeURIComponent(addPath)}`)
+			return
+		}
 		appState.modal_track_add = {track}
 	}
 
