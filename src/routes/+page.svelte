@@ -424,7 +424,18 @@
 		{/if}
 	{:else}
 		<!-- Not logged in -->
-		{#if activeBroadcasts.length}
+		{#if showBroadcastCountWidget}
+			<section class="section dashboard-section">
+				<div class="dashboard-grid">
+					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+						<span class="dashboard-label dashboard-label--with-icon">
+							<Icon icon="cell-signal" size={16} />
+							{m.home_dashboard_live_radios()}
+						</span>
+						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
+					</a>
+				</div>
+			</section>
 			<section class="section">
 				<h2 class="section-title">{m.home_broadcasting()}</h2>
 				<ol class="list">
