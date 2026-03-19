@@ -30,7 +30,6 @@
 </script>
 
 <label class="language-select">
-	<span>{m.settings_language_label()}</span>
 	<select bind:value={selectedLocale} onchange={handleChange} oninput={handleChange}>
 		{#each locales as locale (locale)}
 			<option value={locale}>
@@ -44,12 +43,11 @@
 <style>
 	.language-select {
 		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		font-weight: 500;
+		width: 100%;
 	}
 
 	select {
+		width: 100%;
 		border-radius: var(--border-radius);
 		border: 1px solid var(--gray-6);
 		background: var(--gray-2);

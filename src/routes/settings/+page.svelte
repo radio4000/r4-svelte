@@ -41,6 +41,8 @@
 		{/if}
 	</menu>
 
+	<LanguageSwitcher />
+
 	<menu class="nav-vertical">
 		<a href={resolve('/settings/appearance')}>
 			<Icon icon="palette" />
@@ -93,8 +95,6 @@
 			Docs
 		</a>
 	</menu>
-
-	<LanguageSwitcher />
 </article>
 
 <style>
@@ -103,6 +103,10 @@
 	}
 	menu {
 		margin: 0 0 1rem;
+	}
+
+	menu:first-of-type {
+		margin-bottom: 0;
 	}
 	menu a small {
 		display: block;
