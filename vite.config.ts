@@ -35,6 +35,7 @@ export default defineConfig({
 			workbox: {
 				clientsClaim: true,
 				globPatterns: ['client/**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
+				globIgnores: ['**/*.html'],
 				// Pages are fetched from the network first (always fresh when online).
 				// The cache is only used as an offline fallback or when the network is slow (>5s).
 				runtimeCaching: [
