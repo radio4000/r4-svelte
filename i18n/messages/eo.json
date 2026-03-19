@@ -393,7 +393,7 @@
 	"mentions_empty": "Ankoraŭ neniuj trakoj de aliaj kanaloj mencias {handle}.",
 	"mentions_error": "Ne eblis ŝargi menciojn nun.",
 	"mentions_loading": "Ŝargante menciojn…",
-	"mentions_title": "{name} mencioj",
+	"mentions_title": "{handle} mencioj",
 	"mentions_title_fallback": "Mencioj",
 	"modal_close_label": "Fermi modalan fenestron",
 	"nav_about": "Pri",

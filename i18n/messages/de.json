@@ -393,7 +393,7 @@
 	"mentions_empty": "Noch keine Tracks aus anderen Kanälen erwähnen {handle}.",
 	"mentions_error": "Erwähnungen konnten gerade nicht geladen werden.",
 	"mentions_loading": "Erwähnungen werden geladen…",
-	"mentions_title": "{name} Erwähnungen",
+	"mentions_title": "{handle} Erwähnungen",
 	"mentions_title_fallback": "Erwähnungen",
 	"modal_close_label": "Modal schließen",
 	"nav_about": "Über",

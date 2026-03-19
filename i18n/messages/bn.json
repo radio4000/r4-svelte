@@ -393,7 +393,7 @@
 	"mentions_empty": "এখনও অন্য চ্যানেলের কোনো ট্র্যাকে {handle} উল্লেখ নেই।",
 	"mentions_error": "এখন উল্লেখগুলো লোড করা যাচ্ছে না।",
 	"mentions_loading": "উল্লেখ লোড হচ্ছে…",
-	"mentions_title": "{name} উল্লেখসমূহ",
+	"mentions_title": "{handle} উল্লেখসমূহ",
 	"mentions_title_fallback": "উল্লেখসমূহ",
 	"modal_close_label": "মডাল বন্ধ করুন",
 	"nav_about": "সম্পর্কে",

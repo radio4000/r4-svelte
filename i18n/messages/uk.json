@@ -393,7 +393,7 @@
 	"mentions_empty": "Поки жоден трек з інших каналів не згадує {handle}.",
 	"mentions_error": "Зараз не вдалося завантажити згадки.",
 	"mentions_loading": "Завантаження згадок…",
-	"mentions_title": "Згадки {name}",
+	"mentions_title": "Згадки {handle}",
 	"mentions_title_fallback": "Згадки",
 	"modal_close_label": "Закрити модальне вікно",
 	"nav_about": "Про нас",

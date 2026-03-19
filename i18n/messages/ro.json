@@ -393,7 +393,7 @@
 	"mentions_empty": "Nicio piesă din alte canale nu îl menționează încă pe {handle}.",
 	"mentions_error": "Nu s-au putut încărca mențiunile chiar acum.",
 	"mentions_loading": "Se încarcă mențiunile…",
-	"mentions_title": "Mențiuni pentru {name}",
+	"mentions_title": "Mențiuni pentru {handle}",
 	"mentions_title_fallback": "Mențiuni",
 	"modal_close_label": "Închide fereastra",
 	"nav_about": "Despre",

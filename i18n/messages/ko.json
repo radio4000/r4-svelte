@@ -393,7 +393,7 @@
 	"mentions_empty": "아직 다른 채널의 트랙이 {handle}을 언급하지 않았습니다.",
 	"mentions_error": "지금은 언급을 불러올 수 없습니다.",
 	"mentions_loading": "언급 불러오는 중…",
-	"mentions_title": "{name} 언급",
+	"mentions_title": "{handle} 언급",
 	"mentions_title_fallback": "언급",
 	"modal_close_label": "모달 닫기",
 	"nav_about": "정보",

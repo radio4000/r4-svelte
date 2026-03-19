@@ -393,7 +393,7 @@
 	"mentions_empty": "Nessuna traccia di altri canali menziona ancora {handle}.",
 	"mentions_error": "Impossibile caricare le menzioni in questo momento.",
 	"mentions_loading": "Caricamento menzioni…",
-	"mentions_title": "Menzioni di {name}",
+	"mentions_title": "Menzioni di {handle}",
 	"mentions_title_fallback": "Menzioni",
 	"modal_close_label": "Chiudi modale",
 	"nav_about": "Info",

@@ -393,7 +393,7 @@
 	"mentions_empty": "अभी तक किसी दूसरे चैनल के ट्रैक्स में {handle} का ज़िक्र नहीं है।",
 	"mentions_error": "अभी मेंशन्स लोड नहीं हो सके।",
 	"mentions_loading": "मेंशन्स लोड हो रहे हैं…",
-	"mentions_title": "{name} मेंशन्स",
+	"mentions_title": "{handle} मेंशन्स",
 	"mentions_title_fallback": "मेंशन्स",
 	"modal_close_label": "मोडल बंद करें",
 	"nav_about": "बारे में",

@@ -393,7 +393,7 @@
 	"mentions_empty": "{handle} adindan bahseden baska kanal parcasi henuz yok.",
 	"mentions_error": "Bahsetmeler su anda yuklenemedi.",
 	"mentions_loading": "Bahsetmeler yukleniyor…",
-	"mentions_title": "{name} bahsetmeleri",
+	"mentions_title": "{handle} bahsetmeleri",
 	"mentions_title_fallback": "Bahsetmeler",
 	"modal_close_label": "Modalı kapat",
 	"nav_about": "Hakkında",

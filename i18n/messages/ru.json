@@ -393,7 +393,7 @@
 	"mentions_empty": "Пока ни один трек из других каналов не упоминает {handle}.",
 	"mentions_error": "Сейчас не удалось загрузить упоминания.",
 	"mentions_loading": "Загрузка упоминаний…",
-	"mentions_title": "Упоминания {name}",
+	"mentions_title": "Упоминания {handle}",
 	"mentions_title_fallback": "Упоминания",
 	"modal_close_label": "Закрыть модал",
 	"nav_about": "О проекте",

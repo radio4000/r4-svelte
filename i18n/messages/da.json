@@ -393,7 +393,7 @@
 	"mentions_empty": "Ingen tracks fra andre kanaler nævner {handle} endnu.",
 	"mentions_error": "Kunne ikke indlæse omtaler lige nu.",
 	"mentions_loading": "Indlæser omtaler…",
-	"mentions_title": "{name} omtaler",
+	"mentions_title": "{handle} omtaler",
 	"mentions_title_fallback": "Omtaler",
 	"modal_close_label": "Luk modal",
 	"nav_about": "Om",

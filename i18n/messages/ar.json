@@ -393,7 +393,7 @@
 	"mentions_empty": "لا توجد بعد مسارات من قنوات أخرى تذكر {handle}.",
 	"mentions_error": "تعذر تحميل الإشارات الآن.",
 	"mentions_loading": "جارٍ تحميل الإشارات…",
-	"mentions_title": "إشارات {name}",
+	"mentions_title": "إشارات {handle}",
 	"mentions_title_fallback": "الإشارات",
 	"modal_close_label": "إغلاق النافذة",
 	"nav_about": "حول",

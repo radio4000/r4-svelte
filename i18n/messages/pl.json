@@ -393,7 +393,7 @@
 	"mentions_empty": "Żadne utwory z innych kanałów jeszcze nie wspominają {handle}.",
 	"mentions_error": "Nie udało się teraz załadować wzmianek.",
 	"mentions_loading": "Ładowanie wzmianek…",
-	"mentions_title": "Wzmianki o {name}",
+	"mentions_title": "Wzmianki o {handle}",
 	"mentions_title_fallback": "Wzmianki",
 	"modal_close_label": "Zamknij okno",
 	"nav_about": "O aplikacji",

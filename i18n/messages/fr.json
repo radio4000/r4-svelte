@@ -393,7 +393,7 @@
 	"mentions_empty": "Aucun track d’autres canaux ne mentionne encore {handle}.",
 	"mentions_error": "Impossible de charger les mentions pour le moment.",
 	"mentions_loading": "Chargement des mentions…",
-	"mentions_title": "Mentions de {name}",
+	"mentions_title": "Mentions de {handle}",
 	"mentions_title_fallback": "Mentions",
 	"modal_close_label": "Fermer la fenêtre",
 	"nav_about": "À propos",

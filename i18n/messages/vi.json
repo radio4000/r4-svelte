@@ -393,7 +393,7 @@
 	"mentions_empty": "Chưa có track nào từ kênh khác nhắc tới {handle}.",
 	"mentions_error": "Không thể tải các lượt nhắc tới lúc này.",
 	"mentions_loading": "Đang tải các lượt nhắc tới…",
-	"mentions_title": "Các lượt nhắc tới {name}",
+	"mentions_title": "Các lượt nhắc tới {handle}",
 	"mentions_title_fallback": "Lượt nhắc tới",
 	"modal_close_label": "Đóng modal",
 	"nav_about": "Giới thiệu",

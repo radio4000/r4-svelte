@@ -393,7 +393,7 @@
 	"mentions_empty": "还没有其他频道的曲目提到 {handle}。",
 	"mentions_error": "暂时无法加载提及。",
 	"mentions_loading": "正在加载提及…",
-	"mentions_title": "{name} 的提及",
+	"mentions_title": "{handle} 的提及",
 	"mentions_title_fallback": "提及",
 	"modal_close_label": "关闭模态框",
 	"nav_about": "关于",

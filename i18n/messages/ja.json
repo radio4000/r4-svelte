@@ -393,7 +393,7 @@
 	"mentions_empty": "{handle} に言及している他のチャンネルのトラックはまだありません。",
 	"mentions_error": "現在メンションを読み込めません。",
 	"mentions_loading": "メンションを読み込み中…",
-	"mentions_title": "{name} へのメンション",
+	"mentions_title": "{handle} へのメンション",
 	"mentions_title_fallback": "メンション",
 	"modal_close_label": "モーダルを閉じる",
 	"nav_about": "概要",

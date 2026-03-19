@@ -393,7 +393,7 @@
 	"mentions_empty": "Ainda não há faixas de outros canais a mencionar {handle}.",
 	"mentions_error": "Não foi possível carregar as menções agora.",
 	"mentions_loading": "A carregar menções…",
-	"mentions_title": "Menções a {name}",
+	"mentions_title": "Menções a {handle}",
 	"mentions_title_fallback": "Menções",
 	"modal_close_label": "Fechar modal",
 	"nav_about": "Sobre",
