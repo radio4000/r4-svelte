@@ -85,7 +85,6 @@
 			</div>
 		</div>
 		<div class="actions">
-
 			<ButtonFollow {channel} class="ghost" />
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}

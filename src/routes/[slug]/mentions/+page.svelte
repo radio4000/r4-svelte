@@ -95,7 +95,10 @@
 
 {#snippet navControls()}
 	{#if tracks.length}
-		<SearchInput bind:value={q} placeholder={m.mentions_search_placeholder({count: tracks.length, handle: `@${slug}`})} />
+		<SearchInput
+			bind:value={q}
+			placeholder={m.mentions_search_placeholder({count: tracks.length, handle: `@${slug}`})}
+		/>
 		<button type="button" title={m.search_play_all()} onclick={playMentionTracks}><Icon icon="play-fill" /></button>
 		<button type="button" title={m.search_queue_all()} onclick={queueMentionTracks}><Icon icon="next-fill" /></button>
 	{/if}

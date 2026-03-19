@@ -177,7 +177,7 @@
 						{/each}
 					</menu>
 				{/if}
-				</header>
+			</header>
 
 			{#if tracksQuery.isReady && visibleTracks.length > 0}
 				<Tracklist

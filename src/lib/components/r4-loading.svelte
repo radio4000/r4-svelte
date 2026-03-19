@@ -34,7 +34,7 @@
 		{text: 'กรุณารอสักครู่', lang: 'Thai'},
 		{text: 'Bir dakika lütfen', lang: 'Turkish'},
 		{text: 'Un funud, os gwelwch yn dda', lang: 'Welsh'},
-		{text: 'Omunye mzuzu, sicela', lang: 'Zulu'},
+		{text: 'Omunye mzuzu, sicela', lang: 'Zulu'}
 	]
 
 	const random = sentences[Math.floor(Math.random() * sentences.length)]
