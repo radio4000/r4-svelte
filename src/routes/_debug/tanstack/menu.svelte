@@ -9,8 +9,9 @@
 		href="/_debug/tanstack/error-handling"
 		aria-current={page.url.pathname === '/_debug/tanstack/error-handling' ? 'page' : undefined}>errors</a
 	>
-	<a href="/_debug/tanstack/demo" aria-current={page.url.pathname === '/_debug/tanstack/demo' ? 'page' : undefined}
-		>demo</a
+	<a
+		href="/_debug/tanstack/tutorial"
+		aria-current={page.url.pathname === '/_debug/tanstack/tutorial' ? 'page' : undefined}>tutorial</a
 	>
 	<a href="/_debug/tanstack/tracks" aria-current={page.url.pathname === '/_debug/tanstack/tracks' ? 'page' : undefined}
 		>tracks</a

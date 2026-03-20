@@ -64,19 +64,19 @@
 	>
 		<div class="map-fill fill-height">
 			{#if channel}
-			<MapChannels
-				channels={[channel]}
-				latitude={channel.latitude}
-				longitude={channel.longitude}
-				zoom={15}
-				syncUrl={true}
-				linkToMap="global"
-				showControls={false}
-				bind:globeMode
-				bind:showGraticules
-				bind:showDayNight
-				bind:tileStyle
-			/>
+				<MapChannels
+					channels={[channel]}
+					latitude={channel.latitude}
+					longitude={channel.longitude}
+					zoom={15}
+					syncUrl={true}
+					linkToMap="global"
+					showControls={false}
+					bind:globeMode
+					bind:showGraticules
+					bind:showDayNight
+					bind:tileStyle
+				/>
 			{/if}
 		</div>
 	</Subpage>
