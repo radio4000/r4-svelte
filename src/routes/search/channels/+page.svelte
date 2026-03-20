@@ -1,8 +1,6 @@
 <script>
-	import {page} from '$app/state'
-	import {afterNavigate, goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {Debounced} from 'runed'
+	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import {parseMentionQuery, searchChannelsCombined} from '$lib/search'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getTopChannelSlugs} from '$lib/utils'
@@ -13,39 +11,9 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
+	const search = new SearchUrl('/search/channels')
 
-	let inputValue = $state(page.url.searchParams.get('q') ?? '')
-	const debouncedInput = new Debounced(() => inputValue, 300)
-
-	let inputSeeded = !!page.url.searchParams.get('q')
-	afterNavigate(({type}) => {
-		if (type === 'goto') return
-		const q = page.url.searchParams.get('q') ?? ''
-		inputValue = q
-		inputSeeded = !!q
-	})
-
-	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) return
-		if (inputSeeded) {
-			inputSeeded = false
-			return
-		}
-		goto(`/search/channels?q=${encodeURIComponent(q)}`, {replaceState: true})
-	})
-
-	function handleSubmit(e) {
-		e.preventDefault()
-		const q = inputValue.trim()
-		if (!q) {
-			goto('/search/channels', {replaceState: true})
-			return
-		}
-		debouncedInput.setImmediately(inputValue)
-	}
-
-	const hasFilter = $derived(!!debouncedInput.current.trim())
+	const hasFilter = $derived(!!search.debouncedInput.current.trim())
 	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
 
 	/** @type {import('$lib/types.ts').Channel[]} */
@@ -53,7 +21,7 @@
 	let channelsLoading = $state(false)
 
 	$effect(() => {
-		const q = debouncedInput.current.trim()
+		const q = search.debouncedInput.current.trim()
 		if (!q) {
 			channels = []
 			return
@@ -86,7 +54,7 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<SearchShell {uid} bind:value={inputValue} onsubmit={handleSubmit} />
+	<SearchShell {uid} bind:value={search.value} onsubmit={search.handleSubmit} />
 
 	{#if hasFilter}
 		{#if channelsLoading}
@@ -98,7 +66,7 @@
 				{/each}
 			</ul>
 		{:else}
-			<p>{m.search_no_results()} "{inputValue}"</p>
+			<p>{m.search_no_results()} "{search.value}"</p>
 		{/if}
 	{:else}
 		<div class="empty-tip">

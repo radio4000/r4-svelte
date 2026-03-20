@@ -1,10 +1,10 @@
 <script>
 	import {page} from '$app/state'
-	import {afterNavigate, goto} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {setScene} from '$lib/scene-state.svelte'
-	import {Debounced} from 'runed'
+	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
+	import {parseView, serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchShell from '$lib/components/search-shell.svelte'
@@ -26,69 +26,19 @@
 	})
 
 	const uid = $props.id()
+	const search = new SearchUrl('/search', (q) => viewToUrl('/search', parseView(q)))
 
-	// --- Smart input (local, ephemeral) ---
-	let inputValue = $state(page.url.searchParams.get('q') ?? '')
-	const debouncedInput = new Debounced(() => inputValue, 300)
-
-	// --- URL is the single source of truth ---
+	// URL is the single source of truth
 	const view = $derived(viewFromUrl(page.url))
 	const q = $derived(view.sources[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
-	// --- View → URL ---
-	function viewToUrl(v) {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const params = new URLSearchParams()
-		const q = viewLabel(v)
-		if (q) params.set('q', q)
-		if (v.order) params.set('order', v.order)
-		if (v.direction) params.set('direction', v.direction)
-		if (v.limit) params.set('limit', String(v.limit))
-		if (v.offset) params.set('offset', String(v.offset))
-		const str = params.toString()
-		return str ? `/search?${str}` : '/search'
-	}
-
-	// --- Sync input from URL on landing + browser back/forward ---
-	let inputSeeded = !!page.url.searchParams.get('q')
-	afterNavigate(({type}) => {
-		if (type === 'goto') return
-		const seeded = page.url.searchParams.get('q') ?? ''
-		inputValue = seeded
-		inputSeeded = !!seeded
-	})
-
-	// --- Smart input → URL ---
-	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) return
-		if (inputSeeded) {
-			inputSeeded = false
-			return
-		}
-		const resolved = parseView(q)
-		goto(viewToUrl(resolved), {replaceState: true})
-	})
-
-	function handleSubmit(e) {
-		e.preventDefault()
-		const q = inputValue.trim()
-		if (!q) {
-			goto('/search', {replaceState: true})
-			return
-		}
-		debouncedInput.setImmediately(inputValue)
-	}
-
-	// --- ViewsBar → URL ---
 	function onViewsBarChange(v) {
-		inputSeeded = true
-		inputValue = viewLabel(v)
-		goto(viewToUrl(v), {replaceState: true})
+		search.seedInput(viewLabel(v))
+		goto(viewToUrl('/search', v), {replaceState: true})
 	}
 
-	// --- Track results (View pipeline) ---
+	// Track results (View pipeline)
 	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
 	const tracksLoading = $derived(viewQuery.loading)
@@ -133,11 +83,11 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<SearchShell {uid} bind:value={inputValue} onsubmit={handleSubmit} {view} onviewchange={onViewsBarChange} />
+	<SearchShell {uid} bind:value={search.value} onsubmit={search.handleSubmit} {view} onviewchange={onViewsBarChange} />
 
 	{#if hasFilter}
 		{#if !channelsLoading && !tracksLoading && channels.length === 0 && tracks.length === 0}
-			<p>{m.search_no_results()} "{inputValue || serializeView(view)}"</p>
+			<p>{m.search_no_results()} "{search.value || serializeView(view)}"</p>
 			<p>{m.search_tip_slug()}</p>
 		{/if}
 
@@ -168,7 +118,7 @@
 							? m.search_track_one({count: tracks.length})
 							: m.search_track_other({count: tracks.length})}
 					</h2>
-					<SearchTrackMenu {tracks} title={inputValue.trim()} {view} />
+					<SearchTrackMenu {tracks} title={search.value.trim()} {view} />
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}

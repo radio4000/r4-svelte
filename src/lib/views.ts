@@ -134,6 +134,19 @@ export function viewLabel(view: View): string {
 		.join('; ')
 }
 
+/** Build a URL string from a View and a base path (e.g. '/search', '/search/tracks'). */
+export function viewToUrl(basePath: string, view: View): string {
+	const params = new URLSearchParams()
+	const q = viewLabel(view)
+	if (q) params.set('q', q)
+	if (view.order) params.set('order', view.order)
+	if (view.direction) params.set('direction', view.direction)
+	if (view.limit) params.set('limit', String(view.limit))
+	if (view.offset) params.set('offset', String(view.offset))
+	const str = params.toString()
+	return str ? `${basePath}?${str}` : basePath
+}
+
 /** Remove empty fields so two semantically equivalent views compare equal. */
 export function normalizeView(view?: View): View | undefined {
 	if (!view) return undefined
