@@ -19,7 +19,7 @@
 		{value: 'Recursive', label: 'Recursive'},
 		{value: 'Epilogue', label: 'Epilogue'},
 		{value: 'Sono', label: 'Sono'},
-		{value: 'var(--font-system)', label: 'System'}
+		{value: 'system-ui', label: 'System'}
 	]
 
 	const baseColors = [

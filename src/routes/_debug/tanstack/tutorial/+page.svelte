@@ -3,7 +3,8 @@
 	import {queryClient} from '$lib/collections/query-client'
 	import {browser} from '$app/environment'
 	import {demoCollection, demoState, fakeAPI, SHARED_IDS} from './demo-state.svelte'
-	import {useLiveQuery, eq} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {eq} from '@tanstack/svelte-db'
 	import Menu from '../menu.svelte'
 	import {logger} from '$lib/logger'
 

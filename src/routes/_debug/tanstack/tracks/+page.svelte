@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {SvelteSet} from 'svelte/reactivity'
 	import Menu from '../menu.svelte'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/db'
 	import {tracksCollection, addTrack, updateTrack, deleteTrack, ensureTracksLoaded} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'

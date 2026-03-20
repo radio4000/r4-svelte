@@ -1,7 +1,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {tracksCollection, deleteTrack} from '$lib/collections/tracks'

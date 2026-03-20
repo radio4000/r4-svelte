@@ -498,7 +498,8 @@
 
 	function updateNightLayer() {
 		if (!map || !mapReady) return
-		/** @type {GeoJSONSource | undefined} */ (map.getSource('night-source'))?.setData(buildNightGeoJSON())
+		const nightSource = /** @type {GeoJSONSource | undefined} */ (map.getSource('night-source'))
+		nightSource?.setData(buildNightGeoJSON())
 	}
 
 	function handleReady(m) {
@@ -740,7 +741,7 @@
 	:global(.map-popup) {
 		width: 14.5rem;
 		/* overwrite maplibre */
-		font-family: var(--sans-serif);
+		font-family: var(--font-sans);
 	}
 
 	:global(.maplibregl-popup-content) {

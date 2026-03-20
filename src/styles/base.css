@@ -14,6 +14,7 @@ html {
 	font-size: calc(var(--font-root) * var(--scaling));
 	line-height: 1.5;
 	font-weight: 400;
+	font-stretch: 100%;
 	text-rendering: optimizeLegibility;
 	background: var(--gray-1);
 	color: var(--gray-12);
@@ -113,14 +114,14 @@ a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
 	text-transform: uppercase;
 	font-size: var(--font-2);
 	font-weight: 400;
-	font-family: var(--font-monospace);
+	font-family: var(--font-mono);
 	letter-spacing: 0.03em;
 }
 
 a.slug-link,
 .slug-link {
 	text-decoration: none;
-	font-family: var(--font-monospace);
+	font-family: var(--font-mono);
 	letter-spacing: 0.03em;
 	color: var(--gray-10);
 

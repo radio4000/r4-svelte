@@ -6,10 +6,9 @@ Web frontend for Radio4000. SvelteKit + Svelte 5.
 
 For any task or question:
 
-1. **Read docs first** — `docs/reference.json` (full API reference). Read any topic-specific doc inside the ./docs folder. Most answers are already there. Assess whether existing APIs cover the task or if new concepts are needed.
-2. **Ask clarifying questions!** before exploring the entire code base, and when the task is ambiguous
-3. Run `bun run check && bun run types` once when you think you're done — not after every edit. These are slow and noisy; running them repeatedly wastes time and clutters the output.
-4. Update @plan.md and docs where needed — delete done items from plan, don't strikethrough
+1. **Read docs first!** — `docs/reference.json` (full API reference). Read any topic-specific doc inside the ./docs folder. Most answers are already there. Assess whether existing APIs cover the task or if new concepts are needed.
+2. Ask clarifying questions before exploring the entire code base, and when the task is ambiguous
+3. Update @plan.md and docs where needed — delete done items from plan, don't strikethrough
 
 ```
 /src/routes           -- pages

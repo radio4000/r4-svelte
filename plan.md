@@ -54,7 +54,9 @@ Translate missing keys and fix review flags per batch. Use `i18n:review <locale>
 
 ## Needs research
 
-- **`useLiveQuery` migration** — two versions in use: official `@tanstack/svelte-db` (14 files) and custom `$lib/tanstack/useLiveQuery.svelte` (11 files). The official version fires `$state` mutations during `$derived` evaluation when IDB-cached data loads (`state_unsafe_mutation`). Custom version avoids this with `includeInitialState: false` + `untrack()`. Root layout already swapped. ~15 files remain: `layout-header`, `player`, `button-follow`, `queue-panel`, `history/+page`, `broadcasts/+page`, `[slug]/edit`, `auth/+page`, `[slug]/map`, `[slug]/batch-edit`, `[slug]/trackids`, `[slug]/delete`, `[slug]/tracks/[tid]/(tabs)/+layout`, plus debug pages. Need a way to switch globally + per page.
-- **atproto scrobbling** — on play, write `fm.teal.alpha.feed.play` to the user's PDS via teal.fm's lexicon. Shared listening history across apps. Requires OAuth account linking, opt-in, one `createRecord` per play. Fire-and-forget, no sync. Proves out atproto OAuth plumbing for everything else.
+- **`fetchQuery` usage review** — `queryClient.fetchQuery` appears in component bodies (`followers`, `following`, `related` pages). Review whether these belong in a collection or loader instead.
+
+-**atproto scrobbling** — on play, write `fm.teal.alpha.feed.play` to the user's PDS via teal.fm's lexicon. Shared listening history across apps. Requires OAuth account linking, opt-in, one `createRecord` per play. Fire-and-forget, no sync. Proves out atproto OAuth plumbing for everything else.
+
 - **atproto as backend** — sign in with Bluesky, sync channels/tracks. Major architectural shift. See github.com/radio4000/r4atproto
 - **Shared track_meta** — collaborative metadata curation between users. See github.com/radio4000/r4-sync-tests/issues/6

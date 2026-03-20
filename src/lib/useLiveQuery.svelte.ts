@@ -6,7 +6,7 @@
 // it fixes some bugs around svelte mutated $state during render
 // it improves perf by avoiding some extra loops
 import {untrack} from 'svelte'
-import {BaseQueryBuilder, createLiveQueryCollection} from '@tanstack/db'
+import {BaseQueryBuilder, CollectionImpl, createLiveQueryCollection} from '@tanstack/db'
 import type {
 	Collection,
 	Context,
@@ -28,6 +28,19 @@ function toValue(value: unknown) {
 		return value()
 	}
 	return value
+}
+
+/** Detect a Collection instance. Uses instanceof as primary check (matches upstream React),
+ *  with duck-typing fallback for multiple-package-copy edge cases. */
+function isCollectionInstance(value: unknown): boolean {
+	if (value instanceof CollectionImpl) return true
+	return (
+		value != null &&
+		typeof value === `object` &&
+		typeof (value as any).subscribeChanges === `function` &&
+		typeof (value as any).startSyncImmediate === `function` &&
+		typeof (value as any).id === `string`
+	)
 }
 
 type MaybeGetter<T> = T | (() => T)
@@ -63,21 +76,20 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		let unwrappedParam = configOrQueryOrCollection
 		try {
 			const potentiallyUnwrapped = toValue(configOrQueryOrCollection)
-			if (potentiallyUnwrapped !== configOrQueryOrCollection) {
+			// Only accept the unwrapped value if it's a collection.
+			// toValue() calls functions with no args, which is fine for getters (() => collection)
+			// but query callbacks ((q) => ...) may return null or throw when q is undefined.
+			// Without this guard, a callback like (q) => { if (!enabled) return null; ... }
+			// would set unwrappedParam to null, bypassing the function branch entirely.
+			if (potentiallyUnwrapped !== configOrQueryOrCollection && isCollectionInstance(potentiallyUnwrapped)) {
 				unwrappedParam = potentiallyUnwrapped
 			}
 		} catch {
 			unwrappedParam = configOrQueryOrCollection
 		}
 
-		const isCollection =
-			unwrappedParam &&
-			typeof unwrappedParam === `object` &&
-			typeof unwrappedParam.subscribeChanges === `function` &&
-			typeof unwrappedParam.startSyncImmediate === `function` &&
-			typeof unwrappedParam.id === `string`
-
-		if (isCollection) {
+		// Direct collection input (matches upstream React overloads 7/8)
+		if (isCollectionInstance(unwrappedParam)) {
 			if (unwrappedParam.status === `idle`) {
 				unwrappedParam.startSyncImmediate()
 			}
@@ -93,13 +105,37 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 				return null
 			}
 
-			const t1 = performance.now()
-			const lqc = createLiveQueryCollection({
-				query: unwrappedParam,
-				startSync: true
-			})
-			tCreateCollection = performance.now() - t1
-			return lqc
+			// Callback returned a collection (upstream overload 4)
+			if (isCollectionInstance(result)) {
+				if (result.status === `idle`) {
+					result.startSyncImmediate()
+				}
+				return result
+			}
+
+			// Callback returned a QueryBuilder — wrap in live query collection
+			if (result instanceof BaseQueryBuilder) {
+				const t1 = performance.now()
+				const lqc = createLiveQueryCollection({
+					query: unwrappedParam,
+					startSync: true
+				})
+				tCreateCollection = performance.now() - t1
+				return lqc
+			}
+
+			// Callback returned a config object
+			if (typeof result === `object`) {
+				const t1 = performance.now()
+				const lqc = createLiveQueryCollection({
+					...result,
+					startSync: true
+				})
+				tCreateCollection = performance.now() - t1
+				return lqc
+			}
+
+			return null
 		} else {
 			const t1 = performance.now()
 			const lqc = createLiveQueryCollection({
@@ -150,6 +186,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		const count = untrack(() => internalData.length)
 
 		currentCollection.onFirstReady(() => {
+			syncDataFromCollection(currentCollection)
 			status = currentCollection.status
 			const total = performance.now() - t0
 			log.debug(`#${id} ready`, {

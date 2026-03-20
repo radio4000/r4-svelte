@@ -3,7 +3,7 @@
 	import {analyzeChannel} from './spam-detector.js'
 	import {sdk} from '@radio4000/sdk'
 	import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {createQuery} from '@tanstack/svelte-query'
 
 	const MAX_TRACK_COUNT = 10

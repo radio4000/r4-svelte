@@ -272,6 +272,7 @@
 	.description {
 		white-space: pre-line;
 		overflow-wrap: break-word;
+		font-stretch: 90%;
 	}
 
 	.url {

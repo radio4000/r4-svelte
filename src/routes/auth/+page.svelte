@@ -6,7 +6,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {inArray} from '@tanstack/db'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appName} from '$lib/config'

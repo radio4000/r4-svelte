@@ -2,4 +2,4 @@
 	const {href} = $props()
 </script>
 
-<a {href} class="btn">←</a>
+<a {href} class="btn">← &larr; </a>

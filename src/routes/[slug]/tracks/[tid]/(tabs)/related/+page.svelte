@@ -3,7 +3,7 @@
 	import {appShortName} from '$lib/config'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
 	import TrackCard from '$lib/components/track-card.svelte'

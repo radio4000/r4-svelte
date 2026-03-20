@@ -1,6 +1,6 @@
 <script>
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import {page} from '$app/state'
 	import {fuzzySearch} from '$lib/search'

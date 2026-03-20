@@ -159,9 +159,9 @@
 		const ff = appState.font_family
 		if (ff) {
 			const value = ff.startsWith('var(') ? `${ff}, sans-serif` : `'${ff}', sans-serif`
-			document.documentElement.style.setProperty('--font-family', value)
+			document.documentElement.style.setProperty('--font-sans', value)
 		} else {
-			document.documentElement.style.removeProperty('--font-family')
+			document.documentElement.style.removeProperty('--font-sans')
 		}
 	})
 

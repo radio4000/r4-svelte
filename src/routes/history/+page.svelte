@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {useLiveQuery} from '@tanstack/svelte-db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {playHistoryCollection, clearPlayHistory, type PlayHistoryEntry} from '$lib/collections/play-history'
 	import {playTrack} from '$lib/api'
 	import {ensureTracksLoaded} from '$lib/collections/tracks'
