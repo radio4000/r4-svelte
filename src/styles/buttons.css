@@ -207,8 +207,9 @@ button.chip:hover,
 
 button.chip.active,
 .btn.chip.active {
-	background: var(--accent-8);
+	background: var(--accent-7);
 	border-color: var(--accent-9);
+	/* color: light-dark(var(--gray-1), var(--gray-12)); */
 }
 
 .chip-group > :not(button) {
@@ -252,14 +253,13 @@ button.chip.active:hover,
 }
 
 .chip.active + .chip-delete {
-	background: var(--accent-8);
+	background: var(--accent-7);
 	border-color: var(--accent-9);
 }
 
 .chip-delete:hover,
 .chip.active + .chip-delete:hover {
 	background: var(--color-red);
-	color: white;
 }
 
 /* Select should use normal text color, not the customizable --button-color */

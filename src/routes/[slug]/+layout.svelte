@@ -333,19 +333,7 @@
 	.channel-actions {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
 		flex-shrink: 0;
-	}
-
-	.channel-actions span {
-		display: flex;
-		align-items: center;
-		gap: 0.15rem;
-	}
-
-	.channel-actions span + span {
-		padding-left: 0.5rem;
-		border-left: 1px solid var(--gray-5);
 	}
 
 	main {

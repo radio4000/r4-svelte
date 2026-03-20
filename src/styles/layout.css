@@ -208,14 +208,6 @@ menu.nav-vertical {
 	}
 }
 
-/* Menu styles inside popovers */
-[popover] menu {
-	&.nav-vertical {
-		border: none;
-		border-radius: 0;
-	}
-}
-
 menu.nav-options {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -288,6 +280,18 @@ menu.nav-grouped {
 	}
 	a[aria-current='page'] {
 		background: var(--accent-3);
+	}
+}
+
+/* Menu styles inside popovers */
+[popover] menu {
+	&.nav-vertical {
+		border: none;
+		border-radius: 0;
+
+		a:hover {
+			background: var(--gray-3);
+		}
 	}
 }
 

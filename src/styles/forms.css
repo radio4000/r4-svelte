@@ -70,7 +70,7 @@ input[type='checkbox'] {
 
 input[type='range'] {
 	margin: 0;
-	accent-color: var(--accent-9);
+	accent-color: var(--accent-7);
 	background: transparent;
 	-webkit-appearance: none;
 
@@ -78,7 +78,7 @@ input[type='range'] {
 		height: 0.2rem;
 		background: linear-gradient(
 			to right,
-			var(--range-color, var(--accent-9)) var(--range-fill, 0%),
+			var(--range-color, var(--accent-7)) var(--range-fill, 0%),
 			var(--gray-4) var(--range-fill, 0%)
 		);
 	}
