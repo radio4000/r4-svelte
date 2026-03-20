@@ -158,10 +158,10 @@ export const DECK_ACCENTS = [
 	'hsl(190 50% 50%)'
 ]
 
-/** Accent color for a deck by index. Returns undefined when only one deck exists. */
+/** Accent color for a deck. Uses (deckId - 1) so each deck always maps to the same color regardless of how many exist. */
 export function deckAccent(deckIds: number[], deckId: number): string | undefined {
 	if (deckIds.length < 2) return undefined
-	return DECK_ACCENTS[deckIds.indexOf(deckId) % DECK_ACCENTS.length]
+	return DECK_ACCENTS[(deckId - 1) % DECK_ACCENTS.length]
 }
 
 /** Add a new deck, returns it */

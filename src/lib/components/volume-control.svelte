@@ -27,7 +27,7 @@
 	<media-mute-button
 		class="btn"
 		class:active={Boolean(deck?.muted)}
-		mediamuted={deck?.muted ? '' : null}
+		mediavolumelevel={deck?.muted ? 'off' : 'high'}
 		onclick={handleToggleMute}
 		{@attach tooltip({content: m.player_tooltip_mute(), position: 'top'})}
 	></media-mute-button>

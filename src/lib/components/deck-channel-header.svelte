@@ -149,7 +149,6 @@
 	.deck-channel-header {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
 		min-width: 0;
 	}
 

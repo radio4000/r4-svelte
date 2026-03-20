@@ -5,6 +5,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import {conceptIcons} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
 	const isSignedIn = $derived(!!appState.user)
@@ -15,7 +16,7 @@
 	const isTags = $derived(page.route.id?.startsWith('/tags'))
 
 	const activeIcon = $derived(
-		isHome ? 'radio' : isFeed ? 'history' : isChannels ? 'cell-signal' : isTracks ? 'play-fill' : 'tag'
+		isHome ? conceptIcons.home : isFeed ? conceptIcons.feed : isChannels ? conceptIcons.channels : isTracks ? conceptIcons.tracks : conceptIcons.tags
 	)
 	const activeLabel = $derived(
 		isHome
@@ -37,24 +38,24 @@
 	{/snippet}
 	<menu class="nav-vertical">
 		<a href={resolve('/')} class:active={isHome}>
-			<Icon icon="radio" />
+			<Icon icon={conceptIcons.home} />
 			{m.home_tab_home()}
 		</a>
 		<a href={resolve('/channels/featured')} class:active={isChannels}>
-			<Icon icon="cell-signal" />
+			<Icon icon={conceptIcons.channels} />
 			{m.explore_tab_channels()}
 		</a>
 		<a href={resolve('/tracks/recent')} class:active={isTracks}>
-			<Icon icon="play-fill" />
+			<Icon icon={conceptIcons.tracks} />
 			{m.explore_tab_tracks()}
 		</a>
 		<a href={resolve('/tags/featured')} class:active={isTags}>
-			<Icon icon="tag" />
+			<Icon icon={conceptIcons.tags} />
 			{m.explore_tab_tags()}
 		</a>
 		{#if isSignedIn}
 			<a href={resolve('/feed')} class:active={isFeed}>
-				<Icon icon="history" />
+				<Icon icon={conceptIcons.feed} />
 				{m.nav_feed()}
 			</a>
 		{/if}

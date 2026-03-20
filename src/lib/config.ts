@@ -38,6 +38,19 @@ export const communityLinks: CommunityLink[] = [
 	{label: 'Matrix', href: appChatUrl},
 	{label: 'Blog', href: 'https://blog.radio4000.com'}
 ]
+/** Canonical icon name per UI concept — import instead of hardcoding icon strings */
+export const conceptIcons = {
+	home: 'radio',
+	channels: 'database',
+	tracks: 'play-fill',
+	tags: 'tag',
+	search: 'search',
+	feed: 'history',
+	history: 'history',
+	broadcast: 'cell-signal',
+	settings: 'options-vertical-encircled',
+} as const
+
 export const posthogKey = env.PUBLIC_POSTHOG_KEY ?? 'phc_hjAzrJR1oqwdWF2chYKVdAkAQAXtTgd576iTuMTfuEO'
 export const posthogHost = env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com'
 export const youtubeApiKey = env.PUBLIC_YOUTUBE_KEY ?? 'AIzaSyDCLAKtHqvRA8ucWLnFtLEPq6qC2fWomQk'

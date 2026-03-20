@@ -113,20 +113,18 @@
 	}
 
 	.resize-handle {
-		width: 2px;
+		width: 3px;
 		cursor: col-resize;
-		background: var(--gray-7);
+		border-right: 1px solid var(--gray-7);
 		flex-shrink: 0;
 		touch-action: none;
-		transition:
-			width 120ms ease,
-			background-color 120ms ease;
+		transition: border-color 120ms ease;
 	}
 
 	.resize-handle:hover,
 	.resize-handle:focus-visible,
 	.deck.resizing .resize-handle {
-		background: var(--deck-accent, var(--gray-5));
+		border-right-color: var(--deck-accent, var(--gray-5));
 	}
 
 	@media (max-width: 768px) {
@@ -208,6 +206,10 @@
 			height: 0;
 			min-height: 0;
 		}
+	}
+
+	.deck :global(.bottom-chrome article.active) {
+		border-radius: var(--border-radius) var(--border-radius) 0 0;
 	}
 
 	/* Hide queue panel via CSS — keeps it in the DOM */

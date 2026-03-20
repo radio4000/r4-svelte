@@ -82,6 +82,7 @@
 	let paginationInitialPage = $state(1)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
+	let shuffleKey = $state(0)
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
@@ -199,7 +200,8 @@
 			() => order,
 			() => orderDirection,
 			() => broadcastIds,
-			() => favoriteIds
+			() => favoriteIds,
+			() => shuffleKey
 		]
 	)
 	const channelsRaw = $derived(channelsQuery.data ?? [])
@@ -539,9 +541,7 @@
 					bind:direction={appState.channels_order_direction}
 					onreshuffle={() => {
 						paginatedLimit = CHANNELS_PAGE_SIZE
-						queryClient.invalidateQueries({
-							predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
-						})
+						shuffleKey++
 					}}
 				/>
 			{/if}

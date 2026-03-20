@@ -346,6 +346,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0rem;
+		border-radius: 8px 8px 0 0;
+		overflow: hidden;
+		border-top: 1px solid var(--gray-6);
 		/*
 		padding: 0.4rem 0.5rem;
 		 */
@@ -366,6 +369,10 @@
 	.compact-decks :global(.deck-compact-bar) {
 		flex: 0 0 auto;
 		min-width: 0;
+	}
+
+	.compact-deck-item:first-child :global(.deck-compact-bar) {
+		border-top: none;
 	}
 
 	@media (max-width: 768px) {

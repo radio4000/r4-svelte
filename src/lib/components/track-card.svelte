@@ -301,7 +301,7 @@
 	}
 
 	.active {
-		background: var(--accent-3);
+		/* background: var(--accent-3); */
 		outline: 1px solid var(--gray-5);
 		outline-offset: -1px;
 		border-radius: var(--border-radius);

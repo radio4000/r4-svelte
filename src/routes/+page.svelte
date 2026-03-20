@@ -360,7 +360,7 @@
 			{#if showOnboarding && !appState.show_onboarding_hint}
 				<div class="onboarding-toggle-row">
 					<button
-						class="btn icon-btn onboarding-toggle"
+						class="btn onboarding-toggle"
 						onclick={() => (appState.show_onboarding_hint = true)}
 						title="Show getting started"
 					>
@@ -413,14 +413,13 @@
 					<h2 class="section-title">{m.home_featured()}</h2>
 					<menu>
 						{#if featuredFirst}
-							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
+							<button type="button" onclick={toggleFeaturedPlay}>
 								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
 							<button
 								type="button"
-								class="icon-btn"
 								title={m.home_featured_refresh()}
 								onclick={pickFeatured}
 								disabled={shuffling}
@@ -486,7 +485,7 @@
 		{:else}
 			<menu class="filtermenu">
 				<button
-					class="btn icon-btn"
+					class="btn"
 					style="margin-left: auto"
 					onclick={() => (appState.show_welcome_hint = true)}
 					title={m.welcome_title({appName})}
@@ -502,14 +501,13 @@
 					<h2 class="section-title"><a href={resolve('/channels/featured')}>{m.home_featured()}</a></h2>
 					<menu>
 						{#if featuredFirst}
-							<button type="button" class="icon-btn" onclick={toggleFeaturedPlay}>
+							<button type="button" onclick={toggleFeaturedPlay}>
 								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
 							<button
 								type="button"
-								class="icon-btn"
 								title={m.home_featured_refresh()}
 								onclick={pickFeatured}
 								disabled={shuffling}

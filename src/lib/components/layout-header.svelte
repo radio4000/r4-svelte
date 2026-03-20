@@ -12,7 +12,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import InternetIndicator from '$lib/components/internet-indicator.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {appName} from '$lib/config'
+	import {appName, conceptIcons} from '$lib/config'
 
 	const {preloading} = $props()
 
@@ -34,17 +34,15 @@
 		>
 			<IconR4 />
 		</a>
-		<!--
 		<a
 			href={resolve('/channels')}
 			class="btn"
-			class:active={page.route.id === '/channels'}
-			aria-label={appName}
-			{@attach tooltip({content: 'Channels'})}
+			class:active={page.route.id?.startsWith('/channels')}
+			aria-label={m.nav_channels()}
+			{@attach tooltip({content: m.nav_channels()})}
 		>
-			Channels
+			<Icon icon={conceptIcons.channels} />
 		</a>
-		-->
 		<a
 			href={resolve('/search')}
 			class="btn"
@@ -52,7 +50,7 @@
 			aria-label={m.nav_search()}
 			{@attach tooltip({content: m.nav_search()})}
 		>
-			<Icon icon="search" />
+			<Icon icon={conceptIcons.search} />
 		</a>
 	</nav>
 
@@ -120,7 +118,7 @@
 			aria-label={m.nav_history()}
 			{@attach tooltip({content: m.nav_history()})}
 		>
-			<Icon icon="history" />
+			<Icon icon={conceptIcons.history} />
 		</a>
 		<a
 			href={resolve('/menu')}
@@ -129,7 +127,7 @@
 			aria-label="Menu"
 			{@attach tooltip({content: 'Menu'})}
 		>
-			<Icon icon="options-vertical-encircled" />
+			<Icon icon={conceptIcons.settings} />
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
@@ -173,6 +171,7 @@
 
 	.user {
 		margin-top: auto;
+		margin-bottom: auto;
 	}
 
 	.broadcast-dot {

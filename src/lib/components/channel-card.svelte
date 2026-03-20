@@ -166,10 +166,10 @@
 
 		:global(.list) & {
 			display: grid;
-			grid-template-columns: 4rem 1fr auto;
+			grid-template-columns: 5rem 1fr auto;
 			align-items: center;
 			padding: 0.5rem;
-			gap: 0 0.5rem;
+			gap: 0 0.75rem;
 		}
 	}
 
@@ -321,5 +321,11 @@
 		50% {
 			opacity: 0.5;
 		}
+	}
+
+	/* no radius inside lists */
+	:global(.virtual-item) article,
+	:global(.list) article {
+		border-radius: 0;
 	}
 </style>

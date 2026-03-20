@@ -471,6 +471,15 @@
 				>
 					<Icon icon="fullscreen" />
 				</button>
+				{#if hasMultipleDecks || !appState.embed_mode}
+					<button
+						onclick={() => toggleDeckCompact(deckId)}
+						aria-label={m.player_tooltip_compact()}
+						{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
+					>
+						<Icon icon="deck-panel" expanded />
+					</button>
+				{/if}
 			</menu>
 		</div>
 	</header>
@@ -591,15 +600,6 @@
 			{#if !isListeningToBroadcast}
 				<VolumeControl {deckId} />
 			{/if}
-			{#if hasMultipleDecks || !appState.embed_mode}
-				<button
-					onclick={() => toggleDeckCompact(deckId)}
-					aria-label={m.player_tooltip_compact()}
-					{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
-				>
-					<Icon icon="deck-panel" expanded />
-				</button>
-			{/if}
 		</menu>
 		{#if appState.show_track_range_control !== false && displayTrack}
 			<div class="progress-row">
@@ -691,7 +691,7 @@
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		gap: 0.35rem;
+		gap: 0.5rem;
 		min-width: 0;
 		max-width: min(58vw, 20rem);
 	}
@@ -704,7 +704,7 @@
 	.header-channel :global(.player-header-title) {
 		font-size: var(--font-4);
 		font-weight: 600;
-		line-height: 1.2;
+		line-height: 1;
 	}
 
 	.header-channel :global(.meta-row) {
@@ -716,8 +716,7 @@
 		line-height: 0;
 
 		:global(img) {
-			width: 2.5rem;
-			height: 2.5rem;
+			height: 1rem;
 		}
 	}
 
@@ -813,7 +812,6 @@
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
-		border-top: 1px solid var(--gray-6);
 	}
 
 	.layout-controls {
@@ -866,7 +864,6 @@
 	.header-footer {
 		flex-shrink: 0;
 		cursor: pointer;
-		border-top: 1px solid var(--gray-6);
 		background: var(--header-bg);
 	}
 

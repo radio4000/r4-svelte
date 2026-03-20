@@ -21,6 +21,7 @@
 	let {deckId} = $props()
 
 	let deck = $derived(appState.decks[deckId])
+	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
@@ -135,7 +136,11 @@
 	})
 </script>
 
-<div class="deck-compact-bar">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="deck-compact-bar" class:active-deck={isActiveDeck} onclick={(e) => {
+	if (e.target instanceof Element && e.target.closest('a, button, input, menu')) return
+	appState.active_deck_id = deckId
+}}>
 	{#if appState.show_track_range_control !== false && displayTrack}
 		<div class="progress">
 			<input
@@ -257,10 +262,8 @@
 			'controls'
 			'progress';
 		row-gap: 0.4rem;
-		gap: 0.75rem;
-		/*border: 1px solid var(--gray-6);*/
 		border-top: 1px solid var(--gray-6);
-		background: var(--header-bg);
+		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 8%, var(--header-bg));
 		min-width: 0;
 		overflow: hidden;
 	}
@@ -276,6 +279,7 @@
 		width: 100%;
 		justify-content: flex-start;
 		flex-wrap: wrap;
+		padding-inline: 0.5rem;
 	}
 
 	.progress {
@@ -308,6 +312,7 @@
 		flex: 1 1 auto;
 		width: 100%;
 		min-height: 2rem;
+		padding-inline: 0.5rem;
 	}
 
 	.channel-panel {
@@ -323,6 +328,12 @@
 		width: 32px;
 		height: 32px;
 		flex-shrink: 0;
+	}
+
+	.active-deck .avatar {
+		outline: 2px solid var(--accent-9);
+		outline-offset: 1px;
+		border-radius: var(--border-radius);
 	}
 
 	.expand {
@@ -352,6 +363,7 @@
 
 	.track-panel :global(article) {
 		height: 100%;
+		outline-offset: 0;
 	}
 
 	.track-panel :global(.card) {
