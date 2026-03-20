@@ -6,6 +6,12 @@
 	import {slugify} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
+	$effect(() => {
+		if (appState.initialized && !appState.user) {
+			goto(resolve('/auth') + '?redirect=' + encodeURIComponent(resolve('/create-channel')))
+		}
+	})
+
 	let error = $state('')
 	let submitting = $state(false)
 
