@@ -102,13 +102,6 @@ button.link {
 	}
 }
 
-/* ? */
-.icon-btn {
-	border: 0;
-	background: none;
-	padding: 0;
-}
-
 /* Keeps button sizing but removes background, border and shadow */
 button.ghost,
 .btn.ghost {
