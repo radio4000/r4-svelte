@@ -8,8 +8,8 @@
 	import {channelPresence} from '$lib/presence.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
 
-	/** @type {{deckId?: number, channelId?: string, channelSlug?: string, isLiveOverride?: boolean, compact?: boolean}} */
-	let {deckId = 1, channelId, channelSlug, isLiveOverride, compact = false} = $props()
+	/** @type {{deckId?: number, channelId?: string, channelSlug?: string, isLiveOverride?: boolean, compact?: boolean, showPresence?: boolean}} */
+	let {deckId = 1, channelId, channelSlug, isLiveOverride, compact = false, showPresence = true} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -72,7 +72,7 @@
 
 {#if userChannelId}
 	<div>
-		{#if channelSlug && channelPresence[channelSlug]?.broadcast > 0}
+		{#if showPresence && channelSlug && channelPresence[channelSlug]?.broadcast > 0}
 			<PresenceCount count={channelPresence[channelSlug].broadcast} />
 		{/if}
 
