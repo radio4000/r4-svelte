@@ -10,6 +10,7 @@
 	import LinkEntities from './link-entities.svelte'
 	import ButtonFollow from './button-follow.svelte'
 	import PopoverMenu from './popover-menu.svelte'
+	import ButtonPlay from './button-play.svelte'
 	import Icon from './icon.svelte'
 
 	/** @type {{channel: import('$lib/types').Channel, href?: string, updatedAtHref?: string, children?: import('svelte').Snippet}}*/
@@ -46,6 +47,7 @@
 >
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
+		<ButtonPlay {channel} />
 	</figure>
 	<div class="body">
 		<div class="info">
@@ -172,6 +174,7 @@
 	}
 
 	figure {
+		position: relative;
 		border-radius: var(--border-radius);
 		background: var(--gray-2);
 		aspect-ratio: 1;
@@ -181,6 +184,34 @@
 
 		:global(.list) & {
 			grid-column: 1;
+		}
+
+		:global(button) {
+			position: absolute;
+			inset: 0;
+			display: grid;
+			place-content: center;
+			opacity: 0;
+			transition: opacity 0.15s;
+			background: oklch(0 0 0 / 0.4);
+			color: white;
+		}
+
+		article:hover &,
+		article:focus-within & {
+			:global(button) {
+				opacity: 1;
+			}
+		}
+
+		article.playing & :global(button) {
+			opacity: 1;
+		}
+
+		@media (pointer: coarse) {
+			button {
+				opacity: 0.8;
+			}
 		}
 	}
 
