@@ -16,6 +16,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -169,7 +170,6 @@
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
 	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
-	const showAutoRadioWidget = $derived(userChannelHasAuto)
 	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
 
 	const broadcastingDecks = $derived.by(() => {
@@ -185,9 +185,6 @@
 				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
 			})
 	})
-	const userAutoRadioStatusLabel = $derived(
-		userChannelHasAuto ? (userChannelHasAutoDrifted ? m.status_drifted() : m.status_synced()) : m.common_off()
-	)
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -224,13 +221,6 @@
 		{#if userChannel}
 			<div class="channel-play">
 				{#if userChannelIsBroadcasting}
-					<span
-						class="channel-badge audience-badge"
-						title={m.home_dashboard_live_listeners({count: userChannelBroadcastListeners.toLocaleString()})}
-					>
-						<Icon icon="users" size={12} />
-						{userChannelBroadcastListeners.toLocaleString()}
-					</span>
 					<a
 						href={resolve(`/${userChannel.slug}`)}
 						class="channel-badge live-link"
@@ -291,22 +281,7 @@
 						</div>
 					{/each}
 				{/if}
-				{#if showAutoRadioWidget}
-					<button
-						class="dashboard-card dashboard-card--button auto-live-btn"
-						class:dashboard-card--alert={userChannelHasAutoDrifted}
-						class:ghost={!userChannelHasAutoDrifted}
-						type="button"
-						onclick={toggleUserChannelAutoRadio}
-					>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="infinite" size={16} />
-							{m.home_dashboard_auto_radio()}
-						</span>
-						<strong class="dashboard-value">{userAutoRadioStatusLabel}</strong>
-					</button>
-				{/if}
-				<div class="dashboard-card dashboard-card--channel">
+					<div class="dashboard-card dashboard-card--channel">
 					<ol class="list">
 						<li><ChannelCard channel={userChannel} /></li>
 					</ol>
@@ -596,13 +571,6 @@
 		margin-left: auto;
 	}
 
-	.audience-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		margin-left: 0;
-	}
-
 	.mini-play {
 		display: flex;
 		align-items: center;
@@ -754,11 +722,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.dashboard-card--alert {
-		border-color: var(--red-7, #d44);
-		background: light-dark(var(--red-2, #fee), var(--red-3, #442));
 	}
 
 	.section-header {
