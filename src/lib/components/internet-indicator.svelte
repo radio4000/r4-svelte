@@ -1,51 +1,26 @@
 <script>
 	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {useOnline} from '$lib/online.svelte'
 
-	let online = $state(navigator.onLine)
-
-	$effect(() => {
-		const goOffline = () => {
-			online = false
-		}
-		const goOnline = () => {
-			online = true
-		}
-		window.addEventListener('offline', goOffline)
-		window.addEventListener('online', goOnline)
-		return () => {
-			window.removeEventListener('offline', goOffline)
-			window.removeEventListener('online', goOnline)
-		}
-	})
+	const {href}: {href?: string} = $props()
+	const {online} = useOnline()
 </script>
 
-<div data-online={online}>
-	{#if online}
-		<Icon icon="wifi" />
-		<p>{m.status_online()}</p>
+{#if !online}
+	{#if href}
+		<a {href} class="offline-indicator" aria-label="Offline">
+			<Icon icon="wifi-off" />
+		</a>
 	{:else}
-		<Icon icon="wifi-off" />
-		<p>{m.status_offline()}</p>
+		<span class="offline-indicator">
+			<Icon icon="wifi-off" />
+		</span>
 	{/if}
-</div>
+{/if}
 
 <style>
-	div {
-		display: flex;
-		gap: 0.3em;
-		align-items: center;
+	.offline-indicator {
+		display: inline-flex;
 		color: var(--color-red);
-	}
-	p {
-		margin: 0;
-	}
-	div[data-online='true'] {
-		color: var(--color-green);
-	}
-	div :global(svg) {
-		position: relative;
-		top: -1px;
-		width: 1rem;
 	}
 </style>

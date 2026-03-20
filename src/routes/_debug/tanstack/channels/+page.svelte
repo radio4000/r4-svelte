@@ -3,7 +3,13 @@
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {inArray, not, isNull, gte} from '@tanstack/db'
-	import {channelsCollection, createChannel, updateChannel, deleteChannel, fetchChannelCount} from '$lib/collections/channels'
+	import {
+		channelsCollection,
+		createChannel,
+		updateChannel,
+		deleteChannel,
+		fetchChannelCount
+	} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')
@@ -280,8 +286,8 @@
 	<details open>
 		<summary>Pagination proof (prev / X of Y / next)</summary>
 		<p>
-			Reactive <code>.limit(currentPage * pageSize)</code> — collection accumulates rows, local slice picks current page.
-			Same pattern as <code>channels.svelte</code>.
+			Reactive <code>.limit(currentPage * pageSize)</code> — collection accumulates rows, local slice picks current
+			page. Same pattern as <code>channels.svelte</code>.
 		</p>
 		<p>
 			Status: <code>{paginationQuery.status}</code> · Query limit: <strong>{queryLimit}</strong> · Total fetched:

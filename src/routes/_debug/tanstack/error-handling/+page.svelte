@@ -129,7 +129,9 @@
 		return q.from({rows: errorCollection}).orderBy(({rows}) => rows.id)
 	})
 
-	let errorMessage = $derived(errorCollection.utils.lastError instanceof Error ? errorCollection.utils.lastError.message : '')
+	let errorMessage = $derived(
+		errorCollection.utils.lastError instanceof Error ? errorCollection.utils.lastError.message : ''
+	)
 	let collectionIsError = $derived(errorCollection.utils.isError)
 
 	let localResult = $state<AssertionResult | null>(null)
