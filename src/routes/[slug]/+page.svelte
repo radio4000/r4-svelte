@@ -2,6 +2,7 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
+	import {setScene} from '$lib/scene-state.svelte'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -18,6 +19,10 @@
 	import {getAutoDecksForView} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Seo from '$lib/components/seo.svelte'
+
+	$effect(() => {
+		setScene({geometry: 'sphere', backgroundColor: 'oklch(18% 0.04 140)', cameraPosition: [1, 0.5, 4]})
+	})
 
 	const SECTION_TRACK_LIMIT = 50
 	const FEATURED_LIMIT = 10

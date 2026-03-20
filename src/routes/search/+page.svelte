@@ -1,6 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {afterNavigate, goto} from '$app/navigation'
+	import {setScene} from '$lib/scene-state.svelte'
 	import {Debounced} from 'runed'
 	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
 	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
@@ -24,6 +25,15 @@
 	import {fromAction} from 'svelte/attachments'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import * as m from '$lib/paraglide/messages'
+
+	$effect(() => {
+		setScene({
+			geometry: 'icosahedron',
+			backgroundColor: 'oklch(10% 0.05 200)',
+			cameraPosition: [0, 0, 5],
+			rotationSpeed: 0.5
+		})
+	})
 
 	const uid = $props.id()
 

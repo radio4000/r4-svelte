@@ -11,9 +11,22 @@
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
+	import {onMount} from 'svelte'
 	import {appName} from '$lib/config'
 
 	const {preloading} = $props()
+
+	let isOnline = $state(true)
+	onMount(() => {
+		const update = () => (isOnline = navigator.onLine)
+		update()
+		window.addEventListener('online', update)
+		window.addEventListener('offline', update)
+		return () => {
+			window.removeEventListener('online', update)
+			window.removeEventListener('offline', update)
+		}
+	})
 
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
@@ -130,6 +143,11 @@
 		>
 			<Icon icon="options-vertical-encircled" />
 		</a>
+		{#if !isOnline}
+			<a href={resolve('/import')} class="btn ghost offline-indicator" aria-label="Offline" {@attach tooltip({content: 'Offline'})}>
+				<Icon icon="wifi-off" />
+			</a>
+		{/if}
 	</nav>
 </header>
 
@@ -185,6 +203,10 @@
 
 	.btn:has(.broadcast-dot) {
 		position: relative;
+	}
+
+	.offline-indicator {
+		cursor: default;
 	}
 
 	.channel-link {
