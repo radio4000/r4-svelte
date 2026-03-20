@@ -143,7 +143,7 @@
 				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer">&rarr;</a>
 			{/if}
 			{#if track.slug && track.discogs_url && !appState.embed_mode}
-				<a href="{permalink}/discogs" class="discogs">{m.track_meta_discogs()}</a>
+				<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}><Icon icon="radio-on" size={14} /></a>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</time>
@@ -349,7 +349,7 @@
 		display: flex;
 		flex-flow: column;
 		place-items: flex-end;
-		place-content: flex-start;
+		place-content: center;
 		padding-top: 0.1rem;
 		gap: 0.15rem;
 		/* because this is the actual link with some trickery */
@@ -371,14 +371,16 @@
 
 	article {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		:global(.popover-menu) {
 			padding: 0.2em;
 		}
 	}
 
 	.discogs {
-		font-size: var(--font-3);
+		display: flex;
+		align-items: center;
+		color: var(--gray-10);
 	}
 
 	:global(.trackcard-contextBtn) {

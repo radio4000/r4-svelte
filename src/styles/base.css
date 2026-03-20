@@ -93,7 +93,7 @@ a {
 	transition: text-decoration-color 150ms;
 }
 
-a:link,
+a,
 a:visited {
 	color: var(--gray-12);
 	/* color: var(--accent-9); */
@@ -121,7 +121,6 @@ a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
 a.slug-link,
 .slug-link {
 	text-decoration: none;
-	font-family: var(--font-mono);
 	letter-spacing: 0.03em;
 	color: var(--gray-10);
 

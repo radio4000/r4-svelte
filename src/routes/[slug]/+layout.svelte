@@ -223,7 +223,6 @@
 				</div>
 				<menu class="channel-actions">
 					{#if canEdit}
-						<span>
 							<BroadcastControls
 								deckId={appState.active_deck_id}
 								channelId={channel.id}
@@ -231,9 +230,7 @@
 								isLiveOverride={isChannelLive}
 								compact
 							/>
-						</span>
 					{:else if channel.id && isChannelLive}
-						<span>
 							<button
 								type="button"
 								onclick={() => {
@@ -245,12 +242,8 @@
 							>
 								<Icon icon="cell-signal" />
 							</button>
-						</span>
 					{/if}
-					<span>
 						<ButtonPlay {channel} trackId={tid} />
-					</span>
-					<span>
 						{#if hasChannel}
 							<ButtonFollow {channel} />
 						{:else}
@@ -258,8 +251,6 @@
 								<Icon icon="favorite" />
 							</a>
 						{/if}
-					</span>
-					<span>
 						<button
 							type="button"
 							onclick={() => (appState.modal_share = {channel})}
@@ -268,7 +259,6 @@
 						>
 							<Icon icon="share" />
 						</button>
-					</span>
 				</menu>
 			</header>
 		{/if}
@@ -382,6 +372,5 @@
 		flex: 1;
 		min-width: 0;
 		overflow: hidden;
-		padding: 0 0.5rem;
 	}
 </style>

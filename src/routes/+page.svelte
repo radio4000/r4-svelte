@@ -569,7 +569,7 @@
 
 		/* grids manage their own horizontal spacing */
 		:global(.grid) {
-			margin-inline: -0.5rem;
+			margin-inline: 0rem;
 		}
 	}
 
@@ -579,6 +579,10 @@
 		align-items: center;
 		margin: 0 0 1rem;
 		z-index: 1;
+	}
+
+	.filtermenu:first-child {
+		z-index: 2;
 	}
 
 	.channel-play {

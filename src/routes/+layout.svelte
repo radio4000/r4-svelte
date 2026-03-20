@@ -391,13 +391,13 @@
 		}
 
 		.compact-decks {
-			padding-inline: 0.5rem;
 			position: relative;
 			bottom: auto;
 		}
 
 		.compact-decks :global(.deck-compact-bar) {
 			min-width: 0;
+			padding-inline: 0.5rem;
 		}
 	}
 
