@@ -9,9 +9,12 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
-	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
+	import {tracksCollection, checkTracksFreshness, ensureTracksLoaded} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
+	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
+	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
@@ -93,6 +96,28 @@
 			(d) => d.auto_radio && (d.view?.sources[0]?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
 		)
 	)
+	let channelHasAuto = $derived(anyChannelAutoDecks.length > 0)
+	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	let channelAutoResyncDeckId = $derived.by(() => {
+		if (!channelHasAuto) return undefined
+		const activeDeck = appState.decks[appState.active_deck_id]
+		if (activeDeck?.auto_radio && (activeDeck.view?.sources[0]?.channels?.[0] === channel?.slug || activeDeck.playlist_slug === channel?.slug)) {
+			return activeDeck.id
+		}
+		return anyChannelAutoDecks[0]?.id
+	})
+	async function toggleChannelAutoRadio() {
+		if (!channel?.slug) return
+		if (channelHasAuto && channelAutoResyncDeckId) {
+			resyncAutoRadio(channelAutoResyncDeckId)
+		} else {
+			await ensureTracksLoaded(channel.slug)
+			const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === channel.slug)
+			if (hasAutoRadioCoverage(tracks)) {
+				joinAutoRadio(appState.active_deck_id, toAutoTracks(tracks), {sources: [{channels: [channel.slug]}]})
+			}
+		}
+	}
 	let channelPlayingDeck = $derived.by(() => {
 		if (!channel?.slug) return undefined
 		const active = appState.decks[appState.active_deck_id]
@@ -244,6 +269,12 @@
 							</button>
 					{/if}
 						<ButtonPlay {channel} trackId={tid} />
+					<AutoRadioButton
+						className="btn{channelHasAuto ? ' active' : ''}"
+						synced={!channelHasAutoDrifted}
+						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+						onclick={toggleChannelAutoRadio}
+					/>
 						{#if hasChannel}
 							<ButtonFollow {channel} />
 						{:else}
