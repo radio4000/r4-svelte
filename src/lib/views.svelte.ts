@@ -1,9 +1,12 @@
 import {fuzzySearch} from '$lib/search'
 import {shuffleArray} from '$lib/utils'
 import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+import {createQuery} from '@tanstack/svelte-query'
 import {eq, inArray} from '@tanstack/db'
 import {tracksCollection} from '$lib/collections/tracks'
 import {channelsCollection} from '$lib/collections/channels'
+import {sdk} from '@radio4000/sdk'
+import {parseUrl} from 'media-now'
 import type {Channel, Deck, Track} from '$lib/types'
 import {viewURI, type View} from '$lib/views'
 
@@ -79,18 +82,37 @@ export function queryView(getView: () => View) {
 		[() => channelsKey, () => searchKey, () => tagsKey, () => limitKey, () => offsetKey]
 	)
 
-	const tagsLiveQuery = useLiveQuery(
-		(q) => {
-			const tags = tagsKey ? tagsKey.split(',') : []
-			if (!tags.length || channelsKey) return null
-			return q
-				.from({tracks: tracksCollection})
-				.where(({tracks}) => inArray(tracks.tags, tags))
-				.orderBy(({tracks}) => tracks.created_at, 'desc')
-				.limit(4000)
-		},
-		[() => tagsKey, () => channelsKey]
-	)
+	// createQuery, not useLiveQuery: TanStack DB's inArray does scalar-in-array,
+	// not array-overlap, so it can't filter on the tags array column client-side.
+	const tagsQuery = createQuery(() => {
+		const tags = tagsKey ? tagsKey.split(',') : []
+		return {
+			queryKey: ['tracks', 'tags', ...tags],
+			queryFn: async () => {
+				const {data, error} = await sdk.supabase
+					.from('channel_tracks')
+					.select('*')
+					.overlaps('tags', tags)
+					.order('created_at', {ascending: false})
+					.limit(4000)
+				if (error) throw error
+				const tracks = ((data || []) as Track[]).map((track) => {
+					const parsed = track.url ? parseUrl(track.url) : null
+					return {
+						...track,
+						provider: track.provider ?? parsed?.provider ?? null,
+						media_id: track.media_id ?? parsed?.id ?? null
+					}
+				})
+				tracksCollection.utils.writeBatch(() => {
+					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
+				})
+				return tracks
+			},
+			enabled: !!tags.length && !channelsKey,
+			staleTime: 24 * 60 * 60 * 1000
+		}
+	})
 
 	const searchLiveQuery = useLiveQuery(
 		(q) => {
@@ -110,7 +132,7 @@ export function queryView(getView: () => View) {
 			const data: Track[] = channelsKey
 				? ((tracksQuery.data ?? []) as Track[])
 				: tagsKey
-					? ((tagsLiveQuery.data ?? []) as Track[])
+					? ((tagsQuery.data ?? []) as Track[])
 					: searchKey
 						? ((searchLiveQuery.data ?? []) as Track[])
 						: []
@@ -126,7 +148,7 @@ export function queryView(getView: () => View) {
 		},
 		get count(): number {
 			if (searchKey && !channelsKey && !tagsKey) return (searchLiveQuery.data ?? []).length
-			if (tagsKey && !channelsKey) return (tagsLiveQuery.data ?? []).length
+			if (tagsKey && !channelsKey) return (tagsQuery.data ?? []).length
 			// channel+tags or channel+search: count is full filtered result before slicing
 			if (channelsKey && (searchKey || tagsKey)) {
 				const data = (tracksQuery.data ?? []) as Track[]
@@ -140,7 +162,7 @@ export function queryView(getView: () => View) {
 		get loading() {
 			return (
 				(!!channelsKey && !tracksQuery.isReady) ||
-				(!!tagsKey && !channelsKey && !tagsLiveQuery.isReady) ||
+				(!!tagsKey && !channelsKey && tagsQuery.isPending) ||
 				(!!searchKey && !channelsKey && !tagsKey && !searchLiveQuery.isReady)
 			)
 		}
