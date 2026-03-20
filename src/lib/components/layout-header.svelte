@@ -6,12 +6,10 @@
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
 	import ShareDialog from '$lib/components/share-dialog.svelte'
 	import ShortcutsDialog from '$lib/components/shortcuts-dialog.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import IconR4 from '$lib/components/icon-r4.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {resyncAutoRadio} from '$lib/api'
 	import * as m from '$lib/paraglide/messages'
 	import {appName} from '$lib/config'
 
@@ -22,27 +20,6 @@
 	const isBroadcasting = $derived(
 		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
-	const userChannelAutoDecks = $derived.by(() => {
-		if (!userChannel?.slug) return []
-		return Object.values(appState.decks).filter(
-			(d) =>
-				d.auto_radio && (d.view?.sources[0]?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
-		)
-	})
-	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
-	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	const userChannelResyncDeckId = $derived.by(() => {
-		if (!userChannel?.slug || !userChannelHasAuto) return undefined
-		const activeDeck = appState.decks[appState.active_deck_id]
-		if (
-			activeDeck?.id &&
-			activeDeck.auto_radio &&
-			(activeDeck.view?.sources[0]?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
-		) {
-			return activeDeck.id
-		}
-		return userChannelAutoDecks[0]?.id
-	})
 </script>
 
 <header>
@@ -88,16 +65,6 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
-				{#if userChannelHasAuto}
-					<span {@attach tooltip({content: m.auto_radio_resync()})}>
-						<AutoRadioButton
-							className="btn resync-link"
-							synced={!userChannelHasAutoDrifted}
-							title={m.auto_radio_resync()}
-							onclick={() => userChannelResyncDeckId && resyncAutoRadio(userChannelResyncDeckId)}
-						/>
-					</span>
-				{/if}
 				{#if isBroadcasting}
 					<a
 						href={resolve(`/${userChannel.slug}`)}
@@ -113,12 +80,11 @@
 					href={resolve(`/${userChannel.slug}`)}
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
-					class:active={userChannelHasAuto || page.params?.slug === userChannel.slug}
+					class:active={page.params?.slug === userChannel.slug}
 					{@attach tooltip({content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
-					{#if userChannelHasAuto}<span class="auto-dot" class:drifted={userChannelHasAutoDrifted}></span>{/if}
 				</a>
 			{:else if isSignedIn}
 				<a
@@ -218,24 +184,6 @@
 	}
 
 	.btn:has(.broadcast-dot) {
-		position: relative;
-	}
-
-	.auto-dot {
-		position: absolute;
-		bottom: -4px;
-		right: -4px;
-		width: 0.55rem;
-		height: 0.55rem;
-		border-radius: 50%;
-		background: var(--accent-9);
-	}
-
-	.auto-dot.drifted {
-		background: var(--red-9, #e53e3e);
-	}
-
-	.btn:has(.auto-dot) {
 		position: relative;
 	}
 
