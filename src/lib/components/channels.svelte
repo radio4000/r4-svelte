@@ -152,6 +152,13 @@
 		paginatedLimit = CHANNELS_PAGE_SIZE
 	})
 
+	/** @type {Record<string, () => string[]>} Filters whose total count comes from a local ID list */
+	const localIdFilters = {
+		favorites: () => favoriteIds,
+		broadcasting: () => broadcastIds,
+		imported: () => appState.local_channel_ids ?? []
+	}
+
 	// Fetch channels driven by the active filter + sort
 	// deps: reactive values used inside the callback must be listed so the
 	// $derived.by() in useLiveQuery re-creates the collection when they change.
@@ -161,18 +168,10 @@
 			if (!capabilities.globalBrowse) {
 				return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
 			}
-			if (filter === 'imported') {
-				const ids = appState.local_channel_ids ?? []
-				if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-				return base
-					.where(({ch}) => inArray(ch.id, ids))
-					.orderBy(({ch}) => ch.created_at, 'desc')
-					.limit(queryLimit)
-			} else if (filter === 'favorites') {
-				return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			} else if (filter === 'broadcasting') {
-				if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-				base = base.where(({ch}) => inArray(ch.id, broadcastIds))
+			const localIds = localIdFilters[filter]?.()
+			if (localIds) {
+				if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+				base = base.where(({ch}) => inArray(ch.id, localIds))
 			} else if (filter === 'featured') {
 				base = base
 					.where(({ch}) => gte(ch.track_count, 10))
@@ -193,9 +192,17 @@
 			if (queryOffset) base = base.offset(queryOffset)
 			return base
 		},
-		[() => queryLimit, () => queryOffset, () => filter, () => order, () => orderDirection, () => broadcastIds]
+		[
+			() => queryLimit,
+			() => queryOffset,
+			() => filter,
+			() => order,
+			() => orderDirection,
+			() => broadcastIds,
+			() => favoriteIds
+		]
 	)
-	const channelsRaw = $derived(filter === 'favorites' ? follows.followedChannels : (channelsQuery.data ?? []))
+	const channelsRaw = $derived(channelsQuery.data ?? [])
 	// For featured: score and take top 12; paged views already return one page via offset; otherwise all
 	const channels = $derived.by(() => {
 		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
@@ -206,13 +213,7 @@
 	// Server-side total count for pagination (N/M display)
 	let serverCount = $state(0)
 	$effect(() => {
-		if (
-			!isPaged ||
-			filter === 'broadcasting' ||
-			filter === 'imported' ||
-			filter === 'featured' ||
-			filter === 'favorites'
-		) {
+		if (!isPaged || filter === 'featured' || filter in localIdFilters) {
 			serverCount = 0
 			return
 		}
@@ -228,15 +229,7 @@
 			})
 			.catch(() => {})
 	})
-	const totalCount = $derived(
-		filter === 'broadcasting'
-			? broadcastIds.length
-			: filter === 'favorites'
-				? favoriteIds.length
-				: filter === 'imported'
-					? (appState.local_channel_ids?.length ?? 0)
-					: serverCount
-	)
+	const totalCount = $derived(localIdFilters[filter]?.().length ?? serverCount)
 	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
 	const hasNextPage = $derived(
 		isPaged && filter !== 'featured' && (totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
