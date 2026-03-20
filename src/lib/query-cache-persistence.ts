@@ -113,13 +113,18 @@ function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {stat
 	// Skip failed results
 	if (query.state.status !== 'success') return false
 
-	const key = query.queryKey?.[0]
+	const queryKey = query.queryKey ?? []
+	const key = queryKey[0]
 	// Shuffled channel queries are random — restoring stale order is misleading
-	if (key === 'channels' && query.queryKey.includes('shuffle')) return false
+	if (key === 'channels' && queryKey.includes('shuffle')) return false
 	// Broadcast state is ephemeral (realtime), stale data causes ghost sessions
 	if (key === 'broadcasts') return false
 	// Freshness checks must always hit the server
 	if (key === 'tracks-freshness') return false
+	// Keep query-cache persistence focused on small canonical snapshots.
+	// Broad, derived, or partial query shapes duplicate large datasets and are cheaper to recompute.
+	if (key === 'channels') return queryKey.length === 2 && typeof queryKey[1] === 'string'
+	if (key === 'tracks') return queryKey.length === 2 && typeof queryKey[1] === 'string'
 
 	return true
 }
@@ -128,7 +133,7 @@ const persistOptions = {
 	queryClient,
 	persister: idbPersister,
 	maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days — matches gcTime, keeps user import data alive
-	buster: '8',
+	buster: '9',
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 

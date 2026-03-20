@@ -14,45 +14,70 @@ const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
 import type {Track} from '$lib/types'
 
+type TrackQueryParams = {
+	slugEq?: string
+	slugIn?: string[]
+	tagsIn?: string[]
+	ftsEq?: string
+	createdAfter?: string
+	limit?: number
+}
+
+function parseTrackParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]): TrackQueryParams {
+	const options = parseLoadSubsetOptions(opts)
+	return {
+		slugEq: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined,
+		slugIn: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value as string[] | undefined,
+		tagsIn: options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value as string[] | undefined,
+		ftsEq: options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value as string | undefined,
+		createdAfter: options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value as
+			| string
+			| undefined,
+		limit: options.limit
+	}
+}
+
+function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
+	if (params.slugIn) {
+		const key: (string | number)[] = ['tracks', 'slugs', ...params.slugIn.toSorted()]
+		if (params.limit) key.push('limit', params.limit)
+		if (params.createdAfter) key.push('after', params.createdAfter)
+		return key
+	}
+	if (params.slugEq) {
+		const key: (string | number)[] = ['tracks', params.slugEq]
+		if (params.limit) key.push('limit', params.limit)
+		if (params.createdAfter) key.push('after', params.createdAfter)
+		return key
+	}
+	if (params.tagsIn) return ['tracks', 'tags', ...params.tagsIn.toSorted()]
+	if (params.ftsEq) return ['tracks', 'search', params.ftsEq]
+	return ['tracks']
+}
+
 export const tracksCollection = createCollection<Track, string>({
 	...queryCollectionOptions({
-		queryKey: (opts) => {
-			const options = parseLoadSubsetOptions(opts)
-			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
-			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
-			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
-			if (slugIn) return ['tracks', ...slugIn.sort()]
-			if (slugEq) return ['tracks', slugEq]
-			if (tagsIn) return ['tracks', 'tags', ...tagsIn.toSorted()]
-			if (ftsEq) return ['tracks', 'search', ftsEq]
-			return ['tracks']
-		},
+		queryKey: (opts) => getTrackQueryKey(parseTrackParams(opts)),
 		syncMode: 'on-demand',
 		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
 		staleTime: 24 * 60 * 60 * 1000,
 		queryFn: async (ctx): Promise<Track[]> => {
-			const options = parseLoadSubsetOptions(ctx.meta?.loadSubsetOptions)
-			const slugEq = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value
-			const slugIn = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value
-			const slugs = slugIn ?? (slugEq ? [slugEq] : [])
-			const tagsIn = options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value
-			const ftsEq = options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value
-			const createdAfter = options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value
+			const params = parseTrackParams(ctx.meta?.loadSubsetOptions)
+			const slugs = params.slugIn ?? (params.slugEq ? [params.slugEq] : [])
 
-			log.info('queryFn', {slugs, tagsIn, ftsEq, createdAfter})
+			log.info('queryFn', {slugs, tagsIn: params.tagsIn, ftsEq: params.ftsEq, createdAfter: params.createdAfter})
 
 			if (!capabilities.globalBrowse) {
 				const all = [...tracksCollection.state.values()]
 				if (slugs.length) {
 					const set = new Set(slugs)
-					return all.filter((t) => set.has(t.slug))
+					return all.filter((t) => !!t.slug && set.has(t.slug))
 				}
-				if (tagsIn?.length) return all.filter((t) => t.tags?.some((tag) => tagsIn.includes(tag)))
-				if (ftsEq) {
-					const q = ftsEq.toLowerCase()
+				if (params.tagsIn?.length) return all.filter((t) => t.tags?.some((tag) => params.tagsIn?.includes(tag)))
+				if (params.ftsEq) {
+					const q = params.ftsEq.toLowerCase()
 					return all.filter((t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q))
 				}
 				return all
@@ -62,9 +87,13 @@ export const tracksCollection = createCollection<Track, string>({
 			if (slugs.length) {
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
-						const tracks = await fetchTracksBySlug(s, {limit: options.limit, createdAfter})
+						const tracks = await fetchTracksBySlug(s, {limit: params.limit, createdAfter: params.createdAfter})
 						log.info('queryFn fetched', {slug: s, count: tracks.length})
-						queryClient.setQueryData(['tracks', s], tracks)
+						// Keep the canonical per-slug cache entry reserved for full channel snapshots.
+						// Partial slug fetches (limit/createdAfter) must not overwrite that persisted key.
+						if (!params.limit && !params.createdAfter) {
+							queryClient.setQueryData(['tracks', s], tracks)
+						}
 						return tracks
 					})
 				)
@@ -72,9 +101,9 @@ export const tracksCollection = createCollection<Track, string>({
 			}
 
 			// Global: fetch by tags
-			if (tagsIn?.length) {
+			if (params.tagsIn?.length) {
 				let query = sdk.supabase.from('channel_tracks').select('*')
-				query = query.overlaps('tags', tagsIn)
+				query = query.overlaps('tags', params.tagsIn)
 				query = query.order('created_at', {ascending: false}).limit(4000)
 				const {data, error} = await query
 				if (error) throw error
@@ -93,8 +122,8 @@ export const tracksCollection = createCollection<Track, string>({
 			}
 
 			// Global: full-text search
-			if (ftsEq) {
-				const {tracks: rawTracks} = await searchTracks(ftsEq, {limit: 4000})
+			if (params.ftsEq) {
+				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: 4000})
 				const tracks = rawTracks.map((track) => {
 					const parsed = track.url ? parseUrl(track.url) : null
 					return {

@@ -23,9 +23,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	$effect(() => {
-		setScene({geometry: 'box', backgroundColor: 'oklch(15% 0.04 260)', lightCycling: true, cameraPosition: [0, 0, 4]})
-	})
+	setScene({geometry: 'box', backgroundColor: 'oklch(15% 0.04 260)', lightCycling: true, cameraPosition: [0, 0, 4]})
 
 	const FEATURED_COUNT = 3
 	const FEATURED_COUNT_LOGGEDOUT = 6

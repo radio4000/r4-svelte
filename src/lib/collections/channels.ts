@@ -59,6 +59,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 			imageNotNull: false,
 			coordinatesNotNull: false,
 			shuffle: false,
+			offset: undefined as number | undefined,
 			orderColumn: 'created_at' as string | undefined,
 			ascending: true,
 			sortKey: 'default'
@@ -75,6 +76,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 	const coordinatesNotNull = options.filters.some((f) => f.field[0] === 'latitude')
 	const sort = options.sorts[0]
 	const shuffle = sort?.field[0] === 'shuffle'
+	const offset = (opts as Record<string, unknown> | undefined)?.offset as number | undefined
 	return {
 		slug,
 		idIn,
@@ -82,6 +84,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		imageNotNull,
 		coordinatesNotNull,
 		shuffle,
+		offset,
 		orderColumn: shuffle ? undefined : ((sort?.field[0] as string) ?? 'created_at'),
 		ascending: sort ? sort.direction === 'asc' : true,
 		sortKey: shuffle ? 'shuffle' : sort ? `${sort.field[0]}_${sort.direction}` : 'default'
@@ -91,18 +94,19 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 export const channelsCollection = createCollection<Channel, string>({
 	...queryCollectionOptions({
 		queryKey: (opts) => {
-			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey} = parseChannelParams(opts)
+			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey, offset} = parseChannelParams(opts)
 			if (slug) return ['channels', slug]
 			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
-			// Include limit so different page sizes get separate cache entries.
+			// Include limit+offset so different pages get separate cache entries.
 			// With a function queryKey, on-demand mode does NOT auto-append
 			// loadSubsetOptions like it does for static keys.
 			const limit = opts?.limit ?? 0
+			const off = offset ?? 0
 			const segments: (string | number)[] = ['channels']
 			if (coordinatesNotNull) segments.push('geo')
-			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey, limit]
-			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey, limit]
-			return [...segments, sortKey, limit]
+			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey, limit, off]
+			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey, limit, off]
+			return [...segments, sortKey, limit, off]
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -150,7 +154,7 @@ export const channelsCollection = createCollection<Channel, string>({
 			if (p.imageNotNull) query = query.not('image', 'is', null)
 			if (p.coordinatesNotNull) query = query.not('latitude', 'is', null).not('longitude', 'is', null)
 			if (!p.shuffle) query = query.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
-			query = query.limit(limit)
+			query = query.range(p.offset ?? 0, (p.offset ?? 0) + limit - 1)
 			const {data, error} = await query
 			if (error) throw error
 			return (data ?? []) as Channel[]

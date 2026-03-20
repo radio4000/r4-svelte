@@ -68,7 +68,6 @@ export function useLiveQuery<TResult extends object, TKey extends string | numbe
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
 export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
 	const id = ++queryCounter
-	const t0 = performance.now()
 	let tCreateCollection: number | undefined
 	let tSyncData: number | undefined
 

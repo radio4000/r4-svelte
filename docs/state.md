@@ -22,6 +22,9 @@ When a component calls `useLiveQuery`, the collection checks the query cache. If
 
 Query cache is persisted to IndexedDB via `query-cache-persistence.ts`. On app boot (`+layout.js`):
 
+Today we only persist small canonical query snapshots there: full per-slug track queries and single-channel lookups.
+Broad channel lists, search/tag results, and partial track queries are recomputed instead of restored.
+
 1. `collectionsHydrated` — restore collection state from IDB (if enabled)
 2. `cacheReady` — restore query cache from IDB
 3. `preload()` — prefetch channels, restore deck tracks

@@ -26,13 +26,11 @@
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import * as m from '$lib/paraglide/messages'
 
-	$effect(() => {
-		setScene({
-			geometry: 'icosahedron',
-			backgroundColor: 'oklch(10% 0.05 200)',
-			cameraPosition: [0, 0, 5],
-			rotationSpeed: 0.5
-		})
+	setScene({
+		geometry: 'icosahedron',
+		backgroundColor: 'oklch(10% 0.05 200)',
+		cameraPosition: [0, 0, 5],
+		rotationSpeed: 0.5
 	})
 
 	const uid = $props.id()

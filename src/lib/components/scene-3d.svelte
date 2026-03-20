@@ -1,4 +1,5 @@
 <script>
+	import {untrack} from 'svelte'
 	import {sceneState} from '$lib/scene-state.svelte'
 	import {gsap} from 'gsap'
 	import {Renderer, Camera, Transform, Mesh, Program, Box, Sphere, Torus, Cylinder} from 'ogl'
@@ -26,7 +27,6 @@
 	let program
 	let rafId = -1
 	let resizeObserver
-	let currentGeometryName = ''
 	let isSwapping = false
 
 	const vertex = /* glsl */ `
@@ -104,8 +104,6 @@
 		mesh.geometry = createGeometry(newName, renderer.gl)
 		if (oldGeo && typeof oldGeo.remove === 'function') oldGeo.remove()
 
-		currentGeometryName = newName
-
 		// Scale in
 		await gsap.to(mesh.scale, {x: 1, y: 1, z: 1, duration: 0.4, ease: 'elastic.out(1, 0.5)'})
 
@@ -147,7 +145,6 @@
 		})
 
 		const geometry = createGeometry(cfg.geometry, gl)
-		currentGeometryName = cfg.geometry
 		mesh = new Mesh(gl, {geometry, program})
 		mesh.setParent(scene)
 
@@ -166,6 +163,7 @@
 		let lastTime = 0
 		function loop(time) {
 			rafId = requestAnimationFrame(loop)
+			if (!renderer || !scene || !camera) return
 			const dt = Math.min((time - lastTime) / 1000, 0.1)
 			lastTime = time
 
@@ -246,7 +244,9 @@
 
 	$effect(() => {
 		if (!canvas) return
-		init()
+		// Untrack so init's read of sceneState.current doesn't subscribe —
+		// otherwise every broadcast update re-creates the entire GL context.
+		untrack(() => init())
 		return () => {
 			cancelAnimationFrame(rafId)
 			resizeObserver?.disconnect()

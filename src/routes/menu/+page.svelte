@@ -11,9 +11,7 @@
 	import {repoBlobUrl, repoUrl, repoCommitUrl} from '$lib/repo'
 	import BackLink from '$lib/components/back-link.svelte'
 
-	$effect(() => {
-		setScene({geometry: 'torus', backgroundColor: 'oklch(12% 0.03 30)', cameraPosition: [0, 1, 5]})
-	})
+	setScene({geometry: 'torus', backgroundColor: 'oklch(12% 0.03 30)', cameraPosition: [0, 1, 5]})
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')

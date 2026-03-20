@@ -202,7 +202,7 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-	<Scene3d />
+	<!-- <Scene3d /> -->
 	<svg class="auto-live-gradient-defs" width="0" height="0" aria-hidden="true" focusable="false">
 		<defs>
 			<linearGradient id="r5-auto-live-gradient" x1="0" y1="0" x2="1" y2="0">

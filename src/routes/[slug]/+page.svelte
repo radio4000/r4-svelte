@@ -20,9 +20,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import Seo from '$lib/components/seo.svelte'
 
-	$effect(() => {
-		setScene({geometry: 'sphere', backgroundColor: 'oklch(18% 0.04 140)', cameraPosition: [1, 0.5, 4]})
-	})
+	setScene({geometry: 'sphere', backgroundColor: 'oklch(18% 0.04 140)', cameraPosition: [1, 0.5, 4]})
 
 	const SECTION_TRACK_LIMIT = 50
 	const FEATURED_LIMIT = 10

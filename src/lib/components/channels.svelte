@@ -119,10 +119,9 @@
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: 5000}
 	const queryLimit = $derived(
-		filter === 'featured'
-			? 50
-			: Math.max(VIEW_MIN_LIMIT[display] ?? 0, isPaged ? currentPage * pageSize : paginatedLimit)
+		filter === 'featured' ? 50 : isPaged ? pageSize : Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
 	)
+	const queryOffset = $derived(isPaged ? (currentPage - 1) * pageSize : 0)
 	const favoriteIds = $derived(follows.followedIds)
 
 	// Reactive broadcast IDs for the broadcasting filter
@@ -190,18 +189,19 @@
 					base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
 				}
 			}
-			return base.limit(queryLimit)
+			base = base.limit(queryLimit)
+			if (queryOffset) base = base.offset(queryOffset)
+			return base
 		},
-		[() => queryLimit, () => filter, () => order, () => orderDirection, () => broadcastIds]
+		[() => queryLimit, () => queryOffset, () => filter, () => order, () => orderDirection, () => broadcastIds]
 	)
 	const channelsRaw = $derived(filter === 'favorites' ? follows.followedChannels : (channelsQuery.data ?? []))
-	// For featured: score and take top 12; for paged views: slice to current page; otherwise all
+	// For featured: score and take top 12; paged views already return one page via offset; otherwise all
 	const channels = $derived.by(() => {
 		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
-		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 		return channelsRaw
 	})
-	const hasMore = $derived(filter !== 'featured' && channelsRaw.length >= queryLimit)
+	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
 
 	// Server-side total count for pagination (N/M display)
 	let serverCount = $state(0)
@@ -291,13 +291,9 @@
 
 	let stableChannels = $state(/** @type {typeof channels} */ ([]))
 	$effect(() => {
-		// Only update when the fetched data covers the current page's start index,
-		// or when there's genuinely no data. Prevents a flash of 0 items when paging
-		// forward — the collection returns cached rows (isLoading=false) before the
-		// fetch for the new page completes.
-		const sliceStart = (currentPage - 1) * pageSize
-		const dataCoversPage = channelsRaw.length > sliceStart || channelsRaw.length === 0
-		if (!channelsQuery.isLoading && dataCoversPage) stableChannels = channels
+		// With offset pagination the query returns exactly one page.
+		// Keep showing the previous page while the next one loads.
+		if (!channelsQuery.isLoading && channels.length > 0) stableChannels = channels
 	})
 	const orderedChannels = $derived(isPaged ? stableChannels : channels)
 
