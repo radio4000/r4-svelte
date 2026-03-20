@@ -28,7 +28,7 @@ A search returns **channels** and **tracks** as parallel result sets.
 
 Track results go through the [View pipeline](views.md) — same `queryView` that powers `/_debug/views`.
 
-Channel results run separately: exact slug lookup (`@ko002` finds the channel card), remote FTS (channels whose name/description matches), and local fuzzy search (channels already in memory). These are not part of the View — they're a search-page feature.
+Channel results run separately via `searchChannelsCombined({slugs, query, localChannels})`: exact slug lookup (`@ko002` finds the channel card), remote FTS (channels whose name/description matches), and local fuzzy search (channels already in memory). Results are deduplicated by ID. These are not part of the View — they're a search-page feature.
 
 ## The search page
 
@@ -52,6 +52,6 @@ We don't use the SDK's built-in search — it only does websearch-style matching
 
 - `src/routes/search/+page.svelte` — resolves `?q=` on arrival, wires up both input paths
 - `src/lib/search-fts.js` — `buildFtsFilter`, `searchChannels`, `searchTracks`
-- `src/lib/search.js` — `searchAll`, `findChannelBySlug`, `fuzzySearch`, `searchChannelsLocal`, `searchTracksLocal`
+- `src/lib/search.js` — `searchAll`, `findChannelBySlug`, `searchChannelsCombined`, `fuzzySearch`, `searchChannelsLocal`, `searchTracksLocal`
 - `src/lib/components/search-input.svelte` — the smart input component
 - See also [views.md](views.md) — the View pipeline that powers track results

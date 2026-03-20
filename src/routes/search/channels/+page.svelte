@@ -3,9 +3,9 @@
 	import {afterNavigate, goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {Debounced} from 'runed'
-	import {searchChannels} from '$lib/search-fts'
-	import {findChannelBySlug, parseMentionQuery, searchChannelsLocal} from '$lib/search'
+	import {parseMentionQuery, searchChannelsCombined} from '$lib/search'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {getTopChannelSlugs} from '$lib/utils'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchShell from '$lib/components/search-shell.svelte'
 	import {trap} from '$lib/focus'
@@ -46,17 +46,7 @@
 	}
 
 	const hasFilter = $derived(!!debouncedInput.current.trim())
-	const featuredChannelSlugs = $derived.by(() => {
-		return [...channelsCollection.state.values()]
-			.filter((channel) => channel?.slug)
-			.toSorted(
-				(a, b) =>
-					(b.track_count ?? 0) - (a.track_count ?? 0) ||
-					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
-			)
-			.slice(0, 6)
-			.map((channel) => channel.slug)
-	})
+	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
 
 	/** @type {import('$lib/types.ts').Channel[]} */
 	let channels = $state([])
@@ -71,34 +61,16 @@
 		const {channelSlugs, trackQuery} = parseMentionQuery(q)
 		channelsLoading = true
 		let stale = false
-		/** @type {Promise<import('$lib/types').Channel[]>[]} */
-		const promises = []
-		if (channelSlugs.length) {
-			promises.push(
-				...channelSlugs.map((slug) => findChannelBySlug(slug).then((channel) => (channel ? [channel] : [])))
-			)
-		}
-		if (trackQuery) {
-			const local = searchChannelsLocal(trackQuery, [...channelsCollection.state.values()])
-			promises.push(searchChannels(trackQuery))
-			if (local.length) promises.push(Promise.resolve(local))
-		}
-		if (!promises.length) {
-			channels = []
-			channelsLoading = false
-			return
-		}
-		Promise.all(promises)
+		searchChannelsCombined({
+			slugs: channelSlugs,
+			query: trackQuery,
+			localChannels: [...channelsCollection.state.values()]
+		})
 			.then((results) => {
-				if (stale) return
-				// eslint-disable-next-line svelte/prefer-svelte-reactivity
-				const seen = new Set()
-				channels = results.flat().filter((c) => {
-					if (seen.has(c.id)) return false
-					seen.add(c.id)
-					return true
-				})
-				channelsLoading = false
+				if (!stale) {
+					channels = results
+					channelsLoading = false
+				}
 			})
 			.catch(() => {
 				if (!stale) channelsLoading = false

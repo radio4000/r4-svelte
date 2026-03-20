@@ -203,7 +203,11 @@
 		{"name": "searchAll(query, {limit?})", "desc": "Search @channel, #tag, and free-text (FTS)."},
 		{"name": "fuzzySearch(query, items, keys, {limit?, threshold?})", "desc": "Generic local fuzzy search."},
 		{"name": "searchTracksLocal(query, tracks, {limit?})", "desc": "Local tracks search."},
-		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."}
+		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."},
+		{
+			"name": "searchChannelsCombined({slugs?, query?, localChannels?})",
+			"desc": "Slug lookups + FTS + local fuzzy, deduplicated."
+		}
 	],
 
 	"src/lib/views.ts": [
@@ -317,7 +321,9 @@
 		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
 		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."},
 		{"name": "countStrings(strings)", "desc": "Count occurrences → {value, count}[], sorted by frequency then alpha."},
-		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks → {value, count}[]."}
+		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks → {value, count}[]."},
+		{"name": "getTopChannelSlugs(channels, limit)", "desc": "Top channel slugs sorted by track count + recency."},
+		{"name": "getTopTagValues(tracks, limit)", "desc": "Top tag value strings from a collection of tracks."}
 	],
 
 	"src/lib/logger.js": [

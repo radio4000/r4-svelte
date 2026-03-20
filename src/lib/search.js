@@ -113,6 +113,32 @@ export async function searchAll(query, {limit = 100} = {}) {
 	return {channels, tracks}
 }
 
+/**
+ * Combined channel search: slug lookups + FTS + local fuzzy, deduplicated.
+ * @param {{slugs?: string[], query?: string, localChannels?: import('$lib/types').Channel[]}} params
+ * @returns {Promise<import('$lib/types').Channel[]>}
+ */
+export async function searchChannelsCombined({slugs = [], query = '', localChannels = []} = {}) {
+	/** @type {Promise<import('$lib/types').Channel[]>[]} */
+	const promises = []
+	if (slugs.length) {
+		promises.push(...slugs.map((slug) => findChannelBySlug(slug).then((c) => (c ? [c] : []))))
+	}
+	if (query) {
+		promises.push(searchChannels(query))
+		const local = searchChannelsLocal(query, localChannels)
+		if (local.length) promises.push(Promise.resolve(local))
+	}
+	if (!promises.length) return []
+	const results = await Promise.all(promises)
+	const seen = new Set()
+	return results.flat().filter((c) => {
+		if (seen.has(c.id)) return false
+		seen.add(c.id)
+		return true
+	})
+}
+
 // Local fuzzy search utils (pure functions for potential reuse)
 
 /**

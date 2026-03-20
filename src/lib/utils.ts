@@ -215,6 +215,29 @@ export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }
 
+/** Top channel slugs sorted by track count + recency. */
+export function getTopChannelSlugs(
+	channels: Iterable<{slug?: string | null; track_count?: number | null; latest_track_at?: string | null}>,
+	limit: number
+): string[] {
+	return [...channels]
+		.filter((c) => c?.slug)
+		.toSorted(
+			(a, b) =>
+				(b.track_count ?? 0) - (a.track_count ?? 0) || (b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
+		)
+		.slice(0, limit)
+		.map((c) => c.slug as string)
+}
+
+/** Top tag values from a collection of tracks. */
+export function getTopTagValues(tracks: Array<{tags?: string[] | null}>, limit: number): string[] {
+	if (!tracks.length) return []
+	return getChannelTags(tracks)
+		.slice(0, limit)
+		.map((t) => t.value)
+}
+
 /**
  * Score a channel for "featured" ranking.
  * Higher = more interesting. Used client-side to sort a quality pool.
