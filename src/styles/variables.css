@@ -1,6 +1,6 @@
 :root {
 	/* layout */
-	--scaling: 1.15;
+	--scaling: 1;
 	--space-1: calc(0.2rem * var(--scaling));
 	--space-2: calc(0.5rem * var(--scaling));
 	--space-3: calc(1rem * var(--scaling));
@@ -16,9 +16,9 @@
 	--media-button-icon-height: 18px;
 
 	/* typography */
-	--sans-serif: firava, system-ui, sans-serif;
-	--font-system: system-ui, sans-serif;
-	--monospace: ui-monospace, monospace;
+	--font-root: 17px;
+	--font-sans: firava, system-ui, sans-serif;
+	--font-mono: ui-monospace, monospace;
 	--font-1: 0.6875rem;
 	--font-2: 0.75rem;
 	--font-3: 0.8125rem;

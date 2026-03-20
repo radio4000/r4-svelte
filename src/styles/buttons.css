@@ -7,9 +7,11 @@ button,
 	vertical-align: top;
 	align-items: center;
 	justify-content: center;
-	min-width: 1.75rem;
+
+	/* dimensions */
+	min-width: 2rem;
 	min-height: 2rem;
-	padding: 0 0.5rem;
+	padding: 0 0.4rem;
 
 	flex-shrink: 0;
 	white-space: nowrap;
@@ -81,12 +83,6 @@ button.active:active,
 	background-color: var(--accent-2);
 }
 
-.icon-btn {
-	border: 0;
-	background: none;
-	padding: 0;
-}
-
 /* Looks like an <a> — no padding, no border, underlined text */
 button.link {
 	background: none;
@@ -106,12 +102,20 @@ button.link {
 	}
 }
 
+/* ? */
+.icon-btn {
+	border: 0;
+	background: none;
+	padding: 0;
+}
+
 /* Keeps button sizing but removes background, border and shadow */
 button.ghost,
 .btn.ghost {
 	background-color: transparent;
 	border-color: transparent;
 	box-shadow: none;
+
 	&:hover,
 	&:focus,
 	&:active,

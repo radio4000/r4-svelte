@@ -34,7 +34,7 @@ Interface surfaces use neutral background colors:
 
 ## Typography
 
-Font scale via `--font-1` (smallest) through `--font-9` (largest). Font families: `--sans-serif`, `--monospace`.
+Font scale via `--font-1` (smallest) through `--font-9` (largest). Font families: `--font-sans`, `--font-mono`.
 
 - `.caps` — uppercase monospace label text
 - `<small>` — muted secondary text

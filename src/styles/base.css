@@ -10,8 +10,8 @@ body {
 }
 
 html {
-	font-family: var(--font-family, 'firava', sans-serif);
-	font-size: calc(16px * var(--scaling));
+	font-family: var(--font-sans);
+	font-size: calc(var(--font-root) * var(--scaling));
 	line-height: 1.5;
 	font-weight: 400;
 	text-rendering: optimizeLegibility;
@@ -113,14 +113,14 @@ a[href^='https://']:not(.btn):not([data-no-external-icon])::after {
 	text-transform: uppercase;
 	font-size: var(--font-2);
 	font-weight: 400;
-	font-family: var(--monospace);
+	font-family: var(--font-monospace);
 	letter-spacing: 0.03em;
 }
 
 a.slug-link,
 .slug-link {
 	text-decoration: none;
-	font-family: var(--monospace);
+	font-family: var(--font-monospace);
 	letter-spacing: 0.03em;
 	color: var(--gray-10);
 

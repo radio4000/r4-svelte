@@ -30,8 +30,8 @@
 	header {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
+		gap: 0.5rem;
+		margin-block: 0.5rem 1rem;
 	}
 
 	h1 {

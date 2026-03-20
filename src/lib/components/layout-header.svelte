@@ -200,13 +200,7 @@
 	}
 
 	.home-link {
-		width: 2rem;
-		height: 2rem;
 		padding: 0;
-		:global(svg) {
-			width: 1.1rem;
-			height: auto;
-		}
 	}
 
 	.user {
@@ -266,7 +260,7 @@
 		box-shadow:
 			lch(0 0 0 / 0.06) 0px 4px 4px -1px,
 			lch(0 0 0 / 0.12) 0px 1px 1px 0px,
-			inset 3px 0 0 var(--accent-9);
+			inset 2px 0 0 var(--accent-9);
 	}
 
 	@media (max-width: 768px) {
@@ -291,7 +285,7 @@
 			box-shadow:
 				lch(0 0 0 / 0.06) 0px 4px 4px -1px,
 				lch(0 0 0 / 0.12) 0px 1px 1px 0px,
-				inset 0 3px 0 var(--accent-9);
+				inset 0 2px 0 var(--accent-9);
 		}
 	}
 	@media (min-width: 768px) {
@@ -299,10 +293,11 @@
 			overflow-y: auto;
 		}
 
-		/* Square buttons when vertical, capped at 2rem */
+		/* Square buttons when vertical */
 		nav :global(.btn) {
+			/*
 			aspect-ratio: 1/1;
-			max-width: 2rem;
+			 */
 		}
 	}
 </style>
