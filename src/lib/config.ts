@@ -49,6 +49,14 @@ export const conceptIcons = {
 	history: 'history',
 	broadcast: 'cell-signal',
 	settings: 'options-vertical-encircled',
+	info: 'circle-info',
+	mentions: 'user',
+	following: 'sparkles',
+	followers: 'users',
+	map: 'map',
+	backup: 'document-download',
+	batchEdit: 'unordered-list',
+	delete: 'delete',
 } as const
 
 export const posthogKey = env.PUBLIC_POSTHOG_KEY ?? 'phc_hjAzrJR1oqwdWF2chYKVdAkAQAXtTgd576iTuMTfuEO'

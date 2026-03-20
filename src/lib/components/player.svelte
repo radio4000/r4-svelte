@@ -840,6 +840,7 @@
 	}
 
 	.bottom-chrome {
+		border-top: 1px solid var(--gray-7);
 		margin-top: auto;
 		display: flex;
 		flex-direction: column;
@@ -847,6 +848,10 @@
 		@media (max-width: 768px) {
 			margin-top: 0;
 		}
+	}
+
+	.bottom-chrome:has(.active) {
+		border-top: 0;
 	}
 
 	.progress-row {
