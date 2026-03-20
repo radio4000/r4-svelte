@@ -4,7 +4,7 @@
 	import {setScene} from '$lib/scene-state.svelte'
 	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
+	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import SearchShell from '$lib/components/search-shell.svelte'
@@ -26,8 +26,7 @@
 	})
 
 	const uid = $props.id()
-	const search = new SearchUrl('/search', (q) => viewToUrl('/search', parseView(q)))
-
+	const search = new SearchUrl('/search')
 	// URL is the single source of truth
 	const view = $derived(viewFromUrl(page.url))
 	const q = $derived(view.sources[0] ?? {})

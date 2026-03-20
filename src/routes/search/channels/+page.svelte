@@ -1,7 +1,9 @@
 <script>
+	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {SearchUrl} from '$lib/search-url.svelte.js'
-	import {parseMentionQuery, searchChannelsCombined} from '$lib/search'
+	import {searchChannelsCombined} from '$lib/search'
+	import {viewFromUrl} from '$lib/views'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getTopChannelSlugs} from '$lib/utils'
 	import ChannelCard from '$lib/components/channel-card.svelte'
@@ -13,7 +15,10 @@
 	const uid = $props.id()
 	const search = new SearchUrl('/search/channels')
 
-	const hasFilter = $derived(!!search.debouncedInput.current.trim())
+	// URL is the single source of truth
+	const view = $derived(viewFromUrl(page.url))
+	const q = $derived(view.sources[0] ?? {})
+	const hasFilter = $derived(!!q.channels?.length || !!q.search)
 	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
 
 	/** @type {import('$lib/types.ts').Channel[]} */
@@ -21,17 +26,15 @@
 	let channelsLoading = $state(false)
 
 	$effect(() => {
-		const q = search.debouncedInput.current.trim()
-		if (!q) {
+		if (!hasFilter) {
 			channels = []
 			return
 		}
-		const {channelSlugs, trackQuery} = parseMentionQuery(q)
 		channelsLoading = true
 		let stale = false
 		searchChannelsCombined({
-			slugs: channelSlugs,
-			query: trackQuery,
+			slugs: q.channels,
+			query: q.search,
 			localChannels: [...channelsCollection.state.values()]
 		})
 			.then((results) => {

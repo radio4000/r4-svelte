@@ -640,8 +640,7 @@
 		grid-column: 1 / -1;
 	}
 
-	.dashboard-card--link,
-	.dashboard-card--button {
+	.dashboard-card--link {
 		color: inherit;
 		text-align: left;
 		text-decoration: none;
@@ -655,10 +654,6 @@
 			border-color: var(--accent-7);
 			outline: none;
 		}
-	}
-
-	.dashboard-card--button {
-		cursor: pointer;
 	}
 
 	.dashboard-label {

@@ -100,7 +100,6 @@
 		if (view.order) parts.push(`order: ${view.order}`)
 		if (view.direction === 'asc') parts.push('asc')
 		if (view.limit) parts.push(`limit: ${view.limit}`)
-		if (view.exclude?.length) parts.push(`exclude: ${view.exclude.length}`)
 		return parts.join(' \u00b7 ')
 	})
 
@@ -230,19 +229,6 @@
 								placeholder={m.views_limit_placeholder()}
 								min="1"
 								max="4000"
-							/>
-						</fieldset>
-						<fieldset>
-							<label for="{uid}-exclude">Exclude track IDs</label>
-							<input
-								id="{uid}-exclude"
-								type="text"
-								value={view.exclude?.join(', ') || ''}
-								onchange={(e) => {
-									const ids = splitList(e.currentTarget.value)
-									onchange({...view, exclude: ids.length ? ids : undefined})
-								}}
-								placeholder="uuid-1, uuid-2"
 							/>
 						</fieldset>
 					</form>

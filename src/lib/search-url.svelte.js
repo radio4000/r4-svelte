@@ -1,10 +1,11 @@
 import {page} from '$app/state'
 import {afterNavigate, goto} from '$app/navigation'
 import {Debounced} from 'runed'
+import {parseView, viewToUrl} from '$lib/views'
 
 /**
  * Debounced input ↔ URL sync for search routes.
- * Use: `const search = new SearchUrl('/search/tracks', toUrl)`
+ * Use: `const search = new SearchUrl('/search/tracks')`
  * Bind: `bind:value={search.value}`
  */
 export class SearchUrl {
@@ -14,13 +15,10 @@ export class SearchUrl {
 	#inputSeeded = false
 	#basePath
 
-	/**
-	 * @param {string} basePath
-	 * @param {(query: string) => string} [toUrl]
-	 */
-	constructor(basePath, toUrl) {
+	/** @param {string} basePath */
+	constructor(basePath) {
 		this.#basePath = basePath
-		const buildUrl = toUrl ?? ((q) => `${basePath}?q=${encodeURIComponent(q)}`)
+		const buildUrl = (q) => viewToUrl(basePath, parseView(q))
 
 		this.value = page.url.searchParams.get('q') ?? ''
 		this.debouncedInput = new Debounced(() => this.value, 300)

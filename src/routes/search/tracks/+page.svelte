@@ -4,7 +4,7 @@
 	import {resolve} from '$app/paths'
 	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
+	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
 	import SearchShell from '$lib/components/search-shell.svelte'
 	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
@@ -16,7 +16,7 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
-	const search = new SearchUrl('/search/tracks', (q) => viewToUrl('/search/tracks', parseView(q)))
+	const search = new SearchUrl('/search/tracks')
 
 	// URL is the single source of truth
 	const view = $derived(viewFromUrl(page.url))

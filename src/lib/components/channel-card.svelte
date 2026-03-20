@@ -209,7 +209,7 @@
 		}
 
 		@media (pointer: coarse) {
-			button {
+			:global(button) {
 				opacity: 0.8;
 			}
 		}

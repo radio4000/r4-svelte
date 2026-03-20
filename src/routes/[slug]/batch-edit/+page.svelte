@@ -3,7 +3,7 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import {page} from '$app/state'
-	import {fuzzySearch} from '$lib/search'
+	import {fuzzySearch} from '$lib/utils'
 	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 	import {updateTrack, insertDurationFromMeta} from '$lib/collections/tracks'
 	import {pullYouTube} from '$lib/metadata/youtube'

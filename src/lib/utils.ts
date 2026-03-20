@@ -1,3 +1,4 @@
+import fuzzysort from 'fuzzysort'
 import {appCloudinaryUrl} from '$lib/config'
 import * as m from '$lib/paraglide/messages'
 
@@ -384,4 +385,12 @@ export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?:
 	const filteredNodes = nodes.filter((n) => connectedTags.has(n.id))
 
 	return {nodes: filteredNodes, edges}
+}
+
+/**
+ * Generic fuzzy search (fuzzysort wrapper).
+ */
+export function fuzzySearch<T>(query: string, items: T[], keys: string[], {limit = 100, threshold = 0.5} = {}): T[] {
+	if (!query?.trim()) return items
+	return fuzzysort.go(query, items, {keys, limit, threshold}).map((r) => r.obj)
 }

@@ -1,7 +1,7 @@
 <script>
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {inArray} from '@tanstack/db'
-	import {fuzzySearch} from '$lib/search'
+	import {fuzzySearch} from '$lib/utils'
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'

@@ -4,7 +4,7 @@
 	import {gsap} from 'gsap'
 	import {Renderer, Camera, Transform, Mesh, Program, Box, Sphere, Torus, Cylinder} from 'ogl'
 
-	/** @type {HTMLCanvasElement} */
+	/** @type {HTMLCanvasElement | undefined} */
 	let canvas = $state()
 
 	// Mutable tween targets
@@ -68,6 +68,7 @@
 		const c = document.createElement('canvas')
 		c.width = c.height = 1
 		const ctx = c.getContext('2d')
+		if (!ctx) return {r: 0, g: 0, b: 0}
 		ctx.fillStyle = colorStr
 		ctx.fillRect(0, 0, 1, 1)
 		const d = ctx.getImageData(0, 0, 1, 1).data
@@ -76,7 +77,7 @@
 
 	/**
 	 * @param {string} name
-	 * @param {WebGLRenderingContext} gl
+	 * @param {import('ogl').OGLRenderingContext} gl
 	 */
 	function createGeometry(name, gl) {
 		switch (name) {
@@ -111,6 +112,9 @@
 	}
 
 	function init() {
+		if (!canvas) return
+		/** @type {HTMLCanvasElement} */
+		const el = canvas
 		const cfg = sceneState.current
 		const initial = parseCssColor(cfg.backgroundColor ?? 'oklch(15% 0.04 260)')
 		bg.r = initial.r
@@ -123,7 +127,7 @@
 		cam.z = cz
 		meshRot.speed = cfg.rotationSpeed ?? 0.3
 
-		renderer = new Renderer({canvas, alpha: false, antialias: true})
+		renderer = new Renderer({canvas: el, alpha: false, antialias: true})
 		const gl = renderer.gl
 
 		// Initial clear color
@@ -150,14 +154,14 @@
 
 		// Resize
 		function resize() {
-			const w = canvas.parentElement?.clientWidth ?? window.innerWidth
-			const h = canvas.parentElement?.clientHeight ?? window.innerHeight
+			const w = el.parentElement?.clientWidth ?? window.innerWidth
+			const h = el.parentElement?.clientHeight ?? window.innerHeight
 			renderer.setSize(w, h)
 			camera.perspective({aspect: w / h})
 		}
 		resize()
 		resizeObserver = new ResizeObserver(resize)
-		resizeObserver.observe(canvas.parentElement ?? document.documentElement)
+		resizeObserver.observe(el.parentElement ?? document.documentElement)
 
 		// Render loop
 		let lastTime = 0

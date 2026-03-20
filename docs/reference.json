@@ -190,6 +190,17 @@
 		{"name": "AutoRadio", "desc": "Stateful wrapper: setTracks + tick. Re-shuffles on week rollover."}
 	],
 
+	"src/lib/search-url.svelte.js": [
+		{
+			"name": "SearchUrl(basePath)",
+			"desc": "Debounced input ↔ URL sync for search routes. Parses input through parseView, writes ?q= URL via viewToUrl."
+		},
+		{"name": "SearchUrl.value", "desc": "Bindable input value ($state)."},
+		{"name": "SearchUrl.debouncedInput", "desc": "Debounced version of value (300ms)."},
+		{"name": "SearchUrl.handleSubmit(e)", "desc": "Form submit handler — flushes debounce or clears URL."},
+		{"name": "SearchUrl.seedInput(value)", "desc": "Set input without triggering navigation (e.g. from ViewsBar)."}
+	],
+
 	"src/lib/search-fts.js": [
 		{"name": "buildFtsFilter(query)", "desc": "Build FTS filter combining websearch + prefix."},
 		{"name": "searchChannels(query, {limit?})", "desc": "Search channels remotely."},
@@ -217,7 +228,7 @@
 		},
 		{
 			"name": "View",
-			"desc": "Type: {sources: ViewSource[], order?, direction?, limit?, exclude?}. One or more sources + display options."
+			"desc": "Type: {sources: ViewSource[], order?, direction?, limit?, offset?}. Query (sources) + display options."
 		},
 		{
 			"name": "parseSource(input)",
@@ -229,7 +240,8 @@
 		},
 		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
 		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
-		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (decodes search string, passes to parseView)."},
+		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (?q= param + option params)."},
+		{"name": "viewToUrl(basePath, view)", "desc": "Build a URL string from a View and base path (e.g. '/search')."},
 		{"name": "viewLabel(view)", "desc": "All sources as a human-readable string, no options. For labels/display."},
 		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
 		{"name": "viewURI(view?)", "desc": "Canonical serialized key for comparing View identity."}
@@ -237,16 +249,28 @@
 
 	"src/lib/views.svelte.ts": [
 		{
+			"name": "MAX_CLIENT_TRACKS",
+			"desc": "Max tracks fetched for client-side filtering (4000)."
+		},
+		{
+			"name": "ViewStrategy",
+			"desc": "Type: 'channel' | 'channel-filtered' | 'tags-only' | 'search-only' | 'empty'."
+		},
+		{
+			"name": "resolveViewStrategy(source?)",
+			"desc": "Pick fetch strategy from a ViewSource. Pure function, no reactivity."
+		},
+		{
 			"name": "getAutoDecksForView(decks, view?)",
 			"desc": "Return auto-radio decks whose stored view matches the given view identity."
 		},
 		{
 			"name": "processViewTracks(tracks, view)",
-			"desc": "Post-process tracks: tag filter, fuzzy search, sort/shuffle, limit."
+			"desc": "Post-process tracks: tag post-filter, fuzzy search, sort/shuffle."
 		},
 		{
 			"name": "queryView(getView)",
-			"desc": "Reactive view query (component init). Returns {tracks, channels, loading} getters."
+			"desc": "Reactive view query (component init). Returns {tracks, channels, loading, strategy} getters."
 		}
 	],
 

@@ -2,8 +2,10 @@
 	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
-	let {data} = $props()
-	const bookmarkletHref = `javascript:(function(){window.open('${data.origin}/add?url='+encodeURIComponent(location.href))})();`
+	const {data} = $props()
+	const bookmarkletHref = $derived(
+		`javascript:(function(){window.open('${data.origin}/add?url='+encodeURIComponent(location.href))})();`
+	)
 </script>
 
 <svelte:head>

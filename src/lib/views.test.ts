@@ -7,7 +7,8 @@ import {
 	normalizeView,
 	viewURI,
 	viewLabel,
-	viewFromUrl
+	viewFromUrl,
+	viewToUrl
 } from './views'
 import type {View} from './views'
 
@@ -91,12 +92,6 @@ describe('parseView', () => {
 			]
 		})
 	})
-	test('exclude option', () => {
-		expect(parseView('@ko002?exclude=uuid-1,uuid-2')).toEqual({
-			sources: [{channels: ['ko002']}],
-			exclude: ['uuid-1', 'uuid-2']
-		})
-	})
 	test('tagsMode=all applies to sources with tags', () => {
 		expect(parseView('#jazz #dub?tagsMode=all')).toEqual({
 			sources: [{tags: ['jazz', 'dub'], tagsMode: 'all'}]
@@ -135,23 +130,10 @@ describe('serializeView', () => {
 		}
 		expect(serializeView(view)).toBe('@alice #jazz;@bob?order=shuffle&limit=100')
 	})
-	test('exclude', () => {
-		const view: View = {
-			sources: [{channels: ['ko002']}],
-			exclude: ['uuid-1', 'uuid-2']
-		}
-		expect(serializeView(view)).toBe('@ko002?exclude=uuid-1,uuid-2')
-	})
 })
 
 describe('round-trip: parseView ↔ serializeView', () => {
-	const cases = [
-		'@ko002',
-		'@ko002 #jazz',
-		'@alice #jazz;@bob #techno',
-		'@alice;@bob;@coco?order=shuffle&limit=100',
-		'@ko002?exclude=uuid-1,uuid-2'
-	]
+	const cases = ['@ko002', '@ko002 #jazz', '@alice #jazz;@bob #techno', '@alice;@bob;@coco?order=shuffle&limit=100']
 	for (const input of cases) {
 		test(`"${input}"`, () => {
 			const view = parseView(input)
@@ -305,13 +287,12 @@ describe('parseView multi-query stress', () => {
 	})
 
 	test('multi-query with all options', () => {
-		const input = '@alice;@bob;@coco?order=updated&direction=asc&limit=200&exclude=id1,id2,id3'
+		const input = '@alice;@bob;@coco?order=updated&direction=asc&limit=200'
 		const view = parseView(input)
 		expect(view.sources).toHaveLength(3)
 		expect(view.order).toBe('updated')
 		expect(view.direction).toBe('asc')
 		expect(view.limit).toBe(200)
-		expect(view.exclude).toEqual(['id1', 'id2', 'id3'])
 	})
 
 	test('empty segments between semicolons are dropped', () => {
@@ -426,14 +407,6 @@ describe('parseView option edge cases', () => {
 		expect(view).not.toHaveProperty('foo')
 		expect(view).not.toHaveProperty('baz')
 	})
-	test('empty exclude is ignored', () => {
-		const view = parseView('@ko002?exclude=')
-		expect(view.exclude).toBeUndefined()
-	})
-	test('exclude with trailing comma', () => {
-		const view = parseView('@ko002?exclude=id1,id2,')
-		expect(view.exclude).toEqual(['id1', 'id2'])
-	})
 	test('r4:// with options', () => {
 		const view = parseView('r4://@ko002?order=name&direction=desc')
 		expect(view.sources).toEqual([{channels: ['ko002']}])
@@ -458,14 +431,12 @@ describe('serializeView edge cases', () => {
 			sources: [{channels: ['ko002']}],
 			order: 'created',
 			direction: 'desc',
-			limit: 100,
-			exclude: ['a', 'b']
+			limit: 100
 		}
 		const result = serializeView(view)
 		expect(result).toContain('order=created')
 		expect(result).toContain('direction=desc')
 		expect(result).toContain('limit=100')
-		expect(result).toContain('exclude=a,b')
 		expect(result).toMatch(channelPrefixRe)
 	})
 	test('direction without order', () => {
@@ -522,9 +493,7 @@ describe('round-trip: parseView ↔ serializeView (extended)', () => {
 		'miles davis',
 		'@a @b @c @d @e?order=shuffle&limit=100',
 		'@ko002?order=created&direction=asc&limit=50',
-		'?order=shuffle&limit=50',
-		'@ko002?exclude=uuid-1,uuid-2,uuid-3',
-		'@alice #jazz;@bob?exclude=x,y'
+		'?order=shuffle&limit=50'
 	]
 	for (const input of cases) {
 		test(`"${input}"`, () => {
@@ -569,14 +538,6 @@ describe('normalizeView deep', () => {
 		expect(result).toEqual({
 			sources: [{channels: ['alice']}, {channels: ['bob'], tags: ['jazz']}]
 		})
-	})
-	test('preserves exclude', () => {
-		const result = normalizeView({sources: [{channels: ['ko002']}], exclude: ['a', 'b']})
-		expect(result).toEqual({sources: [{channels: ['ko002']}], exclude: ['a', 'b']})
-	})
-	test('empty exclude is stripped', () => {
-		const result = normalizeView({sources: [{channels: ['ko002']}], exclude: []})
-		expect(result).toEqual({sources: [{channels: ['ko002']}]})
 	})
 })
 
@@ -660,5 +621,24 @@ describe('viewFromUrl', () => {
 	test('only options, no q', () => {
 		const url = new URL('http://x.com/search?order=shuffle&limit=50')
 		expect(viewFromUrl(url)).toEqual({sources: [{}], order: 'shuffle', limit: 50})
+	})
+	test('tagsMode=all from URL param', () => {
+		const url = new URL('http://x.com/search?q=%23jazz%20%23dub&tagsMode=all')
+		const view = viewFromUrl(url)
+		expect(view.sources[0].tagsMode).toBe('all')
+	})
+	test('tagsMode=all only applies to sources with tags', () => {
+		const url = new URL('http://x.com/search?q=%40alice%20%23jazz%3B%40bob&tagsMode=all')
+		const view = viewFromUrl(url)
+		expect(view.sources[0].tagsMode).toBe('all')
+		expect(view.sources[1].tagsMode).toBeUndefined()
+	})
+	test('tagsMode survives viewToUrl → viewFromUrl round-trip', () => {
+		const view: View = {sources: [{tags: ['jazz', 'dub'], tagsMode: 'all'}], order: 'created'}
+		const urlStr = viewToUrl('/search', view)
+		const url = new URL(`http://x.com${urlStr}`)
+		const result = viewFromUrl(url)
+		expect(result.sources[0].tagsMode).toBe('all')
+		expect(result.order).toBe('created')
 	})
 })
