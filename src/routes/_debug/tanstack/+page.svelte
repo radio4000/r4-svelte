@@ -8,17 +8,12 @@
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import {playHistoryCollection} from '$lib/collections/play-history'
 	import {cacheReady} from '$lib/query-cache-persistence'
-	import {browser} from '$app/environment'
 
 	let tick = $state(0)
 	const refresh = () => tick++
 
-	$effect(() => {
-		if (!browser) return
-		return queryClient.getQueryCache().subscribe(() => tick++)
-	})
-
 	const cacheItemCount = (type: string) => {
+		void tick
 		return queryClient
 			.getQueryCache()
 			.getAll()
@@ -27,7 +22,6 @@
 	}
 
 	const collections = $derived.by(() => {
-		void tick
 		return [
 			{name: 'tracks', size: tracksCollection.state.size, cached: cacheItemCount('tracks')},
 			{name: 'channels', size: channelsCollection.state.size, cached: cacheItemCount('channels')},

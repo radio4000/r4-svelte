@@ -62,6 +62,7 @@ export const broadcastsCollection = createCollection(
  * @param {BroadcastWithChannel[]} broadcasts
  */
 function reconcileBroadcastsSnapshot(broadcasts) {
+	if (broadcastsCollection.status !== 'ready') return
 	const nextIds = new Set(broadcasts.map((b) => b.channel_id))
 	for (const b of broadcasts) broadcastsCollection.utils.writeUpsert(b)
 	for (const existing of broadcastsCollection.state.values()) {
@@ -90,6 +91,11 @@ sdk.supabase
 	.channel('broadcasts-realtime')
 	.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
 		log.info('broadcasts realtime', {event: payload.eventType})
+
+		if (broadcastsCollection.status !== 'ready') {
+			log.debug('collection not ready, skipping realtime event')
+			return
+		}
 
 		if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
 			const newData = /** @type {{channel_id: string}} */ (payload.new)

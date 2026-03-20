@@ -26,24 +26,6 @@ export type ChannelQueryParams = {
 	shuffle?: boolean
 }
 
-/** Build a Supabase channels query (without limit/range). Shared by queryFn and loadMoreChannels. */
-function buildChannelsQuery(params: ChannelQueryParams) {
-	const view = params.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
-	let query = sdk.supabase.from(view).select('*')
-	if (params.idIn?.length) {
-		query = query.in('id', params.idIn)
-	} else if (params.imageNotNull && params.trackCountGte) {
-		query = query.not('image', 'is', null).gte('track_count', params.trackCountGte)
-	} else if (params.trackCountGte) {
-		query = query.gte('track_count', params.trackCountGte)
-	}
-	if (params.coordinatesNotNull) {
-		query = query.not('latitude', 'is', null).not('longitude', 'is', null)
-	}
-	if (params.shuffle) return query
-	return query.order(params.orderColumn ?? 'created_at', {ascending: params.ascending ?? true})
-}
-
 /** Fetch total count of channels matching the given params (HEAD request, no data). */
 export async function fetchChannelCount(params: ChannelQueryParams = {}): Promise<number> {
 	if (!capabilities.globalBrowse) return 0
@@ -64,59 +46,23 @@ export async function fetchChannelCount(params: ChannelQueryParams = {}): Promis
 	return count ?? 0
 }
 
-/** Fetch the next page of channels, routing through QueryClient cache so staleTime applies. */
-export async function loadMoreChannels(
-	params: ChannelQueryParams & {offset: number; limit: number}
-): Promise<Channel[]> {
-	if (!capabilities.globalBrowse) return []
-	const sortKey = params.shuffle
-		? 'shuffle'
-		: `${params.orderColumn ?? 'created_at'}_${params.ascending ? 'asc' : 'desc'}`
-	const queryKey: (string | number)[] = ['channels']
-	if (params.coordinatesNotNull) queryKey.push('geo')
-	if (params.imageNotNull && params.trackCountGte) queryKey.push('artwork', sortKey)
-	else if (params.trackCountGte) queryKey.push('minTracks', params.trackCountGte, sortKey)
-	else queryKey.push(sortKey)
-	if (params.idIn?.length) queryKey.push('ids', ...params.idIn.toSorted())
-	queryKey.push('offset', params.offset, 'limit', params.limit)
-	log.info('channels loadMore', {queryKey})
-	const data = await queryClient.fetchQuery({
-		// eslint-disable-next-line @tanstack/query/exhaustive-deps -- queryKey is built dynamically from params above
-		queryKey,
-		staleTime: 60 * 60 * 1000,
-		queryFn: async () => {
-			const {data, error} = await buildChannelsQuery(params).range(params.offset, params.offset + params.limit - 1)
-			if (error) throw error
-			return (data ?? []) as Channel[]
-		}
-	})
-	if (data.length) {
-		channelsCollection.utils.writeBatch(() => {
-			for (const ch of data) channelsCollection.utils.writeUpsert(ch)
-		})
-	}
-	return data
-}
-
-const defaultChannelParams = {
-	slug: undefined as string | undefined,
-	idIn: undefined as string[] | undefined,
-	trackCountGte: undefined as number | undefined,
-	imageNotNull: false,
-	coordinatesNotNull: false,
-	shuffle: false,
-	orderColumn: 'created_at' as string | undefined,
-	ascending: true,
-	sortKey: 'default'
-}
-
 /** Parse d2ts loadSubsetOptions into domain params. Shared by queryKey and queryFn. */
 function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) {
 	let options: ReturnType<typeof parseLoadSubsetOptions>
 	try {
 		options = parseLoadSubsetOptions(opts)
 	} catch {
-		return defaultChannelParams
+		return {
+			slug: undefined as string | undefined,
+			idIn: undefined as string[] | undefined,
+			trackCountGte: undefined as number | undefined,
+			imageNotNull: false,
+			coordinatesNotNull: false,
+			shuffle: false,
+			orderColumn: 'created_at' as string | undefined,
+			ascending: true,
+			sortKey: 'default'
+		}
 	}
 	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined
 	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as string[] | undefined
@@ -148,11 +94,15 @@ export const channelsCollection = createCollection<Channel, string>({
 			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey} = parseChannelParams(opts)
 			if (slug) return ['channels', slug]
 			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
+			// Include limit so different page sizes get separate cache entries.
+			// With a function queryKey, on-demand mode does NOT auto-append
+			// loadSubsetOptions like it does for static keys.
+			const limit = opts?.limit ?? 0
 			const segments: (string | number)[] = ['channels']
 			if (coordinatesNotNull) segments.push('geo')
-			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey]
-			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey]
-			return [...segments, sortKey]
+			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey, limit]
+			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey, limit]
+			return [...segments, sortKey, limit]
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -183,15 +133,27 @@ export const channelsCollection = createCollection<Channel, string>({
 				const localMatches = (appState.local_channels ?? []).filter((c) => p.idIn?.includes(c.id) && localIds.has(c.id))
 				const remoteIds = p.idIn.filter((id) => !localIds.has(id))
 				if (!remoteIds.length) return localMatches
-				const {data, error} = await buildChannelsQuery({...p, idIn: remoteIds}).limit(remoteIds.length)
+				let idQuery = sdk.supabase
+					.from(p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks')
+					.select('*')
+					.in('id', remoteIds)
+				if (!p.shuffle) idQuery = idQuery.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
+				const {data, error} = await idQuery.limit(remoteIds.length)
 				if (error) throw error
 				return [...localMatches, ...(data || [])] as Channel[]
 			}
 			log.info('channels queryFn', p)
-			const limit = p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE
-			const {data, error} = await buildChannelsQuery(p).limit(limit)
+			const limit = ctx.meta?.loadSubsetOptions?.limit ?? (p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE)
+			const view = p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
+			let query = sdk.supabase.from(view).select('*')
+			if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
+			if (p.imageNotNull) query = query.not('image', 'is', null)
+			if (p.coordinatesNotNull) query = query.not('latitude', 'is', null).not('longitude', 'is', null)
+			if (!p.shuffle) query = query.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
+			query = query.limit(limit)
+			const {data, error} = await query
 			if (error) throw error
-			return (data || []) as Channel[]
+			return (data ?? []) as Channel[]
 		}
 	}),
 	onInsert: async ({transaction}) => {

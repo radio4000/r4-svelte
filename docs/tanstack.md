@@ -160,6 +160,29 @@ const data = await queryClient.fetchQuery({
 
 Use this for loaders, freshness checks, and other non-reactive reads.
 
+### reactive limit (pagination)
+
+A reactive `.limit()` on the live query drives pagination. The collection's `queryFn` receives the limit via `ctx.meta?.loadSubsetOptions?.limit` and fetches that many rows from Supabase. Increasing the limit triggers a new fetch; the collection caches all rows it has seen.
+
+```js
+let paginatedLimit = $state(PAGE_SIZE)
+
+const query = useLiveQuery((q) =>
+	q
+		.from({ch: channelsCollection})
+		.where(({ch}) => gte(ch.track_count, 10))
+		.limit(paginatedLimit)
+)
+
+function loadMore() {
+	paginatedLimit += PAGE_SIZE
+}
+
+let hasMore = $derived(query.data?.length >= paginatedLimit)
+```
+
+Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/_debug/tanstack/channels`.
+
 ## references
 
 - https://tanstack.com/db/latest/docs/overview.md

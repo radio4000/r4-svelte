@@ -4,6 +4,7 @@
 	import {setScene} from '$lib/scene-state.svelte'
 	import {appName} from '$lib/config'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
@@ -17,7 +18,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
+
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -90,11 +91,10 @@
 		else playChannel(appState.active_deck_id, featuredFirst)
 	}
 
-	// Live broadcasts — sorted by most recently active, reactive via realtime
-	const broadcastRows = $derived.by(() =>
-		[...broadcastsCollection.state.values()]
-			.filter((b) => b.channel_id && b.channels)
-			.toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
+	// Live broadcasts — reactive via useLiveQuery, sorted by most recently active
+	const broadcastsQuery = useLiveQuery(broadcastsCollection)
+	const broadcastRows = $derived(
+		(broadcastsQuery.data ?? []).toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
 	)
 	const activeBroadcasts = $derived(broadcastRows.slice(0, 10))
 	const favoriteBroadcastRows = $derived.by(() =>
@@ -286,7 +286,7 @@
 						</div>
 					{/each}
 				{/if}
-					<div class="dashboard-card dashboard-card--channel">
+				<div class="dashboard-card dashboard-card--channel">
 					<ol class="list">
 						<li><ChannelCard channel={userChannel} /></li>
 					</ol>

@@ -68,8 +68,10 @@
 
 		{"name": "tracksCollection", "desc": "Tracks data."},
 		{"name": "tracksAPI", "desc": "Tracks collection API helpers."},
-		{"name": "channelsCollection", "desc": "Channels data."},
+		{"name": "channelsCollection", "desc": "Channels data. Pagination via reactive .limit() on useLiveQuery."},
 		{"name": "channelsAPI", "desc": "Channels collection API helpers."},
+		{"name": "fetchChannelCount(params?)", "desc": "Total count for pagination UI (HEAD request, no data)."},
+		{"name": "CHANNELS_PAGE_SIZE", "desc": "Default page size (20)."},
 		{"name": "followsCollection", "desc": "Followed channels (synced)."},
 		{"name": "broadcastsCollection", "desc": "Active broadcasts."},
 		{"name": "trackMetaCollection", "desc": "YouTube/MusicBrainz metadata (localStorage)."},

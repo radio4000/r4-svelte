@@ -188,10 +188,8 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		currentCollection.onFirstReady(() => {
 			syncDataFromCollection(currentCollection)
 			status = currentCollection.status
-			const total = performance.now() - t0
 			log.debug(`#${id} ready`, {
 				items: count,
-				total: `${total.toFixed(2)}ms`,
 				createCollection: `${tCreateCollection?.toFixed(2)}ms`,
 				initState: 'REMOVED',
 				syncData: `${tSyncData?.toFixed(2)}ms`

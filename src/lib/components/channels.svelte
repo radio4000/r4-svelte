@@ -9,7 +9,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {queryClient} from '$lib/collections/query-client'
 	import {cacheReady} from '$lib/query-cache-persistence'
-	import {loadMoreChannels, fetchChannelCount, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
+	import {fetchChannelCount, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
@@ -82,10 +82,6 @@
 	let paginationInitialPage = $state(1)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
-	let fetchedUpTo = $state(CHANNELS_PAGE_SIZE)
-	let nextPageSize = $state(CHANNELS_PAGE_SIZE)
-	let loadedAll = $state(false)
-	let loadingMore = $state(false)
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
@@ -121,7 +117,7 @@
 	const isPaged = $derived(display === 'grid' || display === 'list')
 
 	/** Minimum channel count for views that need a dense dataset */
-	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: Infinity}
+	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: 5000}
 	const queryLimit = $derived(
 		filter === 'featured'
 			? 50
@@ -149,69 +145,55 @@
 	/** @type {Record<string, number>} Filter → minimum track count */
 	const filterMinTracks = {artwork: 2, '10+': 10, '100+': 100, '1000+': 1000}
 
-	/** Map UI filter/sort state → ChannelQueryParams for loadMoreChannels */
-	const channelQueryParams = $derived.by(() => ({
-		idIn:
-			filter === 'broadcasting' && broadcastIds.length
-				? broadcastIds
-				: filter === 'favorites' && favoriteIds.length
-					? favoriteIds
-					: undefined,
-		trackCountGte: filter === 'featured' ? 10 : filterMinTracks[filter],
-		imageNotNull: filter === 'artwork' || filter === 'featured',
-		coordinatesNotNull: display === 'map',
-		shuffle: filter !== 'featured' && order === 'shuffle',
-		orderColumn: filter === 'featured' ? sortColumns['updated'] : sortColumns[order],
-		ascending: (orderDirection || 'desc') === 'asc',
-		limit: filter === 'featured' ? 50 : undefined
-	}))
-
 	// Reset pagination when filter/sort changes
 	$effect(() => {
 		void filter
 		void order
 		void orderDirection
 		paginatedLimit = CHANNELS_PAGE_SIZE
-		fetchedUpTo = CHANNELS_PAGE_SIZE
-		loadedAll = false
-		nextPageSize = CHANNELS_PAGE_SIZE
 	})
 
 	// Fetch channels driven by the active filter + sort
-	const channelsQuery = useLiveQuery((q) => {
-		let base = q.from({ch: channelsCollection})
-		if (!capabilities.globalBrowse) {
-			const q = base.orderBy(({ch}) => ch.created_at, 'desc')
-			return queryLimit === Infinity ? q : q.limit(queryLimit)
-		}
-		if (filter === 'imported') {
-			const ids = appState.local_channel_ids ?? []
-			if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			const q = base.where(({ch}) => inArray(ch.id, ids)).orderBy(({ch}) => ch.created_at, 'desc')
-			return queryLimit === Infinity ? q : q.limit(queryLimit)
-		} else if (filter === 'favorites') {
-			return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-		} else if (filter === 'broadcasting') {
-			if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-			base = base.where(({ch}) => inArray(ch.id, broadcastIds))
-		} else if (filter === 'featured') {
-			base = base
-				.where(({ch}) => gte(ch.track_count, 10))
-				.where(({ch}) => not(isNull(ch.image)))
-				.orderBy(({ch}) => ch.latest_track_at, 'desc')
-		} else {
-			const minTracks = filterMinTracks[filter]
-			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
-			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
-		}
-		if (filter !== 'featured') {
-			const col = sortColumns[order]
-			if (col) {
-				base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+	// deps: reactive values used inside the callback must be listed so the
+	// $derived.by() in useLiveQuery re-creates the collection when they change.
+	const channelsQuery = useLiveQuery(
+		(q) => {
+			let base = q.from({ch: channelsCollection})
+			if (!capabilities.globalBrowse) {
+				return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
 			}
-		}
-		return queryLimit === Infinity ? base : base.limit(queryLimit)
-	})
+			if (filter === 'imported') {
+				const ids = appState.local_channel_ids ?? []
+				if (!ids.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+				return base
+					.where(({ch}) => inArray(ch.id, ids))
+					.orderBy(({ch}) => ch.created_at, 'desc')
+					.limit(queryLimit)
+			} else if (filter === 'favorites') {
+				return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			} else if (filter === 'broadcasting') {
+				if (!broadcastIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+				base = base.where(({ch}) => inArray(ch.id, broadcastIds))
+			} else if (filter === 'featured') {
+				base = base
+					.where(({ch}) => gte(ch.track_count, 10))
+					.where(({ch}) => not(isNull(ch.image)))
+					.orderBy(({ch}) => ch.latest_track_at, 'desc')
+			} else {
+				const minTracks = filterMinTracks[filter]
+				if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
+				if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
+			}
+			if (filter !== 'featured') {
+				const col = sortColumns[order]
+				if (col) {
+					base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+				}
+			}
+			return base.limit(queryLimit)
+		},
+		[() => queryLimit, () => filter, () => order, () => orderDirection, () => broadcastIds]
+	)
 	const channelsRaw = $derived(filter === 'favorites' ? follows.followedChannels : (channelsQuery.data ?? []))
 	// For featured: score and take top 12; for paged views: slice to current page; otherwise all
 	const channels = $derived.by(() => {
@@ -219,7 +201,7 @@
 		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 		return channelsRaw
 	})
-	const hasMore = $derived(filter !== 'featured' && !loadedAll && channelsRaw.length >= paginatedLimit)
+	const hasMore = $derived(filter !== 'featured' && channelsRaw.length >= queryLimit)
 
 	// Server-side total count for pagination (N/M display)
 	let serverCount = $state(0)
@@ -235,8 +217,12 @@
 			return
 		}
 		serverCount = 0
-		const params = channelQueryParams
-		void fetchChannelCount(params)
+		void fetchChannelCount({
+			trackCountGte: filterMinTracks[filter],
+			imageNotNull: filter === 'artwork',
+			coordinatesNotNull: display === 'map',
+			shuffle: order === 'shuffle'
+		})
 			.then((n) => {
 				serverCount = n
 			})
@@ -299,62 +285,19 @@
 		})()
 	})
 
-	// Auto-fetch from supabase when the query needs more data than we have
-	$effect(() => {
-		if (!capabilities.globalBrowse) return
-		if (filter === 'imported' || filter === 'favorites') return
-		if (display === 'map' && !loadedAll && !loadingMore) {
-			fetchAllForMap()
-			return
-		}
-		if (queryLimit > fetchedUpTo && !loadedAll && !loadingMore) {
-			fetchUpTo(queryLimit)
-		}
-	})
-
-	/** For map display: single bulk fetch (cached via QueryClient, respects staleTime) */
-	async function fetchAllForMap() {
-		loadingMore = true
-		const params = channelQueryParams
-		try {
-			const result = await loadMoreChannels({...params, offset: 0, limit: 5000})
-			fetchedUpTo = result.length
-			loadedAll = result.length < 5000
-		} finally {
-			loadingMore = false
-		}
-	}
-
-	/** Fetch from supabase until we have at least `target` rows (or exhaust the dataset) */
-	async function fetchUpTo(target) {
-		loadingMore = true
-		try {
-			while (fetchedUpTo < target && !loadedAll) {
-				const batch = Math.min(nextPageSize, target - fetchedUpTo)
-				const result = await loadMoreChannels({
-					...channelQueryParams,
-					offset: fetchedUpTo,
-					limit: batch
-				})
-				fetchedUpTo += batch
-				if (result.length < batch) loadedAll = true
-				nextPageSize = Math.min(nextPageSize * 2, 500)
-			}
-		} finally {
-			loadingMore = false
-		}
-	}
-
-	async function handleLoadMore() {
-		paginatedLimit += nextPageSize
-		if (filter !== 'imported' && paginatedLimit > fetchedUpTo && !loadedAll) {
-			await fetchUpTo(paginatedLimit)
-		}
+	function handleLoadMore() {
+		paginatedLimit += CHANNELS_PAGE_SIZE
 	}
 
 	let stableChannels = $state(/** @type {typeof channels} */ ([]))
 	$effect(() => {
-		if (!loadingMore) stableChannels = channels
+		// Only update when the fetched data covers the current page's start index,
+		// or when there's genuinely no data. Prevents a flash of 0 items when paging
+		// forward — the collection returns cached rows (isLoading=false) before the
+		// fetch for the new page completes.
+		const sliceStart = (currentPage - 1) * pageSize
+		const dataCoversPage = channelsRaw.length > sliceStart || channelsRaw.length === 0
+		if (!channelsQuery.isLoading && dataCoversPage) stableChannels = channels
 	})
 	const orderedChannels = $derived(isPaged ? stableChannels : channels)
 
@@ -505,8 +448,8 @@
 		{/if}
 
 		{#if display === 'map' && hasMore}
-			<button class="btn" onclick={handleLoadMore} disabled={loadingMore}>
-				{loadingMore ? '…' : `+${nextPageSize}`}
+			<button class="btn" onclick={handleLoadMore} disabled={channelsQuery.isLoading}>
+				{channelsQuery.isLoading ? '…' : m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
 			</button>
 		{/if}
 
@@ -522,9 +465,7 @@
 					aria-label="Go to page"
 					>{currentPage}{#if totalPages > 0}/{totalPages}{/if}</button
 				>
-				<button onclick={() => setPage(currentPage + 1)} disabled={!hasNextPage} aria-label="Next page"
-					>{loadingMore ? '…' : '→'}</button
-				>
+				<button onclick={() => setPage(currentPage + 1)} disabled={!hasNextPage} aria-label="Next page">→</button>
 			</span>
 			<Dialog bind:showModal={showPaginationDialog}>
 				<div class="pagination-dialog">
@@ -609,9 +550,6 @@
 					bind:direction={appState.channels_order_direction}
 					onreshuffle={() => {
 						paginatedLimit = CHANNELS_PAGE_SIZE
-						fetchedUpTo = CHANNELS_PAGE_SIZE
-						loadedAll = false
-						nextPageSize = CHANNELS_PAGE_SIZE
 						queryClient.invalidateQueries({
 							predicate: (q) => q.queryKey[0] === 'channels' && q.queryKey.includes('shuffle')
 						})
@@ -623,7 +561,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default {channels} {openSlug} loading={loadingMore} />
+			<MapChannels.default {channels} {openSlug} loading={channelsQuery.isLoading} />
 		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner {channels} />
@@ -657,8 +595,8 @@
 							total: channels.length
 						})}
 						{#if hasMore}
-							<button onclick={handleLoadMore} disabled={loadingMore}>
-								{loadingMore ? '...' : m.channels_load_more({count: nextPageSize})}
+							<button onclick={handleLoadMore} disabled={channelsQuery.isLoading}>
+								{channelsQuery.isLoading ? '...' : m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
 							</button>
 						{/if}
 					</p>

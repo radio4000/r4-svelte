@@ -1,8 +1,9 @@
 <script lang="ts">
+	import {untrack} from 'svelte'
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {inArray, not, isNull, gte} from '@tanstack/db'
-	import {channelsCollection, createChannel, updateChannel, deleteChannel} from '$lib/collections/channels'
+	import {channelsCollection, createChannel, updateChannel, deleteChannel, fetchChannelCount} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 
 	let error = $state('')
@@ -24,17 +25,23 @@
 	)
 
 	// --- Pagination proof ---
-	// Test: does setWindow() trigger a new queryFn call with updated limit?
-	let paginationLimit = $state(3)
-	let paginationOffset = $state(0)
+	// Same pattern as channels.svelte: reactive limit covers currentPage * pageSize,
+	// collection accumulates rows, local slice picks the current page.
+	const PAGE_SIZE = 3
+	let currentPage = $state(1)
+	const queryLimit = $derived(currentPage * PAGE_SIZE)
 	const paginationQuery = useLiveQuery((q) =>
 		q
 			.from({channels: channelsCollection})
 			.orderBy(({channels}) => channels.created_at, 'desc')
-			.limit(paginationLimit)
+			.limit(queryLimit)
 	)
-	const paginationChannels = $derived(paginationQuery.data ?? [])
-	const paginationCollection = $derived(paginationQuery.collection)
+	const paginationAll = $derived(paginationQuery.data ?? [])
+	const paginationChannels = $derived(paginationAll.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE))
+	const hasMore = $derived(paginationAll.length >= queryLimit)
+	let serverCount = $state(0)
+	fetchChannelCount().then((n) => (serverCount = n))
+	const totalPages = $derived(serverCount > 0 ? Math.ceil(serverCount / PAGE_SIZE) : 0)
 
 	// --- Bulk fetch proof (map case) ---
 	let bulkLimit = $state(0)
@@ -57,6 +64,7 @@
 
 	// --- Filter switching proof ---
 	type FilterPreset = 'all' | '10+' | '100+' | '1000+' | 'artwork' | 'geo'
+	const filterPresets: FilterPreset[] = ['all', '10+', '100+', '1000+', 'artwork', 'geo']
 	let activeFilter = $state<FilterPreset>('all')
 	let filterLimit = $state(10)
 	const filterQuery = useLiveQuery((q) => {
@@ -65,9 +73,7 @@
 		else if (activeFilter === '100+') base = base.where(({channels}) => gte(channels.track_count, 100))
 		else if (activeFilter === '1000+') base = base.where(({channels}) => gte(channels.track_count, 1000))
 		else if (activeFilter === 'artwork') {
-			base = base
-				.where(({channels}) => gte(channels.track_count, 2))
-				.where(({channels}) => not(isNull(channels.image)))
+			base = base.where(({channels}) => gte(channels.track_count, 2)).where(({channels}) => not(isNull(channels.image)))
 		} else if (activeFilter === 'geo') {
 			base = base.where(({channels}) => not(isNull(channels.latitude)))
 		}
@@ -79,32 +85,8 @@
 		const f = activeFilter
 		const count = filterChannels.length
 		const status = filterQuery.status
-		filterLog = [...filterLog, `filter=${f} limit=${filterLimit} → ${count} rows (${status})`]
+		filterLog = [...untrack(() => filterLog), `filter=${f} limit=${filterLimit} → ${count} rows (${status})`]
 	})
-
-	let setWindowLog = $state<string[]>([])
-
-	async function testSetWindow(newLimit: number, newOffset: number) {
-		const utils = paginationCollection?.utils as {setWindow?: (opts: {limit?: number; offset?: number}) => true | Promise<void>}
-		if (!utils?.setWindow) {
-			setWindowLog = [...setWindowLog, `ERROR: setWindow not found on collection.utils`]
-			return
-		}
-		const before = paginationChannels.length
-		setWindowLog = [...setWindowLog, `setWindow({limit: ${newLimit}, offset: ${newOffset}}) — before: ${before} rows`]
-		try {
-			const result = utils.setWindow({limit: newLimit, offset: newOffset})
-			if (result === true) {
-				setWindowLog = [...setWindowLog, `  → returned true (no fetch needed, data already present)`]
-			} else {
-				setWindowLog = [...setWindowLog, `  → returned Promise (fetching…)`]
-				await result
-				setWindowLog = [...setWindowLog, `  → fetch complete, now: ${paginationChannels.length} rows`]
-			}
-		} catch (err) {
-			setWindowLog = [...setWindowLog, `  → ERROR: ${(err as Error).message}`]
-		}
-	}
 
 	const myChannels = $derived(myChannelQuery.data || [])
 	const latestChannels = $derived(latestQuery.data || [])
@@ -213,19 +195,48 @@
 		<summary>Bulk fetch proof (map case)</summary>
 		<p>Tests fetching large datasets — channels with coordinates, like the map view needs.</p>
 		<p>
-			Status: <code>{bulkQuery.status}</code> ·
-			Rows: <strong>{bulkChannels.length}</strong>
-			{#if bulkElapsed > 0} · {bulkElapsed.toFixed(0)}ms{/if}
+			Status: <code>{bulkQuery.status}</code> · Rows: <strong>{bulkChannels.length}</strong>
+			{#if bulkElapsed > 0}
+				· {bulkElapsed.toFixed(0)}ms{/if}
 		</p>
 		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-			<button onclick={() => { bulkLimit = 100; bulkT0 = performance.now(); bulkElapsed = 0 }}>100</button>
-			<button onclick={() => { bulkLimit = 500; bulkT0 = performance.now(); bulkElapsed = 0 }}>500</button>
-			<button onclick={() => { bulkLimit = 1000; bulkT0 = performance.now(); bulkElapsed = 0 }}>1000</button>
-			<button onclick={() => { bulkLimit = 5000; bulkT0 = performance.now(); bulkElapsed = 0 }}>5000</button>
-			<button onclick={() => { bulkLimit = 0; bulkElapsed = 0 }}>reset</button>
+			<button
+				onclick={() => {
+					bulkLimit = 100
+					bulkT0 = performance.now()
+					bulkElapsed = 0
+				}}>100</button
+			>
+			<button
+				onclick={() => {
+					bulkLimit = 500
+					bulkT0 = performance.now()
+					bulkElapsed = 0
+				}}>500</button
+			>
+			<button
+				onclick={() => {
+					bulkLimit = 1000
+					bulkT0 = performance.now()
+					bulkElapsed = 0
+				}}>1000</button
+			>
+			<button
+				onclick={() => {
+					bulkLimit = 5000
+					bulkT0 = performance.now()
+					bulkElapsed = 0
+				}}>5000</button
+			>
+			<button
+				onclick={() => {
+					bulkLimit = 0
+					bulkElapsed = 0
+				}}>reset</button
+			>
 		</div>
 		{#if bulkChannels.length}
-			<p>First: {bulkChannels[0]?.slug} · Last: {bulkChannels[bulkChannels.length - 1]?.slug}</p>
+			<p>First: {bulkChannels[0]?.slug} · Last: {bulkChannels.at(-1)?.slug}</p>
 		{/if}
 	</details>
 
@@ -233,12 +244,11 @@
 		<summary>Filter switching proof</summary>
 		<p>Tests whether changing <code>.where()</code> triggers new queryFn calls with correct filters.</p>
 		<p>
-			Status: <code>{filterQuery.status}</code> ·
-			Filter: <strong>{activeFilter}</strong> ·
-			Rows: <strong>{filterChannels.length}</strong>
+			Status: <code>{filterQuery.status}</code> · Filter: <strong>{activeFilter}</strong> · Rows:
+			<strong>{filterChannels.length}</strong>
 		</p>
 		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-			{#each /** @type {FilterPreset[]} */ (['all', '10+', '100+', '1000+', 'artwork', 'geo']) as f}
+			{#each filterPresets as f (f)}
 				<button class:active={activeFilter === f} onclick={() => (activeFilter = f)}>{f}</button>
 			{/each}
 			<label>Limit: <input type="number" bind:value={filterLimit} min="1" max="100" style="width: 4em" /></label>
@@ -268,20 +278,20 @@
 	</details>
 
 	<details open>
-		<summary>Pagination proof</summary>
-		<p>Tests whether <code>setWindow()</code> triggers the collection queryFn with updated limit/offset.</p>
+		<summary>Pagination proof (prev / X of Y / next)</summary>
 		<p>
-			Status: <code>{paginationQuery.status}</code> ·
-			Rows: <strong>{paginationChannels.length}</strong> ·
-			Collection: <code>{paginationCollection ? 'yes' : 'no'}</code>
+			Reactive <code>.limit(currentPage * pageSize)</code> — collection accumulates rows, local slice picks current page.
+			Same pattern as <code>channels.svelte</code>.
 		</p>
-		<div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-			<label>Limit: <input type="number" bind:value={paginationLimit} min="1" max="50" style="width: 4em" /></label>
-			<label>Offset: <input type="number" bind:value={paginationOffset} min="0" max="100" style="width: 4em" /></label>
-			<button onclick={() => testSetWindow(paginationLimit, paginationOffset)}>setWindow()</button>
-			<button onclick={() => testSetWindow(paginationLimit + 5, paginationOffset)}>+5 limit</button>
-			<button onclick={() => testSetWindow(paginationLimit, paginationOffset + paginationLimit)}>next page</button>
-			<button onclick={() => (setWindowLog = [])}>clear log</button>
+		<p>
+			Status: <code>{paginationQuery.status}</code> · Query limit: <strong>{queryLimit}</strong> · Total fetched:
+			<strong>{paginationAll.length}</strong> · Page rows: <strong>{paginationChannels.length}</strong>
+		</p>
+		<div style="display: flex; gap: 0.5rem; align-items: center;">
+			<button disabled={currentPage <= 1} onclick={() => (currentPage -= 1)}>← prev</button>
+			<span>{currentPage}{totalPages ? ` of ${totalPages}` : ''}</span>
+			<button disabled={!hasMore && currentPage >= totalPages} onclick={() => (currentPage += 1)}>next →</button>
+			<button disabled={currentPage === 1} onclick={() => (currentPage = 1)}>reset</button>
 		</div>
 		{#if paginationChannels.length}
 			<table>
@@ -289,16 +299,13 @@
 				<tbody>
 					{#each paginationChannels as ch, i (ch.id)}
 						<tr>
-							<td>{paginationOffset + i + 1}</td>
+							<td>{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
 							<td>{ch.slug}</td>
 							<td>{ch.created_at ? new Date(ch.created_at).toLocaleDateString() : '-'}</td>
 						</tr>
 					{/each}
 				</tbody>
 			</table>
-		{/if}
-		{#if setWindowLog.length}
-			<pre style="font-size: 0.8em; max-height: 12rem; overflow: auto;">{setWindowLog.join('\n')}</pre>
 		{/if}
 	</details>
 
@@ -333,3 +340,9 @@
 		{/if}
 	</details>
 </div>
+
+<style>
+	details {
+		margin-block: 1rem;
+	}
+</style>

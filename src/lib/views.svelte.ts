@@ -1,12 +1,9 @@
 import {fuzzySearch} from '$lib/search'
 import {shuffleArray} from '$lib/utils'
-import {createQuery} from '@tanstack/svelte-query'
 import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-import {inArray} from '@tanstack/db'
+import {eq, inArray} from '@tanstack/db'
 import {tracksCollection} from '$lib/collections/tracks'
 import {channelsCollection} from '$lib/collections/channels'
-import {searchTracks} from '$lib/search-fts'
-import {sdk} from '@radio4000/sdk'
 import type {Channel, Deck, Track} from '$lib/types'
 import {viewURI, type View} from '$lib/views'
 
@@ -58,65 +55,54 @@ export function queryView(getView: () => View) {
 	const limitKey = $derived(getView().limit ?? 50)
 	const offsetKey = $derived(getView().offset ?? 0)
 
-	const channelsQuery = useLiveQuery((q) => {
-		const slugs = channelsKey ? channelsKey.split(',') : []
-		if (!slugs.length) return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
-		return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, slugs))
-	})
+	const channelsQuery = useLiveQuery(
+		(q) => {
+			const slugs = channelsKey ? channelsKey.split(',') : []
+			if (!slugs.length) return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
+			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, slugs))
+		},
+		[() => channelsKey]
+	)
 
-	const tracksQuery = useLiveQuery((q) => {
-		const slugs = channelsKey ? channelsKey.split(',') : []
-		if (!slugs.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
-		const fetchAll = !!searchKey || !!tagsKey
-		return q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => inArray(tracks.slug, slugs))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-			.limit(fetchAll ? 4000 : limitKey)
-			.offset(fetchAll ? 0 : offsetKey)
-	})
+	const tracksQuery = useLiveQuery(
+		(q) => {
+			const slugs = channelsKey ? channelsKey.split(',') : []
+			if (!slugs.length) return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
+			const fetchAll = !!searchKey || !!tagsKey
+			return q
+				.from({tracks: tracksCollection})
+				.where(({tracks}) => inArray(tracks.slug, slugs))
+				.orderBy(({tracks}) => tracks.created_at, 'desc')
+				.limit(fetchAll ? 4000 : limitKey)
+				.offset(fetchAll ? 0 : offsetKey)
+		},
+		[() => channelsKey, () => searchKey, () => tagsKey, () => limitKey, () => offsetKey]
+	)
 
-	const tagsQuery = createQuery(() => {
-		const tags = tagsKey ? tagsKey.split(',') : []
-		return {
-			queryKey: ['tracks', 'tags', ...tags, offsetKey, limitKey],
-			queryFn: async () => {
-				const {data, error} = await sdk.supabase
-					.from('channel_tracks')
-					.select('*')
-					.overlaps('tags', tags)
-					.order('created_at', {ascending: false})
-					.range(offsetKey, offsetKey + limitKey - 1)
-				if (error) throw error
-				const tracks = (data || []) as Track[]
-				tracksCollection.utils.writeBatch(() => {
-					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
-				})
-				return tracks
-			},
-			enabled: !!tags.length && !channelsKey,
-			staleTime: 24 * 60 * 60 * 1000
-		}
-	})
+	const tagsLiveQuery = useLiveQuery(
+		(q) => {
+			const tags = tagsKey ? tagsKey.split(',') : []
+			if (!tags.length || channelsKey) return null
+			return q
+				.from({tracks: tracksCollection})
+				.where(({tracks}) => inArray(tracks.tags, tags))
+				.orderBy(({tracks}) => tracks.created_at, 'desc')
+				.limit(4000)
+		},
+		[() => tagsKey, () => channelsKey]
+	)
 
-	const searchQuery = createQuery(() => {
-		const search = searchKey
-		return {
-			queryKey: ['tracks', 'search', search, offsetKey, limitKey],
-			queryFn: async () => {
-				const {tracks, count} = (await searchTracks(search, {limit: limitKey, offset: offsetKey})) as {
-					tracks: Track[]
-					count: number
-				}
-				tracksCollection.utils.writeBatch(() => {
-					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
-				})
-				return {tracks, count}
-			},
-			enabled: !!search && !channelsKey && !tagsKey,
-			staleTime: 24 * 60 * 60 * 1000
-		}
-	})
+	const searchLiveQuery = useLiveQuery(
+		(q) => {
+			if (!searchKey || channelsKey || tagsKey) return null
+			return q
+				.from({tracks: tracksCollection})
+				.where(({tracks}) => eq(tracks.fts, searchKey))
+				.orderBy(({tracks}) => tracks.created_at, 'desc')
+				.limit(4000)
+		},
+		[() => searchKey, () => channelsKey, () => tagsKey]
+	)
 
 	return {
 		get tracks() {
@@ -124,19 +110,23 @@ export function queryView(getView: () => View) {
 			const data: Track[] = channelsKey
 				? ((tracksQuery.data ?? []) as Track[])
 				: tagsKey
-					? ((tagsQuery.data ?? []) as Track[])
+					? ((tagsLiveQuery.data ?? []) as Track[])
 					: searchKey
-						? ((searchQuery.data as {tracks: Track[]} | undefined)?.tracks ?? [])
+						? ((searchLiveQuery.data ?? []) as Track[])
 						: []
 			const processed = processViewTracks(data, v)
-			// channel+tags or channel+search: fetched all, filtered client-side, paginate here
+			// Paginate client-side when working from the full cached set
 			if (channelsKey && (searchKey || tagsKey)) {
+				return processed.slice(offsetKey, offsetKey + limitKey)
+			}
+			if (!channelsKey && (tagsKey || searchKey)) {
 				return processed.slice(offsetKey, offsetKey + limitKey)
 			}
 			return processed
 		},
 		get count(): number {
-			if (searchKey && !channelsKey && !tagsKey) return (searchQuery.data as {count: number} | undefined)?.count ?? 0
+			if (searchKey && !channelsKey && !tagsKey) return (searchLiveQuery.data ?? []).length
+			if (tagsKey && !channelsKey) return (tagsLiveQuery.data ?? []).length
 			// channel+tags or channel+search: count is full filtered result before slicing
 			if (channelsKey && (searchKey || tagsKey)) {
 				const data = (tracksQuery.data ?? []) as Track[]
@@ -150,8 +140,8 @@ export function queryView(getView: () => View) {
 		get loading() {
 			return (
 				(!!channelsKey && !tracksQuery.isReady) ||
-				(!!tagsKey && !channelsKey && tagsQuery.isPending) ||
-				(!!searchKey && !channelsKey && !tagsKey && searchQuery.isPending)
+				(!!tagsKey && !channelsKey && !tagsLiveQuery.isReady) ||
+				(!!searchKey && !channelsKey && !tagsKey && !searchLiveQuery.isReady)
 			)
 		}
 	}

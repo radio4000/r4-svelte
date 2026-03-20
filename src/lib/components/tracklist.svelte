@@ -297,11 +297,7 @@
 
 <style>
 	h3 {
-		line-height: 1.2;
 		text-align: center;
-		text-transform: capitalize;
-		font-weight: bold;
-		font-size: var(--font-5);
 	}
 
 	.timeline .list > li:first-child {

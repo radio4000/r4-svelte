@@ -9,7 +9,7 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
-	import {tracksCollection, checkTracksFreshness, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
@@ -101,7 +101,10 @@
 	let channelAutoResyncDeckId = $derived.by(() => {
 		if (!channelHasAuto) return undefined
 		const activeDeck = appState.decks[appState.active_deck_id]
-		if (activeDeck?.auto_radio && (activeDeck.view?.sources[0]?.channels?.[0] === channel?.slug || activeDeck.playlist_slug === channel?.slug)) {
+		if (
+			activeDeck?.auto_radio &&
+			(activeDeck.view?.sources[0]?.channels?.[0] === channel?.slug || activeDeck.playlist_slug === channel?.slug)
+		) {
 			return activeDeck.id
 		}
 		return anyChannelAutoDecks[0]?.id
@@ -110,12 +113,8 @@
 		if (!channel?.slug) return
 		if (channelHasAuto && channelAutoResyncDeckId) {
 			resyncAutoRadio(channelAutoResyncDeckId)
-		} else {
-			await ensureTracksLoaded(channel.slug)
-			const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === channel.slug)
-			if (hasAutoRadioCoverage(tracks)) {
-				joinAutoRadio(appState.active_deck_id, toAutoTracks(tracks), {sources: [{channels: [channel.slug]}]})
-			}
+		} else if (hasAutoRadioCoverage(allChannelTracks)) {
+			joinAutoRadio(appState.active_deck_id, toAutoTracks(allChannelTracks), {sources: [{channels: [channel.slug]}]})
 		}
 	}
 	let channelPlayingDeck = $derived.by(() => {
@@ -248,48 +247,48 @@
 				</div>
 				<menu class="channel-actions">
 					{#if canEdit}
-							<BroadcastControls
-								deckId={appState.active_deck_id}
-								channelId={channel.id}
-								channelSlug={channel.slug}
-								isLiveOverride={isChannelLive}
-								compact
-							/>
+						<BroadcastControls
+							deckId={appState.active_deck_id}
+							channelId={channel.id}
+							channelSlug={channel.slug}
+							isLiveOverride={isChannelLive}
+							compact
+						/>
 					{:else if channel.id && isChannelLive}
-							<button
-								type="button"
-								onclick={() => {
-									if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
-									else joinBroadcast(appState.active_deck_id, channel.id)
-								}}
-								title={m.nav_broadcasts()}
-								aria-label={m.nav_broadcasts()}
-							>
-								<Icon icon="cell-signal" />
-							</button>
+						<button
+							type="button"
+							onclick={() => {
+								if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+								else joinBroadcast(appState.active_deck_id, channel.id)
+							}}
+							title={m.nav_broadcasts()}
+							aria-label={m.nav_broadcasts()}
+						>
+							<Icon icon="cell-signal" />
+						</button>
 					{/if}
-						<ButtonPlay {channel} trackId={tid} />
+					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
 						synced={!channelHasAutoDrifted}
 						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onclick={toggleChannelAutoRadio}
 					/>
-						{#if hasChannel}
-							<ButtonFollow {channel} />
-						{:else}
-							<a href={authUrl} class="btn" title={m.common_follow()}>
-								<Icon icon="favorite" />
-							</a>
-						{/if}
-						<button
-							type="button"
-							onclick={() => (appState.modal_share = {channel})}
-							title={m.share_native()}
-							aria-label={m.share_native()}
-						>
-							<Icon icon="share" />
-						</button>
+					{#if hasChannel}
+						<ButtonFollow {channel} />
+					{:else}
+						<a href={authUrl} class="btn" title={m.common_follow()}>
+							<Icon icon="favorite" />
+						</a>
+					{/if}
+					<button
+						type="button"
+						onclick={() => (appState.modal_share = {channel})}
+						title={m.share_native()}
+						aria-label={m.share_native()}
+					>
+						<Icon icon="share" />
+					</button>
 				</menu>
 			</header>
 		{/if}

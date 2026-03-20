@@ -129,20 +129,8 @@
 		return q.from({rows: errorCollection}).orderBy(({rows}) => rows.id)
 	})
 
-	let errorVersion = $state(0)
-	$effect(() => {
-		return queryClient.getQueryCache().subscribe(() => errorVersion++)
-	})
-
-	let errorMessage = $derived.by(() => {
-		void errorVersion
-		return errorCollection.utils.lastError instanceof Error ? errorCollection.utils.lastError.message : ''
-	})
-
-	let collectionIsError = $derived.by(() => {
-		void errorVersion
-		return errorCollection.utils.isError
-	})
+	let errorMessage = $derived(errorCollection.utils.lastError instanceof Error ? errorCollection.utils.lastError.message : '')
+	let collectionIsError = $derived(errorCollection.utils.isError)
 
 	let localResult = $state<AssertionResult | null>(null)
 	let cacheResult = $state<AssertionResult | null>(null)
