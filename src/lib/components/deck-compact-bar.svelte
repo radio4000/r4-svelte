@@ -137,10 +137,14 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="deck-compact-bar" class:active-deck={isActiveDeck} onclick={(e) => {
-	if (e.target instanceof Element && e.target.closest('a, button, input, menu')) return
-	appState.active_deck_id = deckId
-}}>
+<div
+	class="deck-compact-bar"
+	class:active-deck={isActiveDeck}
+	onclick={(e) => {
+		if (e.target instanceof Element && e.target.closest('a, button, input, menu')) return
+		appState.active_deck_id = deckId
+	}}
+>
 	{#if appState.show_track_range_control !== false && displayTrack}
 		<div class="progress">
 			<input

@@ -5,9 +5,9 @@
 	import {Debounced} from 'runed'
 	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
 	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
-	import ViewsBar from '$lib/components/views-bar.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
+	import SearchShell from '$lib/components/search-shell.svelte'
 	import {searchChannels} from '$lib/search-fts'
 	import {searchChannelsLocal, findChannelBySlug} from '$lib/search'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -19,8 +19,6 @@
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import SearchTabs from '$lib/components/search-tabs.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
@@ -200,14 +198,7 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<header class="search-header">
-		<SearchTabs />
-		<form onsubmit={handleSubmit}>
-			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-			<SearchInput id="{uid}-search" bind:value={inputValue} placeholder={m.header_search_placeholder()} autofocus />
-		</form>
-		<ViewsBar {view} onchange={onViewsBarChange} />
-	</header>
+	<SearchShell {uid} bind:value={inputValue} onsubmit={handleSubmit} {view} onviewchange={onViewsBarChange} />
 
 	{#if hasFilter}
 		{#if !channelsLoading && !tracksLoading && channels.length === 0 && tracks.length === 0}
@@ -296,36 +287,6 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1;
-	}
-
-	.search-header {
-		position: sticky;
-		top: 0;
-		background: var(--body-bg);
-		/* Default page controls layer: above content, below app overlays/fullscreen deck. */
-		z-index: 3;
-		padding: 0.5rem;
-		display: flex;
-		align-items: flex-start;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.search-header :global(.popover-menu) {
-		flex-shrink: 0;
-	}
-
-	.search-header form {
-		flex: 1 1 0;
-		min-width: min(200px, 100%);
-	}
-
-	.search-header form :global(input) {
-		width: 100%;
-	}
-
-	.search-header :global(.views-bar) {
-		flex-shrink: 0;
 	}
 
 	article > p,

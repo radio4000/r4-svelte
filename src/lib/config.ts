@@ -56,7 +56,7 @@ export const conceptIcons = {
 	map: 'map',
 	backup: 'document-download',
 	batchEdit: 'unordered-list',
-	delete: 'delete',
+	delete: 'delete'
 } as const
 
 export const posthogKey = env.PUBLIC_POSTHOG_KEY ?? 'phc_hjAzrJR1oqwdWF2chYKVdAkAQAXtTgd576iTuMTfuEO'

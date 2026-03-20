@@ -418,12 +418,7 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
-							<button
-								type="button"
-								title={m.home_featured_refresh()}
-								onclick={pickFeatured}
-								disabled={shuffling}
-							>
+							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
 								<Icon icon="switch-alt" />
 							</button>
 						{/if}
@@ -506,12 +501,7 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
-							<button
-								type="button"
-								title={m.home_featured_refresh()}
-								onclick={pickFeatured}
-								disabled={shuffling}
-							>
+							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
 								<Icon icon="switch-alt" />
 							</button>
 						{/if}

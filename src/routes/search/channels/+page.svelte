@@ -7,8 +7,7 @@
 	import {findChannelBySlug, parseMentionQuery, searchChannelsLocal} from '$lib/search'
 	import {channelsCollection} from '$lib/collections/channels'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import SearchTabs from '$lib/components/search-tabs.svelte'
+	import SearchShell from '$lib/components/search-shell.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import * as m from '$lib/paraglide/messages'
@@ -115,13 +114,7 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<header class="search-header">
-		<SearchTabs />
-		<form onsubmit={handleSubmit}>
-			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-			<SearchInput id="{uid}-search" bind:value={inputValue} placeholder={m.header_search_placeholder()} autofocus />
-		</form>
-	</header>
+	<SearchShell {uid} bind:value={inputValue} onsubmit={handleSubmit} />
 
 	{#if hasFilter}
 		{#if channelsLoading}
@@ -158,31 +151,6 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1;
-	}
-
-	.search-header {
-		position: sticky;
-		top: 0;
-		background: var(--body-bg);
-		z-index: 3;
-		padding: 0.5rem;
-		display: flex;
-		align-items: flex-start;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.search-header :global(.search-tabs) {
-		flex-shrink: 0;
-	}
-
-	.search-header form {
-		flex: 1 1 0;
-		min-width: min(200px, 100%);
-	}
-
-	.search-header form :global(input) {
-		width: 100%;
 	}
 
 	article > p {

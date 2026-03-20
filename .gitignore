@@ -11,9 +11,7 @@ rollup-visualizer.html
 i18n/batches/*.json
 
 # oskars arbe tests..
-.arbe/arbe.db
-.arbe/arbe.db-shm
-.arbe/arbe.db-wal
+.arbe/
 
 # OS
 .DS_Store
