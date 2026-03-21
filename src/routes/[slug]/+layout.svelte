@@ -12,8 +12,9 @@
 	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {joinAutoRadio, resyncAutoRadio} from '$lib/api'
+	import {toggleChannelAutoRadio, joinAutoRadio, resyncAutoRadio} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
+	import {findAutoDecksForChannel, pickAutoResyncDeck, findChannelPlayingDeck, findListeningDeck} from '$lib/deck'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
@@ -90,45 +91,11 @@
 	let isLocal = $derived(isLocalChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
 	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
-	// Any auto deck playing this channel, regardless of tag/search filter
-	let anyChannelAutoDecks = $derived.by(() =>
-		Object.values(appState.decks).filter(
-			(d) => d.auto_radio && (d.view?.sources[0]?.channels?.[0] === channel?.slug || d.playlist_slug === channel?.slug)
-		)
-	)
+	let anyChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, channel?.slug))
 	let channelHasAuto = $derived(anyChannelAutoDecks.length > 0)
 	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	let channelAutoResyncDeckId = $derived.by(() => {
-		if (!channelHasAuto) return undefined
-		const activeDeck = appState.decks[appState.active_deck_id]
-		if (
-			activeDeck?.auto_radio &&
-			(activeDeck.view?.sources[0]?.channels?.[0] === channel?.slug || activeDeck.playlist_slug === channel?.slug)
-		) {
-			return activeDeck.id
-		}
-		return anyChannelAutoDecks[0]?.id
-	})
-	async function toggleChannelAutoRadio() {
-		if (!channel?.slug) return
-		if (channelHasAuto && channelAutoResyncDeckId) {
-			resyncAutoRadio(channelAutoResyncDeckId)
-		} else if (hasAutoRadioCoverage(allChannelTracks)) {
-			joinAutoRadio(appState.active_deck_id, toAutoTracks(allChannelTracks), {sources: [{channels: [channel.slug]}]})
-		}
-	}
-	let channelPlayingDeck = $derived.by(() => {
-		if (!channel?.slug) return undefined
-		const active = appState.decks[appState.active_deck_id]
-		if (active && active.playlist_slug === channel.slug) return active
-		return Object.values(appState.decks).find((d) => d.playlist_slug === channel.slug && d.is_playing)
-	})
-	let channelListeningDeck = $derived.by(() => {
-		if (!channel?.id) return undefined
-		const active = appState.decks[appState.active_deck_id]
-		if (active?.listening_to_channel_id === channel.id) return active
-		return Object.values(appState.decks).find((d) => d.listening_to_channel_id === channel.id)
-	})
+	let channelPlayingDeck = $derived(findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug))
+	let channelListeningDeck = $derived(findListeningDeck(appState.decks, appState.active_deck_id, channel?.id))
 	let channelHeaderDeck = $derived(channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0])
 	let listeningTrackSlug = $derived.by(() => {
 		const trackId = channelListeningDeck?.playlist_track
@@ -272,7 +239,7 @@
 						className="btn{channelHasAuto ? ' active' : ''}"
 						synced={!channelHasAutoDrifted}
 						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-						onclick={toggleChannelAutoRadio}
+						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>
 					{#if hasChannel}
 						<ButtonFollow {channel} />

@@ -8,9 +8,9 @@
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
-	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-	import {toAutoTracks} from '$lib/player/auto-radio'
-	import {playChannel, togglePlayPause, resyncAutoRadio, joinAutoRadio} from '$lib/api'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {playChannel, togglePlayPause, toggleChannelAutoRadio} from '$lib/api'
+	import {findAutoDecksForChannel, pickAutoResyncDeck, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
@@ -101,19 +101,11 @@
 	const favoriteBroadcasts = $derived.by(() => favoriteBroadcastRows.slice(0, 10))
 	const broadcastCount = $derived(broadcastRows.length)
 	const favoriteBroadcastCount = $derived(favoriteBroadcastRows.length)
-	const userChannelIsBroadcasting = $derived(
-		!!userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
-	)
+	const userChannelIsBroadcasting = $derived(isBroadcasting(appState.decks, userChannel?.id))
 
 	// User channel play state
-	const userChannelPlayingDeckId = $derived.by(() => {
-		if (!userChannel?.slug) return undefined
-		return Object.values(appState.decks).find((d) => d.playlist_slug === userChannel.slug && d.is_playing)?.id
-	})
-	const userChannelLoadedDeckId = $derived.by(() => {
-		if (!userChannel?.slug) return undefined
-		return Object.values(appState.decks).find((d) => d.playlist_slug === userChannel.slug)?.id
-	})
+	const userChannelPlayingDeckId = $derived(findPlayingDeck(appState.decks, userChannel?.slug)?.id)
+	const userChannelLoadedDeckId = $derived(findLoadedDeck(appState.decks, userChannel?.slug)?.id)
 	const userChannelIsPlaying = $derived(!!userChannelPlayingDeckId)
 	function toggleUserChannelPlay() {
 		if (!userChannel) return
@@ -122,37 +114,12 @@
 	}
 
 	// Auto radio state for user's channel
-	const userChannelAutoDecks = $derived.by(() => {
-		if (!userChannel?.slug) return []
-		return Object.values(appState.decks).filter(
-			(d) =>
-				d.auto_radio && (d.view?.sources[0]?.channels?.[0] === userChannel.slug || d.playlist_slug === userChannel.slug)
-		)
-	})
+	const userChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
 	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
 	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	const userChannelResyncDeckId = $derived.by(() => {
-		if (!userChannel?.slug || !userChannelHasAuto) return undefined
-		const activeDeck = appState.decks[appState.active_deck_id]
-		if (
-			activeDeck?.id &&
-			activeDeck.auto_radio &&
-			(activeDeck.view?.sources[0]?.channels?.[0] === userChannel.slug || activeDeck.playlist_slug === userChannel.slug)
-		) {
-			return activeDeck.id
-		}
-		return userChannelAutoDecks[0]?.id
-	})
 
-	async function toggleUserChannelAutoRadio() {
-		if (!userChannel) return
-		if (userChannelHasAuto && userChannelResyncDeckId) {
-			resyncAutoRadio(userChannelResyncDeckId)
-		} else {
-			await ensureTracksLoaded(userChannel.slug)
-			const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === userChannel.slug)
-			joinAutoRadio(appState.active_deck_id, toAutoTracks(tracks), {sources: [{channels: [userChannel.slug]}]})
-		}
+	function toggleUserChannelAutoRadio() {
+		if (userChannel?.slug) toggleChannelAutoRadio(userChannel.slug)
 	}
 
 	$effect(() => {

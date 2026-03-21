@@ -193,3 +193,99 @@ export function dateProvenance(dateString) {
 	if (days < 90) return 'recent'
 	return dateYear(dateString)
 }
+
+// ---------------------------------------------------------------------------
+// Period generation — for splitting date ranges into year/quarter/month buckets
+// ---------------------------------------------------------------------------
+
+/** @typedef {{label: string, startDate: Date, endDate: Date}} TimePeriod */
+
+/** Get min/max dates from items with a date field.
+ * @param {{created_at: string}[]} items
+ * @returns {{minDate: Date, maxDate: Date} | null} */
+export function getDateRange(items) {
+	if (!items.length) return null
+	const dates = items.map((t) => new Date(t.created_at).getTime())
+	return {
+		minDate: new Date(Math.min(...dates)),
+		maxDate: new Date(Math.max(...dates))
+	}
+}
+
+/** Generate year periods between two dates.
+ * @param {Date} start
+ * @param {Date} end
+ * @returns {TimePeriod[]} */
+export function generateYearPeriods(start, end) {
+	const periods = []
+	for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+		periods.push({
+			label: year.toString(),
+			startDate: new Date(year, 0, 1),
+			endDate: new Date(year + 1, 0, 1)
+		})
+	}
+	return periods
+}
+
+/** Generate quarter (solstice) periods between two dates.
+ * @param {Date} start
+ * @param {Date} end
+ * @param {string[]} quarterNames — four labels, one per quarter (e.g. translated solstice names)
+ * @returns {TimePeriod[]} */
+export function generateQuarterPeriods(start, end, quarterNames) {
+	const periods = []
+	for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
+		for (let q = 0; q < 4; q++) {
+			const quarterStart = new Date(year, q * 3, 1)
+			const quarterEnd = new Date(year, (q + 1) * 3, 1)
+			if (quarterStart <= end && quarterEnd >= start) {
+				periods.push({
+					label: `${year} ${quarterNames[q]}`,
+					startDate: quarterStart,
+					endDate: quarterEnd
+				})
+			}
+		}
+	}
+	return periods
+}
+
+/** Generate month periods between two dates.
+ * @param {Date} start
+ * @param {Date} end
+ * @returns {TimePeriod[]} */
+export function generateMonthPeriods(start, end) {
+	const periods = []
+	let currentYear = start.getFullYear()
+	let currentMonth = start.getMonth()
+	const endYear = end.getFullYear()
+	const endMonth = end.getMonth()
+
+	while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const monthEnd = new Date(currentYear, currentMonth + 1, 1)
+		periods.push({
+			label: `${currentYear} ${monthStart.toLocaleDateString('en', {month: 'short'})}`,
+			startDate: monthStart,
+			endDate: monthEnd
+		})
+		currentMonth++
+		if (currentMonth > 11) {
+			currentMonth = 0
+			currentYear++
+		}
+	}
+	return periods
+}
+
+/** Filter items by a date-range period.
+ * @param {{created_at: string}[]} items
+ * @param {TimePeriod} period
+ * @returns {{created_at: string}[]} */
+export function filterByDateRange(items, period) {
+	return items.filter((item) => {
+		const date = new Date(item.created_at)
+		return date >= period.startDate && date < period.endDate
+	})
+}

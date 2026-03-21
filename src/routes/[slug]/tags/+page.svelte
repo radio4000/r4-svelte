@@ -15,6 +15,7 @@
 	import Subpage from '$lib/components/subpage.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
+	import {getDateRange, generateYearPeriods, generateQuarterPeriods, generateMonthPeriods} from '$lib/dates.js'
 
 	let slug = $derived(page.params.slug ?? '')
 
@@ -88,74 +89,24 @@
 	const displayLabelMap = {list: m.tags_display_list(), cloud: m.tags_display_cloud()}
 
 	// Date range from tracks
-	let dateRange = $derived.by(() => {
-		if (!tracks.length) return null
-		const dates = tracks.map((t) => new Date(t.created_at).getTime())
-		return {
-			minDate: new Date(Math.min(...dates)),
-			maxDate: new Date(Math.max(...dates))
-		}
-	})
+	let dateRange = $derived(getDateRange(tracks))
 
 	// Generate time periods based on date range
 	let periods = $derived.by(() => {
 		if (!dateRange) return []
-
-		const newPeriods = []
-		const start = dateRange.minDate
-		const end = dateRange.maxDate
-
-		if (timePeriod === 'year') {
-			for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
-				newPeriods.push({
-					label: year.toString(),
-					startDate: new Date(year, 0, 1),
-					endDate: new Date(year + 1, 0, 1)
-				})
-			}
-		} else if (timePeriod === 'solstice') {
+		const {minDate: start, maxDate: end} = dateRange
+		if (timePeriod === 'year') return generateYearPeriods(start, end)
+		if (timePeriod === 'solstice') {
 			const solsticeNames = [
 				m.tags_solstice_march(),
 				m.tags_solstice_june(),
 				m.tags_solstice_september(),
 				m.tags_solstice_december()
 			]
-			for (let year = start.getFullYear(); year <= end.getFullYear(); year++) {
-				for (let q = 0; q < 4; q++) {
-					const quarterStart = new Date(year, q * 3, 1)
-					const quarterEnd = new Date(year, (q + 1) * 3, 1)
-					if (quarterStart <= end && quarterEnd >= start) {
-						newPeriods.push({
-							label: `${year} ${solsticeNames[q]}`,
-							startDate: quarterStart,
-							endDate: quarterEnd
-						})
-					}
-				}
-			}
-		} else if (timePeriod === 'month') {
-			let currentYear = start.getFullYear()
-			let currentMonth = start.getMonth()
-			const endYear = end.getFullYear()
-			const endMonth = end.getMonth()
-
-			while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
-				const monthStart = new Date(currentYear, currentMonth, 1)
-				const monthEnd = new Date(currentYear, currentMonth + 1, 1)
-				newPeriods.push({
-					label: `${currentYear} ${monthStart.toLocaleDateString('en', {month: 'short'})}`,
-					startDate: monthStart,
-					endDate: monthEnd
-				})
-				currentMonth++
-				if (currentMonth > 11) {
-					currentMonth = 0
-					currentYear++
-				}
-			}
+			return generateQuarterPeriods(start, end, solsticeNames)
 		}
-
-		return newPeriods
+		if (timePeriod === 'month') return generateMonthPeriods(start, end)
+		return []
 	})
 
 	// Tags for current period
