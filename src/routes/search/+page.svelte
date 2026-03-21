@@ -1,7 +1,6 @@
 <script>
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {setScene} from '$lib/scene-state.svelte'
 	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import {queryView} from '$lib/views.svelte'
 	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
@@ -18,13 +17,6 @@
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import * as m from '$lib/paraglide/messages'
-
-	setScene({
-		geometry: 'icosahedron',
-		backgroundColor: 'oklch(10% 0.05 200)',
-		cameraPosition: [0, 0, 5],
-		rotationSpeed: 0.5
-	})
 
 	const uid = $props.id()
 	const search = new SearchUrl('/search')
