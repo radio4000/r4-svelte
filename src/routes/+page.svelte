@@ -476,7 +476,7 @@
 				</ol>
 			</section>
 		{/if}
-		<section class="section">
+		<section class="section section--globe">
 			<div class="globe">
 				<MapChannels
 					channels={globeChannels}
@@ -641,7 +641,7 @@
 			</section>
 		{/if}
 
-		<section class="section">
+		<section class="section section--globe">
 			<header class="section-header">
 				<h2 class="section-title"><a href={resolve('/channels/all')}>Overview</a></h2>
 			</header>
@@ -674,6 +674,10 @@
 <style>
 	.homepage {
 		padding: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 
 		/* grids manage their own horizontal spacing */
 		:global(.grid) {
@@ -714,6 +718,14 @@
 
 	.section {
 		margin-bottom: 1.5rem;
+	}
+
+	.section--globe {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		margin-bottom: 0;
 	}
 
 	.dashboard-section {
@@ -899,12 +911,17 @@
 	}
 
 	.globe {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 300px;
 		margin-top: -0.75rem;
 		background: var(--gray-2);
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		:global(.map) {
-			min-height: 500px;
+			flex: 1;
+			min-height: 0;
 		}
 		:global(article .description) {
 			display: none;
