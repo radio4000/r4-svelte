@@ -33,6 +33,15 @@
 			<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
 				>{doc}</a
 			>
+			{#if data.subroutes?.[doc]}
+				{#each data.subroutes[doc] as sub (sub)}
+					<a
+						class="subroute"
+						href={resolve(`/docs/${doc}/${sub}`)}
+						aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}>{sub}</a
+					>
+				{/each}
+			{/if}
 		{/each}
 	</nav>
 
@@ -85,6 +94,11 @@
 
 			&[aria-current='page'] {
 				background: var(--accent-7);
+			}
+
+			&.subroute {
+				padding-inline-start: 2rem;
+				font-size: var(--font-5);
 			}
 		}
 	}
