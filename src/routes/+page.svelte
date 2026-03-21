@@ -29,6 +29,7 @@
 
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import MapChannels from '$lib/components/map-channels.svelte'
+	import {not, isNull} from '@tanstack/db'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -226,12 +227,10 @@
 	)
 
 	// Globe channels — all synced channels with coordinates
-	const globeChannelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
-	const globeChannels = $derived(
-		(globeChannelsQuery.data ?? []).filter(
-			(c) => Number.isFinite(c?.latitude) && Number.isFinite(c?.longitude)
-		)
+	const globeChannelsQuery = useLiveQuery((q) =>
+		q.from({ch: channelsCollection}).where(({ch}) => not(isNull(ch.latitude)))
 	)
+	const globeChannels = $derived(globeChannelsQuery.data ?? [])
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -726,6 +725,10 @@
 		flex-direction: column;
 		min-height: 0;
 		margin-bottom: 0;
+
+		.section-header {
+			margin-bottom: 1rem;
+		}
 	}
 
 	.dashboard-section {
