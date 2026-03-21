@@ -206,10 +206,6 @@ figure {
 	color: var(--color-error);
 }
 
-.warning {
-	color: var(--color-warning);
-}
-
 .success {
 	color: var(--accent-9);
 }

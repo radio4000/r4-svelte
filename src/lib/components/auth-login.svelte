@@ -202,4 +202,8 @@
 		text-align: center;
 		margin-top: 1rem;
 	}
+	menu.centerwrap {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 </style>

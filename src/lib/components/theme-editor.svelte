@@ -369,4 +369,29 @@
 	.inactive {
 		display: none;
 	}
+
+	.color-grid {
+		display: grid;
+		grid-template-columns: repeat(12, 1fr);
+		/*grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));*/
+		gap: 0.2rem;
+		margin: 0.5rem;
+
+		figure {
+			height: 4rem;
+		}
+
+		code {
+			font-size: var(--font-3);
+			font-family: inherit;
+			padding: 0.2rem;
+		}
+	}
+
+	.color-swatch {
+		border: 1px solid var(--gray-4);
+		border-radius: var(--border-radius);
+		overflow: hidden;
+		background: var(--gray-2);
+	}
 </style>

@@ -52,17 +52,6 @@
 	margin-right: auto;
 }
 
-.logo {
-	display: block;
-	text-align: center;
-	margin-block-end: 2rem;
-
-	svg {
-		width: 4rem;
-		height: auto;
-	}
-}
-
 /* Use on containers that need scrolling */
 .scroll {
 	overflow-y: auto;
@@ -137,10 +126,6 @@
 	gap: 0.5rem;
 }
 
-.row--vcenter {
-	place-items: center;
-}
-
 .fill-height {
 	display: flex;
 	flex: 1;
@@ -179,11 +164,6 @@ nav {
 	a:has(svg, i) {
 		gap: 0.2rem;
 	}
-}
-
-menu.centerwrap {
-	flex-wrap: wrap;
-	justify-content: center;
 }
 
 menu.nav-vertical {
@@ -354,35 +334,15 @@ dl.meta {
 	}
 }
 
-.color-grid {
-	display: grid;
-	grid-template-columns: repeat(12, 1fr);
-	/*grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));*/
-	gap: 0.2rem;
-	margin: 0.5rem;
+.logo {
+	display: block;
+	text-align: center;
+	margin-block-end: 2rem;
 
-	figure {
-		height: 4rem;
+	svg {
+		width: 4rem;
+		height: auto;
 	}
-
-	code {
-		font-size: var(--font-3);
-		font-family: inherit;
-		padding: 0.2rem;
-	}
-}
-
-.color-swatch {
-	border: 1px solid var(--gray-4);
-	border-radius: var(--border-radius);
-	overflow: hidden;
-	background: var(--gray-2);
-}
-
-/* Overwrites to make it look ok with our styles */
-.lil-controller.lil-number input {
-	color: initial;
-	min-height: 0;
 }
 
 /* Useful for docs, longer text */

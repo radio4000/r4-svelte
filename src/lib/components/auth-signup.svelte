@@ -288,4 +288,8 @@
 		margin-top: 1rem;
 		text-align: center;
 	}
+	menu.centerwrap {
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 </style>

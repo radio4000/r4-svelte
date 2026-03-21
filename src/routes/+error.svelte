@@ -26,4 +26,7 @@
 		display: flex;
 		flex-flow: column;
 	}
+	.row--vcenter {
+		place-items: center;
+	}
 </style>
