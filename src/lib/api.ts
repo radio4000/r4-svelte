@@ -489,10 +489,8 @@ export async function togglePlayPause(deckId) {
 		return
 	}
 	if (player.paused) {
-		if (deck) deck.is_playing = true
 		player.play()
 	} else {
-		if (deck) deck.is_playing = false
 		player.pause()
 	}
 	maybeBroadcastNotify()
@@ -531,6 +529,32 @@ export function clearQueue(deckId) {
 		deck.playlist_tracks_shuffled = []
 	}
 	log.log('clear_queue', {deckId, kept: current})
+}
+
+/** Clear entire queue including current track */
+export function clearAllQueue(deckId: number) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	deck.playlist_tracks = []
+	deck.playlist_tracks_shuffled = []
+	deck.playlist_track = undefined
+	log.log('clear_all_queue', {deckId})
+}
+
+/** Record a seek position and notify broadcast listeners */
+export function recordSeekPosition(deckId: number, seconds: number) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	deck.seeked_at = new Date().toISOString()
+	deck.seek_position = seconds
+	maybeBroadcastNotify()
+}
+
+/** Apply a partial remote state update to a deck (broadcast sync) */
+export function applyRemoteState(deckId: number, state: Partial<Deck>) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	Object.assign(deck, state)
 }
 
 /**
@@ -598,7 +622,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 	if (result instanceof Promise) {
 		return result
 			.then(() => {
-				if (deck) deck.is_playing = true
 				log.log('play() succeeded')
 				maybeBroadcastNotify()
 			})
@@ -607,7 +630,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 				log.warn('play() was prevented:', error.message || error)
 			})
 	}
-	if (deck) deck.is_playing = true
 	maybeBroadcastNotify()
 	return Promise.resolve()
 }
@@ -646,12 +668,7 @@ export function seekTo(deckId, seconds) {
 		return
 	}
 	mediaEl.currentTime = seconds
-	const deck = getDeck(deckId)
-	if (deck) {
-		deck.seeked_at = new Date().toISOString()
-		deck.seek_position = seconds
-	}
-	maybeBroadcastNotify()
+	recordSeekPosition(deckId, seconds)
 }
 
 export function next(deckId: number, endReason: PlayEndReason) {
@@ -705,9 +722,7 @@ export function previous(deckId: number, endReason: PlayEndReason) {
 export function eject(deckId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	deck.playlist_track = undefined
-	deck.playlist_tracks = []
-	deck.playlist_tracks_shuffled = []
+	clearAllQueue(deckId)
 	deck.hide_video_player = true
 	deck.shuffle = false
 	deck.is_playing = false

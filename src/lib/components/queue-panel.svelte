@@ -5,7 +5,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {toggleShuffle} from '$lib/api'
+	import {toggleShuffle, clearAllQueue} from '$lib/api'
 	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import Icon from './icon.svelte'
@@ -64,10 +64,7 @@
 	}
 
 	function clearQueue() {
-		if (!deck) return
-		deck.playlist_tracks = []
-		deck.playlist_tracks_shuffled = []
-		deck.playlist_track = undefined
+		clearAllQueue(deckId)
 	}
 </script>
 

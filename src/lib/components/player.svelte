@@ -16,7 +16,8 @@
 		toggleVideo,
 		getUserInitiatedPlay,
 		setUserInitiatedPlay,
-		resyncAutoRadio
+		resyncAutoRadio,
+		recordSeekPosition
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
@@ -212,12 +213,7 @@
 		if (deck && mediaElement && 'playbackRate' in mediaElement) {
 			mediaElement.playbackRate = deck.speed ?? 1
 		}
-		if (deck && mediaElement) {
-			deck.seeked_at = new Date().toISOString()
-			deck.seek_position = mediaElement.currentTime ?? 0
-		}
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+		if (mediaElement) recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
 
 		// Update track duration if missing (only for owned channels, once per track)
 		if (
@@ -238,12 +234,7 @@
 	function handlePause() {
 		log.log('handlePause')
 		if (deck) deck.is_playing = false
-		if (deck && mediaElement) {
-			deck.seeked_at = new Date().toISOString()
-			deck.seek_position = mediaElement.currentTime ?? 0
-		}
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+		if (mediaElement) recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
 	}
 
 	/** @param {any} event */
@@ -293,11 +284,8 @@
 	}
 
 	function handleSeeked() {
-		if (!deck || !mediaElement) return
-		deck.seeked_at = new Date().toISOString()
-		deck.seek_position = mediaElement.currentTime ?? 0
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+		if (!mediaElement) return
+		recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
 	}
 
 	$effect(() => {
@@ -655,12 +643,6 @@
 						const val = Number(e.currentTarget.value)
 						mediaCurrentTime = val
 						if (mediaElement) mediaElement.currentTime = val
-						if (deck) {
-							deck.seeked_at = new Date().toISOString()
-							deck.seek_position = val
-						}
-						const broadcastingChannelId = getBroadcastingChannelId()
-						if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 					}}
 					class="progress-range"
 					disabled={!Number.isFinite(mediaDuration)}
