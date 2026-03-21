@@ -36,89 +36,71 @@
 </script>
 
 <div class="scanner">
-	<div class="device">
-		<header>
+	<figure class="spectrum">
+		{#each channels as ch, i (ch.id)}
+			<button
+				class="marker"
+				class:tuned={i === index}
+				style="left: {(i / (channels.length - 1)) * 100}%"
+				title={ch.slug}
+				onclick={() => (index = i)}
+			>
+				<div
+					class="marker-signal"
+					style="height: {0.5 + Math.min(1, ((ch.track_count ?? 0) / 400) ** 0.8) * 3.5}rem"
+				></div>
+			</button>
+		{/each}
+	</figure>
+
+	<InputRange
+		bind:value={index}
+		min={0}
+		max={channels.length - 1}
+		step={1}
+		oninput={() => {
+			if (!autoplay) return
+			if (playDebounce) clearTimeout(playDebounce)
+			playDebounce = setTimeout(play, 400)
+		}}
+	/>
+
+	{#if channel}
+		<div class="station">
 			<p class="slug">{channel ? `@${channel.slug}` : ''}</p>
-			<menu>
-				<button onclick={prev} title={m.scanner_previous_channel()}
-					><Icon icon="previous-fill" /></button
-				>
-				<button onclick={play} title={m.scanner_play_channel()}><Icon icon="play-fill" /></button>
-				<button onclick={next} title={m.scanner_next_channel()}><Icon icon="next-fill" /></button>
-				<button onclick={seek} title={m.scanner_random_channel()}><Icon icon="shuffle" /></button>
-				<button
-					onclick={() => (autoplay = !autoplay)}
-					class:active={autoplay}
-					title={m.scanner_autoplay_navigation()}>{m.scanner_auto()}</button
-				>
-			</menu>
-			<InputRange
-				bind:value={index}
-				min={0}
-				max={channels.length - 1}
-				step={1}
-				oninput={() => {
-					if (!autoplay) return
-					if (playDebounce) clearTimeout(playDebounce)
-					playDebounce = setTimeout(play, 400)
-				}}
-			/>
-		</header>
+			<ChannelCard {channel} />
+		</div>
+	{/if}
 
-		<figure class="spectrum">
-			{#each channels as ch, i (ch.id)}
-				<button
-					class="marker"
-					class:tuned={i === index}
-					style="left: {(i / (channels.length - 1)) * 100}%"
-					title={ch.slug}
-					onclick={() => (index = i)}
-				>
-					<div
-						class="marker-signal"
-						style="height: {0.5 + Math.min(1, ((ch.track_count ?? 0) / 400) ** 0.8) * 3.5}rem"
-					></div>
-				</button>
-			{/each}
-		</figure>
-
-		{#if channel}
-			<div class="station">
-				<ChannelCard {channel} />
-			</div>
-		{/if}
-	</div>
+	<menu>
+		<button onclick={prev} title={m.scanner_previous_channel()}
+			><Icon icon="previous-fill" /></button
+		>
+		<button onclick={play} title={m.scanner_play_channel()}><Icon icon="play-fill" /></button>
+		<button onclick={next} title={m.scanner_next_channel()}><Icon icon="next-fill" /></button>
+		<button onclick={seek} title={m.scanner_random_channel()}><Icon icon="shuffle" /></button>
+		<button
+			onclick={() => (autoplay = !autoplay)}
+			class:active={autoplay}
+			title={m.scanner_autoplay_navigation()}>{m.scanner_auto()}</button
+		>
+	</menu>
 </div>
 
 <style>
 	.scanner {
 		display: flex;
 		flex-direction: column;
-		padding: 1rem;
 		align-items: center;
-	}
-
-	.device {
+		justify-content: center;
 		width: 100%;
-		max-width: 420px;
-		background: var(--gray-3);
-		border: 1px solid var(--gray-12);
-		border-radius: 2px;
-	}
-
-	header {
-		display: flex;
-		flex-direction: column;
-		padding: 0.6rem 0.8rem;
-		gap: 0.4rem;
-		align-items: center;
-		border-bottom: 1px solid var(--gray-10);
+		gap: 0.5rem;
 	}
 
 	.slug {
 		font-size: var(--font-5);
-		font-weight: bold;
 		margin: 0;
+		text-align: center;
 	}
 
 	menu {
@@ -131,11 +113,10 @@
 
 	.spectrum {
 		position: relative;
-		height: 3rem;
+		height: 4rem;
+		width: 100%;
 		margin: 0;
 		overflow: hidden;
-		border-top: 1px solid var(--gray-10);
-		border-bottom: 1px solid var(--gray-10);
 		background: var(--gray-5);
 	}
 
@@ -164,11 +145,12 @@
 		width: 3px;
 	}
 
-	:global(header > .input-range) {
+	:global(.scanner > .input-range) {
 		width: 100%;
 	}
 
 	.station {
-		padding: 1rem;
+		max-width: 420px;
+		width: 100%;
 	}
 </style>
