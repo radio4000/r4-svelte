@@ -637,7 +637,11 @@
 						<li><ChannelCard {channel} /></li>
 					{/each}
 				</ol>
-				<CoverFlip items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels} orientation="horizontal" class="featured-flip">
+				<CoverFlip
+					items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels}
+					orientation="horizontal"
+					class="featured-flip"
+				>
 					{#snippet item({item: channel, active})}
 						<div class="flip-card" class:active>
 							<ChannelCard {channel} />
@@ -647,7 +651,11 @@
 						<p class="flip-label">
 							<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
 							{#if channel.description}
-								<span class="flip-desc">— {channel.description.length > 140 ? channel.description.slice(0, 140) + '…' : channel.description}</span>
+								<span class="flip-desc"
+									>— {channel.description.length > 140
+										? channel.description.slice(0, 140) + '…'
+										: channel.description}</span
+								>
 							{/if}
 						</p>
 					{/snippet}

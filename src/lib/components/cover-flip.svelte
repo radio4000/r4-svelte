@@ -9,7 +9,15 @@
 	 *  item: (args: {item: any, index: number, active: boolean}) => any,
 	 *  active: (args: {item: any, index: number}) => any,
 	 * }} */
-	let {items, scrollItemsPerNotch = 1, orientation = 'vertical', class: extraClass = '', item, active, ...rest} = $props()
+	let {
+		items,
+		scrollItemsPerNotch = 1,
+		orientation = 'vertical',
+		class: extraClass = '',
+		item,
+		active,
+		...rest
+	} = $props()
 	let container = $state()
 	let loop
 	let activeIndex = $state(-1)

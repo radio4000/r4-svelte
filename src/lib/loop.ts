@@ -271,10 +271,7 @@ export function createLoop(
 		}
 		const p = document.createElement('div')
 		const progressWrap = gsap.utils.wrap(0, 1)
-		let ratio: number,
-			startProgress: number,
-			lastSnap: number,
-			wasPlaying: boolean
+		let ratio: number, startProgress: number, lastSnap: number, wasPlaying: boolean
 
 		const align = () => {
 			tl.progress(
