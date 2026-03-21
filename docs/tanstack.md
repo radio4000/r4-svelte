@@ -64,7 +64,7 @@ Keep proving this locally. It is one of the easiest ways to lie to yourself.
 
 Always import from `$lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db` directly.
 
-The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), adds performance instrumentation, and is the verified path for app behavior.
+The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), cleans up replaced live query collections, and is the verified path for app behavior. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ### `queryFn` returns full truth for that fetch shape
 
@@ -184,6 +184,12 @@ let hasMore = $derived(query.data?.length >= paginatedLimit)
 ```
 
 Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/docs/tanstack/channels`.
+
+Caveats learned the hard way:
+
+- `.offset()` on a live query is applied locally by d2ts, not forwarded to Supabase. The sync layer always fetches from row 0 with `limit = offset + pageSize`. Do not use `.offset()` for server-side pagination.
+- For paged views, use `limit = currentPage * pageSize` (accumulate) and `.slice()` locally. The `queryFn` should delta-fetch: look up cached results for the same query shape with a smaller limit and only fetch the new rows. See `channels.ts` queryFn for the pattern.
+- Each dep change in `useLiveQuery` creates a new `createLiveQueryCollection`. Our wrapper calls `cleanup()` on the old collection to stop its d2ts pipeline and pending callbacks. Without this, stale collections cause delayed re-renders.
 
 ## references
 

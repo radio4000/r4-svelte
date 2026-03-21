@@ -122,10 +122,9 @@
 		filter === 'featured'
 			? 50
 			: isPaged
-				? pageSize
+				? currentPage * pageSize
 				: Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
 	)
-	const queryOffset = $derived(isPaged ? (currentPage - 1) * pageSize : 0)
 	const favoriteIds = $derived(follows.followedIds)
 
 	// Reactive broadcast IDs for the broadcasting filter
@@ -163,58 +162,45 @@
 		imported: () => appState.local_channel_ids ?? []
 	}
 
-	// Fetch channels driven by the active filter + sort
-	// deps: reactive values used inside the callback must be listed so the
-	// $derived.by() in useLiveQuery re-creates the collection when they change.
-	const channelsQuery = useLiveQuery(
-		(q) => {
-			let base = q.from({ch: channelsCollection})
-			if (!capabilities.globalBrowse) {
-				return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+	// Fetch channels driven by the active filter + sort.
+	// No deps array needed — Svelte auto-tracks reactive reads in the callback.
+	const channelsQuery = useLiveQuery((q) => {
+		let base = q.from({ch: channelsCollection})
+		if (!capabilities.globalBrowse) {
+			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+		}
+		const localIds = localIdFilters[filter]?.()
+		if (localIds) {
+			if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			base = base.where(({ch}) => inArray(ch.id, localIds))
+		} else if (filter === 'featured') {
+			base = base
+				.where(({ch}) => gte(ch.track_count, 10))
+				.where(({ch}) => not(isNull(ch.image)))
+				.orderBy(({ch}) => ch.latest_track_at, 'desc')
+		} else {
+			const minTracks = filterMinTracks[filter]
+			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
+			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
+		}
+		if (filter !== 'featured') {
+			const col = sortColumns[order]
+			if (col) {
+				base = base.orderBy(
+					({ch}) => ch[col],
+					order === 'shuffle' ? 'asc' : orderDirection || 'desc'
+				)
 			}
-			const localIds = localIdFilters[filter]?.()
-			if (localIds) {
-				if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-				base = base.where(({ch}) => inArray(ch.id, localIds))
-			} else if (filter === 'featured') {
-				base = base
-					.where(({ch}) => gte(ch.track_count, 10))
-					.where(({ch}) => not(isNull(ch.image)))
-					.orderBy(({ch}) => ch.latest_track_at, 'desc')
-			} else {
-				const minTracks = filterMinTracks[filter]
-				if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
-				if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
-			}
-			if (filter !== 'featured') {
-				const col = sortColumns[order]
-				if (col) {
-					base = base.orderBy(
-						({ch}) => ch[col],
-						order === 'shuffle' ? 'asc' : orderDirection || 'desc'
-					)
-				}
-			}
-			base = base.limit(queryLimit)
-			if (queryOffset) base = base.offset(queryOffset)
-			return base
-		},
-		[
-			() => queryLimit,
-			() => queryOffset,
-			() => filter,
-			() => order,
-			() => orderDirection,
-			() => broadcastIds,
-			() => favoriteIds,
-			() => shuffleKey
-		]
-	)
+		}
+		base = base.limit(queryLimit)
+		return base
+	})
 	const channelsRaw = $derived(channelsQuery.data ?? [])
-	// For featured: score and take top 12; paged views already return one page via offset; otherwise all
+	// For featured: score and take top 12; paged views slice locally; otherwise all
 	const channels = $derived.by(() => {
 		if (filter === 'featured')
 			return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 		return channelsRaw
 	})
 	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
@@ -290,8 +276,7 @@
 
 	let stableChannels = $state(/** @type {typeof channels} */ ([]))
 	$effect(() => {
-		// With offset pagination the query returns exactly one page.
-		// Keep showing the previous page while the next one loads.
+		// Keep showing the previous page while the next one loads
 		if (!channelsQuery.isLoading && channels.length > 0) stableChannels = channels
 	})
 	const orderedChannels = $derived(isPaged ? stableChannels : channels)
@@ -558,7 +543,8 @@
 	.layout {
 		position: relative;
 		&.layout--map,
-		&.layout--infinite {
+		&.layout--infinite,
+		&.layout--tuner {
 			display: flex;
 			flex-direction: column;
 			flex-grow: 1;
@@ -566,8 +552,12 @@
 		&.layout--infinite :global(.canvas-wrapper) {
 			flex: 1;
 		}
+		&.layout--tuner :global(.scanner) {
+			flex: 1;
+		}
 		&.layout--infinite .filtermenu,
-		&.layout--map .filtermenu {
+		&.layout--map .filtermenu,
+		&.layout--tuner .filtermenu {
 			position: absolute;
 			top: 0;
 			left: 0;

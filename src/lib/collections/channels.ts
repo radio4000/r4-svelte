@@ -154,9 +154,29 @@ export const channelsCollection = createCollection<Channel, string>({
 				if (error) throw error
 				return [...localMatches, ...(data || [])] as Channel[]
 			}
-			log.info('channels queryFn', p)
 			const limit =
 				ctx.meta?.loadSubsetOptions?.limit ?? (p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE)
+
+			// Find the largest cached result for this query shape (same filters/sort, smaller limit).
+			// This avoids re-fetching rows we already have when the limit grows (pagination).
+			const baseKey: (string | number)[] = ['channels']
+			if (p.coordinatesNotNull) baseKey.push('geo')
+			if (p.imageNotNull && p.trackCountGte) baseKey.push('artwork')
+			else if (p.trackCountGte) baseKey.push('minTracks', p.trackCountGte)
+			let cached: Channel[] = []
+			const queries = queryClient.getQueriesData<Channel[]>({queryKey: baseKey})
+			for (const [, data] of queries) {
+				if (data && data.length > cached.length && data.length <= limit) {
+					cached = data
+				}
+			}
+			if (cached.length >= limit) {
+				log.info('channels queryFn (cached)', {limit, cached: cached.length})
+				return cached.slice(0, limit)
+			}
+
+			const fetchFrom = cached.length
+			log.info('channels queryFn', {limit, fetchFrom, cached: cached.length})
 			const view = p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
 			let query = sdk.supabase.from(view).select('*')
 			if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
@@ -164,10 +184,10 @@ export const channelsCollection = createCollection<Channel, string>({
 			if (p.coordinatesNotNull)
 				query = query.not('latitude', 'is', null).not('longitude', 'is', null)
 			if (!p.shuffle) query = query.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
-			query = query.range(p.offset ?? 0, (p.offset ?? 0) + limit - 1)
+			query = query.range(fetchFrom, limit - 1)
 			const {data, error} = await query
 			if (error) throw error
-			return (data ?? []) as Channel[]
+			return [...cached, ...(data ?? [])] as Channel[]
 		}
 	}),
 	onInsert: async ({transaction}) => {

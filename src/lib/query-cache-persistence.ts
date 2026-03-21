@@ -149,8 +149,10 @@ const persistOptions = {
 	dehydrateOptions: {shouldDehydrateQuery}
 }
 
-export const cacheReady = persistQueryClientRestore(persistOptions)
+// TEMP DISABLED - debugging pagination/data issues
+export const cacheReady: Promise<void> = Promise.resolve()
 
-cacheReady.then(() => {
-	persistQueryClientSubscribe(persistOptions)
-})
+// export const cacheReady = persistQueryClientRestore(persistOptions)
+// cacheReady.then(() => {
+// 	persistQueryClientSubscribe(persistOptions)
+// })
