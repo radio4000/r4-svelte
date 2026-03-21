@@ -143,7 +143,7 @@
 
 		{#if showAutoButton}
 			<AutoRadioButton
-				className="auto-btn"
+				className="auto-btn active"
 				synced={autoGhost}
 				title={autoTitle}
 				ariaLabel={autoTitle}

@@ -252,7 +252,7 @@
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
-						synced={!channelHasAutoDrifted}
+						synced={channelHasAuto && !channelHasAutoDrifted}
 						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>

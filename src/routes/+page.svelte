@@ -336,8 +336,8 @@
 								<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 							<AutoRadioButton
-								className="btn ghost{userChannelHasAuto ? ' active' : ''}"
-								synced={!userChannelHasAutoDrifted}
+								className="btn{userChannelHasAuto ? ' active' : ''}"
+								synced={userChannelHasAuto && !userChannelHasAutoDrifted}
 								title={m.auto_radio_resync()}
 								onclick={toggleUserChannelAutoRadio}
 							/>

@@ -131,6 +131,11 @@ button.auto-live-btn.ghost .oi-infinite .oi-vector,
 	stroke: url('#r5-auto-live-gradient');
 }
 
+/* active + drifted: solid accent stroke (no animation) */
+button.auto-live-btn.active:not(.ghost) .oi-infinite .oi-vector {
+	stroke: var(--accent-9);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	button.auto-live-btn.ghost .oi-infinite .oi-vector,
 	.btn.auto-live-btn.ghost .oi-infinite .oi-vector {
