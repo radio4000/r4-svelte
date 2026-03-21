@@ -2,8 +2,8 @@
 
 Search pages share one input grammar but two result engines:
 
-- **Track results** go through the [View pipeline](views.md): `queryView(view)` handles channel scoping, tag filtering, FTS, fuzzy post-filter, and sort/pagination.
-- **Channel results** run separately via `searchChannelsCombined()` in `search.js`: slug lookup + remote FTS + local fuzzy, deduplicated by ID. Not part of the View — channel cards are a search-page feature.
+- Track results go through the [View pipeline](views.md): `queryView(view)` handles channel scoping, tag filtering, FTS, fuzzy post-filter, and sort/pagination.
+- Channel results run separately via `searchChannelsCombined()` in `search.js`: slug lookup + remote FTS + local fuzzy, deduplicated by ID. Not part of the View — channel cards are a search-page feature.
 
 ## Query syntax
 
@@ -19,13 +19,13 @@ Search pages share one input grammar but two result engines:
 
 ## URL format (SearchURL)
 
-Page URLs use the **SearchURL** format: human query text in `?q=`, display options as sibling params (`/search?q=@ko002 #jazz miles&order=created`). This is not the same as a **ViewURI** — see [two serializations](views.md#two-serializations). Both formats preserve all View fields.
+Page URLs use the `SearchURL` format: human query text in `?q=`, display options as sibling params (`/search?q=@ko002 #jazz miles&order=created`). Not the same as a `ViewURI` — see [two serializations](views.md#two-serializations).
 
 `SearchUrl` (from `search-url.svelte.js`) syncs the text input to the page URL. It debounces input, runs `parseView(q)` → `viewToUrl()`, and writes the URL. On load, `viewFromUrl(page.url)` reconstructs the View. The debounced sync only writes non-empty queries — clearing the input doesn't update the URL until submit.
 
 ## The search page
 
-Two input paths write the same `?q=` URL: the **smart input** (text field, via `SearchUrl`) and the **ViewsBar** (saved view tabs, filter/display controls, via `viewToUrl`/`viewFromUrl`). They stay in sync — ViewsBar changes call `seedInput`, and smart input changes flow to ViewsBar through the URL.
+Two input paths write the same `?q=` URL: the smart input (text field, via `SearchUrl`) and the `ViewsBar` (saved view tabs, filter/display controls, via `viewToUrl`/`viewFromUrl`). They stay in sync — `ViewsBar` changes call `seedInput`, and smart input changes flow to `ViewsBar` through the URL.
 
 Dedicated routes are projections of the same search language, trimmed to one result engine:
 

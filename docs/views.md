@@ -10,31 +10,17 @@ type ViewSource = {channels?; tags?; tagsMode?; search?}
 type View = {sources: ViewSource[]; order?; direction?; limit?; offset?}
 ```
 
-A View has two conceptual halves: **query** (sources — what to fetch) and **display** (order, direction, limit, offset — how to show it). They live in one flat object at runtime, but the distinction matters for serialization and strategy selection.
+A View has two conceptual halves: `query` (sources — what to fetch) and `display` (order, direction, limit, offset — how to show it). They live in one flat object at runtime, but the distinction matters for serialization and strategy selection.
 
 ## Two serializations
 
-A View has two string forms with distinct jobs:
+A View has two lossless string forms:
 
-**ViewURI** (`serializeView(view)`) — lossless identity for storage and comparison. Preserves all fields including `tagsMode`. Saved views store this in their `uri` field. `viewURI(view)` normalizes first, for equality checks.
+`ViewURI` (`serializeView(view)`) — compact identity for storage and comparison. A string using `@mentions`, `#hashtags`, and free text, with options after `?`. Tags refer to track tags. The `r4://` prefix is optional. Saved views store this in their `uri` field. `viewURI(view)` normalizes first, for equality checks.
 
-**SearchURL** (`viewToUrl(basePath, view)`) — human-readable page URL for navigation. The query text goes in `?q=`, and display options (`order`, `direction`, `limit`, `offset`, `tagsMode`) become sibling URL params. `viewFromUrl(url)` reads this format back.
+`SearchURL` (`viewToUrl(basePath, view)`) — page URL for navigation. Query text goes in `?q=`, display options become sibling URL params. `viewFromUrl(url)` reads it back.
 
-Both formats are now lossless for all supported View fields. The difference is structural: ViewURI is a single compact string (`@ko002 #jazz?order=shuffle&tagsMode=all`), SearchURL splits query from options across URL params (`?q=@ko002 #jazz&order=shuffle&tagsMode=all`).
-
-Example: `/search?q=@ko002 #jazz&order=created`
-
-`viewLabel(view)` returns the human query text (sources only, no options) — this is what goes into `?q=`.
-
-For more, see lib/views.ts, lib/views.svelte.ts, lib/search-url.svelte.js, lib/collections/views.ts.
-
----
-
-## What is a ViewURI?
-
-A string using @mentions, #hashtags, and free text for search (server-side FTS + client-side fuzzy). Options follow `?`. Tags always refer to track tags, not channel tags. The `r4://` prefix is optional.
-
-**Multi-source (experimental):** The parser and ViewsBar support `;`-separated multi-source Views (e.g. `@alice #jazz;@bob #techno`). Parse/serialize/normalize handle multiple sources correctly, but the runtime query path (`queryView`, `resolveViewStrategy`, all search routes) reads only `sources[0]`. Multi-source is not yet wired at query time.
+The difference is structural: ViewURI is one string (`@ko002 #jazz?order=shuffle`), SearchURL splits across params (`?q=@ko002 #jazz&order=shuffle`). `viewLabel(view)` returns the human query text (sources only, no options) — this is what goes into `?q=`.
 
 ```
 @ko002
@@ -45,6 +31,8 @@ r4://@ko002 #jazz
 @alice #jazz;@bob #techno;@coco miles davis
 @alice;@bob;@coco?order=shuffle&limit=100
 ```
+
+Multi-source (experimental): `;`-separated sources parse and serialize correctly, but `queryView` reads only `sources[0]` at runtime.
 
 ## Query strategies
 
@@ -72,6 +60,6 @@ After `?`, global to all sources:
 
 ## Saving and pinning views
 
-A **SavedView** gives a View a name and persists it to localStorage: `{id, name, uri, position?, description?, created_at}`. `uri` is `serializeView(view)`.
+A `SavedView` gives a View a name and persists it to localStorage: `{id, name, uri, position?, description?, created_at}`. `uri` is `serializeView(view)`.
 
 A SavedView with a non-null `position` appears in the sidebar. `pinView(id)` appends to the end, `unpinView(id)` clears it, `reorderPinnedViews(orderedIds)` updates sort weights.
