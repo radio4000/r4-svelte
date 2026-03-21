@@ -27,17 +27,6 @@
 </article>
 
 <style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin-block: 0.5rem 1rem;
-	}
-
-	h1 {
-		margin: 0;
-	}
-
 	menu {
 		margin: 0 0 1rem;
 	}

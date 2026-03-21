@@ -14,12 +14,16 @@
 	padding-inline: 0.5rem;
 }
 
-/* Page header with back-link: used in settings and import pages */
+/* Page header with back-link */
 .focused header {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	margin-block-start: 0.5rem;
+	margin-block: 0.5rem 1rem;
+
+	h1 {
+		margin: 0;
+	}
 }
 
 /* Vertically center content, a bit, for pages with less content */

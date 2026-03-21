@@ -7,7 +7,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 Add things here that we want to do before putting this live on radio4000.com
 
 - set up player.radio4000.com with new website that can serve as the embed iframe target. Could be this same app, but only the /embed route.
-- double-test sign up, also with providers
 - is it obv how to reach us for help?
 - Homepage: feed empty state says "No tracks added in the last 7 days" but could load older data progressively as user scrolls followed channels.
 

@@ -62,15 +62,6 @@
 </article>
 
 <style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
-	}
-	h1 {
-		margin: 0;
-	}
 	.box {
 		margin: 1rem 0;
 		border: 1px solid var(--gray-6);

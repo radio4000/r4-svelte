@@ -56,7 +56,7 @@
 	<title>{m.views_pins_title()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
 		<BackLink href={resolve('/settings')} />
 		<h1>{m.views_pins_title()}</h1>
@@ -114,15 +114,6 @@
 </article>
 
 <style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
-	}
-	h1 {
-		margin: 0;
-	}
 	menu {
 		margin-block: 1rem;
 	}
