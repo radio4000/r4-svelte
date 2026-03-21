@@ -264,6 +264,16 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
+		{#if !isSignedIn && !appState.show_welcome_hint}
+			<button
+				class="btn"
+				style="margin-left: auto"
+				onclick={() => (appState.show_welcome_hint = true)}
+				title={m.welcome_title({appName})}
+			>
+				<Icon icon="circle-info" />
+			</button>
+		{/if}
 		{#if userChannel && (userChannelIsPlaying || userChannelIsBroadcasting)}
 			<BroadcastControls
 				deckId={userChannelLoadedDeckId}
@@ -595,17 +605,6 @@
 					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 				</menu>
 			</section>
-		{:else}
-			<menu class="filtermenu">
-				<button
-					class="btn"
-					style="margin-left: auto"
-					onclick={() => (appState.show_welcome_hint = true)}
-					title={m.welcome_title({appName})}
-				>
-					<Icon icon="circle-info" />
-				</button>
-			</menu>
 		{/if}
 
 		{#if featuredChannels.length}
@@ -674,7 +673,7 @@
 	.homepage {
 		padding: 0.5rem;
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
 		flex: 1;
 		min-height: 0;
 
@@ -739,7 +738,7 @@
 
 	.dashboard-grid {
 		display: flex;
-		flex-direction: column;
+		flex-wrap: wrap;
 		gap: 0.4rem;
 	}
 
