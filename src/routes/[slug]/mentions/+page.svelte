@@ -90,7 +90,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.mentions_title({handle: slug})}</title>
+	<title>{m.mentions_title({handle: `@${slug}`})}</title>
 </svelte:head>
 
 <ChannelNavControlsPortal controls={navControls} />
@@ -112,7 +112,7 @@
 
 <section>
 	<Subpage
-		title={m.mentions_title({handle: slug})}
+		title={m.mentions_title({handle: `@${slug}`})}
 		loading={mentionsQuery.isPending}
 		error={mentionsQuery.isError}
 		errorText={m.mentions_error()}

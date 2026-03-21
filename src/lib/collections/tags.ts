@@ -15,13 +15,12 @@ export const tagsCollection = createCollection<Tag, string>(
 		getKey: (item) => item.tag,
 		staleTime: 60 * 60 * 1000,
 		queryFn: async () => {
-			// @ts-expect-error — 'tags' is a DB view not in generated types
 			const {data, error} = await sdk.supabase
 				.from('tags')
 				.select('tag, count')
 				.order('count', {ascending: false})
 			if (error) throw error
-			return (data ?? []) as unknown as Tag[]
+			return data ?? []
 		}
 	})
 )

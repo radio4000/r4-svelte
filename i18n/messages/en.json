@@ -449,7 +449,7 @@
 	"mentions_error": "Could not load mentions right now.",
 	"mentions_loading": "Loading mentions…",
 	"mentions_search_placeholder": "Search {count} tracks mentioning {handle}",
-	"mentions_title": "Mentions for @{handle}",
+	"mentions_title": "Mentions for {handle}",
 	"mentions_title_fallback": "Mentions",
 	"modal_close_label": "Close modal",
 	"nav_about": "About",
