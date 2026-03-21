@@ -1,6 +1,9 @@
 # Search
 
-Type words, see matching channels and tracks. The query syntax, View pipeline, and FTS all serve that loop.
+Search pages share one input grammar but two result engines:
+
+- Track results go through the [View pipeline](views.md): `queryView(view)` handles channel scoping, tag filtering, FTS, fuzzy post-filter, and sort/pagination.
+- Channel results run separately via `searchChannelsCombined()` in `search.js`: slug lookup + remote FTS + local fuzzy, deduplicated by ID. Not part of the View — channel cards are a search-page feature.
 
 ## Query syntax
 
@@ -12,37 +15,27 @@ Type words, see matching channels and tracks. The query syntax, View pipeline, a
 - `@ko002 #jazz miles` — tracks from ko002 tagged jazz matching "miles"
 - `@ko002 @oskar house` — tracks from ko002 and oskar matching "house"
 
-`parseSearchQueryToView` parses a query string into a [View](views.md). The View is what actually fetches data.
+`parseView` (from `views.ts`) parses a query string into a [View](views.md). The View drives track results. The first source's `@slug` mentions and `search` text also feed into `searchChannelsCombined` for channel cards.
 
-## URL format
+## URL format (SearchURL)
 
-The URL `?q=@ko002 #jazz miles` is a human-friendly entry point. On arrival, the search page resolves it into canonical view params (`?channels=ko002&tags=jazz&search=miles`) and rewrites the URL. The `?q=` form is never stored or saved — it's a one-way door.
+Page URLs use the `SearchURL` format: human query text in `?q=`, display options as sibling params (`/search?q=@ko002 #jazz miles&order=created`). Not the same as a `ViewURI` — see [two serializations](views.md#two-serializations).
 
-One gotcha: `#` is the URL fragment separator. The browser splits `?q=@ko002 #jazz` into query `q=@ko002 ` and fragment `#jazz`. The page recombines `searchParams.get('q')` with `url.hash` before parsing.
-
-View params are the format of record. ViewsBar reads and writes them. Saved views store them. Shared links should use them.
-
-## Results
-
-A search returns **channels** and **tracks** as parallel result sets.
-
-Track results go through the [View pipeline](views.md) — same `queryView` that powers `/_debug/views`.
-
-Channel results run separately: exact slug lookup (`@ko002` finds the channel card), remote FTS (channels whose name/description matches), and local fuzzy search (channels already in memory). These are not part of the View — they're a search-page feature.
+`SearchUrl` (from `search-url.svelte.js`) syncs the text input to the page URL. It debounces input, runs `parseView(q)` → `viewToUrl()`, and writes the URL. On load, `viewFromUrl(page.url)` reconstructs the View. The debounced sync only writes non-empty queries — clearing the input doesn't update the URL until submit.
 
 ## The search page
 
-Two input paths that write the same URL format:
+Two input paths write the same `?q=` URL: the smart input (text field, via `SearchUrl`) and the `ViewsBar` (saved view tabs, filter/display controls, via `viewToUrl`/`viewFromUrl`). They stay in sync — `ViewsBar` changes call `seedInput`, and smart input changes flow to `ViewsBar` through the URL.
 
-1. **Smart input** — text field at the top. Debounces, resolves `@`/`#` syntax, writes view params to the URL.
-2. **ViewsBar** — below the input. Saved view tabs, filter/display controls. Reads and writes view params directly.
+Dedicated routes are projections of the same search language, trimmed to one result engine:
 
-When ViewsBar changes something, the smart input syncs to reflect the current view. When the smart input resolves a query, ViewsBar picks it up from the URL.
+- `/search` — mixed results: View-backed tracks + channel discovery
+- `/search/tracks` — View-backed track results only (same `@channel`, `#tag`, free-text syntax)
+- `/search/channels` — channel discovery only (plain text + `@slug` mentions)
 
-Dedicated routes keep the same search model, trimmed to one result type:
+## Two-stage fetch and refine
 
-- `/search/channels` searches channels only. It accepts plain text and exact `@slug` mentions.
-- `/search/tracks` searches tracks only and still accepts the same `@channel`, `#tag`, and free-text view syntax as `/search`.
+Track results use a broad-then-narrow approach: fetch broadly (FTS, Supabase overlaps, or channel dump), then refine locally with `processViewTracks` (tag post-filtering for `tagsMode=all`, fuzzy search, sort/shuffle). See [query strategies](views.md#query-strategies) for which stage does what per strategy.
 
 ## FTS details
 
@@ -50,8 +43,11 @@ We don't use the SDK's built-in search — it only does websearch-style matching
 
 ## Files
 
-- `src/routes/search/+page.svelte` — resolves `?q=` on arrival, wires up both input paths
+- `src/lib/search-url.svelte.js` — `SearchUrl` class: debounced input ↔ URL sync for all search routes
+- `src/routes/search/+page.svelte` — combined search (channels + tracks)
+- `src/routes/search/tracks/+page.svelte` — tracks only
+- `src/routes/search/channels/+page.svelte` — channels only
 - `src/lib/search-fts.js` — `buildFtsFilter`, `searchChannels`, `searchTracks`
-- `src/lib/search.js` — `searchAll`, `findChannelBySlug`, `fuzzySearch`, `searchChannelsLocal`, `searchTracksLocal`
+- `src/lib/search.js` — `searchChannelsCombined`, `findChannelBySlug`
 - `src/lib/components/search-input.svelte` — the smart input component
 - See also [views.md](views.md) — the View pipeline that powers track results

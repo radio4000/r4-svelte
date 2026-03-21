@@ -85,7 +85,7 @@
 	<title>{m.page_title_history()}</title>
 </svelte:head>
 
-<article>
+<article class="focused">
 	<header class="constrained">
 		<h1>{m.history_title()}</h1>
 		<p>{m.history_local_note()}</p>
@@ -147,10 +147,6 @@
 </article>
 
 <style>
-	header {
-		margin-bottom: 1rem;
-	}
-
 	.header-actions {
 		padding-inline-start: 0.5rem;
 		justify-content: space-between;

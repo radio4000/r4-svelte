@@ -199,7 +199,7 @@
 	<title>{m.page_title_stats()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
 		<h1>{m.stats_heading()}</h1>
 		<p>{m.stats_intro()}</p>
@@ -376,12 +376,6 @@
 </article>
 
 <style>
-	article {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
 	section {
 		p,
 		ol {

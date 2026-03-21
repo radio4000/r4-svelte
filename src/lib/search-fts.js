@@ -2,7 +2,7 @@ import {sdk} from '@radio4000/sdk'
 
 /**
  * Pure FTS utilities — no collection deps, importable from anywhere.
- * search.js re-exports these and adds collection-dependent orchestration (searchAll).
+ * search.js imports these and adds collection-dependent orchestration.
  */
 
 const RE_WEBSEARCH = /\bor\b|^-|\s-|"/

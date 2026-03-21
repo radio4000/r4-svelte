@@ -13,7 +13,6 @@ export type View = {
 	direction?: 'asc' | 'desc'
 	limit?: number
 	offset?: number
-	exclude?: string[]
 }
 
 /** A serialized View as a compact string (e.g. `@alice #jazz;@bob #techno synth?order=shuffle`). */
@@ -95,8 +94,6 @@ export function parseView(input: string): View {
 				if (!s.tagsMode && s.tags?.length) s.tagsMode = 'all'
 			}
 		}
-		const exclude = p.get('exclude')
-		if (exclude) view.exclude = exclude.split(',').filter(Boolean)
 	}
 	return view
 }
@@ -111,9 +108,7 @@ export function serializeView(view: View): ViewURI {
 	if (view.offset) options.set('offset', String(view.offset))
 	if (view.sources.some((s) => s.tagsMode === 'all')) options.set('tagsMode', 'all')
 	const optStr = options.toString()
-	const excludeStr = view.exclude?.length ? `exclude=${view.exclude.join(',')}` : ''
-	const allOpts = [optStr, excludeStr].filter(Boolean).join('&')
-	return `${sourcesStr}${allOpts ? `?${allOpts}` : ''}` as ViewURI
+	return `${sourcesStr}${optStr ? `?${optStr}` : ''}` as ViewURI
 }
 
 /** Extract a View from a URL. Reads `q` param as the human query, plus separate `order`/`direction`/`limit`/`offset` params. */
@@ -121,6 +116,12 @@ export function viewFromUrl(url: URL): View {
 	const q = url.searchParams.get('q') ?? ''
 	const view = parseView(decodeURIComponent(q))
 	parseOptions(url.searchParams, view)
+	const tagsMode = url.searchParams.get('tagsMode')
+	if (tagsMode === 'all') {
+		for (const s of view.sources) {
+			if (!s.tagsMode && s.tags?.length) s.tagsMode = 'all'
+		}
+	}
 	return view
 }
 
@@ -132,6 +133,20 @@ export function viewLabel(view: View): string {
 		.map((s) => serializeSource(s))
 		.filter(Boolean)
 		.join('; ')
+}
+
+/** Build a URL string from a View and a base path (e.g. '/search', '/search/tracks'). */
+export function viewToUrl(basePath: string, view: View): string {
+	const params = new URLSearchParams()
+	const q = viewLabel(view)
+	if (q) params.set('q', q)
+	if (view.order) params.set('order', view.order)
+	if (view.direction) params.set('direction', view.direction)
+	if (view.limit) params.set('limit', String(view.limit))
+	if (view.offset) params.set('offset', String(view.offset))
+	if (view.sources.some((s) => s.tagsMode === 'all')) params.set('tagsMode', 'all')
+	const str = params.toString()
+	return str ? `${basePath}?${str}` : basePath
 }
 
 /** Remove empty fields so two semantically equivalent views compare equal. */
@@ -148,14 +163,12 @@ export function normalizeView(view?: View): View | undefined {
 			return Object.keys(normalized).length ? normalized : undefined
 		})
 		.filter((s): s is ViewSource => s !== undefined)
-	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset && !view.exclude?.length)
-		return undefined
+	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset) return undefined
 	const normalized: View = {sources: sources.length ? sources : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction
 	if (view.limit) normalized.limit = view.limit
 	if (view.offset) normalized.offset = view.offset
-	if (view.exclude?.length) normalized.exclude = view.exclude
 	return normalized
 }
 

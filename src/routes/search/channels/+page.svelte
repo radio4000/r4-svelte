@@ -1,105 +1,47 @@
 <script>
 	import {page} from '$app/state'
-	import {afterNavigate, goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {Debounced} from 'runed'
-	import {searchChannels} from '$lib/search-fts'
-	import {findChannelBySlug, parseMentionQuery, searchChannelsLocal} from '$lib/search'
+	import {SearchUrl} from '$lib/search-url.svelte.js'
+	import {searchChannelsCombined} from '$lib/search'
+	import {viewFromUrl} from '$lib/views'
 	import {channelsCollection} from '$lib/collections/channels'
+	import {getTopChannelSlugs} from '$lib/utils'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import SearchTabs from '$lib/components/search-tabs.svelte'
+	import SearchShell from '$lib/components/search-shell.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
+	const search = new SearchUrl('/search/channels')
 
-	let inputValue = $state(page.url.searchParams.get('q') ?? '')
-	const debouncedInput = new Debounced(() => inputValue, 300)
-
-	let inputSeeded = !!page.url.searchParams.get('q')
-	afterNavigate(({type}) => {
-		if (type === 'goto') return
-		const q = page.url.searchParams.get('q') ?? ''
-		inputValue = q
-		inputSeeded = !!q
-	})
-
-	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) return
-		if (inputSeeded) {
-			inputSeeded = false
-			return
-		}
-		goto(`/search/channels?q=${encodeURIComponent(q)}`, {replaceState: true})
-	})
-
-	function handleSubmit(e) {
-		e.preventDefault()
-		const q = inputValue.trim()
-		if (!q) {
-			goto('/search/channels', {replaceState: true})
-			return
-		}
-		debouncedInput.setImmediately(inputValue)
-	}
-
-	const hasFilter = $derived(!!debouncedInput.current.trim())
-	const featuredChannelSlugs = $derived.by(() => {
-		return [...channelsCollection.state.values()]
-			.filter((channel) => channel?.slug)
-			.toSorted(
-				(a, b) =>
-					(b.track_count ?? 0) - (a.track_count ?? 0) ||
-					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
-			)
-			.slice(0, 6)
-			.map((channel) => channel.slug)
-	})
+	// URL is the single source of truth
+	const view = $derived(viewFromUrl(page.url))
+	const q = $derived(view.sources[0] ?? {})
+	const hasFilter = $derived(!!q.channels?.length || !!q.search)
+	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
 
 	/** @type {import('$lib/types.ts').Channel[]} */
 	let channels = $state([])
 	let channelsLoading = $state(false)
 
 	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) {
+		if (!hasFilter) {
 			channels = []
 			return
 		}
-		const {channelSlugs, trackQuery} = parseMentionQuery(q)
 		channelsLoading = true
 		let stale = false
-		/** @type {Promise<import('$lib/types').Channel[]>[]} */
-		const promises = []
-		if (channelSlugs.length) {
-			promises.push(
-				...channelSlugs.map((slug) => findChannelBySlug(slug).then((channel) => (channel ? [channel] : [])))
-			)
-		}
-		if (trackQuery) {
-			const local = searchChannelsLocal(trackQuery, [...channelsCollection.state.values()])
-			promises.push(searchChannels(trackQuery))
-			if (local.length) promises.push(Promise.resolve(local))
-		}
-		if (!promises.length) {
-			channels = []
-			channelsLoading = false
-			return
-		}
-		Promise.all(promises)
+		searchChannelsCombined({
+			slugs: q.channels,
+			query: q.search,
+			localChannels: [...channelsCollection.state.values()]
+		})
 			.then((results) => {
-				if (stale) return
-				// eslint-disable-next-line svelte/prefer-svelte-reactivity
-				const seen = new Set()
-				channels = results.flat().filter((c) => {
-					if (seen.has(c.id)) return false
-					seen.add(c.id)
-					return true
-				})
-				channelsLoading = false
+				if (!stale) {
+					channels = results
+					channelsLoading = false
+				}
 			})
 			.catch(() => {
 				if (!stale) channelsLoading = false
@@ -115,13 +57,7 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<header class="search-header">
-		<SearchTabs />
-		<form onsubmit={handleSubmit}>
-			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-			<SearchInput id="{uid}-search" bind:value={inputValue} placeholder={m.header_search_placeholder()} autofocus />
-		</form>
-	</header>
+	<SearchShell {uid} bind:value={search.value} onsubmit={search.handleSubmit} />
 
 	{#if hasFilter}
 		{#if channelsLoading}
@@ -133,7 +69,7 @@
 				{/each}
 			</ul>
 		{:else}
-			<p>{m.search_no_results()} "{inputValue}"</p>
+			<p>{m.search_no_results()} "{search.value}"</p>
 		{/if}
 	{:else}
 		<div class="empty-tip">
@@ -158,31 +94,6 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1;
-	}
-
-	.search-header {
-		position: sticky;
-		top: 0;
-		background: var(--body-bg);
-		z-index: 3;
-		padding: 0.5rem;
-		display: flex;
-		align-items: flex-start;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.search-header :global(.search-tabs) {
-		flex-shrink: 0;
-	}
-
-	.search-header form {
-		flex: 1 1 0;
-		min-width: min(200px, 100%);
-	}
-
-	.search-header form :global(input) {
-		width: 100%;
 	}
 
 	article > p {

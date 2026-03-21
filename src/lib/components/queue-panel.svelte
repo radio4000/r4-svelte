@@ -1,7 +1,7 @@
 <script>
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {inArray} from '@tanstack/db'
-	import {fuzzySearch} from '$lib/search'
+	import {fuzzySearch} from '$lib/utils'
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
@@ -162,7 +162,7 @@
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-5);
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.2rem;
 	}
 
 	.search-container :global(.search-input) {

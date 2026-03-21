@@ -40,7 +40,7 @@
 	<title>{m.account_change_email()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
 		<BackLink href={resolve('/settings/account')} />
 		<h1>{m.account_change_email()}</h1>
@@ -78,15 +78,6 @@
 </article>
 
 <style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
-	}
-	h1 {
-		margin: 0;
-	}
 	form {
 		margin-block: 1rem;
 	}

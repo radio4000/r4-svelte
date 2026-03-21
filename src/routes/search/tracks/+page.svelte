@@ -1,130 +1,38 @@
 <script>
 	import {page} from '$app/state'
-	import {afterNavigate, goto} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {Debounced} from 'runed'
-	import {queryView, getAutoDecksForView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel} from '$lib/views'
-	import ViewsBar from '$lib/components/views-bar.svelte'
+	import {SearchUrl} from '$lib/search-url.svelte.js'
+	import {queryView} from '$lib/views.svelte'
+	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
+	import SearchShell from '$lib/components/search-shell.svelte'
+	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
-	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import ButtonFeedback from '$lib/components/button-feedback.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import SearchTabs from '$lib/components/search-tabs.svelte'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
-	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import {getChannelTags} from '$lib/utils'
+	import {getTopChannelSlugs, getTopTagValues} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
 	const uid = $props.id()
-
-	let inputValue = $state(page.url.searchParams.get('q') ?? '')
-	const debouncedInput = new Debounced(() => inputValue, 300)
+	const search = new SearchUrl('/search/tracks')
 
 	// URL is the single source of truth
 	const view = $derived(viewFromUrl(page.url))
 	const q = $derived(view.sources[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
-	function viewToUrl(v) {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const params = new URLSearchParams()
-		const label = viewLabel(v)
-		if (label) params.set('q', label)
-		if (v.order) params.set('order', v.order)
-		if (v.direction) params.set('direction', v.direction)
-		if (v.limit) params.set('limit', String(v.limit))
-		const str = params.toString()
-		return str ? `/search/tracks?${str}` : '/search/tracks'
-	}
-
-	let inputSeeded = !!page.url.searchParams.get('q')
-	afterNavigate(({type}) => {
-		if (type === 'goto') return
-		const seeded = page.url.searchParams.get('q') ?? ''
-		inputValue = seeded
-		inputSeeded = !!seeded
-	})
-
-	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) return
-		if (inputSeeded) {
-			inputSeeded = false
-			return
-		}
-		const resolved = parseView(q)
-		goto(viewToUrl(resolved), {replaceState: true})
-	})
-
-	function handleSubmit(e) {
-		e.preventDefault()
-		const q = inputValue.trim()
-		if (!q) {
-			goto('/search/tracks', {replaceState: true})
-			return
-		}
-		debouncedInput.setImmediately(inputValue)
-	}
-
 	function onViewsBarChange(v) {
-		inputSeeded = true
-		inputValue = viewLabel(v)
-		goto(viewToUrl(v), {replaceState: true})
-	}
-
-	// Play / Queue
-	const deckKeys = $derived(Object.keys(appState.decks))
-	const multiDeck = $derived(deckKeys.length > 1)
-	const deckLabel = $derived(multiDeck ? `Deck ${deckKeys.indexOf(String(appState.active_deck_id)) + 1}` : '')
-
-	async function playSearchResults() {
-		if (!tracks.length) return
-		const ids = tracks.map((t) => t.id)
-		await playTrack(appState.active_deck_id, ids[0], null, 'play_search')
-		setPlaylist(appState.active_deck_id, ids, {title: inputValue.trim()})
-	}
-
-	function queueSearchResults() {
-		if (!tracks.length) return
-		addToPlaylist(
-			appState.active_deck_id,
-			tracks.map((t) => t.id)
-		)
+		search.seedInput(viewLabel(v))
+		goto(viewToUrl('/search/tracks', v), {replaceState: true})
 	}
 
 	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
 	const tracksLoading = $derived(viewQuery.loading)
-	const autoRadioTracks = $derived(toAutoTracks(tracks))
-	const canShowAutoRadio = $derived(hasAutoRadioCoverage(tracks))
-	const searchAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), view))
-	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
-	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
-	const featuredChannelSlugs = $derived.by(() => {
-		return [...channelsCollection.state.values()]
-			.filter((channel) => channel?.slug)
-			.toSorted(
-				(a, b) =>
-					(b.track_count ?? 0) - (a.track_count ?? 0) ||
-					(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
-			)
-			.slice(0, 6)
-			.map((channel) => channel.slug)
-	})
-	const featuredTags = $derived.by(() => {
-		const tracks = [...tracksCollection.state.values()]
-		if (!tracks.length) return []
-		return getChannelTags(tracks)
-			.slice(0, 12)
-			.map((tag) => tag.value)
-	})
+	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
+	const featuredTags = $derived(getTopTagValues([...tracksCollection.state.values()], 12))
 </script>
 
 <svelte:head>
@@ -132,18 +40,11 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<header class="search-header">
-		<SearchTabs />
-		<form onsubmit={handleSubmit}>
-			<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-			<SearchInput id="{uid}-search" bind:value={inputValue} placeholder={m.header_search_placeholder()} autofocus />
-		</form>
-		<ViewsBar {view} onchange={onViewsBarChange} />
-	</header>
+	<SearchShell {uid} bind:value={search.value} onsubmit={search.handleSubmit} {view} onviewchange={onViewsBarChange} />
 
 	{#if hasFilter}
 		{#if !tracksLoading && tracks.length === 0}
-			<p>{m.search_no_results()} "{inputValue || serializeView(view)}"</p>
+			<p>{m.search_no_results()} "{search.value || serializeView(view)}"</p>
 		{/if}
 
 		{#if tracksLoading}
@@ -156,25 +57,7 @@
 							? m.search_track_one({count: tracks.length})
 							: m.search_track_other({count: tracks.length})}
 					</h2>
-					<menu>
-						<ButtonFeedback onclick={playSearchResults}>
-							{#snippet successChildren()}<Icon icon="play-fill" />
-								{m.search_playing({count: tracks.length})}{/snippet}
-							<Icon icon="play-fill" />{multiDeck ? m.search_play_on_deck({deck: deckLabel}) : m.search_play_all()}
-						</ButtonFeedback>
-						<ButtonFeedback onclick={queueSearchResults}>
-							{#snippet successChildren()}<Icon icon="next-fill" />
-								{m.search_queued({count: tracks.length})}{/snippet}
-							<Icon icon="next-fill" />{multiDeck ? m.search_add_to_deck({deck: deckLabel}) : m.search_queue_all()}
-						</ButtonFeedback>
-						{#if canShowAutoRadio}
-							<AutoRadioButton
-								synced={isSearchAutoActive && !isSearchAutoDrifted}
-								title={isSearchAutoDrifted ? m.auto_radio_resync() : m.search_auto_radio_this()}
-								onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
-							/>
-						{/if}
-					</menu>
+					<SearchTrackMenu {tracks} title={search.value.trim()} {view} />
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
@@ -211,35 +94,6 @@
 		flex: 1;
 	}
 
-	.search-header {
-		position: sticky;
-		top: 0;
-		background: var(--body-bg);
-		z-index: 3;
-		padding: 0.5rem;
-		display: flex;
-		align-items: flex-start;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.search-header :global(.search-tabs) {
-		flex-shrink: 0;
-	}
-
-	.search-header form {
-		flex: 1 1 0;
-		min-width: min(200px, 100%);
-	}
-
-	.search-header form :global(input) {
-		width: 100%;
-	}
-
-	.search-header :global(.views-bar) {
-		flex-shrink: 0;
-	}
-
 	article > p {
 		margin-inline: 0.5rem;
 	}
@@ -252,12 +106,6 @@
 		padding-inline: 0.5rem;
 	}
 
-	.track-results > header > menu {
-		margin-left: 0;
-		flex-wrap: wrap;
-	}
-
-	menu,
 	section {
 		margin-bottom: 1rem;
 	}

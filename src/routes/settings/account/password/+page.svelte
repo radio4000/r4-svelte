@@ -44,7 +44,7 @@
 	<title>{m.account_change_password()}</title>
 </svelte:head>
 
-<article class="constrained">
+<article class="focused constrained">
 	<header>
 		<BackLink href={resolve('/settings/account')} />
 		<h1>{m.account_change_password()}</h1>
@@ -88,15 +88,3 @@
 		</form>
 	{/if}
 </article>
-
-<style>
-	header {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		margin-block: 1rem;
-	}
-	h1 {
-		margin: 0;
-	}
-</style>

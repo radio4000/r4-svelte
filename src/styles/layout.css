@@ -14,12 +14,16 @@
 	padding-inline: 0.5rem;
 }
 
-/* Page header with back-link: used in settings and import pages */
+/* Page header with back-link */
 .focused header {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	margin-block-start: 0.5rem;
+	margin-block: 0.5rem 1rem;
+
+	h1 {
+		margin: 0;
+	}
 }
 
 /* Vertically center content, a bit, for pages with less content */
@@ -383,15 +387,15 @@ dl.meta {
 
 /* Useful for docs, longer text */
 .article {
-	h1,
+	h1 {
+		color: inherit;
+		font-size: var(--font-8);
+		font-weight: 500;
+	}
+
 	h2,
 	h3 {
 		color: inherit;
-	}
-
-	h1 {
-		font-size: var(--font-8);
-		font-weight: 500;
 	}
 	h2 {
 		margin-block-start: 1.5rem;

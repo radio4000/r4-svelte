@@ -74,15 +74,18 @@
 		margin-inline: auto;
 	}
 
-	header {
+	figure {
+		max-height: 80dvh;
+		overflow: hidden;
+		margin-block-end: 2rem;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 0.75rem;
-		margin-block: 0.5rem 1rem;
 	}
 
-	h1 {
-		margin: 0;
+	img {
+		max-width: 100%;
+		height: auto;
 	}
 
 	figure {

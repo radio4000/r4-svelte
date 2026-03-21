@@ -6,7 +6,7 @@
 	--space-3: calc(1rem * var(--scaling));
 	--border-radius: 0.4rem;
 	--media-radius: var(--border-radius);
-	--track-artwork-size: 2.375rem;
+	--track-artwork-size: 2rem;
 	--shadow-modal: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
 	--deck-transition-fast: 200ms;
 	--deck-transition-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -16,7 +16,7 @@
 	--media-button-icon-height: 18px;
 
 	/* typography */
-	--font-root: 17px;
+	--font-root: 16px;
 	--font-sans: 'Radio Canada', 'firava', system-ui, sans-serif;
 	--font-mono: ui-monospace, monospace;
 	--font-1: 0.6875rem;
@@ -45,6 +45,12 @@
 	--breakpoint-md: 1024px;
 	--breakpoint-lg: 1280px;
 	--breakpoint-xl: 1640px;
+}
+
+@media (min-width: 768px) {
+	:root {
+		--font-root: 17px;
+	}
 }
 
 :root.light {

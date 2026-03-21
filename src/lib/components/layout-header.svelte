@@ -241,12 +241,5 @@
 		header {
 			overflow-y: auto;
 		}
-
-		/* Square buttons when vertical */
-		nav :global(.btn) {
-			/*
-			aspect-ratio: 1/1;
-			 */
-		}
 	}
 </style>

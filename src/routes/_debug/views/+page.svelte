@@ -1,74 +1,26 @@
 <script lang="ts">
 	import {page} from '$app/state'
-	import {goto, afterNavigate} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {queryView} from '$lib/views.svelte'
-	import {parseView, viewFromUrl, viewLabel, type View} from '$lib/views'
+	import {parseView, serializeView, viewFromUrl, viewLabel, viewToUrl, type View} from '$lib/views'
+	import {SearchUrl} from '$lib/search-url.svelte.js'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import ViewsBar from '$lib/components/views-bar.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
-	import {Debounced} from 'runed'
 
 	const uid = $props.id()
+	const basePath = '/_debug/views'
+	const search = new SearchUrl(basePath)
 
-	// --- Smart input (local, ephemeral) ---
-	let inputValue = $state('')
-	const debouncedInput = new Debounced(() => inputValue, 300)
-
-	// --- URL is the single source of truth ---
 	const view: View = $derived(viewFromUrl(page.url))
-	const hasFilter = $derived(view.sources.some((s) => !!s.channels?.length || !!s.tags?.length || !!s.search))
+	const primarySource = $derived(view.sources[0] ?? {})
+	const hasFilter = $derived(!!primarySource.channels?.length || !!primarySource.tags?.length || !!primarySource.search)
+	const hasExtraSources = $derived(view.sources.length > 1)
 	const viewQuery = queryView(() => view)
 
-	// --- Sync input from URL on landing + browser back/forward ---
-	let inputSeeded = false
-	afterNavigate(({type}) => {
-		if (type === 'goto') return
-		const seeded = page.url.searchParams.get('q') ?? ''
-		inputValue = seeded
-		inputSeeded = !!seeded
-	})
-
-	// --- View → URL params ---
-	function viewToUrl(v: View): string {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const params = new URLSearchParams()
-		const q = viewLabel(v)
-		if (q) params.set('q', q)
-		if (v.order) params.set('order', v.order)
-		if (v.direction) params.set('direction', v.direction)
-		if (v.limit) params.set('limit', String(v.limit))
-		if (v.offset) params.set('offset', String(v.offset))
-		const str = params.toString()
-		return str ? `/_debug/views?${str}` : '/_debug/views'
-	}
-
-	// --- Smart input → URL ---
-	$effect(() => {
-		const q = debouncedInput.current.trim()
-		if (!q) return
-		if (inputSeeded) {
-			inputSeeded = false
-			return
-		}
-		const resolved = parseView(q)
-		goto(viewToUrl(resolved), {replaceState: true})
-	})
-
-	function handleSubmit(e: Event) {
-		e.preventDefault()
-		const q = inputValue.trim()
-		if (!q) {
-			goto('/_debug/views', {replaceState: true})
-			return
-		}
-		debouncedInput.setImmediately(inputValue)
-	}
-
-	// --- ViewsBar → URL ---
 	function onViewsBarChange(v: View) {
-		inputSeeded = true
-		inputValue = viewLabel(v)
-		goto(viewToUrl(v), {replaceState: true})
+		search.seedInput(viewLabel(v))
+		goto(viewToUrl(basePath, v), {replaceState: true})
 	}
 
 	// --- Pagination ---
@@ -80,7 +32,7 @@
 	)
 
 	function navigate(newOffset: number) {
-		goto(viewToUrl({...view, offset: newOffset, limit}), {replaceState: true})
+		goto(viewToUrl(basePath, {...view, offset: newOffset, limit}), {replaceState: true})
 	}
 
 	// --- Examples ---
@@ -89,16 +41,13 @@
 		['Channel + tags', '@oskar #jazz #dub'],
 		['Search', 'miles davis'],
 		['Shuffle + limit', '@ko002?order=shuffle&limit=50'],
-		['Tags mode all', '#jazz #dub?tagsMode=all'],
-		['Multi-query', '@ko002 #jazz;@oskar #dub'],
-		['Multi + options', '@ko002 #jazz;@oskar #dub?order=created&direction=asc&limit=100']
+		['Tags mode all', '#jazz #dub?tagsMode=all']
 	] as const
 
 	function loadExample(viewStr: string) {
 		const v = parseView(viewStr)
-		inputSeeded = true
-		inputValue = viewLabel(v)
-		goto(viewToUrl(v), {replaceState: true})
+		search.seedInput(viewLabel(v))
+		goto(viewToUrl(basePath, v), {replaceState: true})
 	}
 </script>
 
@@ -113,12 +62,17 @@
 
 	<header>
 		<h1>Views</h1>
-		<p>Smart input + ViewsBar + queryView. URL is source of truth.</p>
+		<p>Track View debug. Reuses the same SearchUrl, ViewsBar, and queryView flow as the app.</p>
+		{#if hasExtraSources}
+			<p>
+				<small>Multi-source Views parse and serialize here, but queryView currently uses the first source only.</small>
+			</p>
+		{/if}
 	</header>
 
-	<form onsubmit={handleSubmit}>
+	<form onsubmit={search.handleSubmit}>
 		<label for="{uid}-search" class="visually-hidden">View query</label>
-		<SearchInput id="{uid}-search" bind:value={inputValue} placeholder="@oskar @ko002 #jazz chill vibes" autofocus />
+		<SearchInput id="{uid}-search" bind:value={search.value} placeholder="@oskar @ko002 #jazz chill vibes" autofocus />
 	</form>
 
 	<ViewsBar {view} onchange={onViewsBarChange} />
@@ -133,6 +87,18 @@
 				</li>
 			{/each}
 		</ul>
+	</details>
+
+	<details open={hasFilter}>
+		<summary>Representations</summary>
+		<dl class="representations">
+			<dt>Label</dt>
+			<dd><code>{viewLabel(view) || '(empty)'}</code></dd>
+			<dt>URI</dt>
+			<dd><code>{serializeView(view) || '(empty)'}</code></dd>
+			<dt>URL</dt>
+			<dd><code>{viewToUrl(basePath, view)}</code></dd>
+		</dl>
 	</details>
 
 	<details open={hasFilter}>
@@ -201,5 +167,20 @@
 	pre {
 		font-size: 0.8em;
 		overflow-x: auto;
+	}
+	.representations {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.25rem 0.5rem;
+	}
+	.representations dt {
+		font-weight: 600;
+	}
+	.representations dd {
+		margin: 0;
+		min-width: 0;
+	}
+	.representations code {
+		overflow-wrap: anywhere;
 	}
 </style>

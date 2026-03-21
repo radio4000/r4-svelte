@@ -19,7 +19,15 @@ import {
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
-import {weeklyShuffle, playbackState, toAutoTracks, epochFromTracks, type AutoTrack} from '$lib/player/auto-radio'
+import {
+	weeklyShuffle,
+	playbackState,
+	toAutoTracks,
+	hasAutoRadioCoverage,
+	epochFromTracks,
+	type AutoTrack
+} from '$lib/player/auto-radio'
+import {findAutoDecksForChannel, pickAutoResyncDeck} from '$lib/deck'
 import {processViewTracks} from '$lib/views.svelte'
 import {serializeView, viewLabel, normalizeView, type View} from '$lib/views'
 
@@ -785,6 +793,23 @@ export async function resyncAutoRadio(deckId: number) {
 	} else {
 		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 	}
+}
+
+export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
+	const autoDecks = findAutoDecksForChannel(appState.decks, slug)
+	const resyncId = pickAutoResyncDeck(appState.decks, appState.active_deck_id, slug, autoDecks)
+	if (autoDecks.length && resyncId) {
+		resyncAutoRadio(resyncId)
+	} else {
+		const channelTracks = tracks ?? (await loadChannelTracks(slug))
+		if (!hasAutoRadioCoverage(channelTracks)) return
+		joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {sources: [{channels: [slug]}]})
+	}
+}
+
+async function loadChannelTracks(slug: string): Promise<Track[]> {
+	await ensureTracksLoaded(slug)
+	return [...tracksCollection.state.values()].filter((t) => t.slug === slug)
 }
 
 /**

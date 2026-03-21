@@ -195,7 +195,7 @@
 	}
 
 	.map :global(.maplibregl-map),
-	.map-popup {
+	.map :global(.map-popup) {
 		font-family: inherit;
 	}
 </style>
