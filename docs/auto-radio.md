@@ -2,8 +2,6 @@
 
 Synchronized "live radio" without a broadcaster. Every listener with the same track set hears the same track at the same offset at the same wall-clock time — no server, no clock sync.
 
-Broadcast needs someone at the controls. Auto-radio is the same shared timeline with nobody driving.
-
 ## How it works
 
 A track list is shuffled deterministically each week using a seeded PRNG. The seed combines the epoch (oldest track's `created_at`), the current Sunday-aligned week number, and an optional view seed. Elapsed time since epoch, wrapped modulo the total playlist duration, pins everyone to the same position in the loop.

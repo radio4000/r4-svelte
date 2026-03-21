@@ -24,8 +24,6 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 ## skill mappings
 
-Load these before reading more code than you need.
-
 | task                                                           | load                                                                     |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | collection setup, adapters, sync mode, preload                 | `node_modules/@tanstack/db/skills/db-core/collection-setup/SKILL.md`     |
@@ -57,8 +55,6 @@ let tracks = $derived.by(() => ids.map((id) => tracksCollection.state.get(id)).f
 const query = useLiveQuery((q) => q.from({tracks: tracksCollection}).where(...))
 let tracks = $derived(query.data ?? [])
 ```
-
-Keep proving this locally. It is one of the easiest ways to lie to yourself.
 
 ### always use our `useLiveQuery` wrapper
 

@@ -53,25 +53,14 @@ Each script does one thing. Locale argument is always optional and positional.
 | `bun run i18n:review da`        | Missing keys + review flags → stdout JSON             |
 | `bun run i18n:apply batch.json` | Apply a batch file to locale files                    |
 
-All output goes to stdout (pipe to a file if you want one). Stats goes to stdout too — no stderr/stdout mixing.
-
-`i18n:check` is the strict parity guard. It requires every locale to have the same keys as `en.json` and the same `{placeholders}` for every translated string.
-
-`i18n:prune-unused` scans `src/` for the normal `m.key()` pattern, removes unused keys from `en.json`, then `bun run i18n` removes the resulting orphaned keys from the other locales.
+All output goes to stdout (pipe to a file if you want one).
 
 ## Translating a locale
 
 ```bash
-# 1. Check coverage
 bun run i18n:stats da
-
-# 2. Extract missing keys
 bun run i18n:extract da > /tmp/da-batch.json
-
-# 3. Translate the batch (hand to a translator or LLM)
-#    Keep all {placeholders} unchanged
-
-# 4. Apply
+# Translate the batch (hand to a translator or LLM), keep all {placeholders} unchanged
 bun run i18n:apply /tmp/da-batch.json
 bun run i18n
 ```
