@@ -38,36 +38,30 @@
 </svelte:head>
 
 <h1>CoverFlip</h1>
-<div class="cover-flip-demo">
-	<p><small>Scroll or drag to flip through items. Click an item to jump to it.</small></p>
+<p><small>Scroll or drag to flip through items. Click an item to jump to it.</small></p>
 
-	<div class="gui" bind:this={guiContainer}></div>
+<div class="gui" bind:this={guiContainer}></div>
 
-	<div class="demo-panel">
-		{#key `${orientation}-${itemCount}`}
-			<CoverFlip {items} {orientation} {scrollItemsPerNotch}>
-				{#snippet item({item: d, active})}
-					<div class="swatch" class:active style:background={d.color}>
-						{d.label}
-					</div>
-				{/snippet}
-				{#snippet active({item: d, index})}
-					<div class="active-info">
-						<strong>{d.label}</strong> — index {index}
-					</div>
-				{/snippet}
-			</CoverFlip>
-		{/key}
-	</div>
+<div class="demo-panel">
+	{#key `${orientation}-${itemCount}`}
+		<CoverFlip {items} {orientation} {scrollItemsPerNotch}>
+			{#snippet item({item: d, active})}
+				<div class="swatch" class:active style:background={d.color}>
+					{d.label}
+				</div>
+			{/snippet}
+			{#snippet active({item: d, index})}
+				<p>{d.label} — index {index}</p>
+			{/snippet}
+		</CoverFlip>
+	{/key}
 </div>
 
 <style>
-	.cover-flip-demo {
-		margin-top: 1rem;
-	}
 	.demo-panel {
+		flex: 1;
 		display: flex;
-		flex-direction: column;
+		flex-flow: column nowrap;
 		align-items: center;
 		gap: 1rem;
 		margin-block: 2rem;
@@ -77,13 +71,17 @@
 		height: 50vh;
 		border: 3px dashed red;
 	}
+
 	.demo-panel :global(.CoverFlip-item) {
 		border: 1px dashed blue;
 	}
+
 	.demo-panel :global(.CoverFlip--horizontal) {
 		width: 80%;
 		height: 20vh;
+		min-height: 220px;
 	}
+
 	.swatch {
 		width: 200px;
 		height: 200px;
@@ -101,8 +99,5 @@
 	.swatch.active {
 		opacity: 1;
 		scale: 1;
-	}
-	.active-info {
-		text-align: center;
 	}
 </style>

@@ -1,5 +1,6 @@
 <script>
 	import {createLoop} from '$lib/loop.ts'
+	import {untrack} from 'svelte'
 
 	/** @type {{
 	 *  items: any[],
@@ -8,7 +9,7 @@
 	 *  item: (args: {item: any, index: number, active: boolean}) => any,
 	 *  active: (args: {item: any, index: number}) => any,
 	 * }} */
-	let {items, scrollItemsPerNotch = 1, orientation = 'vertical', item, active, ...rest} = $props()
+	let {items, scrollItemsPerNotch = 1, orientation = 'vertical', class: extraClass = '', item, active, ...rest} = $props()
 	let container = $state()
 	let loop
 	let activeIndex = $state(-1)
@@ -21,18 +22,25 @@
 		if (!elements?.length) return
 		void items
 
-		loop = createLoop(elements, {
-			paused: true,
-			draggable: true,
-			center: true,
-			axis: isHorizontal ? 'x' : 'y',
-			wheel: {itemsPerNotch: scrollItemsPerNotch},
-			onChange: (_element, index) => {
-				activeIndex = index
-			}
+		const l = untrack(() => {
+			return createLoop(elements, {
+				paused: true,
+				draggable: true,
+				center: true,
+				axis: isHorizontal ? 'x' : 'y',
+				wheel: {itemsPerNotch: scrollItemsPerNotch},
+				onChange: (_element, index) => {
+					activeIndex = index
+				},
+				onClickItem: (_element, index) => {
+					handleClick(index)
+				}
+			})
 		})
+		loop = l
+		activeIndex = l.current()
 
-		return () => loop?.kill?.()
+		return () => l?.kill?.()
 	})
 
 	const tweenVars = {duration: 0.3, ease: 'power2.out'}
@@ -57,7 +65,7 @@
 </script>
 
 <section
-	class={`CoverFlip${isHorizontal ? ' CoverFlip--horizontal' : ''}`}
+	class={`CoverFlip${isHorizontal ? ' CoverFlip--horizontal' : ''}${extraClass ? ' ' + extraClass : ''}`}
 	bind:this={container}
 	tabindex="0"
 	role="listbox"
@@ -75,7 +83,6 @@
 			role="option"
 			aria-selected={index === activeIndex}
 			tabindex="-1"
-			onclick={() => handleClick(index)}
 		>
 			{@render item({item: itemData, index, active: index === activeIndex})}
 		</div>
@@ -98,6 +105,7 @@
 
 	.CoverFlip--horizontal {
 		flex-direction: row;
+		max-width: 100%;
 	}
 
 	.CoverFlip-item {

@@ -46,6 +46,7 @@ export interface LoopConfig {
 	center?: boolean | Element | string
 	wheel?: boolean | {itemsPerNotch?: number}
 	onChange?: (el: Element, index: number) => void
+	onClickItem?: (el: Element, index: number) => void
 }
 
 export interface Loop {
@@ -273,7 +274,6 @@ export function createLoop(
 		let ratio: number,
 			startProgress: number,
 			lastSnap: number,
-			initChange: number,
 			wasPlaying: boolean
 
 		const align = () => {
@@ -297,13 +297,12 @@ export function createLoop(
 				startProgress = tl.progress()
 				refresh()
 				ratio = 1 / measured.totalDistance
-				initChange = startProgress / -ratio - current
 				gsap.set(p, {[ax.drag]: startProgress / -ratio})
 			},
 			onDrag: align,
 			onThrowUpdate: align,
 			snap(value: number) {
-				if (Math.abs(startProgress / -ratio - this[ax.drag]) < 10) return lastSnap + initChange
+				if (Math.abs(startProgress / -ratio - this[ax.drag]) < 10) return startProgress / -ratio
 				const t = -(value * ratio) * tl.duration()
 				const wrapped = timeWrap(t)
 				const snapTime = times[findClosest(times, wrapped, tl.duration())]
@@ -311,6 +310,14 @@ export function createLoop(
 				if (Math.abs(dif) > tl.duration() / 2) dif += dif < 0 ? tl.duration() : -tl.duration()
 				lastSnap = (t + dif) / tl.duration() / -ratio
 				return lastSnap
+			},
+			onClick(e: PointerEvent) {
+				if (!config.onClickItem) return
+				const clicked = els.find((el) => el === e.target || el.contains(e.target as Node))
+				if (clicked) {
+					const idx = els.indexOf(clicked)
+					if (idx !== -1) config.onClickItem(clicked, idx)
+				}
 			},
 			onRelease() {
 				closestIndex(true)

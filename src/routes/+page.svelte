@@ -27,6 +27,7 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 
+	import CoverFlip from '$lib/components/cover-flip.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import {not, isNull} from '@tanstack/db'
@@ -636,6 +637,21 @@
 						<li><ChannelCard {channel} /></li>
 					{/each}
 				</ol>
+				<CoverFlip items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels} orientation="horizontal" class="featured-flip">
+					{#snippet item({item: channel, active})}
+						<div class="flip-card" class:active>
+							<ChannelCard {channel} />
+						</div>
+					{/snippet}
+					{#snippet active({item: channel})}
+						<p class="flip-label">
+							<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+							{#if channel.description}
+								<span class="flip-desc">— {channel.description.length > 140 ? channel.description.slice(0, 140) + '…' : channel.description}</span>
+							{/if}
+						</p>
+					{/snippet}
+				</CoverFlip>
 			</section>
 		{/if}
 
@@ -1011,5 +1027,30 @@
 				}
 			}
 		}
+	}
+
+	:global(.featured-flip) {
+		width: 100vw;
+		margin-left: calc(-0.5rem);
+		gap: 0.25rem;
+	}
+
+	.flip-card {
+		width: 250px;
+
+		:global(.body) {
+			display: none;
+		}
+	}
+
+	.flip-desc {
+		color: var(--gray-10);
+	}
+
+	.flip-label {
+		text-align: center;
+		font-size: var(--font-4);
+		padding: 0.5rem;
+		min-height: 4rem;
 	}
 </style>

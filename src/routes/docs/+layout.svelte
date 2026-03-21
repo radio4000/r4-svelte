@@ -105,6 +105,7 @@
 
 	.docs > main {
 		padding: 1rem 0 0 1rem;
+		min-width: 0;
 	}
 
 	.doc-tabs {
@@ -115,8 +116,7 @@
 	}
 
 	.doc-playground {
-		display: grid;
-		gap: 1rem;
+		min-width: 0;
 	}
 
 	.hidden-tab {
