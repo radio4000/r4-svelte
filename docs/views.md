@@ -50,13 +50,13 @@ r4://@ko002 #jazz
 
 `resolveViewStrategy(source)` picks a fetch path based on the first ViewSource:
 
-| Strategy | Condition | Fetch | Post-filter |
-|---|---|---|---|
-| `channel` | channels only | local query by slug, server-paginated | sort only |
-| `channel-filtered` | channels + tags or search | local query (all tracks), client-paginated | tags, fuzzy, sort |
-| `tags-only` | tags, no channels | remote Supabase overlaps | tagsMode=all, sort |
-| `search-only` | search text, no channels/tags | local FTS live query | fuzzy, sort |
-| `empty` | nothing specified | no fetch | — |
+| Strategy           | Condition                     | Fetch                                      | Post-filter        |
+| ------------------ | ----------------------------- | ------------------------------------------ | ------------------ |
+| `channel`          | channels only                 | local query by slug, server-paginated      | sort only          |
+| `channel-filtered` | channels + tags or search     | local query (all tracks), client-paginated | tags, fuzzy, sort  |
+| `tags-only`        | tags, no channels             | remote Supabase overlaps                   | tagsMode=all, sort |
+| `search-only`      | search text, no channels/tags | local FTS live query                       | fuzzy, sort        |
+| `empty`            | nothing specified             | no fetch                                   | —                  |
 
 All strategies that fetch broadly (everything except `channel`) paginate client-side via `processViewTracks` + slice. The `channel` strategy delegates pagination to the query layer.
 
