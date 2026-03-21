@@ -632,7 +632,7 @@
 						{/if}
 					</menu>
 				</header>
-				<ol class="grid">
+				<ol class="grid grid--scroll">
 					{#each featuredChannels as channel (channel.id)}
 						<li><ChannelCard {channel} /></li>
 					{/each}
