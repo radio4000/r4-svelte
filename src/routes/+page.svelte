@@ -674,7 +674,7 @@
 	.homepage {
 		padding: 0.5rem;
 		display: flex;
-		flex-direction: column;
+		flex-wrap: wrap;
 		flex: 1;
 		min-height: 0;
 
