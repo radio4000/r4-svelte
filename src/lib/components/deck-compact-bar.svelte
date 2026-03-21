@@ -393,12 +393,12 @@
 
 	.track-panel :global(article) {
 		height: 100%;
+		outline: 0;
 		outline-offset: 0;
 	}
 
 	.track-panel :global(.card) {
-		min-height: 0;
-		padding: 0.25rem 0 0.25rem 0.5rem;
+		padding: 0;
 	}
 
 	.track-panel :global(h3 + p) {
@@ -418,7 +418,7 @@
 		.channel-panel {
 			width: auto;
 			min-width: 14rem;
-			flex: 0 1 24rem;
+			flex: 0 1 14rem;
 		}
 
 		.track-panel {

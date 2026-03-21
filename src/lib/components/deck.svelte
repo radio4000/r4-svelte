@@ -158,7 +158,7 @@
 		}
 
 		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
-			:global(.bottom-controls) {
+			:global(.controls) {
 			flex-wrap: wrap;
 		}
 

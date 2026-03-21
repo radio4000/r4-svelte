@@ -561,7 +561,7 @@
 
 	<section class="bottom-chrome">
 		<!-- 4. Channel/track info + deck toggle -->
-		<footer class="header-footer" onclick={() => (appState.active_deck_id = deckId)}>
+		<footer class="track-panel" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
@@ -608,7 +608,7 @@
 			{/if}
 		</footer>
 
-		<menu class="player-controls bottom-controls">
+		<menu class="controls">
 			{#if isListeningToBroadcast}
 				<button
 					disabled
@@ -632,7 +632,7 @@
 			{/if}
 		</menu>
 		{#if appState.show_track_range_control !== false && displayTrack}
-			<div class="progress-row">
+			<div class="progress">
 				<input
 					type="range"
 					min="0"
@@ -829,12 +829,9 @@
 		margin-left: auto;
 	}
 
-	.player-controls {
+	.controls {
 		align-items: center;
 		min-width: 0;
-	}
-
-	.bottom-controls {
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
@@ -880,7 +877,7 @@
 		border-top: 0;
 	}
 
-	.progress-row {
+	.progress {
 		padding: 0 0.45rem 0.3rem;
 		line-height: 0;
 		z-index: 1;
@@ -892,14 +889,14 @@
 		z-index: 1;
 	}
 
-	.header-footer {
+	.track-panel {
 		flex-shrink: 0;
 		cursor: pointer;
 		background: var(--header-bg);
 	}
 
 	@media (max-width: 768px) {
-		.bottom-controls {
+		.controls {
 			gap: 0.1rem;
 			justify-content: flex-start;
 		}
