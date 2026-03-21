@@ -196,3 +196,16 @@ How filtered tracks become playback:
          ──→ /@slug/backup (data export)
          ──→ /@slug/map (geographic view)
 ```
+
+## Ecosystem
+
+This is one repo in a larger platform. When a task crosses boundaries, check the relevant project.
+
+| Project | Role |
+|---------|------|
+| [supabase](https://github.com/radio4000/supabase) | PostgreSQL schema, migrations, RLS policies |
+| [@radio4000/sdk](https://github.com/radio4000/sdk) | CRUD, auth, follows |
+| [r4 CLI](https://github.com/radio4000/cli) | CLI for auth, channels, tracks, search |
+| [API](https://github.com/radio4000/api) | REST API layer |
+| [media-now](https://github.com/radio4000/media-now) | URL → provider + metadata |
+| [@radio4000/components](https://github.com/radio4000/components) | Lit web components (radio4000.com) |
