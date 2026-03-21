@@ -573,7 +573,7 @@
 	"share_media_url_label": "URL du média",
 	"share_native": "Partager",
 	"share_track_title": "Partager le morceau → {title}",
-	"shortcuts_action_gotoDebug": "Aller au debug",
+	"shortcuts_action_gotoDocs": "Aller aux docs",
 	"shortcuts_action_gotoHome": "Aller à l’accueil",
 	"shortcuts_action_gotoSettings": "Aller aux réglages",
 	"shortcuts_action_openSearch": "Ouvrir la recherche",

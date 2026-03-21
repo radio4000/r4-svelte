@@ -40,5 +40,5 @@ For any task or question:
 ## Debug
 
 `window.r5` exposes sdk, appState, queryClient, tracksCollection, channelsCollection for console testing.
-Use `/src/routes/_debug` freely for (temporary) test routes and playgrounds.
+Playground routes live under `/src/routes/docs` alongside their markdown docs. Add `playground: true` in the page server load to get the docs/playground split layout.
 The `r4 --help` CLI can help inspect data from remote PostgreSQL.

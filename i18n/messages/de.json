@@ -573,7 +573,7 @@
 	"share_media_url_label": "Medien-URL",
 	"share_native": "Teilen",
 	"share_track_title": "Track teilen → {title}",
-	"shortcuts_action_gotoDebug": "Zur Debug-Seite",
+	"shortcuts_action_gotoDocs": "Zur Docs-Seite",
 	"shortcuts_action_gotoHome": "Zur Startseite",
 	"shortcuts_action_gotoSettings": "Zu den Einstellungen",
 	"shortcuts_action_openSearch": "Suche öffnen",

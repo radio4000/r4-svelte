@@ -509,7 +509,7 @@
 	"share_media_url_label": "মিডিয়া ইউআরএল",
 	"share_native": "শেয়ার",
 	"share_track_title": "ট্র্যাক শেয়ার করুন → {title}",
-	"shortcuts_action_gotoDebug": "ডিবাগে যান",
+	"shortcuts_action_gotoDocs": "ডক্সে যান",
 	"shortcuts_action_gotoHome": "হোমে যান",
 	"shortcuts_action_gotoSettings": "সেটিংসে যান",
 	"shortcuts_action_openSearch": "সার্চ খুলুন",

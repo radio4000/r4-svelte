@@ -11,7 +11,7 @@ export const DEFAULT_KEY_BINDINGS = {
 	r: 'toggleCompactDeck',
 	'g h': 'gotoHome',
 	'g s': 'gotoSettings',
-	'g d': 'gotoDebug',
+	'g d': 'gotoDocs',
 	'Shift+Slash': 'showShortcutsHelp'
 }
 
@@ -38,7 +38,7 @@ export function initializeKeyboardShortcuts() {
 		toggleCompactDeck: () => toggleDeckCompact(appState.active_deck_id),
 		gotoHome: () => gotoIfAllowed('/'),
 		gotoSettings: () => gotoIfAllowed('/settings'),
-		gotoDebug: () => gotoIfAllowed('/_debug'),
+		gotoDocs: () => gotoIfAllowed('/docs'),
 		showShortcutsHelp: () => {
 			appState.modal_shortcuts = true
 		}

@@ -7,9 +7,11 @@
  * Our final approach combines the best of both worlds:
  * 
  * ACCENT COLORS (dynamic from base):
- * - Uses base color's lightness and chroma dynamically
- * - accent-9 = exact base color, others derived from it
- * - Gives users full control over accent character
+ * - Steps 1-8 use RELATIVE lightness: interpolate from white/black toward base `l`
+ * - Light: calc((1-f)*l + f) — lerps from near-white down to base lightness
+ * - Dark:  calc(l*f)         — lerps from near-black up to base lightness (accelerating)
+ * - accent-9 = exact base color, steps 10-12 go past it
+ * - Smooth transition at 8→9 regardless of what base lightness the user picks
  * 
  * GRAY COLORS (fixed lightness, proportional chroma):
  * - Uses FIXED lightness values based on UX research
@@ -47,38 +49,43 @@
 	/* Main accent color for easy reference */
 	--accent: light-dark(var(--accent-light), var(--accent-dark));
 
-	/* Accent scale - 12 steps from base colors */
+	/* Accent scale - 12 steps from base colors
+	 * Steps 1-8 use RELATIVE lightness derived from the base color's own `l`,
+	 * so the ramp always lands smoothly at step 9 (the raw base color).
+	 * Light: lerp from white toward base — calc((1-f)*l + f) where f decreases
+	 * Dark:  lerp from black toward base — calc(l * f) where f increases (accelerating)
+	 */
 	--accent-1: light-dark(
-		oklch(from var(--accent-light) 98% calc(c * 0.15) h),
-		oklch(from var(--accent-dark) 12% calc(c * 0.2) h)
+		oklch(from var(--accent-light) calc(0.04 * l + 0.96) calc(c * 0.15) h),
+		oklch(from var(--accent-dark) calc(l * 0.15) calc(c * 0.2) h)
 	);
 	--accent-2: light-dark(
-		oklch(from var(--accent-light) 95% calc(c * 0.25) h),
-		oklch(from var(--accent-dark) 16% calc(c * 0.3) h)
+		oklch(from var(--accent-light) calc(0.1 * l + 0.9) calc(c * 0.25) h),
+		oklch(from var(--accent-dark) calc(l * 0.2) calc(c * 0.3) h)
 	);
 	--accent-3: light-dark(
-		oklch(from var(--accent-light) 92% calc(c * 0.35) h),
-		oklch(from var(--accent-dark) 20% calc(c * 0.4) h)
+		oklch(from var(--accent-light) calc(0.16 * l + 0.84) calc(c * 0.35) h),
+		oklch(from var(--accent-dark) calc(l * 0.26) calc(c * 0.4) h)
 	);
 	--accent-4: light-dark(
-		oklch(from var(--accent-light) 88% calc(c * 0.45) h),
-		oklch(from var(--accent-dark) 24% calc(c * 0.5) h)
+		oklch(from var(--accent-light) calc(0.24 * l + 0.76) calc(c * 0.45) h),
+		oklch(from var(--accent-dark) calc(l * 0.34) calc(c * 0.5) h)
 	);
 	--accent-5: light-dark(
-		oklch(from var(--accent-light) 83% calc(c * 0.55) h),
-		oklch(from var(--accent-dark) 28% calc(c * 0.6) h)
+		oklch(from var(--accent-light) calc(0.34 * l + 0.66) calc(c * 0.55) h),
+		oklch(from var(--accent-dark) calc(l * 0.43) calc(c * 0.6) h)
 	);
 	--accent-6: light-dark(
-		oklch(from var(--accent-light) 77% calc(c * 0.65) h),
-		oklch(from var(--accent-dark) 32% calc(c * 0.7) h)
+		oklch(from var(--accent-light) calc(0.46 * l + 0.54) calc(c * 0.65) h),
+		oklch(from var(--accent-dark) calc(l * 0.54) calc(c * 0.7) h)
 	);
 	--accent-7: light-dark(
-		oklch(from var(--accent-light) 70% calc(c * 0.75) h),
-		oklch(from var(--accent-dark) 38% calc(c * 0.8) h)
+		oklch(from var(--accent-light) calc(0.6 * l + 0.4) calc(c * 0.75) h),
+		oklch(from var(--accent-dark) calc(l * 0.67) calc(c * 0.8) h)
 	);
 	--accent-8: light-dark(
-		oklch(from var(--accent-light) 62% calc(c * 0.85) h),
-		oklch(from var(--accent-dark) 44% calc(c * 0.9) h)
+		oklch(from var(--accent-light) calc(0.76 * l + 0.24) calc(c * 0.85) h),
+		oklch(from var(--accent-dark) calc(l * 0.82) calc(c * 0.9) h)
 	);
 	--accent-9: light-dark(var(--accent-light), var(--accent-dark));
 	--accent-10: light-dark(

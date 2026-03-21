@@ -509,7 +509,7 @@
 	"share_media_url_label": "媒体 URL",
 	"share_native": "分享",
 	"share_track_title": "分享曲目 → {title}",
-	"shortcuts_action_gotoDebug": "前往调试页",
+	"shortcuts_action_gotoDocs": "前往文档页",
 	"shortcuts_action_gotoHome": "前往首页",
 	"shortcuts_action_gotoSettings": "前往设置",
 	"shortcuts_action_openSearch": "打开搜索",

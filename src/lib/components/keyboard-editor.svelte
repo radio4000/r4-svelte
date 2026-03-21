@@ -19,7 +19,7 @@
 		'toggleCompactDeck',
 		'gotoHome',
 		'gotoSettings',
-		'gotoDebug',
+		'gotoDocs',
 		'showShortcutsHelp'
 	]
 
@@ -30,7 +30,7 @@
 		toggleCompactDeck: () => m.shortcuts_action_toggleCompactDeck(),
 		gotoHome: () => m.shortcuts_action_gotoHome(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
-		gotoDebug: () => m.shortcuts_action_gotoDebug(),
+		gotoDocs: () => m.shortcuts_action_gotoDocs(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 

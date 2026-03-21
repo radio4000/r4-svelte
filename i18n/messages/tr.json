@@ -573,7 +573,7 @@
 	"share_media_url_label": "Medya URL'si",
 	"share_native": "Paylaş",
 	"share_track_title": "Parçayı paylaş → {title}",
-	"shortcuts_action_gotoDebug": "Hata ayıklamaya git",
+	"shortcuts_action_gotoDocs": "Belgelere git",
 	"shortcuts_action_gotoHome": "Ana sayfaya git",
 	"shortcuts_action_gotoSettings": "Ayarlara git",
 	"shortcuts_action_openSearch": "Aramayı aç",

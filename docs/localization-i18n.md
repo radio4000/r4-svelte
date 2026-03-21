@@ -31,7 +31,7 @@ Usually out of scope:
 Useful grep for a first pass:
 
 ```bash
-rg -n '<title>|placeholder=|aria-label=|title=|>[^<{]*[A-Za-z][^<{]*<' src/routes src/lib/components --glob '!src/routes/_debug/**'
+rg -n '<title>|placeholder=|aria-label=|title=|>[^<{]*[A-Za-z][^<{]*<' src/routes src/lib/components --glob '!src/routes/docs/**'
 ```
 
 Review the matches manually. The grep is only for discovery; it will also catch examples, slugs, and non-copy literals.
@@ -133,5 +133,5 @@ The new locale appears in the language switcher immediately. Untranslated keys f
 
 - RTL locales (e.g. `ar`, `ur`) are automatically rendered right-to-left via `dir="rtl"` on `<html>`
 - On boot, the app matches `navigator.languages` and falls back to the Paraglide default (`en`)
-- Routes under `src/routes/_debug` are developer playgrounds and do not need translation
+- Routes under `src/routes/docs` are developer playgrounds and do not need translation
 - Also see [Fink](https://fink.inlang.com) for a web UI to edit translations

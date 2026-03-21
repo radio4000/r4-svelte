@@ -101,11 +101,11 @@ That is how we handle array `includes`, overlap-style filtering, and similar cas
 
 Each TanStack debug route needs a distinct job.
 
-- `src/routes/_debug/tanstack/+page.svelte` shows live app state: collection sizes, cache keys, persistence.
-- `src/routes/_debug/tanstack/tutorial/+page.svelte` is the walkthrough for humans.
-- `src/routes/_debug/tanstack/tracks/+page.svelte` probes real track collection and backend wiring.
-- `src/routes/_debug/tanstack/channels/+page.svelte` probes real channel collection and backend wiring.
-- `src/routes/_debug/tanstack/error-handling/+page.svelte` keeps the error-state rough edge visible and should evolve into assertions.
+- `src/routes/docs/tanstack/+page.svelte` shows live app state: collection sizes, cache keys, persistence.
+- `src/routes/docs/tanstack/tutorial/+page.svelte` is the walkthrough for humans.
+- `src/routes/docs/tanstack/tracks/+page.svelte` probes real track collection and backend wiring.
+- `src/routes/docs/tanstack/channels/+page.svelte` probes real channel collection and backend wiring.
+- `src/routes/docs/tanstack/error-handling/+page.svelte` keeps the error-state rough edge visible and should evolve into assertions.
 
 Do not add more TanStack pages unless the route has a distinct verification job. Otherwise fold it into one of these.
 
@@ -183,7 +183,7 @@ function loadMore() {
 let hasMore = $derived(query.data?.length >= paginatedLimit)
 ```
 
-Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/_debug/tanstack/channels`.
+Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/docs/tanstack/channels`.
 
 ## references
 

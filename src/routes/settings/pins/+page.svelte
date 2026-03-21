@@ -66,7 +66,7 @@
 	<p><small>{m.views_pins_intro()}</small></p>
 
 	{#if !savedViews.length}
-		<p>{m.views_no_saved()} <a href="/_debug/views">{m.views_create_first()}</a>.</p>
+		<p>{m.views_no_saved()} <a href="/docs/views">{m.views_create_first()}</a>.</p>
 	{:else}
 		<menu class="nav-vertical">
 			{#each sortedViews() as item (item.sv.id)}
