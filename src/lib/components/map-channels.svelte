@@ -80,7 +80,7 @@
 
 	const _colorCanvas = document.createElement('canvas')
 	_colorCanvas.width = _colorCanvas.height = 1
-	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (_colorCanvas.getContext('2d'))
+	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (_colorCanvas.getContext('2d', {willReadFrequently: true}))
 
 	function resolveCssColor(variableName, fallback = '#888888') {
 		const div = document.createElement('div')
@@ -126,15 +126,35 @@
 		// 4-tier visual hierarchy: broadcasting > active > favorite > normal
 		// mirrors the channel card: .playing uses --accent-3 bg, broadcasting shows a live badge
 		if (state.isBroadcasting) {
-			return {radius: 9, strokeColor: palette.broadcastingStroke, fillColor: palette.broadcastingFill, strokeWidth: 3}
+			return {
+				radius: 9,
+				strokeColor: palette.broadcastingStroke,
+				fillColor: palette.broadcastingFill,
+				strokeWidth: 3
+			}
 		}
 		if (state.isActive) {
-			return {radius: 8, strokeColor: palette.activeStroke, fillColor: palette.activeFill, strokeWidth: 2}
+			return {
+				radius: 8,
+				strokeColor: palette.activeStroke,
+				fillColor: palette.activeFill,
+				strokeWidth: 2
+			}
 		}
 		if (state.isFavorite) {
-			return {radius: 7, strokeColor: palette.favoriteStroke, fillColor: palette.favoriteFill, strokeWidth: 2}
+			return {
+				radius: 7,
+				strokeColor: palette.favoriteStroke,
+				fillColor: palette.favoriteFill,
+				strokeWidth: 2
+			}
 		}
-		return {radius: 5, strokeColor: palette.normalStroke, fillColor: palette.normalFill, strokeWidth: 1.5}
+		return {
+			radius: 5,
+			strokeColor: palette.normalStroke,
+			fillColor: palette.normalFill,
+			strokeWidth: 1.5
+		}
 	}
 
 	/** @returns {GeoJSON.FeatureCollection} */
@@ -490,7 +510,12 @@
 				type: 'line',
 				source: 'graticule-source',
 				filter: ['!=', ['get', 'id'], 'equator'],
-				paint: {'line-color': '#6699bb', 'line-width': 1, 'line-opacity': 0.6, 'line-dasharray': [4, 4]},
+				paint: {
+					'line-color': '#6699bb',
+					'line-width': 1,
+					'line-opacity': 0.6,
+					'line-dasharray': [4, 4]
+				},
 				layout: {visibility: showGraticules ? 'visible' : 'none'}
 			})
 		}
@@ -736,6 +761,10 @@
 
 	.map-controls menu.nav-grouped {
 		margin: 0;
+	}
+
+	:global(.maplibregl-map) {
+		font-family: var(--font-sans);
 	}
 
 	:global(.map-popup) {

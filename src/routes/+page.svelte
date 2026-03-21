@@ -4,6 +4,7 @@
 	import {setScene} from '$lib/scene-state.svelte'
 	import {appName} from '$lib/config'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
@@ -20,6 +21,7 @@
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
+	import MapChannels from '$lib/components/map-channels.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -155,6 +157,12 @@
 				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
 			})
 	})
+
+	// Globe channels — all synced channels with coordinates
+	const globeChannelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
+	const globeChannels = $derived(
+		(globeChannelsQuery.data ?? []).filter((c) => Number.isFinite(c?.latitude) && Number.isFinite(c?.longitude))
+	)
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -361,6 +369,11 @@
 				</ol>
 			</section>
 		{/if}
+		<section class="section">
+			<div class="globe">
+				<MapChannels channels={globeChannels} globeMode={true} zoom={1} syncUrl={false} showControls={false} />
+			</div>
+		</section>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
 		{#if activeBroadcasts.length}
@@ -481,6 +494,12 @@
 				</ol>
 			</section>
 		{/if}
+
+		<section class="section">
+			<div class="globe">
+				<MapChannels channels={globeChannels} globeMode={true} zoom={1.5} syncUrl={false} showControls={false} />
+			</div>
+		</section>
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<footer class="stats footer-stats">
@@ -711,6 +730,19 @@
 			&:hover {
 				text-decoration: underline;
 			}
+		}
+	}
+
+	.globe {
+		margin-top: -0.75rem;
+		background: var(--gray-2);
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		:global(.map) {
+			min-height: 500px;
+		}
+		:global(article .description) {
+			display: none;
 		}
 	}
 
