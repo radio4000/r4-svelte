@@ -335,6 +335,7 @@
 	}
 
 	function setFilter(value) {
+		appState.channels_filter = value
 		if (filterBasePath) {
 			goto(resolve(/** @type {any} */ (filterBasePath + '/' + slugFor(value))))
 			return
