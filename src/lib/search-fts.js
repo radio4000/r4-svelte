@@ -70,12 +70,12 @@ export async function searchTracks(query, {limit = 100, offset = 0, channelSlug}
 	if (!filter) return {tracks: [], count: 0}
 	let q = sdk.supabase
 		.from('channel_tracks')
-		.select('*')
+		.select('*', {count: 'exact'})
 		.or(filter)
 		.order('created_at', {ascending: false})
 		.range(offset, offset + limit - 1)
 	if (channelSlug) q = q.eq('slug', channelSlug)
-	const {data, error} = await q
+	const {data, error, count} = await q
 	if (error) throw new Error(error.message)
-	return {tracks: /** @type {import('$lib/types').Track[]} */ (data ?? []), count: 0}
+	return {tracks: /** @type {import('$lib/types').Track[]} */ (data ?? []), count: count ?? 0}
 }

@@ -12,6 +12,7 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
+	import Pagination from '$lib/components/pagination.svelte'
 	import {getTopChannelSlugs, getTopTagValues} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
@@ -23,6 +24,9 @@
 	const q = $derived(view.sources[0] ?? {})
 	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
 
+	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
+	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '50') || 50))
+
 	function onViewsBarChange(v) {
 		search.seedInput(viewLabel(v))
 		goto(viewToUrl('/search/tracks', v), {replaceState: true})
@@ -30,6 +34,7 @@
 
 	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
+	const totalCount = $derived(viewQuery.count)
 	const tracksLoading = $derived(viewQuery.loading)
 	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 6))
 	const featuredTags = $derived(getTopTagValues([...tracksCollection.state.values()], 12))
@@ -59,10 +64,12 @@
 			<section class="track-results">
 				<header>
 					<h2>
+						{totalCount || tracks.length}
 						{tracks.length === 1
 							? m.search_track_one({count: tracks.length})
 							: m.search_track_other({count: tracks.length})}
 					</h2>
+					<Pagination {currentPage} {pageSize} {totalCount} defaultPageSize={50} />
 					<SearchTrackMenu {tracks} title={search.value.trim()} {view} />
 				</header>
 				<ul class="list">

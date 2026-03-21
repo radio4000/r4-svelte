@@ -10,6 +10,7 @@
 	import SearchShell from '$lib/components/search-shell.svelte'
 	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
 	import {searchChannelsCombined} from '$lib/search'
+	import Pagination from '$lib/components/pagination.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {getTopChannelSlugs, getTopTagValues} from '$lib/utils'
@@ -37,29 +38,39 @@
 		goto(viewToUrl('/search', v), {replaceState: true})
 	}
 
+	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
+	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '50') || 50))
+
 	// Track results (View pipeline)
 	const viewQuery = queryView(() => view)
 	const tracks = $derived(viewQuery.tracks)
+	const totalCount = $derived(viewQuery.count)
 	const tracksLoading = $derived(viewQuery.loading)
 
 	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 3))
 	const featuredTags = $derived(getTopTagValues([...tracksCollection.state.values()], 6))
 
 	// --- Channel results (parallel, outside View) ---
+	// Stable keys so pagination (page/offset) changes don't re-trigger the channel search.
+	const channelSlugsKey = $derived(q.channels?.join(',') || '')
+	const searchTermKey = $derived(q.search || '')
+
 	/** @type {import('$lib/types.ts').Channel[]} */
 	let channels = $state([])
 	let channelsLoading = $state(false)
 
 	$effect(() => {
-		if (!hasFilter) {
+		const slugs = channelSlugsKey ? channelSlugsKey.split(',') : undefined
+		const query = searchTermKey || undefined
+		if (!slugs?.length && !query) {
 			channels = []
 			return
 		}
 		channelsLoading = true
 		let stale = false
 		searchChannelsCombined({
-			slugs: q.channels,
-			query: q.search,
+			slugs,
+			query,
 			localChannels: [...channelsCollection.state.values()]
 		})
 			.then((results) => {
@@ -119,10 +130,12 @@
 			<section class="track-results">
 				<header>
 					<h2>
+						{totalCount || tracks.length}
 						{tracks.length === 1
 							? m.search_track_one({count: tracks.length})
 							: m.search_track_other({count: tracks.length})}
 					</h2>
+					<Pagination {currentPage} {pageSize} {totalCount} defaultPageSize={50} />
 					<SearchTrackMenu {tracks} title={search.value.trim()} {view} />
 				</header>
 				<ul class="list">

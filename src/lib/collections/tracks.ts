@@ -57,8 +57,16 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 		if (params.createdAfter) key.push('after', params.createdAfter)
 		return key
 	}
-	if (params.tagsIn) return ['tracks', 'tags', ...params.tagsIn.toSorted()]
-	if (params.ftsEq) return ['tracks', 'search', params.ftsEq]
+	if (params.tagsIn) {
+		const key: (string | number)[] = ['tracks', 'tags', ...params.tagsIn.toSorted()]
+		if (params.limit) key.push('limit', params.limit)
+		return key
+	}
+	if (params.ftsEq) {
+		const key: (string | number)[] = ['tracks', 'search', params.ftsEq]
+		if (params.limit) key.push('limit', params.limit)
+		return key
+	}
 	return ['tracks']
 }
 
@@ -122,7 +130,7 @@ export const tracksCollection = createCollection<Track, string>({
 			if (params.tagsIn?.length) {
 				let query = sdk.supabase.from('channel_tracks').select('*')
 				query = query.overlaps('tags', params.tagsIn)
-				query = query.order('created_at', {ascending: false}).limit(4000)
+				query = query.order('created_at', {ascending: false}).limit(params.limit || 50)
 				const {data, error} = await query
 				if (error) throw error
 				const tracks = ((data || []) as Track[]).map((track) => {
@@ -141,7 +149,7 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Global: full-text search
 			if (params.ftsEq) {
-				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: 4000})
+				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: params.limit || 50})
 				const tracks = rawTracks.map((track) => {
 					const parsed = track.url ? parseUrl(track.url) : null
 					return {

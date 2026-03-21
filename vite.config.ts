@@ -28,6 +28,12 @@ export default defineConfig({
 			project: './i18n/project.inlang',
 			outdir: './src/lib/paraglide'
 		}),
+		{
+			name: 'paraglide-postcompile',
+			buildStart() {
+				execSync('node i18n/postcompile.js')
+			}
+		},
 		SvelteKitPWA({
 			manifest: false,
 			registerType: 'autoUpdate',

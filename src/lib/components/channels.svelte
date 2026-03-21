@@ -24,6 +24,7 @@
 	import {featuredScore} from '$lib/utils'
 	import ChannelCard from './channel-card.svelte'
 	import Dialog from './dialog.svelte'
+	import Pagination from './pagination.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SearchInput from './search-input.svelte'
@@ -78,8 +79,6 @@
 	}
 
 	let showFeaturedInfo = $state(false)
-	let showPaginationDialog = $state(false)
-	let paginationInitialPage = $state(1)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
 	let shuffleKey = $state(0)
@@ -240,13 +239,6 @@
 			.catch(() => {})
 	})
 	const totalCount = $derived(localIdFilters[filter]?.().length ?? serverCount)
-	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
-	const hasNextPage = $derived(
-		isPaged &&
-			filter !== 'featured' &&
-			(totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
-	)
-	const hasPrevPage = $derived(isPaged && currentPage > 1)
 
 	// Restore imported channels into the collection on filter activation.
 	// appState.local_channels is the durable source — persisted in localStorage.
@@ -343,22 +335,6 @@
 		appState.channels_filter = value
 		const query = new URL(page.url).searchParams
 		query.set('filter', value)
-		query.delete('page')
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
-	}
-
-	function setPage(n) {
-		const query = new URL(page.url).searchParams
-		if (n <= 1) query.delete('page')
-		else query.set('page', String(n))
-		goto(`?${query.toString()}`, {keepFocus: true})
-	}
-
-	function setPageSize(n) {
-		const size = Math.max(1, Math.min(200, n || 12))
-		const query = new URL(page.url).searchParams
-		if (size === 12) query.delete('per')
-		else query.set('per', String(size))
 		query.delete('page')
 		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 	}
@@ -461,60 +437,14 @@
 			</button>
 		{/if}
 
-		{#if isPaged && filter !== 'featured' && (hasPrevPage || hasNextPage || totalPages > 1)}
-			<span class="pagination">
-				<button
-					onclick={() => setPage(currentPage - 1)}
-					disabled={!hasPrevPage}
-					aria-label="Previous page">←</button
-				>
-				<button
-					class="page-label"
-					onclick={() => {
-						paginationInitialPage = currentPage
-						showPaginationDialog = true
-					}}
-					aria-label="Go to page"
-					>{currentPage}{#if totalPages > 0}/{totalPages}{/if}</button
-				>
-				<button
-					onclick={() => setPage(currentPage + 1)}
-					disabled={!hasNextPage}
-					aria-label="Next page">→</button
-				>
-			</span>
-			<Dialog bind:showModal={showPaginationDialog}>
-				<div class="pagination-dialog">
-					<label>
-						<span>{m.channels_pagination_page()}</span>
-						<input
-							type="number"
-							min="1"
-							max={totalPages || undefined}
-							value={paginationInitialPage}
-							autofocus
-							onchange={(e) => {
-								const n = parseInt(/** @type {HTMLInputElement} */ (e.target).value)
-								if (n >= 1) {
-									setPage(n)
-									showPaginationDialog = false
-								}
-							}}
-						/>
-					</label>
-					<label>
-						<span>{m.channels_pagination_per_page()}</span>
-						<input
-							type="number"
-							min="1"
-							max="200"
-							value={pageSize}
-							onchange={(e) =>
-								setPageSize(parseInt(/** @type {HTMLInputElement} */ (e.target).value))}
-						/>
-					</label>
-				</div>
-			</Dialog>
+		{#if isPaged && filter !== 'featured'}
+			<Pagination
+				{currentPage}
+				{pageSize}
+				{totalCount}
+				resultCount={channels.length}
+				defaultPageSize={12}
+			/>
 		{/if}
 
 		{#if searchHref}
@@ -669,42 +599,5 @@
 	.filtermenu :global(.search-input) {
 		flex: 1 1 0;
 		min-width: 6rem;
-	}
-
-	.pagination {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-
-		.page-label {
-			min-width: 2.6rem;
-			font-variant-numeric: tabular-nums;
-			font-size: var(--font-2);
-			padding: 0.1rem 0.2rem;
-		}
-	}
-
-	.pagination-dialog {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		padding: 0.5rem 0;
-
-		label {
-			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-
-			span {
-				min-width: 4rem;
-				font-size: var(--font-3);
-				color: light-dark(var(--gray-10), var(--gray-8));
-			}
-
-			input[type='number'] {
-				width: 5rem;
-				text-align: center;
-			}
-		}
 	}
 </style>
