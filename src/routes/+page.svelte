@@ -1,7 +1,6 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
-	import {setScene} from '$lib/scene-state.svelte'
 	import {appName} from '$lib/config'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -9,8 +8,16 @@
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {playChannel, togglePlayPause, toggleChannelAutoRadio} from '$lib/api'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {getChannelTags, extractHashtags} from '$lib/utils'
+	import {
+		playChannel,
+		togglePlayPause,
+		toggleChannelAutoRadio,
+		setPlaylist,
+		playTrack,
+		sortByNewest
+	} from '$lib/api'
 	import {findAutoDecksForChannel, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
@@ -24,13 +31,6 @@
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
-
-	setScene({
-		geometry: 'box',
-		backgroundColor: 'oklch(15% 0.04 260)',
-		lightCycling: true,
-		cameraPosition: [0, 0, 4]
-	})
 
 	const FEATURED_COUNT = 3
 	const FEATURED_COUNT_LOGGEDOUT = 6
@@ -152,20 +152,69 @@
 	)
 	const userChannelListenerTotal = $derived(userChannelPresence?.total ?? 0)
 	const userChannelBroadcastListeners = $derived(userChannelPresence?.broadcast ?? 0)
+	const userChannelAutoListeners = $derived(userChannelPresence?.autoRadio ?? 0)
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
+	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
+
+	$effect(() => {
+		const slug = userChannel?.slug
+		if (!slug || !showTrackWidget) return
+		void ensureTracksLoaded(slug)
+	})
+
+	const userChannelTopTags = $derived.by(() => {
+		if (!userChannel?.slug) return []
+		const channelTracks = /** @type {import('$lib/types').Track[]} */ (
+			[...tracksCollection.state.values()].filter(
+				(t) => /** @type {any} */ (t).slug === userChannel.slug
+			)
+		)
+		const featuredTags = extractHashtags(userChannel.description ?? '').map((t) => t.slice(1))
+		const allByCount = getChannelTags(channelTracks)
+		const featuredWithCount = featuredTags
+			.map((tag) => allByCount.find((t) => t.value === tag) ?? {value: tag, count: 0})
+			.slice(0, 13)
+		const topExtra = allByCount
+			.filter((t) => !featuredTags.includes(t.value))
+			.slice(0, 13 - featuredWithCount.length)
+		return [...featuredWithCount, ...topExtra]
+	})
+
+	async function playChannelTag(tag) {
+		if (!userChannel) return
+		const slug = userChannel.slug
+		await ensureTracksLoaded(slug)
+		const tracks = /** @type {import('$lib/types').Track[]} */ (
+			[...tracksCollection.state.values()]
+				.filter(
+					(t) =>
+						/** @type {any} */ (t).slug === slug && /** @type {any} */ (t.tags ?? []).includes(tag)
+				)
+				.sort(sortByNewest)
+		)
+		if (!tracks.length) return
+		setPlaylist(
+			appState.active_deck_id,
+			tracks.map((t) => t.id)
+		)
+		await playTrack(appState.active_deck_id, tracks[0].id, null, 'play_channel')
+	}
+
 	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
-	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
+	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
 	const showAudienceWidget = $derived(
-		userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0
+		userChannelListenerTotal > 0 ||
+			userChannelBroadcastListeners > 0 ||
+			userChannelAutoListeners > 0
 	)
 
-	const broadcastingDecks = $derived.by(() => {
-		if (!userChannel) return []
-		return Object.values(appState.decks)
-			.filter((d) => d.broadcasting_channel_id === userChannel.id)
+	const activeDecks = $derived.by(() =>
+		Object.values(appState.decks)
+			.filter((d) => d.playlist_track)
+			.sort((a, b) => a.id - b.id)
 			.map((deck) => {
 				const currentId = deck.playlist_track
 				const tracks = deck.playlist_tracks
@@ -174,7 +223,7 @@
 				const getTrack = (id) => (id ? tracksCollection.state.get(id) : undefined)
 				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
 			})
-	})
+	)
 
 	// Globe channels — all synced channels with coordinates
 	const globeChannelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
@@ -216,41 +265,28 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
-		{#if userChannel}
-			<div class="channel-play">
-				{#if userChannelIsBroadcasting}
-					<a
-						href={resolve(`/${userChannel.slug}`)}
-						class="channel-badge live-link"
-						title={m.status_broadcasting()}
-						aria-label={m.status_broadcasting()}
-					>
-						{m.status_live_short()}
-					</a>
-				{/if}
-				{#if userChannelTrackCount > 0}
-					{#if userChannelIsPlaying || userChannelIsBroadcasting}
-						<BroadcastControls
-							deckId={userChannelLoadedDeckId}
-							channelId={userChannel.id}
-							channelSlug={userChannel.slug}
-						/>
-					{/if}
-					<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
-						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-						<span class="mini-play-avatar"
-							><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
-						>
-						<span class="mini-play-slug">{userChannel.slug}</span>
-					</button>
-					<AutoRadioButton
-						className="btn{userChannelHasAuto ? ' active' : ''}"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={toggleUserChannelAutoRadio}
-					/>
-				{/if}
-			</div>
+		{#if userChannel && (userChannelIsPlaying || userChannelIsBroadcasting)}
+			<BroadcastControls
+				deckId={userChannelLoadedDeckId}
+				channelId={userChannel.id}
+				channelSlug={userChannel.slug}
+			/>
+			{#if showAudienceWidget}
+				<span class="audience-counts">
+					{#if userChannelListenerTotal > 0}<Icon
+							icon="users"
+							size={12}
+						/>{userChannelListenerTotal}{/if}
+					{#if userChannelBroadcastListeners > 0}<Icon
+							icon="cell-signal"
+							size={12}
+						/>{userChannelBroadcastListeners}{/if}
+					{#if userChannelAutoListeners > 0}<Icon
+							icon="infinite"
+							size={12}
+						/>{userChannelAutoListeners}{/if}
+				</span>
+			{/if}
 		{/if}
 	</menu>
 
@@ -260,30 +296,78 @@
 		<section class="section dashboard-section">
 			<div class="dashboard-grid">
 				{#if showBroadcastStatusWidget}
-					{#each broadcastingDecks as { deck, current, next } (deck.id)}
-						<div class="dashboard-card broadcast-deck-card">
-							<span class="dashboard-label dashboard-label--with-icon">
-								<Icon icon="cell-signal" size={16} />
-								{m.home_dashboard_broadcast()}
-							</span>
-							<div class="broadcast-track">
-								<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
-								<span class="broadcast-track-title">{current?.title ?? '—'}</span>
-							</div>
+					{#each activeDecks as { deck, current, next } (deck.id)}
+						<div class="dashboard-card dashboard-card--row broadcast-deck-card">
+							<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
+							{#if deck.broadcasting_channel_id}
+								<Icon icon="cell-signal" size={14} />
+							{/if}
+							<span class="broadcast-track-title">{current?.title ?? '—'}</span>
 							{#if next}
-								<div class="broadcast-track broadcast-track--next">
-									<Icon icon="next-fill" size={14} />
-									<span class="broadcast-track-title">{next.title}</span>
-								</div>
+								<Icon icon="next-fill" size={12} />
+								<span class="broadcast-track-title broadcast-track-title--next">{next.title}</span>
 							{/if}
 						</div>
 					{/each}
 				{/if}
-				<div class="dashboard-card dashboard-card--channel">
-					<ol class="list">
-						<li><ChannelCard channel={userChannel} /></li>
-					</ol>
+				<div class="dashboard-card dashboard-card--row">
+					<span class="channel-widget-avatar"
+						><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
+					>
+					<a href={resolve(`/${userChannel.slug}`)} class="dashboard-label--tag"
+						>@{userChannel.slug}</a
+					>
+					{#if userChannelIsBroadcasting}
+						<span class="channel-badge live-link">{m.status_live_short()}</span>
+					{/if}
+					<div class="tag-actions">
+						{#if userChannelTrackCount > 0}
+							<button class="btn ghost" onclick={toggleUserChannelPlay} title={userChannel.slug}>
+								<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
+							</button>
+							<AutoRadioButton
+								className="btn ghost{userChannelHasAuto ? ' active' : ''}"
+								synced={!userChannelHasAutoDrifted}
+								title={m.auto_radio_resync()}
+								onclick={toggleUserChannelAutoRadio}
+							/>
+						{/if}
+						<a
+							class="btn ghost"
+							href={resolve('/search') + `?q=${encodeURIComponent('@' + userChannel.slug)}`}
+							title="Search @{userChannel.slug}"
+						>
+							<Icon icon="search" />
+						</a>
+					</div>
 				</div>
+				{#if tagsLoading}
+					<div class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder">
+						<small>…</small>
+					</div>
+				{/if}
+				{#each userChannelTopTags as { value, count } (value)}
+					<div class="dashboard-card dashboard-card--row dashboard-card--tag">
+						<a
+							class="dashboard-label--tag"
+							href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
+								`?tags=${encodeURIComponent(value)}`}>#{value}</a
+						>
+						<small class="tag-count">{count}</small>
+						<div class="tag-actions">
+							<button class="btn ghost" onclick={() => playChannelTag(value)} title="Play #{value}">
+								<Icon icon="play-fill" />
+							</button>
+							<a
+								class="btn ghost"
+								href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
+								title="Search #{value} globally"
+							>
+								<Icon icon="search" />
+							</a>
+						</div>
+					</div>
+				{/each}
 				{#if showOnboarding}
 					{#if appState.show_onboarding_hint}
 						<div class="dashboard-card onboarding dismissible">
@@ -317,57 +401,37 @@
 				{/if}
 				{#if showTrackWidget}
 					<a
-						class="dashboard-card dashboard-card--link"
+						class="dashboard-card dashboard-card--link dashboard-card--row"
 						href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
 					>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="unordered-list" size={16} />
-							{m.home_dashboard_tracks()}
-						</span>
-						<strong class="dashboard-value">{userChannelTrackCount.toLocaleString()}</strong>
+						<Icon icon="unordered-list" size={16} />
+						<span>{m.home_dashboard_tracks()}</span>
+						<strong class="dashboard-value broadcast-count"
+							>{userChannelTrackCount.toLocaleString()}</strong
+						>
 					</a>
 				{/if}
 				{#if showFavoritesWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/favorites')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="favorite-fill" size={16} />
-							{m.home_dashboard_favorites()}
-						</span>
-						<strong class="dashboard-value"
+					<a
+						class="dashboard-card dashboard-card--link dashboard-card--row"
+						href={resolve('/channels/favorites')}
+					>
+						<Icon icon="favorite-fill" size={16} />
+						<span>{m.home_dashboard_favorites()}</span>
+						<strong class="dashboard-value broadcast-count"
 							>{follows.followedChannels.length.toLocaleString()}</strong
 						>
 					</a>
 				{/if}
 				{#if showFavoriteBroadcastWidget}
 					<a
-						class="dashboard-card dashboard-card--link dashboard-card--live"
+						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="cell-signal" size={16} />
-							{m.home_dashboard_favorites_broadcasting()}
-						</span>
-						<strong class="dashboard-value">{favoriteBroadcastCount.toLocaleString()}</strong>
-					</a>
-				{/if}
-				{#if showAudienceWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve(`/${userChannel.slug}`)}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="users" size={16} />
-							{m.home_dashboard_audience()}
-						</span>
-						<strong class="dashboard-value">{userChannelListenerTotal.toLocaleString()}</strong>
-						<small class="dashboard-meta"
-							><Icon icon="cell-signal" size={12} />
-							{m.home_dashboard_live_listeners({
-								count: userChannelBroadcastListeners.toLocaleString()
-							})}</small
-						>
-						<small class="dashboard-meta"
-							><Icon icon="users" size={12} />
-							{m.home_dashboard_total_listeners({
-								count: userChannelListenerTotal.toLocaleString()
-							})}</small
+						<Icon icon="cell-signal" size={16} />
+						<span>{m.home_dashboard_favorites_broadcasting()}</span>
+						<strong class="dashboard-value broadcast-count"
+							>{favoriteBroadcastCount.toLocaleString()}</strong
 						>
 					</a>
 				{/if}
@@ -388,12 +452,15 @@
 		{#if showBroadcastCountWidget}
 			<section class="section dashboard-section">
 				<div class="dashboard-grid" style="width: fit-content;">
-					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/broadcasting')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="signal" size={16} />
-							{m.home_dashboard_live_radios()}
-						</span>
-						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
+					<a
+						class="dashboard-card dashboard-card--link dashboard-card--row"
+						href={resolve('/channels/broadcasting')}
+					>
+						<Icon icon="signal" size={16} />
+						<span>{m.home_dashboard_live_radios()}</span>
+						<strong class="dashboard-value broadcast-count"
+							>{broadcastCount.toLocaleString()}</strong
+						>
 					</a>
 				</div>
 			</section>
@@ -422,6 +489,17 @@
 		</section>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
+		<section class="section dashboard-section">
+			<div class="dashboard-grid">
+				<a
+					class="dashboard-card dashboard-card--link dashboard-card--row"
+					href={resolve('/create-channel')}
+				>
+					<Icon icon="add" size={16} />
+					<span>{m.home_create_channel()}</span>
+				</a>
+			</div>
+		</section>
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">
@@ -470,14 +548,14 @@
 			<section class="section dashboard-section">
 				<div class="dashboard-grid">
 					<a
-						class="dashboard-card dashboard-card--link dashboard-card--live"
+						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="cell-signal" size={16} />
-							{m.home_dashboard_live_radios()}
-						</span>
-						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
+						<Icon icon="cell-signal" size={16} />
+						<span>{m.home_dashboard_live_radios()}</span>
+						<strong class="dashboard-value broadcast-count"
+							>{broadcastCount.toLocaleString()}</strong
+						>
 					</a>
 				</div>
 			</section>
@@ -564,6 +642,9 @@
 		{/if}
 
 		<section class="section">
+			<header class="section-header">
+				<h2 class="section-title"><a href={resolve('/channels/all')}>Overview</a></h2>
+			</header>
 			<div class="globe">
 				<MapChannels
 					channels={globeChannels}
@@ -612,46 +693,8 @@
 		z-index: 2;
 	}
 
-	.channel-play {
-		margin-left: auto;
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
 	.create-channel-action {
 		margin-left: auto;
-	}
-
-	.mini-play {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding-inline: 0.5rem;
-		height: 2rem;
-		font-size: var(--font-3);
-		max-width: 9rem;
-	}
-
-	.mini-play-avatar {
-		width: 1.25rem;
-		height: 1.25rem;
-		flex-shrink: 0;
-		overflow: hidden;
-		border-radius: var(--border-radius);
-
-		:global(img, svg) {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-			border-radius: inherit;
-		}
-	}
-
-	.mini-play-slug {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.live-link {
@@ -696,9 +739,65 @@
 		min-width: 0;
 	}
 
-	.dashboard-card--channel {
-		padding: 0.5rem;
-		grid-column: 1 / -1;
+	.channel-widget-avatar {
+		width: 1.4rem;
+		height: 1.4rem;
+		flex-shrink: 0;
+		overflow: hidden;
+		border-radius: var(--border-radius);
+
+		:global(img, svg) {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			border-radius: inherit;
+		}
+	}
+
+	.dashboard-card--row {
+		flex-direction: row;
+		align-items: center;
+		padding: 0.4rem 0.6rem;
+		gap: 0.4rem;
+		overflow: hidden;
+	}
+
+	.dashboard-card--row > span:not(.channel-widget-avatar):not(.tag-count):not(.audience-counts) {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.dashboard-card--row > a.dashboard-label--tag {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		flex-shrink: 1;
+	}
+
+	.dashboard-label--tag {
+		font-weight: 600;
+		font-size: var(--font-3);
+		color: var(--accent-9);
+		text-decoration: none;
+		flex-shrink: 0;
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	.tag-count {
+		font-size: var(--font-2);
+		color: light-dark(var(--gray-9), var(--gray-8));
+		margin-right: auto;
+	}
+
+	.tag-actions {
+		display: flex;
+		gap: 0.1rem;
+		flex-shrink: 0;
 	}
 
 	.dashboard-card--link {
@@ -717,17 +816,6 @@
 		}
 	}
 
-	.dashboard-label {
-		font-size: var(--font-2);
-		color: light-dark(var(--gray-10), var(--gray-9));
-	}
-
-	.dashboard-label--with-icon {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-	}
-
 	.dashboard-value {
 		font-size: var(--font-7);
 		font-weight: 600;
@@ -735,12 +823,9 @@
 		color: light-dark(var(--gray-12), var(--gray-11));
 	}
 
-	.dashboard-meta {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: var(--font-1);
-		color: light-dark(var(--gray-10), var(--gray-8));
+	.broadcast-count {
+		margin-left: auto;
+		font-size: var(--font-4);
 	}
 
 	.dashboard-card--live {
@@ -751,24 +836,29 @@
 	.broadcast-deck-card {
 		border-color: var(--accent-7);
 		background: var(--accent-2);
-	}
-
-	.broadcast-track {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
 		font-size: var(--font-2);
 		overflow: hidden;
-	}
-
-	.broadcast-track--next {
-		opacity: 0.6;
 	}
 
 	.broadcast-track-title {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.broadcast-track-title--next {
+		opacity: 0.5;
+		flex: 0 1 auto;
+	}
+
+	.audience-counts {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.8em;
+		color: var(--gray-9);
 	}
 
 	.section-header {
