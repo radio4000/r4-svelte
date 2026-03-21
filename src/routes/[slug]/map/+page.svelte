@@ -91,4 +91,40 @@
 	.map-fill {
 		display: contents;
 	}
+
+	/* override global nav-grouped margin and extend to buttons/select/sep */
+	menu.nav-grouped {
+		margin: 0;
+		align-items: stretch;
+
+		button,
+		select {
+			display: inline-flex;
+			align-items: center;
+			padding: 0.3rem 0.5rem;
+			min-height: 2rem;
+			font-size: var(--font-4);
+			border: none;
+			border-right: 1px solid var(--gray-6);
+			border-radius: 0;
+			background: transparent;
+			cursor: pointer;
+			&:last-child {
+				border-right: none;
+			}
+			&:hover {
+				background: var(--gray-4);
+			}
+			&.active {
+				background: var(--accent-3);
+				color: var(--accent-11);
+			}
+		}
+
+		.sep {
+			width: 1px;
+			background: var(--gray-6);
+			align-self: stretch;
+		}
+	}
 </style>
