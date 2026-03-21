@@ -9,7 +9,7 @@
 		page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index'
 	)
 
-	const hasPlayground = $derived(/** @type {any} */ (data).playground === true)
+	const hasPlayground = $derived(/** @type {any} */ (page.data).playground === true)
 	const hasHtml = $derived(!!data.html)
 
 	const activeTab = $derived(
@@ -46,32 +46,32 @@
 	</nav>
 
 	<main class="article">
-		<div class="constrained">
-			{#if hasPlayground && hasHtml}
-				<menu class="tabs nav-grouped doc-tabs">
-					<button
-						aria-current={activeTab === 'docs' ? 'true' : undefined}
-						onclick={() => setTab('docs')}>Docs</button
-					>
-					<button
-						aria-current={activeTab === 'playground' ? 'true' : undefined}
-						onclick={() => setTab('playground')}>Playground</button
-					>
-				</menu>
+		{#if hasPlayground && hasHtml}
+			<menu class="tabs nav-grouped doc-tabs">
+				<button
+					aria-current={activeTab === 'docs' ? 'true' : undefined}
+					onclick={() => setTab('docs')}>Docs</button
+				>
+				<button
+					aria-current={activeTab === 'playground' ? 'true' : undefined}
+					onclick={() => setTab('playground')}>Playground</button
+				>
+			</menu>
 
-				<div class="doc-playground">
-					<article class="doc-prose article" class:hidden-tab={activeTab !== 'docs'}>
-						<!-- eslint-disable svelte/no-at-html-tags -->
-						{@html data.html}
-					</article>
-					<div class="doc-output article" class:hidden-tab={activeTab !== 'playground'}>
-						{@render children()}
-					</div>
+			<div class="doc-playground">
+				<article class="doc-prose constrained article" class:hidden-tab={activeTab !== 'docs'}>
+					<!-- eslint-disable svelte/no-at-html-tags -->
+					{@html data.html}
+				</article>
+				<div class="doc-output article" class:hidden-tab={activeTab !== 'playground'}>
+					{@render children()}
 				</div>
-			{:else}
+			</div>
+		{:else}
+			<div class="constrained">
 				{@render children()}
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</main>
 </div>
 

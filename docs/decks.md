@@ -1,4 +1,4 @@
-# Player UI
+# Decks player UI
 
 ## Terms
 
