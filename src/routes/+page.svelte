@@ -450,7 +450,7 @@
 
 		{#if showBroadcastCountWidget}
 			<section class="section dashboard-section">
-				<div class="dashboard-grid" style="width: fit-content;">
+				<div class="dashboard-grid">
 					<a
 						class="dashboard-card dashboard-card--link dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
@@ -738,9 +738,9 @@
 	}
 
 	.dashboard-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: 0.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
 	}
 
 	.dashboard-card {
