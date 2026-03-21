@@ -66,7 +66,9 @@
 
 	// Basic stats
 	const totalPlays = $derived(plays.length)
-	const totalListeningTime = $derived(Math.round(plays.reduce((sum, p) => sum + (p.ms_played || 0), 0) / 1000 / 60))
+	const totalListeningTime = $derived(
+		Math.round(plays.reduce((sum, p) => sum + (p.ms_played || 0), 0) / 1000 / 60)
+	)
 	const uniqueTracks = $derived(new Set(plays.map((p) => p.track_id)).size)
 	const uniqueChannels = $derived(new Set(plays.map((p) => p.slug)).size)
 	const skipRate = $derived(
@@ -102,7 +104,9 @@
 			.filter((p) => new Date(p.started_at).getTime() > sevenDaysAgoMs)
 			.forEach((p) => {
 				const playTime = new Date(p.started_at).getTime()
-				const existingTime = recentTracks[p.track_id] ? new Date(recentTracks[p.track_id].started_at).getTime() : 0
+				const existingTime = recentTracks[p.track_id]
+					? new Date(recentTracks[p.track_id].started_at).getTime()
+					: 0
 				if (!recentTracks[p.track_id] || playTime > existingTime) {
 					const channel = channelBySlug[p.slug]
 					recentTracks[p.track_id] = {
@@ -187,10 +191,18 @@
 			.map(([reason, count]) => ({reason, count}))
 	})
 
-	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
+	const userInitiatedReasons = [
+		'user_click_track',
+		'user_next',
+		'user_prev',
+		'play_channel',
+		'play_search'
+	]
 	const userInitiatedRate = $derived.by(() => {
 		if (plays.length === 0) return 0
-		const userInitiated = plays.filter((p) => p.reason_start && userInitiatedReasons.includes(p.reason_start)).length
+		const userInitiated = plays.filter(
+			(p) => p.reason_start && userInitiatedReasons.includes(p.reason_start)
+		).length
 		return Math.round((userInitiated / plays.length) * 100)
 	})
 </script>

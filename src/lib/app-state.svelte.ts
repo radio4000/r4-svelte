@@ -208,7 +208,8 @@ $effect.root(() => {
 		localStorage.setItem(STATE_KEY, JSON.stringify(state))
 	})
 	$effect(() => {
-		const queues: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> = {}
+		const queues: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> =
+			{}
 		for (const [id, deck] of Object.entries(appState.decks)) {
 			if (deck.listening_to_channel_id) continue
 			queues[Number(id)] = {

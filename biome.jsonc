@@ -6,11 +6,16 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**", "!src/lib/paraglide", "!**/*.svelte", "!src/lib/tanstack/useLiveQuery.svelte.ts"]
+		"includes": [
+			"src/**",
+			"!src/lib/paraglide",
+			"!**/*.svelte",
+			"!src/lib/tanstack/useLiveQuery.svelte.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,
-		"lineWidth": 120
+		"lineWidth": 100
 	},
 	"assist": {"actions": {"source": {"organizeImports": "off"}}},
 	"linter": {

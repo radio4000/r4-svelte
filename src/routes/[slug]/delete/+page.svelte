@@ -40,11 +40,15 @@
 				// Snapshot before any state changes
 				const channelId = channel.id
 				const channelSlug = channel.slug
-				const channelTracks = [...tracksCollection.state.values()].filter((t) => t?.slug === channelSlug)
+				const channelTracks = [...tracksCollection.state.values()].filter(
+					(t) => t?.slug === channelSlug
+				)
 				const trackIds = channelTracks.map((t) => t.id)
 
 				// Remove from local_channel_ids first so queryFn won't restore the channel
-				appState.local_channel_ids = (appState.local_channel_ids ?? []).filter((id) => id !== channelId)
+				appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
+					(id) => id !== channelId
+				)
 
 				// Navigate away first to avoid layout flashing "Channel not found"
 				await goto('/')
@@ -80,7 +84,10 @@
 	{#if canDelete && channel}
 		<div class="card">
 			<header>
-				<h1>{m.channel_delete_heading()} <a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a></h1>
+				<h1>
+					{m.channel_delete_heading()}
+					<a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a>
+				</h1>
 			</header>
 
 			{#if isLocal}
@@ -107,7 +114,9 @@
 			</form>
 		</div>
 
-		<p class="cancel-link"><a href={resolve('/[slug]', {slug: channel.slug})}>{m.common_cancel()}</a></p>
+		<p class="cancel-link">
+			<a href={resolve('/[slug]', {slug: channel.slug})}>{m.common_cancel()}</a>
+		</p>
 	{:else if !isSignedIn && !isLocal}
 		<p><a href={resolve('/auth')}>{m.auth_log_in()}</a></p>
 	{:else}

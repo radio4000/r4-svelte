@@ -40,7 +40,9 @@
 	</menu>
 
 	<h1>Decks</h1>
-	<p style="min-height: 3rem">Inspect and manipulate deck state. Changes are live and persist to localStorage.</p>
+	<p style="min-height: 3rem">
+		Inspect and manipulate deck state. Changes are live and persist to localStorage.
+	</p>
 
 	<section>
 		<menu>
@@ -82,7 +84,9 @@
 					<legend>Layout &middot; <strong>{layoutLabel(deck)}</strong></legend>
 
 					<menu>
-						<button disabled={layoutLabel(deck) === 'normal'} onclick={() => setNormal(deck)}>Normal</button>
+						<button disabled={layoutLabel(deck) === 'normal'} onclick={() => setNormal(deck)}
+							>Normal</button
+						>
 						<button disabled={deck.compact} onclick={() => setCompact(deck)}>Compact</button>
 						<button disabled={deck.expanded} onclick={() => setExpanded(deck)}>Expanded</button>
 					</menu>
@@ -95,8 +99,12 @@
 					</menu>
 
 					<fieldset class="row">
-						<label><input type="checkbox" bind:checked={deck.hide_video_player} /> hide_video_player</label>
-						<label><input type="checkbox" bind:checked={deck.hide_queue_panel} /> hide_queue_panel</label>
+						<label
+							><input type="checkbox" bind:checked={deck.hide_video_player} /> hide_video_player</label
+						>
+						<label
+							><input type="checkbox" bind:checked={deck.hide_queue_panel} /> hide_queue_panel</label
+						>
 						<label><input type="checkbox" bind:checked={deck.compact} /> compact</label>
 						<label><input type="checkbox" bind:checked={deck.expanded} /> expanded</label>
 					</fieldset>
@@ -110,8 +118,11 @@
 						<label><input type="checkbox" bind:checked={deck.muted} /> muted</label>
 					</fieldset>
 					<fieldset class="row">
-						<label>volume <InputRange bind:value={deck.volume} min={0} max={1} step={0.05} /></label>
-						<label>speed <InputRange bind:value={deck.speed} min={0.25} max={3} step={0.25} /></label>
+						<label>volume <InputRange bind:value={deck.volume} min={0} max={1} step={0.05} /></label
+						>
+						<label
+							>speed <InputRange bind:value={deck.speed} min={0.25} max={3} step={0.25} /></label
+						>
 					</fieldset>
 				</fieldset>
 			</form>
@@ -127,8 +138,9 @@
 
 					<dt>Queue</dt>
 					<dd>
-						track: <code>{deck.playlist_track ?? 'none'}</code> &middot; tracks: {deck.playlist_tracks?.length ?? 0} &middot;
-						shuffled: {deck.playlist_tracks_shuffled?.length ?? 0}
+						track: <code>{deck.playlist_track ?? 'none'}</code> &middot; tracks: {deck
+							.playlist_tracks?.length ?? 0} &middot; shuffled: {deck.playlist_tracks_shuffled
+							?.length ?? 0}
 						{#if deck.queue_panel_width != null}&middot; panel width: {deck.queue_panel_width}px{/if}
 					</dd>
 

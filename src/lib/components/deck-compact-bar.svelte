@@ -70,14 +70,18 @@
 			toHref: appState.embed_mode ? undefined : (path) => resolve(/** @type {any} */ (path))
 		})
 	)
-	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
+	let canEditTrackChannel = $derived(
+		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
+	)
 	let trackHref = $derived(
 		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
 			? resolve(`/${displayTrack.slug}/tracks/${displayTrack.id}`)
 			: undefined
 	)
 	let provider = $derived(
-		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
+		displayTrack?.provider ||
+			(displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) ||
+			null
 	)
 
 	let activeQueue = $derived(getActiveQueue(deck))
@@ -193,13 +197,23 @@
 					autoGhost={!deck?.auto_radio_drifted}
 					autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 					onAutoClick={() => resyncAutoRadio(deckId)}
-					listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
-					listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
-					listeningWhomSlug={deck?.listening_to_channel_id ? headerState.listeningWhomSlug : undefined}
-					listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
+					listeningWhoSlug={deck?.listening_to_channel_id
+						? headerState.listeningWhoSlug
+						: undefined}
+					listeningWhoHref={deck?.listening_to_channel_id
+						? headerState.listeningWhoHref
+						: undefined}
+					listeningWhomSlug={deck?.listening_to_channel_id
+						? headerState.listeningWhomSlug
+						: undefined}
+					listeningWhomHref={deck?.listening_to_channel_id
+						? headerState.listeningWhomHref
+						: undefined}
 					showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
 					broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
-					broadcastSyncTitle={deck?.listening_drifted ? m.player_sync_broadcast() : m.player_broadcast_synced()}
+					broadcastSyncTitle={deck?.listening_drifted
+						? m.player_sync_broadcast()
+						: m.player_broadcast_synced()}
 					onBroadcastSyncClick={() =>
 						deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
 				/>
@@ -209,10 +223,22 @@
 			<div class="track-panel">
 				{#if trackHref}
 					<a class="track-link" href={trackHref}>
-						<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+						<TrackCard
+							track={displayTrack}
+							{deckId}
+							canEdit={canEditTrackChannel}
+							menuAlign="end"
+							menuValign="top"
+						/>
 					</a>
 				{:else}
-					<TrackCard track={displayTrack} {deckId} canEdit={canEditTrackChannel} menuAlign="end" menuValign="top" />
+					<TrackCard
+						track={displayTrack}
+						{deckId}
+						canEdit={canEditTrackChannel}
+						menuAlign="end"
+						menuValign="top"
+					/>
 				{/if}
 			</div>
 		{/if}

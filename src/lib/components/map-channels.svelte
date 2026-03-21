@@ -80,7 +80,9 @@
 
 	const _colorCanvas = document.createElement('canvas')
 	_colorCanvas.width = _colorCanvas.height = 1
-	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (_colorCanvas.getContext('2d', {willReadFrequently: true}))
+	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (
+		_colorCanvas.getContext('2d', {willReadFrequently: true})
+	)
 
 	function resolveCssColor(variableName, fallback = '#888888') {
 		const div = document.createElement('div')
@@ -301,7 +303,8 @@
 				const href = link.getAttribute('href')
 				if (!href) return
 				if (href.startsWith('#')) return
-				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
+				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))
+					return
 				if (popupNavigationInFlight) return
 				clearPendingPopupLinkNavigation()
 				pendingPopupLinkNavigationTimer = setTimeout(() => {
@@ -359,7 +362,9 @@
 	function updateBroadcastLayer() {
 		if (!broadcastLayer || !mapReady) return
 		broadcastLayer.setChannels(
-			mapChannels.filter((c) => broadcastingIds.has(c.id)).map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
+			mapChannels
+				.filter((c) => broadcastingIds.has(c.id))
+				.map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
 		)
 	}
 
@@ -389,7 +394,9 @@
 				sources: {
 					satellite: {
 						type: 'raster',
-						tiles: ['https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+						tiles: [
+							'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+						],
 						tileSize: 256,
 						maxzoom: 19,
 						attribution: 'Powered by Esri'
@@ -449,7 +456,9 @@
 	/** @returns {import('geojson').FeatureCollection} */
 	function buildNightGeoJSON() {
 		const now = new Date()
-		const dayOfYear = Math.round((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000)
+		const dayOfYear = Math.round(
+			(now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000
+		)
 		const decDeg = -23.45 * Math.cos(((2 * Math.PI) / 365) * (dayOfYear + 10))
 		const dec = (decDeg * Math.PI) / 180
 		// Small epsilon avoids tan(0) singularity at equinoxes
@@ -475,7 +484,9 @@
 		}
 		return {
 			type: 'FeatureCollection',
-			features: [{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}]
+			features: [
+				{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}
+			]
 		}
 	}
 
@@ -658,7 +669,8 @@
 	$effect(() => {
 		const vis = showGraticules ? 'visible' : 'none'
 		if (!map || !mapReady) return
-		if (map.getLayer('graticule-equator')) map.setLayoutProperty('graticule-equator', 'visibility', vis)
+		if (map.getLayer('graticule-equator'))
+			map.setLayoutProperty('graticule-equator', 'visibility', vis)
 		if (map.getLayer('graticule-other')) map.setLayoutProperty('graticule-other', 'visibility', vis)
 	})
 

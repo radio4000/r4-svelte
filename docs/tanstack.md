@@ -130,7 +130,9 @@ Use [browser-testing.md](browser-testing.md) with `agent-browser` when verifying
 The live query fetches and reads.
 
 ```js
-const tracks = useLiveQuery((q) => q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.slug, slug)))
+const tracks = useLiveQuery((q) =>
+	q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.slug, slug))
+)
 ```
 
 Use this when d2ts can express the filter directly.

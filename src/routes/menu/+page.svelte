@@ -34,7 +34,9 @@
 	<menu class="nav-vertical">
 		{#if userChannel}
 			<a href={resolve(`/${userChannel.slug}`)}>
-				<span class="channel-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span>
+				<span class="channel-avatar"
+					><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
+				>
 				{userChannel.name}
 				<small>@{userChannel.slug}</small>
 			</a>

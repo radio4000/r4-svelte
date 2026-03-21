@@ -43,7 +43,8 @@ const channelMap = new Map() // slug → { ch, refCount, watching }
 /** @param {string} slug */
 function initChannelPresence(slug) {
 	untrack(() => {
-		if (!channelPresence[slug]) channelPresence[slug] = {total: 0, broadcast: 0, autoRadio: 0, byUri: {}}
+		if (!channelPresence[slug])
+			channelPresence[slug] = {total: 0, broadcast: 0, autoRadio: 0, byUri: {}}
 	})
 }
 

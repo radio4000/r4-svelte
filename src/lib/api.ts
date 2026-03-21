@@ -2,7 +2,12 @@ import {tick} from 'svelte'
 import {goto} from '$app/navigation'
 import {appState, authStatus, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
-import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
+import {
+	leaveBroadcast,
+	notifyBroadcastState,
+	upsertRemoteBroadcast,
+	getBroadcastingChannelId
+} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {capture} from '$lib/analytics'
 import {sdk} from '@radio4000/sdk'
@@ -81,7 +86,9 @@ type MediaPlayer = HTMLElement & {
 export function getMediaPlayer(deckId: number): MediaPlayer | null {
 	return (document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
 		document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
-		document.querySelector(`[data-deck="${deckId}"] audio.native-audio-player`)) as MediaPlayer | null
+		document.querySelector(
+			`[data-deck="${deckId}"] audio.native-audio-player`
+		)) as MediaPlayer | null
 }
 
 /** Wait until a media element exists for a deck. */
@@ -167,7 +174,13 @@ export async function playTrack(
 	}
 
 	// Set flag for user-initiated playback (respects autoplay setting for fresh decks)
-	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
+	const userInitiatedReasons = [
+		'user_click_track',
+		'user_next',
+		'user_prev',
+		'play_channel',
+		'play_search'
+	]
 	if (userInitiatedReasons.includes(startReason)) {
 		const deckAlreadyPlaying = deck.is_playing || deck.playlist_track
 		if (appState.autoplay_new_deck || deckAlreadyPlaying) {
@@ -243,7 +256,11 @@ export async function playTrack(
 	}
 }
 
-export async function playChannel(deckId: number, {id, slug}: {id: string; slug: string}, trackId?: string) {
+export async function playChannel(
+	deckId: number,
+	{id, slug}: {id: string; slug: string},
+	trackId?: string
+) {
 	log.log('play_channel', {deckId, id, slug})
 	leaveBroadcast(deckId)
 	const d = getDeck(deckId)
@@ -252,7 +269,9 @@ export async function playChannel(deckId: number, {id, slug}: {id: string; slug:
 		d.auto_radio_drifted = undefined
 	}
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug).sort(sortByNewest)
+	const tracks = [...tracksCollection.state.values()]
+		.filter((t) => t?.slug === slug)
+		.sort(sortByNewest)
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return
@@ -314,7 +333,11 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string; slug?: string} = {}) {
+export function setPlaylist(
+	deckId: number,
+	trackIds: string[],
+	options: {title?: string; slug?: string} = {}
+) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
@@ -341,7 +364,12 @@ export function addToPlaylist(deckId, trackIds) {
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
-	log.log('addToPlaylist', {deckId, added: trackIds.length, before, after: deck.playlist_tracks.length})
+	log.log('addToPlaylist', {
+		deckId,
+		added: trackIds.length,
+		before,
+		after: deck.playlist_tracks.length
+	})
 }
 
 /**
@@ -360,7 +388,11 @@ export function playNext(deckId, trackIds) {
 	}
 	deck.playlist_tracks = queueInsertManyAfter(deck.playlist_tracks, currentId, ids)
 	if (deck.shuffle) {
-		deck.playlist_tracks_shuffled = queueInsertManyAfter(deck.playlist_tracks_shuffled, currentId, ids)
+		deck.playlist_tracks_shuffled = queueInsertManyAfter(
+			deck.playlist_tracks_shuffled,
+			currentId,
+			ids
+		)
 	}
 	log.log('play_next', {deckId, ids, after: currentId})
 }
@@ -636,7 +668,11 @@ export function next(deckId: number, endReason: PlayEndReason) {
 	const nextId = queueNext(activeQueue, deck.playlist_track)
 	if (nextId) {
 		const startReason: PlayStartReason =
-			endReason === 'youtube_error' ? 'track_error' : endReason === 'user_next' ? 'user_next' : 'auto_next'
+			endReason === 'youtube_error'
+				? 'track_error'
+				: endReason === 'user_next'
+					? 'user_next'
+					: 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
@@ -694,7 +730,12 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 
 	const rotationStartUnix = epochFromTracks(autoTracks)
 	const viewSeed = view ? serializeView(view) : undefined
-	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(
+		autoTracks,
+		rotationStartUnix,
+		Date.now(),
+		viewSeed
+	)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
@@ -763,7 +804,12 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!autoTracks.length) return
 
 	const viewSeed = serializeView(view)
-	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(
+		autoTracks,
+		rotationStartUnix,
+		Date.now(),
+		viewSeed
+	)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 	const label = viewLabel(view) || undefined
@@ -803,7 +849,9 @@ export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
 	} else {
 		const channelTracks = tracks ?? (await loadChannelTracks(slug))
 		if (!hasAutoRadioCoverage(channelTracks)) return
-		joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {sources: [{channels: [slug]}]})
+		joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {
+			sources: [{channels: [slug]}]
+		})
 	}
 }
 

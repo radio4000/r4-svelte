@@ -26,7 +26,9 @@
 {#if href}
 	<a {href} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</a>
 {:else}
-	<button type="button" {onclick} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</button>
+	<button type="button" {onclick} class:playing={isPlaying} class:filtered={isFiltered}
+		>{@render children()}</button
+	>
 {/if}
 
 <style>

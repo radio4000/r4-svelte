@@ -23,7 +23,10 @@ export function pickAutoResyncDeck(
 	const candidates = autoDecks ?? findAutoDecksForChannel(decks, slug)
 	if (!candidates.length) return undefined
 	const active = decks[activeDeckId]
-	if (active?.auto_radio && (active.view?.sources[0]?.channels?.[0] === slug || active.playlist_slug === slug)) {
+	if (
+		active?.auto_radio &&
+		(active.view?.sources[0]?.channels?.[0] === slug || active.playlist_slug === slug)
+	) {
 		return active.id
 	}
 	return candidates[0]?.id

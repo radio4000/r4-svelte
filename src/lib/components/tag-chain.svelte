@@ -34,10 +34,15 @@
 			{/each}
 		</menu>
 		<menu class="actions">
-			<a href={resolve('/[slug]/tracks', {slug: channelSlug}) + `?tags=${tags.map(encodeURIComponent).join(',')}`}>
+			<a
+				href={resolve('/[slug]/tracks', {slug: channelSlug}) +
+					`?tags=${tags.map(encodeURIComponent).join(',')}`}
+			>
 				{m.tag_chain_see_tracks({count: matchingTracks.length})}
 			</a>
-			<button class="primary" onclick={playChain} disabled={matchingTracks.length === 0}>▶ {m.common_play()}</button>
+			<button class="primary" onclick={playChain} disabled={matchingTracks.length === 0}
+				>▶ {m.common_play()}</button
+			>
 			<button onclick={() => (tags = [])} aria-label={m.tag_chain_clear()}>✕</button>
 		</menu>
 	</div>

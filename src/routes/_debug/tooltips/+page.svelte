@@ -22,7 +22,9 @@
 	<section>
 		<h2>HTML content</h2>
 		<menu>
-			<button {@attach tooltip({content: '<em>Italic</em> and <strong>bold</strong>'})}> Styled </button>
+			<button {@attach tooltip({content: '<em>Italic</em> and <strong>bold</strong>'})}>
+				Styled
+			</button>
 			<button {@attach tooltip({content: 'Shortcut <kbd>S</kbd>'})}> With kbd </button>
 		</menu>
 	</section>

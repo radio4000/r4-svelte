@@ -18,7 +18,9 @@
 
 	const cardHref = $derived(href ?? `/${channel.slug}`)
 
-	const isBroadcasting = $derived((broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)))
+	const isBroadcasting = $derived(
+		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id))
+	)
 
 	const isPlaying = $derived(
 		Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
@@ -63,7 +65,8 @@
 				{/if}
 			</h3>
 			<small class="slug"
-				><a href={cardHref} class="slug-link" data-sveltekit-preload-data="false">@{channel.slug}</a></small
+				><a href={cardHref} class="slug-link" data-sveltekit-preload-data="false">@{channel.slug}</a
+				></small
 			>
 			{#if channel.description}
 				<p class="description">
@@ -74,7 +77,9 @@
 				{@render children()}
 			{/if}
 			<div class="meta">
-				{#if channel.track_count}<small>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small>{/if}
+				{#if channel.track_count}<small
+						>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small
+					>{/if}
 				{#if channel.latest_track_at}
 					<small>
 						{#if updatedAtHref}
@@ -97,13 +102,19 @@
 						type="button"
 						role="menuitem"
 						onclick={() =>
-							isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
+							isPlaying
+								? togglePlayPause(appState.active_deck_id)
+								: playChannel(appState.active_deck_id, channel)}
 					>
 						<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
 						{isPlaying ? m.common_pause() : m.common_play()}
 					</button>
 					{#if isBroadcasting}
-						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
+						<button
+							type="button"
+							role="menuitem"
+							onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+						>
 							<Icon icon="cell-signal" />
 							{m.channel_card_join_broadcast()}
 						</button>
@@ -114,7 +125,9 @@
 					</button>
 				</menu>
 				<menu class="nav-vertical">
-					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" /> {m.channel_card_visit()}</a>
+					<a class="btn" href={cardHref} role="menuitem"
+						><Icon icon="circle-info" /> {m.channel_card_visit()}</a
+					>
 				</menu>
 			</PopoverMenu>
 		</div>

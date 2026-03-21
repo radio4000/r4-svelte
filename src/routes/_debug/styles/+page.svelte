@@ -17,7 +17,10 @@
 		<h2>Heading 2</h2>
 		<h3>Heading 3</h3>
 		<h4>Heading 4</h4>
-		<p>Regular paragraph text. <strong>Bold text.</strong> <em>Italic text.</em> <a href="#a">A link</a>.</p>
+		<p>
+			Regular paragraph text. <strong>Bold text.</strong> <em>Italic text.</em>
+			<a href="#a">A link</a>.
+		</p>
 		<p><small>Small / secondary text</small></p>
 		<p><code>Inline code</code></p>
 		<pre><code

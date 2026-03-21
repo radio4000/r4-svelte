@@ -67,7 +67,12 @@
 				importUrl()
 			}}
 		>
-			<input type="url" bind:value={url} placeholder={m.import_backup_url_placeholder()} disabled={importing} />
+			<input
+				type="url"
+				bind:value={url}
+				placeholder={m.import_backup_url_placeholder()}
+				disabled={importing}
+			/>
 			<button type="submit" disabled={importing || !url.trim()}>{m.import_from_url()}</button>
 		</form>
 
@@ -77,7 +82,12 @@
 			{:else}
 				{m.import_backup_dropzone()} <span class="browse-link">{m.import_dropzone_browse()}</span>
 			{/if}
-			<input type="file" accept=".json,application/json" onchange={onFileChange} disabled={importing} />
+			<input
+				type="file"
+				accept=".json,application/json"
+				onchange={onFileChange}
+				disabled={importing}
+			/>
 		</Dropzone>
 	{/if}
 

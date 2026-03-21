@@ -61,12 +61,21 @@ async function flushToIDB() {
 	try {
 		await set(IDB_KEYS.queryCache, clean, store)
 		const totalMs = (performance.now() - t0).toFixed(1)
-		log.debug(`persistClient #${n}`, {queries, sizeKB: `${sizeKB}KB`, cleanMs: `${cleanMs}ms`, totalMs: `${totalMs}ms`})
+		log.debug(`persistClient #${n}`, {
+			queries,
+			sizeKB: `${sizeKB}KB`,
+			cleanMs: `${cleanMs}ms`,
+			totalMs: `${totalMs}ms`
+		})
 	} catch (err) {
 		await resetStore(`persistClient: ${err}`)
 		await set(IDB_KEYS.queryCache, clean, store)
 		const totalMs = (performance.now() - t0).toFixed(1)
-		log.warn(`persistClient #${n} (retry)`, {queries, sizeKB: `${sizeKB}KB`, totalMs: `${totalMs}ms`})
+		log.warn(`persistClient #${n} (retry)`, {
+			queries,
+			sizeKB: `${sizeKB}KB`,
+			totalMs: `${totalMs}ms`
+		})
 	}
 }
 
@@ -109,7 +118,10 @@ const idbPersister = {
 }
 
 /* Decides which "query keys" to persist locally */
-function shouldDehydrateQuery(query: {queryKey: readonly unknown[]; state: {status: string; data: unknown}}): boolean {
+function shouldDehydrateQuery(query: {
+	queryKey: readonly unknown[]
+	state: {status: string; data: unknown}
+}): boolean {
 	// Skip failed results
 	if (query.state.status !== 'success') return false
 

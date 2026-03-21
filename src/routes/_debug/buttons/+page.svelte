@@ -81,7 +81,9 @@
 	<section>
 		<h2>ButtonFeedback</h2>
 		<div class="row">
-			<ButtonFeedback onclick={() => new Promise((r) => setTimeout(r, 600))}>Click me (success)</ButtonFeedback>
+			<ButtonFeedback onclick={() => new Promise((r) => setTimeout(r, 600))}
+				>Click me (success)</ButtonFeedback
+			>
 			<ButtonFeedback onclick={() => new Promise((_, r) => setTimeout(r, 600))} error="Oops">
 				Click me (error)
 			</ButtonFeedback>
@@ -132,7 +134,11 @@
 			<button class="chip active">dub</button>
 			<button class="chip" disabled>disabled</button>
 		</div>
-		<p><small>With delete — label as toggle (<code>button.chip</code> + <code>.chip-delete</code>)</small></p>
+		<p>
+			<small
+				>With delete — label as toggle (<code>button.chip</code> + <code>.chip-delete</code>)</small
+			>
+		</p>
 		<div class="row">
 			<span class="chip-group">
 				<button class="chip">jazz</button>
@@ -147,7 +153,11 @@
 				<button class="chip-delete" disabled aria-label="Remove">×</button>
 			</span>
 		</div>
-		<p><small>With delete — label as inert (<code>span.chip</code> + <code>.chip-delete</code>)</small></p>
+		<p>
+			<small
+				>With delete — label as inert (<code>span.chip</code> + <code>.chip-delete</code>)</small
+			>
+		</p>
 		<div class="row">
 			<span class="chip-group">
 				<span class="chip">jazz</span>

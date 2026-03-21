@@ -68,7 +68,9 @@
 		void tracksCollection.state.size
 		tracks = [...tracksCollection.state.values()]
 			.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= featuredSince)
-			.toSorted((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+			.toSorted(
+				(a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+			)
 			.slice(0, 50)
 		loadedAll = true
 	}
@@ -100,13 +102,18 @@
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}
 				<Icon icon="filter-alt" />
-				{filterParam === 'recent' ? m.explore_tracks_filter_recent() : m.explore_tracks_filter_featured()}
+				{filterParam === 'recent'
+					? m.explore_tracks_filter_recent()
+					: m.explore_tracks_filter_featured()}
 			{/snippet}
 			<menu class="nav-vertical">
-				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/tracks/recent'))}
-					>{m.explore_tracks_filter_recent()}</button
+				<button
+					class:active={filterParam === 'recent'}
+					onclick={() => goto(resolve('/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
 				>
-				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/tracks/featured'))}
+				<button
+					class:active={filterParam === 'featured'}
+					onclick={() => goto(resolve('/tracks/featured'))}
 					>{m.explore_tracks_filter_featured()}</button
 				>
 			</menu>

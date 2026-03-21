@@ -26,9 +26,11 @@ const RE_R4_PREFIX = /^r4:\/\//
 /** Apply order/direction/limit/offset from URLSearchParams onto a View in place. */
 function parseOptions(p: URLSearchParams, view: View): void {
 	const order = p.get('order')
-	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
+	if (order && (validOrders as readonly string[]).includes(order))
+		view.order = order as View['order']
 	const dir = p.get('direction')
-	if (dir && (validDirections as readonly string[]).includes(dir)) view.direction = dir as View['direction']
+	if (dir && (validDirections as readonly string[]).includes(dir))
+		view.direction = dir as View['direction']
 	const limit = p.get('limit')
 	if (limit) {
 		const n = Number(limit)
@@ -163,7 +165,8 @@ export function normalizeView(view?: View): View | undefined {
 			return Object.keys(normalized).length ? normalized : undefined
 		})
 		.filter((s): s is ViewSource => s !== undefined)
-	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset) return undefined
+	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset)
+		return undefined
 	const normalized: View = {sources: sources.length ? sources : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction

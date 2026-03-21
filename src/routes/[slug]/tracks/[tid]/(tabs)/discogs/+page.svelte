@@ -25,7 +25,9 @@
 	)
 	const canPull = $derived(Boolean(discogsUrl && mediaId))
 	const shouldPull = $derived(Boolean(canPull && (!hasDiscogsData || !hasMatchingDiscogsData)))
-	const fetchKey = $derived(track?.id && mediaId && discogsUrl ? `${track.id}:${mediaId}:${discogsUrl}` : null)
+	const fetchKey = $derived(
+		track?.id && mediaId && discogsUrl ? `${track.id}:${mediaId}:${discogsUrl}` : null
+	)
 
 	let loading = $state(false)
 	let error = $state('')

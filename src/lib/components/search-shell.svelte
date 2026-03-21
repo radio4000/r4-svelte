@@ -11,7 +11,12 @@
 	<SearchTabs />
 	<form {onsubmit}>
 		<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-		<SearchInput id="{uid}-search" bind:value placeholder={m.header_search_placeholder()} autofocus />
+		<SearchInput
+			id="{uid}-search"
+			bind:value
+			placeholder={m.header_search_placeholder()}
+			autofocus
+		/>
 	</form>
 	{#if view && onviewchange}
 		<ViewsBar {view} onchange={onviewchange} />

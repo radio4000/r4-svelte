@@ -7,9 +7,13 @@
 
 	// Favorite broadcasts: innerJoin broadcasts × follows
 	const favQuery = useLiveQuery((q) =>
-		q.from({b: broadcastsCollection}).innerJoin({f: followsCollection}, ({b, f}) => eq(b.channel_id, f.id))
+		q
+			.from({b: broadcastsCollection})
+			.innerJoin({f: followsCollection}, ({b, f}) => eq(b.channel_id, f.id))
 	)
-	const favBroadcasts = $derived((favQuery.data ?? []) as Array<{b: BroadcastWithChannel; f: {id: string}}>)
+	const favBroadcasts = $derived(
+		(favQuery.data ?? []) as Array<{b: BroadcastWithChannel; f: {id: string}}>
+	)
 </script>
 
 <div class="constrained">
@@ -37,7 +41,11 @@
 					<tr>
 						<td><a href="/@{ch?.slug ?? row.b.channel_id}">{ch?.name ?? row.b.channel_id}</a></td>
 						<td>{row.b.decks?.length ?? 0}</td>
-						<td>{row.b.track_played_at ? new Date(row.b.track_played_at).toLocaleTimeString() : '-'}</td>
+						<td
+							>{row.b.track_played_at
+								? new Date(row.b.track_played_at).toLocaleTimeString()
+								: '-'}</td
+						>
 					</tr>
 				{/each}
 			</tbody>

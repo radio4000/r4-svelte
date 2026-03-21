@@ -78,7 +78,9 @@
 				<p class="featured-tags">
 					<small>{m.search_examples()}</small>
 					{#each featuredChannelSlugs as slug (`channel-${slug}`)}
-						<a href={resolve('/search/channels') + `?q=${encodeURIComponent('@' + slug)}`}>@{slug}</a>
+						<a href={resolve('/search/channels') + `?q=${encodeURIComponent('@' + slug)}`}
+							>@{slug}</a
+						>
 					{/each}
 				</p>
 			{/if}

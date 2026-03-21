@@ -132,7 +132,8 @@
 			<div class="controls-row">
 				<Icon icon="keyboard" />
 				<div>
-					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> move ·
+					<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd
+					><kbd>→</kbd> move ·
 					<kbd>Q</kbd><kbd>E</kbd> up/down
 				</div>
 			</div>

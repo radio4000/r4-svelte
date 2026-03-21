@@ -60,10 +60,18 @@ export function useLiveQuery<TContext extends Context>(
 	config: LiveQueryCollectionConfig<TContext>,
 	deps?: Array<() => unknown>
 ): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext>>
-export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+export function useLiveQuery<
+	TResult extends object,
+	TKey extends string | number,
+	TUtils extends Record<string, any>
+>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & NonSingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, Array<TResult>>
-export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+export function useLiveQuery<
+	TResult extends object,
+	TKey extends string | number,
+	TUtils extends Record<string, any>
+>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & SingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
 export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
@@ -80,7 +88,10 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			// but query callbacks ((q) => ...) may return null or throw when q is undefined.
 			// Without this guard, a callback like (q) => { if (!enabled) return null; ... }
 			// would set unwrappedParam to null, bypassing the function branch entirely.
-			if (potentiallyUnwrapped !== configOrQueryOrCollection && isCollectionInstance(potentiallyUnwrapped)) {
+			if (
+				potentiallyUnwrapped !== configOrQueryOrCollection &&
+				isCollectionInstance(potentiallyUnwrapped)
+			) {
 				unwrappedParam = potentiallyUnwrapped
 			}
 		} catch {

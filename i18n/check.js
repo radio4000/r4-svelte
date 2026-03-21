@@ -53,7 +53,9 @@ for (const locale of locales) {
 	if (placeholderIssues.length > 0) {
 		console.log(`    placeholder mismatches (${placeholderIssues.length}):`)
 		for (const issue of placeholderIssues) {
-			console.log(`      ${issue.key}: expected {${issue.expected.join(', ')}} got {${issue.actual.join(', ')}}`)
+			console.log(
+				`      ${issue.key}: expected {${issue.expected.join(', ')}} got {${issue.actual.join(', ')}}`
+			)
 		}
 	}
 }

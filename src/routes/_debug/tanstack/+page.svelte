@@ -41,14 +41,17 @@
 				const isSubset = (key === 'channels' || key === 'tracks') && q.queryKey.length > 1
 				const data = q.state.data
 				const hasData = Array.isArray(data) && data.length > 0 && data.every((x) => x != null)
-				const willPersist = q.state.status === 'success' && hasData && !isSubset && key !== 'todos-cached'
+				const willPersist =
+					q.state.status === 'success' && hasData && !isSubset && key !== 'todos-cached'
 				return {
 					key: q.queryKey.join('/'),
 					size: Array.isArray(data) ? data.length : data ? 1 : 0,
 					status: q.state.status,
 					stale: q.isStale(),
 					willPersist,
-					updatedAt: q.state.dataUpdatedAt ? new Date(q.state.dataUpdatedAt).toLocaleTimeString() : '-'
+					updatedAt: q.state.dataUpdatedAt
+						? new Date(q.state.dataUpdatedAt).toLocaleTimeString()
+						: '-'
 				}
 			})
 			.sort((a, b) => a.key.localeCompare(b.key))
@@ -137,7 +140,10 @@
 		{#if cacheQueries.length}
 			<table>
 				<thead>
-					<tr><th>Key</th><th>Items</th><th>Status</th><th>Stale</th><th>Persist</th><th>Updated</th></tr>
+					<tr
+						><th>Key</th><th>Items</th><th>Status</th><th>Stale</th><th>Persist</th><th>Updated</th
+						></tr
+					>
 				</thead>
 				<tbody>
 					{#each cacheQueries as q (q.key)}

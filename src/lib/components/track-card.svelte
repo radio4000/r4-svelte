@@ -72,7 +72,8 @@
 			target.closest('button.tag-link')
 		)
 			return
-		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+			return
 		if (onPlay) {
 			onPlay(track.id)
 			return
@@ -165,7 +166,9 @@
 			<button type="button" class="danger" role="menuitem" data-no-close onclick={handleDelete}
 				>{m.common_confirm()}</button
 			>
-			<button type="button" role="menuitem" onclick={() => menu?.close()}>{m.common_cancel()}</button>
+			<button type="button" role="menuitem" onclick={() => menu?.close()}
+				>{m.common_cancel()}</button
+			>
 		{:else}
 			<menu>
 				<button
@@ -210,8 +213,11 @@
 					>
 				{/if}
 				{#if isRealTrack}
-					<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
-						><Icon icon="share" /></button
+					<button
+						type="button"
+						role="menuitem"
+						{@attach tooltip({content: m.share_native()})}
+						onclick={shareTrack}><Icon icon="share" /></button
 					>
 				{/if}
 			</menu>
@@ -222,7 +228,9 @@
 					>
 				{/if}
 				{#if isRealTrack && !appState.embed_mode}
-					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
+					<a class="btn" href={permalink} role="menuitem"
+						><Icon icon="circle-info" size={14} />{m.track_go_to()}</a
+					>
 				{:else if track.url && !appState.embed_mode}
 					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
 						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
@@ -232,7 +240,12 @@
 					<button type="button" role="menuitem" onclick={editTrack}
 						><Icon icon="settings" size={14} />{m.common_edit()}</button
 					>
-					<button type="button" class="danger" role="menuitem" data-no-close onclick={() => (showDeleteConfirm = true)}
+					<button
+						type="button"
+						class="danger"
+						role="menuitem"
+						data-no-close
+						onclick={() => (showDeleteConfirm = true)}
 						><Icon icon="delete" size={14} />{m.common_delete()}</button
 					>
 				{/if}

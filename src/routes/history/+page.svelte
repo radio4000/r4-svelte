@@ -1,6 +1,10 @@
 <script lang="ts">
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {playHistoryCollection, clearPlayHistory, type PlayHistoryEntry} from '$lib/collections/play-history'
+	import {
+		playHistoryCollection,
+		clearPlayHistory,
+		type PlayHistoryEntry
+	} from '$lib/collections/play-history'
 	import {playTrack} from '$lib/api'
 	import {ensureTracksLoaded} from '$lib/collections/tracks'
 	import {appState} from '$lib/app-state.svelte'
@@ -132,9 +136,12 @@
 							{#snippet description()}
 								{#if play.ms_played || play.skipped || play.shuffle}
 									<small class="play-metas">
-										{#if play.ms_played}<span class="play-meta">{formatDurationCompact(play.ms_played)}</span>{/if}
+										{#if play.ms_played}<span class="play-meta"
+												>{formatDurationCompact(play.ms_played)}</span
+											>{/if}
 										{#if play.skipped}<span class="play-meta">{m.history_flag_skipped()}</span>{/if}
-										{#if play.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span>{/if}
+										{#if play.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span
+											>{/if}
 									</small>
 								{/if}
 							{/snippet}

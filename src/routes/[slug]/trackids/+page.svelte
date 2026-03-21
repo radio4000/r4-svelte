@@ -7,7 +7,9 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const channelQuery = useLiveQuery((q) =>
-		q.from({channels: channelsCollection}).where(({channels}) => eq(channels.slug, page.params.slug))
+		q
+			.from({channels: channelsCollection})
+			.where(({channels}) => eq(channels.slug, page.params.slug))
 	)
 	const tracksQuery = useLiveQuery((q) =>
 		q

@@ -54,7 +54,9 @@
 				</li>
 			{:else}
 				<li>
-					<a href={repoUrl} target="_blank" rel="noreferrer">{m.settings_analytics_code_refs_repo()}</a>
+					<a href={repoUrl} target="_blank" rel="noreferrer"
+						>{m.settings_analytics_code_refs_repo()}</a
+					>
 				</li>
 			{/if}
 		</ul>

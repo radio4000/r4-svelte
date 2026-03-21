@@ -3,7 +3,8 @@ import {appUrl, appPlayerUrl} from '$lib/config'
 
 export const channelUrl = (channel: Channel) => `${appUrl}/${channel.slug}`
 
-export const trackUrl = (channel: Channel, track: Track) => `${appUrl}/${channel.slug}/tracks/${track.id}`
+export const trackUrl = (channel: Channel, track: Track) =>
+	`${appUrl}/${channel.slug}/tracks/${track.id}`
 
 export const channelEmbed = (channel: Channel) =>
 	`<iframe src="${appPlayerUrl}/v2/?slug=${channel.slug}" width="320" height="500"></iframe>`

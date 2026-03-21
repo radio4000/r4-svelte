@@ -47,7 +47,11 @@ const WEEK_A_TZ_MS = WEEK_A_MS // UTC timestamps are timezone-agnostic
 
 describe('toAutoTracks', () => {
 	it('removes tracks with duration <= 0', () => {
-		const tracks = [makeTrack(0, {duration: 0}), makeTrack(1, {duration: -5}), makeTrack(2, {duration: 30})]
+		const tracks = [
+			makeTrack(0, {duration: 0}),
+			makeTrack(1, {duration: -5}),
+			makeTrack(2, {duration: 30})
+		]
 		expect(toAutoTracks(tracks).map((t) => t.id)).toEqual(['t2'])
 	})
 
@@ -79,7 +83,11 @@ describe('hasAutoRadioCoverage', () => {
 	})
 
 	it('returns false below 50% coverage', () => {
-		const tracks = [makeTrack(0, {duration: 0}), makeTrack(1, {duration: 0}), makeTrack(2, {duration: 30})]
+		const tracks = [
+			makeTrack(0, {duration: 0}),
+			makeTrack(1, {duration: 0}),
+			makeTrack(2, {duration: 30})
+		]
 		expect(hasAutoRadioCoverage(tracks)).toBe(false)
 	})
 })
@@ -273,7 +281,9 @@ describe('epochFromTracks', () => {
 			{created_at: '2023-01-01T00:00:00Z'},
 			{created_at: '2024-12-01T00:00:00Z'}
 		]
-		expect(epochFromTracks(tracks)).toBe(Math.floor(new Date('2023-01-01T00:00:00Z').getTime() / 1000))
+		expect(epochFromTracks(tracks)).toBe(
+			Math.floor(new Date('2023-01-01T00:00:00Z').getTime() / 1000)
+		)
 	})
 
 	it('is stable regardless of input order', () => {

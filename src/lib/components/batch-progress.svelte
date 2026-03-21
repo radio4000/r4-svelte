@@ -5,12 +5,23 @@
 	 */
 
 	/** @type {{total: number, chunkSize?: number, chunks?: Chunk[], elapsed?: number, running?: boolean, onRun?: () => void, onAbort?: () => void, controls?: import('svelte').Snippet}} */
-	let {total, chunkSize = 50, chunks = [], elapsed = 0, running = false, onRun, onAbort, controls} = $props()
+	let {
+		total,
+		chunkSize = 50,
+		chunks = [],
+		elapsed = 0,
+		running = false,
+		onRun,
+		onAbort,
+		controls
+	} = $props()
 
 	let chunkCount = $derived(Math.ceil(total / chunkSize))
 	let lastChunkSize = $derived(total % chunkSize || chunkSize)
 	let isDone = $derived(
-		chunks.length > 0 && !running && chunks.every((c) => c.status === 'done' || c.status === 'error')
+		chunks.length > 0 &&
+			!running &&
+			chunks.every((c) => c.status === 'done' || c.status === 'error')
 	)
 
 	// Count completed items based on done chunks
@@ -25,7 +36,9 @@
 	})
 
 	let elapsedStr = $derived(
-		elapsed < 60 ? `${elapsed.toFixed(1)}s` : `${Math.floor(elapsed / 60)}m ${(elapsed % 60).toFixed(0)}s`
+		elapsed < 60
+			? `${elapsed.toFixed(1)}s`
+			: `${Math.floor(elapsed / 60)}m ${(elapsed % 60).toFixed(0)}s`
 	)
 
 	/** @param {MouseEvent & {currentTarget: HTMLButtonElement}} e */

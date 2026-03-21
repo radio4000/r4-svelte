@@ -8,7 +8,15 @@
  *
  * Heuristics: placeholder mismatches, extreme length ratios, identical to another locale.
  */
-import {resolveLocales, readLocale, missingKeys, en, enKeys, placeholderNames, localeFiles} from './lib.js'
+import {
+	resolveLocales,
+	readLocale,
+	missingKeys,
+	en,
+	enKeys,
+	placeholderNames,
+	localeFiles
+} from './lib.js'
 
 const locales = resolveLocales(process.argv[2])
 
@@ -44,7 +52,9 @@ for (const locale of locales) {
 		const enPh = placeholderNames(enValue)
 		const localePh = placeholderNames(value)
 		if (enPh.size !== localePh.size || [...enPh].some((p) => !localePh.has(p))) {
-			issues.push(`placeholder mismatch: expected {${[...enPh].join(', ')}} got {${[...localePh].join(', ')}}`)
+			issues.push(
+				`placeholder mismatch: expected {${[...enPh].join(', ')}} got {${[...localePh].join(', ')}}`
+			)
 		}
 
 		// Length ratio (strings > 10 chars)
@@ -75,7 +85,8 @@ for (const locale of locales) {
 
 const payload = {
 	source_locale: 'en',
-	notes: 'Translate missing keys in "translations". Check flagged issues in "review" — fix or ignore.',
+	notes:
+		'Translate missing keys in "translations". Check flagged issues in "review" — fix or ignore.',
 	translations,
 	review
 }

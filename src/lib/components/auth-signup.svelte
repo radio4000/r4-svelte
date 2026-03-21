@@ -68,7 +68,9 @@
 		}
 	}
 
-	async function verifyOtp(/** @type {import('@supabase/supabase-js').EmailOtpType} */ type = 'email') {
+	async function verifyOtp(
+		/** @type {import('@supabase/supabase-js').EmailOtpType} */ type = 'email'
+	) {
 		loading = true
 		error = null
 		try {
@@ -128,7 +130,8 @@
 		</form>
 	{:else}
 		<menu class="centerwrap">
-			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button>
+			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button
+			>
 		</menu>
 	{/if}
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -167,7 +170,8 @@
 	{/if}
 	<menu class="centerwrap">
 		{#if !showCode}
-			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button>
+			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button
+			>
 		{/if}
 		<!-- <ButtonFeedback onclick={() => sendMagicLink({rethrow: true})} success={m.auth_resend_success()}>
 			{m.auth_resend()}
@@ -175,7 +179,9 @@
 		<!-- <button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button> -->
 	</menu>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
-	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button></p>
+	<p>
+		<button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button>
+	</p>
 {:else if step === 'password'}
 	<form
 		class="form"
@@ -212,7 +218,11 @@
 		</button>
 	</form>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
-	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.auth_use_magic_link()}</button></p>
+	<p>
+		<button type="button" class="link" onclick={() => (step = 'email')}
+			>← {m.auth_use_magic_link()}</button
+		>
+	</p>
 {:else if step === 'email'}
 	<form
 		class="form"
@@ -240,14 +250,20 @@
 	<!-- <menu class="centerwrap">
 		<button type="button" onclick={() => (step = 'password')}>{m.auth_use_password_instead()}</button>
 	</menu> -->
-	<p><button type="button" class="link" onclick={() => (step = 'providers')}>← {m.common_back()}</button></p>
+	<p>
+		<button type="button" class="link" onclick={() => (step = 'providers')}
+			>← {m.common_back()}</button
+		>
+	</p>
 {:else}
 	<AuthProviders onEmailClick={handleEmailContinue} {redirect} />
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	<p>
 		<small
 			>{m.auth_terms_prefix()}
-			<a href="{appLegalUrl}/terms-of-service" target="_blank" rel="noopener">{m.auth_terms_link()}</a>.</small
+			<a href="{appLegalUrl}/terms-of-service" target="_blank" rel="noopener"
+				>{m.auth_terms_link()}</a
+			>.</small
 		>
 	</p>
 {/if}

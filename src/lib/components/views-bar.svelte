@@ -1,6 +1,12 @@
 <script lang="ts">
 	import {serializeView, parseView, viewLabel, type View, type ViewSource} from '$lib/views'
-	import {viewsCollection, createView, updateView, deleteView, type SavedView} from '$lib/collections/views'
+	import {
+		viewsCollection,
+		createView,
+		updateView,
+		deleteView,
+		type SavedView
+	} from '$lib/collections/views'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
@@ -25,7 +31,9 @@
 	// Active detection
 	const currentParams = $derived(serializeView(view))
 	const activeViewId = $derived(savedViews.find((sv) => sv.uri === currentParams)?.id ?? null)
-	const baseViewName = $derived(baseViewId ? savedViews.find((sv) => sv.id === baseViewId)?.name : null)
+	const baseViewName = $derived(
+		baseViewId ? savedViews.find((sv) => sv.id === baseViewId)?.name : null
+	)
 
 	// Dirty detection
 	$effect(() => {
@@ -170,7 +178,8 @@
 										id="{uid}-channels-{i}"
 										type="text"
 										value={s.channels?.join(', ') || ''}
-										onchange={(e) => updateSource(i, {...s, channels: splitList(e.currentTarget.value)})}
+										onchange={(e) =>
+											updateSource(i, {...s, channels: splitList(e.currentTarget.value)})}
 										placeholder={m.views_channels_placeholder()}
 									/>
 								</fieldset>
@@ -180,7 +189,10 @@
 										<select
 											value={s.tagsMode || 'any'}
 											onchange={(e) =>
-												updateSource(i, {...s, tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'})}
+												updateSource(i, {
+													...s,
+													tagsMode: e.currentTarget.value === 'all' ? 'all' : 'any'
+												})}
 										>
 											<option value="any">{m.views_tags_any()}</option>
 											<option value="all">{m.views_tags_all()}</option>
@@ -189,7 +201,10 @@
 											type="text"
 											value={s.tags?.join(', ') || ''}
 											onchange={(e) =>
-												updateSource(i, {...s, tags: splitList(e.currentTarget.value.replaceAll('#', ''))})}
+												updateSource(i, {
+													...s,
+													tags: splitList(e.currentTarget.value.replaceAll('#', ''))
+												})}
 											placeholder={m.views_tags_placeholder()}
 										/>
 									</fieldset>
@@ -200,7 +215,8 @@
 										id="{uid}-search-{i}"
 										type="text"
 										value={s.search || ''}
-										onchange={(e) => updateSource(i, {...s, search: e.currentTarget.value.trim() || undefined})}
+										onchange={(e) =>
+											updateSource(i, {...s, search: e.currentTarget.value.trim() || undefined})}
 										placeholder={m.views_search_placeholder()}
 									/>
 								</fieldset>
@@ -225,7 +241,8 @@
 								id="{uid}-limit"
 								type="number"
 								value={view.limit || ''}
-								onchange={(e) => onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
+								onchange={(e) =>
+									onchange({...view, limit: Number(e.currentTarget.value) || undefined})}
 								placeholder={m.views_limit_placeholder()}
 								min="1"
 								max="4000"
@@ -247,7 +264,8 @@
 				onkeydown={(e) => e.key === 'Enter' && saveNewView()}
 			/>
 			<button type="button" onclick={cancelAdding}>{m.common_cancel()}</button>
-			<button type="button" class="primary" onclick={saveNewView} disabled={!draftName.trim()}>{m.common_save()}</button
+			<button type="button" class="primary" onclick={saveNewView} disabled={!draftName.trim()}
+				>{m.common_save()}</button
 			>
 		</section>
 	{/if}

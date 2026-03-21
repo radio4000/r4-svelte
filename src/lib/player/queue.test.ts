@@ -27,7 +27,15 @@ describe('queue navigation', () => {
 
 describe('queue insertion', () => {
 	it('queueInsertManyAfter inserts multiple items', () => {
-		expect(queueInsertManyAfter(queue, 'b', ['x', 'y'])).toEqual(['a', 'b', 'x', 'y', 'c', 'd', 'e'])
+		expect(queueInsertManyAfter(queue, 'b', ['x', 'y'])).toEqual([
+			'a',
+			'b',
+			'x',
+			'y',
+			'c',
+			'd',
+			'e'
+		])
 		expect(queueInsertManyAfter(queue, 'missing', ['x'])).toEqual(['a', 'b', 'c', 'd', 'e', 'x'])
 	})
 })

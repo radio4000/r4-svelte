@@ -17,13 +17,15 @@
 
 	<h1>App State</h1>
 	<p>
-		Global reactive state persisted to localStorage. Changes here reflect immediately across the app. Also available at <code
-			>window.r5.appState</code
-		>.
+		Global reactive state persisted to localStorage. Changes here reflect immediately across the
+		app. Also available at <code>window.r5.appState</code>.
 	</p>
 
 	<section>
-		<p>Clears any custom, local user settings, application state as well as cached channels and tracks in idb.</p>
+		<p>
+			Clears any custom, local user settings, application state as well as cached channels and
+			tracks in idb.
+		</p>
 		<button onclick={clearAll}>Reset localstorage + IndexedDB</button>
 	</section>
 

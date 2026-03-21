@@ -391,7 +391,11 @@
 		}
 
 		/* when any deck has visible content, cap page scroll area so decks get most of the viewport */
-		.content:has(:global(.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))))
+		.content:has(
+				:global(
+					.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+				)
+			)
 			.scroll-area {
 			flex: 0 1 auto;
 			max-height: 28dvh;

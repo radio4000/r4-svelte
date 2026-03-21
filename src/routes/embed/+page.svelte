@@ -20,7 +20,9 @@
 */
 
 	const rawView: View = $derived.by(() => viewFromUrl(page.url))
-	const hasView = $derived(rawView.sources.some((s) => s.channels?.length || s.tags?.length || s.search))
+	const hasView = $derived(
+		rawView.sources.some((s) => s.channels?.length || s.tags?.length || s.search)
+	)
 
 	function viewToDecks(view: View): Record<number, ReturnType<typeof createDefaultDeck>> {
 		if (!view.sources.length) return {1: createDefaultDeck(1)}
@@ -31,7 +33,12 @@
 					id,
 					{
 						...createDefaultDeck(id),
-						view: {sources: [source], order: view.order, direction: view.direction, limit: view.limit}
+						view: {
+							sources: [source],
+							order: view.order,
+							direction: view.direction,
+							limit: view.limit
+						}
 					}
 				]
 			})
@@ -81,7 +88,12 @@
 	const deckViews = $derived(
 		rawView.sources.map((source, i) => ({
 			deckId: i + 1,
-			view: {sources: [source], order: rawView.order, direction: rawView.direction, limit: rawView.limit} satisfies View
+			view: {
+				sources: [source],
+				order: rawView.order,
+				direction: rawView.direction,
+				limit: rawView.limit
+			} satisfies View
 		}))
 	)
 
@@ -92,7 +104,9 @@
 		}
 	})
 
-	const viewQueries = $derived(deckViews.map(({deckId, view}) => ({deckId, view, query: queryView(() => view)})))
+	const viewQueries = $derived(
+		deckViews.map(({deckId, view}) => ({deckId, view, query: queryView(() => view)}))
+	)
 
 	$effect(() => {
 		for (const {deckId, view, query} of viewQueries) {

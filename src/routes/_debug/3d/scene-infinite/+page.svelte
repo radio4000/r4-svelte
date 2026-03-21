@@ -53,7 +53,10 @@
 			guiControllers = []
 		}
 		const {GUI} = await import('lil-gui')
-		const channelOptions = Object.fromEntries([['(none)', ''], ...channels.map((c) => [`@${c.slug}`, c.id])])
+		const channelOptions = Object.fromEntries([
+			['(none)', ''],
+			...channels.map((c) => [`@${c.slug}`, c.id])
+		])
 		const params = {
 			selected: selectedId || '',
 			clearSelection() {
@@ -128,7 +131,14 @@
 		<p>Infinite scene with shared 3D channel cards.</p>
 	</header>
 	<section class="scene" bind:this={sceneEl}>
-		<InfiniteCanvas {media} {activeId} {activeIds} {selectedId} onclick={handleClick} onnavigate={handleNavigate} />
+		<InfiniteCanvas
+			{media}
+			{activeId}
+			{activeIds}
+			{selectedId}
+			onclick={handleClick}
+			onnavigate={handleNavigate}
+		/>
 	</section>
 </article>
 

@@ -31,7 +31,10 @@
 </article>
 
 <figure>
-	<img src="/images/illustrations/ruins-of-the-augustus-bridge-at-narni.jpg" alt={m.about_bridge_alt()} />
+	<img
+		src="/images/illustrations/ruins-of-the-augustus-bridge-at-narni.jpg"
+		alt={m.about_bridge_alt()}
+	/>
 	<figcaption>{m.about_bridge_caption()}</figcaption>
 </figure>
 

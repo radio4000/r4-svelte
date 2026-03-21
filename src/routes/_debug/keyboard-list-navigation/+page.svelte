@@ -25,7 +25,9 @@
 	<h1>Listbox keyboard navigation</h1>
 
 	<p>
-		Implements the <a href="https://www.w3.org/WAI/ARIA/apg/patterns/listbox/">ARIA Listbox pattern</a>
+		Implements the <a href="https://www.w3.org/WAI/ARIA/apg/patterns/listbox/"
+			>ARIA Listbox pattern</a
+		>
 		using a Svelte attachment. Single tab stop with internal arrow key navigation.
 	</p>
 

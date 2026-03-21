@@ -40,7 +40,13 @@
 </svelte:head>
 
 <article {@attach fromAction(trap)}>
-	<SearchShell {uid} bind:value={search.value} onsubmit={search.handleSubmit} {view} onviewchange={onViewsBarChange} />
+	<SearchShell
+		{uid}
+		bind:value={search.value}
+		onsubmit={search.handleSubmit}
+		{view}
+		onviewchange={onViewsBarChange}
+	/>
 
 	{#if hasFilter}
 		{#if !tracksLoading && tracks.length === 0}

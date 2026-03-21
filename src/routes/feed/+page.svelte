@@ -44,7 +44,9 @@
 		return groupByDay(
 			[...tracksCollection.state.values()]
 				.filter((t) => t?.slug && slugSet.has(t.slug) && (t.created_at ?? '') >= since)
-				.toSorted((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+				.toSorted(
+					(a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+				)
 		)
 	})
 

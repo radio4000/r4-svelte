@@ -23,7 +23,9 @@
 	// Reuse tracks query from parent layout (avoids duplicate useLiveQuery)
 	const tracksQuery = getTracksQueryCtx()
 
-	const metaQuery = useLiveQuery((q) => q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id))
+	const metaQuery = useLiveQuery((q) =>
+		q.from({meta: trackMetaCollection}).orderBy(({meta}) => meta.media_id)
+	)
 
 	function getTrackProvider(track) {
 		return track.provider ?? null
@@ -31,14 +33,17 @@
 
 	let channel = $derived(channelCtx.data)
 	let rawTracks = $derived(tracksQuery.data || [])
-	let metaMap = $derived(new Map(metaQuery.data?.map((m) => [trackMetaKey(m.provider, m.media_id), m]) || []))
+	let metaMap = $derived(
+		new Map(metaQuery.data?.map((m) => [trackMetaKey(m.provider, m.media_id), m]) || [])
+	)
 	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
 			if (!track.media_id) return track
 			const provider = getTrackProvider(track)
 			const meta =
-				metaMap.get(trackMetaKey(provider, track.media_id)) ?? metaMap.get(trackMetaKey(null, track.media_id))
+				metaMap.get(trackMetaKey(provider, track.media_id)) ??
+				metaMap.get(trackMetaKey(null, track.media_id))
 			return meta ? {...track, ...meta} : track
 		})
 	)
@@ -69,7 +74,10 @@
 
 	// All tracks missing YouTube metadata
 	let allTracksMissingMeta = $derived(
-		tracks.filter((track) => getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error)
+		tracks.filter(
+			(track) =>
+				getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error
+		)
 	)
 
 	// Selection-aware: fetch for selected tracks if any, otherwise all missing meta
@@ -311,8 +319,12 @@
 {#snippet navControls()}
 	<PopoverMenu>
 		{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabels[filter]}{/snippet}
-		<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>{m.batch_edit_filter_all()}</button>
-		<button class:active={filter === 'missing-description'} onclick={() => (filter = 'missing-description')}
+		<button class:active={filter === 'all'} onclick={() => (filter = 'all')}
+			>{m.batch_edit_filter_all()}</button
+		>
+		<button
+			class:active={filter === 'missing-description'}
+			onclick={() => (filter = 'missing-description')}
 			>{m.batch_edit_filter_missing_description()}</button
 		>
 		<button class:active={filter === 'no-tags'} onclick={() => (filter = 'no-tags')}
@@ -339,27 +351,36 @@
 		<button class:active={filter === 'no-duration'} onclick={() => (filter = 'no-duration')}
 			>{m.batch_edit_filter_no_duration()}</button
 		>
-		<button class:active={filter === 'meta-no-duration'} onclick={() => (filter = 'meta-no-duration')}
-			>{m.batch_edit_filter_meta_no_duration()}</button
+		<button
+			class:active={filter === 'meta-no-duration'}
+			onclick={() => (filter = 'meta-no-duration')}>{m.batch_edit_filter_meta_no_duration()}</button
 		>
 	</PopoverMenu>
 
 	{#if allTags.length > 0}
 		<PopoverMenu>
 			{#snippet trigger()}<Icon icon="tag" /> {tagFilter || m.batch_edit_tags_label()}{/snippet}
-			<button class:active={!tagFilter} onclick={() => (tagFilter = '')}>{m.batch_edit_all_tags()}</button>
+			<button class:active={!tagFilter} onclick={() => (tagFilter = '')}
+				>{m.batch_edit_all_tags()}</button
+			>
 			{#each allTags as { value, count } (value)}
-				<button class:active={tagFilter === value} onclick={() => (tagFilter = value)}>{value} ({count})</button>
+				<button class:active={tagFilter === value} onclick={() => (tagFilter = value)}
+					>{value} ({count})</button
+				>
 			{/each}
 		</PopoverMenu>
 	{/if}
 
 	{#if allMentions.length > 0}
 		<PopoverMenu>
-			{#snippet trigger()}<Icon icon="user" /> {mentionFilter || m.batch_edit_mentions_label()}{/snippet}
-			<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}>{m.batch_edit_all_mentions()}</button>
+			{#snippet trigger()}<Icon icon="user" />
+				{mentionFilter || m.batch_edit_mentions_label()}{/snippet}
+			<button class:active={!mentionFilter} onclick={() => (mentionFilter = '')}
+				>{m.batch_edit_all_mentions()}</button
+			>
 			{#each allMentions as { value, count } (value)}
-				<button class:active={mentionFilter === value} onclick={() => (mentionFilter = value)}>{value} ({count})</button
+				<button class:active={mentionFilter === value} onclick={() => (mentionFilter = value)}
+					>{value} ({count})</button
 				>
 			{/each}
 		</PopoverMenu>
@@ -377,7 +398,10 @@
 			})}
 		>
 			{fetchingMeta
-				? m.batch_edit_fetching_progress({current: fetchProgress.current, total: fetchProgress.total})
+				? m.batch_edit_fetching_progress({
+						current: fetchProgress.current,
+						total: fetchProgress.total
+					})
 				: m.batch_edit_fetch_meta_button({
 						count: targetTracksMissingMeta.length,
 						selected: hasSelection ? m.batch_edit_fetch_meta_short_selected() : ''
@@ -386,7 +410,8 @@
 	{/if}
 
 	<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-		{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} /> {m.batch_edit_display_label()}{/snippet}
+		{#snippet trigger()}<Icon icon="grid" strokeWidth={1.7} />
+			{m.batch_edit_display_label()}{/snippet}
 		<div class="sort-row">
 			<select bind:value={sortBy}>
 				<option value={null}>{m.batch_edit_sort_placeholder()}</option>
@@ -452,7 +477,9 @@
 							/>
 						</div>
 						<div class="col-link"></div>
-						{#if !hiddenColumns.includes('url')}<div class="col-url">{m.batch_edit_column_url()}</div>{/if}
+						{#if !hiddenColumns.includes('url')}<div class="col-url">
+								{m.batch_edit_column_url()}
+							</div>{/if}
 						{#if !hiddenColumns.includes('title')}<button
 								class="col-title sortable"
 								class:sorted={sortBy === 'title'}
@@ -485,7 +512,9 @@
 								{m.batch_edit_column_mentions()}
 								{sortBy === 'mentions' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
 							</button>{/if}
-						{#if !hiddenColumns.includes('discogs')}<div class="col-discogs">{m.batch_edit_column_discogs()}</div>{/if}
+						{#if !hiddenColumns.includes('discogs')}<div class="col-discogs">
+								{m.batch_edit_column_discogs()}
+							</div>{/if}
 						{#if !hiddenColumns.includes('duration')}<button
 								class="col-duration sortable"
 								class:sorted={sortBy === 'duration'}

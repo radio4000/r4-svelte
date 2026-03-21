@@ -56,10 +56,19 @@
 		{"name": "deck.seeked_at", "desc": "Timestamp of last seek."},
 		{"name": "deck.seek_position", "desc": "Seek position in seconds."},
 		{"name": "deck.auto_radio", "desc": "Auto-radio active flag."},
-		{"name": "deck.auto_radio_drifted", "desc": "Computed drift from expected schedule (2s tolerance)."},
-		{"name": "deck.view", "desc": "Stored View identity/filters for matching and auto-radio resync."},
+		{
+			"name": "deck.auto_radio_drifted",
+			"desc": "Computed drift from expected schedule (2s tolerance)."
+		},
+		{
+			"name": "deck.view",
+			"desc": "Stored View identity/filters for matching and auto-radio resync."
+		},
 		{"name": "deck.auto_radio_rotation_start", "desc": "Epoch from oldest track (unix seconds)."},
-		{"name": "deck.listening_drifted", "desc": "Computed drift from expected broadcast position (2s tolerance)."}
+		{
+			"name": "deck.listening_drifted",
+			"desc": "Computed drift from expected broadcast position (2s tolerance)."
+		}
 	],
 
 	"src/lib/tanstack/collections": [
@@ -68,9 +77,15 @@
 
 		{"name": "tracksCollection", "desc": "Tracks data."},
 		{"name": "tracksAPI", "desc": "Tracks collection API helpers."},
-		{"name": "channelsCollection", "desc": "Channels data. Pagination via reactive .limit() on useLiveQuery."},
+		{
+			"name": "channelsCollection",
+			"desc": "Channels data. Pagination via reactive .limit() on useLiveQuery."
+		},
 		{"name": "channelsAPI", "desc": "Channels collection API helpers."},
-		{"name": "fetchChannelCount(params?)", "desc": "Total count for pagination UI (HEAD request, no data)."},
+		{
+			"name": "fetchChannelCount(params?)",
+			"desc": "Total count for pagination UI (HEAD request, no data)."
+		},
 		{"name": "CHANNELS_PAGE_SIZE", "desc": "Default page size (20)."},
 		{"name": "followsCollection", "desc": "Followed channels (synced)."},
 		{"name": "broadcastsCollection", "desc": "Active broadcasts."},
@@ -87,7 +102,10 @@
 		{"name": "getTrackWithMeta(id)", "desc": "Track with YouTube/MusicBrainz meta."},
 		{"name": "ensureTracksLoaded(slug)", "desc": "Fetch if not cached."},
 		{"name": "checkTracksFreshness(slug)", "desc": "Check if tracks need refresh."},
-		{"name": "insertDurationFromMeta(trackId, meta)", "desc": "Update track duration from metadata."},
+		{
+			"name": "insertDurationFromMeta(trackId, meta)",
+			"desc": "Update track duration from metadata."
+		},
 
 		{"name": "createChannel({name, slug, ...})", "desc": "Create a channel."},
 		{"name": "updateChannel(id, changes)", "desc": "Update a channel."},
@@ -110,7 +128,10 @@
 	"src/lib/api.ts": [
 		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
 		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
-		{"name": "setUserInitiatedPlay(deckId, value)", "desc": "Set user-initiated play flag for a deck."},
+		{
+			"name": "setUserInitiatedPlay(deckId, value)",
+			"desc": "Set user-initiated play flag for a deck."
+		},
 		{"name": "getMediaPlayer(deckId)", "desc": "Find the media player element for a deck."},
 
 		{"name": "playTrack(deckId, id, endReason, startReason)", "desc": "Start playback of a track."},
@@ -119,7 +140,10 @@
 			"desc": "Play a channel, optionally starting from a specific track ID."
 		},
 		{"name": "playTrackInNewDeck(trackId, slug)", "desc": "Play a track in a newly created deck."},
-		{"name": "playChannelInNewDeck(channel, trackId?)", "desc": "Play a channel in a newly created deck."},
+		{
+			"name": "playChannelInNewDeck(channel, trackId?)",
+			"desc": "Play a channel in a newly created deck."
+		},
 		{"name": "shufflePlayChannel(deckId, {id, slug})", "desc": "Random start plus shuffle."},
 		{"name": "togglePlayPause(deckId)", "desc": "Toggle play/pause for a deck."},
 		{"name": "playFromHere(deckId, trackId)", "desc": "Play from track to end."},
@@ -131,7 +155,10 @@
 		{"name": "clearQueue(deckId)", "desc": "Keep current track, clear the rest."},
 		{"name": "shuffleRemaining(deckId)", "desc": "Shuffle remaining tracks."},
 		{"name": "rotateQueue(deckId)", "desc": "Move played to end."},
-		{"name": "toggleShuffle(deckId)", "desc": "Toggle shuffle mode (switch between original/shuffled order)."},
+		{
+			"name": "toggleShuffle(deckId)",
+			"desc": "Toggle shuffle mode (switch between original/shuffled order)."
+		},
 
 		{"name": "play(deckId, player?)", "desc": "Resume playback."},
 		{"name": "pause(player)", "desc": "Pause playback."},
@@ -146,11 +173,17 @@
 			"name": "joinAutoRadio(deckId, tracks, view?)",
 			"desc": "Start deterministic live radio. View differentiates shuffles and sets label."
 		},
-		{"name": "resyncAutoRadio(deckId)", "desc": "Resync drifted deck to current auto-radio position."},
+		{
+			"name": "resyncAutoRadio(deckId)",
+			"desc": "Resync drifted deck to current auto-radio position."
+		},
 
 		{"name": "toggleTheme()", "desc": "Light/dark mode."},
 		{"name": "getDeck(deckId)", "desc": "Internal: look up deck from appState.decks."},
-		{"name": "maybeBroadcastNotify()", "desc": "Internal: notify broadcast if currently broadcasting."},
+		{
+			"name": "maybeBroadcastNotify()",
+			"desc": "Internal: notify broadcast if currently broadcasting."
+		},
 
 		{"name": "toggleQueuePanel(deckId)", "desc": "Toggle queue sidebar for a deck."},
 		{"name": "toggleDeckCompact(deckId)", "desc": "Compact/expand a deck."},
@@ -164,16 +197,25 @@
 		{"name": "queueNext(queue, currentId)", "desc": "Return next ID or null."},
 		{"name": "queuePrev(queue, currentId)", "desc": "Return previous ID or null."},
 
-		{"name": "queueInsertManyAfter(queue, currentId, insertIds)", "desc": "Insert many after current ID."},
+		{
+			"name": "queueInsertManyAfter(queue, currentId, insertIds)",
+			"desc": "Insert many after current ID."
+		},
 		{"name": "queueRemove(queue, id)", "desc": "Remove ID."},
 
-		{"name": "queueShuffleKeepCurrent(queue, currentId)", "desc": "Shuffle but keep current first."},
+		{
+			"name": "queueShuffleKeepCurrent(queue, currentId)",
+			"desc": "Shuffle but keep current first."
+		},
 		{"name": "queueRotate(queue, currentId)", "desc": "Rotate queue from current."},
 		{"name": "queueUnique(queue)", "desc": "Remove duplicates."}
 	],
 
 	"src/lib/player/auto-radio.ts": [
-		{"name": "toAutoTracks(tracks)", "desc": "Filter to tracks with duration > 0 and non-empty url."},
+		{
+			"name": "toAutoTracks(tracks)",
+			"desc": "Filter to tracks with duration > 0 and non-empty url."
+		},
 		{
 			"name": "epochFromTracks(tracks)",
 			"desc": "Unix seconds of oldest track's created_at. Stable epoch for shuffle math."
@@ -187,7 +229,10 @@
 			"name": "playbackState(tracks, totalDuration, rotationStartUnix, nowMs)",
 			"desc": "Compute track + offset at a given moment."
 		},
-		{"name": "AutoRadio", "desc": "Stateful wrapper: setTracks + tick. Re-shuffles on week rollover."}
+		{
+			"name": "AutoRadio",
+			"desc": "Stateful wrapper: setTracks + tick. Re-shuffles on week rollover."
+		}
 	],
 
 	"src/lib/search-url.svelte.js": [
@@ -197,8 +242,14 @@
 		},
 		{"name": "SearchUrl.value", "desc": "Bindable input value ($state)."},
 		{"name": "SearchUrl.debouncedInput", "desc": "Debounced version of value (300ms)."},
-		{"name": "SearchUrl.handleSubmit(e)", "desc": "Form submit handler — flushes debounce or clears URL."},
-		{"name": "SearchUrl.seedInput(value)", "desc": "Set input without triggering navigation (e.g. from ViewsBar)."}
+		{
+			"name": "SearchUrl.handleSubmit(e)",
+			"desc": "Form submit handler — flushes debounce or clears URL."
+		},
+		{
+			"name": "SearchUrl.seedInput(value)",
+			"desc": "Set input without triggering navigation (e.g. from ViewsBar)."
+		}
 	],
 
 	"src/lib/search-fts.js": [
@@ -212,7 +263,10 @@
 		{"name": "searchChannels (re-export)", "desc": "Re-exported from search-fts."},
 		{"name": "searchTracks (re-export)", "desc": "Re-exported from search-fts."},
 		{"name": "searchAll(query, {limit?})", "desc": "Search @channel, #tag, and free-text (FTS)."},
-		{"name": "fuzzySearch(query, items, keys, {limit?, threshold?})", "desc": "Generic local fuzzy search."},
+		{
+			"name": "fuzzySearch(query, items, keys, {limit?, threshold?})",
+			"desc": "Generic local fuzzy search."
+		},
 		{"name": "searchTracksLocal(query, tracks, {limit?})", "desc": "Local tracks search."},
 		{"name": "searchChannelsLocal(query, channels, {limit?})", "desc": "Local channels search."},
 		{
@@ -238,12 +292,24 @@
 			"name": "serializeSource(source)",
 			"desc": "ViewSource to human string (also a valid ViewURI segment). Internal to serializeView."
 		},
-		{"name": "parseView(input)", "desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."},
+		{
+			"name": "parseView(input)",
+			"desc": "Parse view string (with ; and ?options, optional r4:// prefix) into a View."
+		},
 		{"name": "serializeView(view)", "desc": "Serialize View to compact string (no r4:// prefix)."},
 		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (?q= param + option params)."},
-		{"name": "viewToUrl(basePath, view)", "desc": "Build a URL string from a View and base path (e.g. '/search')."},
-		{"name": "viewLabel(view)", "desc": "All sources as a human-readable string, no options. For labels/display."},
-		{"name": "normalizeView(view?)", "desc": "Drop empty fields so equivalent views compare equal."},
+		{
+			"name": "viewToUrl(basePath, view)",
+			"desc": "Build a URL string from a View and base path (e.g. '/search')."
+		},
+		{
+			"name": "viewLabel(view)",
+			"desc": "All sources as a human-readable string, no options. For labels/display."
+		},
+		{
+			"name": "normalizeView(view?)",
+			"desc": "Drop empty fields so equivalent views compare equal."
+		},
 		{"name": "viewURI(view?)", "desc": "Canonical serialized key for comparing View identity."}
 	],
 
@@ -287,9 +353,18 @@
 	],
 
 	"src/lib/broadcast.js": [
-		{"name": "isUserBroadcasting(channelId)", "desc": "Check if user is broadcasting on a channel."},
-		{"name": "notifyBroadcastState(channelId)", "desc": "Push broadcast state update via realtime."},
-		{"name": "getBroadcastingChannelId()", "desc": "Get the channel ID being broadcast from any deck."},
+		{
+			"name": "isUserBroadcasting(channelId)",
+			"desc": "Check if user is broadcasting on a channel."
+		},
+		{
+			"name": "notifyBroadcastState(channelId)",
+			"desc": "Push broadcast state update via realtime."
+		},
+		{
+			"name": "getBroadcastingChannelId()",
+			"desc": "Get the channel ID being broadcast from any deck."
+		},
 		{
 			"name": "calculateSeekTime(state, track)",
 			"desc": "Compute expected playback second (speed-aware) from broadcast state."
@@ -309,17 +384,29 @@
 			"desc": "Extract tag suggestions from Discogs data."
 		},
 		{"name": "searchUrl(title)", "desc": "Generate Discogs search URL for title."},
-		{"name": "pull(ytid, discogsUrl)", "desc": "Fetch and save Discogs data to trackMetaCollection."},
-		{"name": "hunt(trackId, ytid, title)", "desc": "Auto-discover Discogs URL via MusicBrainz chain."}
+		{
+			"name": "pull(ytid, discogsUrl)",
+			"desc": "Fetch and save Discogs data to trackMetaCollection."
+		},
+		{
+			"name": "hunt(trackId, ytid, title)",
+			"desc": "Auto-discover Discogs URL via MusicBrainz chain."
+		}
 	],
 
 	"src/lib/dates.js": [
 		{"name": "formatDate(date)", "desc": "Format date using Intl.DateTimeFormat."},
-		{"name": "formatDateFormal(date, locale?)", "desc": "Formal date+time: Year/Month/day + localized time."},
+		{
+			"name": "formatDateFormal(date, locale?)",
+			"desc": "Formal date+time: Year/Month/day + localized time."
+		},
 		{"name": "toIsoDateTime(date)", "desc": "Convert date input to ISO datetime string."},
 		{"name": "isValidDateInput(date)", "desc": "True when Date/string/number is a valid date."},
 		{"name": "dateYear(dateString)", "desc": "Just the year."},
-		{"name": "dateProvenance(dateString)", "desc": "Smart: 'this week'/'this month'/'recent'/year."},
+		{
+			"name": "dateProvenance(dateString)",
+			"desc": "Smart: 'this week'/'this month'/'recent'/year."
+		},
 		{"name": "relativeDate(dateString)", "desc": "Returns 'X days ago'."},
 		{"name": "relativeDateDetailed(dateString)", "desc": "Days/months/years ago."},
 		{"name": "relativeDateSolar(dateString)", "desc": "Cosmic time: sun orbits + earth rotations."},
@@ -340,14 +427,29 @@
 
 		{"name": "trimWithEllipsis(text, maxLength?)", "desc": "Truncate with ellipsis."},
 		{"name": "shuffleArray(arr)", "desc": "Fisher-Yates shuffle."},
-		{"name": "generateFrequency(name, slug, min, max)", "desc": "Deterministic frequency from string."},
+		{
+			"name": "generateFrequency(name, slug, min, max)",
+			"desc": "Deterministic frequency from string."
+		},
 		{"name": "timeAgo(dateString)", "desc": "Relative time: 'Xm ago', 'Xh Ym ago'."},
 		{"name": "channelAvatarUrl(id, size?, format?)", "desc": "Cloudinary URL for channel avatar."},
 		{"name": "pickRandomN(n)", "desc": "Pick n random items from array."},
-		{"name": "countStrings(strings)", "desc": "Count occurrences → {value, count}[], sorted by frequency then alpha."},
-		{"name": "getChannelTags(tracks)", "desc": "Aggregate and count tags from tracks → {value, count}[]."},
-		{"name": "getTopChannelSlugs(channels, limit)", "desc": "Top channel slugs sorted by track count + recency."},
-		{"name": "getTopTagValues(tracks, limit)", "desc": "Top tag value strings from a collection of tracks."}
+		{
+			"name": "countStrings(strings)",
+			"desc": "Count occurrences → {value, count}[], sorted by frequency then alpha."
+		},
+		{
+			"name": "getChannelTags(tracks)",
+			"desc": "Aggregate and count tags from tracks → {value, count}[]."
+		},
+		{
+			"name": "getTopChannelSlugs(channels, limit)",
+			"desc": "Top channel slugs sorted by track count + recency."
+		},
+		{
+			"name": "getTopTagValues(tracks, limit)",
+			"desc": "Top tag value strings from a collection of tracks."
+		}
 	],
 
 	"src/lib/logger.js": [
@@ -355,7 +457,10 @@
 			"name": "logger",
 			"desc": "Sealed adze logger. Usage: logger.info('msg'), logger.ns('sync').seal() for namespaced."
 		},
-		{"name": "store", "desc": "Adze log store (cache: true, level: debug). Access logs via store.logs."}
+		{
+			"name": "store",
+			"desc": "Adze log store (cache: true, level: debug). Access logs via store.logs."
+		}
 	],
 
 	"src/lib/components": [
@@ -455,7 +560,10 @@
 		{"name": "r4 --help", "desc": "Show help."},
 		{"name": "r4 channel --help", "desc": "List channels."},
 		{"name": "r4 track --help", "desc": "List tracks."},
-		{"name": "r4 search <query> [--channels] [--tracks] [--limit n]", "desc": "Search channels and tracks."}
+		{
+			"name": "r4 search <query> [--channels] [--tracks] [--limit n]",
+			"desc": "Search channels and tracks."
+		}
 	],
 
 	"window.r5": [

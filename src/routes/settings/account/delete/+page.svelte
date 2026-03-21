@@ -37,7 +37,10 @@
 	{#if !appState.user}
 		<p>{m.account_sign_in_prompt()}</p>
 	{:else}
-		<p>{m.account_delete_warning_pre()} <strong>{appState.user.email}</strong> {m.account_delete_warning_post()}</p>
+		<p>
+			{m.account_delete_warning_pre()} <strong>{appState.user.email}</strong>
+			{m.account_delete_warning_post()}
+		</p>
 		<p><strong>{m.account_delete_irreversible()}</strong></p>
 		<ul>
 			<li>{m.account_delete_item_channels()}</li>

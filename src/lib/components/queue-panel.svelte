@@ -53,7 +53,9 @@
 		return trackIds.map((id) => byId.get(id)).filter((t) => !!t)
 	})
 
-	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description']))
+	let filteredQueueTracks = $derived(
+		fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description'])
+	)
 
 	/** @param {string} tag */
 	function toggleTag(tag) {
@@ -77,7 +79,10 @@
 			debounce={150}
 		/>
 		{#if searchQuery !== ''}
-			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: m.queue_clear_search()})}>
+			<button
+				onclick={() => (searchQuery = '')}
+				{@attach tooltip({content: m.queue_clear_search()})}
+			>
 				<Icon icon="close" />
 			</button>
 		{/if}
@@ -91,7 +96,11 @@
 				<Icon icon="shuffle" />
 			</button>
 			{#if !appState.embed_mode}
-				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
+				<button
+					onclick={clearQueue}
+					{@attach tooltip({content: m.common_clear()})}
+					title={m.common_clear()}
+				>
 					<Icon icon="delete" />
 				</button>
 			{/if}

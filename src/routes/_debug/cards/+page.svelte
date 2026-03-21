@@ -16,7 +16,10 @@
 	let containerWidth = $state(600)
 
 	onMount(async () => {
-		const [trRes, chsRes] = await Promise.all([sdk.channels.readChannelTracks(slug, 6), sdk.channels.readChannels(3)])
+		const [trRes, chsRes] = await Promise.all([
+			sdk.channels.readChannelTracks(slug, 6),
+			sdk.channels.readChannels(3)
+		])
 		tracks = trRes.data ?? []
 		channels = chsRes.data ?? []
 		loading = false
@@ -29,7 +32,10 @@
 
 <div class="container">
 	<h1>Cards</h1>
-	<p><small>Track and channel cards from <code>@{slug}</code>. Drag container edges to resize.</small></p>
+	<p>
+		<small>Track and channel cards from <code>@{slug}</code>. Drag container edges to resize.</small
+		>
+	</p>
 
 	{#if loading}
 		<p>Loading…</p>

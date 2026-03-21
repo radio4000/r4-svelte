@@ -9,7 +9,9 @@
 	const meta = $derived(detail.meta)
 	const musicbrainzData = $derived(meta?.musicbrainz_data)
 	const hasMusicbrainzInfo = $derived(
-		Boolean(musicbrainzData && typeof musicbrainzData === 'object' && 'recording' in musicbrainzData)
+		Boolean(
+			musicbrainzData && typeof musicbrainzData === 'object' && 'recording' in musicbrainzData
+		)
 	)
 	const provider = $derived(detail.trackProvider)
 	const mediaId = $derived(detail.trackMediaId)

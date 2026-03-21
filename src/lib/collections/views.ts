@@ -36,7 +36,10 @@ export function createView(name: string, view: View, description?: string): Save
 	return entry
 }
 
-export function updateView(id: string, updates: Partial<Pick<SavedView, 'name' | 'description' | 'uri' | 'position'>>) {
+export function updateView(
+	id: string,
+	updates: Partial<Pick<SavedView, 'name' | 'description' | 'uri' | 'position'>>
+) {
 	viewsCollection.update(id, (draft) => {
 		if (updates.name !== undefined) draft.name = updates.name
 		if (updates.description !== undefined) draft.description = updates.description

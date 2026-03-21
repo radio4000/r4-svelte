@@ -167,7 +167,10 @@
 				demoCollection.insert(todo)
 			}
 		}
-		log.info('populateCollection', {inserted: demoCollection.size, liveQueryItems: liveQueryData.length})
+		log.info('populateCollection', {
+			inserted: demoCollection.size,
+			liveQueryItems: liveQueryData.length
+		})
 	}
 
 	let cacheItemCount = $derived((workResult?.length ?? 0) + (homeResult?.length ?? 0))
@@ -224,13 +227,16 @@
 <article class="constrained">
 	<Menu />
 	<h1>TanStack Query + DB</h1>
-	<p>Interactive exploration. Query caches <strong>responses</strong>. DB stores <strong>rows</strong>.</p>
+	<p>
+		Interactive exploration. Query caches <strong>responses</strong>. DB stores
+		<strong>rows</strong>.
+	</p>
 
 	<section>
 		<h2>1. Just fetch</h2>
 		<p>
-			Fetch data, render it. Click a few times—each click fires a new network request even though we already have the
-			data.
+			Fetch data, render it. Click a few times—each click fires a new network request even though we
+			already have the data.
 		</p>
 		<p>
 			<button onclick={justFetch} disabled={isFetching}>fetch('/todos')</button>
@@ -250,7 +256,8 @@
 	<section>
 		<h2>2. Cached fetch + queryOptions</h2>
 		<p>
-			Wrap fetch in <code>fetchQuery</code>. Responses are cached by <code>queryKey</code>. Define the config once with
+			Wrap fetch in <code>fetchQuery</code>. Responses are cached by <code>queryKey</code>. Define
+			the config once with
 			<code>queryOptions()</code> and reuse it everywhere.
 		</p>
 		<pre>const todoQueryOpts = queryOptions(&#123;
@@ -282,7 +289,9 @@ createQuery(() => (&#123; ...todoQueryOpts &#125;))</pre>
 			<code>gcTime</code> — how long unused data stays in memory. Or invalidate manually:
 		</p>
 		<p>
-			<button onclick={invalidateCache} disabled={isInvalidating}>invalidateQueries(['todos-demo'])</button>
+			<button onclick={invalidateCache} disabled={isInvalidating}
+				>invalidateQueries(['todos-demo'])</button
+			>
 			{#if cacheInvalidated}
 				<mark>Cache invalidated. Try section 2 again.</mark>
 			{/if}
@@ -292,8 +301,9 @@ createQuery(() => (&#123; ...todoQueryOpts &#125;))</pre>
 	<section>
 		<h2>4. Reactive queries</h2>
 		<p>
-			<code>createQuery</code> is Svelte-specific (React has <code>useQuery</code>). It returns a reactive object that
-			stays subscribed to the cache. Unlike <code>fetchQuery</code>, it fetches automatically and watches for changes.
+			<code>createQuery</code> is Svelte-specific (React has <code>useQuery</code>). It returns a
+			reactive object that stays subscribed to the cache. Unlike <code>fetchQuery</code>, it fetches
+			automatically and watches for changes.
 		</p>
 		<p>Same queryOptions, different method:</p>
 		<pre>const query = createQuery(() => (&#123;
@@ -318,7 +328,10 @@ createQuery(() => (&#123; ...todoQueryOpts &#125;))</pre>
 			<button onclick={addToCache}>setQueryData (add todo)</button>
 		</p>
 		{#if cacheUpdated}
-			<p>Section 4 (reactive) updated instantly. Section 2 (imperative) didn't—it's a snapshot, not a subscription.</p>
+			<p>
+				Section 4 (reactive) updated instantly. Section 2 (imperative) didn't—it's a snapshot, not a
+				subscription.
+			</p>
 		{/if}
 	</section>
 
@@ -373,15 +386,17 @@ try &#123;
 	<section>
 		<h2>7. Normalization — why DB exists</h2>
 		<p>
-			Two API endpoints return overlapping data. Watch the query cache store duplicates while the collection
-			deduplicates by ID.
+			Two API endpoints return overlapping data. Watch the query cache store duplicates while the
+			collection deduplicates by ID.
 		</p>
 
 		<p>
 			<button onclick={fetchWork} disabled={workFetched}>Fetch "work" list</button>
 			<button onclick={fetchHome} disabled={homeFetched}>Fetch "home" list</button>
 			{#if workFetched && homeFetched}
-				<button onclick={populateCollection} disabled={liveQueryData.length > 0}>→ Pour into collection</button>
+				<button onclick={populateCollection} disabled={liveQueryData.length > 0}
+					>→ Pour into collection</button
+				>
 			{/if}
 		</p>
 
@@ -418,30 +433,35 @@ try &#123;
 
 		{#if liveQueryData.length}
 			<p>
-				This is normalization. Query cached two <strong>responses</strong> (blobs). The collection stores five
-				<strong>rows</strong> (entities), deduplicated by ID. Update a row once, everything that references it sees the change.
+				This is normalization. Query cached two <strong>responses</strong> (blobs). The collection
+				stores five
+				<strong>rows</strong> (entities), deduplicated by ID. Update a row once, everything that references
+				it sees the change.
 			</p>
 			<p>
-				In this demo we manually poured data in. In the real app, <code>queryCollectionOptions()</code>
-				does this automatically — it's <code>queryOptions()</code> but with a collection as the destination instead of the
-				query cache.
+				In this demo we manually poured data in. In the real app, <code
+					>queryCollectionOptions()</code
+				>
+				does this automatically — it's <code>queryOptions()</code> but with a collection as the destination
+				instead of the query cache.
 			</p>
 		{/if}
 	</section>
 
 	<aside>
 		<p>
-			<strong>Reactive vs one-off:</strong> <code>collection.state</code> and <code>.toArray</code> return plain
-			snapshots — great for event handlers and one-time lookups, but wrapping them in <code>$derived</code> won't make
-			them reactive. For reactive reads, always use <code>useLiveQuery</code>.
+			<strong>Reactive vs one-off:</strong> <code>collection.state</code> and <code>.toArray</code>
+			return plain snapshots — great for event handlers and one-time lookups, but wrapping them in
+			<code>$derived</code>
+			won't make them reactive. For reactive reads, always use <code>useLiveQuery</code>.
 		</p>
 	</aside>
 
 	<section>
 		<h2>8. Live queries</h2>
 		<p>
-			Once data is in a collection, <code>useLiveQuery</code> gives you reactive, filtered views across <em>all</em> loaded
-			data — regardless of which query key brought it in.
+			Once data is in a collection, <code>useLiveQuery</code> gives you reactive, filtered views
+			across <em>all</em> loaded data — regardless of which query key brought it in.
 		</p>
 
 		{#if liveQueryData.length}
@@ -465,8 +485,8 @@ try &#123;
 				</div>
 			</div>
 			<p>
-				Filter, sort, join across collections — all reactive, sub-millisecond. Your components declare what data shape
-				they need. The query engine handles the rest.
+				Filter, sort, join across collections — all reactive, sub-millisecond. Your components
+				declare what data shape they need. The query engine handles the rest.
 			</p>
 		{:else}
 			<p><small>Populate the collection in section 7 first.</small></p>
@@ -483,7 +503,9 @@ Collection (rows, keyed by ID)
   ↓ useLiveQuery
 Component (reactive, filtered)</pre>
 		<p>
-			Query fetches. DB stores. Live queries read. See <a href="/_debug/tanstack">the other demos</a> or
+			Query fetches. DB stores. Live queries read. See <a href="/_debug/tanstack">the other demos</a
+			>
+			or
 			<a href="https://tanstack.com/db/latest/docs/overview">the official docs</a>.
 		</p>
 	</section>

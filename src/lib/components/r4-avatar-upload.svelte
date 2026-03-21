@@ -25,7 +25,9 @@
 			const res = await sdk.channels.createImage(/** @type {any} */ (file), slug)
 			if (!res.ok) {
 				const body = await res.json().catch(() => null)
-				throw new Error(body?.message || body?.error || `${m.avatar_upload_failed()} (${res.status})`)
+				throw new Error(
+					body?.message || body?.error || `${m.avatar_upload_failed()} (${res.status})`
+				)
 			}
 			const data = await res.json()
 			if (!data?.public_id) throw new Error(m.avatar_upload_missing_id())

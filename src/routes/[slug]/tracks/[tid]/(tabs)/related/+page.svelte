@@ -22,7 +22,10 @@
 			queryKey: ['tracks', 'media_id', mediaId],
 			staleTime: 0, //5 * 60 * 1000, // 5 mins
 			queryFn: async () => {
-				const {data: tracks, error} = await sdk.supabase.from('channel_tracks').select('*').eq('media_id', mediaId)
+				const {data: tracks, error} = await sdk.supabase
+					.from('channel_tracks')
+					.select('*')
+					.eq('media_id', mediaId)
 				if (error) throw error
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
@@ -37,7 +40,9 @@
 		q.from({t: tracksCollection}).where(({t}) => eq(t.media_id, trackMediaId || ''))
 	)
 	const relatedTracks = $derived(
-		(relatedQuery.data ?? []).filter((t) => t.id !== track?.id && (t.provider ?? null) === trackProvider)
+		(relatedQuery.data ?? []).filter(
+			(t) => t.id !== track?.id && (t.provider ?? null) === trackProvider
+		)
 	)
 </script>
 

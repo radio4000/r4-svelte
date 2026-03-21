@@ -18,7 +18,8 @@
 		if (!channelsWithLocation.length) return null
 		if (!requestedSlug) return channelsWithLocation[0]
 		return (
-			channelsWithLocation.find((channel) => channel.slug?.toLowerCase() === requestedSlug) || channelsWithLocation[0]
+			channelsWithLocation.find((channel) => channel.slug?.toLowerCase() === requestedSlug) ||
+			channelsWithLocation[0]
 		)
 	})
 	const sampleChannels = $derived(channelsWithLocation.slice(0, 12))

@@ -16,7 +16,9 @@
 	const redirectParam = redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''
 
 	const userChannelsQuery = useLiveQuery((q) =>
-		q.from({channels: channelsCollection}).where(({channels}) => inArray(channels.id, appState.channels || []))
+		q
+			.from({channels: channelsCollection})
+			.where(({channels}) => inArray(channels.id, appState.channels || []))
 	)
 
 	const log = logger.ns('auth').seal()

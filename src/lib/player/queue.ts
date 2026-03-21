@@ -20,7 +20,11 @@ export function queuePrev(queue: string[], currentId: string): string | null {
 }
 
 /** Insert multiple IDs after current position */
-export function queueInsertManyAfter(queue: string[], currentId: string, insertIds: string[]): string[] {
+export function queueInsertManyAfter(
+	queue: string[],
+	currentId: string,
+	insertIds: string[]
+): string[] {
 	const idx = queue.indexOf(currentId)
 	if (idx === -1) return [...queue, ...insertIds]
 	return [...queue.slice(0, idx + 1), ...insertIds, ...queue.slice(idx + 1)]
@@ -51,7 +55,9 @@ export function queueUnique(queue: string[]): string[] {
 
 /** Get the active queue array for a deck (respects shuffle) */
 export function getActiveQueue(
-	deck: {shuffle?: boolean; playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]} | undefined
+	deck:
+		| {shuffle?: boolean; playlist_tracks?: string[]; playlist_tracks_shuffled?: string[]}
+		| undefined
 ): string[] {
 	if (!deck) return []
 	return deck.shuffle ? deck.playlist_tracks_shuffled || [] : deck.playlist_tracks || []

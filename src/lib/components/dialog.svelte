@@ -27,7 +27,11 @@
 	<div>
 		<header>
 			{@render header?.()}
-			<button onclick={() => dialog.close()} title={m.modal_close_label()} aria-label={m.modal_close_label()}>
+			<button
+				onclick={() => dialog.close()}
+				title={m.modal_close_label()}
+				aria-label={m.modal_close_label()}
+			>
 				<Icon icon="close" />
 			</button>
 		</header>

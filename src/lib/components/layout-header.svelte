@@ -19,7 +19,8 @@
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
 	const isBroadcasting = $derived(
-		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
+		userChannel &&
+			Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
 </script>
 
@@ -80,7 +81,9 @@
 					class="btn channel-link"
 					class:broadcasting={isBroadcasting}
 					class:active={page.params?.slug === userChannel.slug}
-					{@attach tooltip({content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()})}
+					{@attach tooltip({
+						content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()
+					})}
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}

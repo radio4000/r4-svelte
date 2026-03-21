@@ -46,7 +46,9 @@
 	</dl>
 
 	<footer>
-		<a href={resolve('/settings/keyboard')} onclick={() => (showModal = false)}>{m.shortcuts_edit()}</a>
+		<a href={resolve('/settings/keyboard')} onclick={() => (showModal = false)}
+			>{m.shortcuts_edit()}</a
+		>
 	</footer>
 </Dialog>
 

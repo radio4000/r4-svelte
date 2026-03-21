@@ -5,7 +5,12 @@ describe('deriveChannelActivityState', () => {
 	it('derives consistent active/favorite/live/tag state', () => {
 		const state = deriveChannelActivityState({
 			decks: {
-				1: {playlist_title: '#house', playlist_slug: 'alpha', playlist_track: 't1', is_playing: true},
+				1: {
+					playlist_title: '#house',
+					playlist_slug: 'alpha',
+					playlist_track: 't1',
+					is_playing: true
+				},
 				2: {view: {tags: ['dub']}, listening_to_channel_id: 'c2'}
 			},
 			tracksState: new Map([['t1', {id: 't1', slug: 'alpha', tags: ['techno']}]]),

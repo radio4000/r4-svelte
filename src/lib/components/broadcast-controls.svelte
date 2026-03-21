@@ -1,7 +1,12 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
-	import {startBroadcast, stopBroadcast, getBroadcastingChannelId, isUserBroadcasting} from '$lib/broadcast'
+	import {
+		startBroadcast,
+		stopBroadcast,
+		getBroadcastingChannelId,
+		isUserBroadcasting
+	} from '$lib/broadcast'
 	import {getMediaPlayer} from '$lib/api'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -9,7 +14,14 @@
 	import PresenceCount from '$lib/components/presence-count.svelte'
 
 	/** @type {{deckId?: number, channelId?: string, channelSlug?: string, isLiveOverride?: boolean, compact?: boolean, showPresence?: boolean}} */
-	let {deckId = 1, channelId, channelSlug, isLiveOverride, compact = false, showPresence = true} = $props()
+	let {
+		deckId = 1,
+		channelId,
+		channelSlug,
+		isLiveOverride,
+		compact = false,
+		showPresence = true
+	} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
@@ -88,12 +100,22 @@
 				{#if !compact}{m.broadcast_stop_button()}{/if}
 			</button>
 		{:else if canStartBroadcast}
-			<button onclick={start} class:compact title={m.broadcast_start_button()} aria-label={m.broadcast_start_button()}>
+			<button
+				onclick={start}
+				class:compact
+				title={m.broadcast_start_button()}
+				aria-label={m.broadcast_start_button()}
+			>
 				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 				{#if !compact}{m.broadcast_start_button()}{/if}
 			</button>
 		{:else if compact}
-			<button disabled class:compact title={m.broadcast_requires_track()} aria-label={m.broadcast_requires_track()}>
+			<button
+				disabled
+				class:compact
+				title={m.broadcast_requires_track()}
+				aria-label={m.broadcast_requires_track()}
+			>
 				<Icon icon="cell-signal" strokeWidth={1.7}></Icon>
 			</button>
 		{/if}

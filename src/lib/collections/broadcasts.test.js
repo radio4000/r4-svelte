@@ -12,9 +12,10 @@ const BROADCAST_SELECT = `
 
 describe('broadcasts', () => {
 	test('broadcast query returns valid BroadcastWithChannel data', async () => {
-		const {data: broadcasts, error} = /** @type {{data: BroadcastWithChannel[] | null, error: any}} */ (
-			await sdk.supabase.from('broadcast').select(BROADCAST_SELECT)
-		)
+		const {data: broadcasts, error} =
+			/** @type {{data: BroadcastWithChannel[] | null, error: any}} */ (
+				await sdk.supabase.from('broadcast').select(BROADCAST_SELECT)
+			)
 
 		expect(error).toBeNull()
 		expect(Array.isArray(broadcasts)).toBe(true)

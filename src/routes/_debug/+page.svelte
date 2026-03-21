@@ -7,7 +7,11 @@
 		{href: 'cards', title: 'Cards', desc: 'Track and channel card variants'},
 		{href: 'canvas', title: 'Canvas', desc: 'Canvas rendering experiments'},
 		{href: 'decks', title: 'Decks', desc: 'Deck tracklist playground'},
-		{href: 'keyboard-list-navigation', title: 'Listbox nav', desc: 'Keyboard-driven list navigation'},
+		{
+			href: 'keyboard-list-navigation',
+			title: 'Listbox nav',
+			desc: 'Keyboard-driven list navigation'
+		},
 		{href: 'livequery-perf', title: 'Live query', desc: 'TanStack live query benchmarks'},
 		{href: 'media-chrome', title: 'Player chrome', desc: 'Media player UI components'},
 		{href: 'map', title: 'Map', desc: 'Global and single-channel map routes'},

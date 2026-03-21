@@ -72,7 +72,9 @@
 	const localQuery = useLiveQuery(localCollection)
 
 	let localItems = $derived(localQuery.data ?? [])
-	let snapshotDoneCount = $derived([...localCollection.state.values()].filter((item) => item.done).length)
+	let snapshotDoneCount = $derived(
+		[...localCollection.state.values()].filter((item) => item.done).length
+	)
 	const readLiveDoneCount = () => (localQuery.data ?? []).filter((item) => item.done).length
 
 	const cacheKey = ['tanstack', 'assertions', 'cache']
@@ -261,7 +263,10 @@
 		await errorCollection.utils.refetch().catch(() => {})
 		await waitFor(() => errorQuery.isError && collectionIsError && errorMessage.length > 0)
 
-		const pass = errorQuery.isError && collectionIsError && errorMessage.includes('assertion error from queryFn')
+		const pass =
+			errorQuery.isError &&
+			collectionIsError &&
+			errorMessage.includes('assertion error from queryFn')
 
 		errorResult = {
 			pass,
@@ -309,8 +314,8 @@
 	<Menu />
 	<h1>TanStack assertions</h1>
 	<p>
-		Local checks for the contracts in <code>docs/tanstack.md</code>. The tutorial explains things. This page proves
-		them.
+		Local checks for the contracts in <code>docs/tanstack.md</code>. The tutorial explains things.
+		This page proves them.
 	</p>
 
 	<menu>
@@ -327,8 +332,8 @@
 	<section>
 		<h2>1. local collection reactivity</h2>
 		<p>
-			<code>useLiveQuery</code> should react to local mutations. A derived read from <code>collection.state</code> should
-			stay stale.
+			<code>useLiveQuery</code> should react to local mutations. A derived read from
+			<code>collection.state</code> should stay stale.
 		</p>
 		<p>Status: <strong>{localResult ? (localResult.pass ? 'pass' : 'fail') : 'not run'}</strong></p>
 		<p>Current rows: {localItems.length} • Snapshot done count: {snapshotDoneCount}</p>
@@ -353,8 +358,8 @@
 	<section>
 		<h2>2. query cache assertions</h2>
 		<p>
-			<code>setQueryData</code> should update <code>createQuery</code> subscribers immediately. Invalidating an inactive query
-			should leave it stale.
+			<code>setQueryData</code> should update <code>createQuery</code> subscribers immediately. Invalidating
+			an inactive query should leave it stale.
 		</p>
 		<p>Status: <strong>{cacheResult ? (cacheResult.pass ? 'pass' : 'fail') : 'not run'}</strong></p>
 		<p>
@@ -370,7 +375,10 @@
 
 	<section>
 		<h2>3. error state</h2>
-		<p>Known rough edge upstream. This route keeps the failure visible and asserts the path we rely on in the app.</p>
+		<p>
+			Known rough edge upstream. This route keeps the failure visible and asserts the path we rely
+			on in the app.
+		</p>
 		<p>Status: <strong>{errorResult ? (errorResult.pass ? 'pass' : 'fail') : 'not run'}</strong></p>
 		<p><code>query.isError</code>: {String(errorQuery.isError)}</p>
 		<p><code>collection.utils.isError</code>: {String(collectionIsError)}</p>

@@ -44,7 +44,10 @@
 			oninput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
 			class="range"
 			data-default={!deck?.speed || deck.speed === 1 || null}
-			style="--range-fill: {((((deck?.speed ?? 1) - speedMin) / (speedMax - speedMin)) * 100).toFixed(1)}%"
+			style="--range-fill: {(
+				(((deck?.speed ?? 1) - speedMin) / (speedMax - speedMin)) *
+				100
+			).toFixed(1)}%"
 		/>
 	</div>
 {/if}

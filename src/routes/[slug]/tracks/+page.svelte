@@ -73,7 +73,9 @@
 			}
 		]
 	}))
-	let filteredAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), filteredAutoView))
+	let filteredAutoDecks = $derived.by(() =>
+		getAutoDecksForView(Object.values(appState.decks), filteredAutoView)
+	)
 	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
 	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
 	let filteredPlaylistTitle = $derived.by(() => {
@@ -124,7 +126,11 @@
 				{/snippet}
 				<menu class="tags-menu">
 					{#each aggregatedTags as { value, count } (value)}
-						<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+						<button
+							type="button"
+							class:active={selectedTags.includes(value)}
+							onclick={() => toggleTag(value)}
+						>
 							{value} <span class="tag-count">({count})</span>
 						</button>
 					{/each}
@@ -137,13 +143,18 @@
 			debounce={150}
 		/>
 		{#if visibleTracks.length}
-			<button type="button" title={m.common_play()} onclick={playFilteredTracks}><Icon icon="play-fill" /></button>
-			<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}><Icon icon="next-fill" /></button>
+			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
+				><Icon icon="play-fill" /></button
+			>
+			<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}
+				><Icon icon="next-fill" /></button
+			>
 			{#if channel && canShowFilteredAutoRadio}
 				<AutoRadioButton
 					synced={isFilteredAutoActive && !isFilteredAutoDrifted}
 					title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
-					onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+					onclick={() =>
+						joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
 				/>
 			{/if}
 		{/if}

@@ -120,7 +120,11 @@
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: 5000}
 	const queryLimit = $derived(
-		filter === 'featured' ? 50 : isPaged ? pageSize : Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
+		filter === 'featured'
+			? 50
+			: isPaged
+				? pageSize
+				: Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
 	)
 	const queryOffset = $derived(isPaged ? (currentPage - 1) * pageSize : 0)
 	const favoriteIds = $derived(follows.followedIds)
@@ -186,7 +190,10 @@
 			if (filter !== 'featured') {
 				const col = sortColumns[order]
 				if (col) {
-					base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
+					base = base.orderBy(
+						({ch}) => ch[col],
+						order === 'shuffle' ? 'asc' : orderDirection || 'desc'
+					)
 				}
 			}
 			base = base.limit(queryLimit)
@@ -207,7 +214,8 @@
 	const channelsRaw = $derived(channelsQuery.data ?? [])
 	// For featured: score and take top 12; paged views already return one page via offset; otherwise all
 	const channels = $derived.by(() => {
-		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+		if (filter === 'featured')
+			return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
 		return channelsRaw
 	})
 	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
@@ -234,7 +242,9 @@
 	const totalCount = $derived(localIdFilters[filter]?.().length ?? serverCount)
 	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
 	const hasNextPage = $derived(
-		isPaged && filter !== 'featured' && (totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
+		isPaged &&
+			filter !== 'featured' &&
+			(totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
 	)
 	const hasPrevPage = $derived(isPaged && currentPage > 1)
 
@@ -268,7 +278,9 @@
 				const stillMissing = unmigratedIds.filter((id) => !recoveredIds.has(id))
 				if (stillMissing.length) {
 					const stillMissingSet = new Set(stillMissing)
-					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter((id) => !stillMissingSet.has(id))
+					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
+						(id) => !stillMissingSet.has(id)
+					)
 				}
 			}
 			// Write any still-missing channels into the collection
@@ -363,24 +375,22 @@
 					{@attach tooltip({content: m.channels_filter_tooltip_featured(), position: 'right'})}
 					>{m.channels_filter_option_featured()}</button
 				>
-				<button
-					class:active={filter === 'all'}
-					onclick={() => setFilter('all')}
-					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
-					>{m.channels_filter_option_all()}</button
-				>
 				{#if follows.followedIds.length}
 					<button
 						class:active={filter === 'favorites'}
 						onclick={() => setFilter('favorites')}
-						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}>{m.nav_favorites()}</button
+						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}
+						>{m.nav_favorites()}</button
 					>
 				{/if}
 				{#if broadcastsCollection.state.size}
 					<button
 						class:active={filter === 'broadcasting'}
 						onclick={() => setFilter('broadcasting')}
-						{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
+						{@attach tooltip({
+							content: m.channels_filter_tooltip_broadcasting(),
+							position: 'right'
+						})}
 						>{m.channels_filter_option_broadcasting()}<span
 							class="channel-badge"
 							style:background="var(--color-red)"
@@ -405,6 +415,12 @@
 					onclick={() => setFilter('1000+')}
 					{@attach tooltip({content: m.channels_filter_tooltip_1000(), position: 'right'})}
 					>{m.channels_filter_option_1000()}</button
+				>
+				<button
+					class:active={filter === 'all'}
+					onclick={() => setFilter('all')}
+					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
+					>{m.channels_filter_option_all()}</button
 				>
 				<button
 					class:active={filter === 'artwork'}
@@ -446,7 +462,11 @@
 
 		{#if isPaged && filter !== 'featured' && (hasPrevPage || hasNextPage || totalPages > 1)}
 			<span class="pagination">
-				<button onclick={() => setPage(currentPage - 1)} disabled={!hasPrevPage} aria-label="Previous page">←</button>
+				<button
+					onclick={() => setPage(currentPage - 1)}
+					disabled={!hasPrevPage}
+					aria-label="Previous page">←</button
+				>
 				<button
 					class="page-label"
 					onclick={() => {
@@ -456,7 +476,11 @@
 					aria-label="Go to page"
 					>{currentPage}{#if totalPages > 0}/{totalPages}{/if}</button
 				>
-				<button onclick={() => setPage(currentPage + 1)} disabled={!hasNextPage} aria-label="Next page">→</button>
+				<button
+					onclick={() => setPage(currentPage + 1)}
+					disabled={!hasNextPage}
+					aria-label="Next page">→</button
+				>
 			</span>
 			<Dialog bind:showModal={showPaginationDialog}>
 				<div class="pagination-dialog">
@@ -484,7 +508,8 @@
 							min="1"
 							max="200"
 							value={pageSize}
-							onchange={(e) => setPageSize(parseInt(/** @type {HTMLInputElement} */ (e.target).value))}
+							onchange={(e) =>
+								setPageSize(parseInt(/** @type {HTMLInputElement} */ (e.target).value))}
 						/>
 					</label>
 				</div>
@@ -508,7 +533,8 @@
 					class:active={display === 'grid'}
 					onclick={() => setDisplay('grid')}
 					{@attach tooltip({content: m.channels_tooltip_grid()})}
-					><Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small></button
+					><Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small
+					></button
 				>
 				<button
 					class:active={display === 'list'}
@@ -585,7 +611,9 @@
 						})}
 						{#if hasMore}
 							<button onclick={handleLoadMore} disabled={channelsQuery.isLoading}>
-								{channelsQuery.isLoading ? '...' : m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
+								{channelsQuery.isLoading
+									? '...'
+									: m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
 							</button>
 						{/if}
 					</p>

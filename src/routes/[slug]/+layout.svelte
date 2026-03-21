@@ -79,11 +79,15 @@
 		}
 	})
 	let isListeningToChannel = $derived(
-		Boolean(channel?.id && Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id))
+		Boolean(
+			channel?.id &&
+			Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id)
+		)
 	)
 	let isChannelPlaying = $derived(
 		Boolean(
-			channel?.slug && Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
+			channel?.slug &&
+			Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
 		)
 	)
 	let canEdit = $derived(canEditChannel(channel?.id))
@@ -93,9 +97,15 @@
 	let anyChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, channel?.slug))
 	let channelHasAuto = $derived(anyChannelAutoDecks.length > 0)
 	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	let channelPlayingDeck = $derived(findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug))
-	let channelListeningDeck = $derived(findListeningDeck(appState.decks, appState.active_deck_id, channel?.id))
-	let channelHeaderDeck = $derived(channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0])
+	let channelPlayingDeck = $derived(
+		findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug)
+	)
+	let channelListeningDeck = $derived(
+		findListeningDeck(appState.decks, appState.active_deck_id, channel?.id)
+	)
+	let channelHeaderDeck = $derived(
+		channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0]
+	)
 	let listeningTrackSlug = $derived.by(() => {
 		const trackId = channelListeningDeck?.playlist_track
 		if (!trackId) return undefined
@@ -195,9 +205,15 @@
 						slug={channelHeaderState.slug}
 						slugHref={channelHeaderState.slugHref}
 						tags={channelHeaderState.tags}
-						listeningWhoSlug={channelListeningDeck ? channelHeaderState.listeningWhoSlug : undefined}
-						listeningWhoHref={channelListeningDeck ? channelHeaderState.listeningWhoHref : undefined}
-						listeningWhomSlug={channelListeningDeck ? channelHeaderState.listeningWhomSlug : undefined}
+						listeningWhoSlug={channelListeningDeck
+							? channelHeaderState.listeningWhoSlug
+							: undefined}
+						listeningWhoHref={channelListeningDeck
+							? channelHeaderState.listeningWhoHref
+							: undefined}
+						listeningWhomSlug={channelListeningDeck
+							? channelHeaderState.listeningWhomSlug
+							: undefined}
 						listeningWhomHref={channelHeaderState.listeningWhomHref}
 						showBroadcastSync={Boolean(channelListeningDeck && channel.id)}
 						broadcastSyncDrifted={Boolean(channelListeningDeck?.listening_drifted)}
@@ -260,7 +276,13 @@
 		{/if}
 
 		<menu class="channel-nav">
-			<ChannelSectionMenu {slug} {channel} {canEdit} {isLocal} trackCount={allChannelTracks.length} />
+			<ChannelSectionMenu
+				{slug}
+				{channel}
+				{canEdit}
+				{isLocal}
+				trackCount={allChannelTracks.length}
+			/>
 			{#if channelNavControls}
 				<div class="channel-nav-controls">
 					{@render channelNavControls()}

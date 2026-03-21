@@ -6,7 +6,9 @@ const log = logger.ns('metadata/youtube').seal()
 
 /** @param {Array<{provider?: string | null, mediaId: string}>} tracks */
 function getTracksToUpdate(tracks) {
-	return tracks.filter((track) => !trackMetaCollection.get(trackMetaKey(track.provider, track.mediaId))?.youtube_data)
+	return tracks.filter(
+		(track) => !trackMetaCollection.get(trackMetaKey(track.provider, track.mediaId))?.youtube_data
+	)
 }
 
 /**

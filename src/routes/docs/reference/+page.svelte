@@ -58,8 +58,8 @@
 	<header>
 		<h1>REFERENCE</h1>
 		<p>
-			.. of our primary modules and their functions. Generated from <code>docs/reference.json</code> which is created manually,
-			well, by another robot, but still.
+			.. of our primary modules and their functions. Generated from <code>docs/reference.json</code> which
+			is created manually, well, by another robot, but still.
 		</p>
 		<button onclick={toggleAll}>{allExpanded ? 'Collapse all' : 'Expand all'}</button>
 	</header>

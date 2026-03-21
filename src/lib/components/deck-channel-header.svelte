@@ -61,8 +61,12 @@
 	} = $props()
 
 	const hasListeningPair = $derived(Boolean(listeningWhoSlug))
-	const hasDistinctWhom = $derived(Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug))
-	const titleClassNames = $derived(['title-row', titleClass, isPlaying ? 'active' : ''].filter(Boolean).join(' '))
+	const hasDistinctWhom = $derived(
+		Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug)
+	)
+	const titleClassNames = $derived(
+		['title-row', titleClass, isPlaying ? 'active' : ''].filter(Boolean).join(' ')
+	)
 </script>
 
 <div class="deck-channel-header">
@@ -73,7 +77,11 @@
 			<span class="title-link">{title}</span>
 		{/if}
 		{#if isBroadcasting}
-			<span class="channel-badge live-pill" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
+			<span
+				class="channel-badge live-pill"
+				title={m.status_broadcasting()}
+				aria-label={m.status_broadcasting()}
+			>
 				<Icon icon="cell-signal" size={14} />
 				{m.status_live_short()}
 			</span>
@@ -101,7 +109,11 @@
 						<Icon icon="cell-signal" size={14} />
 					</button>
 				{:else}
-					<span class="channel-badge sync-icon" title={broadcastSyncTitle} aria-label={broadcastSyncTitle}>
+					<span
+						class="channel-badge sync-icon"
+						title={broadcastSyncTitle}
+						aria-label={broadcastSyncTitle}
+					>
 						<Icon icon="cell-signal" size={14} />
 					</span>
 				{/if}

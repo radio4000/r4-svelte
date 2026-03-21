@@ -29,13 +29,17 @@
 	const relatedTracks = $derived.by(() => {
 		if (!trackMediaId || !track?.id) return []
 		return (tracksQuery.data ?? []).filter((t) => {
-			return t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+			return (
+				t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+			)
 		})
 	})
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => and(eq(meta.media_id, trackMediaId || ''), eq(meta.provider, trackProvider)))
+			.where(({meta}) =>
+				and(eq(meta.media_id, trackMediaId || ''), eq(meta.provider, trackProvider))
+			)
 			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
@@ -48,8 +52,12 @@
 				: undefined
 	)
 	const isLoading = $derived(tracksQuery.isLoading)
-	const hasYoutubeInfo = $derived(Boolean(meta?.youtube_data && Object.keys(meta.youtube_data).length > 0))
-	const hasMusicbrainzInfo = $derived(Boolean(meta?.musicbrainz_data && 'recording' in meta.musicbrainz_data))
+	const hasYoutubeInfo = $derived(
+		Boolean(meta?.youtube_data && Object.keys(meta.youtube_data).length > 0)
+	)
+	const hasMusicbrainzInfo = $derived(
+		Boolean(meta?.musicbrainz_data && 'recording' in meta.musicbrainz_data)
+	)
 	const hasDiscogsInfo = $derived(
 		Boolean(track?.discogs_url || (meta?.discogs_data && Object.keys(meta.discogs_data).length > 0))
 	)

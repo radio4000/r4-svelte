@@ -3,7 +3,13 @@
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/db'
-	import {tracksCollection, addTrack, updateTrack, deleteTrack, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {
+		tracksCollection,
+		addTrack,
+		updateTrack,
+		deleteTrack,
+		ensureTracksLoaded
+	} from '$lib/collections/tracks'
 	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
 
@@ -127,7 +133,9 @@
 			<p>Loading…</p>
 		{:else if tracksQuery.isError}
 			<p class="error" role="alert">
-				{tracksCollection.utils.lastError instanceof Error ? tracksCollection.utils.lastError.message : 'Sync failed'}
+				{tracksCollection.utils.lastError instanceof Error
+					? tracksCollection.utils.lastError.message
+					: 'Sync failed'}
 			</p>
 		{:else if tracksQuery.data?.length}
 			<p>{tracksQuery.data.length} tracks for {userChannel?.slug}</p>
@@ -145,7 +153,9 @@
 
 	<section>
 		<h2>Load from any channel</h2>
-		<p>Populate the collection with tracks from different channels, then see them combined below.</p>
+		<p>
+			Populate the collection with tracks from different channels, then see them combined below.
+		</p>
 		<fieldset class="row">
 			<input type="text" bind:value={testSlug} placeholder="slug" />
 			<button onclick={loadTracks}>ensureTracksLoaded</button>
@@ -156,10 +166,13 @@
 	<section>
 		<h2>Cross-collection query</h2>
 		<p>
-			50 most recent tracks <strong>across all loaded channels</strong> — Query can't do this (each key is isolated). DB can.
+			50 most recent tracks <strong>across all loaded channels</strong> — Query can't do this (each key
+			is isolated). DB can.
 		</p>
 		<p>
-			{recentTracks.data?.length ?? 0} tracks from {slugsLoaded.length} channels ({slugsLoaded.join(', ') || 'none'})
+			{recentTracks.data?.length ?? 0} tracks from {slugsLoaded.length} channels ({slugsLoaded.join(
+				', '
+			) || 'none'})
 		</p>
 
 		{#if recentTracks.data?.length}

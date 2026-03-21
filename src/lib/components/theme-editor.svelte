@@ -197,8 +197,11 @@
 				<label for={`${uid}--border-radius`}>{m.theme_corners_label()}</label>
 				<input
 					type="checkbox"
-					checked={customVariables['--border-radius'] ? customVariables['--border-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
+					checked={customVariables['--border-radius']
+						? customVariables['--border-radius'] !== '0'
+						: true}
+					onchange={(e) =>
+						updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--border-radius`}
 				/>
 			</fieldset>
@@ -207,20 +210,31 @@
 				<label for={`${uid}--media-radius`}>{m.theme_artwork_label()}</label>
 				<input
 					type="checkbox"
-					checked={customVariables['--media-radius'] ? customVariables['--media-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
+					checked={customVariables['--media-radius']
+						? customVariables['--media-radius'] !== '0'
+						: true}
+					onchange={(e) =>
+						updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--media-radius`}
 				/>
 			</fieldset>
 
 			<fieldset>
 				<label for={`${uid}-hide-artwork`}>{m.theme_hide_artwork_label()}</label>
-				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
+				<input
+					type="checkbox"
+					bind:checked={appState.hide_track_artwork}
+					id={`${uid}-hide-artwork`}
+				/>
 			</fieldset>
 
 			<fieldset>
 				<label for={`${uid}-pointer-cursor`}>{m.theme_pointer_cursor_label()}</label>
-				<input type="checkbox" bind:checked={appState.use_pointer_cursor} id={`${uid}-pointer-cursor`} />
+				<input
+					type="checkbox"
+					bind:checked={appState.use_pointer_cursor}
+					id={`${uid}-pointer-cursor`}
+				/>
 			</fieldset>
 
 			<fieldset>
@@ -267,7 +281,9 @@
 				</fieldset>
 			{/each}
 
-			<button type="button" onclick={resetToDefaults} style:align-self="start">{m.theme_reset_button()}</button>
+			<button type="button" onclick={resetToDefaults} style:align-self="start"
+				>{m.theme_reset_button()}</button
+			>
 		</form>
 	</section>
 
@@ -281,8 +297,15 @@
 			</fieldset>
 			<fieldset>
 				<label for="{uid}-import" class="visually-hidden">{m.theme_apply_button()}</label>
-				<input id="{uid}-import" type="text" bind:value={importText} placeholder={m.theme_import_placeholder()} />
-				<button type="button" onclick={importTheme} disabled={!importText.trim()}>{m.theme_apply_button()}</button>
+				<input
+					id="{uid}-import"
+					type="text"
+					bind:value={importText}
+					placeholder={m.theme_import_placeholder()}
+				/>
+				<button type="button" onclick={importTheme} disabled={!importText.trim()}
+					>{m.theme_apply_button()}</button
+				>
 			</fieldset>
 		</form>
 	</section>

@@ -25,7 +25,12 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	setScene({geometry: 'box', backgroundColor: 'oklch(15% 0.04 260)', lightCycling: true, cameraPosition: [0, 0, 4]})
+	setScene({
+		geometry: 'box',
+		backgroundColor: 'oklch(15% 0.04 260)',
+		lightCycling: true,
+		cameraPosition: [0, 0, 4]
+	})
 
 	const FEATURED_COUNT = 3
 	const FEATURED_COUNT_LOGGEDOUT = 6
@@ -41,7 +46,9 @@
 	const showOnboarding = $derived(
 		!follows.isLoading &&
 			!!userChannel &&
-			((userChannel.track_count ?? 0) === 0 || follows.followedChannels.length === 0 || !userChannel.image)
+			((userChannel.track_count ?? 0) === 0 ||
+				follows.followedChannels.length === 0 ||
+				!userChannel.image)
 	)
 
 	// Featured channels (not logged in, or no channel)
@@ -72,7 +79,9 @@
 				const pool = await getFeaturedPool(FEATURED_DAYS)
 				featuredPool = pool
 				// Initial pick: by score, consistent with explore pages
-				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, featuredPickCount)
+				const picked = pool
+					.toSorted((a, b) => featuredScore(b) - featuredScore(a))
+					.slice(0, featuredPickCount)
 				featuredChannels = picked
 			} catch (e) {
 				console.warn('[homepage] failed to load featured channels', e)
@@ -82,7 +91,10 @@
 
 	const featuredFirst = $derived(featuredChannels[0] ?? null)
 	const featuredIsPlaying = $derived(
-		!!featuredFirst && Object.values(appState.decks).some((d) => d.playlist_slug === featuredFirst.slug && d.is_playing)
+		!!featuredFirst &&
+			Object.values(appState.decks).some(
+				(d) => d.playlist_slug === featuredFirst.slug && d.is_playing
+			)
 	)
 
 	function toggleFeaturedPlay() {
@@ -94,7 +106,9 @@
 	// Live broadcasts — reactive via useLiveQuery, sorted by most recently active
 	const broadcastsQuery = useLiveQuery(broadcastsCollection)
 	const broadcastRows = $derived(
-		(broadcastsQuery.data ?? []).toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
+		(broadcastsQuery.data ?? []).toSorted((a, b) =>
+			(b.track_played_at ?? '').localeCompare(a.track_played_at ?? '')
+		)
 	)
 	const activeBroadcasts = $derived(broadcastRows.slice(0, 10))
 	const favoriteBroadcastRows = $derived.by(() =>
@@ -132,7 +146,9 @@
 	})
 
 	const userChannelPresence = $derived(
-		userChannel?.slug ? (channelPresence[userChannel.slug] ?? {total: 0, broadcast: 0, autoRadio: 0, byUri: {}}) : null
+		userChannel?.slug
+			? (channelPresence[userChannel.slug] ?? {total: 0, broadcast: 0, autoRadio: 0, byUri: {}})
+			: null
 	)
 	const userChannelListenerTotal = $derived(userChannelPresence?.total ?? 0)
 	const userChannelBroadcastListeners = $derived(userChannelPresence?.broadcast ?? 0)
@@ -142,7 +158,9 @@
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
 	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
-	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
+	const showAudienceWidget = $derived(
+		userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0
+	)
 
 	const broadcastingDecks = $derived.by(() => {
 		if (!userChannel) return []
@@ -161,7 +179,9 @@
 	// Globe channels — all synced channels with coordinates
 	const globeChannelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
 	const globeChannels = $derived(
-		(globeChannelsQuery.data ?? []).filter((c) => Number.isFinite(c?.latitude) && Number.isFinite(c?.longitude))
+		(globeChannelsQuery.data ?? []).filter(
+			(c) => Number.isFinite(c?.latitude) && Number.isFinite(c?.longitude)
+		)
 	)
 
 	// Stats for not-logged-in users
@@ -267,13 +287,19 @@
 				{#if showOnboarding}
 					{#if appState.show_onboarding_hint}
 						<div class="dashboard-card onboarding dismissible">
-							<button class="dismiss-btn" onclick={() => (appState.show_onboarding_hint = false)} aria-label="Close">
+							<button
+								class="dismiss-btn"
+								onclick={() => (appState.show_onboarding_hint = false)}
+								aria-label="Close"
+							>
 								<Icon icon="close" />
 							</button>
 							<ol class="todo-list">
 								<li>
 									<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
-									<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>{m.home_onboarding_add_track()}</a>
+									<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+										>{m.home_onboarding_add_track()}</a
+									>
 								</li>
 								<li>
 									<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
@@ -281,14 +307,19 @@
 								</li>
 								<li>
 									<input type="checkbox" disabled checked={!!userChannel.image} />
-									<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}>{m.home_onboarding_add_image()}</a>
+									<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
+										>{m.home_onboarding_add_image()}</a
+									>
 								</li>
 							</ol>
 						</div>
 					{/if}
 				{/if}
 				{#if showTrackWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>
+					<a
+						class="dashboard-card dashboard-card--link"
+						href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+					>
 						<span class="dashboard-label dashboard-label--with-icon">
 							<Icon icon="unordered-list" size={16} />
 							{m.home_dashboard_tracks()}
@@ -302,11 +333,16 @@
 							<Icon icon="favorite-fill" size={16} />
 							{m.home_dashboard_favorites()}
 						</span>
-						<strong class="dashboard-value">{follows.followedChannels.length.toLocaleString()}</strong>
+						<strong class="dashboard-value"
+							>{follows.followedChannels.length.toLocaleString()}</strong
+						>
 					</a>
 				{/if}
 				{#if showFavoriteBroadcastWidget}
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+					<a
+						class="dashboard-card dashboard-card--link dashboard-card--live"
+						href={resolve('/channels/broadcasting')}
+					>
 						<span class="dashboard-label dashboard-label--with-icon">
 							<Icon icon="cell-signal" size={16} />
 							{m.home_dashboard_favorites_broadcasting()}
@@ -323,11 +359,15 @@
 						<strong class="dashboard-value">{userChannelListenerTotal.toLocaleString()}</strong>
 						<small class="dashboard-meta"
 							><Icon icon="cell-signal" size={12} />
-							{m.home_dashboard_live_listeners({count: userChannelBroadcastListeners.toLocaleString()})}</small
+							{m.home_dashboard_live_listeners({
+								count: userChannelBroadcastListeners.toLocaleString()
+							})}</small
 						>
 						<small class="dashboard-meta"
 							><Icon icon="users" size={12} />
-							{m.home_dashboard_total_listeners({count: userChannelListenerTotal.toLocaleString()})}</small
+							{m.home_dashboard_total_listeners({
+								count: userChannelListenerTotal.toLocaleString()
+							})}</small
 						>
 					</a>
 				{/if}
@@ -371,14 +411,22 @@
 		{/if}
 		<section class="section">
 			<div class="globe">
-				<MapChannels channels={globeChannels} globeMode={true} zoom={1} syncUrl={false} showControls={false} />
+				<MapChannels
+					channels={globeChannels}
+					globeMode={true}
+					zoom={1}
+					syncUrl={false}
+					showControls={false}
+				/>
 			</div>
 		</section>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
 		{#if activeBroadcasts.length}
 			<section class="section">
-				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
+				<h2 class="section-title">
+					<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+				</h2>
 				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
@@ -398,7 +446,12 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
-							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
+							<button
+								type="button"
+								title={m.home_featured_refresh()}
+								onclick={pickFeatured}
+								disabled={shuffling}
+							>
 								<Icon icon="switch-alt" />
 							</button>
 						{/if}
@@ -416,7 +469,10 @@
 		{#if showBroadcastCountWidget}
 			<section class="section dashboard-section">
 				<div class="dashboard-grid">
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
+					<a
+						class="dashboard-card dashboard-card--link dashboard-card--live"
+						href={resolve('/channels/broadcasting')}
+					>
 						<span class="dashboard-label dashboard-label--with-icon">
 							<Icon icon="cell-signal" size={16} />
 							{m.home_dashboard_live_radios()}
@@ -437,7 +493,11 @@
 
 		{#if appState.show_welcome_hint}
 			<section class="section welcome-section dismissible">
-				<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
+				<button
+					class="dismiss-btn"
+					onclick={() => (appState.show_welcome_hint = false)}
+					aria-label="Close"
+				>
 					<Icon icon="close" />
 				</button>
 				<h1>{m.welcome_title({appName})}</h1>
@@ -450,8 +510,9 @@
 					<li>{m.welcome_feature_open()}</li>
 				</ul>
 				<menu class="welcome-menu">
-					<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
-						>{m.header_start_your_radio()}</a
+					<a
+						href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')}
+						class="btn primary">{m.header_start_your_radio()}</a
 					>
 					<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
 					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
@@ -473,7 +534,9 @@
 		{#if featuredChannels.length}
 			<section class="section">
 				<header class="section-header">
-					<h2 class="section-title"><a href={resolve('/channels/featured')}>{m.home_featured()}</a></h2>
+					<h2 class="section-title">
+						<a href={resolve('/channels/featured')}>{m.home_featured()}</a>
+					</h2>
 					<menu>
 						{#if featuredFirst}
 							<button type="button" onclick={toggleFeaturedPlay}>
@@ -481,7 +544,12 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
-							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
+							<button
+								type="button"
+								title={m.home_featured_refresh()}
+								onclick={pickFeatured}
+								disabled={shuffling}
+							>
 								<Icon icon="switch-alt" />
 							</button>
 						{/if}
@@ -497,7 +565,13 @@
 
 		<section class="section">
 			<div class="globe">
-				<MapChannels channels={globeChannels} globeMode={true} zoom={1.5} syncUrl={false} showControls={false} />
+				<MapChannels
+					channels={globeChannels}
+					globeMode={true}
+					zoom={1.5}
+					syncUrl={false}
+					showControls={false}
+				/>
 			</div>
 		</section>
 
@@ -509,7 +583,8 @@
 				{#if trackCount}<a href={resolve('/tracks/recent')}
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
-				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
+				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span
+					>{/if}
 			</footer>
 		{/if}
 	{/if}

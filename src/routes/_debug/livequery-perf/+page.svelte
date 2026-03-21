@@ -11,7 +11,9 @@
 
 	// Collection stats
 	const collectionSize = $derived(tracksCollection.state.size)
-	const tracksForSlug = $derived([...tracksCollection.state.values()].filter((t) => t.slug === slug).length)
+	const tracksForSlug = $derived(
+		[...tracksCollection.state.values()].filter((t) => t.slug === slug).length
+	)
 
 	// Cache info
 	const cacheInfo = $derived(() => {
@@ -63,8 +65,8 @@
 
 	<h1>useLiveQuery Performance Test</h1>
 	<p>
-		This page tests the performance of <code>useLiveQuery</code> by mounting/unmounting a component that queries tracks for
-		a channel.
+		This page tests the performance of <code>useLiveQuery</code> by mounting/unmounting a component that
+		queries tracks for a channel.
 	</p>
 
 	<section>

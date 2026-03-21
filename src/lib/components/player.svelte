@@ -20,7 +20,12 @@
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
-	import {joinBroadcast, leaveBroadcast, getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
+	import {
+		joinBroadcast,
+		leaveBroadcast,
+		getBroadcastingChannelId,
+		notifyBroadcastState
+	} from '$lib/broadcast.js'
 	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -93,7 +98,9 @@
 	let displayChannel = $derived(channel ?? lastChannel)
 
 	let src = $derived(track?.url)
-	let provider = $derived(track?.provider || (track?.url ? parseUrl(track.url)?.provider : null) || null)
+	let provider = $derived(
+		track?.provider || (track?.url ? parseUrl(track.url)?.provider : null) || null
+	)
 	let useNativeAudio = $derived(provider === 'file')
 	let mediaElement = $derived.by(() => {
 		if (provider === 'youtube') return youtubePlayer
@@ -126,7 +133,9 @@
 			: undefined
 	)
 	const broadcastSlug = $derived(
-		deck?.broadcasting_channel_id ? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug : undefined
+		deck?.broadcasting_channel_id
+			? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug
+			: undefined
 	)
 
 	// The channel that is broadcasting (the DJ), looked up by ID
@@ -135,7 +144,9 @@
 		if (!id) return undefined
 		return untrack(() => channelsCollection.state.get(id))
 	})
-	let headerChannel = $derived(isListeningToBroadcast ? (broadcastingChannel ?? displayChannel) : displayChannel)
+	let headerChannel = $derived(
+		isListeningToBroadcast ? (broadcastingChannel ?? displayChannel) : displayChannel
+	)
 	let headerSlug = $derived(headerChannel?.slug ?? deck?.playlist_slug ?? displayTrack?.slug)
 	let headerTitle = $derived(headerChannel?.name ?? (headerSlug ? `@${headerSlug}` : '@unknown'))
 	let headerState = $derived.by(() =>
@@ -154,7 +165,8 @@
 
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
-			? viewLabel(deck.view ?? {sources: [{channels: [deck.playlist_slug]}]}) || `@${deck.playlist_slug}`
+			? viewLabel(deck.view ?? {sources: [{channels: [deck.playlist_slug]}]}) ||
+					`@${deck.playlist_slug}`
 			: undefined
 	)
 	const headerPresenceCount = $derived(
@@ -208,7 +220,13 @@
 		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 
 		// Update track duration if missing (only for owned channels, once per track)
-		if (track && channel && canEditChannel(channel.id) && !track.duration && mediaElement?.duration) {
+		if (
+			track &&
+			channel &&
+			canEditChannel(channel.id) &&
+			!track.duration &&
+			mediaElement?.duration
+		) {
 			const duration = Math.round(mediaElement.duration)
 			const existing = tracksCollection.state.get(track.id)
 			if (duration > 0 && !existing?.duration) {
@@ -336,7 +354,12 @@
 		// set auto_radio_drifted=false immediately; this guard prevents a false-positive
 		// drifted flip before the media element has moved off 0.
 		if (t < DRIFT_TOLERANCE_SECONDS) return
-		const snap = playbackState(syncAutoTracks, syncTotalDuration, deck.auto_radio_rotation_start, Date.now())
+		const snap = playbackState(
+			syncAutoTracks,
+			syncTotalDuration,
+			deck.auto_radio_rotation_start,
+			Date.now()
+		)
 		const drifted =
 			!snap ||
 			deck.playlist_track !== snap.currentTrack.id ||
@@ -417,13 +440,23 @@
 						autoGhost={!deck?.auto_radio_drifted}
 						autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onAutoClick={() => resyncAutoRadio(deckId)}
-						listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
-						listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
-						listeningWhomSlug={deck?.listening_to_channel_id ? headerState.listeningWhomSlug : undefined}
-						listeningWhomHref={deck?.listening_to_channel_id ? headerState.listeningWhomHref : undefined}
+						listeningWhoSlug={deck?.listening_to_channel_id
+							? headerState.listeningWhoSlug
+							: undefined}
+						listeningWhoHref={deck?.listening_to_channel_id
+							? headerState.listeningWhoHref
+							: undefined}
+						listeningWhomSlug={deck?.listening_to_channel_id
+							? headerState.listeningWhomSlug
+							: undefined}
+						listeningWhomHref={deck?.listening_to_channel_id
+							? headerState.listeningWhomHref
+							: undefined}
 						showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
 						broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
-						broadcastSyncTitle={deck?.listening_drifted ? m.player_sync_broadcast() : m.player_broadcast_synced()}
+						broadcastSyncTitle={deck?.listening_drifted
+							? m.player_sync_broadcast()
+							: m.player_broadcast_synced()}
 						onBroadcastSyncClick={() => {
 							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
 						}}
@@ -459,7 +492,10 @@
 						onclick={() => toggleQueuePanel(deckId)}
 						class:active={deck?.hide_queue_panel}
 						aria-label={deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
-						{@attach tooltip({content: deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible(), position: 'top'})}
+						{@attach tooltip({
+							content: deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible(),
+							position: 'top'
+						})}
 					>
 						<Icon icon="unordered-list" />
 					</button>
@@ -541,21 +577,27 @@
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
-						{@const ytid = !appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
+						{@const ytid =
+							!appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
 						{@const trackHref =
 							!appState.embed_mode && isDbId(displayTrack.id)
 								? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
 								: null}
 						{#if ytid}
 							{#if trackHref}
-								<a href={trackHref} class="track-artwork"><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a>
+								<a href={trackHref} class="track-artwork"
+									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a
+								>
 							{:else}
-								<span class="track-artwork"><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span>
+								<span class="track-artwork"
+									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span
+								>
 							{/if}
 						{/if}
 						<div class="info">
 							<h3 class="title">
-								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a>{:else}{displayTrack.title}{/if}
+								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a
+									>{:else}{displayTrack.title}{/if}
 							</h3>
 							<p class="description">{m.player_broadcast_live()}</p>
 						</div>
@@ -659,7 +701,9 @@
 		disabled={!canPlayFromQueue}
 		class="play"
 		class:active={deck?.is_playing}
-		{@attach tooltip({content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()})}
+		{@attach tooltip({
+			content: deck?.is_playing ? m.player_tooltip_pause() : m.player_tooltip_play()
+		})}
 	>
 		<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 	</button>

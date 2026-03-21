@@ -115,10 +115,15 @@
 		</menu>
 		<div>
 			<h1>Spam Angel</h1>
-			<p>Review and mark suspected spam channels. Nothing is deleted here — use the generated SQL to act.</p>
+			<p>
+				Review and mark suspected spam channels. Nothing is deleted here — use the generated SQL to
+				act.
+			</p>
 		</div>
 		<menu>
-			<button onclick={clearAll} disabled={toDelete.length === 0 && toKeep.length === 0}>Clear all</button>
+			<button onclick={clearAll} disabled={toDelete.length === 0 && toKeep.length === 0}
+				>Clear all</button
+			>
 		</menu>
 	</header>
 
@@ -153,7 +158,9 @@
 									<div class="evidence">
 										{#if ev.keywords.length > 0}
 											<span class="tag" data-type="spam"
-												>{ev.keywords.slice(0, 4).join(', ')}{ev.keywords.length > 4 ? '…' : ''}</span
+												>{ev.keywords.slice(0, 4).join(', ')}{ev.keywords.length > 4
+													? '…'
+													: ''}</span
 											>
 										{/if}
 										{#if ev.phrases.length > 0}
@@ -179,7 +186,10 @@
 							</div>
 
 							{#if isExpanded || (channel.description?.length ?? 0) > 100}
-								<div class="expanded" class:collapsed={!isExpanded && (channel.description?.length ?? 0) > 100}>
+								<div
+									class="expanded"
+									class:collapsed={!isExpanded && (channel.description?.length ?? 0) > 100}
+								>
 									<p class="desc" onclick={() => toggleExpand(channel.id)}>
 										{isExpanded ? channel.description : channel.description?.slice(0, 150)}
 										{#if !isExpanded && (channel.description?.length ?? 0) > 150}…{/if}

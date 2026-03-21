@@ -10,7 +10,15 @@
 	 *   [key: string]: any,
 	 * }}
 	 */
-	let {onclick, success = 'Done', error = 'Failed', delay = 2000, children, successChildren, ...rest} = $props()
+	let {
+		onclick,
+		success = 'Done',
+		error = 'Failed',
+		delay = 2000,
+		children,
+		successChildren,
+		...rest
+	} = $props()
 
 	/** @type {'idle' | 'busy' | 'success' | 'error'} */
 	let state = $state('idle')

@@ -42,7 +42,10 @@
 		}, 100)
 
 		// Create fake track IDs
-		const trackIds = Array.from({length: trackCount}, (_, i) => `track_${String(i).padStart(4, '0')}`)
+		const trackIds = Array.from(
+			{length: trackCount},
+			(_, i) => `track_${String(i).padStart(4, '0')}`
+		)
 
 		// Pre-create batch entries
 		const totalBatches = Math.ceil(trackIds.length / chunkSize)
@@ -129,7 +132,15 @@
 	<p>Visualizes chunked async operations with configurable concurrency, delays and error rates.</p>
 
 	<section>
-		<BatchProgress total={trackCount} {chunkSize} chunks={batches} {elapsed} {running} onRun={runTest} onAbort={abort}>
+		<BatchProgress
+			total={trackCount}
+			{chunkSize}
+			chunks={batches}
+			{elapsed}
+			{running}
+			onRun={runTest}
+			onAbort={abort}
+		>
 			{#snippet controls()}
 				<label>
 					Items

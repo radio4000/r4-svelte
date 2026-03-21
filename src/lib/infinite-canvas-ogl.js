@@ -291,7 +291,11 @@ export class InfiniteCanvasOGL {
 		this.media = config.media || []
 		this.activeId = config.activeId
 		this.activeIds = new Set(
-			Array.isArray(config.activeIds) ? config.activeIds.filter(Boolean) : config.activeId ? [config.activeId] : []
+			Array.isArray(config.activeIds)
+				? config.activeIds.filter(Boolean)
+				: config.activeId
+					? [config.activeId]
+					: []
 		)
 		this.selectedId = config.selectedId ?? null
 		this.liveBorderColor = config.liveBorderColor || '#ff0000'
@@ -329,8 +333,12 @@ export class InfiniteCanvasOGL {
 		this.liveSpherePulseAmount = Number.isFinite(config.liveSpherePulseAmount)
 			? Number(config.liveSpherePulseAmount)
 			: 0.045
-		this.liveSpherePulseSpeed = Number.isFinite(config.liveSpherePulseSpeed) ? Number(config.liveSpherePulseSpeed) : 1.8
-		this.liveSphereSizeRatio = Number.isFinite(config.liveSphereSizeRatio) ? Number(config.liveSphereSizeRatio) : 0.14
+		this.liveSpherePulseSpeed = Number.isFinite(config.liveSpherePulseSpeed)
+			? Number(config.liveSpherePulseSpeed)
+			: 1.8
+		this.liveSphereSizeRatio = Number.isFinite(config.liveSphereSizeRatio)
+			? Number(config.liveSphereSizeRatio)
+			: 0.14
 		this.roundArtworks = config.roundArtworks ?? true
 		this.cornerRadius = config.cornerRadius ?? 0.12
 		this.useRoundedBezel = this.roundArtworks && this.cornerRadius > 0.001
@@ -341,10 +349,14 @@ export class InfiniteCanvasOGL {
 		this.sceneMode = config.sceneMode === 'single' ? 'single' : 'infinite'
 		this.disableNavigation = config.disableNavigation ?? this.sceneMode === 'single'
 		this.enableCardTilt = config.enableCardTilt ?? this.sceneMode === 'single'
-		this.singleCardSize = Number.isFinite(config.singleCardSize) ? Number(config.singleCardSize) : 18
+		this.singleCardSize = Number.isFinite(config.singleCardSize)
+			? Number(config.singleCardSize)
+			: 18
 		this.tiltAmount = Number.isFinite(config.tiltAmount) ? Number(config.tiltAmount) : 2.8
 		this.singleSceneConstrainMovement = config.singleSceneConstrainMovement ?? true
-		this.singleSceneMaxXY = Number.isFinite(config.singleSceneMaxXY) ? Number(config.singleSceneMaxXY) : null
+		this.singleSceneMaxXY = Number.isFinite(config.singleSceneMaxXY)
+			? Number(config.singleSceneMaxXY)
+			: null
 		this.singleSceneCardDragRotate = config.singleSceneCardDragRotate ?? false
 		this.singleSceneCardRotateSensitivity = Number.isFinite(config.singleSceneCardRotateSensitivity)
 			? Number(config.singleSceneCardRotateSensitivity)
@@ -449,7 +461,11 @@ export class InfiniteCanvasOGL {
 		// Create shared geometries
 		this.planeGeometry = new Plane(this.gl, {width: 1, height: 1})
 		this.borderGeometry = new Plane(this.gl, {width: 1, height: 1})
-		this.liveSphereGeometry = new Sphere(this.gl, {radius: 0.5, widthSegments: 16, heightSegments: 12})
+		this.liveSphereGeometry = new Sphere(this.gl, {
+			radius: 0.5,
+			widthSegments: 16,
+			heightSegments: 12
+		})
 
 		// 1x1 canvas placeholder avoids "Alpha-premult and y-flip deprecated" warnings
 		// that fire when OGL uploads a typed-array default texture
@@ -841,9 +857,11 @@ export class InfiniteCanvasOGL {
 
 	getBorderVisual(styleKey) {
 		if (styleKey === 'active') return {color: this.activeBorderColor, thickness: 0.016, alpha: 1}
-		if (styleKey === 'favorite') return {color: this.favoriteBorderColor, thickness: 0.015, alpha: 1}
+		if (styleKey === 'favorite')
+			return {color: this.favoriteBorderColor, thickness: 0.015, alpha: 1}
 		if (styleKey === 'live') return {color: this.liveBorderColor, thickness: 0.019, alpha: 1}
-		if (styleKey === 'selected') return {color: this.selectedBorderColor, thickness: 0.017, alpha: 1}
+		if (styleKey === 'selected')
+			return {color: this.selectedBorderColor, thickness: 0.017, alpha: 1}
 		if (styleKey === 'hover') return {color: this.hoverBorderColor, thickness: 0.014, alpha: 1}
 		return {color: this.activeBorderColor, thickness: 0.0, alpha: 0.0}
 	}
@@ -1027,7 +1045,10 @@ export class InfiniteCanvasOGL {
 		const ts = bezelBack.userData.targetScale
 		let logo = bezelBack.userData.logoOverlay
 		if (!logo) {
-			logo = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: this.logoOverlayProgram})
+			logo = new Mesh(this.gl, {
+				geometry: this.planeGeometry ?? undefined,
+				program: this.logoOverlayProgram
+			})
 			logo.userData = {isLogoOverlay: true, mainMesh: bezelBack}
 			logo.setParent(group)
 			bezelBack.userData.logoOverlay = logo
@@ -1178,7 +1199,10 @@ export class InfiniteCanvasOGL {
 				const dx = e.clientX - this.lastMouse.x
 				const dy = e.clientY - this.lastMouse.y
 				this.dragDistance += Math.abs(dx) + Math.abs(dy)
-				if (this.forcePanMode || (this.sceneMode === 'single' && this.singleSceneConstrainMovement)) {
+				if (
+					this.forcePanMode ||
+					(this.sceneMode === 'single' && this.singleSceneConstrainMovement)
+				) {
 					this.basePos.x -= dx * 0.07
 					this.basePos.y += dy * 0.07
 					this.targetVel.x = 0
@@ -1371,7 +1395,8 @@ export class InfiniteCanvasOGL {
 	 */
 	formatHoverLabel(mediaItem, target = null) {
 		const base = mediaItem?.slug ? `@${mediaItem.slug}` : ''
-		const channelLabel = `${String(mediaItem?.name || mediaItem?.title || '').trim()} ${base}`.trim()
+		const channelLabel =
+			`${String(mediaItem?.name || mediaItem?.title || '').trim()} ${base}`.trim()
 		if (!target) return base
 		if (target.type === 'channel') {
 			if (target.token === 'title' || target.token === 'slug') return channelLabel
@@ -1416,7 +1441,9 @@ export class InfiniteCanvasOGL {
 				const py = ((halfH - hit.localY) / (halfH * 2)) * CHANNEL_INFO_CANVAS.height
 				const target = resolveChannelInfoClickTarget({mediaItem, x: px, y: py})
 				linkTarget = target
-				this.setInfoHoverTarget(target ? {id: mediaItem.id, type: target.type, token: target.token ?? null} : null)
+				this.setInfoHoverTarget(
+					target ? {id: mediaItem.id, type: target.type, token: target.token ?? null} : null
+				)
 				this.gl.canvas.style.cursor = target ? 'pointer' : 'default'
 			} else {
 				this.setInfoHoverTarget(null)
@@ -1459,7 +1486,11 @@ export class InfiniteCanvasOGL {
 						this.onNavigate(target.href ?? '', mediaItem, target.type, target.token ?? null)
 						return
 					}
-					if (target.type === 'channel' && (target.token === 'title' || target.token === 'slug') && this.onClick) {
+					if (
+						target.type === 'channel' &&
+						(target.token === 'title' || target.token === 'slug') &&
+						this.onClick
+					) {
 						this.onClick(mediaItem)
 						return
 					}
@@ -1901,7 +1932,8 @@ export class InfiniteCanvasOGL {
 
 	setActiveIds(ids) {
 		const next = new Set(Array.isArray(ids) ? ids.filter(Boolean) : [])
-		const same = next.size === this.activeIds.size && [...next].every((id) => this.activeIds.has(id))
+		const same =
+			next.size === this.activeIds.size && [...next].every((id) => this.activeIds.has(id))
 		if (same) return
 		this.activeIds = next
 		this.activeId = next.values().next().value ?? null
@@ -2134,7 +2166,8 @@ export class InfiniteCanvasOGL {
 				if (!infoMesh.userData?.beforeRenderBound) {
 					infoMesh.onBeforeRender(() => {
 						const currentTexture =
-							/** @type {any} */ (infoMesh).userData?.texture || this.getInfoTexture(mesh.userData.mediaItem, style)
+							/** @type {any} */ (infoMesh).userData?.texture ||
+							this.getInfoTexture(mesh.userData.mediaItem, style)
 						infoProgram.uniforms.tMap.value = currentTexture
 						const p = Number(/** @type {any} */ (infoMesh).userData?.progress ?? 1)
 						const clamped = Math.max(0, Math.min(1, p))
@@ -2202,16 +2235,25 @@ export class InfiniteCanvasOGL {
 			} else if (mesh.userData.info?.userData?.style !== style) {
 				mesh.userData.info.userData.style = style
 				bindInfoTexture(mesh.userData.info)
-				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + this.getInfoZOffset())
+				mesh.userData.info.position.set(
+					mesh.position.x,
+					infoY,
+					mesh.position.z + this.getInfoZOffset()
+				)
 				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
 				animateInfoProgress(mesh.userData.info, 1, 0.06)
 			} else if (mesh.userData.info) {
 				if (mesh.userData.info.userData?.textureKey !== infoTextureKey) {
 					bindInfoTexture(mesh.userData.info)
 				}
-				mesh.userData.info.position.set(mesh.position.x, infoY, mesh.position.z + this.getInfoZOffset())
+				mesh.userData.info.position.set(
+					mesh.position.x,
+					infoY,
+					mesh.position.z + this.getInfoZOffset()
+				)
 				mesh.userData.info.scale.set(ts.x, infoScaleY, 1)
-				if ((mesh.userData.info.userData?.progress ?? 1) < 1) animateInfoProgress(mesh.userData.info, 1, 0)
+				if ((mesh.userData.info.userData?.progress ?? 1) < 1)
+					animateInfoProgress(mesh.userData.info, 1, 0)
 			}
 		} else {
 			mesh.userData.liftTarget = 0
@@ -2321,7 +2363,9 @@ export class InfiniteCanvasOGL {
 				isLiveSphere: true,
 				mainMesh: mesh,
 				pulsePhase:
-					seededRandom(hashString(mesh.userData.mediaItem?.id || mesh.userData.mediaItem?.slug || 'live')) *
+					seededRandom(
+						hashString(mesh.userData.mediaItem?.id || mesh.userData.mediaItem?.slug || 'live')
+					) *
 					Math.PI *
 					2,
 				baseScale: 0
@@ -2389,7 +2433,10 @@ export class InfiniteCanvasOGL {
 		const cardStyle = this.getCardStyle(mediaItem)
 		const mesh = new Mesh(this.gl, {
 			geometry: this.planeGeometry ?? undefined,
-			program: this.getBackgroundProgram(cardStyle, this.getMeshBorderStyles(mediaItem)?.[0] ?? 'default')
+			program: this.getBackgroundProgram(
+				cardStyle,
+				this.getMeshBorderStyles(mediaItem)?.[0] ?? 'default'
+			)
 		})
 		mesh.renderOrder = 10
 		mesh.position.set(plane.position.x, plane.position.y, plane.position.z)
@@ -2416,7 +2463,11 @@ export class InfiniteCanvasOGL {
 				program: this.getBezelBackProgram(cardStyle)
 			})
 			back.renderOrder = 5
-			back.position.set(plane.position.x, plane.position.y, plane.position.z + this.getBezelBackZOffset())
+			back.position.set(
+				plane.position.x,
+				plane.position.y,
+				plane.position.z + this.getBezelBackZOffset()
+			)
 			back.scale.set(0.01, 0.01, 0.01)
 			// @ts-expect-error custom field
 			back.userData = {
@@ -2427,7 +2478,11 @@ export class InfiniteCanvasOGL {
 				cardStyle,
 				birthTime,
 				targetScale: {x: scaledW * bezelScale, y: scaledH * bezelScale, z: plane.scale.z},
-				closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z + this.getBezelBackZOffset()},
+				closedPosition: {
+					x: plane.position.x,
+					y: plane.position.y,
+					z: plane.position.z + this.getBezelBackZOffset()
+				},
 				closedScale: {
 					x: scaledW * bezelScale,
 					y: scaledH * bezelScale,
@@ -2451,9 +2506,16 @@ export class InfiniteCanvasOGL {
 		if (!mediaItem?.url) return
 		const texture = this.getTexture(mediaItem.url)
 		const sharedProgram = /** @type {Program} */ (this.texturedProgram)
-		const imgMesh = new Mesh(this.gl, {geometry: this.planeGeometry ?? undefined, program: sharedProgram})
+		const imgMesh = new Mesh(this.gl, {
+			geometry: this.planeGeometry ?? undefined,
+			program: sharedProgram
+		})
 		imgMesh.renderOrder = 20
-		imgMesh.position.set(plane.position.x, plane.position.y, plane.position.z + this.getImageZOffset())
+		imgMesh.position.set(
+			plane.position.x,
+			plane.position.y,
+			plane.position.z + this.getImageZOffset()
+		)
 		imgMesh.scale.set(0.01, 0.01, 0.01)
 		imgMesh.onBeforeRender(() => {
 			sharedProgram.uniforms.tMap.value = texture
@@ -2465,7 +2527,11 @@ export class InfiniteCanvasOGL {
 			mediaKey,
 			birthTime,
 			texture,
-			closedPosition: {x: plane.position.x, y: plane.position.y, z: plane.position.z + this.getImageZOffset()},
+			closedPosition: {
+				x: plane.position.x,
+				y: plane.position.y,
+				z: plane.position.z + this.getImageZOffset()
+			},
 			liftTarget: 0,
 			targetScale: {x: plane.scale.x * IMAGE_INSET, y: plane.scale.y * IMAGE_INSET, z: 1},
 			backgroundMesh: mesh
@@ -2510,7 +2576,8 @@ export class InfiniteCanvasOGL {
 		for (let i = 0; i < planes.length; i++) {
 			const plane = planes[i]
 			const birthTime = now + i * ENTRANCE_STAGGER
-			const mediaItem = this.media.length > 0 ? this.media[plane.mediaIndex % this.media.length] : null
+			const mediaItem =
+				this.media.length > 0 ? this.media[plane.mediaIndex % this.media.length] : null
 			this.createCardMeshes(group, plane, mediaItem, birthTime)
 		}
 
@@ -2647,8 +2714,16 @@ export class InfiniteCanvasOGL {
 				this.targetVel.z = 0
 				this.scrollAccum = 0
 			}
-			this.camera.position.set(this.basePos.x + this.drift.x, this.basePos.y + this.drift.y, this.basePos.z)
-			if (this.sceneMode === 'single' && this.singleSceneConstrainMovement && typeof this.camera.lookAt === 'function')
+			this.camera.position.set(
+				this.basePos.x + this.drift.x,
+				this.basePos.y + this.drift.y,
+				this.basePos.z
+			)
+			if (
+				this.sceneMode === 'single' &&
+				this.singleSceneConstrainMovement &&
+				typeof this.camera.lookAt === 'function'
+			)
 				this.camera.lookAt([0, 0, 0])
 		} else {
 			const tiltX = this.enableCardTilt ? this.singlePointer.x * this.tiltAmount : 0
@@ -2687,10 +2762,19 @@ export class InfiniteCanvasOGL {
 				this.singleCardVelocity.x *= 0.9
 				this.singleCardVelocity.y *= 0.9
 			}
-			this.singleCardRotation.x = lerp(this.singleCardRotation.x, this.singleCardRotationTarget.x, 0.15)
-			this.singleCardRotation.y = lerp(this.singleCardRotation.y, this.singleCardRotationTarget.y, 0.15)
+			this.singleCardRotation.x = lerp(
+				this.singleCardRotation.x,
+				this.singleCardRotationTarget.x,
+				0.15
+			)
+			this.singleCardRotation.y = lerp(
+				this.singleCardRotation.y,
+				this.singleCardRotationTarget.y,
+				0.15
+			)
 			const singleGroup = this.chunks.get(SINGLE_SCENE_KEY)
-			if (singleGroup) singleGroup.rotation.set(this.singleCardRotation.x, this.singleCardRotation.y, 0)
+			if (singleGroup)
+				singleGroup.rotation.set(this.singleCardRotation.x, this.singleCardRotation.y, 0)
 		}
 
 		this.updateChunks()
@@ -2837,9 +2921,14 @@ export class InfiniteCanvasOGL {
 						const progress = Number(ud.info.userData?.progress ?? 1)
 						const clamped = Math.max(0, Math.min(1, progress))
 						const revealOffset = (1 - clamped) * (infoScaleY * 0.26)
-						const infoY = mesh.position.y - ud.targetScale.y * 0.5 - infoScaleY * 0.5 - gap - revealOffset
+						const infoY =
+							mesh.position.y - ud.targetScale.y * 0.5 - infoScaleY * 0.5 - gap - revealOffset
 						ud.info.position.y = lerp(ud.info.position.y, infoY, t)
-						ud.info.scale.y = lerp(ud.info.scale.y, Math.max(infoScaleY * (0.35 + clamped * 0.65), 0.001), t)
+						ud.info.scale.y = lerp(
+							ud.info.scale.y,
+							Math.max(infoScaleY * (0.35 + clamped * 0.65), 0.001),
+							t
+						)
 					}
 				}
 				if (ud?.tagBadge) this.layoutTagBadge(mesh, ud.tagBadge)
@@ -2849,7 +2938,9 @@ export class InfiniteCanvasOGL {
 					const sphereUd = sphere.userData || {}
 					const baseScale = Number(sphereUd.baseScale || 0)
 					const pulse = pulseEnabled
-						? 1 + this.liveSpherePulseAmount * Math.sin(now * 0.001 * pulseSpeed + (sphereUd.pulsePhase || 0))
+						? 1 +
+							this.liveSpherePulseAmount *
+								Math.sin(now * 0.001 * pulseSpeed + (sphereUd.pulsePhase || 0))
 						: 1
 					const finalScale = Math.max(baseScale * pulse, 0.0001)
 					sphere.scale.set(finalScale, finalScale, finalScale)
@@ -2883,7 +2974,8 @@ export class InfiniteCanvasOGL {
 		const prevKeys = this.media.map((item) => this.getMediaKey(item))
 		const nextKeys = next.map((item) => this.getMediaKey(item))
 		const sameOrder =
-			prevKeys.length === nextKeys.length && prevKeys.every((key, index) => key && key === nextKeys[index])
+			prevKeys.length === nextKeys.length &&
+			prevKeys.every((key, index) => key && key === nextKeys[index])
 
 		this.media = next
 		if (sameOrder) {
@@ -3035,7 +3127,8 @@ export class InfiniteCanvasOGL {
 			if (this.camera) {
 				if (typeof this.camera.lookAt === 'function') this.camera.lookAt([0, 0, 0])
 			}
-			if (singleGroup) singleGroup.rotation.set(this.singleCardRotation.x, this.singleCardRotation.y, 0)
+			if (singleGroup)
+				singleGroup.rotation.set(this.singleCardRotation.x, this.singleCardRotation.y, 0)
 			return
 		}
 

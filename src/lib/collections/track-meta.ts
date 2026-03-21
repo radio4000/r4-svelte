@@ -23,7 +23,9 @@ export const trackMetaCollection = createCollection<TrackMeta, string>(
 	})
 )
 
-export function deleteTrackMeta(items: Array<{media_id?: string | null; provider?: string | null}>) {
+export function deleteTrackMeta(
+	items: Array<{media_id?: string | null; provider?: string | null}>
+) {
 	for (const item of items) {
 		if (!item.media_id) continue
 		trackMetaCollection.delete(trackMetaKey(item.provider, item.media_id))

@@ -46,9 +46,12 @@ export function formatDate(date, locale = undefined) {
 export function formatTime(date, locale = undefined) {
 	const value = toValidDate(date)
 	if (!value) return ''
-	return new Intl.DateTimeFormat(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false}).format(
-		value
-	)
+	return new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false
+	}).format(value)
 }
 
 /** Label for a calendar day: "today", "yesterday", or a short locale date.
@@ -133,7 +136,8 @@ export function relativeDateSolar(dateString) {
 	const remainingDays = days % 365
 	const yearsString = years ? `${years} sun orbit${years > 1 ? 's' : ''}` : ''
 	const andString = years && remainingDays ? ', ' : ''
-	const daysString = remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
+	const daysString =
+		remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
 	return `${yearsString}${andString}${daysString}` || 'today'
 }
 

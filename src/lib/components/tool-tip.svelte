@@ -47,7 +47,13 @@
 </script>
 
 {#if supportsAnchorCss}
-	<div bind:this={tooltipElement} {id} popover="hint" role="tooltip" class="tooltip tooltip-{tooltipState.position}">
+	<div
+		bind:this={tooltipElement}
+		{id}
+		popover="hint"
+		role="tooltip"
+		class="tooltip tooltip-{tooltipState.position}"
+	>
 		{@html tooltipState.content}
 	</div>
 {/if}

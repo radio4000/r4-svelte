@@ -49,7 +49,11 @@ export async function searchChannels(query, {limit = 100} = {}) {
 	if (!query?.trim()) return []
 	const filter = buildFtsFilter(query)
 	if (!filter) return []
-	const {data, error} = await sdk.supabase.from('channels_with_tracks').select('*').or(filter).limit(limit)
+	const {data, error} = await sdk.supabase
+		.from('channels_with_tracks')
+		.select('*')
+		.or(filter)
+		.limit(limit)
 	if (error) throw new Error(error.message)
 	return /** @type {import('$lib/types').Channel[]} */ (data ?? [])
 }

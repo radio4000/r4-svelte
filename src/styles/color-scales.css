@@ -89,7 +89,10 @@
 		oklch(from var(--accent-light) calc(l * 0.65) c h),
 		oklch(from var(--accent-dark) calc(l * 1.2) c h)
 	);
-	--accent-12: light-dark(oklch(from var(--accent-light) 20% c h), oklch(from var(--accent-dark) 92% calc(c * 0.7) h));
+	--accent-12: light-dark(
+		oklch(from var(--accent-light) 20% c h),
+		oklch(from var(--accent-dark) 92% calc(c * 0.7) h)
+	);
 
 	/* Gray scale - uses base color's natural chroma, multiplied for each step */
 	/* Light theme: tiny steps at top, big jump to dark text at end */
@@ -114,8 +117,14 @@
 		oklch(from var(--gray-light) 0.93 calc(c * 0.9) h),
 		oklch(from var(--gray-dark) 0.32 calc(c * 1.2) h)
 	);
-	--gray-6: light-dark(oklch(from var(--gray-light) 0.91 c h), oklch(from var(--gray-dark) 0.36 calc(c * 1.1) h));
-	--gray-7: light-dark(oklch(from var(--gray-light) 0.89 calc(c * 1.1) h), oklch(from var(--gray-dark) 0.43 c h));
+	--gray-6: light-dark(
+		oklch(from var(--gray-light) 0.91 c h),
+		oklch(from var(--gray-dark) 0.36 calc(c * 1.1) h)
+	);
+	--gray-7: light-dark(
+		oklch(from var(--gray-light) 0.89 calc(c * 1.1) h),
+		oklch(from var(--gray-dark) 0.43 c h)
+	);
 	--gray-8: light-dark(
 		oklch(from var(--gray-light) 0.82 calc(c * 1.2) h),
 		oklch(from var(--gray-dark) 0.54 calc(c * 1) h)

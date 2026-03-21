@@ -14,7 +14,9 @@
 
 	const view: View = $derived(viewFromUrl(page.url))
 	const primarySource = $derived(view.sources[0] ?? {})
-	const hasFilter = $derived(!!primarySource.channels?.length || !!primarySource.tags?.length || !!primarySource.search)
+	const hasFilter = $derived(
+		!!primarySource.channels?.length || !!primarySource.tags?.length || !!primarySource.search
+	)
 	const hasExtraSources = $derived(view.sources.length > 1)
 	const viewQuery = queryView(() => view)
 
@@ -28,7 +30,9 @@
 	const offset = $derived(view.offset ?? 0)
 	const limit = $derived(view.limit ?? DEFAULT_LIMIT)
 	const hasNext = $derived(
-		viewQuery.count ? offset + viewQuery.tracks.length < viewQuery.count : viewQuery.tracks.length >= limit
+		viewQuery.count
+			? offset + viewQuery.tracks.length < viewQuery.count
+			: viewQuery.tracks.length >= limit
 	)
 
 	function navigate(newOffset: number) {
@@ -65,14 +69,22 @@
 		<p>Track View debug. Reuses the same SearchUrl, ViewsBar, and queryView flow as the app.</p>
 		{#if hasExtraSources}
 			<p>
-				<small>Multi-source Views parse and serialize here, but queryView currently uses the first source only.</small>
+				<small
+					>Multi-source Views parse and serialize here, but queryView currently uses the first
+					source only.</small
+				>
 			</p>
 		{/if}
 	</header>
 
 	<form onsubmit={search.handleSubmit}>
 		<label for="{uid}-search" class="visually-hidden">View query</label>
-		<SearchInput id="{uid}-search" bind:value={search.value} placeholder="@oskar @ko002 #jazz chill vibes" autofocus />
+		<SearchInput
+			id="{uid}-search"
+			bind:value={search.value}
+			placeholder="@oskar @ko002 #jazz chill vibes"
+			autofocus
+		/>
 	</form>
 
 	<ViewsBar {view} onchange={onViewsBarChange} />
@@ -112,12 +124,18 @@
 		<p>Add channels, tags, or a search to start.</p>
 	{:else}
 		<div class="pagination">
-			<button disabled={offset === 0} onclick={() => navigate(Math.max(0, offset - limit))}>← Prev</button>
+			<button disabled={offset === 0} onclick={() => navigate(Math.max(0, offset - limit))}
+				>← Prev</button
+			>
 			<button disabled={!hasNext} onclick={() => navigate(offset + limit)}>Next →</button>
 			{#if viewQuery.loading}
 				<span>Loading…</span>
 			{:else}
-				<span>{offset + 1}–{offset + viewQuery.tracks.length}{viewQuery.count ? ` of ${viewQuery.count}` : ''}</span>
+				<span
+					>{offset + 1}–{offset + viewQuery.tracks.length}{viewQuery.count
+						? ` of ${viewQuery.count}`
+						: ''}</span
+				>
 			{/if}
 		</div>
 		{#if !viewQuery.loading && !viewQuery.tracks.length}

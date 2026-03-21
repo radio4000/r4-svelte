@@ -112,7 +112,10 @@
 					if (!disposed) onready?.(map)
 				})
 			})
-			themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
+			themeObserver.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
 		}
 
 		initMap()

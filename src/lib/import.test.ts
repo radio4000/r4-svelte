@@ -1,11 +1,20 @@
 import {describe, test, expect} from 'vitest'
-import {parseTxtFile, parseM3u, parseTrackTxt, validateBackup, importedSlug, buildFromBackup} from './import'
+import {
+	parseTxtFile,
+	parseM3u,
+	parseTrackTxt,
+	validateBackup,
+	importedSlug,
+	buildFromBackup
+} from './import'
 import type {BackupData} from './import'
 import type {Channel, Track} from './types'
 
 describe('importedSlug', () => {
 	test('appends -import- and first 8 chars of id', () => {
-		expect(importedSlug('ko002', 'e0701ff6-1234-5678-abcd-ef0123456789')).toBe('ko002-import-e0701ff6')
+		expect(importedSlug('ko002', 'e0701ff6-1234-5678-abcd-ef0123456789')).toBe(
+			'ko002-import-e0701ff6'
+		)
 	})
 })
 
@@ -139,7 +148,9 @@ describe('buildFromBackup', () => {
 
 	test('preserves extra track fields like description', () => {
 		const {tracks} = buildFromBackup(
-			backup({}, [{id: 't1', slug: 'ko002', url: 'https://y.com/v', title: 'T', description: 'keep me'}]),
+			backup({}, [
+				{id: 't1', slug: 'ko002', url: 'https://y.com/v', title: 'T', description: 'keep me'}
+			]),
 			'ko002-import-abc'
 		)
 		expect(tracks[0].description).toBe('keep me')

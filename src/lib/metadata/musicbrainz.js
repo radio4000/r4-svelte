@@ -26,7 +26,11 @@ export async function pullMusicBrainz(provider, mediaId, title) {
 				draft.musicbrainz_data = musicbrainzData
 			})
 		} else {
-			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, musicbrainz_data: musicbrainzData})
+			trackMetaCollection.insert({
+				provider: provider ?? null,
+				media_id: mediaId,
+				musicbrainz_data: musicbrainzData
+			})
 		}
 		log.info('updated', musicbrainzData)
 		return musicbrainzData
@@ -79,7 +83,9 @@ export async function search(title) {
 	for (const strategy of searchStrategies) {
 		try {
 			const encodedQuery = encodeURIComponent(strategy.query)
-			const response = await fetch(`https://musicbrainz.org/ws/2/recording?query=${encodedQuery}&fmt=json&limit=1`)
+			const response = await fetch(
+				`https://musicbrainz.org/ws/2/recording?query=${encodedQuery}&fmt=json&limit=1`
+			)
 
 			if (response.ok) {
 				const data = await response.json()

@@ -23,13 +23,17 @@
 	let channelTracks = $derived(tracksQuery.data ?? [])
 	let selectedChannelId = $state(/** @type {string | null} */ (null))
 	let showControlsModal = $state(false)
-	const imageBase = $derived(channel?.image ? {url: channelAvatarUrl(channel.image, 1024, 'webp', 90)} : undefined)
+	const imageBase = $derived(
+		channel?.image ? {url: channelAvatarUrl(channel.image, 1024, 'webp', 90)} : undefined
+	)
 	const isChannelLive = $derived.by(() => {
 		const channelId = channel?.id
 		if (!channelId) return false
 		void broadcastsCollection.state.size
 		const remoteLive = broadcastsCollection.state.has(channelId)
-		const localLive = Object.values(appState.decks).some((deck) => deck.broadcasting_channel_id === channelId)
+		const localLive = Object.values(appState.decks).some(
+			(deck) => deck.broadcasting_channel_id === channelId
+		)
 		return remoteLive || localLive
 	})
 	const mediaItem = $derived.by(() => {
@@ -62,14 +66,18 @@
 	function playByTagToken(token) {
 		const tag = stripHash(token)
 		if (!tag) return false
-		const matches = channelTracks.filter((track) => (track?.tags || []).some((entry) => stripHash(entry) === tag))
+		const matches = channelTracks.filter((track) =>
+			(track?.tags || []).some((entry) => stripHash(entry) === tag)
+		)
 		return playTracks(matches, `#${tag}`)
 	}
 
 	function playByMentionToken(token) {
 		const mention = stripAt(token)
 		if (!mention) return false
-		const matches = channelTracks.filter((track) => (track?.mentions || []).some((entry) => stripAt(entry) === mention))
+		const matches = channelTracks.filter((track) =>
+			(track?.mentions || []).some((entry) => stripAt(entry) === mention)
+		)
 		return playTracks(matches, `@${mention}`)
 	}
 

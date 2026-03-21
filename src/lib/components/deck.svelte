@@ -15,7 +15,9 @@
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
 	let hasHistory = $derived(playHistoryCollection.state.size > 0)
-	let hasContent = $derived((deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory)
+	let hasContent = $derived(
+		(deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory
+	)
 
 	// Deck 1 hides when empty; additional decks are always visible
 	let visible = $derived(showPlayer && deck && (deckId !== 1 || hasContent))
@@ -23,7 +25,9 @@
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 
 	// Inline deck width from stored value
-	let deckStyle = $derived(deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : '')
+	let deckStyle = $derived(
+		deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : ''
+	)
 
 	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
 
@@ -147,7 +151,8 @@
 			aspect-ratio: auto;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.queue-panel) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+			:global(.queue-panel) {
 			flex: 1 1 auto;
 			min-height: 0;
 		}

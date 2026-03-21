@@ -85,7 +85,11 @@
 					<!-- <ChannelHero channel={item.content.channel} /> -->
 					<figure>
 						<a href={resolve('/[slug]', {slug: item.content.channel.slug})}>
-							<ChannelAvatar id={item.content.channel.image} alt={item.content.channel.name} size={64} />
+							<ChannelAvatar
+								id={item.content.channel.image}
+								alt={item.content.channel.name}
+								size={64}
+							/>
 						</a>
 					</figure>
 					<ButtonPlay channel={item.content.channel} />

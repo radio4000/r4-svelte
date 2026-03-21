@@ -12,11 +12,15 @@
 
 	const deckKeys = $derived(Object.keys(appState.decks))
 	const multiDeck = $derived(deckKeys.length > 1)
-	const deckLabel = $derived(multiDeck ? `Deck ${deckKeys.indexOf(String(appState.active_deck_id)) + 1}` : '')
+	const deckLabel = $derived(
+		multiDeck ? `Deck ${deckKeys.indexOf(String(appState.active_deck_id)) + 1}` : ''
+	)
 
 	const autoRadioTracks = $derived(toAutoTracks(tracks))
 	const canShowAutoRadio = $derived(hasAutoRadioCoverage(tracks))
-	const searchAutoDecks = $derived.by(() => (view ? getAutoDecksForView(Object.values(appState.decks), view) : []))
+	const searchAutoDecks = $derived.by(() =>
+		view ? getAutoDecksForView(Object.values(appState.decks), view) : []
+	)
 	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
 
@@ -40,12 +44,16 @@
 	<ButtonFeedback onclick={playSearchResults}>
 		{#snippet successChildren()}<Icon icon="play-fill" />
 			{m.search_playing({count: tracks.length})}{/snippet}
-		<Icon icon="play-fill" />{multiDeck ? m.search_play_on_deck({deck: deckLabel}) : m.search_play_all()}
+		<Icon icon="play-fill" />{multiDeck
+			? m.search_play_on_deck({deck: deckLabel})
+			: m.search_play_all()}
 	</ButtonFeedback>
 	<ButtonFeedback onclick={queueSearchResults}>
 		{#snippet successChildren()}<Icon icon="next-fill" />
 			{m.search_queued({count: tracks.length})}{/snippet}
-		<Icon icon="next-fill" />{multiDeck ? m.search_add_to_deck({deck: deckLabel}) : m.search_queue_all()}
+		<Icon icon="next-fill" />{multiDeck
+			? m.search_add_to_deck({deck: deckLabel})
+			: m.search_queue_all()}
 	</ButtonFeedback>
 	{#if canShowAutoRadio}
 		<AutoRadioButton

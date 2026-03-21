@@ -31,7 +31,10 @@ export async function load() {
 		await cacheReady
 	}
 
-	const embedMode = !!(appMode === 'embed' || (browser && EMBED_HOSTS.includes(window.location.hostname)))
+	const embedMode = !!(
+		appMode === 'embed' ||
+		(browser && EMBED_HOSTS.includes(window.location.hostname))
+	)
 
 	return {
 		embedMode,

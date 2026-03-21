@@ -11,9 +11,13 @@
 			.map(Number)
 			.sort((a, b) => a - b)
 	)
-	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
+	let listeningDeckIds = $derived(
+		deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
-	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
+	let allDecksCompact = $derived(
+		deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact)
+	)
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let hasHistory = $derived(playHistoryCollection.state.size > 0)
 	let visibleDeckIds = $derived.by(() =>
@@ -182,7 +186,9 @@
 				min-height: 0;
 
 				/* grow to fill available height when any deck has visible content */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 100%;
 				}
@@ -194,7 +200,9 @@
 				min-width: 0;
 
 				/* sections with fill decks share the strip height */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 0;
 				}
@@ -206,7 +214,9 @@
 				min-width: 0;
 
 				/* sections with fill decks share the strip height */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 0;
 				}
@@ -217,7 +227,9 @@
 				flex: 0 1 auto;
 				min-height: 0;
 
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 				}
 			}

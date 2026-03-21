@@ -19,7 +19,8 @@ export async function findChannelBySlug(slug) {
 				.trim()
 				.toLowerCase() === normalizedSlug
 	)
-	const localHasLocation = Number.isFinite(Number(local?.latitude)) && Number.isFinite(Number(local?.longitude))
+	const localHasLocation =
+		Number.isFinite(Number(local?.latitude)) && Number.isFinite(Number(local?.longitude))
 	if (local && localHasLocation) return local
 	const {data} = await sdk.channels.readChannel(normalizedSlug)
 	return data ?? local ?? undefined

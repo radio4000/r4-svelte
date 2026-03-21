@@ -18,7 +18,9 @@
 	} = $props()
 
 	const resolvedAriaLabel = $derived(ariaLabel ?? title)
-	const classNames = $derived(['auto-live-btn', className, synced ? 'ghost' : ''].filter(Boolean).join(' '))
+	const classNames = $derived(
+		['auto-live-btn', className, synced ? 'ghost' : ''].filter(Boolean).join(' ')
+	)
 </script>
 
 <button type="button" class={classNames} {title} aria-label={resolvedAriaLabel} {...rest}>

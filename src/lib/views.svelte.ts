@@ -62,7 +62,8 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 	if (view.order === 'shuffle') {
 		data = shuffleArray(data)
 	} else {
-		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
+		const sortField =
+			view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
 		const dir = view.direction === 'asc' ? 1 : -1
 		data = data.toSorted((a, b) => {
 			const va = a[sortField] ?? ''
@@ -122,7 +123,14 @@ export function queryView(getView: () => View) {
 				.limit(fetchAll ? MAX_CLIENT_TRACKS : limit)
 				.offset(fetchAll ? 0 : offset)
 		},
-		[() => strategy, () => channelSlugsCSV, () => searchTerm, () => tagsCSV, () => limit, () => offset]
+		[
+			() => strategy,
+			() => channelSlugsCSV,
+			() => searchTerm,
+			() => tagsCSV,
+			() => limit,
+			() => offset
+		]
 	)
 
 	// Remote tags query: Supabase overlaps (broad "any" match).

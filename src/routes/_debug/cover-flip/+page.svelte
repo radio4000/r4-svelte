@@ -24,7 +24,9 @@
 			const params = {items: itemCount, scrollItemsPerNotch, orientation}
 			gui = new GUI({title: 'CoverFlip', container: guiContainer, autoPlace: false})
 			gui.add(params, 'items', 1, 30, 1).onChange((v) => (itemCount = v))
-			gui.add(params, 'scrollItemsPerNotch', 0.25, 5, 0.25).onChange((v) => (scrollItemsPerNotch = v))
+			gui
+				.add(params, 'scrollItemsPerNotch', 0.25, 5, 0.25)
+				.onChange((v) => (scrollItemsPerNotch = v))
 			gui.add(params, 'orientation', ['vertical', 'horizontal']).onChange((v) => (orientation = v))
 		})
 		return () => gui?.destroy()

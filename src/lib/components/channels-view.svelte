@@ -4,7 +4,10 @@
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
 	import {toChannelCardMedia} from '$lib/components/channel-ui-state.js'
-	import {handleCanvasClick as onCanvasClick, handleCanvasDoubleClick} from '$lib/components/channels-view-shared.js'
+	import {
+		handleCanvasClick as onCanvasClick,
+		handleCanvasDoubleClick
+	} from '$lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import ChannelsViewControls from './channels-view-controls.svelte'
 
