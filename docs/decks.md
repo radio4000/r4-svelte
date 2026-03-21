@@ -2,8 +2,8 @@
 
 ## Terms
 
-| Term                          | What                                                                                                                                                                  |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Term                      | What                                                                                                                                                                  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Deck` (type)             | State object: playback + queue + layout config. Lives in `appState.decks[id]`.                                                                                        |
 | `deck.ts`                 | Pure helpers to query decks: find by channel/slug, check playing/broadcasting/listening state.                                                                        |
 | `deck.svelte`             | Component that renders a `Deck`. Wraps `player.svelte` + `queue-panel.svelte`.                                                                                        |

@@ -162,7 +162,7 @@
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-5);
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.2rem;
 	}
 
 	.search-container :global(.search-input) {

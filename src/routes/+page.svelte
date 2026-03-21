@@ -10,7 +10,7 @@
 	import {getFeaturedPool} from '$lib/collections/featured'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {playChannel, togglePlayPause, toggleChannelAutoRadio} from '$lib/api'
-	import {findAutoDecksForChannel, pickAutoResyncDeck, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
+	import {findAutoDecksForChannel, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'

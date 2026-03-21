@@ -683,7 +683,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 0.3rem 0.4rem;
+		padding: 0.5rem 0.5rem;
 		gap: 0.4rem;
 	}
 
@@ -716,7 +716,7 @@
 		line-height: 0;
 
 		:global(img) {
-			height: 1rem;
+			height: 2rem;
 		}
 	}
 
