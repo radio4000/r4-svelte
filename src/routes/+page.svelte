@@ -277,27 +277,18 @@
 			</button>
 		{/if}
 		{#if userChannel}
-			<BroadcastControls
-				deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
-				channelId={userChannel.id}
-				channelSlug={userChannel.slug}
-			/>
-			{#if showAudienceWidget}
-				<span class="audience-counts">
-					{#if userChannelListenerTotal > 0}<Icon
-							icon="users"
-							size={12}
-						/>{userChannelListenerTotal}{/if}
-					{#if userChannelBroadcastListeners > 0}<Icon
-							icon="cell-signal"
-							size={12}
-						/>{userChannelBroadcastListeners}{/if}
-					{#if userChannelAutoListeners > 0}<Icon
-							icon="infinite"
-							size={12}
-						/>{userChannelAutoListeners}{/if}
-				</span>
-			{/if}
+			<div class="filtermenu-channel">
+				<BroadcastControls
+					deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
+					channelId={userChannel.id}
+					channelSlug={userChannel.slug}
+				/>
+				<a href={resolve(`/${userChannel.slug}`)} class="btn channel-pill">
+					<span class="channel-widget-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span>
+					@{userChannel.slug}
+					{#if userChannelIsBroadcasting}<span class="channel-badge live-link">{m.status_live_short()}</span>{/if}
+				</a>
+			</div>
 		{/if}
 	</menu>
 
@@ -307,7 +298,6 @@
 		<section class="section dashboard-section">
 			{#if showBroadcastStatusWidget || showFavoriteBroadcastWidget}
 				<div class="dashboard-group">
-					<p class="dashboard-group-label">{m.broadcasts_live()}</p>
 					<div class="dashboard-grid">
 						{#if showBroadcastStatusWidget}
 							{#each activeDecks as { deck, current, next } (deck.id)}
@@ -340,137 +330,112 @@
 				</div>
 			{/if}
 
-			<div class="dashboard-group">
-				{#if showBroadcastStatusWidget || showFavoriteBroadcastWidget}
-					<p class="dashboard-group-label">{m.nav_play()}</p>
-				{/if}
-				<div class="dashboard-grid">
-					<div class="dashboard-card dashboard-card--row">
-						<span class="channel-widget-avatar"
-							><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
-						>
-						<a href={resolve(`/${userChannel.slug}`)} class="dashboard-label--tag"
-							>@{userChannel.slug}</a
-						>
-						{#if userChannelIsBroadcasting}
-							<span class="channel-badge live-link">{m.status_live_short()}</span>
+			{#if userChannelTopTags.length > 0 || tagsLoading || showOnboarding}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if tagsLoading}
+							<div class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder">
+								<small>…</small>
+							</div>
 						{/if}
-						<div class="tag-actions">
-							{#if userChannelTrackCount > 0}
-								<button class="btn ghost" onclick={toggleUserChannelPlay} title={userChannel.slug}>
-									<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-								</button>
-								<AutoRadioButton
-									className="btn{userChannelHasAuto ? ' active' : ''}"
-									synced={userChannelHasAuto && userChannelAutoIsPlaying && !userChannelHasAutoDrifted}
-									title={m.auto_radio_resync()}
-									onclick={toggleUserChannelAutoRadio}
-								/>
-							{/if}
-							<a
-								class="btn ghost"
-								href={resolve('/search') + `?q=${encodeURIComponent('@' + userChannel.slug)}`}
-								title="Search @{userChannel.slug}"
-							>
-								<Icon icon="search" />
-							</a>
-						</div>
-					</div>
-					{#if tagsLoading}
-						<div class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder">
-							<small>…</small>
-						</div>
-					{/if}
-					{#each userChannelTopTags as { value, count } (value)}
-						<div class="dashboard-card dashboard-card--row dashboard-card--tag">
-							<a
-								class="dashboard-label--tag"
-								href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
-									`?tags=${encodeURIComponent(value)}`}>#{value}</a
-							>
-							<small class="tag-count">{count}</small>
-							<div class="tag-actions">
+						{#each userChannelTopTags as { value, count } (value)}
+							<div class="dashboard-card dashboard-card--row dashboard-card--tag">
 								<button class="btn ghost" onclick={() => playChannelTag(value)} title="Play #{value}">
 									<Icon icon="play-fill" />
 								</button>
 								<a
-									class="btn ghost"
-									href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
-									title="Search #{value} globally"
+									class="dashboard-label--tag"
+									href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
+										`?tags=${encodeURIComponent(value)}`}>#{value}</a
 								>
-									<Icon icon="search" />
-								</a>
+								<small class="tag-count">{count}</small>
+								<div class="tag-actions">
+									<a
+										class="btn ghost"
+										href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
+										title="Search #{value} globally"
+									>
+										<Icon icon="search" />
+									</a>
+								</div>
 							</div>
-						</div>
-					{/each}
-					{#if showOnboarding}
-						{#if appState.show_onboarding_hint}
-							<div class="dashboard-card onboarding dismissible">
-								<button
-									class="dismiss-btn"
-									onclick={() => (appState.show_onboarding_hint = false)}
-									aria-label="Close"
-								>
-									<Icon icon="close" />
-								</button>
-								<ol class="todo-list">
-									<li>
-										<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
-										<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-											>{m.home_onboarding_add_track()}</a
-										>
-									</li>
-									<li>
-										<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
-										<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
-									</li>
-									<li>
-										<input type="checkbox" disabled checked={!!userChannel.image} />
-										<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
-											>{m.home_onboarding_add_image()}</a
-										>
-									</li>
-								</ol>
-							</div>
+						{/each}
+						{#if showOnboarding}
+							{#if appState.show_onboarding_hint}
+								<div class="dashboard-card onboarding dismissible">
+									<button
+										class="dismiss-btn"
+										onclick={() => (appState.show_onboarding_hint = false)}
+										aria-label="Close"
+									>
+										<Icon icon="close" />
+									</button>
+									<ol class="todo-list">
+										<li>
+											<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
+											<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+												>{m.home_onboarding_add_track()}</a
+											>
+										</li>
+										<li>
+											<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
+											<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+										</li>
+										<li>
+											<input type="checkbox" disabled checked={!!userChannel.image} />
+											<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
+												>{m.home_onboarding_add_image()}</a
+											>
+										</li>
+									</ol>
+								</div>
+							{/if}
 						{/if}
-					{/if}
-					{#if showTrackWidget}
-						<a
-							class="dashboard-card dashboard-card--link dashboard-card--row"
-							href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-						>
-							<Icon icon="unordered-list" size={16} />
-							<span>{m.home_dashboard_tracks()}</span>
-							<strong class="dashboard-value broadcast-count"
-								>{userChannelTrackCount.toLocaleString()}</strong
+					</div>
+					{#if showOnboarding && !appState.show_onboarding_hint}
+						<div class="onboarding-toggle-row">
+							<button
+								class="btn onboarding-toggle"
+								onclick={() => (appState.show_onboarding_hint = true)}
+								title="Show getting started"
 							>
-						</a>
-					{/if}
-					{#if showFavoritesWidget}
-						<a
-							class="dashboard-card dashboard-card--link dashboard-card--row"
-							href={resolve('/channels/favorites')}
-						>
-							<Icon icon="favorite-fill" size={16} />
-							<span>{m.home_dashboard_favorites()}</span>
-							<strong class="dashboard-value broadcast-count"
-								>{follows.followedChannels.length.toLocaleString()}</strong
-							>
-						</a>
+								<Icon icon="circle-info" />
+							</button>
+						</div>
 					{/if}
 				</div>
-				{#if showOnboarding && !appState.show_onboarding_hint}
-					<div class="onboarding-toggle-row">
-						<button
-							class="btn onboarding-toggle"
-							onclick={() => (appState.show_onboarding_hint = true)}
-							title="Show getting started"
-						>
-							<Icon icon="circle-info" />
-						</button>
+			{/if}
+
+			{#if showTrackWidget || showFavoritesWidget}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if showTrackWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+							>
+								<Icon icon="unordered-list" size={16} />
+								<span>{m.home_dashboard_tracks()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{userChannelTrackCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showFavoritesWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/favorites')}
+							>
+								<Icon icon="favorite-fill" size={16} />
+								<span>{m.home_dashboard_favorites()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{follows.followedChannels.length.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
 					</div>
-				{/if}
-			</div>
+				</div>
+			{/if}
 		</section>
 
 		{#if showBroadcastCountWidget}
@@ -737,6 +702,25 @@
 		margin-left: auto;
 	}
 
+	.filtermenu-channel {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-left: auto;
+	}
+
+	.channel-pill {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.2rem 0.4rem;
+	}
+
+	.channel-pill .channel-widget-avatar {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
 	.live-link {
 		text-decoration: none;
 		animation: live-pulse 2s ease-in-out infinite;
@@ -772,6 +756,7 @@
 	.section--globe--loggedout .globe {
 		min-height: 33vh;
 	}
+
 	.dashboard-section {
 		display: flex;
 		flex-direction: column;
