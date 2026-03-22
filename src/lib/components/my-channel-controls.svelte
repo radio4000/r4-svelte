@@ -17,7 +17,7 @@
 
 <div class="my-channel" class:playing={isPlaying} class:live={isBroadcasting}>
 	{#if isBroadcasting}
-		<span class="live-badge channel-badge">{m.status_live_short()}</span>
+		<span class="live-badge">{m.status_live_short()}</span>
 	{/if}
 	<BroadcastControls
 		{deckId}
@@ -68,6 +68,12 @@
 		align-items: center;
 		padding-inline: 0.4rem;
 		border-right: 1px solid var(--accent-7);
+		background: var(--accent-9);
+		color: var(--gray-1);
+		font-size: var(--font-1);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
 		animation: live-pulse 2s ease-in-out infinite;
 		flex-shrink: 0;
 	}
