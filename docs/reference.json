@@ -497,11 +497,6 @@
 			"name": "DeckChannelHeader",
 			"desc": "Shared title/slug/tags header for deck + channel layouts (auto + broadcast sync controls)."
 		},
-		{
-			"name": "deck-channel-header-shared.js",
-			"desc": "Helpers for parsing playlist #tags and resolving listening who/whom slug display."
-		},
-
 		{"name": "HeaderSearch", "desc": "Global search with debounce, @mention autocomplete."},
 		{"name": "KeyboardShortcuts", "desc": "Initializes global keyboard handling."},
 		{"name": "SyncStatus", "desc": "Shows offline queue pending transactions."}

@@ -10,7 +10,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-import TrackCard from '$lib/components/track-card.svelte'
+	import TrackCard from '$lib/components/track-card.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -119,11 +119,7 @@ import TrackCard from '$lib/components/track-card.svelte'
 				{deck}
 				channel={headerChannel}
 				track={displayTrack}
-				autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 				onAutoClick={() => resyncAutoRadio(deckId)}
-				broadcastSyncTitle={deck?.listening_drifted
-					? m.player_sync_broadcast()
-					: m.player_broadcast_synced()}
 				onBroadcastSyncClick={() =>
 					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
 			/>

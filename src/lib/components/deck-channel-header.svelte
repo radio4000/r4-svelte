@@ -10,9 +10,6 @@
 	/** @typedef {import('$lib/types').Deck} Deck */
 	/** @typedef {import('$lib/types').Channel} Channel */
 	/** @typedef {import('$lib/types').Track} Track */
-	/**
-	 * @typedef {{label: string, href?: string}} HeaderTag
-	 */
 
 	/**
 	 * @type {{
@@ -21,10 +18,7 @@
 	 *  track?: Track
 	 *  titleElement?: string
 	 *  titleClass?: string
-	 *  tags?: HeaderTag[]
-	 *  autoTitle?: string
 	 *  onAutoClick?: (() => void) | undefined
-	 *  broadcastSyncTitle?: string
 	 *  onBroadcastSyncClick?: (() => void) | undefined
 	 *  presenceCount?: number
 	 * }}
@@ -35,10 +29,7 @@
 		track,
 		titleElement = 'h3',
 		titleClass = '',
-		tags,
-		autoTitle = 'Auto radio',
 		onAutoClick,
-		broadcastSyncTitle = 'Sync broadcast',
 		onBroadcastSyncClick,
 		presenceCount = 0
 	} = $props()
@@ -53,16 +44,19 @@
 	const isListening = $derived(Boolean(deck?.listening_to_channel_id))
 	const listeningWhoSlug = $derived(isListening ? channel?.slug : undefined)
 	const listeningWhoHref = $derived(listeningWhoSlug ? `/${listeningWhoSlug}` : undefined)
-	const listeningWhomSlug = $derived(isListening ? (track?.slug || deck?.playlist_slug) : undefined)
+	const listeningWhomSlug = $derived(isListening ? track?.slug || deck?.playlist_slug : undefined)
 	const listeningWhomHref = $derived(listeningWhomSlug ? `/${listeningWhomSlug}` : undefined)
 	const showBroadcastSync = $derived(isListening)
 	const broadcastSyncDrifted = $derived(Boolean(deck?.listening_drifted))
+	const broadcastSyncTitle = $derived(
+		broadcastSyncDrifted ? m.player_sync_broadcast() : m.player_broadcast_synced()
+	)
+	const autoTitle = $derived(deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join())
 	const derivedTags = $derived(
-		tags ??
-			extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
-				label: tag,
-				href: slug ? `/${slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}` : undefined
-			}))
+		extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
+			label: tag,
+			href: slug ? `/${slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}` : undefined
+		}))
 	)
 
 	const hasListeningPair = $derived(Boolean(listeningWhoSlug))

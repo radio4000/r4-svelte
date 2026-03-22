@@ -20,7 +20,6 @@
 	import ButtonPlay from '$lib/components/button-play.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import BroadcastLiveControls from '$lib/components/broadcast-live-controls.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
@@ -109,12 +108,6 @@
 			Object.values(appState.decks).some((d) => d.listening_to_channel_id === channel.id)
 		)
 	)
-	let isChannelPlaying = $derived(
-		Boolean(
-			channel?.slug &&
-			Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
-		)
-	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let isLocal = $derived(isLocalChannel(channel?.id))
 	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
@@ -129,27 +122,13 @@
 	let channelListeningDeck = $derived(
 		findListeningDeck(appState.decks, appState.active_deck_id, channel?.id)
 	)
-	let channelHeaderDeck = $derived(
-		channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0]
-	)
-	let listeningTrackSlug = $derived.by(() => {
+	let deck = $derived(channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0])
+	let listeningTrack = $derived.by(() => {
 		const trackId = channelListeningDeck?.playlist_track
 		if (!trackId) return undefined
 		void tracksCollection.state.size
-		return tracksCollection.state.get(trackId)?.slug
+		return tracksCollection.state.get(trackId)
 	})
-	let channelHeaderState = $derived.by(() =>
-		buildDeckChannelHeaderState({
-			title: channel?.name,
-			slug,
-			playlistTitle: channelHeaderDeck?.playlist_title,
-			listening: Boolean(channelListeningDeck),
-			listeningWhoSlug: channelListeningDeck ? slug : undefined,
-			listeningWhomTrackSlug: listeningTrackSlug,
-			listeningWhomFallbackSlug: channelListeningDeck?.playlist_slug,
-			tagBaseSlug: slug
-		})
-	)
 
 	// --- Effects ---
 
@@ -209,29 +188,11 @@
 				</div>
 				<div class="info">
 					<DeckChannelHeader
-						title={channelHeaderState.title}
-						titleHref={channelHeaderState.slugHref}
+						{deck}
+						{channel}
+						track={listeningTrack}
 						titleElement="h1"
 						titleClass="channel-page-title"
-						isPlaying={isChannelPlaying}
-						slug={channelHeaderState.slug}
-						slugHref={channelHeaderState.slugHref}
-						tags={channelHeaderState.tags}
-						listeningWhoSlug={channelListeningDeck
-							? channelHeaderState.listeningWhoSlug
-							: undefined}
-						listeningWhoHref={channelListeningDeck
-							? channelHeaderState.listeningWhoHref
-							: undefined}
-						listeningWhomSlug={channelListeningDeck
-							? channelHeaderState.listeningWhomSlug
-							: undefined}
-						listeningWhomHref={channelHeaderState.listeningWhomHref}
-						showBroadcastSync={Boolean(channelListeningDeck && channel.id)}
-						broadcastSyncDrifted={Boolean(channelListeningDeck?.listening_drifted)}
-						broadcastSyncTitle={channelListeningDeck?.listening_drifted
-							? m.player_sync_broadcast()
-							: m.player_broadcast_synced()}
 						onBroadcastSyncClick={() => {
 							if (!channel?.id) return
 							joinBroadcast(appState.active_deck_id, channel.id)

@@ -32,7 +32,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-import SpeedControl from '$lib/components/speed-control.svelte'
+	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
@@ -416,11 +416,7 @@ import SpeedControl from '$lib/components/speed-control.svelte'
 						track={displayTrack}
 						titleElement="div"
 						titleClass="player-header-title"
-						autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onAutoClick={() => resyncAutoRadio(deckId)}
-						broadcastSyncTitle={deck?.listening_drifted
-							? m.player_sync_broadcast()
-							: m.player_broadcast_synced()}
 						onBroadcastSyncClick={() => {
 							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
 						}}
