@@ -677,7 +677,7 @@
 			</section>
 		{/if}
 
-		<section class="section section--globe">
+		<section class="section section--globe section--globe--loggedout">
 			<header class="section-header">
 				<h2 class="section-title"><a href={resolve('/channels/all') + '?display=map'}>Overview</a></h2>
 			</header>
@@ -768,6 +768,10 @@
 		}
 	}
 
+
+	.section--globe--loggedout .globe {
+		min-height: 33vh;
+	}
 	.dashboard-section {
 		display: flex;
 		flex-direction: column;
