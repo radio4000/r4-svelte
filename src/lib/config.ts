@@ -50,7 +50,7 @@ export const conceptIcons = {
 	search: 'search',
 	feed: 'history',
 	history: 'history',
-	broadcast: 'cell-signal',
+	broadcast: 'signal',
 	settings: 'options-vertical-encircled',
 	info: 'circle-info',
 	mentions: 'user',

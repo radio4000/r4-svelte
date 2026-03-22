@@ -82,7 +82,7 @@
 				title={m.status_broadcasting()}
 				aria-label={m.status_broadcasting()}
 			>
-				<Icon icon="cell-signal" size={14} />
+				<Icon icon="signal" size={14} />
 				{m.status_live_short()}
 			</span>
 		{/if}
@@ -106,7 +106,7 @@
 						aria-label={broadcastSyncTitle}
 						onclick={onBroadcastSyncClick}
 					>
-						<Icon icon="cell-signal" size={14} />
+						<Icon icon="signal" size={14} />
 					</button>
 				{:else}
 					<span
@@ -114,7 +114,7 @@
 						title={broadcastSyncTitle}
 						aria-label={broadcastSyncTitle}
 					>
-						<Icon icon="cell-signal" size={14} />
+						<Icon icon="signal" size={14} />
 					</span>
 				{/if}
 			{/if}

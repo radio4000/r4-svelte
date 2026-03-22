@@ -59,7 +59,7 @@
 				</a>
 				{#if isBroadcasting}
 					<span class="channel-badge live-pill">
-						<Icon icon="cell-signal" size={12} />
+						<Icon icon="signal" size={12} />
 						{m.status_live_short()}
 					</span>
 				{/if}
@@ -115,7 +115,7 @@
 							role="menuitem"
 							onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
 						>
-							<Icon icon="cell-signal" />
+							<Icon icon="signal" />
 							{m.channel_card_join_broadcast()}
 						</button>
 					{/if}

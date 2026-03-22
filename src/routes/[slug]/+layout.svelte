@@ -247,7 +247,7 @@
 							title={m.nav_broadcasts()}
 							aria-label={m.nav_broadcasts()}
 						>
-							<Icon icon="cell-signal" />
+							<Icon icon="signal" />
 						</button>
 					{/if}
 					<ButtonPlay {channel} trackId={tid} />
