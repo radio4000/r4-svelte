@@ -17,6 +17,7 @@ Dry wit welcome. Channel the sensibility of someone who finds elegance in plain 
 ## Code conventions
 
 - Minimal abstraction - direct property access, no unnecessary layers
+- A `$derived` earns its name when it describes state (`isListening`, `isBroadcasting`) or combines values. One that renames a property or prepends `/` and is used once is noise — inline it
 - Self-documenting code via clear naming; comments only explain WHY when not obvious
 - Named exports over default exports
 - JSDoc for types, don't obsess over TypeScript

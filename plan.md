@@ -2,18 +2,9 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-## Kill `deck-channel-header-shared.js` for decks
+## Inline trivial deriveds in deck-channel-header.svelte
 
-`deckTitle(deck, title?)` in `deck.ts` is step 1. The builder (`buildDeckChannelHeaderState`) is now partially redundant. Dismantle it piece by piece:
-
-- title: done -- `deckTitle` handles it. Builder's title fallback (line 90) is dead logic for deck callers.
-- `autoUri` in `player.svelte` re-derives `viewLabel || @slug` -- same as `deckTitle(deck)`. Replace. Same fallback exists in `presence.svelte.js:163` and `deck-compact-bar.svelte`. One primitive for "deck label / deck presence key" — currently duplicated in three places, drift likely.
-- tags: builder extracts hashtags from `playlist_title`. Reuse existing mention/hashtag parsing helpers instead.
-- slug + slugHref: builder maps slug to href via `toHref`. Move to deck derivation or inline.
-- listening who/whom: builder resolves broadcast slugs to hrefs. Move to deck derivation or inline.
-- `deck-channel-header.svelte` itself reads like a state builder wrapped in a component — long chain of rename-only deriveds (line 37), and "channel" means different things by caller (current channel, broadcaster, fallback display). The `listeningWho`/`listeningWhom` naming confirms the contract is fuzzy.
-- once deck callers don't use the builder, `deck-channel-header-shared.js` shrinks to helpers only (`extractPlaylistHashtags`, `buildTagHref`, `getListeningWhomSlug`) for the channel page.
-- channel page (`[slug]/+layout.svelte`) still uses the builder -- separate concern, lower priority. Simplify later once deck path is clean.
+`slugHref`, `listeningWhoHref`, `listeningWhomHref` each just prepend `/` to a slug and are used once — inline as `href="/{slug}"` in the template. `autoGhost` is `deck?.is_playing && !deck?.auto_radio_drifted` — inline into `synced={...}`. Keep state-describing names like `isListening`, `isBroadcasting` — those clarify intent beyond what `deck?.listening_to_channel_id` communicates.
 
 ## Simplify: rely on types and primitives, fewer layers
 
@@ -28,10 +19,10 @@ Possible improvements. Roughly by priority. Verify before implementing.
 
 ## Backlog
 
-- Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`
-- `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly
-- `togglePlay(player)` skips deck state updates and error handling — calls `player.play()` raw. Near-duplicate of `togglePlayPause(deckId)`. Drop both `togglePlay` and `pause(player)`, make callers use `togglePlayPause(deckId)`.
+- Channel identity inconsistent: methods pass `{id, slug}` or just `channelId` — could pass views instead, since views already carry channel identity. Easier contract.
 - Consolidate page metadata behind `src/lib/components/seo.svelte` — today some routes use raw `<svelte:head>` because `Seo` always appends `| {appName}` and emits OG tags, while many title messages already hardcode `Radio4000` or custom formatting. Refactor `Seo` into the single metadata path for non-debug routes: support plain/full titles, stop baking brand names into i18n title strings, move default title/description in `src/app.html` to config-driven values, and keep route usage consistent.
+- `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay. Needs verification and user testing.
+- `seekWhenReady` race in `broadcast.js` — between the final `seekJobSeqByDeck` check and `play(deckId)`, a new job could start. Old job's `play()` still fires. Needs verification and user testing.
 
 ## One day
 
@@ -43,8 +34,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 - `discogs-core.js:6–8` — in-memory fetch cache grows unbounded. 5-min TTL but no eviction. Long sessions accumulate entries. Could move to a db collection.
 - Live query accumulation — navigating creates new queries without cleaning up old ones. Unclear if disposed queries are GC'd or leak.
 - Play history threshold: a track is recorded the moment it starts playing. Should count only after enough listening: full track if under 2 min, half the duration (max 4 min) otherwise. Open questions: accumulate actual play time vs. furthest position? What about pause/resume? Should skipped tracks get a `skipped` flag or disappear? Currently `capture('player:track_play')` fires in `playTrack()` (api.ts); would move to `player.svelte` using `timeupdate`. Needs `getPlayCountThreshold(durationSec)` helper and a way to pass `reason_start` to the player.
-- `seekWhenReady` race in `broadcast.js` — between the final `seekJobSeqByDeck` check and `play(deckId)`, a new job could start. Old job's `play()` still fires.
-- `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay.
 - Ephemeral broadcast tracks have `slug: null` (`broadcast.js`) — listeners can't look up non-DB tracks without `track_url`.
 - `applyBroadcastState` rebuilds `managedIds` inside loop — O(n²) for deck count. Fine now, may matter later.
 
