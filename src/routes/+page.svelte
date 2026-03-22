@@ -233,15 +233,23 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
-		{#if !isSignedIn && !appState.show_welcome_hint}
-			<button
-				class="btn"
-				style="margin-left: auto"
-				onclick={() => (appState.show_welcome_hint = true)}
-				title={m.welcome_title({appName})}
-			>
-				<Icon icon="circle-info" />
-			</button>
+		{#if !isSignedIn}
+			{#if showBroadcastCountWidget}
+				<a class="btn" href={resolve('/channels/broadcasting')}>
+					<Icon icon="cell-signal" />
+					<span>{broadcastCount.toLocaleString()}</span>
+				</a>
+			{/if}
+			{#if !appState.show_welcome_hint}
+				<button
+					class="btn"
+					style="margin-left: auto"
+					onclick={() => (appState.show_welcome_hint = true)}
+					title={m.welcome_title({appName})}
+				>
+					<Icon icon="circle-info" />
+				</button>
+			{/if}
 		{/if}
 		{#if userChannel}
 			<MyChannelControls
@@ -620,22 +628,10 @@
 		{/if}
 
 		{#if showBroadcastCountWidget}
-			<section class="section dashboard-section">
-				<div class="dashboard-grid">
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--row"
-						href={resolve('/channels/broadcasting')}
-					>
-						<Icon icon="cell-signal" size={16} />
-						<span>{m.home_dashboard_live_radios()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{broadcastCount.toLocaleString()}</strong
-						>
-					</a>
-				</div>
-			</section>
 			<section class="section">
-				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<h2 class="section-title">
+					<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+				</h2>
 				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
