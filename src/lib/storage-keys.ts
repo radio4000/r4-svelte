@@ -3,7 +3,7 @@ export const LOCAL_STORAGE_KEYS = {
 	appState: 'r5-app-state',
 	appStateQueue: 'r5-app-state-queue',
 	trackMeta: 'r5-track-meta',
-	playHistory: 'r5-play-history',
+	captureEvents: 'r5-capture-events',
 	spamDecisions: 'r5-spam-decisions',
 	views: 'r5-views'
 } as const

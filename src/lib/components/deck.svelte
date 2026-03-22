@@ -1,7 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import Player from '$lib/components/player.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 
@@ -14,7 +14,9 @@
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
-	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+	let hasHistory = $derived(
+		[...captureEventsCollection.state.values()].some((e) => e.event === 'player:track_play')
+	)
 	let hasContent = $derived(
 		(deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory
 	)

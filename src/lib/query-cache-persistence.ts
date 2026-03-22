@@ -1,9 +1,5 @@
 /** TanStack Query cache persistence to IndexedDB. */
-import {
-	persistQueryClientRestore,
-	persistQueryClientSubscribe,
-	type PersistedClient
-} from '@tanstack/query-persist-client-core'
+import type {PersistedClient} from '@tanstack/query-persist-client-core'
 import {get, set, del, createStore} from 'idb-keyval'
 import {browser} from '$app/environment'
 import {queryClient} from './collections/query-client'
@@ -141,7 +137,7 @@ function shouldDehydrateQuery(query: {
 	return true
 }
 
-const persistOptions = {
+const _persistOptions = {
 	queryClient,
 	persister: idbPersister,
 	maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days — matches gcTime, keeps user import data alive

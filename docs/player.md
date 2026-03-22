@@ -37,7 +37,7 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 ## State
 
 `appState` stores app, user and player states.
-`playHistoryCollection` tracks played tracks with start/end reasons.
+`captureEventsCollection` records play events with start/end reasons (see [capture events](play-history.md)).
 
 ## Auto-radio
 

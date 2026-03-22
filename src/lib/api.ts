@@ -11,7 +11,7 @@ import {
 import {logger} from '$lib/logger'
 import {capture} from '$lib/analytics'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray, isDbId} from '$lib/utils'
+import {shuffleArray, isDbId, uuid} from '$lib/utils'
 import {
 	getActiveQueue,
 	queueInsertManyAfter,
@@ -22,7 +22,7 @@ import {
 	queueRotate
 } from '$lib/player/queue'
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
+
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {
 	weeklyShuffle,
@@ -197,12 +197,13 @@ export async function playTrack(
 
 	// Record play history (skip for ephemeral tracks — no channel/slug)
 	const previousTrackId = deck.playlist_track
+	const previousPlayId = deck.play_id
 	if (!isEphemeral && previousTrackId && previousTrackId !== id && endReason) {
 		const mediaController = document.querySelector(`media-controller#r5-deck-${deckId}`)
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
-		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
 		capture('player:track_end', {
+			play_id: previousPlayId,
 			track_id: previousTrackId,
 			channel_slug: deck.playlist_slug,
 			end_reason: endReason,
@@ -210,10 +211,14 @@ export async function playTrack(
 		})
 	}
 	if (!isEphemeral && startReason && track.slug) {
-		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
+		const playId = uuid()
+		deck.play_id = playId
 		capture('player:track_play', {
+			play_id: playId,
 			track_id: track.id,
 			channel_slug: track.slug,
+			title: track.title,
+			url: track.url,
 			start_reason: startReason,
 			shuffle: deck.shuffle,
 			auto_radio: !!deck.auto_radio,

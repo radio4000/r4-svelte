@@ -6,7 +6,7 @@
 	import {channelsCollection} from '$lib/collections/channels'
 	import {followsCollection} from '$lib/collections/follows'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import {cacheReady} from '$lib/query-cache-persistence'
 
 	let tick = $state(0)
@@ -27,7 +27,7 @@
 			{name: 'channels', size: channelsCollection.state.size, cached: cacheItemCount('channels')},
 			{name: 'follows', size: followsCollection.state.size, cached: cacheItemCount('follows')},
 			{name: 'trackMeta', size: trackMetaCollection.state.size, cached: 0},
-			{name: 'playHistory', size: playHistoryCollection.state.size, cached: 0}
+			{name: 'captureEvents', size: captureEventsCollection.state.size, cached: 0}
 		]
 	})
 

@@ -1,6 +1,7 @@
 import posthog from 'posthog-js'
 import {appState} from '$lib/app-state.svelte'
 import {posthogKey} from '$lib/config'
+import {addCaptureEvent} from '$lib/collections/capture-events'
 import {logger} from '$lib/logger'
 
 const log = logger.ns('analytics').seal()
@@ -65,8 +66,11 @@ export function reset() {
 }
 
 /** Capture a custom event. No-op if the user has not opted in. */
-export function capture(event: string, properties?: Record<string, unknown>) {
+export function capture(event: string, properties?: Record<string, unknown>): string {
 	log.debug(event, properties)
-	if (!appState.analytics_opt_in || !initialized) return
+	const isPosthogInternalEvent = event.startsWith('$')
+	if (!isPosthogInternalEvent) addCaptureEvent(event, properties)
+	if (!appState.analytics_opt_in || !initialized) return ''
 	posthog.capture(event, properties)
+	return ''
 }

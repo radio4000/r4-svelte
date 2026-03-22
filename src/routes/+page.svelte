@@ -10,21 +10,12 @@
 	import {getFeaturedPool} from '$lib/collections/featured'
 	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 	import {getChannelTags, extractHashtags} from '$lib/utils'
-	import {
-		playChannel,
-		togglePlayPause,
-		toggleChannelAutoRadio,
-		setPlaylist,
-		playTrack,
-		sortByNewest
-	} from '$lib/api'
-	import {findAutoDecksForChannel, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
+	import {playChannel, togglePlayPause, setPlaylist, playTrack, sortByNewest} from '$lib/api'
+	import {findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
-	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
+	import {appPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import MyChannelControls from '$lib/components/my-channel-controls.svelte'
 
 	import CoverFlip from '$lib/components/cover-flip.svelte'
@@ -131,16 +122,6 @@
 		else playChannel(appState.active_deck_id, userChannel)
 	}
 
-	// Auto radio state for user's channel
-	const userChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
-	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
-	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	const userChannelAutoIsPlaying = $derived(userChannelAutoDecks.some((d) => d.is_playing))
-
-	function toggleUserChannelAutoRadio() {
-		if (userChannel?.slug) toggleChannelAutoRadio(userChannel.slug)
-	}
-
 	$effect(() => {
 		const slug = userChannel?.slug
 		if (!slug) return
@@ -148,14 +129,6 @@
 		return () => unwatchPresence(slug)
 	})
 
-	const userChannelPresence = $derived(
-		userChannel?.slug
-			? (channelPresence[userChannel.slug] ?? {total: 0, broadcast: 0, autoRadio: 0, byUri: {}})
-			: null
-	)
-	const userChannelListenerTotal = $derived(userChannelPresence?.total ?? 0)
-	const userChannelBroadcastListeners = $derived(userChannelPresence?.broadcast ?? 0)
-	const userChannelAutoListeners = $derived(userChannelPresence?.autoRadio ?? 0)
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
 	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
@@ -208,12 +181,6 @@
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
 	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
-	const showAudienceWidget = $derived(
-		userChannelListenerTotal > 0 ||
-			userChannelBroadcastListeners > 0 ||
-			userChannelAutoListeners > 0
-	)
-
 	const activeDecks = $derived.by(() =>
 		Object.values(appState.decks)
 			.filter((d) => d.playlist_track)

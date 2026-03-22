@@ -360,7 +360,7 @@
 	"history_empty": "No listening history yet.",
 	"history_flag_shuffled": "(shuffled)",
 	"history_flag_skipped": "(skipped)",
-	"history_local_note": "Your play history is private, local on this device and not connected to your account.",
+	"history_local_note": "Your history is private and not shared with anyone. UNLESS, you explicitly opt-in to share how you use the app, in which case data is sent to our PostHog instance in the EU.",
 	"history_reason_auto_next": "Auto next",
 	"history_reason_broadcast_sync": "Broadcast sync",
 	"history_reason_play_channel": "Play channel",

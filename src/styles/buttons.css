@@ -62,6 +62,10 @@ button:disabled,
 	:global(.icon) {
 		opacity: 0.2;
 	}
+
+	&:hover {
+		border-color: initial;
+	}
 }
 
 a.active {

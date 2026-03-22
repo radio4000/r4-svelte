@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -19,7 +19,9 @@
 		deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact)
 	)
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
-	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+	let hasHistory = $derived(
+		[...captureEventsCollection.state.values()].some((e) => e.event === 'player:track_play')
+	)
 	let visibleDeckIds = $derived.by(() =>
 		deckIds.filter((id) => {
 			const deck = appState.decks[id]

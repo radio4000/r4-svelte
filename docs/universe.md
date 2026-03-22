@@ -32,7 +32,7 @@ User → Channel       Search / View             Deck
          ├─ Track      query → view → tracks     queue → player → sound
          ├─ Follow     save  → pin  → nav
          └─ Mention                            Broadcast (live DJ)
-                     Play History                 broadcaster → listeners
+                     Capture Events               broadcaster → listeners
 Track Meta (local)     what, when, why
   YouTube / MB / DC                            Auto-radio (no DJ)
                                                  same track, same second
@@ -102,16 +102,16 @@ How filtered tracks become playback:
        └─ addToPlaylist / playNext ──→ append or insert into existing queue
 ```
 
-## Play history
+## Capture events
 
 ```
   playTrack(deckId, trackId, reason_start)
        │
-       ├──→ addPlayHistoryEntry (records: track, started_at, reason_start)
+       ├──→ capture('player:track_play', {track_id, play_id, reason_start, ...})
        │
        ···track plays···
        │
-       └──→ endPlayHistoryEntry (records: ended_at, ms_played, reason_end, skipped)
+       └──→ capture('player:track_end', {play_id, ms_played, end_reason, ...})
 
   Reasons capture the edges between player states:
     start: user click, next/prev, auto_next, play_channel, broadcast_sync, track_error
@@ -125,7 +125,7 @@ How filtered tracks become playback:
               │         │
               │         └── track ended ──→ next ──→ Player
               │                                        │
-              │                                        └──→ Play History entry
+              │                                        └──→ capture event
               │
               ├── play / pause / seek
               │
@@ -177,7 +177,7 @@ How filtered tracks become playback:
 
   appState (localStorage) ──→ decks, user, display prefs, queue contents
   trackMetaCollection (localStorage) ──→ YouTube/MB/Discogs data
-  playHistoryCollection (localStorage) ──→ listening history
+  captureEventsCollection (localStorage) ──→ capture events (plays, ends, etc.)
   viewsCollection (localStorage) ──→ saved/pinned views
 ```
 
@@ -185,7 +185,7 @@ How filtered tracks become playback:
 
 ```
   PUBLIC      Channel, Track, Follow, Broadcast
-  PRIVATE     Track Meta, Play History, App State, User, Saved Views
+  PRIVATE     Track Meta, Capture Events, App State, User, Saved Views
   SHAREABLE   View (private today, URLs by nature)
 ```
 

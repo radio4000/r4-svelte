@@ -37,6 +37,7 @@ export interface Deck {
 	view?: import('$lib/views').View
 	auto_radio_rotation_start?: number
 	listening_drifted?: boolean
+	play_id?: string
 	track_played_at?: string
 	seeked_at?: string
 	seek_position?: number
@@ -131,23 +132,15 @@ export type Broadcast = Database['public']['Tables']['broadcast']['Row'] & {
 	decks?: BroadcastDeckState[] | null
 }
 
-export interface BroadcastWithChannel extends Broadcast {
-	channels: Channel
+export interface CaptureEvent {
+	id: string
+	event: string
+	properties?: Record<string, unknown>
+	created_at: string
 }
 
-export interface PlayHistory {
-	id: string
-	track_id: string
-	slug: string
-	title: string
-	url: string
-	started_at: string
-	ended_at?: string
-	ms_played: number
-	reason_start?: string
-	reason_end?: string
-	shuffle: boolean
-	skipped: boolean
+export interface BroadcastWithChannel extends Broadcast {
+	channels: Channel
 }
 
 /**

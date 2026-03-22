@@ -90,7 +90,10 @@
 		{"name": "followsCollection", "desc": "Followed channels (synced)."},
 		{"name": "broadcastsCollection", "desc": "Active broadcasts."},
 		{"name": "trackMetaCollection", "desc": "YouTube/MusicBrainz metadata (localStorage)."},
-		{"name": "playHistoryCollection", "desc": "Listening history (localStorage)."},
+		{
+			"name": "captureEventsCollection",
+			"desc": "Capture events — plays, ends, etc. (localStorage)."
+		},
 		{"name": "spamDecisionsCollection", "desc": "Spam decisions (localStorage)."},
 
 		{"name": "addTrack(channel, {url, title, ...})", "desc": "Create track with offline support."},
@@ -120,9 +123,15 @@
 
 		{"name": "deleteTrackMeta(items)", "desc": "Delete cached track metadata."},
 
-		{"name": "addPlayHistoryEntry(track, options)", "desc": "Record play start."},
-		{"name": "endPlayHistoryEntry(id, options)", "desc": "Record play end."},
-		{"name": "clearPlayHistory()", "desc": "Clear all play history."}
+		{
+			"name": "addCaptureEvent(event, properties?)",
+			"desc": "Record any event locally, returns id."
+		},
+		{
+			"name": "buildEndDataMap(allEvents, plays)",
+			"desc": "Pair track_play with track_end by play_id."
+		},
+		{"name": "clearCaptureEvents()", "desc": "Clear all capture events."}
 	],
 
 	"src/lib/api.ts": [

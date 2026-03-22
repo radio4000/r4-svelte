@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
 	import {resolve} from '$app/paths'
 	import {appName} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	import {getLocale} from '$lib/paraglide/runtime'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection, buildEndDataMap} from '$lib/collections/capture-events'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {trackMetaCollection} from '$lib/collections/track-meta'
 	import {followsCollection} from '$lib/collections/follows'
@@ -11,15 +11,18 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 
 	// Reactive reads — updates live as you play tracks, follow channels, etc.
-	const playsQuery = useLiveQuery((q) => q.from({p: playHistoryCollection}))
+	const eventsQuery = useLiveQuery((q) => q.from({ev: captureEventsCollection}))
 	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
 	const trackMetaQuery = useLiveQuery((q) => q.from({tm: trackMetaCollection}))
 	const followsQuery = useLiveQuery((q) => q.from({f: followsCollection}))
 
-	const plays = $derived(playsQuery.data ?? [])
+	let allEvents = $derived(eventsQuery.data ?? [])
+	let plays = $derived(allEvents.filter((e) => e.event === 'player:track_play'))
 	const channels = $derived(channelsQuery.data ?? [])
 	const trackMeta = $derived(trackMetaQuery.data ?? [])
 	const follows = $derived(followsQuery.data ?? [])
+
+	let endDataByPlayId = $derived(buildEndDataMap(allEvents, plays))
 
 	// Query cache stats (tracks are loaded on-demand per slug, so state may be empty)
 	const tracksCached = $derived(
@@ -38,8 +41,7 @@
 	)
 
 	// Storage estimate
-	/** @type {{usage?: number, quota?: number} | null} */
-	let storageEstimate = $state(null)
+	let storageEstimate: {usage?: number; quota?: number} | null = $state(null)
 	$effect(() => {
 		navigator.storage
 			?.estimate?.()
@@ -67,12 +69,25 @@
 	// Basic stats
 	const totalPlays = $derived(plays.length)
 	const totalListeningTime = $derived(
-		Math.round(plays.reduce((sum, p) => sum + (p.ms_played || 0), 0) / 1000 / 60)
+		Math.round(
+			plays.reduce((sum, p) => sum + (endDataByPlayId.get(p.id)?.ms_played || 0), 0) / 1000 / 60
+		)
 	)
-	const uniqueTracks = $derived(new Set(plays.map((p) => p.track_id)).size)
-	const uniqueChannels = $derived(new Set(plays.map((p) => p.slug)).size)
+	const uniqueTracks = $derived(new Set(plays.map((p) => p.properties?.track_id as string)).size)
+	const uniqueChannels = $derived(
+		new Set(plays.map((p) => p.properties?.channel_slug as string)).size
+	)
 	const skipRate = $derived(
-		plays.length > 0 ? Math.round((plays.filter((p) => p.skipped).length / plays.length) * 100) : 0
+		plays.length > 0
+			? Math.round(
+					(plays.filter((p) => {
+						const reason = endDataByPlayId.get(p.id)?.end_reason
+						return reason === 'user_next' || reason === 'user_prev'
+					}).length /
+						plays.length) *
+						100
+				)
+			: 0
 	)
 
 	// Collection stats
@@ -81,7 +96,7 @@
 
 	// Channel timeline (by creation month)
 	const channelTimeline = $derived.by(() => {
-		const monthlyChannels = {}
+		const monthlyChannels: Record<string, number> = {}
 		channels
 			.filter((c) => c.created_at)
 			.forEach((c) => {
@@ -93,52 +108,61 @@
 
 		return Object.entries(monthlyChannels)
 			.sort(([a], [b]) => a.localeCompare(b))
-			.map(([month, count]) => ({month, count}))
+			.map(([month, count]) => ({month, count: count as number}))
 	})
 
 	// Recently played (unique tracks from last 7 days)
 	const recentlyPlayed = $derived.by(() => {
 		const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000
-		const recentTracks = {}
+		const recentTracks: Record<
+			string,
+			{id: string; title: string; channel_name?: string; slug: string; created_at: string}
+		> = {}
 		plays
-			.filter((p) => new Date(p.started_at).getTime() > sevenDaysAgoMs)
+			.filter((p) => new Date(p.created_at).getTime() > sevenDaysAgoMs)
 			.forEach((p) => {
-				const playTime = new Date(p.started_at).getTime()
-				const existingTime = recentTracks[p.track_id]
-					? new Date(recentTracks[p.track_id].started_at).getTime()
+				const trackId = p.properties?.track_id as string
+				const playTime = new Date(p.created_at).getTime()
+				const existingTime = recentTracks[trackId]
+					? new Date(recentTracks[trackId].created_at).getTime()
 					: 0
-				if (!recentTracks[p.track_id] || playTime > existingTime) {
-					const channel = channelBySlug[p.slug]
-					recentTracks[p.track_id] = {
-						id: p.track_id,
-						title: p.title,
+				if (!recentTracks[trackId] || playTime > existingTime) {
+					const slug = p.properties?.channel_slug as string
+					const channel = channelBySlug[slug]
+					recentTracks[trackId] = {
+						id: trackId,
+						title: p.properties?.title as string,
 						channel_name: channel?.name,
-						slug: p.slug,
-						started_at: p.started_at
+						slug: slug,
+						created_at: p.created_at
 					}
 				}
 			})
 		return Object.values(recentTracks)
-			.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+			.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 			.slice(0, 3)
 	})
 
 	// Most replayed tracks (top 3)
 	const mostReplayedTrack = $derived.by(() => {
-		const trackPlays = {}
+		const trackPlays: Record<
+			string,
+			{title: string; channel_name?: string; slug: string; track_id: string; play_count: number}
+		> = {}
 		plays.forEach((p) => {
-			const key = p.track_id
-			if (!trackPlays[key]) {
-				const channel = channelBySlug[p.slug]
-				trackPlays[key] = {
-					title: p.title,
+			const trackId = p.properties?.track_id as string
+			if (!trackPlays[trackId]) {
+				const slug = p.properties?.channel_slug as string
+				const channel = channelBySlug[slug]
+				trackPlays[trackId] = {
+					title: p.properties?.title as string,
 					channel_name: channel?.name,
-					slug: p.slug,
-					track_id: p.track_id,
+					slug: slug,
+					track_id: trackId,
 					play_count: 0
 				}
 			}
-			trackPlays[key].play_count++
+			trackPlays[trackId].play_count++
 		})
 		return Object.values(trackPlays)
 			.sort((a, b) => b.play_count - a.play_count)
@@ -148,46 +172,50 @@
 	// Listening patterns
 	const daysSinceFirstPlay = $derived.by(() => {
 		if (plays.length === 0) return 0
-		const playTimes = plays.map((p) => new Date(p.started_at).getTime())
+		const playTimes = plays.map((p) => new Date(p.created_at).getTime())
 		const firstPlayMs = Math.min(...playTimes)
 		return Math.floor((Date.now() - firstPlayMs) / (1000 * 60 * 60 * 24))
 	})
 
 	const streakDays = $derived.by(() => {
 		if (plays.length === 0) return 0
-		const dates = plays.map((p) => new Date(p.started_at).toDateString())
+		const dates = plays.map((p) => new Date(p.created_at).toDateString())
 		return new Set(dates).size
 	})
 
 	const mostActiveHour = $derived.by(() => {
 		if (plays.length === 0) return null
-		const hourCounts = {}
+		const hourCounts: Record<number, number> = {}
 		plays.forEach((p) => {
-			const hour = new Date(p.started_at).getHours()
+			const hour = new Date(p.created_at).getHours()
 			hourCounts[hour] = (hourCounts[hour] || 0) + 1
 		})
-		const sortedHours = Object.entries(hourCounts).sort(([, a], [, b]) => b - a)
+		const sortedHours = Object.entries(hourCounts).sort(
+			([, a], [, b]) => (b as number) - (a as number)
+		)
 		return sortedHours.length > 0 ? Number(sortedHours[0][0]) : null
 	})
 
 	// Reason analytics
 	const startReasons = $derived.by(() => {
-		const reasons = {}
+		const reasons: Record<string, number> = {}
 		plays.forEach((p) => {
-			if (p.reason_start) reasons[p.reason_start] = (reasons[p.reason_start] || 0) + 1
+			const reason = p.properties?.start_reason as string | undefined
+			if (reason) reasons[reason] = (reasons[reason] || 0) + 1
 		})
 		return Object.entries(reasons)
-			.sort(([, a], [, b]) => b - a)
+			.sort(([, a], [, b]) => (b as number) - (a as number))
 			.map(([reason, count]) => ({reason, count}))
 	})
 
 	const endReasons = $derived.by(() => {
-		const reasons = {}
+		const reasons: Record<string, number> = {}
 		plays.forEach((p) => {
-			if (p.reason_end) reasons[p.reason_end] = (reasons[p.reason_end] || 0) + 1
+			const reason = endDataByPlayId.get(p.id)?.end_reason
+			if (reason) reasons[reason] = (reasons[reason] || 0) + 1
 		})
 		return Object.entries(reasons)
-			.sort(([, a], [, b]) => b - a)
+			.sort(([, a], [, b]) => (b as number) - (a as number))
 			.map(([reason, count]) => ({reason, count}))
 	})
 
@@ -200,9 +228,10 @@
 	]
 	const userInitiatedRate = $derived.by(() => {
 		if (plays.length === 0) return 0
-		const userInitiated = plays.filter(
-			(p) => p.reason_start && userInitiatedReasons.includes(p.reason_start)
-		).length
+		const userInitiated = plays.filter((p) => {
+			const reason = p.properties?.start_reason as string | undefined
+			return reason && userInitiatedReasons.includes(reason)
+		}).length
 		return Math.round((userInitiated / plays.length) * 100)
 	})
 </script>
@@ -378,7 +407,7 @@
 				{/each}
 			</div>
 			<header>
-				<h2 style="text-align:right">
+				<h2 class="text-right">
 					{m.stats_timeline_heading({count: totalChannelsInDb.toLocaleString(), appName})}
 				</h2>
 			</header>
@@ -405,6 +434,10 @@
 		h2 {
 			text-transform: uppercase;
 		}
+	}
+
+	.text-right {
+		text-align: right;
 	}
 
 	.timeline {
