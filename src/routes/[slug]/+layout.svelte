@@ -235,7 +235,6 @@
 							channelId={channel.id}
 							channelSlug={channel.slug}
 							isLiveOverride={isChannelLive}
-							compact
 						/>
 					{:else if channel.id && isChannelLive}
 						<button
