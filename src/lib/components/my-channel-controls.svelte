@@ -16,6 +16,16 @@
 </script>
 
 <div class="my-channel" class:playing={isPlaying} class:live={isBroadcasting}>
+	{#if isBroadcasting}
+		<span class="live-badge channel-badge">{m.status_live_short()}</span>
+	{/if}
+	<BroadcastControls
+		{deckId}
+		channelId={channel.id}
+		channelSlug={channel.slug}
+		compact
+		showPresence={false}
+	/>
 	<button
 		class="play-btn"
 		onclick={onPlayPause}
@@ -31,17 +41,7 @@
 	</button>
 	<a class="channel-link" href={resolve('/[slug]', {slug: channel.slug})}>
 		<span class="slug">@{channel.slug}</span>
-		{#if isBroadcasting}
-			<span class="channel-badge live-badge">{m.status_live_short()}</span>
-		{/if}
 	</a>
-	<BroadcastControls
-		{deckId}
-		channelId={channel.id}
-		channelSlug={channel.slug}
-		compact
-		showPresence={false}
-	/>
 </div>
 
 <style>
@@ -63,8 +63,30 @@
 		}
 	}
 
+	.live-badge {
+		display: flex;
+		align-items: center;
+		padding-inline: 0.4rem;
+		border-right: 1px solid var(--accent-7);
+		animation: live-pulse 2s ease-in-out infinite;
+		flex-shrink: 0;
+	}
+
+	/* BroadcastControls inner button */
+	:global(.my-channel > div) {
+		display: contents;
+	}
+
+	:global(.my-channel > div > button) {
+		border-radius: 0;
+		border-right: 1px solid var(--gray-5);
+
+		.live & {
+			border-right-color: var(--accent-7);
+		}
+	}
+
 	.play-btn {
-		position: relative;
 		display: flex;
 		align-items: center;
 		padding: 0.25rem 0.3rem;
@@ -101,17 +123,11 @@
 	.channel-link {
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
 		padding: 0.25rem 0.5rem;
 		text-decoration: none;
 		color: inherit;
 		font-size: var(--font-3);
 		min-width: 0;
-		border-right: 1px solid var(--gray-5);
-
-		.playing & {
-			border-right-color: var(--accent-7);
-		}
 
 		&:hover .slug {
 			text-decoration: underline;
@@ -128,11 +144,6 @@
 		}
 	}
 
-	.live-badge {
-		flex-shrink: 0;
-		animation: live-pulse 2s ease-in-out infinite;
-	}
-
 	@keyframes live-pulse {
 		0%,
 		100% {
@@ -141,11 +152,5 @@
 		50% {
 			opacity: 0.5;
 		}
-	}
-
-	/* BroadcastControls sits as last child */
-	:global(.my-channel > div > button),
-	:global(.my-channel > a) {
-		border-radius: 0;
 	}
 </style>
