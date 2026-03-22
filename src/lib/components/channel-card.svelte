@@ -41,6 +41,7 @@
 </script>
 
 <article
+	class="card"
 	class:playing={isPlaying}
 	ondblclick={handleDblClick}
 	role="group"

@@ -461,6 +461,7 @@
 					zoom={1}
 					syncUrl={false}
 					showControls={false}
+					tileStyle="topo"
 				/>
 			</div>
 		</section>
@@ -596,6 +597,7 @@
 						zoom={1.5}
 						syncUrl={false}
 						showControls={false}
+						tileStyle="topo"
 					/>
 				</div>
 			</section>
@@ -1060,6 +1062,7 @@
 		text-align: center;
 		font-size: var(--font-4);
 		padding: 0.5rem;
-		min-height: 4rem;
+		/* avoid jumping descriptions */
+		min-height: 6rem;
 	}
 </style>
