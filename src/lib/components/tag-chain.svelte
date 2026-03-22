@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {resolve} from '$app/paths'
-	import {setPlaylist, playTrack} from '$lib/api'
+	import {loadDeckView, playTrack} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track} from '$lib/types'
 	import * as m from '$lib/paraglide/messages'
@@ -16,7 +16,12 @@
 	async function playChain() {
 		if (!tags.length || !matchingTracks.length) return
 		const trackIds = matchingTracks.map((t) => t.id)
-		setPlaylist(appState.active_deck_id, trackIds)
+		loadDeckView(
+			appState.active_deck_id,
+			{sources: [{channels: channelSlug ? [channelSlug] : undefined, tags}]},
+			trackIds,
+			{slug: channelSlug || undefined}
+		)
 		await playTrack(appState.active_deck_id, trackIds[0], null, 'user_click_track')
 	}
 </script>

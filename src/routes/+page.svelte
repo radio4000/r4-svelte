@@ -10,7 +10,7 @@
 	import {getFeaturedPool} from '$lib/collections/featured'
 	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
 	import {getChannelTags, extractHashtags} from '$lib/utils'
-	import {playChannel, togglePlayPause, setPlaylist, playTrack, sortByNewest} from '$lib/api'
+	import {playChannel, togglePlayPause, loadDeckView, playTrack, sortByNewest} from '$lib/api'
 	import {findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
@@ -171,9 +171,11 @@
 				.sort(sortByNewest)
 		)
 		if (!tracks.length) return
-		setPlaylist(
+		loadDeckView(
 			appState.active_deck_id,
-			tracks.map((t) => t.id)
+			{sources: [{channels: [slug], tags: [tag]}]},
+			tracks.map((t) => t.id),
+			{slug}
 		)
 		await playTrack(appState.active_deck_id, tracks[0].id, null, 'play_channel')
 	}

@@ -6,7 +6,7 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {appState} from '$lib/app-state.svelte'
-	import {playTrack, setPlaylist, shufflePlayChannel} from '$lib/api'
+	import {loadDeckView, playTrack, shufflePlayChannel} from '$lib/api'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
 	const channelActivity = $derived(getChannelActivity())
@@ -49,15 +49,6 @@
 		selectedChannelId = item.id
 	}
 
-	function playTracks(tracks, title) {
-		if (!tracks.length) return false
-		const ids = tracks.map((track) => track.id).filter(Boolean)
-		if (!ids.length) return false
-		setPlaylist(appState.active_deck_id, ids, {title})
-		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
-		return true
-	}
-
 	/** Strip leading `#` to get a bare tag for comparison against track.tags */
 	const stripHash = (v) => String(v || '').replace(RE_LEADING_HASH, '')
 	/** Strip leading `@` to get a bare mention for comparison against track.mentions */
@@ -66,19 +57,41 @@
 	function playByTagToken(token) {
 		const tag = stripHash(token)
 		if (!tag) return false
+		const slug = channel?.slug
 		const matches = channelTracks.filter((track) =>
 			(track?.tags || []).some((entry) => stripHash(entry) === tag)
 		)
-		return playTracks(matches, `#${tag}`)
+		if (!matches.length) return false
+		const ids = matches.map((t) => t.id).filter(Boolean)
+		if (!ids.length) return false
+		loadDeckView(
+			appState.active_deck_id,
+			{sources: [{channels: slug ? [slug] : undefined, tags: [tag]}]},
+			ids,
+			{slug: slug || undefined}
+		)
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
+		return true
 	}
 
 	function playByMentionToken(token) {
 		const mention = stripAt(token)
 		if (!mention) return false
+		const slug = channel?.slug
 		const matches = channelTracks.filter((track) =>
 			(track?.mentions || []).some((entry) => stripAt(entry) === mention)
 		)
-		return playTracks(matches, `@${mention}`)
+		if (!matches.length) return false
+		const ids = matches.map((t) => t.id).filter(Boolean)
+		if (!ids.length) return false
+		loadDeckView(
+			appState.active_deck_id,
+			{sources: [{channels: slug ? [slug] : undefined, search: mention}]},
+			ids,
+			{slug: slug || undefined}
+		)
+		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
+		return true
 	}
 
 	async function handleSceneDoubleClick(item) {

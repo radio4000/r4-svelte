@@ -295,7 +295,7 @@ export async function playChannel(
 		return
 	}
 	const ids = tracks.map((t) => t.id)
-	await setPlaylist(deckId, ids)
+	loadDeckView(deckId, {sources: [{channels: [slug]}]}, ids)
 	capture('player:channel_play', {channel_slug: slug, shuffle: false})
 	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
@@ -344,13 +344,17 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	}
 	const ids = tracks.map((t) => t.id)
 	const randomIndex = Math.floor(Math.random() * ids.length)
-	await setPlaylist(deckId, ids)
+	// order:'shuffle' records intent in the view; actual shuffle is still deck-local
+	// (deck.shuffle + playlist_tracks_shuffled). Unifying the two is a future step.
+	loadDeckView(deckId, {sources: [{channels: [slug]}], order: 'shuffle'}, ids)
 	const deck = getDeck(deckId)
 	if (deck) deck.shuffle = true
 	capture('player:channel_play', {channel_slug: slug, shuffle: true})
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
+/** Low-level queue setter. Always clears deck.view — callers that need
+ *  view-backed queues should use loadDeckView() instead. */
 export function setPlaylist(
 	deckId: number,
 	trackIds: string[],
@@ -363,6 +367,22 @@ export function setPlaylist(
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
 	if (options.slug !== undefined) deck.playlist_slug = options.slug || undefined
+	deck.view = undefined
+}
+
+/** Load a queue into a deck from an explicit View.
+ *  Uses setPlaylist() for queue setup, then restores deck.view
+ *  with the normalized view — the only sanctioned view-aware queue load path. */
+export function loadDeckView(
+	deckId: number,
+	view: View,
+	trackIds: string[],
+	options: {title?: string; slug?: string} = {}
+) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	setPlaylist(deckId, trackIds, options)
+	deck.view = normalizeView(view)
 }
 
 /**
@@ -382,6 +402,7 @@ export function addToPlaylist(deckId, trackIds) {
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
+	deck.view = undefined
 	log.log('addToPlaylist', {
 		deckId,
 		added: trackIds.length,
@@ -402,6 +423,7 @@ export function playNext(deckId, trackIds) {
 	const currentId = deck.playlist_track
 	if (!currentId) {
 		deck.playlist_tracks = ids
+		deck.view = undefined
 		return
 	}
 	deck.playlist_tracks = queueInsertManyAfter(deck.playlist_tracks, currentId, ids)
@@ -412,6 +434,7 @@ export function playNext(deckId, trackIds) {
 			ids
 		)
 	}
+	deck.view = undefined
 	log.log('play_next', {deckId, ids, after: currentId})
 }
 
@@ -427,6 +450,7 @@ export function removeFromQueue(deckId, trackId) {
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = queueRemove(deck.playlist_tracks_shuffled, trackId)
 	}
+	deck.view = undefined
 	log.log('remove_from_queue', {deckId, trackId})
 }
 
@@ -527,6 +551,7 @@ export function playFromHere(deckId, trackId) {
 	const fromHere = deck.playlist_tracks.slice(idx)
 	deck.playlist_tracks = fromHere
 	deck.playlist_tracks_shuffled = shuffleArray(fromHere)
+	deck.view = undefined
 	playTrack(deckId, trackId, null, 'user_click_track')
 	log.log('play_from_here', {deckId, trackId, remaining: fromHere.length})
 }
@@ -546,6 +571,7 @@ export function clearQueue(deckId) {
 		deck.playlist_tracks = []
 		deck.playlist_tracks_shuffled = []
 	}
+	deck.view = undefined
 	log.log('clear_queue', {deckId, kept: current})
 }
 
@@ -556,6 +582,7 @@ export function clearAllQueue(deckId: number) {
 	deck.playlist_tracks = []
 	deck.playlist_tracks_shuffled = []
 	deck.playlist_track = undefined
+	deck.view = undefined
 	log.log('clear_all_queue', {deckId})
 }
 
@@ -585,6 +612,9 @@ export function toggleShuffle(deckId) {
 	deck.shuffle = !deck.shuffle
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks || [])
+	}
+	if (deck.view) {
+		deck.view = {...deck.view, order: deck.shuffle ? 'shuffle' : undefined}
 	}
 }
 
@@ -774,16 +804,13 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
 	const label = view ? viewLabel(view) : undefined
-	setPlaylist(
-		deckId,
-		shuffled.map((t) => t.id),
-		{title: label}
-	)
+	const ids = shuffled.map((t) => t.id)
+	if (view) loadDeckView(deckId, view, ids, {title: label})
+	else setPlaylist(deckId, ids, {title: label})
 	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	if (appState.decks[deckId]) {
 		appState.decks[deckId].auto_radio = true
 		appState.decks[deckId].auto_radio_drifted = false
-		appState.decks[deckId].view = view
 		appState.decks[deckId].auto_radio_rotation_start = rotationStartUnix
 	}
 
@@ -847,23 +874,19 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!snap) return
 	const label = viewLabel(view) || undefined
 
+	const ids = shuffled.map((t) => t.id)
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
-		setPlaylist(
-			deckId,
-			shuffled.map((t) => t.id),
-			{title: label, slug}
-		)
+		loadDeckView(deckId, view, ids, {title: label, slug})
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	}
 
-	// Restore auto-radio flags after setPlaylist/playTrack
+	// Restore auto-radio flags after loadDeckView/playTrack
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
 		d.auto_radio_drifted = false
 		d.auto_radio_rotation_start = rotationStartUnix
-		d.view = view
 		if (label) d.playlist_title = label
 	}
 

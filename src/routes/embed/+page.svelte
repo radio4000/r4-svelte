@@ -7,7 +7,7 @@
 	import {viewFromUrl, viewLabel, type View} from '$lib/views'
 	import {queryView} from '$lib/views.svelte'
 	import {appState, createDefaultDeck} from '$lib/app-state.svelte'
-	import {setPlaylist} from '$lib/api'
+	import {loadDeckView} from '$lib/api'
 	import {ensureTracksLoaded} from '$lib/collections/tracks'
 	import * as m from '$lib/paraglide/messages'
 
@@ -29,18 +29,7 @@
 		return Object.fromEntries(
 			view.sources.map((source, i) => {
 				const id = i + 1
-				return [
-					id,
-					{
-						...createDefaultDeck(id),
-						view: {
-							sources: [source],
-							order: view.order,
-							direction: view.direction,
-							limit: view.limit
-						}
-					}
-				]
+				return [id, createDefaultDeck(id)]
 			})
 		)
 	}
@@ -113,8 +102,9 @@
 			if (query.loading || !query.tracks.length) continue
 			const channels = view.sources[0]?.channels ?? []
 			const slug = channels.length === 1 ? channels[0] : undefined
-			setPlaylist(
+			loadDeckView(
 				deckId,
+				view,
 				query.tracks.map((t) => t.id),
 				{title: viewLabel(view), slug}
 			)

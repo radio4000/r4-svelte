@@ -1,5 +1,5 @@
 <script>
-	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import ButtonFeedback from '$lib/components/button-feedback.svelte'
@@ -28,8 +28,9 @@
 	async function playSearchResults() {
 		if (!tracks.length) return
 		const ids = tracks.map((t) => t.id)
+		if (view) loadDeckView(appState.active_deck_id, view, ids, {title})
+		else setPlaylist(appState.active_deck_id, ids, {title})
 		await playTrack(appState.active_deck_id, ids[0], null, 'play_search')
-		setPlaylist(appState.active_deck_id, ids, {title})
 	}
 
 	function queueSearchResults() {
