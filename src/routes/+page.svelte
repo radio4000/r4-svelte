@@ -587,6 +587,7 @@
 			</section>
 		{/if}
 
+		<div class="loggedout-grid">
 		{#if featuredChannels.length}
 			<section class="section">
 				<header class="section-header">
@@ -656,6 +657,7 @@
 				/>
 			</div>
 		</section>
+		</div>
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<footer class="stats footer-stats">
@@ -755,6 +757,28 @@
 
 	.section--globe--loggedout .globe {
 		min-height: 33vh;
+	}
+
+	.loggedout-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+		flex: 1;
+		min-height: 0;
+
+		@media (min-width: 640px) {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		/* CoverFlip breaks out of container by default; contain it within the column */
+		:global(.featured-flip) {
+			width: 100%;
+			margin-left: 0;
+		}
+
+		.section--globe {
+			margin-bottom: 0;
+		}
 	}
 
 	.dashboard-section {
@@ -1060,8 +1084,6 @@
 	}
 
 	:global(.featured-flip) {
-		width: 100vw;
-		margin-left: calc(-0.5rem);
 		gap: 0.25rem;
 	}
 
