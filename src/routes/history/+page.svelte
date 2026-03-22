@@ -122,8 +122,10 @@
 	</header>
 
 	<div class="constrained">
-		<p>{m.history_local_note()}
-		- <a href="/settings/analytics">analytics &rarr;</a></p>
+		<p>
+			{m.history_local_note()}
+			- <a href="/settings/analytics">analytics &rarr;</a>
+		</p>
 	</div>
 
 	{#if allEvents.length > 0}

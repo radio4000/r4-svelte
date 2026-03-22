@@ -17,7 +17,7 @@
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '$lib/modes'
-	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
+	import {syncAnalyticsConsent, capture} from '$lib/analytics'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -170,15 +170,15 @@
 		syncAnalyticsConsent(appState.analytics_opt_in ?? false)
 	})
 
-	// Identify or reset PostHog person profile when user session changes
-	$effect(() => {
-		const user = appState.user
-		if (user) {
-			identify(user.id)
-		} else {
-			reset()
-		}
-	})
+	// Disabled: all analytics events are anonymous for privacy.
+	// $effect(() => {
+	// 	const user = appState.user
+	// 	if (user) {
+	// 		identify(user.id)
+	// 	} else {
+	// 		reset()
+	// 	}
+	// })
 
 	// Apply pointer cursor preference
 	$effect(() => {

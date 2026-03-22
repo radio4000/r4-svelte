@@ -16,13 +16,9 @@ When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` i
 
 ## Identity
 
-`identify(userId)` and `reset()` are exported from `$lib/analytics` and called in `+layout.svelte`:
+All analytics events are anonymous. No person profiles are created, and no user IDs are sent to PostHog. Each device gets a random `distinct_id` from PostHog automatically, which allows per-device analysis without linking events to real users.
 
-- On opt-in: if a user is already logged in, they are identified immediately
-- On login: `identify(user.id)` links future events to the user
-- On logout: `reset()` unlinks the session so anonymous events don't bleed across users
-
-All three helpers are no-ops when the user has not opted in.
+The `identify()` and `reset()` functions are commented out in `src/lib/analytics.ts`.
 
 ## Capturing custom events
 
