@@ -283,15 +283,25 @@
 					channelId={userChannel.id}
 					channelSlug={userChannel.slug}
 				/>
-				<a href={resolve(`/${userChannel.slug}`)} class="btn channel-pill">
-					<span class="channel-widget-avatar"
-						><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
+				<div class="channel-pill" class:playing={userChannelIsPlaying}>
+					<button
+						class="btn channel-pill-play ghost"
+						onclick={toggleUserChannelPlay}
+						title={userChannelIsPlaying ? m.common_pause() : m.common_play()}
+						aria-label={userChannelIsPlaying ? m.common_pause() : m.common_play()}
 					>
-					@{userChannel.slug}
-					{#if userChannelIsBroadcasting}<span class="channel-badge live-link"
-							>{m.status_live_short()}</span
-						>{/if}
-				</a>
+						<span class="channel-widget-avatar"
+							><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
+						>
+						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} size={12} />
+					</button>
+					<a href={resolve(`/${userChannel.slug}`)} class="channel-pill-link">
+						@{userChannel.slug}
+						{#if userChannelIsBroadcasting}<span class="channel-badge live-link"
+								>{m.status_live_short()}</span
+							>{/if}
+					</a>
+				</div>
 			</div>
 		{/if}
 	</menu>
@@ -736,8 +746,41 @@
 	.channel-pill {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		border: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
+		overflow: hidden;
+
+		&.playing {
+			border-color: var(--accent-7);
+			background: var(--accent-3);
+		}
+	}
+
+	.channel-pill-play {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.2rem 0.3rem;
+		border-radius: 0;
+		border-right: 1px solid var(--gray-5);
+
+		.playing & {
+			border-right-color: var(--accent-7);
+		}
+	}
+
+	.channel-pill-link {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
 		padding: 0.2rem 0.4rem;
+		text-decoration: none;
+		color: inherit;
+		font-size: var(--font-3);
+
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.channel-pill .channel-widget-avatar {
