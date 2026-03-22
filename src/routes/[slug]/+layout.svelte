@@ -240,14 +240,16 @@
 					{:else if channel.id && isChannelLive}
 						<button
 							type="button"
+							class:active={isListeningToChannel}
 							onclick={() => {
 								if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
 								else joinBroadcast(appState.active_deck_id, channel.id)
 							}}
-							title={m.nav_broadcasts()}
-							aria-label={m.nav_broadcasts()}
+							title={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+							aria-label={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
 						>
 							<Icon icon="signal" />
+							{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
 						</button>
 					{/if}
 					<ButtonPlay {channel} trackId={tid} />

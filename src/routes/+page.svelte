@@ -276,9 +276,9 @@
 				<Icon icon="circle-info" />
 			</button>
 		{/if}
-		{#if userChannel && (userChannelIsPlaying || userChannelIsBroadcasting)}
+		{#if userChannel}
 			<BroadcastControls
-				deckId={userChannelLoadedDeckId}
+				deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
 				channelId={userChannel.id}
 				channelSlug={userChannel.slug}
 			/>
