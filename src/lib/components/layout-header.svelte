@@ -14,6 +14,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {appName, conceptIcons} from '$lib/config'
 	import {findAutoDecksForChannel} from '$lib/deck'
+	import {deckAccent} from '$lib/app-state.svelte'
 
 	const {preloading} = $props()
 
@@ -25,6 +26,8 @@
 	)
 	const autoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
 	const isAutoRadio = $derived(autoDecks.length > 0)
+	const deckIds = $derived(Object.keys(appState.decks).map(Number))
+	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 </script>
 
 <header>
@@ -34,6 +37,7 @@
 			class="btn home-link"
 			class:active={page.route.id === '/'}
 			aria-label={appName}
+			style:color={activeDeckColor}
 			{@attach tooltip({content: appName})}
 		>
 			<IconR4 />

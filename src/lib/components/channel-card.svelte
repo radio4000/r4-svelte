@@ -93,44 +93,44 @@
 				{/if}
 			</div>
 			<div class="actions">
-			<ButtonFollow {channel} class="ghost" />
-			<PopoverMenu btnClass="ghost" align="right" valign="top">
-				{#snippet trigger()}
-					<Icon icon="options-horizontal" />
-				{/snippet}
-				<menu>
-					<button
-						type="button"
-						role="menuitem"
-						onclick={() =>
-							isPlaying
-								? togglePlayPause(appState.active_deck_id)
-								: playChannel(appState.active_deck_id, channel)}
-					>
-						<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
-						{isPlaying ? m.common_pause() : m.common_play()}
-					</button>
-					{#if isBroadcasting}
+				<ButtonFollow {channel} class="ghost" />
+				<PopoverMenu btnClass="ghost" align="right" valign="top">
+					{#snippet trigger()}
+						<Icon icon="options-horizontal" />
+					{/snippet}
+					<menu>
 						<button
 							type="button"
 							role="menuitem"
-							onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+							onclick={() =>
+								isPlaying
+									? togglePlayPause(appState.active_deck_id)
+									: playChannel(appState.active_deck_id, channel)}
 						>
-							<Icon icon="signal" />
-							{m.channel_card_join_broadcast()}
+							<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
+							{isPlaying ? m.common_pause() : m.common_play()}
 						</button>
-					{/if}
-					<button type="button" role="menuitem" onclick={share}>
-						<Icon icon="share" />
-						{m.channel_card_share()}
-					</button>
-				</menu>
-				<menu class="nav-vertical">
-					<a class="btn" href={cardHref} role="menuitem"
-						><Icon icon="circle-info" /> {m.channel_card_visit()}</a
-					>
-				</menu>
-			</PopoverMenu>
+						{#if isBroadcasting}
+							<button
+								type="button"
+								role="menuitem"
+								onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+							>
+								<Icon icon="signal" />
+								{m.channel_card_join_broadcast()}
+							</button>
+						{/if}
+						<button type="button" role="menuitem" onclick={share}>
+							<Icon icon="share" />
+							{m.channel_card_share()}
+						</button>
+					</menu>
+					<menu class="nav-vertical">
+						<a class="btn" href={cardHref} role="menuitem"
+							><Icon icon="circle-info" /> {m.channel_card_visit()}</a
+						>
+					</menu>
+				</PopoverMenu>
 			</div>
 		</div>
 	</div>
@@ -182,7 +182,7 @@
 		:global(.list) & {
 			display: grid;
 			grid-template-columns: 5rem 1fr auto;
-			align-items: center;
+			align-items: stretch;
 			padding: 0.5rem;
 			gap: 0 0.75rem;
 		}
@@ -199,6 +199,7 @@
 
 		:global(.list) & {
 			grid-column: 1;
+			align-self: center;
 		}
 
 		:global(button) {
@@ -239,7 +240,7 @@
 		:global(.list) & {
 			grid-column: 2 / -1;
 			flex-direction: row;
-			align-items: center;
+			align-items: stretch;
 			flex-wrap: wrap;
 		}
 	}
@@ -260,6 +261,8 @@
 
 		:global(.list) & {
 			flex-shrink: 0;
+			flex-direction: column;
+			justify-content: space-between;
 		}
 	}
 
@@ -271,7 +274,10 @@
 		flex-shrink: 0;
 
 		:global(.list) & {
-			margin-left: auto;
+			flex-direction: column;
+			justify-content: space-between;
+			align-items: flex-end;
+			flex: 1;
 		}
 	}
 
