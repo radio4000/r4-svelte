@@ -666,7 +666,7 @@
 
 		<section class="section section--globe">
 			<header class="section-header">
-				<h2 class="section-title"><a href={resolve('/channels/all')}>Overview</a></h2>
+				<h2 class="section-title"><a href={resolve('/channels/all') + '?display=map'}>Overview</a></h2>
 			</header>
 			<div class="globe">
 				<MapChannels
