@@ -28,7 +28,7 @@
 		notifyBroadcastState
 	} from '$lib/broadcast.js'
 	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
-	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
+	import {appState, canEditChannel, removeDeck, deckAccent} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
@@ -65,6 +65,8 @@
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
+	let deckIds = $derived(Object.keys(appState.decks).map(Number))
+	let accentColor = $derived(deckAccent(deckIds, deckId))
 
 	// Both media player elements
 	let youtubePlayer = $state()
@@ -399,7 +401,7 @@
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
 			{#if hasMultipleDecks}
-				<div class="header-id" class:active={isActiveDeck}>
+				<div class="header-id" class:active={isActiveDeck} style:color={accentColor}>
 					<IconR4 />
 				</div>
 			{/if}
