@@ -41,7 +41,7 @@
 
 <PopoverMenu triggerAttachment={tooltip({content: activeLabel})}>
 	{#snippet trigger()}
-		<Icon icon={activeIcon} />
+		<Icon icon="options-vertical" />
 		{activeLabel}
 	{/snippet}
 	<menu class="nav-vertical">
