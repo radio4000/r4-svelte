@@ -625,10 +625,10 @@
 									? channel.description.slice(0, 140) + '…'
 									: channel.description}</span
 							>
-					{/if}
-				</p>
-			{/snippet}
-		</CoverFlip>
+						{/if}
+					</p>
+				{/snippet}
+			</CoverFlip>
 		{/if}
 
 		{#if showBroadcastCountWidget}

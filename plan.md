@@ -2,9 +2,20 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
+## Kill `deck-channel-header-shared.js` for decks
+
+`deckTitle(deck, title?)` in `deck.ts` is step 1. The builder (`buildDeckChannelHeaderState`) is now partially redundant. Dismantle it piece by piece:
+
+- title: done -- `deckTitle` handles it. Builder's title fallback (line 90) is dead logic for deck callers.
+- `autoUri` in `player.svelte` re-derives `viewLabel || @slug` -- same as `deckTitle(deck)`. Replace.
+- tags: builder extracts hashtags from `playlist_title`. Reuse existing mention/hashtag parsing helpers instead.
+- slug + slugHref: builder maps slug to href via `toHref`. Move to deck derivation or inline.
+- listening who/whom: builder resolves broadcast slugs to hrefs. Move to deck derivation or inline.
+- once deck callers don't use the builder, `deck-channel-header-shared.js` shrinks to helpers only (`extractPlaylistHashtags`, `buildTagHref`, `getListeningWhomSlug`) for the channel page.
+- channel page (`[slug]/+layout.svelte`) still uses the builder -- separate concern, lower priority. Simplify later once deck path is clean.
+
 ## Backlog
 
-- Channel page (`/@slug`) could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
 - Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`
 - `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly
 - `togglePlay(player)` skips deck state updates and error handling — calls `player.play()` raw. Near-duplicate of `togglePlayPause(deckId)`. Drop both `togglePlay` and `pause(player)`, make callers use `togglePlayPause(deckId)`.

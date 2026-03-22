@@ -3,62 +3,67 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
+	import {deckTitle} from '$lib/deck'
+	import {extractHashtags} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
+	/** @typedef {import('$lib/types').Deck} Deck */
+	/** @typedef {import('$lib/types').Channel} Channel */
+	/** @typedef {import('$lib/types').Track} Track */
 	/**
 	 * @typedef {{label: string, href?: string}} HeaderTag
 	 */
 
 	/**
 	 * @type {{
-	 *  title?: string
-	 *  titleHref?: string
+	 *  deck?: Deck
+	 *  channel?: Channel
+	 *  track?: Track
 	 *  titleElement?: string
 	 *  titleClass?: string
-	 *  isPlaying?: boolean
-	 *  isBroadcasting?: boolean
-	 *  slug?: string
-	 *  slugHref?: string
 	 *  tags?: HeaderTag[]
-	 *  showAutoButton?: boolean
-	 *  autoGhost?: boolean
 	 *  autoTitle?: string
 	 *  onAutoClick?: (() => void) | undefined
-	 *  listeningWhoSlug?: string
-	 *  listeningWhoHref?: string
-	 *  listeningWhomSlug?: string
-	 *  listeningWhomHref?: string
-	 *  showBroadcastSync?: boolean
-	 *  broadcastSyncDrifted?: boolean
 	 *  broadcastSyncTitle?: string
 	 *  onBroadcastSyncClick?: (() => void) | undefined
 	 *  presenceCount?: number
 	 * }}
 	 */
 	let {
-		title,
-		titleHref,
+		deck,
+		channel,
+		track,
 		titleElement = 'h3',
 		titleClass = '',
-		isPlaying = false,
-		isBroadcasting = false,
-		slug,
-		slugHref,
-		tags = [],
-		showAutoButton = false,
-		autoGhost = false,
+		tags,
 		autoTitle = 'Auto radio',
 		onAutoClick,
-		listeningWhoSlug,
-		listeningWhoHref,
-		listeningWhomSlug,
-		listeningWhomHref,
-		showBroadcastSync = false,
-		broadcastSyncDrifted = false,
 		broadcastSyncTitle = 'Sync broadcast',
 		onBroadcastSyncClick,
 		presenceCount = 0
 	} = $props()
+
+	const derivedTitle = $derived(deckTitle(deck, channel?.name))
+	const slug = $derived(deck?.playlist_slug)
+	const slugHref = $derived(slug ? `/${slug}` : undefined)
+	const isPlaying = $derived(Boolean(deck?.is_playing))
+	const isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
+	const showAutoButton = $derived(Boolean(deck?.auto_radio))
+	const autoGhost = $derived(!!deck?.is_playing && !deck?.auto_radio_drifted)
+	const isListening = $derived(Boolean(deck?.listening_to_channel_id))
+	const listeningWhoSlug = $derived(isListening ? channel?.slug : undefined)
+	const listeningWhoHref = $derived(listeningWhoSlug ? `/${listeningWhoSlug}` : undefined)
+	const listeningWhomSlug = $derived(isListening ? (track?.slug || deck?.playlist_slug) : undefined)
+	const listeningWhomHref = $derived(listeningWhomSlug ? `/${listeningWhomSlug}` : undefined)
+	const showBroadcastSync = $derived(isListening)
+	const broadcastSyncDrifted = $derived(Boolean(deck?.listening_drifted))
+	const derivedTags = $derived(
+		tags ??
+			extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
+				label: tag,
+				href: slug ? `/${slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}` : undefined
+			}))
+	)
 
 	const hasListeningPair = $derived(Boolean(listeningWhoSlug))
 	const hasDistinctWhom = $derived(
@@ -71,10 +76,10 @@
 
 <div class="deck-channel-header">
 	<svelte:element this={titleElement} class={titleClassNames}>
-		{#if titleHref}
-			<a href={titleHref} class="title-link">{title}</a>
+		{#if slugHref}
+			<a href={slugHref} class="title-link">{derivedTitle}</a>
 		{:else}
-			<span class="title-link">{title}</span>
+			<span class="title-link">{derivedTitle}</span>
 		{/if}
 		{#if isBroadcasting}
 			<span
@@ -133,7 +138,7 @@
 			{/if}
 		{/if}
 
-		{#each tags as tag (tag.label)}
+		{#each derivedTags as tag (tag.label)}
 			{#if tag.href}
 				<Tag href={tag.href} value={tag.label}>{tag.label}</Tag>
 			{:else}

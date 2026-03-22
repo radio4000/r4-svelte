@@ -32,8 +32,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
-	import SpeedControl from '$lib/components/speed-control.svelte'
+import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {logger} from '$lib/logger'
@@ -150,21 +149,6 @@
 	})
 	let headerChannel = $derived(
 		isListeningToBroadcast ? (broadcastingChannel ?? displayChannel) : displayChannel
-	)
-	let headerSlug = $derived(headerChannel?.slug ?? deck?.playlist_slug ?? displayTrack?.slug)
-	let headerTitle = $derived(headerChannel?.name ?? (headerSlug ? `@${headerSlug}` : '@unknown'))
-	let headerState = $derived.by(() =>
-		buildDeckChannelHeaderState({
-			title: headerTitle,
-			slug: headerSlug,
-			playlistTitle: deck?.playlist_title,
-			listening: Boolean(deck?.listening_to_channel_id),
-			listeningWhoSlug: broadcastingChannel?.slug,
-			listeningWhomTrackSlug: displayTrack?.slug,
-			listeningWhomFallbackSlug: deck?.playlist_slug,
-			tagBaseSlug: broadcastingChannel?.slug ?? headerSlug,
-			toHref: appState.embed_mode ? undefined : (path) => resolve(/** @type {any} */ (path))
-		})
 	)
 
 	const autoUri = $derived(
@@ -427,33 +411,13 @@
 						</a>
 					{/if}
 					<DeckChannelHeader
-						title={headerState.title}
-						titleHref={headerState.slugHref}
+						{deck}
+						channel={headerChannel}
+						track={displayTrack}
 						titleElement="div"
 						titleClass="player-header-title"
-						slug={headerState.slug}
-						slugHref={headerState.slugHref}
-						isPlaying={Boolean(deck?.is_playing)}
-						isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
-						tags={headerState.tags}
-						showAutoButton={Boolean(deck?.auto_radio)}
-						autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
 						autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onAutoClick={() => resyncAutoRadio(deckId)}
-						listeningWhoSlug={deck?.listening_to_channel_id
-							? headerState.listeningWhoSlug
-							: undefined}
-						listeningWhoHref={deck?.listening_to_channel_id
-							? headerState.listeningWhoHref
-							: undefined}
-						listeningWhomSlug={deck?.listening_to_channel_id
-							? headerState.listeningWhomSlug
-							: undefined}
-						listeningWhomHref={deck?.listening_to_channel_id
-							? headerState.listeningWhomHref
-							: undefined}
-						showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
-						broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
 						broadcastSyncTitle={deck?.listening_drifted
 							? m.player_sync_broadcast()
 							: m.player_broadcast_synced()}

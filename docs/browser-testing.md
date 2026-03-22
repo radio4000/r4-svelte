@@ -49,14 +49,14 @@ The app exposes `window.r5` in the browser console. Cross-check UI against inter
 agent-browser eval "JSON.stringify(window.r5.appState)"
 ```
 
-| Expression | Returns |
-|---|---|
-| `window.r5.appState` | reactive UI state (decks, user, display prefs) |
-| `window.r5.appState.channels_order` | current channel sort field |
-| `window.r5.appState.channels_display` | "grid" or "list" |
-| `window.r5.sdk` | Supabase SDK instance |
-| `window.r5.channelsCollection._state.size` | channels loaded |
-| `window.r5.tracksCollection._state.size` | tracks loaded |
+| Expression                                 | Returns                                        |
+| ------------------------------------------ | ---------------------------------------------- |
+| `window.r5.appState`                       | reactive UI state (decks, user, display prefs) |
+| `window.r5.appState.channels_order`        | current channel sort field                     |
+| `window.r5.appState.channels_display`      | "grid" or "list"                               |
+| `window.r5.sdk`                            | Supabase SDK instance                          |
+| `window.r5.channelsCollection._state.size` | channels loaded                                |
+| `window.r5.tracksCollection._state.size`   | tracks loaded                                  |
 
 Wrap objects in `JSON.stringify()`.
 
@@ -86,15 +86,15 @@ Inspired by [darwin-derby](https://github.com/kousun12/darwin-derby) — every t
 
 Score each area 0-10, then weight by importance:
 
-| Area | Weight | Score | Weighted |
-|---|---|---|---|
-| Navigation | x2 | /10 | /20 |
-| Channels | x2 | /10 | /20 |
-| Channel page | x2 | /10 | /20 |
-| Search | x1 | /10 | /10 |
-| Player | x2 | /10 | /20 |
-| Auth | x1 | /10 | /10 |
-| Total | | | /100 |
+| Area         | Weight | Score | Weighted |
+| ------------ | ------ | ----- | -------- |
+| Navigation   | x2     | /10   | /20      |
+| Channels     | x2     | /10   | /20      |
+| Channel page | x2     | /10   | /20      |
+| Search       | x1     | /10   | /10      |
+| Player       | x2     | /10   | /20      |
+| Auth         | x1     | /10   | /10      |
+| Total        |        |       | /100     |
 
 0 = completely broken, 5 = works but has issues, 10 = solid.
 

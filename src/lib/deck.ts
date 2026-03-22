@@ -1,4 +1,12 @@
 import type {Deck} from '$lib/types'
+import {viewLabel} from '$lib/views'
+
+/** Deck title: use the given title, or derive one from the view/slug. */
+export function deckTitle(deck: Deck | undefined, title?: string): string {
+	if (title) return title
+	const label = deck?.view ? viewLabel(deck.view) : undefined
+	return label || (deck?.playlist_slug ? `@${deck.playlist_slug}` : '@unknown')
+}
 
 /** All decks as an array (from the Record). */
 export function deckValues(decks: Record<number, Deck>): Deck[] {

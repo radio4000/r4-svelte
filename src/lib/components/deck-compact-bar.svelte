@@ -10,8 +10,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
-	import TrackCard from '$lib/components/track-card.svelte'
+import TrackCard from '$lib/components/track-card.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -57,20 +56,7 @@
 	})
 	let headerChannel = $derived(deck?.listening_to_channel_id ? broadcasterChannel : displayChannel)
 	let headerSlug = $derived(headerChannel?.slug ?? displaySlug)
-	let headerTitle = $derived(headerChannel?.name ?? (headerSlug ? `@${headerSlug}` : '@unknown'))
-	let headerState = $derived.by(() =>
-		buildDeckChannelHeaderState({
-			title: headerTitle,
-			slug: headerSlug,
-			playlistTitle: deck?.playlist_title,
-			listening: Boolean(deck?.listening_to_channel_id),
-			listeningWhoSlug: broadcasterChannel?.slug,
-			listeningWhomTrackSlug: displayTrack?.slug,
-			listeningWhomFallbackSlug: deck?.playlist_slug ?? displaySlug,
-			tagBaseSlug: broadcasterChannel?.slug ?? headerSlug,
-			toHref: appState.embed_mode ? undefined : (path) => resolve(/** @type {any} */ (path))
-		})
-	)
+	let headerSlugHref = $derived(headerSlug ? `/${headerSlug}` : undefined)
 	let canEditTrackChannel = $derived(
 		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
 	)
@@ -124,33 +110,17 @@
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</span>
 				{:else}
-					<a class="avatar" href={headerState.slugHref}>
+					<a class="avatar" href={headerSlugHref}>
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</a>
 				{/if}
 			{/if}
 			<DeckChannelHeader
-				title={headerState.title}
-				titleHref={headerState.slugHref}
-				slug={headerState.slug}
-				slugHref={headerState.slugHref}
-				isPlaying={Boolean(deck?.is_playing)}
-				isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
-				tags={headerState.tags}
-				showAutoButton={Boolean(deck?.auto_radio)}
-				autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
+				{deck}
+				channel={headerChannel}
+				track={displayTrack}
 				autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 				onAutoClick={() => resyncAutoRadio(deckId)}
-				listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
-				listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
-				listeningWhomSlug={deck?.listening_to_channel_id
-					? headerState.listeningWhomSlug
-					: undefined}
-				listeningWhomHref={deck?.listening_to_channel_id
-					? headerState.listeningWhomHref
-					: undefined}
-				showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
-				broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
 				broadcastSyncTitle={deck?.listening_drifted
 					? m.player_sync_broadcast()
 					: m.player_broadcast_synced()}

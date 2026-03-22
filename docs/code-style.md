@@ -20,7 +20,8 @@ Dry wit welcome. Channel the sensibility of someone who finds elegance in plain 
 - Self-documenting code via clear naming; comments only explain WHY when not obvious
 - Named exports over default exports
 - JSDoc for types, don't obsess over TypeScript
-- Pass values directly, no wrappers or trivial delegation
+- Compose from domain primitives (deck, channel, track) — don't pre-digest into intermediate shapes
+- Derive display values where they're used, not in builder functions upstream
 - Domain-specific verbs that match user mental models
 - Pure functions for composability in api/utils/data operations
 - Optimistic execution - trust methods, let errors throw
