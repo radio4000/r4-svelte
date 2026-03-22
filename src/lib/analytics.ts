@@ -60,6 +60,17 @@ export function syncAnalyticsConsent(optIn: boolean) {
 // 	posthog.reset()
 // }
 
+/** Capture an error/exception. No-op if the user has not opted in. */
+export function captureError(error: unknown) {
+	if (!appState.analytics_opt_in || !initialized) return
+	const err = error instanceof Error ? error : new Error(String(error))
+	posthog.capture('$exception', {
+		$exception_message: err.message,
+		$exception_stack_trace_raw: err.stack
+	})
+	log.debug('error captured', err.message)
+}
+
 /** Capture a custom event. No-op if the user has not opted in. */
 export function capture(event: string, properties?: Record<string, unknown>): string {
 	log.debug(event, properties)
