@@ -749,6 +749,12 @@
 		gap: 0.5rem;
 		flex: 1;
 		min-height: 0;
+		overflow: hidden;
+
+		& > section {
+			min-width: 0;
+			overflow: hidden;
+		}
 
 		@media (min-width: 640px) {
 			grid-template-columns: 1fr 1fr;
