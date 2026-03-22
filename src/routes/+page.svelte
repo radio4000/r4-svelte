@@ -23,9 +23,9 @@
 	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
+	import MyChannelControls from '$lib/components/my-channel-controls.svelte'
 
 	import CoverFlip from '$lib/components/cover-flip.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
@@ -277,32 +277,13 @@
 			</button>
 		{/if}
 		{#if userChannel}
-			<div class="filtermenu-channel">
-				<BroadcastControls
-					deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
-					channelId={userChannel.id}
-					channelSlug={userChannel.slug}
-				/>
-				<div class="channel-pill" class:playing={userChannelIsPlaying}>
-					<button
-						class="btn channel-pill-play ghost"
-						onclick={toggleUserChannelPlay}
-						title={userChannelIsPlaying ? m.common_pause() : m.common_play()}
-						aria-label={userChannelIsPlaying ? m.common_pause() : m.common_play()}
-					>
-						<span class="channel-widget-avatar"
-							><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
-						>
-						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} size={12} />
-					</button>
-					<a href={resolve(`/${userChannel.slug}`)} class="channel-pill-link">
-						@{userChannel.slug}
-						{#if userChannelIsBroadcasting}<span class="channel-badge live-link"
-								>{m.status_live_short()}</span
-							>{/if}
-					</a>
-				</div>
-			</div>
+			<MyChannelControls
+				channel={userChannel}
+				deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
+				isPlaying={userChannelIsPlaying}
+				isBroadcasting={userChannelIsBroadcasting}
+				onPlayPause={toggleUserChannelPlay}
+			/>
 		{/if}
 	</menu>
 
@@ -736,71 +717,8 @@
 		margin-left: auto;
 	}
 
-	.filtermenu-channel {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
+	:global(.my-channel) {
 		margin-left: auto;
-	}
-
-	.channel-pill {
-		display: flex;
-		align-items: center;
-		border: 1px solid var(--gray-5);
-		border-radius: var(--border-radius);
-		overflow: hidden;
-
-		&.playing {
-			border-color: var(--accent-7);
-			background: var(--accent-3);
-		}
-	}
-
-	.channel-pill-play {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.2rem 0.3rem;
-		border-radius: 0;
-		border-right: 1px solid var(--gray-5);
-
-		.playing & {
-			border-right-color: var(--accent-7);
-		}
-	}
-
-	.channel-pill-link {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-		padding: 0.2rem 0.4rem;
-		text-decoration: none;
-		color: inherit;
-		font-size: var(--font-3);
-
-		&:hover {
-			text-decoration: underline;
-		}
-	}
-
-	.channel-pill .channel-widget-avatar {
-		width: 1.2rem;
-		height: 1.2rem;
-	}
-
-	.live-link {
-		text-decoration: none;
-		animation: live-pulse 2s ease-in-out infinite;
-	}
-
-	@keyframes live-pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
 	}
 
 	.section {
