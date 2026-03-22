@@ -305,159 +305,172 @@
 		<!-- Logged in with channel -->
 
 		<section class="section dashboard-section">
-			<div class="dashboard-grid">
-				{#if showBroadcastStatusWidget}
-					{#each activeDecks as { deck, current, next } (deck.id)}
-						<div class="dashboard-card dashboard-card--row broadcast-deck-card">
-							<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
-							{#if deck.broadcasting_channel_id}
-								<Icon icon="cell-signal" size={14} />
-							{/if}
-							<span class="broadcast-track-title">{current?.title ?? '—'}</span>
-							{#if next}
-								<Icon icon="next-fill" size={12} />
-								<span class="broadcast-track-title broadcast-track-title--next">{next.title}</span>
-							{/if}
-						</div>
-					{/each}
-				{/if}
-				<div class="dashboard-card dashboard-card--row">
-					<span class="channel-widget-avatar"
-						><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
-					>
-					<a href={resolve(`/${userChannel.slug}`)} class="dashboard-label--tag"
-						>@{userChannel.slug}</a
-					>
-					{#if userChannelIsBroadcasting}
-						<span class="channel-badge live-link">{m.status_live_short()}</span>
-					{/if}
-					<div class="tag-actions">
-						{#if userChannelTrackCount > 0}
-							<button class="btn ghost" onclick={toggleUserChannelPlay} title={userChannel.slug}>
-								<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-							</button>
-							<AutoRadioButton
-								className="btn{userChannelHasAuto ? ' active' : ''}"
-								synced={userChannelHasAuto && userChannelAutoIsPlaying && !userChannelHasAutoDrifted}
-								title={m.auto_radio_resync()}
-								onclick={toggleUserChannelAutoRadio}
-							/>
+			{#if showBroadcastStatusWidget || showFavoriteBroadcastWidget}
+				<div class="dashboard-group">
+					<p class="dashboard-group-label">{m.broadcasts_live()}</p>
+					<div class="dashboard-grid">
+						{#if showBroadcastStatusWidget}
+							{#each activeDecks as { deck, current, next } (deck.id)}
+								<div class="dashboard-card dashboard-card--row broadcast-deck-card">
+									<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
+									{#if deck.broadcasting_channel_id}
+										<Icon icon="cell-signal" size={14} />
+									{/if}
+									<span class="broadcast-track-title">{current?.title ?? '—'}</span>
+									{#if next}
+										<Icon icon="next-fill" size={12} />
+										<span class="broadcast-track-title broadcast-track-title--next">{next.title}</span>
+									{/if}
+								</div>
+							{/each}
 						{/if}
-						<a
-							class="btn ghost"
-							href={resolve('/search') + `?q=${encodeURIComponent('@' + userChannel.slug)}`}
-							title="Search @{userChannel.slug}"
-						>
-							<Icon icon="search" />
-						</a>
+						{#if showFavoriteBroadcastWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="cell-signal" size={16} />
+								<span>{m.home_dashboard_favorites_broadcasting()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{favoriteBroadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
 					</div>
 				</div>
-				{#if tagsLoading}
-					<div class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder">
-						<small>…</small>
-					</div>
+			{/if}
+
+			<div class="dashboard-group">
+				{#if showBroadcastStatusWidget || showFavoriteBroadcastWidget}
+					<p class="dashboard-group-label">{m.nav_play()}</p>
 				{/if}
-				{#each userChannelTopTags as { value, count } (value)}
-					<div class="dashboard-card dashboard-card--row dashboard-card--tag">
-						<a
-							class="dashboard-label--tag"
-							href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
-								`?tags=${encodeURIComponent(value)}`}>#{value}</a
+				<div class="dashboard-grid">
+					<div class="dashboard-card dashboard-card--row">
+						<span class="channel-widget-avatar"
+							><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
 						>
-						<small class="tag-count">{count}</small>
+						<a href={resolve(`/${userChannel.slug}`)} class="dashboard-label--tag"
+							>@{userChannel.slug}</a
+						>
+						{#if userChannelIsBroadcasting}
+							<span class="channel-badge live-link">{m.status_live_short()}</span>
+						{/if}
 						<div class="tag-actions">
-							<button class="btn ghost" onclick={() => playChannelTag(value)} title="Play #{value}">
-								<Icon icon="play-fill" />
-							</button>
+							{#if userChannelTrackCount > 0}
+								<button class="btn ghost" onclick={toggleUserChannelPlay} title={userChannel.slug}>
+									<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
+								</button>
+								<AutoRadioButton
+									className="btn{userChannelHasAuto ? ' active' : ''}"
+									synced={userChannelHasAuto && userChannelAutoIsPlaying && !userChannelHasAutoDrifted}
+									title={m.auto_radio_resync()}
+									onclick={toggleUserChannelAutoRadio}
+								/>
+							{/if}
 							<a
 								class="btn ghost"
-								href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
-								title="Search #{value} globally"
+								href={resolve('/search') + `?q=${encodeURIComponent('@' + userChannel.slug)}`}
+								title="Search @{userChannel.slug}"
 							>
 								<Icon icon="search" />
 							</a>
 						</div>
 					</div>
-				{/each}
-				{#if showOnboarding}
-					{#if appState.show_onboarding_hint}
-						<div class="dashboard-card onboarding dismissible">
-							<button
-								class="dismiss-btn"
-								onclick={() => (appState.show_onboarding_hint = false)}
-								aria-label="Close"
-							>
-								<Icon icon="close" />
-							</button>
-							<ol class="todo-list">
-								<li>
-									<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
-									<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-										>{m.home_onboarding_add_track()}</a
-									>
-								</li>
-								<li>
-									<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
-									<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
-								</li>
-								<li>
-									<input type="checkbox" disabled checked={!!userChannel.image} />
-									<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
-										>{m.home_onboarding_add_image()}</a
-									>
-								</li>
-							</ol>
+					{#if tagsLoading}
+						<div class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder">
+							<small>…</small>
 						</div>
 					{/if}
-				{/if}
-				{#if showTrackWidget}
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--row"
-						href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-					>
-						<Icon icon="unordered-list" size={16} />
-						<span>{m.home_dashboard_tracks()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{userChannelTrackCount.toLocaleString()}</strong
+					{#each userChannelTopTags as { value, count } (value)}
+						<div class="dashboard-card dashboard-card--row dashboard-card--tag">
+							<a
+								class="dashboard-label--tag"
+								href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
+									`?tags=${encodeURIComponent(value)}`}>#{value}</a
+							>
+							<small class="tag-count">{count}</small>
+							<div class="tag-actions">
+								<button class="btn ghost" onclick={() => playChannelTag(value)} title="Play #{value}">
+									<Icon icon="play-fill" />
+								</button>
+								<a
+									class="btn ghost"
+									href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
+									title="Search #{value} globally"
+								>
+									<Icon icon="search" />
+								</a>
+							</div>
+						</div>
+					{/each}
+					{#if showOnboarding}
+						{#if appState.show_onboarding_hint}
+							<div class="dashboard-card onboarding dismissible">
+								<button
+									class="dismiss-btn"
+									onclick={() => (appState.show_onboarding_hint = false)}
+									aria-label="Close"
+								>
+									<Icon icon="close" />
+								</button>
+								<ol class="todo-list">
+									<li>
+										<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
+										<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+											>{m.home_onboarding_add_track()}</a
+										>
+									</li>
+									<li>
+										<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
+										<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+									</li>
+									<li>
+										<input type="checkbox" disabled checked={!!userChannel.image} />
+										<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
+											>{m.home_onboarding_add_image()}</a
+										>
+									</li>
+								</ol>
+							</div>
+						{/if}
+					{/if}
+					{#if showTrackWidget}
+						<a
+							class="dashboard-card dashboard-card--link dashboard-card--row"
+							href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
 						>
-					</a>
-				{/if}
-				{#if showFavoritesWidget}
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--row"
-						href={resolve('/channels/favorites')}
-					>
-						<Icon icon="favorite-fill" size={16} />
-						<span>{m.home_dashboard_favorites()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{follows.followedChannels.length.toLocaleString()}</strong
+							<Icon icon="unordered-list" size={16} />
+							<span>{m.home_dashboard_tracks()}</span>
+							<strong class="dashboard-value broadcast-count"
+								>{userChannelTrackCount.toLocaleString()}</strong
+							>
+						</a>
+					{/if}
+					{#if showFavoritesWidget}
+						<a
+							class="dashboard-card dashboard-card--link dashboard-card--row"
+							href={resolve('/channels/favorites')}
 						>
-					</a>
-				{/if}
-				{#if showFavoriteBroadcastWidget}
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
-						href={resolve('/channels/broadcasting')}
-					>
-						<Icon icon="cell-signal" size={16} />
-						<span>{m.home_dashboard_favorites_broadcasting()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{favoriteBroadcastCount.toLocaleString()}</strong
+							<Icon icon="favorite-fill" size={16} />
+							<span>{m.home_dashboard_favorites()}</span>
+							<strong class="dashboard-value broadcast-count"
+								>{follows.followedChannels.length.toLocaleString()}</strong
+							>
+						</a>
+					{/if}
+				</div>
+				{#if showOnboarding && !appState.show_onboarding_hint}
+					<div class="onboarding-toggle-row">
+						<button
+							class="btn onboarding-toggle"
+							onclick={() => (appState.show_onboarding_hint = true)}
+							title="Show getting started"
 						>
-					</a>
+							<Icon icon="circle-info" />
+						</button>
+					</div>
 				{/if}
 			</div>
-			{#if showOnboarding && !appState.show_onboarding_hint}
-				<div class="onboarding-toggle-row">
-					<button
-						class="btn onboarding-toggle"
-						onclick={() => (appState.show_onboarding_hint = true)}
-						title="Show getting started"
-					>
-						<Icon icon="circle-info" />
-					</button>
-				</div>
-			{/if}
 		</section>
 
 		{#if showBroadcastCountWidget}
@@ -756,9 +769,28 @@
 	}
 
 	.dashboard-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+
 		:global(.list) {
 			margin: 0;
 		}
+	}
+
+	.dashboard-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.dashboard-group-label {
+		font-size: var(--font-3);
+		color: var(--gray-9);
+		margin: 0;
+		padding-inline: 0.25rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	.dashboard-grid {
