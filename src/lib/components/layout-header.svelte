@@ -75,9 +75,11 @@
 				<AddTrackDialog />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
-					class="btn channel-link"
-					class:broadcasting={isBroadcasting}
-					class:active={page.params?.slug === userChannel.slug}
+					class={[
+						'btn',
+						'channel-link',
+						{broadcasting: isBroadcasting, active: page.params?.slug === userChannel.slug}
+					]}
 					{@attach tooltip({
 						content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()
 					})}

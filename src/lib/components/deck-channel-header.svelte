@@ -91,9 +91,11 @@
 			{#if onBroadcastSyncClick}
 				<button
 					type="button"
-					class="channel-badge sync-icon"
-					class:synced={!broadcastSyncDrifted}
-					class:drifted={broadcastSyncDrifted}
+					class={[
+						'channel-badge',
+						'sync-icon',
+						{synced: !broadcastSyncDrifted, drifted: broadcastSyncDrifted}
+					]}
 					title={broadcastSyncTitle}
 					aria-label={broadcastSyncTitle}
 					onclick={onBroadcastSyncClick}

@@ -24,9 +24,9 @@
 </script>
 
 {#if href}
-	<a {href} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</a>
+	<a {href} class={{playing: isPlaying, filtered: isFiltered}}>{@render children()}</a>
 {:else}
-	<button type="button" {onclick} class:playing={isPlaying} class:filtered={isFiltered}
+	<button type="button" {onclick} class={{playing: isPlaying, filtered: isFiltered}}
 		>{@render children()}</button
 	>
 {/if}

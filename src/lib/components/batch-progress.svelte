@@ -74,15 +74,7 @@
 		{#each {length: chunkCount}, i (i)}
 			{@const status = getStatus(i)}
 			{@const size = i === chunkCount - 1 ? lastChunkSize : chunkSize}
-			<div
-				class="chunk"
-				class:queued={status === 'queued'}
-				class:fetching={status === 'fetching'}
-				class:saving={status === 'saving'}
-				class:done={status === 'done'}
-				class:error={status === 'error'}
-				title="{size} items"
-			>
+			<div class={['chunk', status]} title="{size} items">
 				{#if status === 'fetching' || status === 'saving'}
 					…
 				{:else if status === 'done'}

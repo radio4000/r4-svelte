@@ -15,7 +15,7 @@
 	let {channel, deckId, isPlaying, isBroadcasting, onPlayPause} = $props()
 </script>
 
-<div class="my-channel" class:playing={isPlaying} class:live={isBroadcasting}>
+<div class={['my-channel', {playing: isPlaying, live: isBroadcasting}]}>
 	{#if isBroadcasting}
 		<span class="live-badge">{m.status_live_short()}</span>
 	{/if}

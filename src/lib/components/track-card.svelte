@@ -112,7 +112,7 @@
 	}
 </script>
 
-<article class:active class:selected={selected && !active}>
+<article class={{active, selected: selected && !active}}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="card"
@@ -128,7 +128,7 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title" class:locatable={Boolean(onLocate)} onclick={onLocate}>{track.title}</h3>
+			<h3 class={['title', {locatable: Boolean(onLocate)}]} onclick={onLocate}>{track.title}</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
