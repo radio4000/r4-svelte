@@ -383,7 +383,7 @@
 				</div>
 			{/if}
 
-			{#if showTrackWidget || showFavoritesWidget}
+			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget || showBroadcastCountWidget}
 				<div class="dashboard-group">
 					<div class="dashboard-grid">
 						{#if showTrackWidget}
@@ -410,12 +410,6 @@
 								>
 							</a>
 						{/if}
-					</div>
-				</div>
-			{/if}
-			{#if showFavoriteBroadcastWidget || showBroadcastCountWidget}
-				<div class="dashboard-group">
-					<div class="dashboard-grid">
 						{#if showFavoriteBroadcastWidget}
 							<a
 								class="dashboard-card dashboard-card--link dashboard-card--row"
