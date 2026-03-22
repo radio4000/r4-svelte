@@ -291,7 +291,7 @@
 		<!-- Logged in with channel -->
 
 		<section class="section dashboard-section">
-			{#if showBroadcastStatusWidget || showFavoriteBroadcastWidget}
+			{#if showBroadcastStatusWidget}
 				<div class="dashboard-group">
 					<div class="dashboard-grid">
 						{#if showBroadcastStatusWidget}
@@ -310,18 +310,6 @@
 									{/if}
 								</div>
 							{/each}
-						{/if}
-						{#if showFavoriteBroadcastWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
-								href={resolve('/channels/broadcasting')}
-							>
-								<Icon icon="cell-signal" size={16} />
-								<span>{m.home_dashboard_favorites_broadcasting()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{favoriteBroadcastCount.toLocaleString()}</strong
-								>
-							</a>
 						{/if}
 					</div>
 				</div>
@@ -447,24 +435,38 @@
 					</div>
 				</div>
 			{/if}
+			{#if showFavoriteBroadcastWidget || showBroadcastCountWidget}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if showFavoriteBroadcastWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="cell-signal" size={16} />
+								<span>{m.home_dashboard_favorites_broadcasting()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{favoriteBroadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showBroadcastCountWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="cell-signal" size={16} />
+								<span>{m.home_dashboard_live_radios()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{broadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+					</div>
+				</div>
+			{/if}
 		</section>
 
-		{#if showBroadcastCountWidget}
-			<section class="section dashboard-section">
-				<div class="dashboard-grid">
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--row"
-						href={resolve('/channels/broadcasting')}
-					>
-						<Icon icon="cell-signal" size={16} />
-						<span>{m.home_dashboard_live_radios()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{broadcastCount.toLocaleString()}</strong
-						>
-					</a>
-				</div>
-			</section>
-		{/if}
 
 		{#if favoriteBroadcasts.length}
 			<section class="section">
@@ -548,7 +550,7 @@
 			<section class="section dashboard-section">
 				<div class="dashboard-grid">
 					<a
-						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
+						class="dashboard-card dashboard-card--link dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
 						<Icon icon="cell-signal" size={16} />
@@ -893,10 +895,6 @@
 		font-size: var(--font-4);
 	}
 
-	.dashboard-card--live {
-		border-color: var(--accent-7);
-		background: var(--accent-2);
-	}
 
 	.broadcast-deck-card {
 		border-color: var(--accent-7);
