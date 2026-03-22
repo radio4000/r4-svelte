@@ -756,7 +756,7 @@
 			overflow: hidden;
 		}
 
-		@media (min-width: 640px) {
+		@media (min-width: 1024px) {
 			grid-template-columns: 1fr 1fr;
 
 			/* Globe spans both columns when featured channels haven't loaded yet */
