@@ -1,7 +1,7 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx, getChannelNavCtx} from '$lib/contexts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq, and} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -14,6 +14,12 @@
 
 	let {data, children} = $props()
 	const pathname = $derived(page.url.pathname)
+
+	const channelNavCtx = getChannelNavCtx()
+	$effect(() => {
+		channelNavCtx?.setControls(backSnippet)
+		return () => channelNavCtx?.setControls(undefined)
+	})
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -103,6 +109,12 @@
 	url={page.url.href}
 	type="music.song"
 />
+
+{#snippet backSnippet()}
+	<a class="btn ghost" href={`${resolve('/[slug]/tracks', {slug: data.slug})}#${data.tid}`}>
+		<Icon icon="arrow-left" />
+	</a>
+{/snippet}
 
 {#if isLoading}
 	<p>{m.common_loading()}</p>
