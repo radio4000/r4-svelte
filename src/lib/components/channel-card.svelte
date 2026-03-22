@@ -76,6 +76,8 @@
 			{#if children}
 				{@render children()}
 			{/if}
+		</div>
+		<div class="card-footer">
 			<div class="meta">
 				{#if channel.track_count}<small
 						>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small
@@ -90,8 +92,7 @@
 					</small>
 				{/if}
 			</div>
-		</div>
-		<div class="actions">
+			<div class="actions">
 			<ButtonFollow {channel} class="ghost" />
 			<PopoverMenu btnClass="ghost" align="right" valign="top">
 				{#snippet trigger()}
@@ -130,6 +131,7 @@
 					>
 				</menu>
 			</PopoverMenu>
+			</div>
 		</div>
 	</div>
 </article>
@@ -230,12 +232,13 @@
 
 	.body {
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
 		gap: 0.25rem;
 		flex: 1;
 
 		:global(.list) & {
 			grid-column: 2 / -1;
+			flex-direction: row;
 			align-items: center;
 			flex-wrap: wrap;
 		}
@@ -249,15 +252,25 @@
 		margin-top: 0.5rem;
 	}
 
+	.card-footer {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.2rem;
+
+		:global(.list) & {
+			flex-shrink: 0;
+		}
+	}
+
 	.actions {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
 		gap: 0.2rem;
 		flex-shrink: 0;
 
 		:global(.list) & {
-			flex-direction: row;
 			margin-left: auto;
 		}
 	}
@@ -268,7 +281,7 @@
 		gap: 0.2rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 		font-size: var(--font-3);
-		margin-top: auto;
+		flex: 1;
 
 		:global(.list) & {
 			display: none;
