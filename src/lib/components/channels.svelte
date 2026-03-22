@@ -573,7 +573,6 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.5rem;
 		margin: 0.5rem 0.5rem 1rem;
 		z-index: 1;
 	}

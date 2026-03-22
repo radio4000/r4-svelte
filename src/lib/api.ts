@@ -202,10 +202,23 @@ export async function playTrack(
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
 		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
+		capture('player:track_end', {
+			track_id: previousTrackId,
+			channel_slug: deck.playlist_slug,
+			end_reason: endReason,
+			ms_played: msPlayed
+		})
 	}
 	if (!isEphemeral && startReason && track.slug) {
 		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
-		capture('player:track_play', {channel_slug: track.slug, start_reason: startReason})
+		capture('player:track_play', {
+			track_id: track.id,
+			channel_slug: track.slug,
+			start_reason: startReason,
+			shuffle: deck.shuffle,
+			auto_radio: !!deck.auto_radio,
+			broadcast: !!deck.listening_to_channel_id
+		})
 	}
 
 	deck.playlist_track = id
@@ -278,7 +291,7 @@ export async function playChannel(
 	}
 	const ids = tracks.map((t) => t.id)
 	await setPlaylist(deckId, ids)
-	capture('player:channel_play', {channel_slug: slug, is_shuffle: false})
+	capture('player:channel_play', {channel_slug: slug, shuffle: false})
 	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
 
@@ -329,7 +342,7 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	await setPlaylist(deckId, ids)
 	const deck = getDeck(deckId)
 	if (deck) deck.shuffle = true
-	capture('player:channel_play', {channel_slug: slug, is_shuffle: true})
+	capture('player:channel_play', {channel_slug: slug, shuffle: true})
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 

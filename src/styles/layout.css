@@ -99,7 +99,7 @@
 	grid-template-columns: repeat(auto-fill, minmax(clamp(170px, 20vw, 280px), 1fr));
 	margin: 0.5rem;
 	/* margin-block: 0.5rem; */
-	gap: 2rem 1rem;
+	gap: 1rem 0.5rem;
 	padding: 0;
 	list-style: none;
 }

@@ -45,7 +45,10 @@ The helper is a no-op when the user has not opted in, so call sites don't need t
 ## What is tracked (when opted in)
 
 - Pageviews (every `afterNavigate`)
-- Any custom events explicitly captured with `capture()`
+- Player events: track play/end, channel play, auto-radio, broadcast join/start/end
+- All `capture()` calls are logged to console via `log.debug` even when opted out
+
+Events use `player:*` and `broadcast:*` prefixes. Play start/end reasons are defined as `PlayStartReason` and `PlayEndReason` in `types.ts`. Search [`capture(`](https://github.com/radio4000/r4-sync-tests/search?q=%22capture%28%22+path%3Asrc&type=code) for all call sites.
 
 ## What is never tracked
 

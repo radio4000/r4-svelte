@@ -66,6 +66,7 @@ export function reset() {
 
 /** Capture a custom event. No-op if the user has not opted in. */
 export function capture(event: string, properties?: Record<string, unknown>) {
+	log.debug(event, properties)
 	if (!appState.analytics_opt_in || !initialized) return
 	posthog.capture(event, properties)
 }
