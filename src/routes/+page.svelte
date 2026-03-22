@@ -289,7 +289,7 @@
 							size={12}
 						/>{userChannelListenerTotal}{/if}
 					{#if userChannelBroadcastListeners > 0}<Icon
-							icon="signal"
+							icon="cell-signal"
 							size={12}
 						/>{userChannelBroadcastListeners}{/if}
 					{#if userChannelAutoListeners > 0}<Icon
@@ -311,7 +311,7 @@
 						<div class="dashboard-card dashboard-card--row broadcast-deck-card">
 							<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
 							{#if deck.broadcasting_channel_id}
-								<Icon icon="signal" size={14} />
+								<Icon icon="cell-signal" size={14} />
 							{/if}
 							<span class="broadcast-track-title">{current?.title ?? '—'}</span>
 							{#if next}
@@ -439,7 +439,7 @@
 						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
-						<Icon icon="signal" size={16} />
+						<Icon icon="cell-signal" size={16} />
 						<span>{m.home_dashboard_favorites_broadcasting()}</span>
 						<strong class="dashboard-value broadcast-count"
 							>{favoriteBroadcastCount.toLocaleString()}</strong
@@ -467,7 +467,7 @@
 						class="dashboard-card dashboard-card--link dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
-						<Icon icon="signal" size={16} />
+						<Icon icon="cell-signal" size={16} />
 						<span>{m.home_dashboard_live_radios()}</span>
 						<strong class="dashboard-value broadcast-count"
 							>{broadcastCount.toLocaleString()}</strong
@@ -562,7 +562,7 @@
 						class="dashboard-card dashboard-card--link dashboard-card--live dashboard-card--row"
 						href={resolve('/channels/broadcasting')}
 					>
-						<Icon icon="signal" size={16} />
+						<Icon icon="cell-signal" size={16} />
 						<span>{m.home_dashboard_live_radios()}</span>
 						<strong class="dashboard-value broadcast-count"
 							>{broadcastCount.toLocaleString()}</strong

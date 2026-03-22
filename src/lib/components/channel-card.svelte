@@ -59,7 +59,7 @@
 				</a>
 				{#if isBroadcasting}
 					<span class="channel-badge live-pill">
-						<Icon icon="signal" size={12} />
+						<Icon icon="cell-signal" size={12} />
 						{m.status_live_short()}
 					</span>
 				{/if}

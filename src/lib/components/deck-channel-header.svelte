@@ -82,7 +82,7 @@
 				title={m.status_broadcasting()}
 				aria-label={m.status_broadcasting()}
 			>
-				<Icon icon="signal" size={14} />
+				<Icon icon="cell-signal" size={14} />
 				{m.status_live_short()}
 			</span>
 		{/if}

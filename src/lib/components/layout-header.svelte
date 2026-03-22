@@ -72,7 +72,7 @@
 						aria-label={m.status_broadcasting()}
 						{@attach tooltip({content: m.status_broadcasting()})}
 					>
-						<Icon icon="signal" />
+						<Icon icon="cell-signal" />
 					</a>
 				{/if}
 				<AddTrackDialog />
