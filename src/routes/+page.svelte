@@ -546,31 +546,6 @@
 		{/if}
 	{:else}
 		<!-- Not logged in -->
-		{#if showBroadcastCountWidget}
-			<section class="section dashboard-section">
-				<div class="dashboard-grid">
-					<a
-						class="dashboard-card dashboard-card--link dashboard-card--row"
-						href={resolve('/channels/broadcasting')}
-					>
-						<Icon icon="cell-signal" size={16} />
-						<span>{m.home_dashboard_live_radios()}</span>
-						<strong class="dashboard-value broadcast-count"
-							>{broadcastCount.toLocaleString()}</strong
-						>
-					</a>
-				</div>
-			</section>
-			<section class="section">
-				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="list">
-					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-						<li><ChannelCard channel={broadcast.channels} /></li>
-					{/each}
-				</ol>
-			</section>
-		{/if}
-
 		{#if appState.show_welcome_hint}
 			<section class="section welcome-section dismissible">
 				<button
@@ -673,6 +648,31 @@
 				</div>
 			</section>
 		</div>
+
+		{#if showBroadcastCountWidget}
+			<section class="section dashboard-section">
+				<div class="dashboard-grid">
+					<a
+						class="dashboard-card dashboard-card--link dashboard-card--row"
+						href={resolve('/channels/broadcasting')}
+					>
+						<Icon icon="cell-signal" size={16} />
+						<span>{m.home_dashboard_live_radios()}</span>
+						<strong class="dashboard-value broadcast-count"
+							>{broadcastCount.toLocaleString()}</strong
+						>
+					</a>
+				</div>
+			</section>
+			<section class="section">
+				<h2 class="section-title">{m.home_broadcasting()}</h2>
+				<ol class="list">
+					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<footer class="stats footer-stats">
