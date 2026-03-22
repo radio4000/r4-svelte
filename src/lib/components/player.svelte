@@ -318,7 +318,6 @@
 		}
 		const onDuration = () => {
 			const d = el.duration
-			log.log('onDuration', {raw: d, provider, trackDuration: track?.duration, trackId: track?.id})
 			if (deck) deck.media_duration = Number.isFinite(d) && d > 0 ? d : NaN
 		}
 		el.addEventListener('timeupdate', onTime)

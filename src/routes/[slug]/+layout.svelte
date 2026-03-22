@@ -9,6 +9,7 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
@@ -242,21 +243,22 @@
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
 						synced={channelHasAuto && channelAutoIsPlaying && !channelHasAutoDrifted}
-						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+						{@attach tooltip({content: 
+							channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
+						})}
 						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>
 					{#if hasChannel}
 						<ButtonFollow {channel} />
 					{:else}
-						<a href={authUrl} class="btn" title={m.common_follow()}>
+						<a href={authUrl} class="btn" {@attach tooltip({content: m.common_follow()})}>
 							<Icon icon="favorite" />
 						</a>
 					{/if}
 					<button
 						type="button"
 						onclick={() => (appState.modal_share = {channel})}
-						title={m.share_native()}
-						aria-label={m.share_native()}
+						{@attach tooltip({content: m.share_native()})}
 					>
 						<Icon icon="share" />
 					</button>
@@ -273,9 +275,9 @@
 				trackCount={allChannelTracks.length}
 			/>
 			{#if channelNavControls}
-				<div class="channel-nav-controls">
+				<menu class="channel-nav-controls">
 					{@render channelNavControls()}
-				</div>
+				</menu>
 			{/if}
 		</menu>
 	</div>
@@ -363,11 +365,6 @@
 	}
 
 	.channel-nav-controls {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
 		flex: 1;
-		min-width: 0;
-		overflow: hidden;
 	}
 </style>

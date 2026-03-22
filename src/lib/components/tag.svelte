@@ -43,6 +43,7 @@
 		border: none;
 		text-decoration: none;
 		font: inherit;
+		font-stretch: 90%;
 		color: var(--tag-color, inherit);
 		background: var(--tag-bg, var(--gray-3));
 		box-shadow: 0 0 0 1px var(--tag-border, transparent);
@@ -74,9 +75,10 @@
 
 	a:hover,
 	button:hover {
+		--tag-border: var(--gray-7);
 		background: var(--tag-bg-hover, var(--gray-2));
-		box-shadow: 0 0 0 1px var(--gray-6);
-		text-decoration: underline;
+		box-shadow: 0 0 0 1px var(--tag-border);
+		text-decoration: none;
 	}
 
 	a:active,

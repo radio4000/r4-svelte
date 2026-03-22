@@ -26,7 +26,6 @@ button,
 	color: var(--button-color, var(--gray-12));
 	border: 1px solid var(--gray-7);
 	border-radius: var(--border-radius);
-
 	box-shadow: var(--input-shadow);
 
 	--input-shadow: lch(0 0 0 / 0.06) 0px 4px 4px -1px, lch(0 0 0 / 0.12) 0px 1px 1px 0px;
@@ -47,6 +46,7 @@ button:hover,
 .btn:focus,
 .btn:hover {
 	border-color: var(--accent-9);
+	box-shadow: var(--input-shadow-hover);
 }
 
 button:focus,

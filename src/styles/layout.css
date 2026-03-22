@@ -72,12 +72,16 @@
 
 		&:hover {
 			background: light-dark(var(--gray-2), var(--gray-2));
-			--tag-border: var(--accent-6);
+			--tag-border: var(--gray-7);
 		}
+
 	}
 
 	> li[aria-selected='true'] {
 		background: var(--accent-2);
+		&:hover {
+			--tag-border: var(--accent-6);
+		}
 	}
 }
 
@@ -171,16 +175,24 @@ menu.nav-vertical {
 	flex-flow: column;
 	border: 1px solid var(--gray-6);
 	border-radius: var(--border-radius);
-	gap: 0;
 
-	a {
+	a,
+	button {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.5rem;
+		padding: 0.2rem 0.5rem;
 		text-decoration: none;
+		border-radius: var(--border-radius);
+		min-height: 2rem;
+
 		&:hover {
 			background: light-dark(var(--gray-2), var(--gray-2));
+		}
+
+		&.active {
+			background-color: var(--accent-3);
+			color: var(--accent-9);
 		}
 	}
 
@@ -269,13 +281,18 @@ menu.nav-grouped {
 }
 
 /* Menu styles inside popovers */
-[popover] menu {
-	&.nav-vertical {
-		border: none;
-		border-radius: 0;
+[popover] .nav-vertical {
+	border: none;
 
-		a:hover {
-			background: var(--gray-3);
+	a,
+	button {
+		border: 0;
+		background: none;
+		box-shadow: none;
+		justify-content: flex-start;
+
+		&:hover {
+			background: var(--gray-6);
 		}
 	}
 }

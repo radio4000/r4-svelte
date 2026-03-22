@@ -411,7 +411,6 @@
 
 		.compact-decks :global(.deck-compact-bar) {
 			min-width: 0;
-			padding-inline: 0.5rem;
 		}
 	}
 

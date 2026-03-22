@@ -129,40 +129,38 @@
 					</a>
 				{/if}
 			{/if}
-			<div class="channel-info">
-				<DeckChannelHeader
-					title={headerState.title}
-					titleHref={headerState.slugHref}
-					slug={headerState.slug}
-					slugHref={headerState.slugHref}
-					isPlaying={Boolean(deck?.is_playing)}
-					isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
-					tags={headerState.tags}
-					showAutoButton={Boolean(deck?.auto_radio)}
-					autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
-					autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
-					onAutoClick={() => resyncAutoRadio(deckId)}
-					listeningWhoSlug={deck?.listening_to_channel_id
-						? headerState.listeningWhoSlug
-						: undefined}
-					listeningWhoHref={deck?.listening_to_channel_id
-						? headerState.listeningWhoHref
-						: undefined}
-					listeningWhomSlug={deck?.listening_to_channel_id
-						? headerState.listeningWhomSlug
-						: undefined}
-					listeningWhomHref={deck?.listening_to_channel_id
-						? headerState.listeningWhomHref
-						: undefined}
-					showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
-					broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
-					broadcastSyncTitle={deck?.listening_drifted
-						? m.player_sync_broadcast()
-						: m.player_broadcast_synced()}
-					onBroadcastSyncClick={() =>
-						deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
-				/>
-			</div>
+			<DeckChannelHeader
+				title={headerState.title}
+				titleHref={headerState.slugHref}
+				slug={headerState.slug}
+				slugHref={headerState.slugHref}
+				isPlaying={Boolean(deck?.is_playing)}
+				isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
+				tags={headerState.tags}
+				showAutoButton={Boolean(deck?.auto_radio)}
+				autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
+				autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
+				onAutoClick={() => resyncAutoRadio(deckId)}
+				listeningWhoSlug={deck?.listening_to_channel_id
+					? headerState.listeningWhoSlug
+					: undefined}
+				listeningWhoHref={deck?.listening_to_channel_id
+					? headerState.listeningWhoHref
+					: undefined}
+				listeningWhomSlug={deck?.listening_to_channel_id
+					? headerState.listeningWhomSlug
+					: undefined}
+				listeningWhomHref={deck?.listening_to_channel_id
+					? headerState.listeningWhomHref
+					: undefined}
+				showBroadcastSync={Boolean(deck?.listening_to_channel_id)}
+				broadcastSyncDrifted={Boolean(deck?.listening_drifted)}
+				broadcastSyncTitle={deck?.listening_drifted
+					? m.player_sync_broadcast()
+					: m.player_broadcast_synced()}
+				onBroadcastSyncClick={() =>
+					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
+			/>
 		</div>
 		{#if displayTrack}
 			<div class="track-panel">
@@ -233,6 +231,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.4rem;
+		padding-bottom: 0.5rem;
 		border-top: 1px solid var(--gray-6);
 		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 8%, var(--header-bg));
 		min-width: 0;
@@ -248,14 +247,13 @@
 		width: 100%;
 		justify-content: flex-start;
 		flex-wrap: wrap;
-		padding-inline: 0.5rem;
 	}
 
 	.deck-compact-bar :global(.progress) {
 		flex: 1 0 100%;
 		width: 100%;
 		min-width: 0;
-		margin-bottom: -0.4rem;
+		padding-bottom: 0;
 	}
 
 	.controls {
@@ -265,13 +263,17 @@
 
 	.header-info {
 		display: flex;
+		flex-direction: row;
 		align-items: stretch;
-		flex-direction: column;
-		gap: 0.4rem;
+		gap: 0.5rem;
 		min-width: 0;
 		flex: 1 1 auto;
 		width: 100%;
 		min-height: 2rem;
+	}
+
+	.header-info,
+	.row-controls {
 		padding-inline: 0.5rem;
 	}
 
@@ -281,38 +283,27 @@
 		gap: 0.5rem;
 		min-width: 0;
 		width: 100%;
-		flex: 1 1 auto;
-	}
-
-	.avatar {
-		width: 32px;
-		height: 32px;
-		flex-shrink: 0;
-	}
-
-	.active-deck .avatar {
-		outline: 2px solid var(--accent-9);
-		outline-offset: 1px;
-		border-radius: var(--border-radius);
-	}
-
-	.expand {
-		flex-shrink: 0;
-	}
-
-	.channel-info {
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-		flex: 1 1 auto;
-		line-height: 1.2;
+		flex: 1;
 	}
 
 	.track-panel {
 		min-width: 0;
 		width: 100%;
-		flex: 1 1 auto;
+		flex: 2;
+	}
+
+	.avatar {
+		width: var(--track-artwork-size);
+		height: var(--track-artwork-size);
+	}
+
+	.active-deck .avatar {
+		outline: 2px solid var(--accent-9);
+		border-radius: var(--border-radius);
+	}
+
+	.expand {
+		flex-shrink: 0;
 	}
 
 	.track-link {
@@ -336,20 +327,13 @@
 	}
 
 	@media (min-width: 601px) {
-		.header-info {
-			flex-direction: row;
-			gap: 0.5rem;
-		}
-
 		.channel-panel {
 			width: auto;
 			min-width: 14rem;
-			flex: 0 1 14rem;
 		}
 
 		.track-panel {
 			width: auto;
-			flex: 1 1 24rem;
 		}
 	}
 
@@ -357,20 +341,6 @@
 		.deck-compact-bar {
 			flex-direction: row;
 			flex-wrap: wrap;
-			align-items: center;
-		}
-
-		.header-info {
-			flex: 1 1 42rem;
-			width: auto;
-			min-height: 0;
-		}
-
-		.row-controls {
-			flex: 1 1 20rem;
-			width: auto;
-			justify-content: flex-end;
-			flex-wrap: nowrap;
 		}
 	}
 </style>
