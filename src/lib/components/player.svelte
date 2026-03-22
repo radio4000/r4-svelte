@@ -401,7 +401,7 @@
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
 		<div class="header-top">
 			{#if hasMultipleDecks}
-				<div class="header-id" class:active={isActiveDeck} style:color={accentColor}>
+				<div class="header-id" class:active={isActiveDeck} style:color={isActiveDeck ? accentColor : undefined}>
 					<IconR4 />
 				</div>
 			{/if}
