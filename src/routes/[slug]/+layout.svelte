@@ -22,6 +22,7 @@
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
 	import Icon from '$lib/components/icon.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
@@ -202,7 +203,6 @@
 						titleElement="h1"
 						titleClass="channel-page-title"
 						isPlaying={isChannelPlaying}
-						isBroadcasting={isChannelLive}
 						slug={channelHeaderState.slug}
 						slugHref={channelHeaderState.slugHref}
 						tags={channelHeaderState.tags}
@@ -225,31 +225,47 @@
 							if (!channel?.id) return
 							joinBroadcast(appState.active_deck_id, channel.id)
 						}}
-						presenceCount={channelPresence[channel.slug]?.total ?? 0}
 					/>
 				</div>
 				<menu class="channel-actions">
-					{#if canEdit}
+					{#if isChannelLive}
+						<div class="live-group">
+							<PresenceCount count={channelPresence[channel.slug]?.total ?? 0} />
+							<span class="channel-badge live-pill">
+								<Icon icon="cell-signal" size={12} />
+								{m.status_live_short()}
+							</span>
+							{#if canEdit}
+								<BroadcastControls
+									deckId={appState.active_deck_id}
+									channelId={channel.id}
+									channelSlug={channel.slug}
+									isLiveOverride={isChannelLive}
+									showPresence={false}
+								/>
+							{:else if channel.id}
+								<button
+									type="button"
+									class:active={isListeningToChannel}
+									onclick={() => {
+										if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
+										else joinBroadcast(appState.active_deck_id, channel.id)
+									}}
+									title={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+									aria-label={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+								>
+									<Icon icon="signal" />
+									{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
+								</button>
+							{/if}
+						</div>
+					{:else if canEdit}
 						<BroadcastControls
 							deckId={appState.active_deck_id}
 							channelId={channel.id}
 							channelSlug={channel.slug}
 							isLiveOverride={isChannelLive}
 						/>
-					{:else if channel.id && isChannelLive}
-						<button
-							type="button"
-							class:active={isListeningToChannel}
-							onclick={() => {
-								if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
-								else joinBroadcast(appState.active_deck_id, channel.id)
-							}}
-							title={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-							aria-label={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-						>
-							<Icon icon="signal" />
-							{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-						</button>
 					{/if}
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
@@ -354,6 +370,18 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
+	}
+
+	.live-group {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.live-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.2rem;
 	}
 
 	main {
