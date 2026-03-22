@@ -135,6 +135,7 @@
 	const userChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
 	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
 	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	const userChannelAutoIsPlaying = $derived(userChannelAutoDecks.some((d) => d.is_playing))
 
 	function toggleUserChannelAutoRadio() {
 		if (userChannel?.slug) toggleChannelAutoRadio(userChannel.slug)
@@ -337,7 +338,7 @@
 							</button>
 							<AutoRadioButton
 								className="btn{userChannelHasAuto ? ' active' : ''}"
-								synced={userChannelHasAuto && !userChannelHasAutoDrifted}
+								synced={userChannelHasAuto && userChannelAutoIsPlaying && !userChannelHasAutoDrifted}
 								title={m.auto_radio_resync()}
 								onclick={toggleUserChannelAutoRadio}
 							/>

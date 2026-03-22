@@ -194,7 +194,7 @@
 					isBroadcasting={Boolean(deck?.broadcasting_channel_id)}
 					tags={headerState.tags}
 					showAutoButton={Boolean(deck?.auto_radio)}
-					autoGhost={!deck?.auto_radio_drifted}
+					autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
 					autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 					onAutoClick={() => resyncAutoRadio(deckId)}
 					listeningWhoSlug={deck?.listening_to_channel_id

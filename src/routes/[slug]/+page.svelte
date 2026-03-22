@@ -179,6 +179,7 @@
 		{@const autoView = slug ? {sources: [{channels: [slug], tags: selectedTags}]} : undefined}
 		{@const autoDecks = getAutoDecksForView(Object.values(appState.decks), autoView)}
 		{@const isAutoActive = autoDecks.length > 0}
+		{@const isAutoPlaying = autoDecks.some((d) => d.is_playing)}
 		{@const isAutoDrifted = autoDecks.some((d) => d.auto_radio_drifted)}
 		<button
 			type="button"
@@ -199,7 +200,7 @@
 		</button>
 		{#if hasAutoRadioCoverage(tagFilteredTracks)}
 			<AutoRadioButton
-				synced={isAutoActive && !isAutoDrifted}
+				synced={isAutoActive && isAutoPlaying && !isAutoDrifted}
 				title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 				onclick={() =>
 					autoView &&

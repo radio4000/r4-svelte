@@ -22,6 +22,7 @@
 		view ? getAutoDecksForView(Object.values(appState.decks), view) : []
 	)
 	const isSearchAutoActive = $derived(searchAutoDecks.length > 0)
+	const isSearchAutoPlaying = $derived(searchAutoDecks.some((d) => d.is_playing))
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
 
 	async function playSearchResults() {
@@ -57,7 +58,7 @@
 	</ButtonFeedback>
 	{#if canShowAutoRadio}
 		<AutoRadioButton
-			synced={isSearchAutoActive && !isSearchAutoDrifted}
+			synced={isSearchAutoActive && isSearchAutoPlaying && !isSearchAutoDrifted}
 			title={isSearchAutoDrifted ? m.auto_radio_resync() : m.search_auto_radio_this()}
 			onclick={() => joinAutoRadio(appState.active_deck_id, autoRadioTracks, view)}
 		/>

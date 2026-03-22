@@ -851,6 +851,8 @@ export async function resyncAutoRadio(deckId: number) {
 
 	if (isSameTrack) {
 		seekTo(deckId, snap.offsetSeconds)
+		// Ensure playing — user expects the button to always start playback
+		if (!getDeck(deckId)?.is_playing) togglePlayPause(deckId)
 	} else {
 		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 	}

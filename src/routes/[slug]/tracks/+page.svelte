@@ -77,6 +77,7 @@
 		getAutoDecksForView(Object.values(appState.decks), filteredAutoView)
 	)
 	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
+	let isFilteredAutoPlaying = $derived(filteredAutoDecks.some((d) => d.is_playing))
 	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
@@ -151,7 +152,7 @@
 			>
 			{#if channel && canShowFilteredAutoRadio}
 				<AutoRadioButton
-					synced={isFilteredAutoActive && !isFilteredAutoDrifted}
+					synced={isFilteredAutoActive && isFilteredAutoPlaying && !isFilteredAutoDrifted}
 					title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
 					onclick={() =>
 						joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}

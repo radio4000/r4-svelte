@@ -97,6 +97,7 @@
 	let anyChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, channel?.slug))
 	let channelHasAuto = $derived(anyChannelAutoDecks.length > 0)
 	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
+	let channelAutoIsPlaying = $derived(anyChannelAutoDecks.some((d) => d.is_playing))
 	let channelPlayingDeck = $derived(
 		findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug)
 	)
@@ -252,7 +253,7 @@
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
-						synced={channelHasAuto && !channelHasAutoDrifted}
+						synced={channelHasAuto && channelAutoIsPlaying && !channelHasAutoDrifted}
 						title={channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
 						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>
