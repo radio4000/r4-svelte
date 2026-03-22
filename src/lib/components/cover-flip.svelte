@@ -6,6 +6,7 @@
 	 *  items: any[],
 	 *  scrollItemsPerNotch?: number,
 	 *  orientation?: 'vertical' | 'horizontal',
+	 *  class?: string,
 	 *  item: (args: {item: any, index: number, active: boolean}) => any,
 	 *  active: (args: {item: any, index: number}) => any,
 	 * }} */

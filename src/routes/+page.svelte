@@ -131,13 +131,6 @@
 
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
-	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
-
-	$effect(() => {
-		const slug = userChannel?.slug
-		if (!slug || !showTrackWidget) return
-		void ensureTracksLoaded(slug)
-	})
 
 	const userChannelTopTags = $derived.by(() => {
 		if (!userChannel?.slug) return []
@@ -155,6 +148,14 @@
 			.filter((t) => !featuredTags.includes(t.value))
 			.slice(0, 13 - featuredWithCount.length)
 		return [...featuredWithCount, ...topExtra]
+	})
+
+	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
+
+	$effect(() => {
+		const slug = userChannel?.slug
+		if (!slug || !showTrackWidget) return
+		void ensureTracksLoaded(slug)
 	})
 
 	async function playChannelTag(tag) {
@@ -180,7 +181,6 @@
 	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
-	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
 	const activeDecks = $derived.by(() =>
 		Object.values(appState.decks)
 			.filter((d) => d.playlist_track)
@@ -194,6 +194,7 @@
 				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
 			})
 	)
+	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
 
 	// Globe channels — all synced channels with coordinates
 	const globeChannelsQuery = useLiveQuery((q) =>
@@ -441,7 +442,6 @@
 				</div>
 			{/if}
 		</section>
-
 
 		{#if favoriteBroadcasts.length}
 			<section class="section">
@@ -760,15 +760,6 @@
 		gap: 0.3rem;
 	}
 
-	.dashboard-group-label {
-		font-size: var(--font-3);
-		color: var(--gray-9);
-		margin: 0;
-		padding-inline: 0.25rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
 	.dashboard-grid {
 		display: flex;
 		flex-wrap: wrap;
@@ -784,21 +775,6 @@
 		border-radius: var(--border-radius);
 		background: light-dark(var(--gray-1), var(--gray-2));
 		min-width: 0;
-	}
-
-	.channel-widget-avatar {
-		width: 1.4rem;
-		height: 1.4rem;
-		flex-shrink: 0;
-		overflow: hidden;
-		border-radius: var(--border-radius);
-
-		:global(img, svg) {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-			border-radius: inherit;
-		}
 	}
 
 	.dashboard-card--row {
@@ -875,7 +851,6 @@
 		font-size: var(--font-4);
 	}
 
-
 	.broadcast-deck-card {
 		border-color: var(--accent-7);
 		background: var(--accent-2);
@@ -894,14 +869,6 @@
 	.broadcast-track-title--next {
 		opacity: 0.5;
 		flex: 0 1 auto;
-	}
-
-	.audience-counts {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		font-size: 0.8em;
-		color: var(--gray-9);
 	}
 
 	.section-header {

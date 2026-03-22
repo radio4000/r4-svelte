@@ -141,12 +141,8 @@
 				autoGhost={!!deck?.is_playing && !deck?.auto_radio_drifted}
 				autoTitle={deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join()}
 				onAutoClick={() => resyncAutoRadio(deckId)}
-				listeningWhoSlug={deck?.listening_to_channel_id
-					? headerState.listeningWhoSlug
-					: undefined}
-				listeningWhoHref={deck?.listening_to_channel_id
-					? headerState.listeningWhoHref
-					: undefined}
+				listeningWhoSlug={deck?.listening_to_channel_id ? headerState.listeningWhoSlug : undefined}
+				listeningWhoHref={deck?.listening_to_channel_id ? headerState.listeningWhoHref : undefined}
 				listeningWhomSlug={deck?.listening_to_channel_id
 					? headerState.listeningWhomSlug
 					: undefined}

@@ -43,10 +43,7 @@
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
-				<div
-					class="deck-item"
-					style:--deck-accent={deckAccent(deckIds, deckId)}
->
+				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 					<Deck {deckId} />
 				</div>
 			{/each}
@@ -55,10 +52,7 @@
 	{#if listeningDeckIds.length}
 		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
 			{#each listeningDeckIds as deckId (deckId)}
-				<div
-					class="deck-item"
-					style:--deck-accent={deckAccent(deckIds, deckId)}
->
+				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 					<Deck {deckId} />
 				</div>
 			{/each}

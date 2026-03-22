@@ -81,7 +81,6 @@
 	let showFeaturedInfo = $state(false)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
-	let shuffleKey = $state(0)
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
@@ -483,7 +482,6 @@
 					bind:direction={appState.channels_order_direction}
 					onreshuffle={() => {
 						paginatedLimit = CHANNELS_PAGE_SIZE
-						shuffleKey++
 					}}
 				/>
 			{/if}

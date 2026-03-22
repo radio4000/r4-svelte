@@ -287,7 +287,6 @@ export function createLoop(
 			inertia: true,
 			overshootTolerance: 0,
 			onPressInit() {
-				const _current = this[ax.drag]
 				gsap.killTweensOf(tl)
 				wasPlaying = !tl.paused()
 				tl.pause()

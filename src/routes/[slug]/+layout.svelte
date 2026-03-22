@@ -27,6 +27,8 @@
 	import * as m from '$lib/paraglide/messages'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
 
+	// --- Props & route params ---
+
 	let {children} = $props()
 	let channelNavControls = $state<Snippet | undefined>(undefined)
 	setChannelNavCtx({
@@ -38,8 +40,10 @@
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
 
-	// Resolve channel: slug → ID on first hit, then query by stable ID.
+	// --- Channel resolution ---
+	// Slug → ID on first hit, then query by stable ID.
 	// This prevents "not found" flashes when the slug changes (edit, sync).
+
 	const channelBySlugQuery = useLiveQuery((q) =>
 		q
 			.from({channels: channelsCollection})
@@ -72,13 +76,33 @@
 		)
 	)
 
-	// Redirect when the channel's slug drifts from the URL (e.g. after editing)
-	$effect(() => {
-		if (channel?.slug && channel.slug !== slug) {
-			const subpath = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
-			goto(subpath, {replaceState: true})
-		}
-	})
+	// --- Queries ---
+
+	// Tracks query lives in layout — stays alive during [slug]/* navigation
+	const tracksQuery = useLiveQuery((q) =>
+		q
+			.from({tracks: tracksCollection})
+			.where(({tracks}) => eq(tracks.slug, slug))
+			.orderBy(({tracks}) => tracks.created_at, 'desc')
+	)
+	let allChannelTracks = $derived(tracksQuery.data ?? [])
+
+	// Channel-specific broadcast live query so "Live" state updates on this page
+	const channelBroadcastQuery = useLiveQuery((q) =>
+		channelId
+			? q
+					.from({b: broadcastsCollection})
+					.where(({b}) => eq(b.channel_id, channelId))
+					.findOne()
+			: q
+					.from({b: broadcastsCollection})
+					.orderBy(({b}) => b.channel_id, 'asc')
+					.limit(0)
+	)
+
+	// --- Deriveds ---
+
+	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
 	let isListeningToChannel = $derived(
 		Boolean(
 			channel?.id &&
@@ -127,6 +151,16 @@
 		})
 	)
 
+	// --- Effects ---
+
+	// Redirect when the channel's slug drifts from the URL (e.g. after editing)
+	$effect(() => {
+		if (channel?.slug && channel.slug !== slug) {
+			const subpath = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
+			goto(subpath, {replaceState: true})
+		}
+	})
+
 	// Watch presence for this channel (observe counts without tracking self)
 	$effect(() => {
 		const s = channel?.slug
@@ -142,29 +176,8 @@
 		}
 	})
 
-	// Tracks query lives in layout - stays alive during [slug]/* navigation
-	const tracksQuery = useLiveQuery((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	)
+	// --- Context providers ---
 
-	// Channel-specific broadcast live query so "Live" state updates on this page
-	const channelBroadcastQuery = useLiveQuery((q) =>
-		channelId
-			? q
-					.from({b: broadcastsCollection})
-					.where(({b}) => eq(b.channel_id, channelId))
-					.findOne()
-			: q
-					.from({b: broadcastsCollection})
-					.orderBy(({b}) => b.channel_id, 'asc')
-					.limit(0)
-	)
-	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
-
-	// Provide to child routes
 	setChannelCtx({
 		get data() {
 			return channel
@@ -177,8 +190,6 @@
 		}
 	})
 	setTracksQueryCtx(tracksQuery)
-
-	let allChannelTracks = $derived(tracksQuery.data ?? [])
 </script>
 
 <svelte:head>
@@ -243,8 +254,8 @@
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
 						synced={channelHasAuto && channelAutoIsPlaying && !channelHasAutoDrifted}
-						{@attach tooltip({content: 
-							channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
+						{@attach tooltip({
+							content: channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
 						})}
 						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>

@@ -1,6 +1,5 @@
 <script>
 	import '../styles/style.css'
-	import {cubicOut} from 'svelte/easing'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
@@ -52,7 +51,7 @@
 	/** @param {Element} _node */
 	function compactDeckTransition(_node) {
 		return {
-			duration: 0,
+			duration: 0
 		}
 	}
 

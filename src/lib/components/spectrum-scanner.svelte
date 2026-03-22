@@ -40,13 +40,17 @@
 	let tl = null
 
 	$effect(() => {
-		index
+		void index
 		if (!stationEl) return
 		const els = stationEl.querySelectorAll(':scope .card .body .info')
 		if (!els.length) return
 		if (tl) tl.kill()
 		tl = gsap.timeline()
-		tl.fromTo(els, {opacity: 0, y: 6}, {opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out'})
+		tl.fromTo(
+			els,
+			{opacity: 0, y: 6},
+			{opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out'}
+		)
 	})
 </script>
 
@@ -99,15 +103,12 @@
 			playDebounce = setTimeout(play, 400)
 		}}
 	/>
-
-
 </div>
 
 <style>
 	.scanner {
 		--color: var(--gray-12);
 		--color-active: var(--accent-7);
-
 
 		display: flex;
 		flex-direction: column;
