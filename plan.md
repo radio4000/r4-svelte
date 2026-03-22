@@ -7,12 +7,24 @@ Possible improvements. Roughly by priority. Verify before implementing.
 `deckTitle(deck, title?)` in `deck.ts` is step 1. The builder (`buildDeckChannelHeaderState`) is now partially redundant. Dismantle it piece by piece:
 
 - title: done -- `deckTitle` handles it. Builder's title fallback (line 90) is dead logic for deck callers.
-- `autoUri` in `player.svelte` re-derives `viewLabel || @slug` -- same as `deckTitle(deck)`. Replace.
+- `autoUri` in `player.svelte` re-derives `viewLabel || @slug` -- same as `deckTitle(deck)`. Replace. Same fallback exists in `presence.svelte.js:163` and `deck-compact-bar.svelte`. One primitive for "deck label / deck presence key" — currently duplicated in three places, drift likely.
 - tags: builder extracts hashtags from `playlist_title`. Reuse existing mention/hashtag parsing helpers instead.
 - slug + slugHref: builder maps slug to href via `toHref`. Move to deck derivation or inline.
 - listening who/whom: builder resolves broadcast slugs to hrefs. Move to deck derivation or inline.
+- `deck-channel-header.svelte` itself reads like a state builder wrapped in a component — long chain of rename-only deriveds (line 37), and "channel" means different things by caller (current channel, broadcaster, fallback display). The `listeningWho`/`listeningWhom` naming confirms the contract is fuzzy.
 - once deck callers don't use the builder, `deck-channel-header-shared.js` shrinks to helpers only (`extractPlaylistHashtags`, `buildTagHref`, `getListeningWhomSlug`) for the channel page.
 - channel page (`[slug]/+layout.svelte`) still uses the builder -- separate concern, lower priority. Simplify later once deck path is clean.
+
+## Simplify: rely on types and primitives, fewer layers
+
+- **Track normalization x4** — `collections/tracks.ts` lines 136, 153, 180, 202 all re-parse URLs to fill `provider`/`media_id`. One shared normalizer.
+- **Dual-query waterfall + mixed loading contract** — `[slug]/+layout.svelte:46-76` queries by slug → extracts ID → queries by ID → falls back to slug. Two live queries + effect + state for what might be one query. Worse: context reports readiness/loading from the slug query only (line 160), so child routes consume one data source but a different loading contract. Check if TanStack DB still needs the ID re-query.
+- **Broadcast field juggling** — `broadcast.js`: `pickBroadcastFields()` (line 29), `getBroadcastDeckState()` (line 426), ephemeral track construction (line 350). Three hand-rolled serializers. Align types so most disappear.
+- **14 sequential $derived in [slug]/+layout.svelte** (lines 104-131) — many used once. `channelHasAuto`, `channelAutoIsPlaying`, `deck` are property accesses on `anyChannelAutoDecks` — inline in markup.
+- **Static arrays in theme-editor.svelte** (lines 15-85) — ~100 lines of font/color constants recreated on every mount. Extract to module scope or separate file.
+- **Player vs compact bar: same concept, two local contracts** — `player.svelte:76` and `deck-compact-bar.svelte:26` each rebuild "what this deck is showing" with different rules. Both keep their own `lastTrack`/`lastChannel`, both derive display fallbacks, both resolve header channel differently. Extract one shared derivation.
+- **Views CSV churn** — `views.svelte.ts:96` serializes typed view inputs into CSV strings (`channelSlugsCSV`, `tagsCSV`) only to split them back apart in queries at line 104. Pure churn — hides the real contract, ties correctness to ad hoc string encoding. Pass arrays directly.
+- **TrackWithMeta / TrackMeta overlap** — `types.ts` TrackWithMeta and `track-meta.ts` TrackMeta define the same `youtube_data`/`musicbrainz_data`/`discogs_data` fields separately. One shape.
 
 ## Backlog
 

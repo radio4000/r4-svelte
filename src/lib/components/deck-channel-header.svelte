@@ -46,7 +46,6 @@
 	const listeningWhoHref = $derived(listeningWhoSlug ? `/${listeningWhoSlug}` : undefined)
 	const listeningWhomSlug = $derived(isListening ? track?.slug || deck?.playlist_slug : undefined)
 	const listeningWhomHref = $derived(listeningWhomSlug ? `/${listeningWhomSlug}` : undefined)
-	const showBroadcastSync = $derived(isListening)
 	const broadcastSyncDrifted = $derived(Boolean(deck?.listening_drifted))
 	const broadcastSyncTitle = $derived(
 		broadcastSyncDrifted ? m.player_sync_broadcast() : m.player_broadcast_synced()
@@ -59,7 +58,6 @@
 		}))
 	)
 
-	const hasListeningPair = $derived(Boolean(listeningWhoSlug))
 	const hasDistinctWhom = $derived(
 		Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug)
 	)
@@ -88,48 +86,26 @@
 	</svelte:element>
 
 	<div class="meta-row">
-		{#if hasListeningPair}
-			{#if listeningWhoHref}
-				<a class="slug-link" href={listeningWhoHref}>@{listeningWhoSlug}</a>
-			{:else}
-				<span class="slug-link">@{listeningWhoSlug}</span>
-			{/if}
-			{#if showBroadcastSync}
-				{#if onBroadcastSyncClick}
-					<button
-						type="button"
-						class="channel-badge sync-icon"
-						class:synced={!broadcastSyncDrifted}
-						class:drifted={broadcastSyncDrifted}
-						title={broadcastSyncTitle}
-						aria-label={broadcastSyncTitle}
-						onclick={onBroadcastSyncClick}
-					>
-						<Icon icon="signal" size={14} />
-					</button>
-				{:else}
-					<span
-						class="channel-badge sync-icon"
-						title={broadcastSyncTitle}
-						aria-label={broadcastSyncTitle}
-					>
-						<Icon icon="signal" size={14} />
-					</span>
-				{/if}
+		{#if listeningWhoSlug}
+			<a class="slug-link" href={listeningWhoHref}>@{listeningWhoSlug}</a>
+			{#if onBroadcastSyncClick}
+				<button
+					type="button"
+					class="channel-badge sync-icon"
+					class:synced={!broadcastSyncDrifted}
+					class:drifted={broadcastSyncDrifted}
+					title={broadcastSyncTitle}
+					aria-label={broadcastSyncTitle}
+					onclick={onBroadcastSyncClick}
+				>
+					<Icon icon="signal" size={14} />
+				</button>
 			{/if}
 			{#if hasDistinctWhom}
-				{#if listeningWhomHref}
-					<a class="slug-link" href={listeningWhomHref}>@{listeningWhomSlug}</a>
-				{:else}
-					<span class="slug-link">@{listeningWhomSlug}</span>
-				{/if}
+				<a class="slug-link" href={listeningWhomHref}>@{listeningWhomSlug}</a>
 			{/if}
 		{:else if slug}
-			{#if slugHref}
-				<a class="slug-link" href={slugHref}>@{slug}</a>
-			{:else}
-				<span class="slug-link">@{slug}</span>
-			{/if}
+			<a class="slug-link" href={slugHref}>@{slug}</a>
 		{/if}
 
 		{#each derivedTags as tag (tag.label)}
