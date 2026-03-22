@@ -1,9 +1,11 @@
-/** Format seconds to "m:ss" (e.g. 185 → "3:05")
- * @param {number | null | undefined} seconds */
-export function formatDuration(seconds) {
-	if (!seconds) return ''
+/** Format seconds to "m:ss" (e.g. 185 → "3:05").
+ * Returns `fallback` for NaN/null/undefined/negative values (default: empty string).
+ * @param {number | null | undefined} seconds
+ * @param {string} [fallback] */
+export function formatDuration(seconds, fallback = '') {
+	if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return fallback
 	const mins = Math.floor(seconds / 60)
-	const secs = seconds % 60
+	const secs = Math.floor(seconds % 60)
 	return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 

@@ -8,7 +8,7 @@
 	--media-radius: var(--border-radius);
 	--track-artwork-size: 2rem;
 	--shadow-modal: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-	--deck-transition-fast: 200ms;
+	--deck-transition-fast: 150ms;
 	--deck-transition-ease: cubic-bezier(0.2, 0, 0, 1);
 
 	/* media-chrome icon size */

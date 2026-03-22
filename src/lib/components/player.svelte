@@ -44,6 +44,7 @@
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/svelte-db'
 	import {isDbId, trackImageUrl} from '$lib/utils'
+	import PlayerProgress from '$lib/components/player-progress.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {
@@ -208,7 +209,11 @@
 	})
 
 	function handlePlay() {
-		log.log('handlePlay')
+		log.log('handlePlay', {
+			mediaDuration: mediaElement?.duration,
+			trackDuration: track?.duration,
+			canEdit: channel ? canEditChannel(channel.id) : false
+		})
 		didPlay = true
 		userHasPlayed = true
 		if (deck) deck.is_playing = true
@@ -301,18 +306,20 @@
 
 	// Track progress from the media element directly (bypasses media-chrome's
 	// external mediacontroller association which doesn't work with Svelte 5).
-	let mediaDuration = $state(NaN)
-	let mediaCurrentTime = $state(0)
+	// Written to deck state so compact bar can read without its own listeners.
+	let mediaDuration = $derived(deck?.media_duration ?? NaN)
+	let mediaCurrentTime = $derived(deck?.media_current_time ?? 0)
 
 	$effect(() => {
 		const el = mediaElement
 		if (!el) return
 		const onTime = () => {
-			mediaCurrentTime = el.currentTime ?? 0
+			if (deck) deck.media_current_time = el.currentTime ?? 0
 		}
 		const onDuration = () => {
 			const d = el.duration
-			mediaDuration = Number.isFinite(d) ? d : NaN
+			log.log('onDuration', {raw: d, provider, trackDuration: track?.duration, trackId: track?.id})
+			if (deck) deck.media_duration = Number.isFinite(d) && d > 0 ? d : NaN
 		}
 		el.addEventListener('timeupdate', onTime)
 		el.addEventListener('durationchange', onDuration)
@@ -562,6 +569,17 @@
 	{@render children?.()}
 
 	<section class="bottom-chrome">
+		{#if appState.show_track_range_control !== false && displayTrack}
+			<PlayerProgress
+				currentTime={mediaCurrentTime}
+				{mediaDuration}
+				trackDuration={track?.duration}
+				onseek={(val) => {
+					if (deck) deck.media_current_time = val
+					if (mediaElement) mediaElement.currentTime = val
+				}}
+			/>
+		{/if}
 		<!-- 4. Channel/track info + deck toggle -->
 		<footer class="track-panel" onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
@@ -633,27 +651,6 @@
 				<VolumeControl {deckId} />
 			{/if}
 		</menu>
-		{#if appState.show_track_range_control !== false && displayTrack}
-			<div class="progress">
-				<input
-					type="range"
-					min="0"
-					max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
-					step="any"
-					value={mediaCurrentTime}
-					oninput={(e) => {
-						const val = Number(e.currentTarget.value)
-						mediaCurrentTime = val
-						if (mediaElement) mediaElement.currentTime = val
-					}}
-					class="progress-range"
-					disabled={!Number.isFinite(mediaDuration)}
-					style="--range-fill: {Number.isFinite(mediaDuration) && mediaDuration > 0
-						? ((mediaCurrentTime / mediaDuration) * 100).toFixed(1)
-						: 0}%"
-				/>
-			</div>
-		{/if}
 	</section>
 </div>
 
@@ -877,18 +874,6 @@
 
 	.bottom-chrome:has(.active) {
 		border-top: 0;
-	}
-
-	.progress {
-		padding: 0 0.45rem 0.3rem;
-		line-height: 0;
-		z-index: 1;
-	}
-
-	.progress-range {
-		width: 100%;
-		height: 0.25rem;
-		z-index: 1;
 	}
 
 	.track-panel {

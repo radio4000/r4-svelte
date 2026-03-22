@@ -1,6 +1,6 @@
 <script>
 	import '../styles/style.css'
-	import {scale} from 'svelte/transition'
+	import {cubicOut} from 'svelte/easing'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
@@ -48,9 +48,13 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
-	const compactDeckTransitionMs = 200
-	const compactDeckExitMs = 0
-	const compactDeckScaleStart = 0.95
+
+	/** @param {Element} _node */
+	function compactDeckTransition(_node) {
+		return {
+			duration: 0,
+		}
+	}
 
 	// Ensure first client render uses persisted locale before any message call runs.
 	if (typeof window !== 'undefined') {
@@ -253,8 +257,7 @@
 							<div
 								class="compact-deck-item"
 								style:--deck-accent={deckAccent(allDeckIds, deckId)}
-								in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
-								out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
+								transition:compactDeckTransition
 							>
 								<DeckCompactBar {deckId} />
 							</div>

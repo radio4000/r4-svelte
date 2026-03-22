@@ -42,6 +42,8 @@ export interface Deck {
 	seeked_at?: string
 	seek_position?: number
 	speed?: number
+	media_current_time?: number
+	media_duration?: number
 }
 
 export interface AppState {

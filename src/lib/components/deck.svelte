@@ -107,15 +107,10 @@
 		flex-shrink: 0;
 		background: color-mix(in srgb, var(--deck-accent, var(--footer-bg)) 8%, var(--footer-bg));
 		position: relative;
-		opacity: 1;
-		transform: scale(1);
 	}
 
 	.deck:not(.expanded) {
-		transition:
-			opacity var(--deck-transition-fast) var(--deck-transition-ease),
-			transform var(--deck-transition-fast) var(--deck-transition-ease),
-			border-color var(--deck-transition-fast) var(--deck-transition-ease);
+		transition: border-color var(--deck-transition-fast) var(--deck-transition-ease);
 	}
 
 	.resize-handle {
@@ -202,9 +197,6 @@
 		min-width: 0;
 		overflow: hidden;
 		border: none;
-		opacity: 0;
-		transform: scale(0.95);
-		transition-duration: 0ms;
 		pointer-events: none;
 	}
 
@@ -251,9 +243,9 @@
 		pointer-events: none;
 	}
 
-	@media (prefers-reduced-motion: reduce) {
+	/* @media (prefers-reduced-motion: reduce) {
 		.deck:not(.expanded) {
 			transition: none;
 		}
-	}
+	} */
 </style>

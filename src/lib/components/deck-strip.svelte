@@ -1,6 +1,5 @@
 <script>
 	import {page} from '$app/state'
-	import {scale} from 'svelte/transition'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import Deck from '$lib/components/deck.svelte'
@@ -31,9 +30,6 @@
 		})
 	)
 	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
-	const deckTransitionMs = 200
-	const deckExitMs = 0
-	const deckScaleStart = 0.95
 </script>
 
 <aside
@@ -50,9 +46,7 @@
 				<div
 					class="deck-item"
 					style:--deck-accent={deckAccent(deckIds, deckId)}
-					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
-					out:scale={{start: deckScaleStart, duration: deckExitMs}}
-				>
+>
 					<Deck {deckId} />
 				</div>
 			{/each}
@@ -64,9 +58,7 @@
 				<div
 					class="deck-item"
 					style:--deck-accent={deckAccent(deckIds, deckId)}
-					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
-					out:scale={{start: deckScaleStart, duration: deckExitMs}}
-				>
+>
 					<Deck {deckId} />
 				</div>
 			{/each}

@@ -16,6 +16,7 @@
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import PlayerProgress from '$lib/components/player-progress.svelte'
 
 	/** @type {{deckId: number}} */
 	let {deckId} = $props()
@@ -89,55 +90,9 @@
 	let canPrevFromQueue = $derived(canPrev(activeQueue, track?.id))
 	let canNextFromQueue = $derived(canNext(activeQueue, track?.id))
 
-	let mediaDuration = $state(NaN)
-	let mediaCurrentTime = $state(0)
-
-	$effect(() => {
-		const currentTrackId = deck?.playlist_track
-		if (!currentTrackId) {
-			mediaDuration = NaN
-			mediaCurrentTime = 0
-			return
-		}
-		mediaDuration = NaN
-		mediaCurrentTime = 0
-		let stopped = false
-		let rafId = 0
-		let cleanup = () => {}
-
-		const bind = () => {
-			if (stopped) return
-			const el = getMediaPlayer(deckId)
-			if (!el) {
-				rafId = requestAnimationFrame(bind)
-				return
-			}
-			const onTime = () => {
-				mediaCurrentTime = el.currentTime ?? 0
-			}
-			const onDuration = () => {
-				const d = el.duration
-				mediaDuration = Number.isFinite(d) ? d : NaN
-			}
-			el.addEventListener('timeupdate', onTime)
-			el.addEventListener('durationchange', onDuration)
-			el.addEventListener('loadedmetadata', onDuration)
-			onTime()
-			onDuration()
-			cleanup = () => {
-				el.removeEventListener('timeupdate', onTime)
-				el.removeEventListener('durationchange', onDuration)
-				el.removeEventListener('loadedmetadata', onDuration)
-			}
-		}
-
-		rafId = requestAnimationFrame(bind)
-		return () => {
-			stopped = true
-			cancelAnimationFrame(rafId)
-			cleanup()
-		}
-	})
+	// Read media time from deck state (written by player.svelte)
+	let mediaDuration = $derived(deck?.media_duration ?? NaN)
+	let mediaCurrentTime = $derived(deck?.media_current_time ?? 0)
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -150,26 +105,16 @@
 	}}
 >
 	{#if appState.show_track_range_control !== false && displayTrack}
-		<div class="progress">
-			<input
-				type="range"
-				min="0"
-				max={Number.isFinite(mediaDuration) ? mediaDuration : 0}
-				step="any"
-				value={mediaCurrentTime}
-				oninput={(e) => {
-					const val = Number(e.currentTarget.value)
-					mediaCurrentTime = val
-					const mediaElement = getMediaPlayer(deckId)
-					if (mediaElement) mediaElement.currentTime = val
-				}}
-				class="progress-range"
-				disabled={!Number.isFinite(mediaDuration)}
-				style="--range-fill: {Number.isFinite(mediaDuration) && mediaDuration > 0
-					? ((mediaCurrentTime / mediaDuration) * 100).toFixed(1)
-					: 0}%"
-			/>
-		</div>
+		<PlayerProgress
+			currentTime={mediaCurrentTime}
+			{mediaDuration}
+			trackDuration={track?.duration}
+			onseek={(val) => {
+				if (deck) deck.media_current_time = val
+				const mediaElement = getMediaPlayer(deckId)
+				if (mediaElement) mediaElement.currentTime = val
+			}}
+		/>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
 		<div class="channel-panel">
@@ -285,13 +230,9 @@
 <style>
 	.deck-compact-bar {
 		min-height: 49px;
-		display: grid;
-		grid-template-columns: 1fr;
-		grid-template-areas:
-			'info'
-			'controls'
-			'progress';
-		row-gap: 0.4rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
 		border-top: 1px solid var(--gray-6);
 		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 8%, var(--header-bg));
 		min-width: 0;
@@ -302,9 +243,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.2rem;
-		grid-area: controls;
 		flex: 1 1 100%;
-		margin-left: 0;
 		min-width: 0;
 		width: 100%;
 		justify-content: flex-start;
@@ -312,19 +251,11 @@
 		padding-inline: 0.5rem;
 	}
 
-	.progress {
-		grid-area: progress;
+	.deck-compact-bar :global(.progress) {
 		flex: 1 0 100%;
 		width: 100%;
 		min-width: 0;
-		z-index: 1;
-		margin-top: -0.6rem;
-	}
-
-	.progress-range {
-		width: 100%;
-		height: 0.25rem;
-		z-index: 1;
+		margin-bottom: -0.4rem;
 	}
 
 	.controls {
@@ -333,7 +264,6 @@
 	}
 
 	.header-info {
-		grid-area: info;
 		display: flex;
 		align-items: stretch;
 		flex-direction: column;
@@ -405,10 +335,6 @@
 		max-width: 100%;
 	}
 
-	.progress :global(media-time-range) {
-		--media-control-height: 8px;
-	}
-
 	@media (min-width: 601px) {
 		.header-info {
 			flex-direction: row;
@@ -429,32 +355,22 @@
 
 	@media (min-width: 769px) {
 		.deck-compact-bar {
-			display: flex;
-			align-items: center;
+			flex-direction: row;
 			flex-wrap: wrap;
+			align-items: center;
 		}
 
 		.header-info {
-			order: 1;
 			flex: 1 1 42rem;
 			width: auto;
 			min-height: 0;
 		}
 
 		.row-controls {
-			order: 2;
 			flex: 1 1 20rem;
 			width: auto;
 			justify-content: flex-end;
 			flex-wrap: nowrap;
-		}
-
-		.progress {
-			order: 3;
-		}
-
-		.progress :global(media-time-range) {
-			--media-control-height: initial;
 		}
 	}
 </style>
