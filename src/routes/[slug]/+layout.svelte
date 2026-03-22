@@ -305,6 +305,7 @@
 	header {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.6rem;
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-4);
@@ -320,6 +321,7 @@
 		gap: 0.1rem;
 		min-width: 0;
 		flex: 1;
+		min-width: 10rem;
 	}
 
 	.info :global(.channel-page-title) {
