@@ -13,6 +13,7 @@
 	import InternetIndicator from '$lib/components/internet-indicator.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {appName, conceptIcons} from '$lib/config'
+	import {findAutoDecksForChannel} from '$lib/deck'
 
 	const {preloading} = $props()
 
@@ -22,6 +23,8 @@
 		userChannel &&
 			Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
+	const autoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
+	const isAutoRadio = $derived(autoDecks.length > 0)
 </script>
 
 <header>
@@ -65,16 +68,6 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
-				{#if isBroadcasting}
-					<a
-						href={resolve(`/${userChannel.slug}`)}
-						class="btn ghost broadcasting-btn"
-						aria-label={m.status_broadcasting()}
-						{@attach tooltip({content: m.status_broadcasting()})}
-					>
-						<Icon icon="cell-signal" />
-					</a>
-				{/if}
 				<AddTrackDialog />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
@@ -88,6 +81,26 @@
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
 				</a>
+				{#if isBroadcasting}
+					<a
+						href={resolve(`/${userChannel.slug}`)}
+						class="btn ghost broadcasting-btn"
+						aria-label={m.status_broadcasting()}
+						{@attach tooltip({content: m.status_broadcasting()})}
+					>
+						<Icon icon="cell-signal" />
+					</a>
+				{/if}
+				{#if isAutoRadio}
+					<a
+						href={resolve(`/${userChannel.slug}`)}
+						class="btn ghost auto-btn"
+						aria-label={m.auto_radio_join()}
+						{@attach tooltip({content: m.auto_radio_join()})}
+					>
+						<Icon icon="infinite" />
+					</a>
+				{/if}
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
@@ -160,7 +173,8 @@
 		color: currentColor;
 	}
 
-	nav :global(.broadcasting-btn svg) {
+	nav :global(.broadcasting-btn svg),
+	nav :global(.auto-btn svg) {
 		color: var(--accent-9);
 	}
 

@@ -17,12 +17,11 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ButtonPlay from '$lib/components/button-play.svelte'
-	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import {buildDeckChannelHeaderState} from '$lib/components/deck-channel-header-shared'
+	import BroadcastLiveControls from '$lib/components/broadcast-live-controls.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
@@ -228,45 +227,17 @@
 					/>
 				</div>
 				<menu class="channel-actions">
-					{#if isChannelLive}
-						<div class="live-group">
-							<PresenceCount count={channelPresence[channel.slug]?.total ?? 0} />
-							<span class="channel-badge live-pill">
-								<Icon icon="cell-signal" size={12} />
-								{m.status_live_short()}
-							</span>
-							{#if canEdit}
-								<BroadcastControls
-									deckId={appState.active_deck_id}
-									channelId={channel.id}
-									channelSlug={channel.slug}
-									isLiveOverride={isChannelLive}
-									showPresence={false}
-								/>
-							{:else if channel.id}
-								<button
-									type="button"
-									class:active={isListeningToChannel}
-									onclick={() => {
-										if (isListeningToChannel) leaveBroadcast(appState.active_deck_id)
-										else joinBroadcast(appState.active_deck_id, channel.id)
-									}}
-									title={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-									aria-label={isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-								>
-									<Icon icon="signal" />
-									{isListeningToChannel ? m.broadcasts_leave() : m.broadcasts_join()}
-								</button>
-							{/if}
-						</div>
-					{:else if canEdit}
-						<BroadcastControls
-							deckId={appState.active_deck_id}
-							channelId={channel.id}
-							channelSlug={channel.slug}
-							isLiveOverride={isChannelLive}
-						/>
-					{/if}
+					<BroadcastLiveControls
+						channelId={channel.id}
+						channelSlug={channel.slug}
+						deckId={appState.active_deck_id}
+						isLive={isChannelLive}
+						{canEdit}
+						isListening={isListeningToChannel}
+						presenceCount={channelPresence[channel.slug]?.total ?? 0}
+						onJoin={() => joinBroadcast(appState.active_deck_id, channel.id)}
+						onLeave={() => leaveBroadcast(appState.active_deck_id)}
+					/>
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
 						className="btn{channelHasAuto ? ' active' : ''}"
@@ -370,18 +341,6 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
-	}
-
-	.live-group {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
-	.live-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.2rem;
 	}
 
 	main {
