@@ -665,7 +665,7 @@
 	.header {
 		display: flex;
 		flex-direction: column;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	.header-top {
@@ -842,7 +842,7 @@
 
 	.track-panel {
 		flex-shrink: 0;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		background: var(--header-bg);
 	}
 

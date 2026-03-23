@@ -48,11 +48,14 @@
 		background: var(--tag-bg, var(--gray-3));
 		box-shadow: 0 0 0 1px var(--tag-border, transparent);
 		white-space: nowrap;
-		cursor: pointer;
 		transition:
 			background 0.15s,
 			color 0.15s,
 			box-shadow 0.15s;
+	}
+
+	button {
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	a.playing,

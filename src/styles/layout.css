@@ -155,10 +155,6 @@ nav {
 		gap: 0.2rem;
 	}
 
-	:where(a, button) {
-		cursor: var(--cursor, default);
-	}
-
 	:where(a):not(:hover) {
 		text-decoration-color: transparent;
 	}

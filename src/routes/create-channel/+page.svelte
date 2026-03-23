@@ -120,7 +120,7 @@
 	details {
 		color: var(--gray-10);
 		summary {
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 			list-style: none;
 		}
 		fieldset {

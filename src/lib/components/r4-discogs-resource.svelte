@@ -644,7 +644,7 @@
 
 		&.is-real {
 			opacity: 1;
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 		}
 	}
 

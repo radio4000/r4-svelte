@@ -79,7 +79,7 @@
 		border-radius: var(--border-radius);
 		border: 2px dashed var(--gray-6);
 		overflow: hidden;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		transition:
 			border-color 0.15s,
 			opacity 0.15s;
@@ -126,7 +126,7 @@
 		position: absolute;
 		inset: 0;
 		opacity: 0;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		width: 100%;
 		height: 100%;
 	}

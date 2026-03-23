@@ -166,7 +166,7 @@
 
 	footer button {
 		padding: var(--space-1) var(--space-2);
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		border-radius: var(--border-radius);
 	}
 

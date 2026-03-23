@@ -266,6 +266,7 @@
 		min-height: 53px; /* = same height with/without description */
 		min-width: 0;
 		color: inherit;
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	.artwork {
@@ -294,7 +295,7 @@
 			background 0.15s,
 			color 0.15s;
 		&.locatable {
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 		}
 		:global(a) {
 			text-decoration: none;
@@ -366,7 +367,7 @@
 		padding-top: 0.1rem;
 		gap: 0.15rem;
 		/* because this is the actual link with some trickery */
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 
 		.mobile {
 			display: none;

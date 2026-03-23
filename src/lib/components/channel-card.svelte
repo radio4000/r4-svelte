@@ -147,6 +147,7 @@
 		border-radius: var(--border-radius);
 		padding: 0.25rem;
 		user-select: none;
+		cursor: var(--interactive-cursor, pointer);
 		transition:
 			background 0.1s,
 			border-color 0.1s;
@@ -210,7 +211,7 @@
 			place-content: center;
 			opacity: 0;
 			transition: opacity 0.15s;
-			background: oklch(0 0 0 / 0.4);
+			background: oklch(0 0 0 / 0.3);
 			color: white;
 		}
 
@@ -227,7 +228,7 @@
 
 		@media (pointer: coarse) {
 			:global(button) {
-				opacity: 0.8;
+				opacity: 0;
 			}
 		}
 	}

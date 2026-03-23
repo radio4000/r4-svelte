@@ -65,7 +65,7 @@
 
 <style>
 	.editable {
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		display: block;
 		width: 100%;
 	}

@@ -119,7 +119,7 @@
 
 	.CoverFlip-item {
 		flex-shrink: 0;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		will-change: transform;
 	}
 </style>

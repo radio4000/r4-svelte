@@ -108,7 +108,7 @@
 			border-right: 1px solid var(--gray-6);
 			border-radius: 0;
 			background: transparent;
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 			&:last-child {
 				border-right: none;
 			}

@@ -144,7 +144,6 @@
 		padding: 0;
 		border: none;
 		background: transparent;
-		cursor: pointer;
 		display: flex;
 		align-items: flex-end;
 	}

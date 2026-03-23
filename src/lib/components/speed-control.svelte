@@ -72,7 +72,7 @@
 		flex: 1 1 0;
 		min-width: 0;
 		width: 100%;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	.range[data-default] {

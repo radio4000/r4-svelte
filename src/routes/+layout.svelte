@@ -184,8 +184,11 @@
 
 	// Apply pointer cursor preference
 	$effect(() => {
-		const value = appState.use_pointer_cursor ? 'pointer' : 'default'
-		document.documentElement.style.setProperty('--cursor', value)
+		if (appState.use_pointer_cursor) {
+			document.documentElement.style.removeProperty('--interactive-cursor')
+		} else {
+			document.documentElement.style.setProperty('--interactive-cursor', 'default')
+		}
 	})
 
 	// "Close" the database on page unload. I have not noticed any difference, but seems like a good thing to do.

@@ -269,7 +269,7 @@
 		justify-content: space-between;
 		gap: 0.5rem;
 		font-weight: 600;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		padding: 0.5rem;
 		background: var(--gray-2);
 		border-radius: var(--border-radius);
@@ -378,7 +378,7 @@
 		margin-left: 48px;
 	}
 	.expanded.collapsed {
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 	}
 	.desc {
 		margin: 0;
