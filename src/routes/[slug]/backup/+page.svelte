@@ -96,3 +96,12 @@
 		<pre><code>{JSON.stringify(backupData, null, 2)}</code></pre>
 	{/if}
 </article>
+
+<style>
+	pre {
+		max-width: 100%;
+		overflow-x: auto;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+</style>
