@@ -45,8 +45,9 @@
 
 {#snippet navControls()}
 	{#if canEdit}
-		<button type="button" title={m.channel_backup_download()} onclick={downloadBackup}>
+		<button type="button" onclick={downloadBackup}>
 			<Icon icon="document-download" />
+			{m.channel_backup_download()}
 		</button>
 	{/if}
 {/snippet}
