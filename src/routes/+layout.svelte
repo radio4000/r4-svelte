@@ -11,6 +11,7 @@
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
+	import AppUpdateBanner from '$lib/components/app-update-banner.svelte'
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
@@ -88,8 +89,6 @@
 		if (DISABLED_ROUTES.some((p) => page.route.id?.startsWith(p))) {
 			goto(DISABLED_ROUTE_FALLBACK, {replaceState: true})
 		}
-		const {registerSW} = await import('virtual:pwa-register')
-		registerSW({immediate: true})
 		trackAppPresence()
 		try {
 			await data.preloading
@@ -231,6 +230,8 @@
 			<AuthListener />
 			<KeyboardShortcuts />
 			<ToolTip />
+
+			<AppUpdateBanner />
 
 			<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
 				{#if !appState.embed_mode}

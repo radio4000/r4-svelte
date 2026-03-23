@@ -30,7 +30,7 @@ export default defineConfig({
 		}),
 		SvelteKitPWA({
 			manifest: false,
-			registerType: 'autoUpdate',
+			registerType: 'prompt',
 			injectRegister: null,
 			workbox: {
 				clientsClaim: true,
