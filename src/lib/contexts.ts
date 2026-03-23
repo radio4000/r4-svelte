@@ -1,6 +1,6 @@
 import {createContext} from 'svelte'
 import type {Snippet} from 'svelte'
-import type {Channel, Track} from '$lib/types'
+import type {Channel, Track, TrackMetadataFields} from '$lib/types'
 
 /* I never liked context, but sometimes it's useful to avoid re-computing shared values that aren't stored on appState. */
 
@@ -25,14 +25,7 @@ export type TrackDetailCtx = {
 	trackMediaId: string | null
 	channel: Channel | undefined
 	canEdit: boolean
-	meta:
-		| {
-				media_id?: string
-				youtube_data?: {[key: string]: unknown}
-				musicbrainz_data?: object
-				discogs_data?: object
-		  }
-		| undefined
+	meta: ({media_id?: string} & TrackMetadataFields) | undefined
 	tracks: Track[]
 	relatedTracks: Track[]
 	hasYoutubeInfo: boolean

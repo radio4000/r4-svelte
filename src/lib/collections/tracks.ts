@@ -12,7 +12,7 @@ import {getErrorMessage} from './utils'
 
 const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
-import type {Track} from '$lib/types'
+import type {Track, TrackWithMeta} from '$lib/types'
 
 type TrackQueryParams = {
 	slugEq?: string
@@ -291,7 +291,7 @@ async function handleTrackDelete(id: string): Promise<void> {
 	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
-export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
+export function getTrackWithMeta(track: Track): TrackWithMeta {
 	if (!track.media_id) return track
 	const provider = track.provider ?? null
 	const meta =

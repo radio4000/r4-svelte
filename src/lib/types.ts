@@ -7,12 +7,14 @@ export interface Channel extends SDKChannel {
 
 export type Track = SDKTrack
 
-// Track joined with metadata from TrackMeta collection
-export interface TrackWithMeta extends Track {
+export interface TrackMetadataFields {
 	youtube_data?: {id?: string; duration?: number; [key: string]: unknown}
 	musicbrainz_data?: object
 	discogs_data?: object
 }
+
+// Track joined with metadata from TrackMeta collection
+export interface TrackWithMeta extends Track, TrackMetadataFields {}
 
 export interface Deck {
 	id: number

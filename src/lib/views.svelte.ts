@@ -12,6 +12,7 @@ import {viewURI, type View, type ViewSource} from '$lib/views'
 
 /** Max tracks fetched for client-side filtering (search, tags, channel+filter combos). */
 const MAX_CLIENT_TRACKS = 4000
+const EMPTY_STRINGS: string[] = []
 
 /**
  * Which fetch+filter path queryView should use for a View.
@@ -94,8 +95,10 @@ function hydrateTracksFromRemote(data: Record<string, unknown>[]): Track[] {
 /** Reactive view query. Call during component init. Returns {tracks, channels, loading, strategy} with getters. */
 export function queryView(getView: () => View) {
 	// Stable $derived primitives — only change when actual query params change.
-	const channelSlugsCSV = $derived(getView().sources[0]?.channels?.join(',') || '')
-	const tagsCSV = $derived(getView().sources[0]?.tags?.toSorted().join(',') || '')
+	const channelSlugs = $derived(getView().sources[0]?.channels ?? EMPTY_STRINGS)
+	const channelSlugsKey = $derived(channelSlugs.join(','))
+	const tags = $derived(getView().sources[0]?.tags?.toSorted() ?? EMPTY_STRINGS)
+	const tagsKey = $derived(tags.join(','))
 	const searchTerm = $derived(getView().sources[0]?.search?.trim() || '')
 	const limit = $derived(getView().limit ?? 50)
 	const offset = $derived(getView().offset ?? 0)
@@ -103,11 +106,11 @@ export function queryView(getView: () => View) {
 
 	const channelsQuery = useLiveQuery(
 		(q) => {
-			const slugs = channelSlugsCSV ? channelSlugsCSV.split(',') : []
-			if (!slugs.length) return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
-			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, slugs))
+			if (!channelSlugs.length)
+				return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
+			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, channelSlugs))
 		},
-		[() => channelSlugsCSV]
+		[() => channelSlugsKey]
 	)
 
 	// Channel tracks: paginated when strategy=channel, full dump when strategy=channel-filtered
@@ -115,20 +118,19 @@ export function queryView(getView: () => View) {
 		(q) => {
 			if (strategy !== 'channel' && strategy !== 'channel-filtered')
 				return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
-			const slugs = channelSlugsCSV.split(',')
 			const fetchAll = strategy === 'channel-filtered'
 			return q
 				.from({tracks: tracksCollection})
-				.where(({tracks}) => inArray(tracks.slug, slugs))
+				.where(({tracks}) => inArray(tracks.slug, channelSlugs))
 				.orderBy(({tracks}) => tracks.created_at, 'desc')
 				.limit(fetchAll ? MAX_CLIENT_TRACKS : limit)
 				.offset(fetchAll ? 0 : offset)
 		},
 		[
 			() => strategy,
-			() => channelSlugsCSV,
+			() => channelSlugsKey,
 			() => searchTerm,
-			() => tagsCSV,
+			() => tagsKey,
 			() => limit,
 			() => offset
 		]
@@ -137,7 +139,6 @@ export function queryView(getView: () => View) {
 	// Remote tags query: Supabase overlaps (broad "any" match).
 	// createQuery because TanStack DB's inArray can't do array-overlap client-side.
 	const tagsQuery = createQuery(() => {
-		const tags = tagsCSV ? tagsCSV.split(',') : []
 		return {
 			queryKey: ['tracks', 'tags', ...tags, 'limit', limit],
 			queryFn: async () => {

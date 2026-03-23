@@ -8,8 +8,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 - **14 sequential $derived in [slug]/+layout.svelte** (lines 104-131) — many used once. `channelHasAuto`, `channelAutoIsPlaying`, `deck` are property accesses on `anyChannelAutoDecks` — inline in markup.
 - **Static arrays in theme-editor.svelte** (lines 15-85) — ~100 lines of font/color constants recreated on every mount. Extract to module scope or separate file.
 - **Player vs compact bar: same concept, two local contracts** — `player.svelte:76` and `deck-compact-bar.svelte:26` each rebuild "what this deck is showing" with different rules. Both keep their own `lastTrack`/`lastChannel`, both derive display fallbacks, both resolve header channel differently. Extract one shared derivation.
-- **Views CSV churn** — `views.svelte.ts:96` serializes typed view inputs into CSV strings (`channelSlugsCSV`, `tagsCSV`) only to split them back apart in queries at line 104. Pure churn — hides the real contract, ties correctness to ad hoc string encoding. Pass arrays directly.
-- **TrackWithMeta / TrackMeta overlap** — `types.ts` TrackWithMeta and `track-meta.ts` TrackMeta define the same `youtube_data`/`musicbrainz_data`/`discogs_data` fields separately. One shape.
 
 ## Backlog
 
