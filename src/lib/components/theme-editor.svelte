@@ -2,6 +2,7 @@
 	import {Debounced} from 'runed'
 	import {appState} from '$lib/app-state.svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
+	import {fontFamilies, baseColors, overrides, grays, accents} from '$lib/components/theme-editor.data'
 	import InputColor from '$lib/components/input-color.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import ThemeToggle from '$lib/components/theme-toggle.svelte'
@@ -11,78 +12,6 @@
 	const log = logger.ns('theme').seal()
 
 	const uid = $props.id()
-
-	const fontFamilies = [
-		{value: '', label: 'Firava (default)'},
-		{value: 'Rosario', label: 'Rosario'},
-		{value: 'Radio Canada', label: 'Radio Canada'},
-		{value: 'Recursive', label: 'Recursive'},
-		{value: 'Epilogue', label: 'Epilogue'},
-		{value: 'Sono', label: 'Sono'},
-		{value: 'system-ui', label: 'System'}
-	]
-
-	const baseColors = [
-		{
-			name: '--accent-light',
-			label: () => m.theme_color_accent_light_label(),
-			description: () => m.theme_color_accent_desc(),
-			default: 'oklch(0.5 0.25 290)',
-			theme: 'light'
-		},
-		{
-			name: '--accent-dark',
-			label: () => m.theme_color_accent_dark_label(),
-			description: () => m.theme_color_accent_desc(),
-			default: 'oklch(0.8 0.14 222)',
-			theme: 'dark'
-		},
-		{
-			name: '--gray-light',
-			label: () => m.theme_color_gray_label(),
-			description: () => m.theme_color_gray_desc(),
-			default: 'oklch(0.67 0.01 0)',
-			theme: 'light'
-		},
-		{
-			name: '--gray-dark',
-			label: () => m.theme_color_gray_label(),
-			description: () => m.theme_color_gray_desc(),
-			default: 'oklch(0.67 0.005 0)',
-			theme: 'dark'
-		}
-	]
-
-	const overrides = [
-		{
-			name: '--button-bg-light',
-			label: () => m.theme_override_button_bg_label_light(),
-			description: () => m.theme_override_button_bg_desc(),
-			default: '#fff',
-			theme: 'light'
-		},
-		{
-			name: '--button-bg-dark',
-			label: () => m.theme_override_button_bg_label_dark(),
-			description: () => m.theme_override_button_bg_desc(),
-			default: '#000',
-			theme: 'dark'
-		},
-		{
-			name: '--button-color-light',
-			label: () => m.theme_override_button_color_label_light(),
-			description: () => m.theme_override_button_text_desc(),
-			default: '#000',
-			theme: 'light'
-		},
-		{
-			name: '--button-color-dark',
-			label: () => m.theme_override_button_color_label_dark(),
-			description: () => m.theme_override_button_text_desc(),
-			default: '#fff',
-			theme: 'dark'
-		}
-	]
 
 	/** @type {{name: string, value: string} | null} */
 	let pendingUpdate = $state(null)
@@ -163,9 +92,6 @@
 			log.error('import theme failed', {error})
 		}
 	}
-
-	const grays = Array.from(Array(12).keys(), (i) => `--gray-${i + 1}`)
-	const accents = Array.from(Array(12).keys(), (i) => `--accent-${i + 1}`)
 </script>
 
 <div class="focused constrained">

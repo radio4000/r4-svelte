@@ -115,20 +115,14 @@
 		)
 	)
 	let canEdit = $derived(canEditChannel(channel?.id))
-	let isLocal = $derived(isLocalChannel(channel?.id))
-	let hasChannel = $derived((appState.channels?.length ?? 0) > 0)
-	let authUrl = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
 	let anyChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, channel?.slug))
-	let channelHasAuto = $derived(anyChannelAutoDecks.length > 0)
 	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
-	let channelAutoIsPlaying = $derived(anyChannelAutoDecks.some((d) => d.is_playing))
 	let channelPlayingDeck = $derived(
 		findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug)
 	)
 	let channelListeningDeck = $derived(
 		findListeningDeck(appState.decks, appState.active_deck_id, channel?.id)
 	)
-	let deck = $derived(channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0])
 	let listeningTrack = $derived.by(() => {
 		const trackId = channelListeningDeck?.playlist_track
 		if (!trackId) return undefined
@@ -194,7 +188,7 @@
 				</div>
 				<div class="info">
 					<DeckChannelHeader
-						{deck}
+						deck={channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0]}
 						{channel}
 						track={listeningTrack}
 						titleElement="h1"
@@ -219,17 +213,23 @@
 					/>
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
-						className="btn{channelHasAuto ? ' active' : ''}"
-						synced={channelHasAuto && channelAutoIsPlaying && !channelHasAutoDrifted}
+						className="btn{anyChannelAutoDecks.length ? ' active' : ''}"
+						synced={Boolean(anyChannelAutoDecks.length) &&
+							anyChannelAutoDecks.some((d) => d.is_playing) &&
+							!channelHasAutoDrifted}
 						{@attach tooltip({
 							content: channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
 						})}
 						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
 					/>
-					{#if hasChannel}
+					{#if (appState.channels?.length ?? 0) > 0}
 						<ButtonFollow {channel} />
 					{:else}
-						<a href={authUrl} class="btn" {@attach tooltip({content: m.common_follow()})}>
+						<a
+							href={`/auth?redirect=${encodeURIComponent(page.url.pathname)}`}
+							class="btn"
+							{@attach tooltip({content: m.common_follow()})}
+						>
 							<Icon icon="favorite" />
 						</a>
 					{/if}
@@ -249,7 +249,7 @@
 				{slug}
 				{channel}
 				{canEdit}
-				{isLocal}
+				isLocal={isLocalChannel(channel?.id)}
 				trackCount={allChannelTracks.length}
 			/>
 			{#if channelNavControls}

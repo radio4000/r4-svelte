@@ -6,7 +6,6 @@ Possible improvements. Roughly by priority. Verify before implementing.
 
 - **Broadcast field juggling** — `broadcast.js`: `pickBroadcastFields()` (line 29), `getBroadcastDeckState()` (line 426), ephemeral track construction (line 350). Three hand-rolled serializers. Align types so most disappear.
 - **14 sequential $derived in [slug]/+layout.svelte** (lines 104-131) — many used once. `channelHasAuto`, `channelAutoIsPlaying`, `deck` are property accesses on `anyChannelAutoDecks` — inline in markup.
-- **Static arrays in theme-editor.svelte** (lines 15-85) — ~100 lines of font/color constants recreated on every mount. Extract to module scope or separate file.
 - **Player vs compact bar: same concept, two local contracts** — `player.svelte:76` and `deck-compact-bar.svelte:26` each rebuild "what this deck is showing" with different rules. Both keep their own `lastTrack`/`lastChannel`, both derive display fallbacks, both resolve header channel differently. Extract one shared derivation.
 
 ## Backlog
