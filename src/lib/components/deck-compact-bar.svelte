@@ -1,4 +1,5 @@
 <script>
+	import {eq} from '@tanstack/svelte-db'
 	import {resolve} from '$app/paths'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -16,6 +17,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import PlayerProgress from '$lib/components/player-progress.svelte'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 
 	/** @type {{deckId: number}} */
 	let {deckId} = $props()
@@ -30,19 +32,20 @@
 		return tracksCollection.state.get(id)
 	})
 
-	let channel = $derived.by(() => {
-		const slugToUse = track?.slug ?? deck?.playlist_slug
-		if (!slugToUse) return undefined
-		return [...channelsCollection.state.values()].find((ch) => ch.slug === slugToUse)
-	})
+	const channelQuery = useLiveQuery((q) =>
+		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.slug, deck?.playlist_slug ?? ''))
+	)
+	let channel = $derived(channelQuery.data?.[0])
 
 	let lastTrack = $state()
 	let lastChannel = $state()
 	$effect(() => {
 		if (track) lastTrack = track
+		else if (!deck?.playlist_track) lastTrack = undefined
 	})
 	$effect(() => {
 		if (channel) lastChannel = channel
+		else if (!deck?.playlist_track) lastChannel = undefined
 	})
 
 	let displayTrack = $derived(track ?? lastTrack)
@@ -54,7 +57,9 @@
 		void channelsCollection.state.size
 		return channelsCollection.state.get(channelId)
 	})
-	let headerChannel = $derived(deck?.listening_to_channel_id ? broadcasterChannel : displayChannel)
+	let headerChannel = $derived(
+		deck?.listening_to_channel_id ? (broadcasterChannel ?? displayChannel) : displayChannel
+	)
 	let headerSlug = $derived(headerChannel?.slug ?? displaySlug)
 	let headerSlugHref = $derived(headerSlug ? `/${headerSlug}` : undefined)
 	let canEditTrackChannel = $derived(
