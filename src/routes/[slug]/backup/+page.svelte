@@ -65,7 +65,7 @@
 			{m.channel_backup_download()}
 		</button>
 		<button type="button" onclick={copyToClipboard} title={m.share_copy()} aria-label={m.share_copy()}>
-			<Icon icon={copied ? 'check' : 'copy'} />
+			<Icon icon={copied ? 'check' : 'document'} />
 		</button>
 		<button
 			type="button"
