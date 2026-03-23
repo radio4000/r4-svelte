@@ -455,10 +455,12 @@ export function removeFromQueue(deckId, trackId) {
 }
 
 export function toggleTheme() {
-	const isDark = document.documentElement.classList.contains('dark')
-	document.documentElement.classList.toggle('dark', !isDark)
-	document.documentElement.classList.toggle('light', isDark)
-	appState.theme = isDark ? 'light' : 'dark'
+	const cycle: Array<string | undefined> = [undefined, 'light', 'dark']
+	const current = appState.theme
+	const next = cycle[(cycle.indexOf(current) + 1) % cycle.length]
+	document.documentElement.classList.toggle('dark', next === 'dark')
+	document.documentElement.classList.toggle('light', next === 'light')
+	appState.theme = next
 }
 
 /** @param {number} deckId */

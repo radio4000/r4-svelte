@@ -5,9 +5,8 @@
 
 	const {showLabel = true, ...rest} = $props()
 
-	const prefersLight = $derived(window.matchMedia('(prefers-color-scheme: light)').matches)
-	const theme = $derived(appState.theme ?? (prefersLight ? 'light' : 'dark'))
-	const icon = $derived(theme === 'light' ? 'moon' : 'sun')
+	const theme = $derived(appState.theme ?? 'system')
+	const icon = $derived(theme === 'light' ? 'sun' : theme === 'dark' ? 'moon' : 'eye')
 </script>
 
 <button onclick={toggleThemeApi} {...rest}>
