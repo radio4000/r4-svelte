@@ -5,7 +5,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {toggleShuffle, clearAllQueue} from '$lib/api'
+	import {toggleShuffle, clearQueue, clearAllQueue} from '$lib/api'
 	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import Icon from './icon.svelte'
@@ -63,8 +63,12 @@
 		searchQuery = searchQuery === query ? '' : query
 	}
 
-	function clearQueue() {
-		clearAllQueue(deckId)
+	function handleClearQueue() {
+		if (deck?.is_playing) {
+			clearQueue(deckId)
+		} else {
+			clearAllQueue(deckId)
+		}
 	}
 </script>
 
@@ -94,7 +98,7 @@
 			</button>
 			{#if !appState.embed_mode}
 				<button
-					onclick={clearQueue}
+					onclick={handleClearQueue}
 					{@attach tooltip({content: m.common_clear()})}
 					title={m.common_clear()}
 				>
