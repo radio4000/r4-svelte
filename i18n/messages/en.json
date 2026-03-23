@@ -187,7 +187,7 @@
 	"broadcasts_via": "via",
 	"broadcasts_you_are_live": "You are live!",
 	"channel_backup_description": "Download a backup of your channel and all tracks as JSON.",
-	"channel_backup_download": "Download backup",
+	"channel_backup_download": "Download",
 	"channel_backup_page_title": "Backup {handle}",
 	"channel_backup_sign_in": "Sign in to access backup",
 	"channel_backup_success": "Backup downloaded.",
