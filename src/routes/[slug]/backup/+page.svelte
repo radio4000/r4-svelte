@@ -15,6 +15,7 @@
 
 	let error = $state('')
 	let success = $state(false)
+	let showRaw = $state(false)
 
 	const backupData = $derived.by(() => {
 		if (!channel) return null
@@ -55,6 +56,14 @@
 			<Icon icon="document-download" />
 			{m.channel_backup_download()}
 		</button>
+		<button
+			type="button"
+			onclick={() => (showRaw = !showRaw)}
+			title={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+			aria-label={showRaw ? m.track_meta_toggle_formatted() : m.track_meta_toggle_raw()}
+		>
+			<Icon icon="code" />
+		</button>
 	{/if}
 {/snippet}
 
@@ -72,7 +81,7 @@
 	{:else}
 		<p><a href={resolve('/auth')}>{m.channel_backup_sign_in()}</a></p>
 	{/if}
-	{#if backupData}
+	{#if showRaw && backupData}
 		<pre><code>{JSON.stringify(backupData, null, 2)}</code></pre>
 	{/if}
 </article>
