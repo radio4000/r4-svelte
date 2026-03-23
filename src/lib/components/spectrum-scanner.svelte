@@ -106,6 +106,11 @@
 </div>
 
 <style>
+	/* since this page doesn't have scroll we can hide it*/
+	:global(.scroll-area:has(.scanner)) {
+		scrollbar-gutter: auto;
+	}
+
 	.scanner {
 		--color: var(--gray-12);
 		--color-active: var(--accent-7);
@@ -115,7 +120,9 @@
 		align-items: center;
 		justify-content: center;
 		width: 100%;
-		margin-block: 3rem 0;
+		padding-top: 3rem;
+
+		background: linear-gradient(to right, var(--accent-3), transparent);
 	}
 
 	menu {
@@ -171,10 +178,10 @@
 		padding: 0 1rem;
 		place-content: flex-start;
 		align-items: center;
+		container-type: inline-size;
 
 		:global(.card) {
 			flex: 1;
-			flex-flow: row;
 			gap: 1rem;
 			max-width: 80ch;
 		}
@@ -182,6 +189,13 @@
 		:global(.card figure) {
 			max-width: 250px;
 			max-height: 250px;
+		}
+
+		@container (min-width: 768px) {
+			:global(.card) {
+				margin-left: 2vw;
+				flex-flow: row;
+			}
 		}
 	}
 </style>
