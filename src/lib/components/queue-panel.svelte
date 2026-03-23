@@ -87,7 +87,7 @@
 				<Icon icon="close" />
 			</button>
 		{/if}
-		{#if trackIds.length > 1}
+		{#if trackIds.length > 2}
 			<button
 				onclick={() => toggleShuffle(deckId)}
 				class:active={deck?.shuffle}
@@ -96,15 +96,15 @@
 			>
 				<Icon icon="shuffle" />
 			</button>
-			{#if !appState.embed_mode}
-				<button
-					onclick={handleClearQueue}
-					{@attach tooltip({content: m.common_clear()})}
-					title={m.common_clear()}
-				>
-					<Icon icon="delete" />
-				</button>
-			{/if}
+		{/if}
+		{#if !appState.embed_mode && trackIds.length > 0 && (deck?.is_playing ? trackIds.length > 1 : true)}
+			<button
+				onclick={handleClearQueue}
+				{@attach tooltip({content: m.common_clear()})}
+				title={m.common_clear()}
+			>
+				<Icon icon="delete" />
+			</button>
 		{/if}
 	</div>
 
