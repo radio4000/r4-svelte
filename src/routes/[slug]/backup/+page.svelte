@@ -16,13 +16,19 @@
 	let error = $state('')
 	let success = $state(false)
 
+	const backupData = $derived.by(() => {
+		if (!channel) return null
+		void tracksCollection.state.size
+		const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+		return {channel, tracks}
+	})
+
 	function downloadBackup() {
 		error = ''
 		success = false
 		try {
 			if (!channel) throw new Error(m.channel_not_found())
-			const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
-			const data = {channel, tracks}
+			const data = backupData
 			const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'})
 			const url = URL.createObjectURL(blob)
 			const a = document.createElement('a')
@@ -65,5 +71,8 @@
 		{/if}
 	{:else}
 		<p><a href={resolve('/auth')}>{m.channel_backup_sign_in()}</a></p>
+	{/if}
+	{#if backupData}
+		<pre><code>{JSON.stringify(backupData, null, 2)}</code></pre>
 	{/if}
 </article>
