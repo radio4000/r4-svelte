@@ -16,6 +16,7 @@
 	let error = $state('')
 	let success = $state(false)
 	let showRaw = $state(false)
+	let copied = $state(false)
 
 	const backupData = $derived.by(() => {
 		if (!channel) return null
@@ -23,6 +24,13 @@
 		const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
 		return {channel, tracks}
 	})
+
+	async function copyToClipboard() {
+		if (!backupData) return
+		await navigator.clipboard.writeText(JSON.stringify(backupData, null, 2))
+		copied = true
+		setTimeout(() => (copied = false), 2000)
+	}
 
 	function downloadBackup() {
 		error = ''
@@ -55,6 +63,9 @@
 		<button type="button" onclick={downloadBackup}>
 			<Icon icon="document-download" />
 			{m.channel_backup_download()}
+		</button>
+		<button type="button" onclick={copyToClipboard} title={m.share_copy()} aria-label={m.share_copy()}>
+			<Icon icon={copied ? 'check' : 'copy'} />
 		</button>
 		<button
 			type="button"
