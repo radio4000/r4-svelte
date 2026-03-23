@@ -35,9 +35,9 @@
 	--color-interface-border: var(--gray-6);
 
 	/* panel backgrounds */
-	--header-bg: var(--color-interface);
-	--aside-bg: var(--gray-1);
-	--footer-bg: var(--color-interface);
+	--header-bg: var(--color-interface-elevated);
+	--aside-bg: var(--color-interface-elevated);
+	--footer-bg: var(--color-interface-elevated);
 
 	/* media queries can't use variables, but still, nice to declare what we use */
 	--breakpoint-xs: 520px;

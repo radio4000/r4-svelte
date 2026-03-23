@@ -135,7 +135,7 @@
 		flex: 1;
 		min-height: 0;
 		width: 100%;
-		border-top: 1px solid var(--gray-6);
+		border-top: 1px solid var(--color-interface-border);
 	}
 
 	main {

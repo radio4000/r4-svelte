@@ -765,8 +765,8 @@
 	.dashboard-card {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-		padding: 0.75rem;
+		gap: 0.2rem;
+		padding: 0.5rem;
 		border: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		background: light-dark(var(--gray-1), var(--gray-2));
@@ -776,8 +776,6 @@
 	.dashboard-card--row {
 		flex-direction: row;
 		align-items: center;
-		padding: 0.4rem 0.6rem;
-		gap: 0.4rem;
 		overflow: hidden;
 	}
 
@@ -797,9 +795,6 @@
 	}
 
 	.dashboard-label--tag {
-		font-weight: 600;
-		font-size: var(--font-3);
-		color: var(--accent-9);
 		text-decoration: none;
 		flex-shrink: 0;
 		&:hover {

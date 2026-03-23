@@ -200,7 +200,7 @@
 		gap: 0.4rem;
 		padding-bottom: 0.5rem;
 		border-top: 1px solid var(--gray-6);
-		background: color-mix(in srgb, var(--deck-accent, var(--header-bg)) 8%, var(--header-bg));
+		background: var(--color-interface-elevated);
 		min-width: 0;
 		overflow: hidden;
 	}

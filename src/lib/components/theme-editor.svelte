@@ -2,7 +2,13 @@
 	import {Debounced} from 'runed'
 	import {appState} from '$lib/app-state.svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
-	import {fontFamilies, baseColors, overrides, grays, accents} from '$lib/components/theme-editor.data'
+	import {
+		fontFamilies,
+		baseColors,
+		overrides,
+		grays,
+		accents
+	} from '$lib/components/theme-editor.data'
 	import InputColor from '$lib/components/input-color.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import ThemeToggle from '$lib/components/theme-toggle.svelte'

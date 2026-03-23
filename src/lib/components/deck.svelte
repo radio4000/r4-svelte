@@ -105,7 +105,7 @@
 		min-width: 280px;
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
-		background: color-mix(in srgb, var(--deck-accent, var(--footer-bg)) 8%, var(--footer-bg));
+		background: var(--color-interface-elevated);
 		position: relative;
 	}
 
@@ -171,7 +171,6 @@
 		min-width: 0;
 		border: 0;
 		z-index: 200;
-		background: var(--footer-bg);
 	}
 
 	.deck.expanded .resize-handle {
