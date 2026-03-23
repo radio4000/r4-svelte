@@ -209,6 +209,7 @@
 		// Update track duration if missing (only for owned channels, once per track)
 		if (
 			track &&
+			isDbId(track.id) &&
 			channel &&
 			canEditChannel(channel.id) &&
 			!track.duration &&
@@ -240,7 +241,7 @@
 		// Only write playback_error if user owns this track's channel
 		const canWrite = canEditChannel(channel?.id)
 		log.log('handleError', {trackId: track?.id, canWrite, channelId: channel?.id, msg})
-		if (track?.id && channel && canWrite) {
+		if (track?.id && isDbId(track.id) && channel && canWrite) {
 			updateTrack(channel, track.id, {playback_error: msg})
 				.then(() => log.log('playback_error saved', {id: track.id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
