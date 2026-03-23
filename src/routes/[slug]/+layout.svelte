@@ -74,6 +74,12 @@
 			/** @type {unknown} */ (channelByIdQuery.data ?? channelBySlugQuery.data)
 		)
 	)
+	let channelIsLoading = $derived(
+		!channel && (channelBySlugQuery.isLoading || (Boolean(channelId) && channelByIdQuery.isLoading))
+	)
+	let channelIsReady = $derived(
+		Boolean(channel) || (channelBySlugQuery.isReady && (!channelId || channelByIdQuery.isReady))
+	)
 
 	// --- Queries ---
 
@@ -162,10 +168,10 @@
 			return channel
 		},
 		get isReady() {
-			return channelBySlugQuery.isReady
+			return channelIsReady
 		},
 		get isLoading() {
-			return channelBySlugQuery.isLoading
+			return channelIsLoading
 		}
 	})
 	setTracksQueryCtx(tracksQuery)
@@ -255,7 +261,7 @@
 	</div>
 
 	<main>
-		{#if channelBySlugQuery.isReady && !channel}
+		{#if channelIsReady && !channel}
 			<p style="padding: 1rem;">{m.channel_not_found()}</p>
 		{:else}
 			{@render children()}

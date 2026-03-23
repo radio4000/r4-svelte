@@ -2,14 +2,8 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-## Inline trivial deriveds in deck-channel-header.svelte
-
-`slugHref`, `listeningWhoHref`, `listeningWhomHref` each just prepend `/` to a slug and are used once — inline as `href="/{slug}"` in the template. `autoGhost` is `deck?.is_playing && !deck?.auto_radio_drifted` — inline into `synced={...}`. Keep state-describing names like `isListening`, `isBroadcasting` — those clarify intent beyond what `deck?.listening_to_channel_id` communicates.
-
 ## Simplify: rely on types and primitives, fewer layers
 
-- **Track normalization x4** — `collections/tracks.ts` lines 136, 153, 180, 202 all re-parse URLs to fill `provider`/`media_id`. One shared normalizer.
-- **Dual-query waterfall + mixed loading contract** — `[slug]/+layout.svelte:46-76` queries by slug → extracts ID → queries by ID → falls back to slug. Two live queries + effect + state for what might be one query. Worse: context reports readiness/loading from the slug query only (line 160), so child routes consume one data source but a different loading contract. Check if TanStack DB still needs the ID re-query.
 - **Broadcast field juggling** — `broadcast.js`: `pickBroadcastFields()` (line 29), `getBroadcastDeckState()` (line 426), ephemeral track construction (line 350). Three hand-rolled serializers. Align types so most disappear.
 - **14 sequential $derived in [slug]/+layout.svelte** (lines 104-131) — many used once. `channelHasAuto`, `channelAutoIsPlaying`, `deck` are property accesses on `anyChannelAutoDecks` — inline in markup.
 - **Static arrays in theme-editor.svelte** (lines 15-85) — ~100 lines of font/color constants recreated on every mount. Extract to module scope or separate file.

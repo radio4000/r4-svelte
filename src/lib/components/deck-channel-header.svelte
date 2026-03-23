@@ -36,16 +36,12 @@
 
 	const derivedTitle = $derived(deckTitle(deck, channel?.name))
 	const slug = $derived(deck?.playlist_slug)
-	const slugHref = $derived(slug ? `/${slug}` : undefined)
 	const isPlaying = $derived(Boolean(deck?.is_playing))
 	const isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
 	const showAutoButton = $derived(Boolean(deck?.auto_radio))
-	const autoGhost = $derived(!!deck?.is_playing && !deck?.auto_radio_drifted)
 	const isListening = $derived(Boolean(deck?.listening_to_channel_id))
 	const listeningWhoSlug = $derived(isListening ? channel?.slug : undefined)
-	const listeningWhoHref = $derived(listeningWhoSlug ? `/${listeningWhoSlug}` : undefined)
 	const listeningWhomSlug = $derived(isListening ? track?.slug || deck?.playlist_slug : undefined)
-	const listeningWhomHref = $derived(listeningWhomSlug ? `/${listeningWhomSlug}` : undefined)
 	const broadcastSyncDrifted = $derived(Boolean(deck?.listening_drifted))
 	const broadcastSyncTitle = $derived(
 		broadcastSyncDrifted ? m.player_sync_broadcast() : m.player_broadcast_synced()
@@ -68,8 +64,8 @@
 
 <div class="deck-channel-header">
 	<svelte:element this={titleElement} class={titleClassNames}>
-		{#if slugHref}
-			<a href={slugHref} class="title-link">{derivedTitle}</a>
+		{#if slug}
+			<a href="/{slug}" class="title-link">{derivedTitle}</a>
 		{:else}
 			<span class="title-link">{derivedTitle}</span>
 		{/if}
@@ -87,7 +83,7 @@
 
 	<div class="meta-row">
 		{#if listeningWhoSlug}
-			<a class="slug-link" href={listeningWhoHref}>@{listeningWhoSlug}</a>
+			<a class="slug-link" href="/{listeningWhoSlug}">@{listeningWhoSlug}</a>
 			{#if onBroadcastSyncClick}
 				<button
 					type="button"
@@ -104,10 +100,10 @@
 				</button>
 			{/if}
 			{#if hasDistinctWhom}
-				<a class="slug-link" href={listeningWhomHref}>@{listeningWhomSlug}</a>
+				<a class="slug-link" href="/{listeningWhomSlug}">@{listeningWhomSlug}</a>
 			{/if}
 		{:else if slug}
-			<a class="slug-link" href={slugHref}>@{slug}</a>
+			<a class="slug-link" href="/{slug}">@{slug}</a>
 		{/if}
 
 		{#each derivedTags as tag (tag.label)}
@@ -121,7 +117,7 @@
 		{#if showAutoButton}
 			<AutoRadioButton
 				className="auto-btn active"
-				synced={autoGhost}
+				synced={!!deck?.is_playing && !deck?.auto_radio_drifted}
 				title={autoTitle}
 				ariaLabel={autoTitle}
 				size={14}
