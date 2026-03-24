@@ -32,6 +32,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -438,37 +439,27 @@
 				>
 					<Icon icon="close" />
 				</button>
-				<button
-					onclick={() => toggleVideo(deckId)}
-					class:active={deck?.hide_video_player}
-					aria-label={deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
-					{@attach tooltip({
-						content: deck?.hide_video_player ? m.player_hidden() : m.player_visible(),
-						position: 'top'
-					})}
-				>
-					<Icon icon="tv" />
-				</button>
-				{#if !isListeningToBroadcast}
-					<button
-						onclick={() => toggleQueuePanel(deckId)}
-						class:active={deck?.hide_queue_panel}
-						aria-label={deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
-						{@attach tooltip({
-							content: deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible(),
-							position: 'top'
-						})}
-					>
-						<Icon icon="unordered-list" />
-					</button>
-				{/if}
-				<button
-					onclick={() => togglePlayerExpanded(deckId)}
-					class:active={deck?.expanded}
-					{@attach tooltip({content: m.player_tooltip_expand(), position: 'top'})}
-				>
-					<Icon icon="fullscreen" />
-				</button>
+				<PopoverMenu align="right" closeOnClick={false}>
+					{#snippet trigger()}
+						<Icon icon="options-horizontal" />
+					{/snippet}
+					<menu class="deck-context-menu">
+						<button onclick={() => toggleVideo(deckId)} class:active={deck?.hide_video_player} data-no-close>
+							{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
+							<Icon icon="tv" size={14} />
+						</button>
+						{#if !isListeningToBroadcast}
+							<button onclick={() => toggleQueuePanel(deckId)} class:active={deck?.hide_queue_panel} data-no-close>
+								{deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
+								<Icon icon="unordered-list" size={14} />
+							</button>
+						{/if}
+						<button onclick={() => togglePlayerExpanded(deckId)} class:active={deck?.expanded} data-no-close>
+							{@html m.player_tooltip_expand()}
+							<Icon icon="fullscreen" size={14} />
+						</button>
+					</menu>
+				</PopoverMenu>
 				{#if hasMultipleDecks || !appState.embed_mode}
 					<button
 						onclick={() => toggleDeckCompact(deckId)}
@@ -827,6 +818,37 @@
 	.layout-controls {
 		align-items: center;
 		flex-shrink: 0;
+	}
+
+	:global(.deck-context-menu) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+
+		button {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+			width: 100%;
+			padding: 0.4rem 0.6rem;
+			background: none;
+			border: none;
+			border-radius: var(--border-radius);
+			font-size: var(--font-3);
+			color: var(--color-text);
+			cursor: pointer;
+			white-space: nowrap;
+			text-align: left;
+		}
+
+		button:hover {
+			background: var(--gray-3);
+		}
+
+		button.active :global(svg) {
+			color: var(--accent-9);
+		}
 	}
 
 	.top-layout-controls {
