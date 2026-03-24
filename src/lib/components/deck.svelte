@@ -228,7 +228,7 @@
 
 	/* Broadcast listener: no queue, so use less space */
 	.deck.listening {
-		width: 280px;
+		width: var(--deck-width, 280px);
 		min-width: 200px;
 		flex-shrink: 0;
 	}

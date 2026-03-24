@@ -98,14 +98,19 @@
 			display: flex;
 			flex-direction: column;
 			min-height: 0;
+			height: 100%;
 			overflow-y: auto;
 			flex: 0 0 auto;
-			min-width: min(36rem, 45vw);
+			min-width: min-content;
 
 			:global(.deck.listening) {
-				width: 100%;
 				min-width: 0;
 				flex: 1 1 auto;
+			}
+
+			.deck-item {
+				flex: 1 1 auto;
+				min-width: 0;
 			}
 		}
 
