@@ -623,6 +623,24 @@
 		{/if}
 
 		<div class="loggedout-grid">
+			<section class="section section--globe section--globe--loggedout">
+				<header class="section-header">
+					<h2 class="section-title">
+						<a href={resolve('/channels/all') + '?display=map'}>Overview</a>
+					</h2>
+				</header>
+				<div class="globe">
+					<MapChannels
+						channels={globeChannels}
+						globeMode={true}
+						zoom={1.5}
+						syncUrl={false}
+						showControls={false}
+						tileStyle="topo"
+					/>
+				</div>
+			</section>
+
 			{#if featuredChannels.length}
 				<section class="section section--featured-col">
 					<header class="section-header">
@@ -654,24 +672,6 @@
 					</ol>
 				</section>
 			{/if}
-
-			<section class="section section--globe section--globe--loggedout">
-				<header class="section-header">
-					<h2 class="section-title">
-						<a href={resolve('/channels/all') + '?display=map'}>Overview</a>
-					</h2>
-				</header>
-				<div class="globe">
-					<MapChannels
-						channels={globeChannels}
-						globeMode={true}
-						zoom={1.5}
-						syncUrl={false}
-						showControls={false}
-						tileStyle="topo"
-					/>
-				</div>
-			</section>
 		</div>
 
 		{#if featuredChannels.length}
@@ -801,14 +801,6 @@
 			overflow: hidden;
 		}
 
-		@media (min-width: 1024px) {
-			grid-template-columns: 1fr 1fr;
-
-			/* Globe spans both columns when featured channels haven't loaded yet */
-			& > section:only-child {
-				grid-column: 1 / -1;
-			}
-		}
 
 		.section--globe {
 			margin-bottom: 0;
@@ -1043,7 +1035,7 @@
 		flex-direction: column;
 		min-height: 300px;
 		margin-top: -0.75rem;
-		background: var(--gray-2);
+		background: transparent;
 		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		:global(.map) {
