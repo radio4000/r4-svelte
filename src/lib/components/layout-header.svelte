@@ -160,9 +160,10 @@
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
-		padding: 0.5rem;
+		padding: 0.3rem;
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
 		z-index: 50;
 	}
 
