@@ -20,7 +20,6 @@
 	function friendlyAuthError(message = '') {
 		if (message.toLowerCase().includes('database error'))
 			return 'Something went wrong — please try again'
-		if (message === 'Signups not allowed for otp') return 'No account found with this email'
 		return message
 	}
 
@@ -31,7 +30,7 @@
 			const {error: authError} = await sdk.supabase.auth.signInWithOtp({
 				email,
 				options: {
-					shouldCreateUser: false,
+					shouldCreateUser: true,
 					emailRedirectTo: window.location.origin + redirect
 				}
 			})
