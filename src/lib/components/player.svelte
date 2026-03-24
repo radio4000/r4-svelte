@@ -444,17 +444,29 @@
 						<Icon icon="options-horizontal" />
 					{/snippet}
 					<menu class="deck-context-menu">
-						<button onclick={() => toggleVideo(deckId)} class:active={deck?.hide_video_player} data-no-close>
+						<button
+							onclick={() => toggleVideo(deckId)}
+							class:active={deck?.hide_video_player}
+							data-no-close
+						>
 							{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 							<Icon icon="tv" size={14} />
 						</button>
 						{#if !isListeningToBroadcast}
-							<button onclick={() => toggleQueuePanel(deckId)} class:active={deck?.hide_queue_panel} data-no-close>
+							<button
+								onclick={() => toggleQueuePanel(deckId)}
+								class:active={deck?.hide_queue_panel}
+								data-no-close
+							>
 								{deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
 								<Icon icon="unordered-list" size={14} />
 							</button>
 						{/if}
-						<button onclick={() => togglePlayerExpanded(deckId)} class:active={deck?.expanded} data-no-close>
+						<button
+							onclick={() => togglePlayerExpanded(deckId)}
+							class:active={deck?.expanded}
+							data-no-close
+						>
 							{@html m.player_tooltip_expand()}
 							<Icon icon="fullscreen" size={14} />
 						</button>

@@ -801,7 +801,6 @@
 			overflow: hidden;
 		}
 
-
 		.section--globe {
 			margin-bottom: 0;
 		}

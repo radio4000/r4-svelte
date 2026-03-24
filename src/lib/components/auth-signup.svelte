@@ -17,6 +17,13 @@
 	let loading = $state(false)
 	let showCode = $state(false)
 
+	/** Map cryptic Supabase errors to user-friendly messages */
+	function friendlyAuthError(message = '') {
+		if (message.toLowerCase().includes('database error'))
+			return 'Something went wrong — please try again'
+		return message
+	}
+
 	async function sendMagicLink({rethrow = false} = {}) {
 		loading = true
 		error = null
@@ -24,11 +31,12 @@
 			const {error: authError} = await sdk.supabase.auth.signInWithOtp({
 				email,
 				options: {
+					shouldCreateUser: true,
 					emailRedirectTo: window.location.origin + redirect
 				}
 			})
 			if (authError) {
-				error = authError.message
+				error = friendlyAuthError(authError.message)
 				if (rethrow) throw authError
 			} else {
 				step = 'linkSent'
@@ -51,7 +59,7 @@
 		try {
 			const {data, error: authError} = await sdk.auth.signUp({email, password})
 			if (authError) {
-				error = authError.message
+				error = friendlyAuthError(authError.message)
 			} else if (data?.session) {
 				onSuccess?.(data.user)
 			} else if (data?.user) {
@@ -76,7 +84,7 @@
 		try {
 			const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type})
 			if (authError) {
-				error = authError.message
+				error = friendlyAuthError(authError.message)
 			} else if (data?.session) {
 				onSuccess?.(data.user)
 			} else {
