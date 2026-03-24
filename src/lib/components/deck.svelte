@@ -106,6 +106,8 @@
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
 		background: var(--color-interface-elevated);
+		border-radius: var(--border-radius);
+		overflow: hidden;
 		position: relative;
 	}
 
@@ -117,6 +119,7 @@
 		width: 3px;
 		cursor: col-resize;
 		border-right: 1px solid var(--gray-7);
+		border-radius: var(--border-radius) 0 0 var(--border-radius);
 		flex-shrink: 0;
 		touch-action: none;
 		transition: border-color 120ms ease;
