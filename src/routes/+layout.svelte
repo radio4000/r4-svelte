@@ -301,7 +301,7 @@
 	.layout > :global(header) {
 		position: sticky;
 		top: 0;
-		height: 100dvh;
+		margin: var(--interface-margin);
 		flex-shrink: 0;
 	}
 
@@ -355,6 +355,7 @@
 		border-radius: 8px 8px 0 0;
 		overflow: hidden;
 		border-top: 1px solid var(--gray-6);
+		margin: 0 var(--interface-margin) var(--interface-margin);
 		/*
 		padding: 0.4rem 0.5rem;
 		 */

@@ -2,6 +2,7 @@
 	color-scheme: light dark;
 
 	/* layout */
+	--interface-margin: 0.2rem;
 	--scaling: 1;
 	--space-1: calc(0.2rem * var(--scaling));
 	--space-2: calc(0.5rem * var(--scaling));

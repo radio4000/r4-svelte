@@ -67,9 +67,9 @@
 		gap: 0.3rem;
 		flex-shrink: 0;
 		min-height: 0;
-		height: 100%;
 		overflow-x: auto;
 		overflow-y: hidden;
+		margin: var(--interface-margin);
 
 		&:empty {
 			display: none;
