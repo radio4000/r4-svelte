@@ -66,6 +66,7 @@
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
 	let deckIds = $derived(Object.keys(appState.decks).map(Number))
+	let isLastDeck = $derived(deckIds.at(-1) === deckId)
 	let accentColor = $derived(deckAccent(deckIds, deckId))
 
 	// Both media player elements
@@ -578,7 +579,10 @@
 							<strong>{m.player_broadcast_live()}</strong>
 						</div>
 					{/if}
-					<span class="caps btn-leave">{m.status_live_short()}</span>
+					<span class="live-pill">
+						<Icon icon="cell-signal" size={12} />
+						{m.status_live_short()}
+					</span>
 				</div>
 			{:else if displayTrack}
 				<TrackCard
@@ -592,29 +596,33 @@
 			{/if}
 		</footer>
 
-		<menu class="controls">
-			{#if isListeningToBroadcast}
-				<button
-					disabled
-					class="play status"
-					aria-label={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
-					title={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
-				>
-					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-				</button>
-				<button onclick={() => leaveBroadcast(deckId)} class="btn">
-					{m.broadcasts_leave()}
-				</button>
-			{:else}
-				{@render btnPrev()}
-				{@render btnPlay()}
-				{@render btnNext()}
-				<SpeedControl {deckId} {provider} />
-			{/if}
-			{#if !isListeningToBroadcast}
-				<VolumeControl {deckId} />
-			{/if}
-		</menu>
+		{#if !isListeningToBroadcast || !hasMultipleDecks || isLastDeck}
+			<menu class="controls" class:broadcast-controls={isListeningToBroadcast}>
+				{#if isListeningToBroadcast}
+					<button onclick={() => leaveBroadcast(deckId)} class="btn leave-btn">
+						{m.broadcasts_leave()}
+					</button>
+					<button
+						disabled
+						class="play status"
+						aria-label={deck?.is_playing
+							? m.player_broadcast_playing()
+							: m.player_broadcast_paused()}
+						title={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
+					>
+						<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+					</button>
+				{:else}
+					{@render btnPrev()}
+					{@render btnPlay()}
+					{@render btnNext()}
+					<SpeedControl {deckId} {provider} />
+				{/if}
+				{#if !isListeningToBroadcast}
+					<VolumeControl {deckId} />
+				{/if}
+			</menu>
+		{/if}
 	</section>
 </div>
 
@@ -782,14 +790,23 @@
 		color: inherit;
 	}
 
-	.btn-leave {
+	.live-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
 		flex-shrink: 0;
 		font-size: var(--font-2);
+		font-weight: 600;
+		color: var(--accent-9);
 		margin-left: auto;
 	}
 
 	:global(.volume) {
 		margin-left: auto;
+	}
+
+	.leave-btn {
+		flex: 1;
 	}
 
 	.controls {
@@ -798,6 +815,13 @@
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
+	}
+
+	.broadcast-controls {
+		position: sticky;
+		bottom: 0;
+		background: var(--color-interface-elevated, var(--gray-1));
+		border-top: 1px solid var(--gray-5);
 	}
 
 	.layout-controls {
