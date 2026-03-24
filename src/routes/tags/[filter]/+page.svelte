@@ -143,12 +143,15 @@
 
 	.filtermenu {
 		position: sticky;
-		top: 0.5rem;
+		top: 0;
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 		margin: 0 0 1rem;
 		z-index: 1;
+		padding-top: 0.5rem;
+		padding-bottom: 1.5rem;
+		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);
 	}
 
 	.filtermenu :global(.search-input) {
