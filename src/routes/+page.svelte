@@ -9,6 +9,7 @@
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
 	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 	import {getChannelTags, extractHashtags} from '$lib/utils'
 	import {playChannel, togglePlayPause, loadDeckView, playTrack, sortByNewest} from '$lib/api'
 	import {findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
@@ -183,8 +184,9 @@
 	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
-	const activeDecks = $derived.by(() =>
-		Object.values(appState.decks)
+	const activeDecks = $derived.by(() => {
+		void trackMetaCollection.state.size
+		return Object.values(appState.decks)
 			.filter((d) => d.playlist_track)
 			.sort((a, b) => a.id - b.id)
 			.map((deck) => {
@@ -193,9 +195,13 @@
 				const currentIdx = currentId ? tracks.indexOf(currentId) : -1
 				const nextId = currentIdx >= 0 ? tracks[currentIdx + 1] : tracks[0]
 				const getTrack = (id) => (id ? tracksCollection.state.get(id) : undefined)
-				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
+				const current = getTrack(currentId)
+				const meta = current?.media_id
+					? trackMetaCollection.state.get(trackMetaKey(current.provider, current.media_id))
+					: undefined
+				return {deck, current, next: getTrack(nextId), meta}
 			})
-	)
+	})
 	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
 
 	// Globe channels — all synced channels with coordinates
@@ -273,8 +279,20 @@
 				<div class="dashboard-group">
 					<div class="dashboard-grid">
 						{#if showBroadcastStatusWidget}
-							{#each activeDecks as { deck, current, next } (deck.id)}
-								<div class="dashboard-card dashboard-card--row broadcast-deck-card">
+							{#each activeDecks as { deck, current, next, meta } (deck.id)}
+								{@const discogsResource = /** @type {any} */ (meta?.discogs_data ?? null)}
+								{@const mbRecording = /** @type {any} */ (
+									meta?.musicbrainz_data &&
+									typeof meta.musicbrainz_data === 'object' &&
+									'recording' in meta.musicbrainz_data
+										? /** @type {any} */ (meta.musicbrainz_data).recording
+										: null
+								)}
+								{@const hasMeta = Boolean(discogsResource || mbRecording)}
+								<div
+									class="dashboard-card dashboard-card--row broadcast-deck-card"
+									class:has-meta={hasMeta}
+								>
 									<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
 									{#if deck.broadcasting_channel_id}
 										<Icon icon="cell-signal" size={14} />
@@ -285,6 +303,63 @@
 										<span class="broadcast-track-title broadcast-track-title--next"
 											>{next.title}</span
 										>
+									{/if}
+									{#if discogsResource || mbRecording}
+										<div class="broadcast-metadata">
+											{#if discogsResource}
+												{@const artist =
+													discogsResource.artists_sort ||
+													discogsResource.artists?.map((a) => a.name).join(', ') ||
+													''}
+												{@const year =
+													discogsResource.released_formatted ||
+													(discogsResource.year ? String(discogsResource.year) : '')}
+												<div class="broadcast-meta-item">
+													{#if discogsResource.thumb}
+														<img
+															class="meta-thumb"
+															src={discogsResource.thumb}
+															alt=""
+															loading="lazy"
+														/>
+													{/if}
+													<span class="meta-text">
+														{#if artist}<strong>{artist}</strong> —{/if}
+														{discogsResource.title}{#if year}<small class="meta-year">{year}</small
+															>{/if}
+													</span>
+													{#if discogsResource.uri}
+														<a
+															class="meta-badge"
+															href={discogsResource.uri}
+															target="_blank"
+															rel="noopener noreferrer"
+														>
+															<Icon icon="tag" size={10} />Discogs
+														</a>
+													{/if}
+												</div>
+											{/if}
+											{#if mbRecording}
+												{@const mbArtist = mbRecording['artist-credit']?.[0]?.artist?.name}
+												{@const mbDate = mbRecording['first-release-date']}
+												<div class="broadcast-meta-item">
+													<span class="meta-text">
+														{#if mbArtist}<strong>{mbArtist}</strong> —{/if}
+														{mbRecording.title}{#if mbDate}<small class="meta-year">{mbDate}</small
+															>{/if}
+													</span>
+													<a
+														class="meta-badge"
+														href="https://musicbrainz.org/recording/{mbRecording.id}"
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														<Icon icon="circle-info" size={10} />MusicBrainz
+													</a>
+												</div>
+											{/if}
+										</div>
 									{/if}
 								</div>
 							{/each}
@@ -847,6 +922,10 @@
 		background: var(--accent-2);
 		font-size: var(--font-2);
 		overflow: hidden;
+
+		&.has-meta {
+			flex-wrap: wrap;
+		}
 	}
 
 	.broadcast-track-title {
@@ -860,6 +939,65 @@
 	.broadcast-track-title--next {
 		opacity: 0.5;
 		flex: 0 1 auto;
+	}
+
+	.broadcast-metadata {
+		flex: 1 0 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding-top: 0.3rem;
+		border-top: 1px solid var(--accent-4);
+		margin-top: 0.1rem;
+	}
+
+	.broadcast-meta-item {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	.meta-thumb {
+		width: 28px;
+		height: 28px;
+		object-fit: cover;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	.meta-text {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--font-2);
+	}
+
+	.meta-year {
+		margin-left: 0.3rem;
+		color: light-dark(var(--gray-9), var(--gray-8));
+	}
+
+	.meta-badge {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.15rem;
+		font-size: var(--font-1);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: light-dark(var(--gray-8), var(--gray-7));
+		text-decoration: none;
+		padding: 0.1rem 0.3rem;
+		border: 1px solid var(--accent-5);
+		border-radius: 3px;
+
+		&:hover {
+			color: light-dark(var(--gray-11), var(--gray-10));
+			border-color: var(--accent-7);
+		}
 	}
 
 	.section-header {
