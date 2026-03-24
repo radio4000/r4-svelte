@@ -20,7 +20,7 @@
 	/** Map cryptic Supabase errors to user-friendly messages */
 	function friendlyAuthError(message = '') {
 		if (message.toLowerCase().includes('database error'))
-			return 'Something went wrong — please try again'
+			return 'Could not reach the server — please try again in a moment'
 		return message
 	}
 
