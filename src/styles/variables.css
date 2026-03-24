@@ -1,4 +1,6 @@
 :root {
+	color-scheme: light dark;
+
 	/* layout */
 	--scaling: 1;
 	--space-1: calc(0.2rem * var(--scaling));
