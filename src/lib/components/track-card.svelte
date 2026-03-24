@@ -400,7 +400,7 @@
 	:global(.trackcard-contextBtn) {
 		color: var(--gray-9);
 		article:hover & {
-			color: initial;
+			color: inherit;
 		}
 	}
 </style>
