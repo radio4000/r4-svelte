@@ -1,9 +1,11 @@
 <script>
 	import {eq} from '@tanstack/svelte-db'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
+	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
 	import {joinBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
@@ -36,6 +38,19 @@
 		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.slug, deck?.playlist_slug ?? ''))
 	)
 	let channel = $derived(channelQuery.data?.[0])
+
+	const broadcastQuery = useLiveQuery((q) =>
+		channel?.id
+			? q
+					.from({b: broadcastsCollection})
+					.where(({b}) => eq(b.channel_id, channel.id))
+					.findOne()
+			: q
+					.from({b: broadcastsCollection})
+					.orderBy(({b}) => b.channel_id, 'asc')
+					.limit(0)
+	)
+	let isChannelBroadcasting = $derived(Boolean(broadcastQuery.data))
 
 	let lastTrack = $state()
 	let lastChannel = $state()
@@ -124,32 +139,29 @@
 				{deck}
 				channel={headerChannel}
 				track={displayTrack}
+				isBroadcastingChannel={isChannelBroadcasting}
 				onAutoClick={() => resyncAutoRadio(deckId)}
 				onBroadcastSyncClick={() =>
 					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
 			/>
 		</div>
 		{#if displayTrack}
-			<div class="track-panel">
-				{#if trackHref}
-					<a class="track-link" href={trackHref}>
-						<TrackCard
-							track={displayTrack}
-							{deckId}
-							canEdit={canEditTrackChannel}
-							menuAlign="end"
-							menuValign="top"
-						/>
-					</a>
-				{:else}
-					<TrackCard
-						track={displayTrack}
-						{deckId}
-						canEdit={canEditTrackChannel}
-						menuAlign="end"
-						menuValign="top"
-					/>
-				{/if}
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="track-panel"
+				onclick={(e) => {
+					if (!trackHref) return
+					if (e.target instanceof Element && e.target.closest('button, a')) return
+					goto(trackHref)
+				}}
+			>
+				<TrackCard
+					track={displayTrack}
+					{deckId}
+					canEdit={canEditTrackChannel}
+					menuAlign="end"
+					menuValign="top"
+				/>
 			</div>
 		{/if}
 	</div>
@@ -257,6 +269,7 @@
 		min-width: 0;
 		width: 100%;
 		flex: 2;
+		cursor: pointer;
 	}
 
 	.avatar {
@@ -271,12 +284,6 @@
 
 	.expand {
 		flex-shrink: 0;
-	}
-
-	.track-link {
-		display: contents;
-		text-decoration: none;
-		color: inherit;
 	}
 
 	.track-panel :global(article) {
