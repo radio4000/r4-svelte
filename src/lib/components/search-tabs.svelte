@@ -15,7 +15,7 @@
 	const isChannels = $derived(page.route.id === '/search/channels')
 	const isTracks = $derived(page.route.id === '/search/tracks')
 
-	const activeIcon = $derived(isChannels ? 'cell-signal' : isTracks ? 'play-fill' : 'search')
+	const activeIcon = $derived(isChannels ? 'signal' : isTracks ? 'play-fill' : 'search')
 	const activeLabel = $derived(
 		isChannels ? m.search_tab_channels() : isTracks ? m.search_tab_tracks() : m.search_tab_all()
 	)
@@ -32,7 +32,7 @@
 			{m.search_tab_all()}
 		</a>
 		<a href={href('/search/channels')} class:active={isChannels}>
-			<Icon icon="cell-signal" />
+			<Icon icon="signal" />
 			{m.search_tab_channels()}
 		</a>
 		<a href={href('/search/tracks')} class:active={isTracks}>

@@ -44,7 +44,9 @@ describe('parseSource', () => {
 
 describe('serializeSource', () => {
 	test('channels + tags + search', () => {
-		expect(serializeSource({channels: ['alice'], tags: ['jazz'], search: 'hello'})).toBe('@alice #jazz hello')
+		expect(serializeSource({channels: ['alice'], tags: ['jazz'], search: 'hello'})).toBe(
+			'@alice #jazz hello'
+		)
 	})
 	test('empty source', () => {
 		expect(serializeSource({})).toBe('')
@@ -133,7 +135,12 @@ describe('serializeView', () => {
 })
 
 describe('round-trip: parseView ↔ serializeView', () => {
-	const cases = ['@ko002', '@ko002 #jazz', '@alice #jazz;@bob #techno', '@alice;@bob;@coco?order=shuffle&limit=100']
+	const cases = [
+		'@ko002',
+		'@ko002 #jazz',
+		'@alice #jazz;@bob #techno',
+		'@alice;@bob;@coco?order=shuffle&limit=100'
+	]
 	for (const input of cases) {
 		test(`"${input}"`, () => {
 			const view = parseView(input)
@@ -533,7 +540,12 @@ describe('normalizeView deep', () => {
 	})
 	test('multi-query: keeps populated, drops empty', () => {
 		const result = normalizeView({
-			sources: [{channels: ['alice']}, {tags: []}, {channels: ['bob'], tags: ['jazz']}, {search: ''}]
+			sources: [
+				{channels: ['alice']},
+				{tags: []},
+				{channels: ['bob'], tags: ['jazz']},
+				{search: ''}
+			]
 		})
 		expect(result).toEqual({
 			sources: [{channels: ['alice']}, {channels: ['bob'], tags: ['jazz']}]

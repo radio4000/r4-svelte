@@ -30,7 +30,8 @@ export function resolveLocales(filter) {
 
 const placeholderRegex = /\{([a-zA-Z0-9_]+)\}/g
 const jsonExtRegex = /\.json$/
-export const placeholderNames = (v) => new Set(Array.from(String(v ?? '').matchAll(placeholderRegex), (m) => m[1]))
+export const placeholderNames = (v) =>
+	new Set(Array.from(String(v ?? '').matchAll(placeholderRegex), (m) => m[1]))
 
 /** Keys missing or still identical to English */
 export function missingKeys(localeData) {

@@ -1,5 +1,12 @@
 import {tick} from 'svelte'
-import {playTrack, play, seekTo, setUserInitiatedPlay, getMediaPlayer} from '$lib/api'
+import {
+	playTrack,
+	play,
+	seekTo,
+	setUserInitiatedPlay,
+	getMediaPlayer,
+	applyRemoteState
+} from '$lib/api'
 import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
 import {logger} from '$lib/logger'
 import {sdk} from '@radio4000/sdk'
@@ -17,6 +24,20 @@ import {capture} from '$lib/analytics'
 const log = logger.ns('broadcast').seal()
 const RE_YT_PARAM = /[?&]v=([^&]+)/
 const RE_YT_SHORT = /youtu\.be\/([^?]+)/
+
+/** Extract type-validated broadcast fields for deck state */
+function pickBroadcastFields(broadcast) {
+	/** @type {Partial<import('$lib/types').Deck>} */
+	const fields = {}
+	if (broadcast.track_played_at) fields.track_played_at = broadcast.track_played_at
+	if (broadcast.seeked_at) fields.seeked_at = broadcast.seeked_at
+	if (broadcast.seek_position != null) fields.seek_position = broadcast.seek_position
+	if (typeof broadcast.volume === 'number') fields.volume = broadcast.volume
+	if (typeof broadcast.muted === 'boolean') fields.muted = broadcast.muted
+	if (typeof broadcast.is_playing === 'boolean') fields.is_playing = broadcast.is_playing
+	if (typeof broadcast.speed === 'number') fields.speed = broadcast.speed
+	return fields
+}
 
 /** Get slug for a channel ID, or short ID if not found */
 function label(channelId) {
@@ -87,7 +108,8 @@ export function notifyBroadcastState(channelId) {
 }
 
 export function getBroadcastingChannelId() {
-	return Object.values(appState.decks).find((deck) => deck.broadcasting_channel_id)?.broadcasting_channel_id
+	return Object.values(appState.decks).find((deck) => deck.broadcasting_channel_id)
+		?.broadcasting_channel_id
 }
 
 /**
@@ -109,7 +131,12 @@ export async function joinBroadcast(deckId, channelId) {
 		}
 
 		const {data} = /** @type {{data: Broadcast}} */ (
-			await sdk.supabase.from('broadcast').select('*').eq('channel_id', channelId).single().throwOnError()
+			await sdk.supabase
+				.from('broadcast')
+				.select('*')
+				.eq('channel_id', channelId)
+				.single()
+				.throwOnError()
 		)
 
 		// Prefetch all tracks for this channel
@@ -142,7 +169,9 @@ export async function joinBroadcast(deckId, channelId) {
 		}
 
 		// Set active deck to the first listener deck
-		const listenerIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+		const listenerIds = getSortedDeckIds().filter(
+			(id) => appState.decks[id]?.listening_to_channel_id === channelId
+		)
 		if (listenerIds.length) {
 			appState.active_deck_id = listenerIds[0]
 		}
@@ -189,7 +218,9 @@ export async function upsertRemoteBroadcast(channelId) {
 	const deckState = getBroadcastDeckState()
 	const firstTrackId = deckState?.[0]?.track_id ?? null
 	// track_id column is a UUID — use nil UUID for ephemeral tracks (decks JSON has the data)
-	const dbTrackId = isDbId(firstTrackId) ? /** @type {string} */ (firstTrackId) : '00000000-0000-0000-0000-000000000000'
+	const dbTrackId = isDbId(firstTrackId)
+		? /** @type {string} */ (firstTrackId)
+		: '00000000-0000-0000-0000-000000000000'
 	return sdk.supabase
 		.from('broadcast')
 		.upsert(
@@ -310,7 +341,11 @@ async function playBroadcastTrack(deckId, broadcast) {
 	if (!track) {
 		if (broadcast.track_url) {
 			const uri = broadcast.track_url
-			const ytId = uri.match(RE_YT_PARAM)?.[1] ?? uri.match(RE_YT_SHORT)?.[1] ?? broadcast.track_media_id ?? null
+			const ytId =
+				uri.match(RE_YT_PARAM)?.[1] ??
+				uri.match(RE_YT_SHORT)?.[1] ??
+				broadcast.track_media_id ??
+				null
 			const now = new Date().toISOString()
 			track = /** @type {import('$lib/types').Track} */ ({
 				id: track_id,
@@ -347,17 +382,12 @@ async function playBroadcastTrack(deckId, broadcast) {
 		await seekWhenReady(deckId, seekTime, seekJobId)
 		log.log(`seek +${seekTime}s`)
 	}
-	const deck = appState.decks[deckId]
-	if (deck) {
-		deck.listening_to_channel_id = channel_id
-		deck.listening_drifted = false
-		if (broadcast.track_played_at) deck.track_played_at = broadcast.track_played_at
-		if (broadcast.seeked_at) deck.seeked_at = broadcast.seeked_at
-		if (broadcast.seek_position != null) deck.seek_position = broadcast.seek_position
-		if (typeof broadcast.volume === 'number') deck.volume = broadcast.volume
-		if (typeof broadcast.muted === 'boolean') deck.muted = broadcast.muted
-		if (typeof broadcast.is_playing === 'boolean') deck.is_playing = broadcast.is_playing
-		if (typeof broadcast.speed === 'number') deck.speed = broadcast.speed
+	if (appState.decks[deckId]) {
+		applyRemoteState(deckId, {
+			listening_to_channel_id: channel_id,
+			listening_drifted: false,
+			...pickBroadcastFields(broadcast)
+		})
 
 		// Apply to media element — delay slightly so YouTube has time to initialize after load
 		const applyToMedia = () => {
@@ -369,7 +399,8 @@ async function playBroadcastTrack(deckId, broadcast) {
 				if (broadcast.is_playing && mediaEl.paused) mediaEl.play()
 				if (!broadcast.is_playing && !mediaEl.paused) mediaEl.pause()
 			}
-			if (typeof broadcast.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = broadcast.speed
+			if (typeof broadcast.speed === 'number' && 'playbackRate' in mediaEl)
+				mediaEl.playbackRate = broadcast.speed
 		}
 		applyToMedia()
 		// Re-apply after a short delay — YouTube resets playbackRate on video load
@@ -528,7 +559,11 @@ function startBroadcastTableListener(channelId) {
 				log.debug(`table_change @${label(channelId)}`)
 				const stateChannel = broadcastStateListeners.get(channelId)
 				if (stateChannel) {
-					stateChannel.send({type: 'broadcast', event: 'request_state', payload: {channel_id: channelId}})
+					stateChannel.send({
+						type: 'broadcast',
+						event: 'request_state',
+						payload: {channel_id: channelId}
+					})
 				}
 			}
 		)
@@ -548,14 +583,18 @@ async function applyBroadcastState(channelId, decks) {
 	if (!Array.isArray(decks) || !decks.length) return
 
 	const incomingTrackIds = new Set(decks.map((d) => d?.track_id).filter(Boolean))
-	let managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+	let managedIds = getSortedDeckIds().filter(
+		(id) => appState.decks[id]?.listening_to_channel_id === channelId
+	)
 
 	// Add managed decks if needed for this specific broadcast channel.
 	while (managedIds.length < decks.length) {
 		const deck = addDeck()
 		deck.listening_to_channel_id = channelId
 		deck.hide_queue_panel = true
-		managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+		managedIds = getSortedDeckIds().filter(
+			(id) => appState.decks[id]?.listening_to_channel_id === channelId
+		)
 	}
 
 	// Remove excess managed decks only (never touch unrelated local decks).
@@ -567,7 +606,9 @@ async function applyBroadcastState(channelId, decks) {
 		})
 		const removeId = removeIdx >= 0 ? managedIds.splice(removeIdx, 1)[0] : managedIds.pop()
 		if (removeId != null) removeDeck(removeId)
-		managedIds = getSortedDeckIds().filter((id) => appState.decks[id]?.listening_to_channel_id === channelId)
+		managedIds = getSortedDeckIds().filter(
+			(id) => appState.decks[id]?.listening_to_channel_id === channelId
+		)
 		removed = true
 	}
 
@@ -584,7 +625,9 @@ async function applyBroadcastState(channelId, decks) {
 	for (let bi = 0; bi < decks.length; bi++) {
 		const trackId = decks[bi]?.track_id
 		if (!trackId) continue
-		const match = managedIds.find((id) => !usedIds.has(id) && appState.decks[id]?.playlist_track === trackId)
+		const match = managedIds.find(
+			(id) => !usedIds.has(id) && appState.decks[id]?.playlist_track === trackId
+		)
 		if (match != null) {
 			deckForBi[bi] = match
 			usedIds.add(match)
@@ -609,20 +652,20 @@ async function applyBroadcastState(channelId, decks) {
 		const deck = appState.decks[deckId]
 		if (!deck) continue
 
-		deck.listening_to_channel_id = channelId
-		if (state?.track_played_at) deck.track_played_at = state.track_played_at
-		if (state?.seeked_at) deck.seeked_at = state.seeked_at
-		if (state?.seek_position != null) deck.seek_position = state.seek_position
-		if (typeof state?.volume === 'number') deck.volume = state.volume
-		if (typeof state?.muted === 'boolean') deck.muted = state.muted
-		if (typeof state?.is_playing === 'boolean') deck.is_playing = state.is_playing
-		if (typeof state?.speed === 'number') deck.speed = state.speed
 		if (!state?.track_id) {
-			deck.playlist_track = undefined
-			deck.is_playing = false
+			applyRemoteState(deckId, {
+				listening_to_channel_id: channelId,
+				playlist_track: undefined,
+				is_playing: false
+			})
 			continue
 		}
-		const trackChanged = deck.playlist_track !== state.track_id || deck.listening_to_channel_id !== channelId
+		applyRemoteState(deckId, {
+			listening_to_channel_id: channelId,
+			...pickBroadcastFields(state)
+		})
+		const trackChanged =
+			deck.playlist_track !== state.track_id || deck.listening_to_channel_id !== channelId
 		if (trackChanged) {
 			void playBroadcastTrack(deckId, {
 				channel_id: channelId,
@@ -648,7 +691,8 @@ async function applyBroadcastState(channelId, decks) {
 					if (state.is_playing && mediaEl.paused) mediaEl.play()
 					if (!state.is_playing && !mediaEl.paused) mediaEl.pause()
 				}
-				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl) mediaEl.playbackRate = state.speed
+				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl)
+					mediaEl.playbackRate = state.speed
 			}
 			const track = tracksCollection.get(state.track_id)
 			if (track) {

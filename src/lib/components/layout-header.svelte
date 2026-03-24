@@ -13,14 +13,21 @@
 	import InternetIndicator from '$lib/components/internet-indicator.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {appName, conceptIcons} from '$lib/config'
+	import {findAutoDecksForChannel} from '$lib/deck'
+	import {deckAccent} from '$lib/app-state.svelte'
 
 	const {preloading} = $props()
 
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
 	const isBroadcasting = $derived(
-		userChannel && Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
+		userChannel &&
+			Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
+	const autoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
+	const isAutoRadio = $derived(autoDecks.length > 0)
+	const deckIds = $derived(Object.keys(appState.decks).map(Number))
+	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 </script>
 
 <header>
@@ -30,6 +37,7 @@
 			class="btn home-link"
 			class:active={page.route.id === '/'}
 			aria-label={appName}
+			style:color={activeDeckColor}
 			{@attach tooltip({content: appName})}
 		>
 			<IconR4 />
@@ -64,6 +72,21 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
+				<AddTrackDialog />
+				<a
+					href={resolve(`/${userChannel.slug}`)}
+					class={[
+						'btn',
+						'channel-link',
+						{broadcasting: isBroadcasting, active: page.params?.slug === userChannel.slug}
+					]}
+					{@attach tooltip({
+						content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()
+					})}
+				>
+					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
+					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
+				</a>
 				{#if isBroadcasting}
 					<a
 						href={resolve(`/${userChannel.slug}`)}
@@ -74,17 +97,16 @@
 						<Icon icon="cell-signal" />
 					</a>
 				{/if}
-				<AddTrackDialog />
-				<a
-					href={resolve(`/${userChannel.slug}`)}
-					class="btn channel-link"
-					class:broadcasting={isBroadcasting}
-					class:active={page.params?.slug === userChannel.slug}
-					{@attach tooltip({content: isBroadcasting ? m.status_broadcasting() : m.header_go_to_channel()})}
-				>
-					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
-					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
-				</a>
+				{#if isAutoRadio}
+					<a
+						href={resolve(`/${userChannel.slug}`)}
+						class="btn ghost auto-btn"
+						aria-label={m.auto_radio_join()}
+						{@attach tooltip({content: m.auto_radio_join()})}
+					>
+						<Icon icon="infinite" />
+					</a>
+				{/if}
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
@@ -138,9 +160,10 @@
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
-		padding: 0.5rem;
+		padding: 0.3rem;
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
 		z-index: 50;
 	}
 
@@ -157,7 +180,8 @@
 		color: currentColor;
 	}
 
-	nav :global(.broadcasting-btn svg) {
+	nav :global(.broadcasting-btn svg),
+	nav :global(.auto-btn svg) {
 		color: var(--accent-9);
 	}
 

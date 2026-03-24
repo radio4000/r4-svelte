@@ -53,7 +53,8 @@ export function shuffleArray<T>(arr: Array<T>, rand: () => number = Math.random)
 /**
  * Regex for matching hashtags and mentions - shared across components
  */
-export const ENTITY_REGEX = /(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
+export const ENTITY_REGEX =
+	/(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
 
 /**
  * Parse text for entities (hashtags and mentions)
@@ -112,7 +113,12 @@ export function extractMentions(text: string): string[] {
  * All frequency values are rounded to one decimal place.
  * Values are generated inside a given range.
  */
-export async function generateFrequency(channelName: string, channelSlug: string, minFreq: number, maxFreq: number) {
+export async function generateFrequency(
+	channelName: string,
+	channelSlug: string,
+	minFreq: number,
+	maxFreq: number
+) {
 	// Combine the channel name and slug
 	const inputString = channelName + channelSlug
 
@@ -212,20 +218,27 @@ export function countStrings(strings: string[]): Array<{value: string; count: nu
 }
 
 /** Aggregate and count tags from an array of tracks. */
-export function getChannelTags(tracks: Array<{tags?: string[] | null}>): Array<{value: string; count: number}> {
+export function getChannelTags(
+	tracks: Array<{tags?: string[] | null}>
+): Array<{value: string; count: number}> {
 	return countStrings(tracks.flatMap((t) => t.tags ?? []))
 }
 
 /** Top channel slugs sorted by track count + recency. */
 export function getTopChannelSlugs(
-	channels: Iterable<{slug?: string | null; track_count?: number | null; latest_track_at?: string | null}>,
+	channels: Iterable<{
+		slug?: string | null
+		track_count?: number | null
+		latest_track_at?: string | null
+	}>,
 	limit: number
 ): string[] {
 	return [...channels]
 		.filter((c) => c?.slug)
 		.toSorted(
 			(a, b) =>
-				(b.track_count ?? 0) - (a.track_count ?? 0) || (b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
+				(b.track_count ?? 0) - (a.track_count ?? 0) ||
+				(b.latest_track_at ?? '').localeCompare(a.latest_track_at ?? '')
 		)
 		.slice(0, limit)
 		.map((c) => c.slug as string)
@@ -275,14 +288,19 @@ export function formatDay(iso: string): string {
 }
 
 /** Group an array of tracks by creation day, returning [{label, tracks}]. */
-export function groupByDay<T extends {created_at?: string | null}>(tracks: T[]): {label: string; tracks: T[]}[] {
+export function groupByDay<T extends {created_at?: string | null}>(
+	tracks: T[]
+): {label: string; tracks: T[]}[] {
 	const map = new Map<string, T[]>()
 	for (const track of tracks) {
 		const day = track.created_at?.slice(0, 10) ?? ''
 		if (!map.has(day)) map.set(day, [])
 		map.get(day)?.push(track)
 	}
-	return Array.from(map.entries(), ([day, items]) => ({label: day ? formatDay(day) : '—', tracks: items}))
+	return Array.from(map.entries(), ([day, items]) => ({
+		label: day ? formatDay(day) : '—',
+		tracks: items
+	}))
 }
 
 /** Deduplicate an array of objects by their `id` field, keeping the first occurrence. */
@@ -323,7 +341,10 @@ export interface TagGraphOptions {
  * Nodes are tags (raw strings, no `#` prefix). Edges connect tags that appear on the same track.
  * Edge weight = number of tracks where both tags appear together.
  */
-export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?: TagGraphOptions): TagGraph {
+export function buildTagGraph(
+	tracks: Array<{tags?: string[] | null}>,
+	options?: TagGraphOptions
+): TagGraph {
 	const {minEdgeWeight = 2, maxTags = 500, maxEdgesPerNode = 20} = options ?? {}
 
 	// Count tags
@@ -346,7 +367,9 @@ export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?:
 	// Co-occurrence edge weights
 	const edgeWeights: Record<string, number> = {}
 	for (const track of tracks) {
-		const tags = [...new Set((track.tags ?? []).map((t) => t.toLowerCase()).filter((t) => topTagSet.has(t)))]
+		const tags = [
+			...new Set((track.tags ?? []).map((t) => t.toLowerCase()).filter((t) => topTagSet.has(t)))
+		]
 		for (let i = 0; i < tags.length; i++) {
 			for (let j = i + 1; j < tags.length; j++) {
 				const a = tags[i] < tags[j] ? tags[i] : tags[j]
@@ -390,7 +413,12 @@ export function buildTagGraph(tracks: Array<{tags?: string[] | null}>, options?:
 /**
  * Generic fuzzy search (fuzzysort wrapper).
  */
-export function fuzzySearch<T>(query: string, items: T[], keys: string[], {limit = 100, threshold = 0.5} = {}): T[] {
+export function fuzzySearch<T>(
+	query: string,
+	items: T[],
+	keys: string[],
+	{limit = 100, threshold = 0.5} = {}
+): T[] {
 	if (!query?.trim()) return items
 	return fuzzysort.go(query, items, {keys, limit, threshold}).map((r) => r.obj)
 }

@@ -65,11 +65,15 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 			sortKey: 'default'
 		}
 	}
-	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined
-	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as string[] | undefined
-	const trackCountGte = options.filters.find((f) => f.field[0] === 'track_count' && f.operator === 'gte')?.value as
-		| number
+	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as
+		| string
 		| undefined
+	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as
+		| string[]
+		| undefined
+	const trackCountGte = options.filters.find(
+		(f) => f.field[0] === 'track_count' && f.operator === 'gte'
+	)?.value as number | undefined
 	const imageNotNull = options.filters.some(
 		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
 	)
@@ -94,7 +98,8 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 export const channelsCollection = createCollection<Channel, string>({
 	...queryCollectionOptions({
 		queryKey: (opts) => {
-			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey, offset} = parseChannelParams(opts)
+			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey, offset} =
+				parseChannelParams(opts)
 			if (slug) return ['channels', slug]
 			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
 			// Include limit+offset so different pages get separate cache entries.
@@ -134,30 +139,55 @@ export const channelsCollection = createCollection<Channel, string>({
 			// Local imported channels are not in Supabase — serve them from appState directly
 			if (p.idIn) {
 				const localIds = new Set(appState.local_channel_ids ?? [])
-				const localMatches = (appState.local_channels ?? []).filter((c) => p.idIn?.includes(c.id) && localIds.has(c.id))
+				const localMatches = (appState.local_channels ?? []).filter(
+					(c) => p.idIn?.includes(c.id) && localIds.has(c.id)
+				)
 				const remoteIds = p.idIn.filter((id) => !localIds.has(id))
 				if (!remoteIds.length) return localMatches
 				let idQuery = sdk.supabase
 					.from(p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks')
 					.select('*')
 					.in('id', remoteIds)
-				if (!p.shuffle) idQuery = idQuery.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
+				if (!p.shuffle)
+					idQuery = idQuery.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
 				const {data, error} = await idQuery.limit(remoteIds.length)
 				if (error) throw error
 				return [...localMatches, ...(data || [])] as Channel[]
 			}
-			log.info('channels queryFn', p)
-			const limit = ctx.meta?.loadSubsetOptions?.limit ?? (p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE)
+			const limit =
+				ctx.meta?.loadSubsetOptions?.limit ?? (p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE)
+
+			// Find the largest cached result for this query shape (same filters/sort, smaller limit).
+			// This avoids re-fetching rows we already have when the limit grows (pagination).
+			const baseKey: (string | number)[] = ['channels']
+			if (p.coordinatesNotNull) baseKey.push('geo')
+			if (p.imageNotNull && p.trackCountGte) baseKey.push('artwork')
+			else if (p.trackCountGte) baseKey.push('minTracks', p.trackCountGte)
+			let cached: Channel[] = []
+			const queries = queryClient.getQueriesData<Channel[]>({queryKey: baseKey})
+			for (const [, data] of queries) {
+				if (data && data.length > cached.length && data.length <= limit) {
+					cached = data
+				}
+			}
+			if (cached.length >= limit) {
+				log.info('channels queryFn (cached)', {limit, cached: cached.length})
+				return cached.slice(0, limit)
+			}
+
+			const fetchFrom = cached.length
+			log.info('channels queryFn', {limit, fetchFrom, cached: cached.length})
 			const view = p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
 			let query = sdk.supabase.from(view).select('*')
 			if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
 			if (p.imageNotNull) query = query.not('image', 'is', null)
-			if (p.coordinatesNotNull) query = query.not('latitude', 'is', null).not('longitude', 'is', null)
+			if (p.coordinatesNotNull)
+				query = query.not('latitude', 'is', null).not('longitude', 'is', null)
 			if (!p.shuffle) query = query.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
-			query = query.range(p.offset ?? 0, (p.offset ?? 0) + limit - 1)
+			query = query.range(fetchFrom, limit - 1)
 			const {data, error} = await query
 			if (error) throw error
-			return (data ?? []) as Channel[]
+			return [...cached, ...(data ?? [])] as Channel[]
 		}
 	}),
 	onInsert: async ({transaction}) => {
@@ -173,7 +203,10 @@ export const channelsCollection = createCollection<Channel, string>({
 		if (!capabilities.mutations) return
 		log.info('channels onUpdate', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
-			const serverChannel = await handleChannelUpdate(m.modified.id, m.changes as Record<string, unknown>)
+			const serverChannel = await handleChannelUpdate(
+				m.modified.id,
+				m.changes as Record<string, unknown>
+			)
 			if (serverChannel) {
 				log.info('channels onUpdate writeUpsert', {id: serverChannel.id})
 				channelsCollection.utils.writeUpsert(serverChannel)
@@ -193,7 +226,10 @@ export const channelsCollection = createCollection<Channel, string>({
 	}
 })
 
-async function handleChannelInsert(channel: Channel, metadata: Record<string, unknown>): Promise<void> {
+async function handleChannelInsert(
+	channel: Channel,
+	metadata: Record<string, unknown>
+): Promise<void> {
 	const userId = metadata.userId as string
 	if (!userId) throw new Error('userId required in transaction metadata')
 	log.info('channel_insert_start', {id: channel.id, name: channel.name})
@@ -214,7 +250,10 @@ async function handleChannelInsert(channel: Channel, metadata: Record<string, un
 	}
 }
 
-async function handleChannelUpdate(id: string, changes: Record<string, unknown>): Promise<Channel | null> {
+async function handleChannelUpdate(
+	id: string,
+	changes: Record<string, unknown>
+): Promise<Channel | null> {
 	const actualChanges = {...changes}
 	delete actualChanges.updated_at
 	if (Object.keys(actualChanges).length === 0) {
@@ -235,7 +274,11 @@ async function handleChannelDelete(id: string): Promise<void> {
 	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
-export function createChannel(input: {name: string; slug: string; description?: string}): Promise<Channel> {
+export function createChannel(input: {
+	name: string
+	slug: string
+	description?: string
+}): Promise<Channel> {
 	const userId = appState.user?.id
 	if (!userId) throw new Error('Must be signed in to create a channel')
 
@@ -254,7 +297,9 @@ export function createChannel(input: {name: string; slug: string; description?: 
 		favorites: null,
 		followers: null
 	}
-	return channelsCollection.insert(channel, {metadata: {userId}}).isPersisted.promise.then(() => channel)
+	return channelsCollection
+		.insert(channel, {metadata: {userId}})
+		.isPersisted.promise.then(() => channel)
 }
 
 export function updateChannel(id: string, changes: Record<string, unknown>) {

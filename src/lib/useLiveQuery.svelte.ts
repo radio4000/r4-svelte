@@ -45,7 +45,8 @@ function isCollectionInstance(value: unknown): boolean {
 
 type MaybeGetter<T> = T | (() => T)
 
-let queryCounter = 0
+/** Collections created by useLiveQuery that should be cleaned up when replaced */
+const ownedCollections = new WeakSet<object>()
 
 // Overloads matching @tanstack/svelte-db
 export function useLiveQuery<TContext extends Context>(
@@ -60,17 +61,21 @@ export function useLiveQuery<TContext extends Context>(
 	config: LiveQueryCollectionConfig<TContext>,
 	deps?: Array<() => unknown>
 ): UseLiveQueryReturn<GetResult<TContext>, InferResultType<TContext>>
-export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+export function useLiveQuery<
+	TResult extends object,
+	TKey extends string | number,
+	TUtils extends Record<string, any>
+>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & NonSingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, Array<TResult>>
-export function useLiveQuery<TResult extends object, TKey extends string | number, TUtils extends Record<string, any>>(
+export function useLiveQuery<
+	TResult extends object,
+	TKey extends string | number,
+	TUtils extends Record<string, any>
+>(
 	liveQueryCollection: MaybeGetter<Collection<TResult, TKey, TUtils> & SingleResult>
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
 export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
-	const id = ++queryCounter
-	let tCreateCollection: number | undefined
-	let tSyncData: number | undefined
-
 	const collection = $derived.by(() => {
 		let unwrappedParam = configOrQueryOrCollection
 		try {
@@ -80,7 +85,10 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			// but query callbacks ((q) => ...) may return null or throw when q is undefined.
 			// Without this guard, a callback like (q) => { if (!enabled) return null; ... }
 			// would set unwrappedParam to null, bypassing the function branch entirely.
-			if (potentiallyUnwrapped !== configOrQueryOrCollection && isCollectionInstance(potentiallyUnwrapped)) {
+			if (
+				potentiallyUnwrapped !== configOrQueryOrCollection &&
+				isCollectionInstance(potentiallyUnwrapped)
+			) {
 				unwrappedParam = potentiallyUnwrapped
 			}
 		} catch {
@@ -99,7 +107,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 
 		if (typeof unwrappedParam === `function`) {
 			const queryBuilder = new BaseQueryBuilder()
-			const result = untrack(() => unwrappedParam(queryBuilder))
+			const result = unwrappedParam(queryBuilder)
 			if (result === undefined || result === null) {
 				return null
 			}
@@ -114,34 +122,31 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 
 			// Callback returned a QueryBuilder — wrap in live query collection
 			if (result instanceof BaseQueryBuilder) {
-				const t1 = performance.now()
 				const lqc = createLiveQueryCollection({
 					query: unwrappedParam,
 					startSync: true
 				})
-				tCreateCollection = performance.now() - t1
+				ownedCollections.add(lqc)
 				return lqc
 			}
 
 			// Callback returned a config object
 			if (typeof result === `object`) {
-				const t1 = performance.now()
 				const lqc = createLiveQueryCollection({
 					...result,
 					startSync: true
 				})
-				tCreateCollection = performance.now() - t1
+				ownedCollections.add(lqc)
 				return lqc
 			}
 
 			return null
 		} else {
-			const t1 = performance.now()
 			const lqc = createLiveQueryCollection({
 				...unwrappedParam,
 				startSync: true
 			})
-			tCreateCollection = performance.now() - t1
+			ownedCollections.add(lqc)
 			return lqc
 		}
 	})
@@ -150,11 +155,9 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	let status = $state('disabled')
 
 	const syncDataFromCollection = (currentCollection) => {
-		const t1 = performance.now()
 		untrack(() => {
 			internalData = [...currentCollection.values()]
 		})
-		tSyncData = performance.now() - t1
 	}
 
 	let currentUnsubscribe: (() => void) | null = null
@@ -182,17 +185,10 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 
 		// Initial sync
 		syncDataFromCollection(currentCollection)
-		const count = untrack(() => internalData.length)
 
 		currentCollection.onFirstReady(() => {
 			syncDataFromCollection(currentCollection)
 			status = currentCollection.status
-			log.debug(`#${id} ready`, {
-				items: count,
-				createCollection: `${tCreateCollection?.toFixed(2)}ms`,
-				initState: 'REMOVED',
-				syncData: `${tSyncData?.toFixed(2)}ms`
-			})
 		})
 
 		const subscription = currentCollection.subscribeChanges(
@@ -219,6 +215,12 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			if (currentUnsubscribe) {
 				currentUnsubscribe()
 				currentUnsubscribe = null
+			}
+			// Clean up live query collections we created — stops their d2ts pipeline
+			// and pending onFirstReady callbacks, preventing stale re-renders.
+			if (currentCollection && ownedCollections.has(currentCollection)) {
+				ownedCollections.delete(currentCollection)
+				currentCollection.cleanup()
 			}
 		}
 	})

@@ -12,5 +12,5 @@ export async function load({params}) {
 	const slug = params.slug || 'index'
 	const html = await loadDoc(slug)
 	if (!html) error(404, `Doc not found: ${slug}.md`)
-	return {html, slug}
+	return {slug}
 }

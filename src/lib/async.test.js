@@ -5,7 +5,9 @@ test('basic chunking and concurrency', async () => {
 	const items = [1, 2, 3, 4, 5]
 	const results = []
 
-	for await (const result of mapChunked(items, async (chunk) => chunk.map((x) => x * 2), {chunk: 2})) {
+	for await (const result of mapChunked(items, async (chunk) => chunk.map((x) => x * 2), {
+		chunk: 2
+	})) {
 		results.push(result)
 	}
 

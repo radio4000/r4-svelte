@@ -3,125 +3,107 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Tag from '$lib/components/tag.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
+	import {deckTitle} from '$lib/deck'
+	import {extractHashtags} from '$lib/utils'
 	import * as m from '$lib/paraglide/messages'
 
-	/**
-	 * @typedef {{label: string, href?: string}} HeaderTag
-	 */
+	/** @typedef {import('$lib/types').Deck} Deck */
+	/** @typedef {import('$lib/types').Channel} Channel */
+	/** @typedef {import('$lib/types').Track} Track */
 
 	/**
 	 * @type {{
-	 *  title?: string
-	 *  titleHref?: string
+	 *  deck?: Deck
+	 *  channel?: Channel
+	 *  track?: Track
 	 *  titleElement?: string
 	 *  titleClass?: string
-	 *  isPlaying?: boolean
-	 *  isBroadcasting?: boolean
-	 *  slug?: string
-	 *  slugHref?: string
-	 *  tags?: HeaderTag[]
-	 *  showAutoButton?: boolean
-	 *  autoGhost?: boolean
-	 *  autoTitle?: string
+	 *  isBroadcastingChannel?: boolean
 	 *  onAutoClick?: (() => void) | undefined
-	 *  listeningWhoSlug?: string
-	 *  listeningWhoHref?: string
-	 *  listeningWhomSlug?: string
-	 *  listeningWhomHref?: string
-	 *  showBroadcastSync?: boolean
-	 *  broadcastSyncDrifted?: boolean
-	 *  broadcastSyncTitle?: string
 	 *  onBroadcastSyncClick?: (() => void) | undefined
 	 *  presenceCount?: number
 	 * }}
 	 */
 	let {
-		title,
-		titleHref,
+		deck,
+		channel,
+		track,
 		titleElement = 'h3',
 		titleClass = '',
-		isPlaying = false,
-		isBroadcasting = false,
-		slug,
-		slugHref,
-		tags = [],
-		showAutoButton = false,
-		autoGhost = false,
-		autoTitle = 'Auto radio',
+		isBroadcastingChannel = false,
 		onAutoClick,
-		listeningWhoSlug,
-		listeningWhoHref,
-		listeningWhomSlug,
-		listeningWhomHref,
-		showBroadcastSync = false,
-		broadcastSyncDrifted = false,
-		broadcastSyncTitle = 'Sync broadcast',
 		onBroadcastSyncClick,
 		presenceCount = 0
 	} = $props()
 
-	const hasListeningPair = $derived(Boolean(listeningWhoSlug))
-	const hasDistinctWhom = $derived(Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug))
-	const titleClassNames = $derived(['title-row', titleClass, isPlaying ? 'active' : ''].filter(Boolean).join(' '))
+	const derivedTitle = $derived(deckTitle(deck, channel?.name))
+	const slug = $derived(deck?.playlist_slug)
+	const isPlaying = $derived(Boolean(deck?.is_playing))
+	const isBroadcasting = $derived(
+		Boolean(deck?.broadcasting_channel_id && deck.broadcasting_channel_id === channel?.id)
+	)
+	const showAutoButton = $derived(Boolean(deck?.auto_radio))
+	const isListening = $derived(Boolean(deck?.listening_to_channel_id))
+	const listeningWhoSlug = $derived(isListening ? channel?.slug : undefined)
+	const listeningWhomSlug = $derived(isListening ? track?.slug || deck?.playlist_slug : undefined)
+	const broadcastSyncDrifted = $derived(Boolean(deck?.listening_drifted))
+	const broadcastSyncTitle = $derived(
+		broadcastSyncDrifted ? m.player_sync_broadcast() : m.player_broadcast_synced()
+	)
+	const autoTitle = $derived(deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join())
+	const derivedTags = $derived(
+		extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
+			label: tag,
+			href: slug ? `/${slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}` : undefined
+		}))
+	)
+
+	const hasDistinctWhom = $derived(
+		Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug)
+	)
+	const titleClassNames = $derived(
+		['title-row', titleClass, isPlaying ? 'active' : ''].filter(Boolean).join(' ')
+	)
 </script>
 
 <div class="deck-channel-header">
 	<svelte:element this={titleElement} class={titleClassNames}>
-		{#if titleHref}
-			<a href={titleHref} class="title-link">{title}</a>
+		{#if slug}
+			<a href="/{slug}" class="title-link">{derivedTitle}</a>
 		{:else}
-			<span class="title-link">{title}</span>
-		{/if}
-		{#if isBroadcasting}
-			<span class="channel-badge live-pill" title={m.status_broadcasting()} aria-label={m.status_broadcasting()}>
-				<Icon icon="cell-signal" size={14} />
-				{m.status_live_short()}
-			</span>
+			<span class="title-link">{derivedTitle}</span>
 		{/if}
 	</svelte:element>
 
 	<div class="meta-row">
-		{#if hasListeningPair}
-			{#if listeningWhoHref}
-				<a class="slug-link" href={listeningWhoHref}>@{listeningWhoSlug}</a>
-			{:else}
-				<span class="slug-link">@{listeningWhoSlug}</span>
-			{/if}
-			{#if showBroadcastSync}
-				{#if onBroadcastSyncClick}
-					<button
-						type="button"
-						class="channel-badge sync-icon"
-						class:synced={!broadcastSyncDrifted}
-						class:drifted={broadcastSyncDrifted}
-						title={broadcastSyncTitle}
-						aria-label={broadcastSyncTitle}
-						onclick={onBroadcastSyncClick}
-					>
-						<Icon icon="cell-signal" size={14} />
-					</button>
-				{:else}
-					<span class="channel-badge sync-icon" title={broadcastSyncTitle} aria-label={broadcastSyncTitle}>
-						<Icon icon="cell-signal" size={14} />
-					</span>
-				{/if}
+		{#if listeningWhoSlug}
+			<a class="slug-link" href="/{listeningWhoSlug}">@{listeningWhoSlug}</a>
+			{#if onBroadcastSyncClick}
+				<button
+					type="button"
+					class={[
+						'channel-badge',
+						'sync-icon',
+						{synced: !broadcastSyncDrifted, drifted: broadcastSyncDrifted}
+					]}
+					title={broadcastSyncTitle}
+					aria-label={broadcastSyncTitle}
+					onclick={onBroadcastSyncClick}
+				>
+					<Icon icon="signal" size={14} />
+				</button>
 			{/if}
 			{#if hasDistinctWhom}
-				{#if listeningWhomHref}
-					<a class="slug-link" href={listeningWhomHref}>@{listeningWhomSlug}</a>
-				{:else}
-					<span class="slug-link">@{listeningWhomSlug}</span>
-				{/if}
+				<a class="slug-link" href="/{listeningWhomSlug}">@{listeningWhomSlug}</a>
 			{/if}
 		{:else if slug}
-			{#if slugHref}
-				<a class="slug-link" href={slugHref}>@{slug}</a>
-			{:else}
-				<span class="slug-link">@{slug}</span>
+			<a class="slug-link" href="/{slug}">@{slug}</a>
+			{#if isBroadcasting || isBroadcastingChannel}
+				<Icon icon="cell-signal" size={12} class="broadcasting-icon" />
 			{/if}
 		{/if}
 
-		{#each tags as tag (tag.label)}
+		{#each derivedTags as tag (tag.label)}
 			{#if tag.href}
 				<Tag href={tag.href} value={tag.label}>{tag.label}</Tag>
 			{:else}
@@ -131,8 +113,8 @@
 
 		{#if showAutoButton}
 			<AutoRadioButton
-				className="auto-btn"
-				synced={autoGhost}
+				className="auto-btn active"
+				synced={!!deck?.is_playing && !deck?.auto_radio_drifted}
 				title={autoTitle}
 				ariaLabel={autoTitle}
 				size={14}
@@ -170,10 +152,8 @@
 		min-width: 0;
 	}
 
-	.live-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.2rem;
+	:global(.broadcasting-icon) {
+		color: var(--accent-9);
 		flex-shrink: 0;
 	}
 

@@ -2,7 +2,6 @@
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
-	import {setScene} from '$lib/scene-state.svelte'
 	import {appName} from '$lib/config'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -10,8 +9,6 @@
 	import * as m from '$lib/paraglide/messages'
 	import {repoBlobUrl, repoUrl, repoCommitUrl} from '$lib/repo'
 	import BackLink from '$lib/components/back-link.svelte'
-
-	setScene({geometry: 'torus', backgroundColor: 'oklch(12% 0.03 30)', cameraPosition: [0, 1, 5]})
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')
@@ -34,7 +31,9 @@
 	<menu class="nav-vertical">
 		{#if userChannel}
 			<a href={resolve(`/${userChannel.slug}`)}>
-				<span class="channel-avatar"><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span>
+				<span class="channel-avatar"
+					><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
+				>
 				{userChannel.name}
 				<small>@{userChannel.slug}</small>
 			</a>

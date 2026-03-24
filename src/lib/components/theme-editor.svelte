@@ -2,6 +2,13 @@
 	import {Debounced} from 'runed'
 	import {appState} from '$lib/app-state.svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
+	import {
+		fontFamilies,
+		baseColors,
+		overrides,
+		grays,
+		accents
+	} from '$lib/components/theme-editor.data'
 	import InputColor from '$lib/components/input-color.svelte'
 	import InputRange from '$lib/components/input-range.svelte'
 	import ThemeToggle from '$lib/components/theme-toggle.svelte'
@@ -11,78 +18,6 @@
 	const log = logger.ns('theme').seal()
 
 	const uid = $props.id()
-
-	const fontFamilies = [
-		{value: '', label: 'Firava (default)'},
-		{value: 'Rosario', label: 'Rosario'},
-		{value: 'Radio Canada', label: 'Radio Canada'},
-		{value: 'Recursive', label: 'Recursive'},
-		{value: 'Epilogue', label: 'Epilogue'},
-		{value: 'Sono', label: 'Sono'},
-		{value: 'system-ui', label: 'System'}
-	]
-
-	const baseColors = [
-		{
-			name: '--accent-light',
-			label: () => m.theme_color_accent_light_label(),
-			description: () => m.theme_color_accent_desc(),
-			default: 'oklch(0.5 0.25 290)',
-			theme: 'light'
-		},
-		{
-			name: '--accent-dark',
-			label: () => m.theme_color_accent_dark_label(),
-			description: () => m.theme_color_accent_desc(),
-			default: 'oklch(0.8 0.14 222)',
-			theme: 'dark'
-		},
-		{
-			name: '--gray-light',
-			label: () => m.theme_color_gray_label(),
-			description: () => m.theme_color_gray_desc(),
-			default: 'oklch(0.67 0.01 0)',
-			theme: 'light'
-		},
-		{
-			name: '--gray-dark',
-			label: () => m.theme_color_gray_label(),
-			description: () => m.theme_color_gray_desc(),
-			default: 'oklch(0.67 0.005 0)',
-			theme: 'dark'
-		}
-	]
-
-	const overrides = [
-		{
-			name: '--button-bg-light',
-			label: () => m.theme_override_button_bg_label_light(),
-			description: () => m.theme_override_button_bg_desc(),
-			default: '#fff',
-			theme: 'light'
-		},
-		{
-			name: '--button-bg-dark',
-			label: () => m.theme_override_button_bg_label_dark(),
-			description: () => m.theme_override_button_bg_desc(),
-			default: '#000',
-			theme: 'dark'
-		},
-		{
-			name: '--button-color-light',
-			label: () => m.theme_override_button_color_label_light(),
-			description: () => m.theme_override_button_text_desc(),
-			default: '#000',
-			theme: 'light'
-		},
-		{
-			name: '--button-color-dark',
-			label: () => m.theme_override_button_color_label_dark(),
-			description: () => m.theme_override_button_text_desc(),
-			default: '#fff',
-			theme: 'dark'
-		}
-	]
 
 	/** @type {{name: string, value: string} | null} */
 	let pendingUpdate = $state(null)
@@ -163,9 +98,6 @@
 			log.error('import theme failed', {error})
 		}
 	}
-
-	const grays = Array.from(Array(12).keys(), (i) => `--gray-${i + 1}`)
-	const accents = Array.from(Array(12).keys(), (i) => `--accent-${i + 1}`)
 </script>
 
 <div class="focused constrained">
@@ -197,8 +129,11 @@
 				<label for={`${uid}--border-radius`}>{m.theme_corners_label()}</label>
 				<input
 					type="checkbox"
-					checked={customVariables['--border-radius'] ? customVariables['--border-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
+					checked={customVariables['--border-radius']
+						? customVariables['--border-radius'] !== '0'
+						: true}
+					onchange={(e) =>
+						updateVariable('--border-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--border-radius`}
 				/>
 			</fieldset>
@@ -207,20 +142,31 @@
 				<label for={`${uid}--media-radius`}>{m.theme_artwork_label()}</label>
 				<input
 					type="checkbox"
-					checked={customVariables['--media-radius'] ? customVariables['--media-radius'] !== '0' : true}
-					onchange={(e) => updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
+					checked={customVariables['--media-radius']
+						? customVariables['--media-radius'] !== '0'
+						: true}
+					onchange={(e) =>
+						updateVariable('--media-radius', e.currentTarget.checked ? '0.4rem' : '0')}
 					id={`${uid}--media-radius`}
 				/>
 			</fieldset>
 
 			<fieldset>
 				<label for={`${uid}-hide-artwork`}>{m.theme_hide_artwork_label()}</label>
-				<input type="checkbox" bind:checked={appState.hide_track_artwork} id={`${uid}-hide-artwork`} />
+				<input
+					type="checkbox"
+					bind:checked={appState.hide_track_artwork}
+					id={`${uid}-hide-artwork`}
+				/>
 			</fieldset>
 
 			<fieldset>
 				<label for={`${uid}-pointer-cursor`}>{m.theme_pointer_cursor_label()}</label>
-				<input type="checkbox" bind:checked={appState.use_pointer_cursor} id={`${uid}-pointer-cursor`} />
+				<input
+					type="checkbox"
+					bind:checked={appState.use_pointer_cursor}
+					id={`${uid}-pointer-cursor`}
+				/>
 			</fieldset>
 
 			<fieldset>
@@ -267,7 +213,9 @@
 				</fieldset>
 			{/each}
 
-			<button type="button" onclick={resetToDefaults} style:align-self="start">{m.theme_reset_button()}</button>
+			<button type="button" onclick={resetToDefaults} style:align-self="start"
+				>{m.theme_reset_button()}</button
+			>
 		</form>
 	</section>
 
@@ -281,8 +229,15 @@
 			</fieldset>
 			<fieldset>
 				<label for="{uid}-import" class="visually-hidden">{m.theme_apply_button()}</label>
-				<input id="{uid}-import" type="text" bind:value={importText} placeholder={m.theme_import_placeholder()} />
-				<button type="button" onclick={importTheme} disabled={!importText.trim()}>{m.theme_apply_button()}</button>
+				<input
+					id="{uid}-import"
+					type="text"
+					bind:value={importText}
+					placeholder={m.theme_import_placeholder()}
+				/>
+				<button type="button" onclick={importTheme} disabled={!importText.trim()}
+					>{m.theme_apply_button()}</button
+				>
 			</fieldset>
 		</form>
 	</section>
@@ -345,5 +300,30 @@
 
 	.inactive {
 		display: none;
+	}
+
+	.color-grid {
+		display: grid;
+		grid-template-columns: repeat(12, 1fr);
+		/*grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));*/
+		gap: 0.2rem;
+		margin: 0.5rem;
+
+		figure {
+			height: 4rem;
+		}
+
+		code {
+			font-size: var(--font-3);
+			font-family: inherit;
+			padding: 0.2rem;
+		}
+	}
+
+	.color-swatch {
+		border: 1px solid var(--gray-4);
+		border-radius: var(--border-radius);
+		overflow: hidden;
+		background: var(--gray-2);
 	}
 </style>

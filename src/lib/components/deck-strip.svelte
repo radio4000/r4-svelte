@@ -1,8 +1,7 @@
 <script>
 	import {page} from '$app/state'
-	import {scale} from 'svelte/transition'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import Deck from '$lib/components/deck.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -11,11 +10,17 @@
 			.map(Number)
 			.sort((a, b) => a - b)
 	)
-	let listeningDeckIds = $derived(deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id)))
+	let listeningDeckIds = $derived(
+		deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
-	let allDecksCompact = $derived(deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact))
+	let allDecksCompact = $derived(
+		deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact)
+	)
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
-	let hasHistory = $derived(playHistoryCollection.state.size > 0)
+	let hasHistory = $derived(
+		[...captureEventsCollection.state.values()].some((e) => e.event === 'player:track_play')
+	)
 	let visibleDeckIds = $derived.by(() =>
 		deckIds.filter((id) => {
 			const deck = appState.decks[id]
@@ -25,9 +30,6 @@
 		})
 	)
 	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
-	const deckTransitionMs = 200
-	const deckExitMs = 0
-	const deckScaleStart = 0.95
 </script>
 
 <aside
@@ -41,12 +43,7 @@
 	{#if localDeckIds.length}
 		<section class="local">
 			{#each localDeckIds as deckId (deckId)}
-				<div
-					class="deck-item"
-					style:--deck-accent={deckAccent(deckIds, deckId)}
-					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
-					out:scale={{start: deckScaleStart, duration: deckExitMs}}
-				>
+				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 					<Deck {deckId} />
 				</div>
 			{/each}
@@ -55,12 +52,7 @@
 	{#if listeningDeckIds.length}
 		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
 			{#each listeningDeckIds as deckId (deckId)}
-				<div
-					class="deck-item"
-					style:--deck-accent={deckAccent(deckIds, deckId)}
-					in:scale={{start: deckScaleStart, duration: deckTransitionMs}}
-					out:scale={{start: deckScaleStart, duration: deckExitMs}}
-				>
+				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 					<Deck {deckId} />
 				</div>
 			{/each}
@@ -75,9 +67,9 @@
 		gap: 0.3rem;
 		flex-shrink: 0;
 		min-height: 0;
-		height: 100%;
 		overflow-x: auto;
 		overflow-y: hidden;
+		margin: var(--interface-margin);
 
 		&:empty {
 			display: none;
@@ -106,14 +98,19 @@
 			display: flex;
 			flex-direction: column;
 			min-height: 0;
+			height: 100%;
 			overflow-y: auto;
 			flex: 0 0 auto;
-			min-width: min(36rem, 45vw);
+			min-width: min-content;
 
 			:global(.deck.listening) {
-				width: 100%;
 				min-width: 0;
 				flex: 1 1 auto;
+			}
+
+			.deck-item {
+				flex: 1 1 auto;
+				min-width: 0;
 			}
 		}
 
@@ -182,7 +179,9 @@
 				min-height: 0;
 
 				/* grow to fill available height when any deck has visible content */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 100%;
 				}
@@ -194,7 +193,9 @@
 				min-width: 0;
 
 				/* sections with fill decks share the strip height */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 0;
 				}
@@ -206,7 +207,9 @@
 				min-width: 0;
 
 				/* sections with fill decks share the strip height */
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 					min-height: 0;
 				}
@@ -217,7 +220,9 @@
 				flex: 0 1 auto;
 				min-height: 0;
 
-				&:has(:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))) {
+				&:has(
+					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+				) {
 					flex: 1 1 0;
 				}
 			}

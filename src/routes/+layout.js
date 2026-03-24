@@ -10,7 +10,7 @@ import {channelsCollection} from '$lib/collections/channels'
 import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
 import {broadcastsCollection} from '$lib/collections/broadcasts'
 import {followsCollection} from '$lib/collections/follows'
-import {playHistoryCollection} from '$lib/collections/play-history'
+import {captureEventsCollection} from '$lib/collections/capture-events'
 import {cacheReady} from '$lib/query-cache-persistence'
 import {collectionsHydrated} from '$lib/collection-persistence'
 import {appState} from '$lib/app-state.svelte'
@@ -31,7 +31,10 @@ export async function load() {
 		await cacheReady
 	}
 
-	const embedMode = !!(appMode === 'embed' || (browser && EMBED_HOSTS.includes(window.location.hostname)))
+	const embedMode = !!(
+		appMode === 'embed' ||
+		(browser && EMBED_HOSTS.includes(window.location.hostname))
+	)
 
 	return {
 		embedMode,
@@ -83,7 +86,7 @@ async function preload() {
 			broadcastsCollection,
 			followsCollection,
 			spamDecisionsCollection,
-			playHistoryCollection,
+			captureEventsCollection,
 			queue,
 			api
 		}

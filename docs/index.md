@@ -1,18 +1,9 @@
-# Radio4000 "v3 aka r4-sync-tests aka r5" documentation
+# Docs
 
-Hello! These docs are mostly meant for internal development.
+Internal development docs for Radio4000 r5 — a SvelteKit + Svelte 5 frontend using [@radio4000/sdk](radio4000-sdk.md) and [TanStack DB](tanstack.md).
 
-This repo contains a front-end for Radio4000. It primarily relies on SvelteKit + Svelte 5, @radio4000/sdk, TanStack DB.
-For what the concepts mean and how they relate, see [universe](universe.md).
+Start with [universe](universe.md). It maps the domain model (channels, tracks, views, decks, broadcast, auto-radio) and how data flows.
 
-Channels (`/@slug`) are collections of tracks. Tracks (`/@slug/tracks/:id`) are links to music (YouTube, SoundCloud, embeddable URLs).
+[state](state.md) · [code-style](code-style.md) · [reference](reference.json) · [browser-testing](browser-testing.md)
 
-Data flows from the remote database ([radio4000-sdk](radio4000-sdk.md)) through the local sync layer ([tanstack](tanstack.md)).
-
-[homepage](homepage.md) covers the `/`, `/feed`, `/channels`, `/tracks`, and `/tags` routes. Legacy `/explore/*` URLs redirect to the new canonical paths. [player](player.md) handles playback, [queue](queue.md) manages upcoming tracks and history, [search](search.md) finds channels and tracks, [broadcast](broadcast.md) syncs listening in real-time, [followers](followers.md) lets you follow channels, [play-history](play-history.md) tracks what you've listened to, [metadata](metadata.md) enriches tracks via MusicBrainz and YouTube, [keyboard](keyboard.md) shortcuts, [dialogs](dialogs.md) for modals, [localization](localization-i18n.md), [styles](styles.md) for theming.
-
-[reference](reference.json) lists exported functions, [browser-testing](browser-testing.md) for testing. [/settings](/settings) for appearance and account. Data caches locally for offline use. Auth via email or OAuth.
-
-Channels have RSS feeds at `/@slug.rss`, per-channel maps at `/@slug/map`, mentions at `/@slug/mentions`, and data backup at `/@slug/backup`. Tracks have a detail page with tabbed navigation and inline editing.
-
-[state](state.md) covers the data architecture, [code-style](code-style.md) has conventions for writing code here.
+[homepage](homepage.md) · [player](player.md) · [queue](queue.md) · [search](search.md) · [broadcast](broadcast.md) · [follows](follows.md) · [capture-events](play-history.md) · [track-meta](track-meta.md) · [keyboard](keyboard.md) · [dialogs](dialogs.md) · [localization](localization-i18n.md) · [styles](styles.md)

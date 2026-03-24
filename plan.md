@@ -2,13 +2,18 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
+## Simplify: rely on types and primitives, fewer layers
+
+- **Broadcast field juggling** — `broadcast.js`: `pickBroadcastFields()` (line 29), `getBroadcastDeckState()` (line 426), ephemeral track construction (line 350). Three hand-rolled serializers. Align types so most disappear.
+- **14 sequential $derived in [slug]/+layout.svelte** (lines 104-131) — many used once. `channelHasAuto`, `channelAutoIsPlaying`, `deck` are property accesses on `anyChannelAutoDecks` — inline in markup.
+- **Player vs compact bar: same concept, two local contracts** — `player.svelte:76` and `deck-compact-bar.svelte:26` each rebuild "what this deck is showing" with different rules. Both keep their own `lastTrack`/`lastChannel`, both derive display fallbacks, both resolve header channel differently. Extract one shared derivation.
+
 ## Backlog
 
-- Channel page (`/@slug`) could use `processViewTracks` for its inline fuzzy+tag filter. Works fine now, low priority.
-- Channel identity inconsistent: `playChannel` takes `{id, slug}`, broadcast functions take just `channelId`
-- `pause(player)` doesn't set `deck.is_playing = false` — `togglePlayPause(deckId)` does. Stale state when calling `pause()` directly
-- `togglePlay(player)` skips deck state updates and error handling — calls `player.play()` raw. Near-duplicate of `togglePlayPause(deckId)`. Drop both `togglePlay` and `pause(player)`, make callers use `togglePlayPause(deckId)`.
+- Channel identity inconsistent: methods pass `{id, slug}` or just `channelId` — could pass views instead, since views already carry channel identity. Easier contract.
 - Consolidate page metadata behind `src/lib/components/seo.svelte` — today some routes use raw `<svelte:head>` because `Seo` always appends `| {appName}` and emits OG tags, while many title messages already hardcode `Radio4000` or custom formatting. Refactor `Seo` into the single metadata path for non-debug routes: support plain/full titles, stop baking brand names into i18n title strings, move default title/description in `src/app.html` to config-driven values, and keep route usage consistent.
+- `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay. Needs verification and user testing.
+- `seekWhenReady` race in `broadcast.js` — between the final `seekJobSeqByDeck` check and `play(deckId)`, a new job could start. Old job's `play()` still fires. Needs verification and user testing.
 
 ## One day
 
@@ -19,9 +24,7 @@ Possible improvements. Roughly by priority. Verify before implementing.
 - Musicbrainz/discogs auto-matching has a high error rate. Let users mark metadata as wrong, or show an "unverified" badge.
 - `discogs-core.js:6–8` — in-memory fetch cache grows unbounded. 5-min TTL but no eviction. Long sessions accumulate entries. Could move to a db collection.
 - Live query accumulation — navigating creates new queries without cleaning up old ones. Unclear if disposed queries are GC'd or leak.
-- Play history threshold: a track is recorded the moment it starts playing. Should count only after enough listening: full track if under 2 min, half the duration (max 4 min) otherwise. Open questions: accumulate actual play time vs. furthest position? What about pause/resume? Should skipped tracks get a `skipped` flag or disappear? Currently `addPlayHistoryEntry` fires in `playTrack()` (api.ts); would move to `player.svelte` using `timeupdate`. Needs `getPlayCountThreshold(durationSec)` helper and a way to pass `reason_start` to the player.
-- `seekWhenReady` race in `broadcast.js` — between the final `seekJobSeqByDeck` check and `play(deckId)`, a new job could start. Old job's `play()` still fires.
-- `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay.
+- Play history threshold: a track is recorded the moment it starts playing. Should count only after enough listening: full track if under 2 min, half the duration (max 4 min) otherwise. Open questions: accumulate actual play time vs. furthest position? What about pause/resume? Should skipped tracks get a `skipped` flag or disappear? Currently `capture('player:track_play')` fires in `playTrack()` (api.ts); would move to `player.svelte` using `timeupdate`. Needs `getPlayCountThreshold(durationSec)` helper and a way to pass `reason_start` to the player.
 - Ephemeral broadcast tracks have `slug: null` (`broadcast.js`) — listeners can't look up non-DB tracks without `track_url`.
 - `applyBroadcastState` rebuilds `managedIds` inside loop — O(n²) for deck count. Fine now, may matter later.
 

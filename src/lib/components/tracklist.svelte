@@ -128,7 +128,9 @@
 		}
 
 		// Convert to SvelteMap for reactivity in template
-		const svelteGroups = new SvelteMap(Array.from(groups, ([year, months]) => [year, new SvelteMap(months)]))
+		const svelteGroups = new SvelteMap(
+			Array.from(groups, ([year, months]) => [year, new SvelteMap(months)])
+		)
 		cache.groups = svelteGroups
 		return svelteGroups
 	})

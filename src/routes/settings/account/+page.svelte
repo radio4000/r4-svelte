@@ -88,7 +88,9 @@
 						<small>{appState.user.email}</small>
 					</p>
 					<menu>
-						<a class="btn" href={resolve('/settings/account/password')}>{m.account_change_password()}</a>
+						<a class="btn" href={resolve('/settings/account/password')}
+							>{m.account_change_password()}</a
+						>
 						<a class="btn" href={resolve('/settings/account/email')}>{m.account_change_email()}</a>
 					</menu>
 				</div>
@@ -110,7 +112,10 @@
 								{providerLoading === provider ? '...' : m.account_disconnect_provider()}
 							</button>
 						{:else}
-							<button onclick={() => connectProvider(provider)} disabled={providerLoading === provider}>
+							<button
+								onclick={() => connectProvider(provider)}
+								disabled={providerLoading === provider}
+							>
 								{providerLoading === provider ? '...' : m.account_connect_provider({provider})}
 							</button>
 						{/if}
@@ -126,7 +131,11 @@
 						<span>{m.account_share_presence()}</span>
 						<small>{m.account_share_presence_note()}</small>
 					</p>
-					<button onclick={toggleSharePresence} disabled={presenceLoading} aria-pressed={sharePresence}>
+					<button
+						onclick={toggleSharePresence}
+						disabled={presenceLoading}
+						aria-pressed={sharePresence}
+					>
 						{sharePresence ? m.common_on() : m.common_off()}
 					</button>
 				</div>
@@ -141,7 +150,9 @@
 			<menu class="nav-vertical">
 				<div>
 					<p><span>{m.account_delete_title()}</span></p>
-					<a class="btn" href={resolve('/settings/account/delete')}>{m.account_delete_link({appName})}</a>
+					<a class="btn" href={resolve('/settings/account/delete')}
+						>{m.account_delete_link({appName})}</a
+					>
 				</div>
 			</menu>
 		</section>

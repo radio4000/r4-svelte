@@ -7,7 +7,9 @@ declare global {
 			embedMode: boolean
 		}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			tab?: string
+		}
 		// interface Platform {}
 	}
 }

@@ -112,7 +112,10 @@
 					if (!disposed) onready?.(map)
 				})
 			})
-			themeObserver.observe(document.documentElement, {attributes: true, attributeFilter: ['class']})
+			themeObserver.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
 		}
 
 		initMap()
@@ -134,11 +137,12 @@
 		height: 100%;
 		min-height: 300px;
 		z-index: 1;
-		background: var(--body-bg);
+		background: transparent;
 	}
 
+	.map :global(.maplibregl-map),
 	.map :global(.maplibregl-canvas-container) {
-		background: light-dark(var(--gray-2), var(--gray-12));
+		background: transparent;
 	}
 
 	.map :global(.maplibregl-ctrl button),

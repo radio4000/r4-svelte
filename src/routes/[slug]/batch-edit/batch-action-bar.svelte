@@ -18,23 +18,30 @@
 	let fetchProgress = $state({current: 0, total: 0})
 
 	/** @type {import('$lib/types').TrackWithMeta[]} */
-	let selectedTracks = $derived(selectedIds.map((id) => tracks.find((t) => t.id === id)).filter((t) => t !== undefined))
+	let selectedTracks = $derived(
+		selectedIds.map((id) => tracks.find((t) => t.id === id)).filter((t) => t !== undefined)
+	)
 
 	// Selected tracks missing YouTube metadata
 	let selectedMissingMeta = $derived(
 		selectedTracks.filter(
-			(track) => getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error
+			(track) =>
+				getTrackProvider(track) === 'youtube' && !track.youtube_data && !track.playback_error
 		)
 	)
 
 	// Tracks that have metadata duration but no track duration
-	let tracksWithMetaDuration = $derived(selectedTracks.filter((t) => !t.duration && t.youtube_data?.duration))
+	let tracksWithMetaDuration = $derived(
+		selectedTracks.filter((t) => !t.duration && t.youtube_data?.duration)
+	)
 
 	// Tracks that have a duration set
 	let tracksWithDuration = $derived(selectedTracks.filter((t) => t.duration))
 
 	// Tracks that have any metadata
-	let tracksWithMeta = $derived(selectedTracks.filter((t) => t.youtube_data || t.musicbrainz_data || t.discogs_data))
+	let tracksWithMeta = $derived(
+		selectedTracks.filter((t) => t.youtube_data || t.musicbrainz_data || t.discogs_data)
+	)
 
 	// Tags present in selected tracks
 	let selectedTracksTags = $derived(getChannelTags(selectedTracks))
@@ -118,13 +125,17 @@
 		<span class="count">Selected: {selectedIds.length}</span>
 
 		{#if tracksWithMetaDuration.length > 0}
-			<button onclick={copyDurationFromMeta} {@attach tooltip({content: m.batch_edit_action_copy_duration()})}
+			<button
+				onclick={copyDurationFromMeta}
+				{@attach tooltip({content: m.batch_edit_action_copy_duration()})}
 				>Copy duration ({tracksWithMetaDuration.length})</button
 			>
 		{/if}
 
 		{#if tracksWithDuration.length > 0}
-			<button onclick={removeDuration} {@attach tooltip({content: m.batch_edit_action_remove_duration()})}
+			<button
+				onclick={removeDuration}
+				{@attach tooltip({content: m.batch_edit_action_remove_duration()})}
 				>Remove duration ({tracksWithDuration.length})</button
 			>
 		{/if}
@@ -159,7 +170,8 @@
 		<button
 			onclick={() => (showRemoveTag = true)}
 			disabled={selectedTracksTags.length === 0}
-			{@attach tooltip({content: m.batch_edit_action_remove_tag()})}>{m.batch_edit_remove_tag_button()}</button
+			{@attach tooltip({content: m.batch_edit_action_remove_tag()})}
+			>{m.batch_edit_remove_tag_button()}</button
 		>
 	{:else}
 		&nbsp;
@@ -189,7 +201,9 @@
 			{#if allTags.length > 0}
 				<menu>
 					{#each allTags.slice(0, 10) as { value } (value)}
-						<button type="button" onclick={() => (appendText = appendText ? `${appendText} #${value}` : `#${value}`)}
+						<button
+							type="button"
+							onclick={() => (appendText = appendText ? `${appendText} #${value}` : `#${value}`)}
 							>#{value}</button
 						>
 					{/each}

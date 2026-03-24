@@ -248,6 +248,10 @@
 	{/if}
 
 	<button type="submit" disabled={submitting}>
-		{submitting ? m.common_save() + '...' : mode === 'create' ? m.track_add_title() : m.common_save()}
+		{submitting
+			? m.common_save() + '...'
+			: mode === 'create'
+				? m.track_add_title()
+				: m.common_save()}
 	</button>
 </form>

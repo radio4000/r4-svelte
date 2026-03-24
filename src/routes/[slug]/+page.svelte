@@ -2,7 +2,6 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
-	import {setScene} from '$lib/scene-state.svelte'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
@@ -19,8 +18,6 @@
 	import {getAutoDecksForView} from '$lib/views.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Seo from '$lib/components/seo.svelte'
-
-	setScene({geometry: 'sphere', backgroundColor: 'oklch(18% 0.04 140)', cameraPosition: [1, 0.5, 4]})
 
 	const SECTION_TRACK_LIMIT = 50
 	const FEATURED_LIMIT = 10
@@ -91,17 +88,23 @@
 	})
 
 	function toggleTag(tag: string) {
-		selectedTags = selectedTags.includes(tag) ? selectedTags.filter((t) => t !== tag) : [...selectedTags, tag]
+		selectedTags = selectedTags.includes(tag)
+			? selectedTags.filter((t) => t !== tag)
+			: [...selectedTags, tag]
 	}
 
 	// Tracks for the current selection
 	let tagFilteredTracks = $derived(
-		selectedTags.length === 0 ? allTracks : allTracks.filter((t) => selectedTags.every((tag) => t.tags?.includes(tag)))
+		selectedTags.length === 0
+			? allTracks
+			: allTracks.filter((t) => selectedTags.every((tag) => t.tags?.includes(tag)))
 	)
 	let displayTracks = $derived(
 		selectedTags.length === 0 ? previewTracks : tagFilteredTracks.slice(0, SECTION_TRACK_LIMIT)
 	)
-	let selectedPlaylistTitle = $derived(selectedTags.length > 0 ? selectedTags.map((t) => `#${t}`).join(' ') : undefined)
+	let selectedPlaylistTitle = $derived(
+		selectedTags.length > 0 ? selectedTags.map((t) => `#${t}`).join(' ') : undefined
+	)
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -136,7 +139,11 @@
 				<Icon icon="hash" />{selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
 			{/snippet}
 			<menu class="tags-menu">
-				<button type="button" class:active={selectedTags.length === 0} onclick={() => (selectedTags = [])}>
+				<button
+					type="button"
+					class:active={selectedTags.length === 0}
+					onclick={() => (selectedTags = [])}
+				>
 					{m.channel_section_latest()}
 					<span class="tag-count">({Math.min(allTracks.length, SECTION_TRACK_LIMIT)})</span>
 				</button>
@@ -163,11 +170,16 @@
 			</menu>
 		</PopoverMenu>
 	{/if}
-	<SearchInput bind:value={searchInput} placeholder={m.channel_tracks_search_placeholder()} debounce={300} />
+	<SearchInput
+		bind:value={searchInput}
+		placeholder={m.channel_tracks_search_placeholder()}
+		debounce={300}
+	/>
 	{#if selectedTags.length > 0 && tracksQuery.isReady && displayTracks.length > 0}
 		{@const autoView = slug ? {sources: [{channels: [slug], tags: selectedTags}]} : undefined}
 		{@const autoDecks = getAutoDecksForView(Object.values(appState.decks), autoView)}
 		{@const isAutoActive = autoDecks.length > 0}
+		{@const isAutoPlaying = autoDecks.some((d) => d.is_playing)}
 		{@const isAutoDrifted = autoDecks.some((d) => d.auto_radio_drifted)}
 		<button
 			type="button"
@@ -179,14 +191,20 @@
 		>
 			<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} />
 		</button>
-		<button type="button" onclick={() => queueTracks(tagFilteredTracks)} title={m.search_queue_all()}>
+		<button
+			type="button"
+			onclick={() => queueTracks(tagFilteredTracks)}
+			title={m.search_queue_all()}
+		>
 			<Icon icon="next-fill" />
 		</button>
 		{#if hasAutoRadioCoverage(tagFilteredTracks)}
 			<AutoRadioButton
-				synced={isAutoActive && !isAutoDrifted}
+				synced={isAutoActive && isAutoPlaying && !isAutoDrifted}
 				title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
-				onclick={() => autoView && joinAutoRadio(appState.active_deck_id, toAutoTracks(tagFilteredTracks), autoView)}
+				onclick={() =>
+					autoView &&
+					joinAutoRadio(appState.active_deck_id, toAutoTracks(tagFilteredTracks), autoView)}
 			/>
 		{/if}
 	{/if}
@@ -200,7 +218,11 @@
 					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
 				{/if}
 				<p class="dates">
-					<small>{m.channel_updated({date: relativeDate(channel.latest_track_at ?? channel.updated_at)})}</small>
+					<small
+						>{m.channel_updated({
+							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
+						})}</small
+					>
 				</p>
 			</div>
 			{#if channel.description}
@@ -229,8 +251,9 @@
 							>{m.channel_see_all_tag({count: tagFilteredTracks.length, tag: selectedTags[0]})}</a
 						>
 					{:else}
-						<a href={resolve('/[slug]/tracks', {slug}) + '?tags=' + selectedTags.join(',')} class="btn"
-							>{m.channel_see_all_tracks({count: tagFilteredTracks.length})}</a
+						<a
+							href={resolve('/[slug]/tracks', {slug}) + '?tags=' + selectedTags.join(',')}
+							class="btn">{m.channel_see_all_tracks({count: tagFilteredTracks.length})}</a
 						>
 					{/if}
 				</footer>

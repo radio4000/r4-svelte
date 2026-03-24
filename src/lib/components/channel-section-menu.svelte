@@ -51,7 +51,10 @@
 			<Icon icon={conceptIcons.info} />
 			Info
 		</a>
-		<a href={resolve('/[slug]/tracks', {slug})} class:active={routeId?.startsWith('/[slug]/tracks')}>
+		<a
+			href={resolve('/[slug]/tracks', {slug})}
+			class:active={routeId?.startsWith('/[slug]/tracks')}
+		>
 			<Icon icon={conceptIcons.tracks} />
 			{m.nav_tracks()} ({trackCount})
 		</a>
@@ -59,15 +62,24 @@
 			<Icon icon={conceptIcons.tags} />
 			{m.channel_tags_link()}
 		</a>
-		<a href={resolve('/[slug]/mentions', {slug})} class:active={routeId?.startsWith('/[slug]/mentions')}>
+		<a
+			href={resolve('/[slug]/mentions', {slug})}
+			class:active={routeId?.startsWith('/[slug]/mentions')}
+		>
 			<Icon icon={conceptIcons.mentions} />
 			Mentions
 		</a>
-		<a href={resolve('/[slug]/following', {slug})} class:active={routeId?.startsWith('/[slug]/following')}>
+		<a
+			href={resolve('/[slug]/following', {slug})}
+			class:active={routeId?.startsWith('/[slug]/following')}
+		>
 			<Icon icon={conceptIcons.following} />
 			{m.nav_following()}
 		</a>
-		<a href={resolve('/[slug]/followers', {slug})} class:active={routeId?.startsWith('/[slug]/followers')}>
+		<a
+			href={resolve('/[slug]/followers', {slug})}
+			class:active={routeId?.startsWith('/[slug]/followers')}
+		>
 			<Icon icon={conceptIcons.followers} />
 			{m.nav_followers()}
 		</a>
@@ -83,17 +95,26 @@
 				<Icon icon={conceptIcons.settings} />
 				{m.common_edit()}
 			</a>
-			<a href={resolve('/[slug]/batch-edit', {slug})} class:active={routeId?.startsWith('/[slug]/batch-edit')}>
+			<a
+				href={resolve('/[slug]/batch-edit', {slug})}
+				class:active={routeId?.startsWith('/[slug]/batch-edit')}
+			>
 				<Icon icon={conceptIcons.batchEdit} />
 				{m.batch_edit_nav_label()}
 			</a>
-			<a href={resolve('/[slug]/backup', {slug})} class:active={routeId?.startsWith('/[slug]/backup')}>
+			<a
+				href={resolve('/[slug]/backup', {slug})}
+				class:active={routeId?.startsWith('/[slug]/backup')}
+			>
 				<Icon icon={conceptIcons.backup} />
 				Backup
 			</a>
 		{:else if isLocal}
 			<hr />
-			<a href={resolve('/[slug]/delete', {slug})} class:active={routeId?.startsWith('/[slug]/delete')}>
+			<a
+				href={resolve('/[slug]/delete', {slug})}
+				class:active={routeId?.startsWith('/[slug]/delete')}
+			>
 				<Icon icon={conceptIcons.delete} />
 				Delete
 			</a>

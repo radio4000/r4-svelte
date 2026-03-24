@@ -23,7 +23,9 @@ export function calculateSeekTime(broadcast, track) {
 		if (broadcast.seeked_at) {
 			const elapsed = (Date.now() - new Date(broadcast.seeked_at).getTime()) / 1000
 			if (elapsed < 0) return undefined
-			const base = broadcast.is_playing ? broadcast.seek_position + elapsed * speed : broadcast.seek_position
+			const base = broadcast.is_playing
+				? broadcast.seek_position + elapsed * speed
+				: broadcast.seek_position
 			if (track.duration && base >= track.duration) return undefined
 			return Math.round(base)
 		}

@@ -12,7 +12,7 @@ import {getErrorMessage} from './utils'
 
 const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
-import type {Track} from '$lib/types'
+import type {Track, TrackWithMeta} from '$lib/types'
 
 type TrackQueryParams = {
 	slugEq?: string
@@ -26,13 +26,20 @@ type TrackQueryParams = {
 function parseTrackParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]): TrackQueryParams {
 	const options = parseLoadSubsetOptions(opts)
 	return {
-		slugEq: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as string | undefined,
-		slugIn: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value as string[] | undefined,
-		tagsIn: options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value as string[] | undefined,
-		ftsEq: options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value as string | undefined,
-		createdAfter: options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')?.value as
+		slugEq: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as
 			| string
 			| undefined,
+		slugIn: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value as
+			| string[]
+			| undefined,
+		tagsIn: options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value as
+			| string[]
+			| undefined,
+		ftsEq: options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value as
+			| string
+			| undefined,
+		createdAfter: options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')
+			?.value as string | undefined,
 		limit: options.limit
 	}
 }
@@ -50,8 +57,16 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 		if (params.createdAfter) key.push('after', params.createdAfter)
 		return key
 	}
-	if (params.tagsIn) return ['tracks', 'tags', ...params.tagsIn.toSorted()]
-	if (params.ftsEq) return ['tracks', 'search', params.ftsEq]
+	if (params.tagsIn) {
+		const key: (string | number)[] = ['tracks', 'tags', ...params.tagsIn.toSorted()]
+		if (params.limit) key.push('limit', params.limit)
+		return key
+	}
+	if (params.ftsEq) {
+		const key: (string | number)[] = ['tracks', 'search', params.ftsEq]
+		if (params.limit) key.push('limit', params.limit)
+		return key
+	}
 	return ['tracks']
 }
 
@@ -67,7 +82,12 @@ export const tracksCollection = createCollection<Track, string>({
 			const params = parseTrackParams(ctx.meta?.loadSubsetOptions)
 			const slugs = params.slugIn ?? (params.slugEq ? [params.slugEq] : [])
 
-			log.info('queryFn', {slugs, tagsIn: params.tagsIn, ftsEq: params.ftsEq, createdAfter: params.createdAfter})
+			log.info('queryFn', {
+				slugs,
+				tagsIn: params.tagsIn,
+				ftsEq: params.ftsEq,
+				createdAfter: params.createdAfter
+			})
 
 			if (!capabilities.globalBrowse) {
 				const all = [...tracksCollection.state.values()]
@@ -75,10 +95,13 @@ export const tracksCollection = createCollection<Track, string>({
 					const set = new Set(slugs)
 					return all.filter((t) => !!t.slug && set.has(t.slug))
 				}
-				if (params.tagsIn?.length) return all.filter((t) => t.tags?.some((tag) => params.tagsIn?.includes(tag)))
+				if (params.tagsIn?.length)
+					return all.filter((t) => t.tags?.some((tag) => params.tagsIn?.includes(tag)))
 				if (params.ftsEq) {
 					const q = params.ftsEq.toLowerCase()
-					return all.filter((t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q))
+					return all.filter(
+						(t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
+					)
 				}
 				return all
 			}
@@ -87,7 +110,10 @@ export const tracksCollection = createCollection<Track, string>({
 			if (slugs.length) {
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
-						const tracks = await fetchTracksBySlug(s, {limit: params.limit, createdAfter: params.createdAfter})
+						const tracks = await fetchTracksBySlug(s, {
+							limit: params.limit,
+							createdAfter: params.createdAfter
+						})
 						log.info('queryFn fetched', {slug: s, count: tracks.length})
 						// Keep the canonical per-slug cache entry reserved for full channel snapshots.
 						// Partial slug fetches (limit/createdAfter) must not overwrite that persisted key.
@@ -104,7 +130,7 @@ export const tracksCollection = createCollection<Track, string>({
 			if (params.tagsIn?.length) {
 				let query = sdk.supabase.from('channel_tracks').select('*')
 				query = query.overlaps('tags', params.tagsIn)
-				query = query.order('created_at', {ascending: false}).limit(4000)
+				query = query.order('created_at', {ascending: false}).limit(params.limit || 50)
 				const {data, error} = await query
 				if (error) throw error
 				const tracks = ((data || []) as Track[]).map((track) => {
@@ -123,7 +149,7 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Global: full-text search
 			if (params.ftsEq) {
-				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: 4000})
+				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: params.limit || 50})
 				const tracks = rawTracks.map((track) => {
 					const parsed = track.url ? parseUrl(track.url) : null
 					return {
@@ -167,7 +193,10 @@ export const tracksCollection = createCollection<Track, string>({
 		if (!capabilities.mutations) return
 		log.info('onUpdate', {count: transaction.mutations.length})
 		for (const m of transaction.mutations) {
-			const serverTrack = await handleTrackUpdate(m.modified.id, m.changes as Record<string, unknown>)
+			const serverTrack = await handleTrackUpdate(
+				m.modified.id,
+				m.changes as Record<string, unknown>
+			)
 			if (serverTrack) {
 				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
 				const normalized = {
@@ -195,9 +224,16 @@ export const tracksCollection = createCollection<Track, string>({
 	}
 })
 
-async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAfter?: string}): Promise<Track[]> {
+async function fetchTracksBySlug(
+	slug: string,
+	opts?: {limit?: number; createdAfter?: string}
+): Promise<Track[]> {
 	log.info('tracks fetch', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
-	let query = sdk.supabase.from('channel_tracks').select('*').eq('slug', slug).order('created_at', {ascending: false})
+	let query = sdk.supabase
+		.from('channel_tracks')
+		.select('*')
+		.eq('slug', slug)
+		.order('created_at', {ascending: false})
 	if (opts?.limit) query = query.limit(opts.limit)
 	if (opts?.createdAfter) query = query.gt('created_at', opts.createdAfter)
 
@@ -213,7 +249,10 @@ async function fetchTracksBySlug(slug: string, opts?: {limit?: number; createdAf
 	})
 }
 
-async function handleTrackInsert(track: Track, metadata: Record<string, unknown>): Promise<Track | null> {
+async function handleTrackInsert(
+	track: Track,
+	metadata: Record<string, unknown>
+): Promise<Track | null> {
 	const channelId = metadata?.channelId as string
 	if (!channelId) throw new Error('channelId required in transaction metadata')
 	log.info('insert_start', {clientId: track.id, title: track.title, channelId})
@@ -224,12 +263,20 @@ async function handleTrackInsert(track: Track, metadata: Record<string, unknown>
 		description: track.description || undefined,
 		discogs_url: track.discogs_url || undefined
 	})
-	log.info('insert_done', {clientId: track.id, serverId: data?.id, match: track.id === data?.id, error})
+	log.info('insert_done', {
+		clientId: track.id,
+		serverId: data?.id,
+		match: track.id === data?.id,
+		error
+	})
 	if (error) throw new Error(getErrorMessage(error))
 	return (data as Track) ?? null
 }
 
-async function handleTrackUpdate(id: string, changes: Record<string, unknown>): Promise<Track | null> {
+async function handleTrackUpdate(
+	id: string,
+	changes: Record<string, unknown>
+): Promise<Track | null> {
 	log.info('update_start', {id, changes})
 	const response = await sdk.tracks.updateTrack(id, changes)
 	log.info('update_done', {id, error: response.error})
@@ -244,7 +291,7 @@ async function handleTrackDelete(id: string): Promise<void> {
 	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
-export function getTrackWithMeta(track: Track): Track & Partial<Omit<TrackMeta, 'media_id'>> {
+export function getTrackWithMeta(track: Track): TrackWithMeta {
 	if (!track.media_id) return track
 	const provider = track.provider ?? null
 	const meta =
@@ -286,7 +333,11 @@ export function addTrack(
 		.isPersisted.promise.then(() => id)
 }
 
-export function updateTrack(channel: {id: string; slug: string}, id: string, changes: Record<string, unknown>) {
+export function updateTrack(
+	channel: {id: string; slug: string},
+	id: string,
+	changes: Record<string, unknown>
+) {
 	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(id, {metadata: {slug: channel.slug}}, (draft) => {
@@ -300,10 +351,16 @@ export function updateTrack(channel: {id: string; slug: string}, id: string, cha
 }
 
 export function deleteTrack(channel: {id: string; slug: string}, id: string) {
-	return tracksCollection.delete(id, {metadata: {slug: channel.slug}}).isPersisted.promise.then(() => {})
+	return tracksCollection
+		.delete(id, {metadata: {slug: channel.slug}})
+		.isPersisted.promise.then(() => {})
 }
 
-export function batchUpdateTracksUniform(channel: Channel, ids: string[], changes: Record<string, unknown>) {
+export function batchUpdateTracksUniform(
+	channel: Channel,
+	ids: string[],
+	changes: Record<string, unknown>
+) {
 	const parsed = typeof changes.url === 'string' ? parseUrl(changes.url) : null
 	return tracksCollection
 		.update(ids, {metadata: {slug: channel.slug}}, (drafts) => {
@@ -343,7 +400,9 @@ export function batchUpdateTracksIndividual(
 }
 
 export function batchDeleteTracks(channel: Channel, ids: string[]) {
-	return tracksCollection.delete(ids, {metadata: {slug: channel.slug}}).isPersisted.promise.then(() => {})
+	return tracksCollection
+		.delete(ids, {metadata: {slug: channel.slug}})
+		.isPersisted.promise.then(() => {})
 }
 
 export async function checkTracksFreshness(slug: string): Promise<boolean> {
@@ -384,7 +443,8 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
 			}
 
 			const countMismatch = remoteCount !== cachedTracks.length
-			const outdated = countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
+			const outdated =
+				countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
 
 			log.debug('freshness', {
 				slug,
@@ -409,7 +469,10 @@ export async function checkTracksFreshness(slug: string): Promise<boolean> {
  * Fetch tracks created after `createdAfter` for multiple channel slugs in one query.
  * Results are upserted into tracksCollection. Batches slugs to stay within URL limits.
  */
-export async function fetchRecentTracksForSlugs(slugs: string[], createdAfter: string): Promise<void> {
+export async function fetchRecentTracksForSlugs(
+	slugs: string[],
+	createdAfter: string
+): Promise<void> {
 	if (!slugs.length) return
 	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
 	const BATCH = 50

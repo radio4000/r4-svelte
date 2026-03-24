@@ -68,7 +68,8 @@
 			<h1>{m.track_delete_heading()}</h1>
 			<p>
 				<a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a> /
-				<a href={resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid})}>{track.title}</a>
+				<a href={resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid})}>{track.title}</a
+				>
 			</p>
 		</header>
 
@@ -91,7 +92,9 @@
 		</form>
 
 		<p>
-			<a href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}>{m.common_cancel()}</a>
+			<a href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}
+				>{m.common_cancel()}</a
+			>
 		</p>
 	{:else if !isSignedIn}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>

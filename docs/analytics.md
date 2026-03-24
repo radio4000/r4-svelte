@@ -16,13 +16,9 @@ When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` i
 
 ## Identity
 
-`identify(userId)` and `reset()` are exported from `$lib/analytics` and called in `+layout.svelte`:
+All analytics events are anonymous. No person profiles are created, and no user IDs are sent to PostHog. Each device gets a random `distinct_id` from PostHog automatically, which allows per-device analysis without linking events to real users.
 
-- On opt-in: if a user is already logged in, they are identified immediately
-- On login: `identify(user.id)` links future events to the user
-- On logout: `reset()` unlinks the session so anonymous events don't bleed across users
-
-All three helpers are no-ops when the user has not opted in.
+The `identify()` and `reset()` functions are commented out in `src/lib/analytics.ts`.
 
 ## Capturing custom events
 
@@ -42,10 +38,30 @@ The helper is a no-op when the user has not opted in, so call sites don't need t
 - Use `snake_case` for property keys
 - Prefer specific names over generic ones: `track_played` not `click`
 
+## Error tracking
+
+Unhandled client errors are sent to PostHog as `$exception` events via the `handleError` hook in `src/hooks.client.ts`. This uses PostHog's built-in error tracking, so errors appear in the Error Tracking view in the PostHog dashboard.
+
+`captureError(error)` in `analytics.ts` is the underlying helper — it respects the same opt-in guard as `capture()`. You can call it directly in explicit `catch` blocks when you want to report a caught error:
+
+```ts
+import {captureError} from '$lib/analytics'
+
+try {
+	await riskyOperation()
+} catch (err) {
+	captureError(err)
+}
+```
+
 ## What is tracked (when opted in)
 
 - Pageviews (every `afterNavigate`)
-- Any custom events explicitly captured with `capture()`
+- Player events: track play/end, channel play, auto-radio, broadcast join/start/end
+- Unhandled client errors (via `handleError` hook)
+- All `capture()` calls are logged to console via `log.debug` even when opted out
+
+Events use `player:*` and `broadcast:*` prefixes. Play start/end reasons are defined as `PlayStartReason` and `PlayEndReason` in `types.ts`. Search [`capture(`](https://github.com/radio4000/r4-sync-tests/search?q=%22capture%28%22+path%3Asrc&type=code) for all call sites.
 
 ## What is never tracked
 

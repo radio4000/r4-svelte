@@ -16,7 +16,8 @@
 				</a>
 			</dt>
 			<dd>
-				{m.track_related_by()} <a href={resolve('/[slug]', {slug: related.slug})}>@{related.slug}</a>
+				{m.track_related_by()}
+				<a href={resolve('/[slug]', {slug: related.slug})}>@{related.slug}</a>
 			</dd>
 		{/each}
 	</dl>

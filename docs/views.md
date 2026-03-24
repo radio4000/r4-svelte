@@ -2,7 +2,7 @@
 
 Views are track-centric: they describe which tracks to include, from which channels, and how to display them. Channel cards on `/search` are outside the View pipeline — those come from `searchChannelsCombined()` ([search.md](search.md)).
 
-The pipeline: query text → `parseView()` → `View` → `queryView()` → tracks. Inspect it live at `/_debug/views`, which shows the parsed View JSON and queryView result.
+The pipeline: query text → `parseView()` → `View` → `queryView()` → tracks. Inspect it live at `/docs/views`, which shows the parsed View JSON and queryView result.
 
 ```ts
 type ViewURI = string & {readonly __brand: 'ViewURI'}

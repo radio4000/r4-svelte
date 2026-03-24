@@ -2,9 +2,7 @@
 
 ## Cloudflare (default)
 
-After running `bun run build` you have everything inside the `./build` folder.
-
-For this repository, Cloudflare is configured to deploy automatically:
+Cloudflare is configured to deploy automatically:
 
 - pushes to main go to https://beta.radio4000.com
 - pull requests (non-draft) get their own, unique URL

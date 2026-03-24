@@ -16,7 +16,7 @@ button,
 	flex-shrink: 0;
 	white-space: nowrap;
 	user-select: none;
-	cursor: var(--cursor, default);
+	cursor: var(--interactive-cursor, pointer);
 
 	font-size: var(--font-4);
 	font-weight: 400;
@@ -26,9 +26,15 @@ button,
 	color: var(--button-color, var(--gray-12));
 	border: 1px solid var(--gray-7);
 	border-radius: var(--border-radius);
-	box-shadow:
-		lch(0 0 0 / 0.06) 0px 4px 4px -1px,
-		lch(0 0 0 / 0.12) 0px 1px 1px 0px;
+	box-shadow: var(--input-shadow);
+
+	--input-shadow: lch(0 0 0 / 0.06) 0px 4px 4px -1px, lch(0 0 0 / 0.12) 0px 1px 1px 0px;
+	/* --input-shadow: */
+	/* 	inset 0 0.5px 0.5px 0.5px rgba(255, 255, 255, 0.09), 0 2px 4px 0 rgba(0, 0, 0, 0.15), */
+	/* 	0 1px 1.5px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 0 0 0 transparent; */
+	/* --input-shadow-hover: */
+	/* 	inset 0 0.5px 1px 0.5px rgba(255, 255, 255, 0.16), 0 2px 3px 0 rgba(0, 0, 0, 0.3), */
+	/* 	0 1px 1.5px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 0 0 0 transparent; */
 
 	transition-property: border, background-color, color, opacity, transform;
 	transition-duration: 150ms;
@@ -40,6 +46,7 @@ button:hover,
 .btn:focus,
 .btn:hover {
 	border-color: var(--accent-9);
+	box-shadow: var(--input-shadow-hover);
 }
 
 button:focus,
@@ -61,6 +68,10 @@ button:disabled,
 
 	:global(.icon) {
 		opacity: 0.2;
+	}
+
+	&:hover {
+		border-color: initial;
 	}
 }
 
@@ -129,6 +140,11 @@ button.auto-live-btn.ghost .oi-infinite .oi-vector,
 	stroke: var(--accent-9);
 	/* biome-ignore lint/suspicious/noDuplicateProperties: intentional fallback — color for browsers that don't support gradient URLs */
 	stroke: url('#r5-auto-live-gradient');
+}
+
+/* active + drifted: solid accent stroke (no animation) */
+button.auto-live-btn.active:not(.ghost) .oi-infinite .oi-vector {
+	stroke: var(--accent-9);
 }
 
 @media (prefers-reduced-motion: reduce) {

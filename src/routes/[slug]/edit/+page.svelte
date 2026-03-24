@@ -134,7 +134,8 @@
 
 				<fieldset>
 					<label for="description">{m.common_description()}</label>
-					<textarea id="description" name="description" rows="4" bind:value={fieldDescription}></textarea>
+					<textarea id="description" name="description" rows="4" bind:value={fieldDescription}
+					></textarea>
 				</fieldset>
 
 				<fieldset>
@@ -148,7 +149,8 @@
 							min="-90"
 							max="90"
 							placeholder={m.common_latitude()}
-							onchange={(e) => (pickedLat = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
+							onchange={(e) =>
+								(pickedLat = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
 						/>
 						<input
 							name="longitude"
@@ -158,7 +160,8 @@
 							min="-180"
 							max="180"
 							placeholder={m.common_longitude()}
-							onchange={(e) => (pickedLng = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
+							onchange={(e) =>
+								(pickedLng = e.currentTarget.value ? Number(e.currentTarget.value) : null)}
 						/>
 						<button type="button" onclick={() => (showMap = !showMap)}>
 							{showMap ? m.channel_edit_hide_map() : m.channel_edit_pick_on_map()}
@@ -166,19 +169,31 @@
 					</div>
 					{#if showMap}
 						<div class="map-container">
-							<MapPicker latitude={locationLat} longitude={locationLng} onselect={handleLocationSelect} />
+							<MapPicker
+								latitude={locationLat}
+								longitude={locationLng}
+								onselect={handleLocationSelect}
+							/>
 						</div>
 					{/if}
 				</fieldset>
 
 				<fieldset>
 					<label for="url">{m.common_url()}</label>
-					<input id="url" name="url" type="url" bind:value={fieldUrl} placeholder={m.track_form_url_placeholder()} />
+					<input
+						id="url"
+						name="url"
+						type="url"
+						bind:value={fieldUrl}
+						placeholder={m.track_form_url_placeholder()}
+					/>
 				</fieldset>
 			</form>
 		</div>
 
-		<p class="delete-link"><a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a></p>
+		<p class="delete-link">
+			<a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a>
+		</p>
 	{:else if !isSignedIn}
 		<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 	{:else}

@@ -23,17 +23,24 @@
 		<option value="tracks">{m.channels_order_tracks()}</option>
 	</select>
 	{#if order === 'shuffle'}
-		<button onclick={() => onreshuffle?.()} {@attach tooltip({content: m.channels_tooltip_shuffle()})}>
+		<button
+			onclick={() => onreshuffle?.()}
+			{@attach tooltip({content: m.channels_tooltip_shuffle()})}
+		>
 			<Icon icon="shuffle" />
 		</button>
 	{:else}
 		<button
 			onclick={toggleDirection}
 			{@attach tooltip({
-				content: direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
+				content:
+					direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
 			})}
 		>
-			<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+			<Icon
+				icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+				strokeWidth={1.5}
+			/>
 		</button>
 	{/if}
 </div>

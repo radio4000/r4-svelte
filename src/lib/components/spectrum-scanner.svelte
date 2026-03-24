@@ -1,4 +1,5 @@
 <script>
+	import gsap from 'gsap'
 	import {playChannel} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import ChannelCard from './channel-card.svelte'
@@ -9,6 +10,7 @@
 	const {channels = []} = $props()
 
 	let index = $state(0)
+	let stationEl = $state()
 	let autoplay = $state(false)
 	/** @type {ReturnType<typeof setTimeout> | null} */
 	let playDebounce = null
@@ -33,106 +35,106 @@
 		if (!channel) return
 		playChannel(appState.active_deck_id, channel)
 	}
+
+	/** @type {gsap.core.Timeline | null} */
+	let tl = null
+
+	$effect(() => {
+		void index
+		if (!stationEl) return
+		const els = stationEl.querySelectorAll(':scope .card .body .info')
+		if (!els.length) return
+		if (tl) tl.kill()
+		tl = gsap.timeline()
+		tl.fromTo(
+			els,
+			{opacity: 0, y: 6},
+			{opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out'}
+		)
+	})
 </script>
 
 <div class="scanner">
-	<div class="device">
-		<header>
-			<p class="slug">{channel ? `@${channel.slug}` : ''}</p>
-			<menu>
-				<button onclick={prev} title={m.scanner_previous_channel()}><Icon icon="previous-fill" /></button>
-				<button onclick={play} title={m.scanner_play_channel()}><Icon icon="play-fill" /></button>
-				<button onclick={next} title={m.scanner_next_channel()}><Icon icon="next-fill" /></button>
-				<button onclick={seek} title={m.scanner_random_channel()}><Icon icon="shuffle" /></button>
-				<button onclick={() => (autoplay = !autoplay)} class:active={autoplay} title={m.scanner_autoplay_navigation()}
-					>{m.scanner_auto()}</button
-				>
-			</menu>
-			<InputRange
-				bind:value={index}
-				min={0}
-				max={channels.length - 1}
-				step={1}
-				oninput={() => {
-					if (!autoplay) return
-					if (playDebounce) clearTimeout(playDebounce)
-					playDebounce = setTimeout(play, 400)
-				}}
-			/>
-		</header>
+	{#if channel}
+		<div class="station" bind:this={stationEl}>
+			<ChannelCard {channel} />
+		</div>
+	{/if}
 
-		<figure class="spectrum">
-			{#each channels as ch, i (ch.id)}
-				<button
-					class="marker"
-					class:tuned={i === index}
-					style="left: {(i / (channels.length - 1)) * 100}%"
-					title={ch.slug}
-					onclick={() => (index = i)}
-				>
-					<div
-						class="marker-signal"
-						style="height: {0.5 + Math.min(1, ((ch.track_count ?? 0) / 400) ** 0.8) * 3.5}rem"
-					></div>
-				</button>
-			{/each}
-		</figure>
+	<menu>
+		<button onclick={prev} title={m.scanner_previous_channel()}
+			><Icon icon="previous-fill" /></button
+		>
+		<button onclick={play} title={m.scanner_play_channel()}><Icon icon="play-fill" /></button>
+		<button onclick={next} title={m.scanner_next_channel()}><Icon icon="next-fill" /></button>
+		<button onclick={seek} title={m.scanner_random_channel()}><Icon icon="shuffle" /></button>
+		<button
+			onclick={() => (autoplay = !autoplay)}
+			class:active={autoplay}
+			title={m.scanner_autoplay_navigation()}>{m.scanner_auto()}</button
+		>
+	</menu>
 
-		{#if channel}
-			<div class="station">
-				<ChannelCard {channel} />
-			</div>
-		{/if}
-	</div>
+	<figure class="spectrum">
+		{#each channels as ch, i (ch.id)}
+			<button
+				class="marker"
+				class:tuned={i === index}
+				style="left: {(i / (channels.length - 1)) * 100}%"
+				title={ch.slug}
+				onclick={() => (index = i)}
+			>
+				<div
+					class="marker-signal"
+					style="height: {0.5 + Math.min(1, ((ch.track_count ?? 0) / 400) ** 0.8) * 3.5}rem"
+				></div>
+			</button>
+		{/each}
+	</figure>
+
+	<InputRange
+		bind:value={index}
+		min={0}
+		max={channels.length - 1}
+		step={1}
+		oninput={() => {
+			if (!autoplay) return
+			if (playDebounce) clearTimeout(playDebounce)
+			playDebounce = setTimeout(play, 400)
+		}}
+	/>
 </div>
 
 <style>
+	/* since this page doesn't have scroll we can hide it*/
+	:global(.scroll-area:has(.scanner)) {
+		scrollbar-gutter: auto;
+	}
+
 	.scanner {
+		--color: var(--gray-12);
+		--color-active: var(--accent-7);
+
 		display: flex;
 		flex-direction: column;
-		padding: 1rem;
 		align-items: center;
-	}
-
-	.device {
+		justify-content: center;
 		width: 100%;
-		max-width: 420px;
-		background: var(--gray-3);
-		border: 1px solid var(--gray-12);
-		border-radius: 2px;
-	}
+		padding-top: 3rem;
 
-	header {
-		display: flex;
-		flex-direction: column;
-		padding: 0.6rem 0.8rem;
-		gap: 0.4rem;
-		align-items: center;
-		border-bottom: 1px solid var(--gray-10);
-	}
-
-	.slug {
-		font-size: var(--font-5);
-		font-weight: bold;
-		margin: 0;
+		background: linear-gradient(to right, var(--accent-3), transparent);
 	}
 
 	menu {
-		display: flex;
-		gap: 0.4rem;
-		align-items: center;
-		margin: 0;
-		padding: 0;
+		margin-block-end: 1rem;
 	}
 
 	.spectrum {
 		position: relative;
-		height: 3rem;
+		height: 4rem;
+		width: 100%;
 		margin: 0;
 		overflow: hidden;
-		border-top: 1px solid var(--gray-10);
-		border-bottom: 1px solid var(--gray-10);
-		background: var(--gray-5);
 	}
 
 	.marker {
@@ -142,29 +144,57 @@
 		padding: 0;
 		border: none;
 		background: transparent;
-		cursor: pointer;
 		display: flex;
 		align-items: flex-end;
 	}
 
+	:global(.input-range) {
+		background: var(--color);
+	}
+
 	.marker-signal {
 		width: 2px;
-		background: var(--color-red);
+		background: var(--color);
 		min-height: 5px;
 		transition: all 0.2s;
 	}
 
 	.marker.tuned .marker-signal {
-		background: var(--color-purple);
-		height: 100% !important;
-		width: 3px;
+		background: var(--color-active);
+		width: 10px;
+		z-index: 2;
 	}
 
-	:global(header > .input-range) {
+	:global(.scanner > .input-range) {
 		width: 100%;
+		height: 40px;
 	}
 
 	.station {
-		padding: 1rem;
+		display: flex;
+		flex: 1;
+		width: 100%;
+		padding: 0 1rem;
+		place-content: flex-start;
+		align-items: center;
+		container-type: inline-size;
+
+		:global(.card) {
+			flex: 1;
+			gap: 1rem;
+			max-width: 80ch;
+		}
+
+		:global(.card figure) {
+			max-width: 250px;
+			max-height: 250px;
+		}
+
+		@container (min-width: 768px) {
+			:global(.card) {
+				margin-left: 2vw;
+				flex-flow: row;
+			}
+		}
 	}
 </style>

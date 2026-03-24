@@ -11,7 +11,12 @@
 	<SearchTabs />
 	<form {onsubmit}>
 		<label for="{uid}-search" class="visually-hidden">{m.search_title()}</label>
-		<SearchInput id="{uid}-search" bind:value placeholder={m.header_search_placeholder()} autofocus />
+		<SearchInput
+			id="{uid}-search"
+			bind:value
+			placeholder={m.header_search_placeholder()}
+			autofocus
+		/>
 	</form>
 	{#if view && onviewchange}
 		<ViewsBar {view} onchange={onviewchange} />
@@ -22,9 +27,10 @@
 	.search-header {
 		position: sticky;
 		top: 0;
-		background: var(--body-bg);
+		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);
 		z-index: 3;
 		padding: 0.5rem;
+		padding-bottom: 1.5rem;
 		display: flex;
 		align-items: flex-start;
 		flex-wrap: wrap;

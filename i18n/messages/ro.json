@@ -573,7 +573,7 @@
 	"share_media_url_label": "URL media",
 	"share_native": "Partajează",
 	"share_track_title": "Partajează piesa → {title}",
-	"shortcuts_action_gotoDebug": "Mergi la debug",
+	"shortcuts_action_gotoDocs": "Mergi la docs",
 	"shortcuts_action_gotoHome": "Mergi la pagina principală",
 	"shortcuts_action_gotoSettings": "Mergi la setări",
 	"shortcuts_action_openSearch": "Deschide căutarea",

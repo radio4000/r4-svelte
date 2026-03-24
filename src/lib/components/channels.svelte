@@ -24,6 +24,7 @@
 	import {featuredScore} from '$lib/utils'
 	import ChannelCard from './channel-card.svelte'
 	import Dialog from './dialog.svelte'
+	import Pagination from './pagination.svelte'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import SearchInput from './search-input.svelte'
@@ -78,11 +79,8 @@
 	}
 
 	let showFeaturedInfo = $state(false)
-	let showPaginationDialog = $state(false)
-	let paginationInitialPage = $state(1)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
-	let shuffleKey = $state(0)
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
@@ -120,9 +118,12 @@
 	/** Minimum channel count for views that need a dense dataset */
 	const VIEW_MIN_LIMIT = {infinite: 400, tuner: 400, map: 5000}
 	const queryLimit = $derived(
-		filter === 'featured' ? 50 : isPaged ? pageSize : Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
+		filter === 'featured'
+			? 50
+			: isPaged
+				? currentPage * pageSize
+				: Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
 	)
-	const queryOffset = $derived(isPaged ? (currentPage - 1) * pageSize : 0)
 	const favoriteIds = $derived(follows.followedIds)
 
 	// Reactive broadcast IDs for the broadcasting filter
@@ -160,54 +161,45 @@
 		imported: () => appState.local_channel_ids ?? []
 	}
 
-	// Fetch channels driven by the active filter + sort
-	// deps: reactive values used inside the callback must be listed so the
-	// $derived.by() in useLiveQuery re-creates the collection when they change.
-	const channelsQuery = useLiveQuery(
-		(q) => {
-			let base = q.from({ch: channelsCollection})
-			if (!capabilities.globalBrowse) {
-				return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+	// Fetch channels driven by the active filter + sort.
+	// No deps array needed — Svelte auto-tracks reactive reads in the callback.
+	const channelsQuery = useLiveQuery((q) => {
+		let base = q.from({ch: channelsCollection})
+		if (!capabilities.globalBrowse) {
+			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
+		}
+		const localIds = localIdFilters[filter]?.()
+		if (localIds) {
+			if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			base = base.where(({ch}) => inArray(ch.id, localIds))
+		} else if (filter === 'featured') {
+			base = base
+				.where(({ch}) => gte(ch.track_count, 10))
+				.where(({ch}) => not(isNull(ch.image)))
+				.orderBy(({ch}) => ch.latest_track_at, 'desc')
+		} else {
+			const minTracks = filterMinTracks[filter]
+			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
+			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
+		}
+		if (filter !== 'featured') {
+			const col = sortColumns[order]
+			if (col) {
+				base = base.orderBy(
+					({ch}) => ch[col],
+					order === 'shuffle' ? 'asc' : orderDirection || 'desc'
+				)
 			}
-			const localIds = localIdFilters[filter]?.()
-			if (localIds) {
-				if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
-				base = base.where(({ch}) => inArray(ch.id, localIds))
-			} else if (filter === 'featured') {
-				base = base
-					.where(({ch}) => gte(ch.track_count, 10))
-					.where(({ch}) => not(isNull(ch.image)))
-					.orderBy(({ch}) => ch.latest_track_at, 'desc')
-			} else {
-				const minTracks = filterMinTracks[filter]
-				if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
-				if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
-			}
-			if (filter !== 'featured') {
-				const col = sortColumns[order]
-				if (col) {
-					base = base.orderBy(({ch}) => ch[col], order === 'shuffle' ? 'asc' : orderDirection || 'desc')
-				}
-			}
-			base = base.limit(queryLimit)
-			if (queryOffset) base = base.offset(queryOffset)
-			return base
-		},
-		[
-			() => queryLimit,
-			() => queryOffset,
-			() => filter,
-			() => order,
-			() => orderDirection,
-			() => broadcastIds,
-			() => favoriteIds,
-			() => shuffleKey
-		]
-	)
+		}
+		base = base.limit(queryLimit)
+		return base
+	})
 	const channelsRaw = $derived(channelsQuery.data ?? [])
-	// For featured: score and take top 12; paged views already return one page via offset; otherwise all
+	// For featured: score and take top 12; paged views slice locally; otherwise all
 	const channels = $derived.by(() => {
-		if (filter === 'featured') return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+		if (filter === 'featured')
+			return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
+		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 		return channelsRaw
 	})
 	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
@@ -232,11 +224,6 @@
 			.catch(() => {})
 	})
 	const totalCount = $derived(localIdFilters[filter]?.().length ?? serverCount)
-	const totalPages = $derived(totalCount > 0 && pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0)
-	const hasNextPage = $derived(
-		isPaged && filter !== 'featured' && (totalPages > 0 ? currentPage < totalPages : channels.length === pageSize)
-	)
-	const hasPrevPage = $derived(isPaged && currentPage > 1)
 
 	// Restore imported channels into the collection on filter activation.
 	// appState.local_channels is the durable source — persisted in localStorage.
@@ -268,7 +255,9 @@
 				const stillMissing = unmigratedIds.filter((id) => !recoveredIds.has(id))
 				if (stillMissing.length) {
 					const stillMissingSet = new Set(stillMissing)
-					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter((id) => !stillMissingSet.has(id))
+					appState.local_channel_ids = (appState.local_channel_ids ?? []).filter(
+						(id) => !stillMissingSet.has(id)
+					)
 				}
 			}
 			// Write any still-missing channels into the collection
@@ -286,8 +275,7 @@
 
 	let stableChannels = $state(/** @type {typeof channels} */ ([]))
 	$effect(() => {
-		// With offset pagination the query returns exactly one page.
-		// Keep showing the previous page while the next one loads.
+		// Keep showing the previous page while the next one loads
 		if (!channelsQuery.isLoading && channels.length > 0) stableChannels = channels
 	})
 	const orderedChannels = $derived(isPaged ? stableChannels : channels)
@@ -323,6 +311,7 @@
 	}
 
 	function setFilter(value) {
+		appState.channels_filter = value
 		if (filterBasePath) {
 			goto(resolve(/** @type {any} */ (filterBasePath + '/' + slugFor(value))))
 			return
@@ -330,22 +319,6 @@
 		appState.channels_filter = value
 		const query = new URL(page.url).searchParams
 		query.set('filter', value)
-		query.delete('page')
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
-	}
-
-	function setPage(n) {
-		const query = new URL(page.url).searchParams
-		if (n <= 1) query.delete('page')
-		else query.set('page', String(n))
-		goto(`?${query.toString()}`, {keepFocus: true})
-	}
-
-	function setPageSize(n) {
-		const size = Math.max(1, Math.min(200, n || 12))
-		const query = new URL(page.url).searchParams
-		if (size === 12) query.delete('per')
-		else query.set('per', String(size))
 		query.delete('page')
 		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
 	}
@@ -363,24 +336,22 @@
 					{@attach tooltip({content: m.channels_filter_tooltip_featured(), position: 'right'})}
 					>{m.channels_filter_option_featured()}</button
 				>
-				<button
-					class:active={filter === 'all'}
-					onclick={() => setFilter('all')}
-					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
-					>{m.channels_filter_option_all()}</button
-				>
 				{#if follows.followedIds.length}
 					<button
 						class:active={filter === 'favorites'}
 						onclick={() => setFilter('favorites')}
-						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}>{m.nav_favorites()}</button
+						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}
+						>{m.nav_favorites()}</button
 					>
 				{/if}
 				{#if broadcastsCollection.state.size}
 					<button
 						class:active={filter === 'broadcasting'}
 						onclick={() => setFilter('broadcasting')}
-						{@attach tooltip({content: m.channels_filter_tooltip_broadcasting(), position: 'right'})}
+						{@attach tooltip({
+							content: m.channels_filter_tooltip_broadcasting(),
+							position: 'right'
+						})}
 						>{m.channels_filter_option_broadcasting()}<span
 							class="channel-badge"
 							style:background="var(--color-red)"
@@ -405,6 +376,12 @@
 					onclick={() => setFilter('1000+')}
 					{@attach tooltip({content: m.channels_filter_tooltip_1000(), position: 'right'})}
 					>{m.channels_filter_option_1000()}</button
+				>
+				<button
+					class:active={filter === 'all'}
+					onclick={() => setFilter('all')}
+					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
+					>{m.channels_filter_option_all()}</button
 				>
 				<button
 					class:active={filter === 'artwork'}
@@ -444,51 +421,14 @@
 			</button>
 		{/if}
 
-		{#if isPaged && filter !== 'featured' && (hasPrevPage || hasNextPage || totalPages > 1)}
-			<span class="pagination">
-				<button onclick={() => setPage(currentPage - 1)} disabled={!hasPrevPage} aria-label="Previous page">←</button>
-				<button
-					class="page-label"
-					onclick={() => {
-						paginationInitialPage = currentPage
-						showPaginationDialog = true
-					}}
-					aria-label="Go to page"
-					>{currentPage}{#if totalPages > 0}/{totalPages}{/if}</button
-				>
-				<button onclick={() => setPage(currentPage + 1)} disabled={!hasNextPage} aria-label="Next page">→</button>
-			</span>
-			<Dialog bind:showModal={showPaginationDialog}>
-				<div class="pagination-dialog">
-					<label>
-						<span>{m.channels_pagination_page()}</span>
-						<input
-							type="number"
-							min="1"
-							max={totalPages || undefined}
-							value={paginationInitialPage}
-							autofocus
-							onchange={(e) => {
-								const n = parseInt(/** @type {HTMLInputElement} */ (e.target).value)
-								if (n >= 1) {
-									setPage(n)
-									showPaginationDialog = false
-								}
-							}}
-						/>
-					</label>
-					<label>
-						<span>{m.channels_pagination_per_page()}</span>
-						<input
-							type="number"
-							min="1"
-							max="200"
-							value={pageSize}
-							onchange={(e) => setPageSize(parseInt(/** @type {HTMLInputElement} */ (e.target).value))}
-						/>
-					</label>
-				</div>
-			</Dialog>
+		{#if isPaged && filter !== 'featured'}
+			<Pagination
+				{currentPage}
+				{pageSize}
+				{totalCount}
+				resultCount={channels.length}
+				defaultPageSize={12}
+			/>
 		{/if}
 
 		{#if searchHref}
@@ -508,7 +448,8 @@
 					class:active={display === 'grid'}
 					onclick={() => setDisplay('grid')}
 					{@attach tooltip({content: m.channels_tooltip_grid()})}
-					><Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small></button
+					><Icon icon="grid" strokeWidth={1.7} /><small>{m.channels_view_label_grid()}</small
+					></button
 				>
 				<button
 					class:active={display === 'list'}
@@ -541,7 +482,6 @@
 					bind:direction={appState.channels_order_direction}
 					onreshuffle={() => {
 						paginatedLimit = CHANNELS_PAGE_SIZE
-						shuffleKey++
 					}}
 				/>
 			{/if}
@@ -585,7 +525,9 @@
 						})}
 						{#if hasMore}
 							<button onclick={handleLoadMore} disabled={channelsQuery.isLoading}>
-								{channelsQuery.isLoading ? '...' : m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
+								{channelsQuery.isLoading
+									? '...'
+									: m.channels_load_more({count: CHANNELS_PAGE_SIZE})}
 							</button>
 						{/if}
 					</p>
@@ -599,7 +541,8 @@
 	.layout {
 		position: relative;
 		&.layout--map,
-		&.layout--infinite {
+		&.layout--infinite,
+		&.layout--tuner {
 			display: flex;
 			flex-direction: column;
 			flex-grow: 1;
@@ -607,8 +550,12 @@
 		&.layout--infinite :global(.canvas-wrapper) {
 			flex: 1;
 		}
+		&.layout--tuner :global(.scanner) {
+			flex: 1;
+		}
 		&.layout--infinite .filtermenu,
-		&.layout--map .filtermenu {
+		&.layout--map .filtermenu,
+		&.layout--tuner .filtermenu {
 			position: absolute;
 			top: 0;
 			left: 0;
@@ -620,13 +567,15 @@
 
 	.filtermenu {
 		position: sticky;
-		top: 0.5rem;
+		top: 0;
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.5rem;
 		margin: 0.5rem 0.5rem 1rem;
 		z-index: 1;
+		padding-top: 0.5rem;
+		padding-bottom: 1.5rem;
+		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);
 	}
 
 	footer p {
@@ -640,42 +589,5 @@
 	.filtermenu :global(.search-input) {
 		flex: 1 1 0;
 		min-width: 6rem;
-	}
-
-	.pagination {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-
-		.page-label {
-			min-width: 2.6rem;
-			font-variant-numeric: tabular-nums;
-			font-size: var(--font-2);
-			padding: 0.1rem 0.2rem;
-		}
-	}
-
-	.pagination-dialog {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		padding: 0.5rem 0;
-
-		label {
-			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-
-			span {
-				min-width: 4rem;
-				font-size: var(--font-3);
-				color: light-dark(var(--gray-10), var(--gray-8));
-			}
-
-			input[type='number'] {
-				width: 5rem;
-				text-align: center;
-			}
-		}
 	}
 </style>

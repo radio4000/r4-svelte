@@ -72,7 +72,8 @@
 			target.closest('button.tag-link')
 		)
 			return
-		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+			return
 		if (onPlay) {
 			onPlay(track.id)
 			return
@@ -111,7 +112,7 @@
 	}
 </script>
 
-<article class:active class:selected={selected && !active}>
+<article class={{active, selected: selected && !active}}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="card"
@@ -127,7 +128,7 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class="title" class:locatable={Boolean(onLocate)} onclick={onLocate}>{track.title}</h3>
+			<h3 class={['title', {locatable: Boolean(onLocate)}]} onclick={onLocate}>{track.title}</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
@@ -165,7 +166,9 @@
 			<button type="button" class="danger" role="menuitem" data-no-close onclick={handleDelete}
 				>{m.common_confirm()}</button
 			>
-			<button type="button" role="menuitem" onclick={() => menu?.close()}>{m.common_cancel()}</button>
+			<button type="button" role="menuitem" onclick={() => menu?.close()}
+				>{m.common_cancel()}</button
+			>
 		{:else}
 			<menu>
 				<button
@@ -210,8 +213,11 @@
 					>
 				{/if}
 				{#if isRealTrack}
-					<button type="button" role="menuitem" {@attach tooltip({content: m.share_native()})} onclick={shareTrack}
-						><Icon icon="share" /></button
+					<button
+						type="button"
+						role="menuitem"
+						{@attach tooltip({content: m.share_native()})}
+						onclick={shareTrack}><Icon icon="share" /></button
 					>
 				{/if}
 			</menu>
@@ -222,7 +228,9 @@
 					>
 				{/if}
 				{#if isRealTrack && !appState.embed_mode}
-					<a class="btn" href={permalink} role="menuitem"><Icon icon="circle-info" size={14} />{m.track_go_to()}</a>
+					<a class="btn" href={permalink} role="menuitem"
+						><Icon icon="circle-info" size={14} />{m.track_go_to()}</a
+					>
 				{:else if track.url && !appState.embed_mode}
 					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
 						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
@@ -232,7 +240,12 @@
 					<button type="button" role="menuitem" onclick={editTrack}
 						><Icon icon="settings" size={14} />{m.common_edit()}</button
 					>
-					<button type="button" class="danger" role="menuitem" data-no-close onclick={() => (showDeleteConfirm = true)}
+					<button
+						type="button"
+						class="danger"
+						role="menuitem"
+						data-no-close
+						onclick={() => (showDeleteConfirm = true)}
 						><Icon icon="delete" size={14} />{m.common_delete()}</button
 					>
 				{/if}
@@ -253,10 +266,10 @@
 		min-height: 53px; /* = same height with/without description */
 		min-width: 0;
 		color: inherit;
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	.artwork {
-		margin-bottom: auto;
 		aspect-ratio: 1/1;
 		width: var(--track-artwork-size);
 		object-fit: cover;
@@ -274,7 +287,6 @@
 
 	.title {
 		font-size: var(--font-4);
-		font-weight: 400;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -283,7 +295,7 @@
 			background 0.15s,
 			color 0.15s;
 		&.locatable {
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 		}
 		:global(a) {
 			text-decoration: none;
@@ -301,7 +313,7 @@
 	}
 
 	.active {
-		/* background: var(--accent-3); */
+		background: var(--accent-3);
 		outline: 1px solid var(--gray-5);
 		outline-offset: -1px;
 		border-radius: var(--border-radius);
@@ -355,7 +367,7 @@
 		padding-top: 0.1rem;
 		gap: 0.15rem;
 		/* because this is the actual link with some trickery */
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 
 		.mobile {
 			display: none;
@@ -388,7 +400,7 @@
 	:global(.trackcard-contextBtn) {
 		color: var(--gray-9);
 		article:hover & {
-			color: initial;
+			color: inherit;
 		}
 	}
 </style>

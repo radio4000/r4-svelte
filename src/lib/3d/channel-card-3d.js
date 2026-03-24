@@ -38,7 +38,8 @@ function getTrackTotal(mediaItem) {
  * @param {any} mediaItem
  */
 function getUpdatedLabel(mediaItem) {
-	const latest = mediaItem?.channel?.latest_track_at || mediaItem?.channel?.updated_at || mediaItem?.updated_at
+	const latest =
+		mediaItem?.channel?.latest_track_at || mediaItem?.channel?.updated_at || mediaItem?.updated_at
 	if (!latest) return ''
 	return formatDate(latest)
 }
@@ -94,7 +95,17 @@ export function resolveChannelCardStates(mediaItem, ui = {}) {
 	if (isActive) infoStyle = 'active'
 	else if (mediaItem.id === ui.selectedId) infoStyle = 'selected'
 
-	return {isFavorite, isActive, isSelected, isHovered, isPlaying, isLive, borderStyles, cardStyle, infoStyle}
+	return {
+		isFavorite,
+		isActive,
+		isSelected,
+		isHovered,
+		isPlaying,
+		isLive,
+		borderStyles,
+		cardStyle,
+		infoStyle
+	}
 }
 
 /**
@@ -147,7 +158,9 @@ export function buildChannelInfoCanvas(params) {
 	const tags = Array.isArray(mediaItem.tags) ? mediaItem.tags : []
 	const mentions = Array.isArray(mediaItem.mentions) ? mediaItem.mentions : []
 	const activeTags = new Set(
-		Array.isArray(mediaItem.activeTags) ? mediaItem.activeTags.map((t) => normalizeToken(t)).filter(Boolean) : []
+		Array.isArray(mediaItem.activeTags)
+			? mediaItem.activeTags.map((t) => normalizeToken(t)).filter(Boolean)
+			: []
 	)
 	const activeMentions = new Set(
 		Array.isArray(mediaItem.activeMentions)
@@ -233,7 +246,11 @@ export function buildChannelInfoCanvas(params) {
 			const isHoverToken = hoverTarget?.type === palette.kind && hoverTarget?.token === token
 			const bg = isActiveToken ? palette.activeBg : isHoverToken ? palette.hoverBg : palette.bg
 			const fg = isActiveToken ? palette.activeFg : palette.fg
-			const stroke = isActiveToken ? palette.activeBorder : isHoverToken ? palette.hoverBorder : null
+			const stroke = isActiveToken
+				? palette.activeBorder
+				: isHoverToken
+					? palette.hoverBorder
+					: null
 			ctx.font = '600 24px sans-serif'
 			const tw = ctx.measureText(token).width
 			const chipW = Math.ceil(tw + 24)
@@ -261,7 +278,9 @@ export function buildChannelInfoCanvas(params) {
 	const contrastProbeCanvas = document.createElement('canvas')
 	contrastProbeCanvas.width = 1
 	contrastProbeCanvas.height = 1
-	const contrastProbe = /** @type {CanvasRenderingContext2D | null} */ (contrastProbeCanvas.getContext('2d'))
+	const contrastProbe = /** @type {CanvasRenderingContext2D | null} */ (
+		contrastProbeCanvas.getContext('2d')
+	)
 	const parseCssColor = (input) => {
 		if (!contrastProbe) return null
 		contrastProbe.clearRect(0, 0, 1, 1)
@@ -491,7 +510,9 @@ export function resolveChannelInfoClickTarget(params) {
 	const slug = mediaItem?.slug
 	if (!slug) return null
 	if (x < 0 || y < 0 || x > CHANNEL_INFO_CANVAS.width || y > CHANNEL_INFO_CANVAS.height) return null
-	const measure = /** @type {CanvasRenderingContext2D} */ (document.createElement('canvas').getContext('2d'))
+	const measure = /** @type {CanvasRenderingContext2D} */ (
+		document.createElement('canvas').getContext('2d')
+	)
 	if (!measure) return null
 	measure.font = '400 30px sans-serif'
 	const trackTotal = getTrackTotal(mediaItem)
@@ -502,7 +523,10 @@ export function resolveChannelInfoClickTarget(params) {
 	const rotateCenterX = 32 + (totalWidth || 0) + 26
 	const rotateCenterY = metaY + 16
 	measure.font = '700 52px sans-serif'
-	const titleText = String(mediaItem?.name || mediaItem?.title || mediaItem?.slug || '').slice(0, 46)
+	const titleText = String(mediaItem?.name || mediaItem?.title || mediaItem?.slug || '').slice(
+		0,
+		46
+	)
 	const titleWidth = measure.measureText(titleText).width
 	if (x >= 32 && x <= 32 + titleWidth && y >= 26 && y <= 86) {
 		return {href: `/${encodeURIComponent(slug)}`, type: 'channel', token: 'title'}

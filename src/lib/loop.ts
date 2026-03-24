@@ -46,6 +46,7 @@ export interface LoopConfig {
 	center?: boolean | Element | string
 	wheel?: boolean | {itemsPerNotch?: number}
 	onChange?: (el: Element, index: number) => void
+	onClickItem?: (el: Element, index: number) => void
 }
 
 export interface Loop {
@@ -79,7 +80,10 @@ function findClosest(values: number[], value: number, wrapAt: number): number {
 	return index
 }
 
-export function createLoop(items: HTMLElement[] | NodeList | string, config: LoopConfig = {}): Loop {
+export function createLoop(
+	items: HTMLElement[] | NodeList | string,
+	config: LoopConfig = {}
+): Loop {
 	const els = gsap.utils.toArray(items) as HTMLElement[]
 	const axisKey = config.axis === 'horizontal' || config.axis === 'x' ? 'x' : 'y'
 	const ax = AXIS[axisKey]
@@ -175,11 +179,19 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 			const scale = Number(gsap.getProperty(el, ax.scale)) || 1
 			const toLoop = toStart + m.sizes[i] * scale
 
-			tl.to(el, {[ax.translatePct]: snap(((pos - toLoop) / m.sizes[i]) * 100), duration: toLoop / pxPerSec}, 0)
+			tl.to(
+				el,
+				{[ax.translatePct]: snap(((pos - toLoop) / m.sizes[i]) * 100), duration: toLoop / pxPerSec},
+				0
+			)
 			tl.fromTo(
 				el,
 				{[ax.translatePct]: snap(((pos - toLoop + m.totalDistance) / m.sizes[i]) * 100)},
-				{[ax.translatePct]: m.percents[i], duration: (m.totalDistance - toLoop) / pxPerSec, immediateRender: false},
+				{
+					[ax.translatePct]: m.percents[i],
+					duration: (m.totalDistance - toLoop) / pxPerSec,
+					immediateRender: false
+				},
 				toLoop / pxPerSec
 			)
 			tl.add(`label${i}`, toStart / pxPerSec)
@@ -253,14 +265,20 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 	function setupDraggable(): {proxy: HTMLElement; instance: Draggable} | undefined {
 		if (!config.draggable || typeof Draggable !== 'function') return
 		if (typeof InertiaPlugin === 'undefined') {
-			log.warn('InertiaPlugin required for momentum-based scrolling', {url: 'https://greensock.com/club'})
+			log.warn('InertiaPlugin required for momentum-based scrolling', {
+				url: 'https://greensock.com/club'
+			})
 		}
 		const p = document.createElement('div')
 		const progressWrap = gsap.utils.wrap(0, 1)
-		let ratio: number, startProgress: number, lastSnap: number, initChange: number, wasPlaying: boolean
+		let ratio: number, startProgress: number, lastSnap: number, wasPlaying: boolean
 
 		const align = () => {
-			tl.progress(progressWrap(startProgress + (draggableInstance[ax.dragStart] - draggableInstance[ax.drag]) * ratio))
+			tl.progress(
+				progressWrap(
+					startProgress + (draggableInstance[ax.dragStart] - draggableInstance[ax.drag]) * ratio
+				)
+			)
 		}
 
 		const instance = Draggable.create(p, {
@@ -269,20 +287,18 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 			inertia: true,
 			overshootTolerance: 0,
 			onPressInit() {
-				const current = this[ax.drag]
 				gsap.killTweensOf(tl)
 				wasPlaying = !tl.paused()
 				tl.pause()
 				startProgress = tl.progress()
 				refresh()
 				ratio = 1 / measured.totalDistance
-				initChange = startProgress / -ratio - current
 				gsap.set(p, {[ax.drag]: startProgress / -ratio})
 			},
 			onDrag: align,
 			onThrowUpdate: align,
 			snap(value: number) {
-				if (Math.abs(startProgress / -ratio - this[ax.drag]) < 10) return lastSnap + initChange
+				if (Math.abs(startProgress / -ratio - this[ax.drag]) < 10) return startProgress / -ratio
 				const t = -(value * ratio) * tl.duration()
 				const wrapped = timeWrap(t)
 				const snapTime = times[findClosest(times, wrapped, tl.duration())]
@@ -290,6 +306,14 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 				if (Math.abs(dif) > tl.duration() / 2) dif += dif < 0 ? tl.duration() : -tl.duration()
 				lastSnap = (t + dif) / tl.duration() / -ratio
 				return lastSnap
+			},
+			onClick(e: PointerEvent) {
+				if (!config.onClickItem) return
+				const clicked = els.find((el) => el === e.target || el.contains(e.target as Node))
+				if (clicked) {
+					const idx = els.indexOf(clicked)
+					if (idx !== -1) config.onClickItem(clicked, idx)
+				}
 			},
 			onRelease() {
 				closestIndex(true)
@@ -306,7 +330,8 @@ export function createLoop(items: HTMLElement[] | NodeList | string, config: Loo
 
 	function setupWheel(): (() => void) | undefined {
 		if (!config.wheel) return
-		const itemsPerNotch = (typeof config.wheel === 'object' ? config.wheel.itemsPerNotch : undefined) || 1
+		const itemsPerNotch =
+			(typeof config.wheel === 'object' ? config.wheel.itemsPerNotch : undefined) || 1
 		const timePerItem = tl.duration() / length
 		const isHorizontal = axisKey === 'x'
 		const scrollProxy = {time: tl.time()}

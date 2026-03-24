@@ -21,7 +21,11 @@
 	<p>{m.local_import_note()}</p>
 
 	{#if importedCount}
-		<p><a href={resolve('/') + '?filter=imported'}>{m.import_previously_imported({count: importedCount})}</a></p>
+		<p>
+			<a href={resolve('/') + '?filter=imported'}
+				>{m.import_previously_imported({count: importedCount})}</a
+			>
+		</p>
 	{/if}
 
 	<menu class="nav-vertical">

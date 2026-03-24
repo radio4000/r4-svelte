@@ -1,4 +1,4 @@
-# Player UI
+# Decks player UI
 
 ## Terms
 
@@ -22,7 +22,7 @@ Four booleans on the `Deck` type. `compact`/`expanded` are mutually exclusive. T
 - `hide_video_player` — video collapses to 0x0 via CSS. Audio keeps playing.
 - `hide_queue_panel` — `display:none` on queue panel. Video fills freed space.
 
-Deck ID 1 (the default) is hidden until it has queued tracks, an active track, or play history. Additional decks are always visible once created.
+Deck ID 1 (the default) is hidden until it has queued tracks or an active track. Additional decks are always visible once created.
 
 ## Mobile layout behavior
 

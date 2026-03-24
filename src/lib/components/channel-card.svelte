@@ -18,7 +18,9 @@
 
 	const cardHref = $derived(href ?? `/${channel.slug}`)
 
-	const isBroadcasting = $derived((broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id)))
+	const isBroadcasting = $derived(
+		(broadcastsCollection.state.size, broadcastsCollection.state.has(channel.id))
+	)
 
 	const isPlaying = $derived(
 		Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
@@ -39,6 +41,7 @@
 </script>
 
 <article
+	class="card"
 	class:playing={isPlaying}
 	ondblclick={handleDblClick}
 	role="group"
@@ -63,7 +66,8 @@
 				{/if}
 			</h3>
 			<small class="slug"
-				><a href={cardHref} class="slug-link" data-sveltekit-preload-data="false">@{channel.slug}</a></small
+				><a href={cardHref} class="slug-link" data-sveltekit-preload-data="false">@{channel.slug}</a
+				></small
 			>
 			{#if channel.description}
 				<p class="description">
@@ -73,8 +77,12 @@
 			{#if children}
 				{@render children()}
 			{/if}
+		</div>
+		<div class="card-footer">
 			<div class="meta">
-				{#if channel.track_count}<small>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small>{/if}
+				{#if channel.track_count}<small
+						>(<a href="{cardHref}/tracks">{channel.track_count}</a>)</small
+					>{/if}
 				{#if channel.latest_track_at}
 					<small>
 						{#if updatedAtHref}
@@ -85,38 +93,46 @@
 					</small>
 				{/if}
 			</div>
-		</div>
-		<div class="actions">
-			<ButtonFollow {channel} class="ghost" />
-			<PopoverMenu btnClass="ghost" align="right" valign="top">
-				{#snippet trigger()}
-					<Icon icon="options-horizontal" />
-				{/snippet}
-				<menu>
-					<button
-						type="button"
-						role="menuitem"
-						onclick={() =>
-							isPlaying ? togglePlayPause(appState.active_deck_id) : playChannel(appState.active_deck_id, channel)}
-					>
-						<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
-						{isPlaying ? m.common_pause() : m.common_play()}
-					</button>
-					{#if isBroadcasting}
-						<button type="button" role="menuitem" onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}>
-							<Icon icon="cell-signal" />
-							{m.channel_card_join_broadcast()}
+			<div class="actions">
+				<ButtonFollow {channel} class="ghost" />
+				<PopoverMenu btnClass="ghost" align="right" valign="top">
+					{#snippet trigger()}
+						<Icon icon="options-horizontal" />
+					{/snippet}
+					<menu>
+						<button
+							type="button"
+							role="menuitem"
+							onclick={() =>
+								isPlaying
+									? togglePlayPause(appState.active_deck_id)
+									: playChannel(appState.active_deck_id, channel)}
+						>
+							<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
+							{isPlaying ? m.common_pause() : m.common_play()}
 						</button>
-					{/if}
-					<button type="button" role="menuitem" onclick={share}>
-						<Icon icon="share" />
-						{m.channel_card_share()}
-					</button>
-				</menu>
-				<menu class="nav-vertical">
-					<a class="btn" href={cardHref} role="menuitem"><Icon icon="circle-info" /> {m.channel_card_visit()}</a>
-				</menu>
-			</PopoverMenu>
+						{#if isBroadcasting}
+							<button
+								type="button"
+								role="menuitem"
+								onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+							>
+								<Icon icon="signal" />
+								{m.channel_card_join_broadcast()}
+							</button>
+						{/if}
+						<button type="button" role="menuitem" onclick={share}>
+							<Icon icon="share" />
+							{m.channel_card_share()}
+						</button>
+					</menu>
+					<menu class="nav-vertical">
+						<a class="btn" href={cardHref} role="menuitem"
+							><Icon icon="circle-info" /> {m.channel_card_visit()}</a
+						>
+					</menu>
+				</PopoverMenu>
+			</div>
 		</div>
 	</div>
 </article>
@@ -131,6 +147,7 @@
 		border-radius: var(--border-radius);
 		padding: 0.25rem;
 		user-select: none;
+		cursor: var(--interactive-cursor, pointer);
 		transition:
 			background 0.1s,
 			border-color 0.1s;
@@ -167,7 +184,7 @@
 		:global(.list) & {
 			display: grid;
 			grid-template-columns: 5rem 1fr auto;
-			align-items: center;
+			align-items: stretch;
 			padding: 0.5rem;
 			gap: 0 0.75rem;
 		}
@@ -184,6 +201,7 @@
 
 		:global(.list) & {
 			grid-column: 1;
+			align-self: center;
 		}
 
 		:global(button) {
@@ -193,7 +211,7 @@
 			place-content: center;
 			opacity: 0;
 			transition: opacity 0.15s;
-			background: oklch(0 0 0 / 0.4);
+			background: oklch(0 0 0 / 0.3);
 			color: white;
 		}
 
@@ -210,20 +228,21 @@
 
 		@media (pointer: coarse) {
 			:global(button) {
-				opacity: 0.8;
+				opacity: 0;
 			}
 		}
 	}
 
 	.body {
 		display: flex;
-		flex-direction: row;
+		flex-direction: column;
 		gap: 0.25rem;
 		flex: 1;
 
 		:global(.list) & {
 			grid-column: 2 / -1;
-			align-items: center;
+			flex-direction: row;
+			align-items: stretch;
 			flex-wrap: wrap;
 		}
 	}
@@ -236,16 +255,31 @@
 		margin-top: 0.5rem;
 	}
 
+	.card-footer {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.2rem;
+
+		:global(.list) & {
+			flex-shrink: 0;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+	}
+
 	.actions {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
 		gap: 0.2rem;
 		flex-shrink: 0;
 
 		:global(.list) & {
-			flex-direction: row;
-			margin-left: auto;
+			flex-direction: column;
+			justify-content: space-between;
+			align-items: flex-end;
+			flex: 1;
 		}
 	}
 
@@ -255,7 +289,7 @@
 		gap: 0.2rem;
 		color: light-dark(var(--gray-10), var(--gray-9));
 		font-size: var(--font-3);
-		margin-top: auto;
+		flex: 1;
 
 		:global(.list) & {
 			display: none;

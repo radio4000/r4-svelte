@@ -16,14 +16,13 @@ Dry wit welcome. Channel the sensibility of someone who finds elegance in plain 
 
 ## Code conventions
 
-- Direct property access over getters/setters when direct access works
-- Minimal abstraction - keep code paths direct without unnecessary layers
+- Minimal abstraction - direct property access, no unnecessary layers
+- A `$derived` earns its name when it describes state (`isListening`, `isBroadcasting`) or combines values. One that renames a property or prepends `/` and is used once is noise — inline it
 - Self-documenting code via clear naming; comments only explain WHY when not obvious
 - Named exports over default exports
 - JSDoc for types, don't obsess over TypeScript
-- Pass primitives directly, avoid wrapper objects around simple data
-- Use literal objects directly, avoid helper functions for basic object creation
-- Methods should do something meaningful beyond simple delegation
+- Compose from domain primitives (deck, channel, track) — don't pre-digest into intermediate shapes
+- Derive display values where they're used, not in builder functions upstream
 - Domain-specific verbs that match user mental models
 - Pure functions for composability in api/utils/data operations
 - Optimistic execution - trust methods, let errors throw
@@ -32,13 +31,11 @@ Dry wit welcome. Channel the sensibility of someone who finds elegance in plain 
 
 ## HTML/CSS
 
-Global styles live in `styles/style.css` - don't redefine button styles etc.
+Global styles in `styles/style.css`, custom properties in `variables.css`. Don't redefine what's already there.
 
-Use CSS custom properties from `variables.css` for colors and font-sizing.
+Semantic elements (`<section>`, `<article>`, `<figure>`) over `<div>`s. No classes by default — use structure, ARIA roles, `data-*` attributes, and modern selectors (`:has`, `:where`, `:is`). Only add a class for 3rd-party hooks or proven reuse.
 
-Semantic elements (`<section>`, `<article>`, `<figure>`) over container `<div>`s. Write HTML/CSS without classes by default. Express state via semantic elements, ARIA roles, `data-*` attributes. Style via structure and modern selectors (`:has`, `:where`, `:is`), not class soup. Only introduce a class for 3rd-party hooks or proven reuse.
-
-Let browser defaults handle spacing, typography, and most layout. Focus on styles critical for functionality.
+Trust global defaults for spacing and typography. Only write CSS for functionality. Reuse from `layout.css`.
 
 ## Svelte 5
 

@@ -1,29 +1,30 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
-	import {setScene} from '$lib/scene-state.svelte'
 	import {appName} from '$lib/config'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
+	import {channelsCollection} from '$lib/collections/channels'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {featuredScore} from '$lib/utils'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {getFeaturedPool} from '$lib/collections/featured'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {playChannel, togglePlayPause, toggleChannelAutoRadio} from '$lib/api'
-	import {findAutoDecksForChannel, findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
+	import {getChannelTags, extractHashtags} from '$lib/utils'
+	import {playChannel, togglePlayPause, loadDeckView, playTrack, sortByNewest} from '$lib/api'
+	import {findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
-	import {appPresence, channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
+	import {appPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
+	import MyChannelControls from '$lib/components/my-channel-controls.svelte'
 
+	import CoverFlip from '$lib/components/cover-flip.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
+	import MapChannels from '$lib/components/map-channels.svelte'
+	import {not, isNull} from '@tanstack/db'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
-
-	setScene({geometry: 'box', backgroundColor: 'oklch(15% 0.04 260)', lightCycling: true, cameraPosition: [0, 0, 4]})
 
 	const FEATURED_COUNT = 3
 	const FEATURED_COUNT_LOGGEDOUT = 6
@@ -39,7 +40,9 @@
 	const showOnboarding = $derived(
 		!follows.isLoading &&
 			!!userChannel &&
-			((userChannel.track_count ?? 0) === 0 || follows.followedChannels.length === 0 || !userChannel.image)
+			((userChannel.track_count ?? 0) === 0 ||
+				follows.followedChannels.length === 0 ||
+				!userChannel.image)
 	)
 
 	// Featured channels (not logged in, or no channel)
@@ -70,7 +73,9 @@
 				const pool = await getFeaturedPool(FEATURED_DAYS)
 				featuredPool = pool
 				// Initial pick: by score, consistent with explore pages
-				const picked = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, featuredPickCount)
+				const picked = pool
+					.toSorted((a, b) => featuredScore(b) - featuredScore(a))
+					.slice(0, featuredPickCount)
 				featuredChannels = picked
 			} catch (e) {
 				console.warn('[homepage] failed to load featured channels', e)
@@ -80,7 +85,10 @@
 
 	const featuredFirst = $derived(featuredChannels[0] ?? null)
 	const featuredIsPlaying = $derived(
-		!!featuredFirst && Object.values(appState.decks).some((d) => d.playlist_slug === featuredFirst.slug && d.is_playing)
+		!!featuredFirst &&
+			Object.values(appState.decks).some(
+				(d) => d.playlist_slug === featuredFirst.slug && d.is_playing
+			)
 	)
 
 	function toggleFeaturedPlay() {
@@ -92,7 +100,9 @@
 	// Live broadcasts — reactive via useLiveQuery, sorted by most recently active
 	const broadcastsQuery = useLiveQuery(broadcastsCollection)
 	const broadcastRows = $derived(
-		(broadcastsQuery.data ?? []).toSorted((a, b) => (b.track_played_at ?? '').localeCompare(a.track_played_at ?? ''))
+		(broadcastsQuery.data ?? []).toSorted((a, b) =>
+			(b.track_played_at ?? '').localeCompare(a.track_played_at ?? '')
+		)
 	)
 	const activeBroadcasts = $derived(broadcastRows.slice(0, 10))
 	const favoriteBroadcastRows = $derived.by(() =>
@@ -113,15 +123,6 @@
 		else playChannel(appState.active_deck_id, userChannel)
 	}
 
-	// Auto radio state for user's channel
-	const userChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
-	const userChannelHasAuto = $derived(userChannelAutoDecks.length > 0)
-	const userChannelHasAutoDrifted = $derived(userChannelAutoDecks.some((d) => d.auto_radio_drifted))
-
-	function toggleUserChannelAutoRadio() {
-		if (userChannel?.slug) toggleChannelAutoRadio(userChannel.slug)
-	}
-
 	$effect(() => {
 		const slug = userChannel?.slug
 		if (!slug) return
@@ -129,32 +130,85 @@
 		return () => unwatchPresence(slug)
 	})
 
-	const userChannelPresence = $derived(
-		userChannel?.slug ? (channelPresence[userChannel.slug] ?? {total: 0, broadcast: 0, autoRadio: 0, byUri: {}}) : null
-	)
-	const userChannelListenerTotal = $derived(userChannelPresence?.total ?? 0)
-	const userChannelBroadcastListeners = $derived(userChannelPresence?.broadcast ?? 0)
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
+
+	const userChannelTopTags = $derived.by(() => {
+		if (!userChannel?.slug) return []
+		const channelTracks = /** @type {import('$lib/types').Track[]} */ (
+			[...tracksCollection.state.values()].filter(
+				(t) => /** @type {any} */ (t).slug === userChannel.slug
+			)
+		)
+		const featuredTags = extractHashtags(userChannel.description ?? '').map((t) => t.slice(1))
+		const allByCount = getChannelTags(channelTracks)
+		const featuredWithCount = featuredTags
+			.map((tag) => allByCount.find((t) => t.value === tag) ?? {value: tag, count: 0})
+			.slice(0, 13)
+		const topExtra = allByCount
+			.filter((t) => !featuredTags.includes(t.value))
+			.slice(0, 13 - featuredWithCount.length)
+		return [...featuredWithCount, ...topExtra]
+	})
+
+	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
+
+	$effect(() => {
+		const slug = userChannel?.slug
+		if (!slug || !showTrackWidget) return
+		void ensureTracksLoaded(slug)
+	})
+
+	async function playChannelTag(tag) {
+		if (!userChannel) return
+		const slug = userChannel.slug
+		await ensureTracksLoaded(slug)
+		const tracks = /** @type {import('$lib/types').Track[]} */ (
+			[...tracksCollection.state.values()]
+				.filter(
+					(t) =>
+						/** @type {any} */ (t).slug === slug && /** @type {any} */ (t.tags ?? []).includes(tag)
+				)
+				.sort(sortByNewest)
+		)
+		if (!tracks.length) return
+		loadDeckView(
+			appState.active_deck_id,
+			{sources: [{channels: [slug], tags: [tag]}]},
+			tracks.map((t) => t.id),
+			{slug}
+		)
+		await playTrack(appState.active_deck_id, tracks[0].id, null, 'play_channel')
+	}
+
 	const showFavoritesWidget = $derived(follows.followedChannels.length > 0)
 	const showFavoriteBroadcastWidget = $derived(favoriteBroadcastCount > 0)
 	const showBroadcastCountWidget = $derived(broadcastCount > 0 && !userChannelIsBroadcasting)
-	const showBroadcastStatusWidget = $derived(userChannelIsBroadcasting)
-	const showAudienceWidget = $derived(userChannelListenerTotal > 0 || userChannelBroadcastListeners > 0)
-
-	const broadcastingDecks = $derived.by(() => {
-		if (!userChannel) return []
+	const activeDecks = $derived.by(() => {
+		void trackMetaCollection.state.size
 		return Object.values(appState.decks)
-			.filter((d) => d.broadcasting_channel_id === userChannel.id)
+			.filter((d) => d.playlist_track)
+			.sort((a, b) => a.id - b.id)
 			.map((deck) => {
 				const currentId = deck.playlist_track
 				const tracks = deck.playlist_tracks
 				const currentIdx = currentId ? tracks.indexOf(currentId) : -1
 				const nextId = currentIdx >= 0 ? tracks[currentIdx + 1] : tracks[0]
 				const getTrack = (id) => (id ? tracksCollection.state.get(id) : undefined)
-				return {deck, current: getTrack(currentId), next: getTrack(nextId)}
+				const current = getTrack(currentId)
+				const meta = current?.media_id
+					? trackMetaCollection.state.get(trackMetaKey(current.provider, current.media_id))
+					: undefined
+				return {deck, current, next: getTrack(nextId), meta}
 			})
 	})
+	const showBroadcastStatusWidget = $derived(activeDecks.length > 0)
+
+	// Globe channels — all synced channels with coordinates
+	const globeChannelsQuery = useLiveQuery((q) =>
+		q.from({ch: channelsCollection}).where(({ch}) => not(isNull(ch.latitude)))
+	)
+	const globeChannels = $derived(globeChannelsQuery.data ?? [])
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -188,41 +242,32 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
+		{#if !isSignedIn}
+			{#if showBroadcastCountWidget}
+				<a class="btn" href={resolve('/channels/broadcasting')}>
+					<Icon icon="cell-signal" />
+					<span>{broadcastCount.toLocaleString()}</span>
+				</a>
+			{/if}
+			{#if !appState.show_welcome_hint}
+				<button
+					class="btn"
+					style="margin-left: auto"
+					onclick={() => (appState.show_welcome_hint = true)}
+					title={m.welcome_title({appName})}
+				>
+					<Icon icon="circle-info" />
+				</button>
+			{/if}
+		{/if}
 		{#if userChannel}
-			<div class="channel-play">
-				{#if userChannelIsBroadcasting}
-					<a
-						href={resolve(`/${userChannel.slug}`)}
-						class="channel-badge live-link"
-						title={m.status_broadcasting()}
-						aria-label={m.status_broadcasting()}
-					>
-						{m.status_live_short()}
-					</a>
-				{/if}
-				{#if userChannelTrackCount > 0}
-					{#if userChannelIsPlaying || userChannelIsBroadcasting}
-						<BroadcastControls
-							deckId={userChannelLoadedDeckId}
-							channelId={userChannel.id}
-							channelSlug={userChannel.slug}
-						/>
-					{/if}
-					<button class="btn mini-play" onclick={toggleUserChannelPlay} title={userChannel.slug}>
-						<Icon icon={userChannelIsPlaying ? 'pause' : 'play-fill'} />
-						<span class="mini-play-avatar"
-							><ChannelAvatar id={userChannel.image} alt={userChannel.name} size={64} /></span
-						>
-						<span class="mini-play-slug">{userChannel.slug}</span>
-					</button>
-					<AutoRadioButton
-						className="btn{userChannelHasAuto ? ' active' : ''}"
-						synced={!userChannelHasAutoDrifted}
-						title={m.auto_radio_resync()}
-						onclick={toggleUserChannelAutoRadio}
-					/>
-				{/if}
-			</div>
+			<MyChannelControls
+				channel={userChannel}
+				deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
+				isPlaying={userChannelIsPlaying}
+				isBroadcasting={userChannelIsBroadcasting}
+				onPlayPause={toggleUserChannelPlay}
+			/>
 		{/if}
 	</menu>
 
@@ -230,126 +275,244 @@
 		<!-- Logged in with channel -->
 
 		<section class="section dashboard-section">
-			<div class="dashboard-grid">
-				{#if showBroadcastStatusWidget}
-					{#each broadcastingDecks as { deck, current, next } (deck.id)}
-						<div class="dashboard-card broadcast-deck-card">
-							<span class="dashboard-label dashboard-label--with-icon">
-								<Icon icon="cell-signal" size={16} />
-								{m.home_dashboard_broadcast()}
-							</span>
-							<div class="broadcast-track">
-								<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
-								<span class="broadcast-track-title">{current?.title ?? '—'}</span>
+			{#if showBroadcastStatusWidget}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if showBroadcastStatusWidget}
+							{#each activeDecks as { deck, current, next, meta } (deck.id)}
+								{@const discogsResource = /** @type {any} */ (meta?.discogs_data ?? null)}
+								{@const mbRecording = /** @type {any} */ (
+									meta?.musicbrainz_data &&
+									typeof meta.musicbrainz_data === 'object' &&
+									'recording' in meta.musicbrainz_data
+										? /** @type {any} */ (meta.musicbrainz_data).recording
+										: null
+								)}
+								{@const hasMeta = Boolean(discogsResource || mbRecording)}
+								<div
+									class="dashboard-card dashboard-card--row broadcast-deck-card"
+									class:has-meta={hasMeta}
+								>
+									<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
+									{#if deck.broadcasting_channel_id}
+										<Icon icon="cell-signal" size={14} />
+									{/if}
+									<span class="broadcast-track-title">{current?.title ?? '—'}</span>
+									{#if next}
+										<Icon icon="next-fill" size={12} />
+										<span class="broadcast-track-title broadcast-track-title--next"
+											>{next.title}</span
+										>
+									{/if}
+									{#if discogsResource || mbRecording}
+										<div class="broadcast-metadata">
+											{#if discogsResource}
+												{@const artist =
+													discogsResource.artists_sort ||
+													discogsResource.artists?.map((a) => a.name).join(', ') ||
+													''}
+												{@const year =
+													discogsResource.released_formatted ||
+													(discogsResource.year ? String(discogsResource.year) : '')}
+												<div class="broadcast-meta-item">
+													{#if discogsResource.thumb}
+														<img
+															class="meta-thumb"
+															src={discogsResource.thumb}
+															alt=""
+															loading="lazy"
+														/>
+													{/if}
+													<span class="meta-text">
+														{#if artist}<strong>{artist}</strong> —{/if}
+														{discogsResource.title}{#if year}<small class="meta-year">{year}</small
+															>{/if}
+													</span>
+													{#if discogsResource.uri}
+														<a
+															class="meta-badge"
+															href={discogsResource.uri}
+															target="_blank"
+															rel="noopener noreferrer"
+														>
+															<Icon icon="tag" size={10} />Discogs
+														</a>
+													{/if}
+												</div>
+											{/if}
+											{#if mbRecording}
+												{@const mbArtist = mbRecording['artist-credit']?.[0]?.artist?.name}
+												{@const mbDate = mbRecording['first-release-date']}
+												<div class="broadcast-meta-item">
+													<span class="meta-text">
+														{#if mbArtist}<strong>{mbArtist}</strong> —{/if}
+														{mbRecording.title}{#if mbDate}<small class="meta-year">{mbDate}</small
+															>{/if}
+													</span>
+													<a
+														class="meta-badge"
+														href="https://musicbrainz.org/recording/{mbRecording.id}"
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														<Icon icon="circle-info" size={10} />MusicBrainz
+													</a>
+												</div>
+											{/if}
+										</div>
+									{/if}
+								</div>
+							{/each}
+						{/if}
+					</div>
+				</div>
+			{/if}
+
+			{#if userChannelTopTags.length > 0 || tagsLoading || showOnboarding}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if tagsLoading}
+							<div
+								class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder"
+							>
+								<small>…</small>
 							</div>
-							{#if next}
-								<div class="broadcast-track broadcast-track--next">
-									<Icon icon="next-fill" size={14} />
-									<span class="broadcast-track-title">{next.title}</span>
+						{/if}
+						{#each userChannelTopTags as { value, count } (value)}
+							<div class="dashboard-card dashboard-card--row dashboard-card--tag">
+								<button
+									class="btn ghost"
+									onclick={() => playChannelTag(value)}
+									title="Play #{value}"
+								>
+									<Icon icon="play-fill" />
+								</button>
+								<a
+									class="dashboard-label--tag"
+									href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
+										`?tags=${encodeURIComponent(value)}`}>#{value}</a
+								>
+								<small class="tag-count">{count}</small>
+								<div class="tag-actions">
+									<a
+										class="btn ghost"
+										href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
+										title="Search #{value} globally"
+									>
+										<Icon icon="search" />
+									</a>
+								</div>
+							</div>
+						{/each}
+						{#if showOnboarding}
+							{#if appState.show_onboarding_hint}
+								<div class="dashboard-card onboarding dismissible">
+									<button
+										class="dismiss-btn"
+										onclick={() => (appState.show_onboarding_hint = false)}
+										aria-label="Close"
+									>
+										<Icon icon="close" />
+									</button>
+									<ol class="todo-list">
+										<li>
+											<input
+												type="checkbox"
+												disabled
+												checked={(userChannel.track_count ?? 0) > 0}
+											/>
+											<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+												>{m.home_onboarding_add_track()}</a
+											>
+										</li>
+										<li>
+											<input
+												type="checkbox"
+												disabled
+												checked={follows.followedChannels.length > 0}
+											/>
+											<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+										</li>
+										<li>
+											<input type="checkbox" disabled checked={!!userChannel.image} />
+											<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
+												>{m.home_onboarding_add_image()}</a
+											>
+										</li>
+									</ol>
 								</div>
 							{/if}
-						</div>
-					{/each}
-				{/if}
-				<div class="dashboard-card dashboard-card--channel">
-					<ol class="list">
-						<li><ChannelCard channel={userChannel} /></li>
-					</ol>
-				</div>
-				{#if showOnboarding}
-					{#if appState.show_onboarding_hint}
-						<div class="dashboard-card onboarding dismissible">
-							<button class="dismiss-btn" onclick={() => (appState.show_onboarding_hint = false)} aria-label="Close">
-								<Icon icon="close" />
+						{/if}
+					</div>
+					{#if showOnboarding && !appState.show_onboarding_hint}
+						<div class="onboarding-toggle-row">
+							<button
+								class="btn onboarding-toggle"
+								onclick={() => (appState.show_onboarding_hint = true)}
+								title="Show getting started"
+							>
+								<Icon icon="circle-info" />
 							</button>
-							<ol class="todo-list">
-								<li>
-									<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
-									<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>{m.home_onboarding_add_track()}</a>
-								</li>
-								<li>
-									<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
-									<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
-								</li>
-								<li>
-									<input type="checkbox" disabled checked={!!userChannel.image} />
-									<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}>{m.home_onboarding_add_image()}</a>
-								</li>
-							</ol>
 						</div>
 					{/if}
-				{/if}
-				{#if showTrackWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve('/[slug]/tracks', {slug: userChannel.slug})}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="unordered-list" size={16} />
-							{m.home_dashboard_tracks()}
-						</span>
-						<strong class="dashboard-value">{userChannelTrackCount.toLocaleString()}</strong>
-					</a>
-				{/if}
-				{#if showFavoritesWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/favorites')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="favorite-fill" size={16} />
-							{m.home_dashboard_favorites()}
-						</span>
-						<strong class="dashboard-value">{follows.followedChannels.length.toLocaleString()}</strong>
-					</a>
-				{/if}
-				{#if showFavoriteBroadcastWidget}
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="cell-signal" size={16} />
-							{m.home_dashboard_favorites_broadcasting()}
-						</span>
-						<strong class="dashboard-value">{favoriteBroadcastCount.toLocaleString()}</strong>
-					</a>
-				{/if}
-				{#if showAudienceWidget}
-					<a class="dashboard-card dashboard-card--link" href={resolve(`/${userChannel.slug}`)}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="users" size={16} />
-							{m.home_dashboard_audience()}
-						</span>
-						<strong class="dashboard-value">{userChannelListenerTotal.toLocaleString()}</strong>
-						<small class="dashboard-meta"
-							><Icon icon="cell-signal" size={12} />
-							{m.home_dashboard_live_listeners({count: userChannelBroadcastListeners.toLocaleString()})}</small
-						>
-						<small class="dashboard-meta"
-							><Icon icon="users" size={12} />
-							{m.home_dashboard_total_listeners({count: userChannelListenerTotal.toLocaleString()})}</small
-						>
-					</a>
-				{/if}
-			</div>
-			{#if showOnboarding && !appState.show_onboarding_hint}
-				<div class="onboarding-toggle-row">
-					<button
-						class="btn onboarding-toggle"
-						onclick={() => (appState.show_onboarding_hint = true)}
-						title="Show getting started"
-					>
-						<Icon icon="circle-info" />
-					</button>
+				</div>
+			{/if}
+
+			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget || showBroadcastCountWidget}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if showTrackWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+							>
+								<Icon icon="unordered-list" size={16} />
+								<span>{m.home_dashboard_tracks()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{userChannelTrackCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showFavoritesWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/favorites')}
+							>
+								<Icon icon="favorite-fill" size={16} />
+								<span>{m.home_dashboard_favorites()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{follows.followedChannels.length.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showFavoriteBroadcastWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="cell-signal" size={16} />
+								<span>{m.home_dashboard_favorites_broadcasting()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{favoriteBroadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showBroadcastCountWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="cell-signal" size={16} />
+								<span>{m.home_dashboard_live_radios()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{broadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+					</div>
 				</div>
 			{/if}
 		</section>
-
-		{#if showBroadcastCountWidget}
-			<section class="section dashboard-section">
-				<div class="dashboard-grid" style="width: fit-content;">
-					<a class="dashboard-card dashboard-card--link" href={resolve('/channels/broadcasting')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="signal" size={16} />
-							{m.home_dashboard_live_radios()}
-						</span>
-						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
-					</a>
-				</div>
-			</section>
-		{/if}
 
 		{#if favoriteBroadcasts.length}
 			<section class="section">
@@ -361,11 +524,36 @@
 				</ol>
 			</section>
 		{/if}
+		<section class="section section--globe">
+			<div class="globe">
+				<MapChannels
+					channels={globeChannels}
+					globeMode={true}
+					zoom={1}
+					syncUrl={false}
+					showControls={false}
+					tileStyle="topo"
+				/>
+			</div>
+		</section>
 	{:else if isSignedIn && authStatus.channelChecked}
 		<!-- Logged in but no channel -->
+		<section class="section dashboard-section">
+			<div class="dashboard-grid">
+				<a
+					class="dashboard-card dashboard-card--link dashboard-card--row"
+					href={resolve('/create-channel')}
+				>
+					<Icon icon="add" size={16} />
+					<span>{m.home_create_channel()}</span>
+				</a>
+			</div>
+		</section>
 		{#if activeBroadcasts.length}
 			<section class="section">
-				<h2 class="section-title"><a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a></h2>
+				<h2 class="section-title">
+					<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+				</h2>
 				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
 						<li><ChannelCard channel={broadcast.channels} /></li>
@@ -385,7 +573,12 @@
 							</button>
 						{/if}
 						{#if featuredPool.length > featuredPickCount}
-							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
+							<button
+								type="button"
+								title={m.home_featured_refresh()}
+								onclick={pickFeatured}
+								disabled={shuffling}
+							>
 								<Icon icon="switch-alt" />
 							</button>
 						{/if}
@@ -400,31 +593,13 @@
 		{/if}
 	{:else}
 		<!-- Not logged in -->
-		{#if showBroadcastCountWidget}
-			<section class="section dashboard-section">
-				<div class="dashboard-grid">
-					<a class="dashboard-card dashboard-card--link dashboard-card--live" href={resolve('/channels/broadcasting')}>
-						<span class="dashboard-label dashboard-label--with-icon">
-							<Icon icon="cell-signal" size={16} />
-							{m.home_dashboard_live_radios()}
-						</span>
-						<strong class="dashboard-value">{broadcastCount.toLocaleString()}</strong>
-					</a>
-				</div>
-			</section>
-			<section class="section">
-				<h2 class="section-title">{m.home_broadcasting()}</h2>
-				<ol class="list">
-					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-						<li><ChannelCard channel={broadcast.channels} /></li>
-					{/each}
-				</ol>
-			</section>
-		{/if}
-
 		{#if appState.show_welcome_hint}
 			<section class="section welcome-section dismissible">
-				<button class="dismiss-btn" onclick={() => (appState.show_welcome_hint = false)} aria-label="Close">
+				<button
+					class="dismiss-btn"
+					onclick={() => (appState.show_welcome_hint = false)}
+					aria-label="Close"
+				>
 					<Icon icon="close" />
 				</button>
 				<h1>{m.welcome_title({appName})}</h1>
@@ -437,46 +612,102 @@
 					<li>{m.welcome_feature_open()}</li>
 				</ul>
 				<menu class="welcome-menu">
-					<a href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')} class="btn primary"
-						>{m.header_start_your_radio()}</a
+					<a
+						href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')}
+						class="btn primary">{m.header_start_your_radio()}</a
 					>
 					<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
 					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
 				</menu>
 			</section>
-		{:else}
-			<menu class="filtermenu">
-				<button
-					class="btn"
-					style="margin-left: auto"
-					onclick={() => (appState.show_welcome_hint = true)}
-					title={m.welcome_title({appName})}
-				>
-					<Icon icon="circle-info" />
-				</button>
-			</menu>
 		{/if}
 
-		{#if featuredChannels.length}
-			<section class="section">
+		<div class="loggedout-grid">
+			<section class="section section--globe section--globe--loggedout">
 				<header class="section-header">
-					<h2 class="section-title"><a href={resolve('/channels/featured')}>{m.home_featured()}</a></h2>
-					<menu>
-						{#if featuredFirst}
-							<button type="button" onclick={toggleFeaturedPlay}>
-								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
-							</button>
-						{/if}
-						{#if featuredPool.length > featuredPickCount}
-							<button type="button" title={m.home_featured_refresh()} onclick={pickFeatured} disabled={shuffling}>
-								<Icon icon="switch-alt" />
-							</button>
-						{/if}
-					</menu>
+					<h2 class="section-title">
+						<a href={resolve('/channels/all') + '?display=map'}>Overview</a>
+					</h2>
 				</header>
-				<ol class="grid">
-					{#each featuredChannels as channel (channel.id)}
-						<li><ChannelCard {channel} /></li>
+				<div class="globe">
+					<MapChannels
+						channels={globeChannels}
+						globeMode={true}
+						zoom={1.5}
+						syncUrl={false}
+						showControls={false}
+						tileStyle="topo"
+					/>
+				</div>
+			</section>
+
+			{#if featuredChannels.length}
+				<section class="section section--featured-col">
+					<header class="section-header">
+						<h2 class="section-title">
+							<a href={resolve('/channels/featured')}>{m.home_featured()}</a>
+						</h2>
+						<menu>
+							{#if featuredFirst}
+								<button type="button" onclick={toggleFeaturedPlay}>
+									<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
+								</button>
+							{/if}
+							{#if featuredPool.length > featuredPickCount}
+								<button
+									type="button"
+									title={m.home_featured_refresh()}
+									onclick={pickFeatured}
+									disabled={shuffling}
+								>
+									<Icon icon="switch-alt" />
+								</button>
+							{/if}
+						</menu>
+					</header>
+					<ol class="grid grid--scroll">
+						{#each featuredChannels as channel (channel.id)}
+							<li><ChannelCard {channel} /></li>
+						{/each}
+					</ol>
+				</section>
+			{/if}
+		</div>
+
+		{#if featuredChannels.length}
+			<CoverFlip
+				items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels}
+				orientation="horizontal"
+				class="featured-flip"
+			>
+				{#snippet item({item: channel, active})}
+					<div class="flip-card" class:active>
+						<ChannelCard {channel} />
+					</div>
+				{/snippet}
+				{#snippet active({item: channel})}
+					<p class="flip-label">
+						<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+						{#if channel.description}
+							<span class="flip-desc"
+								>— {channel.description.length > 140
+									? channel.description.slice(0, 140) + '…'
+									: channel.description}</span
+							>
+						{/if}
+					</p>
+				{/snippet}
+			</CoverFlip>
+		{/if}
+
+		{#if showBroadcastCountWidget}
+			<section class="section">
+				<h2 class="section-title">
+					<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+				</h2>
+				<ol class="list">
+					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+						<li><ChannelCard channel={broadcast.channels} /></li>
 					{/each}
 				</ol>
 			</section>
@@ -490,7 +721,8 @@
 				{#if trackCount}<a href={resolve('/tracks/recent')}
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
-				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
+				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span
+					>{/if}
 			</footer>
 		{/if}
 	{/if}
@@ -499,6 +731,10 @@
 <style>
 	.homepage {
 		padding: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 
 		/* grids manage their own horizontal spacing */
 		:global(.grid) {
@@ -518,93 +754,131 @@
 		z-index: 2;
 	}
 
-	.channel-play {
-		margin-left: auto;
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
 	.create-channel-action {
 		margin-left: auto;
 	}
 
-	.mini-play {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-		padding-inline: 0.5rem;
-		height: 2rem;
-		font-size: var(--font-3);
-		max-width: 9rem;
-	}
-
-	.mini-play-avatar {
-		width: 1.25rem;
-		height: 1.25rem;
-		flex-shrink: 0;
-		overflow: hidden;
-		border-radius: var(--border-radius);
-
-		:global(img, svg) {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-			border-radius: inherit;
-		}
-	}
-
-	.mini-play-slug {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.live-link {
-		text-decoration: none;
-		animation: live-pulse 2s ease-in-out infinite;
-	}
-
-	@keyframes live-pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
+	:global(.my-channel) {
+		margin-left: auto;
 	}
 
 	.section {
 		margin-bottom: 1.5rem;
 	}
 
+	.section--globe {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		margin-bottom: 0;
+
+		.section-header {
+			margin-bottom: 1rem;
+		}
+	}
+
+	.section--featured-col {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.section--globe--loggedout .globe {
+		min-height: 33vh;
+	}
+
+	.loggedout-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+
+		& > section {
+			min-width: 0;
+			overflow: hidden;
+		}
+
+
+		.section--globe {
+			margin-bottom: 0;
+		}
+	}
+
 	.dashboard-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+
 		:global(.list) {
 			margin: 0;
 		}
 	}
 
+	.dashboard-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
 	.dashboard-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: 0.75rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
 	}
 
 	.dashboard-card {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-		padding: 0.75rem;
+		gap: 0.2rem;
+		padding: 0.5rem;
 		border: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		background: light-dark(var(--gray-1), var(--gray-2));
 		min-width: 0;
 	}
 
-	.dashboard-card--channel {
-		padding: 0.5rem;
-		grid-column: 1 / -1;
+	.dashboard-card--row {
+		flex-direction: row;
+		align-items: center;
+		overflow: hidden;
+	}
+
+	.dashboard-card--row > span:not(.channel-widget-avatar):not(.tag-count):not(.audience-counts) {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.dashboard-card--row > a.dashboard-label--tag {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		flex-shrink: 1;
+	}
+
+	.dashboard-label--tag {
+		text-decoration: none;
+		flex-shrink: 0;
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	.tag-count {
+		font-size: var(--font-2);
+		color: light-dark(var(--gray-9), var(--gray-8));
+		margin-right: auto;
+	}
+
+	.tag-actions {
+		display: flex;
+		gap: 0.1rem;
+		flex-shrink: 0;
 	}
 
 	.dashboard-card--link {
@@ -623,17 +897,6 @@
 		}
 	}
 
-	.dashboard-label {
-		font-size: var(--font-2);
-		color: light-dark(var(--gray-10), var(--gray-9));
-	}
-
-	.dashboard-label--with-icon {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
-	}
-
 	.dashboard-value {
 		font-size: var(--font-7);
 		font-weight: 600;
@@ -641,40 +904,92 @@
 		color: light-dark(var(--gray-12), var(--gray-11));
 	}
 
-	.dashboard-meta {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: var(--font-1);
-		color: light-dark(var(--gray-10), var(--gray-8));
-	}
-
-	.dashboard-card--live {
-		border-color: var(--accent-7);
-		background: var(--accent-2);
+	.broadcast-count {
+		margin-left: auto;
+		font-size: var(--font-4);
 	}
 
 	.broadcast-deck-card {
 		border-color: var(--accent-7);
 		background: var(--accent-2);
-	}
-
-	.broadcast-track {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
 		font-size: var(--font-2);
 		overflow: hidden;
-	}
 
-	.broadcast-track--next {
-		opacity: 0.6;
+		&.has-meta {
+			flex-wrap: wrap;
+		}
 	}
 
 	.broadcast-track-title {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.broadcast-track-title--next {
+		opacity: 0.5;
+		flex: 0 1 auto;
+	}
+
+	.broadcast-metadata {
+		flex: 1 0 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding-top: 0.3rem;
+		border-top: 1px solid var(--accent-4);
+		margin-top: 0.1rem;
+	}
+
+	.broadcast-meta-item {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	.meta-thumb {
+		width: 28px;
+		height: 28px;
+		object-fit: cover;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	.meta-text {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--font-2);
+	}
+
+	.meta-year {
+		margin-left: 0.3rem;
+		color: light-dark(var(--gray-9), var(--gray-8));
+	}
+
+	.meta-badge {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.15rem;
+		font-size: var(--font-1);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: light-dark(var(--gray-8), var(--gray-7));
+		text-decoration: none;
+		padding: 0.1rem 0.3rem;
+		border: 1px solid var(--accent-5);
+		border-radius: 3px;
+
+		&:hover {
+			color: light-dark(var(--gray-11), var(--gray-10));
+			border-color: var(--accent-7);
+		}
 	}
 
 	.section-header {
@@ -711,6 +1026,24 @@
 			&:hover {
 				text-decoration: underline;
 			}
+		}
+	}
+
+	.globe {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 300px;
+		margin-top: -0.75rem;
+		background: transparent;
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		:global(.map) {
+			flex: 1;
+			min-height: 0;
+		}
+		:global(article .description) {
+			display: none;
 		}
 	}
 
@@ -795,5 +1128,29 @@
 				}
 			}
 		}
+	}
+
+	:global(.featured-flip) {
+		gap: 0.25rem;
+	}
+
+	.flip-card {
+		width: 250px;
+
+		:global(.body) {
+			display: none;
+		}
+	}
+
+	.flip-desc {
+		color: var(--gray-10);
+	}
+
+	.flip-label {
+		text-align: center;
+		font-size: var(--font-4);
+		padding: 0.5rem;
+		/* avoid jumping descriptions */
+		min-height: 6rem;
 	}
 </style>

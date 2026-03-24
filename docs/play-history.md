@@ -1,42 +1,34 @@
-# Play history
+# Capture events
 
-Every track played leaves a trace—a small record of the moment you pressed play, how long you lingered, and why you moved on.
+Every user action worth remembering — plays, track ends, skips — is recorded as a generic capture event. These feed both the local history UI and optional analytics (PostHog).
 
 ## Data structure
 
 ```ts
-interface PlayHistoryEntry {
+interface CaptureEvent {
 	id: string
-	track_id: string
-	slug: string
-	title: string
-	url: string
-	started_at: string
-	ended_at?: string
-	ms_played: number
-	reason_start?: string
-	reason_end?: string
-	shuffle: boolean
-	skipped: boolean
+	event: string
+	properties?: Record<string, unknown>
+	created_at: string
 }
 ```
 
-The `reason_start` captures intent: did you click deliberately, or did the queue carry you here? The `reason_end` records departure: skipped after three seconds, played to completion, or interrupted by a YouTube error code (`youtube_error_2`, `youtube_error_5`, and their ilk).
+The `event` field names what happened (`player:track_play`, `player:track_end`). Properties carry context: `track_id`, `play_id`, `ms_played`, `end_reason`, `reason_start`, and whatever else the caller passes.
 
 ## Functions
 
 ```js
-addPlayHistoryEntry(track, {reason_start, shuffle})
-endPlayHistoryEntry(trackId, {ms_played, reason_end, skipped})
-clearPlayHistory()
+addCaptureEvent(event, properties?)  // record any event, returns id
+clearCaptureEvents()                 // wipe all local events
+buildEndDataMap(allEvents, plays)    // pair track_play with track_end by play_id
 ```
 
-A play begins when `addPlayHistoryEntry` fires. It remains open—no `ended_at`—until something concludes it. The `endPlayHistoryEntry` function finds the most recent open entry for that track (handling the peculiar case of repeat plays) and seals it with duration and cause of death.
+`addCaptureEvent` is called from `analytics.capture()`, which also forwards to PostHog when the user has opted in. The capture event is always stored locally regardless of opt-in.
 
 ## Storage
 
-Local only. The collection persists to localStorage under `r5-play-history`. No sync to remote—your listening habits remain your own.
+Local only. The collection persists to localStorage under `r5-capture-events`. No sync to remote — your listening habits remain your own.
 
-## Why track this
+## History page
 
-Statistics, eventually. Patterns of listening. The tracks you always skip past. The ones you play repeatedly at 2am. Data that might, someday, tell you something about yourself you didn't already know.
+`/history` queries `captureEventsCollection`, filters for `player:track_play` events, and pairs each with its `player:track_end` via `play_id` to show duration and end reason. `/history/stats` aggregates the same data for listening statistics.

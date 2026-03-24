@@ -15,7 +15,8 @@ export function listboxNav({onSelect, onChange, wrap = false, selectOnClick = fa
 	return (element) => {
 		let activeIndex = -1
 
-		const getItems = () => /** @type {HTMLElement[]} */ ([...element.querySelectorAll('[role="option"]')])
+		const getItems = () =>
+			/** @type {HTMLElement[]} */ ([...element.querySelectorAll('[role="option"]')])
 
 		const setActive = (index, items = getItems()) => {
 			if (!items.length) return

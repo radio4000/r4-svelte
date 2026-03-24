@@ -77,7 +77,11 @@
 			{#if recording?.id}
 				<dt>{m.track_meta_musicbrainz()}</dt>
 				<dd>
-					<a href="https://musicbrainz.org/recording/{recording.id}" target="_blank" rel="noopener noreferrer">
+					<a
+						href="https://musicbrainz.org/recording/{recording.id}"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						{m.track_meta_view_musicbrainz()}
 					</a>
 				</dd>

@@ -22,18 +22,29 @@
 {#if !track || !channel}
 	<p>{m.track_not_found()}</p>
 {:else if canEdit}
-	<TrackForm
-		mode="edit"
-		channel={{id: channel.id, slug: channel.slug}}
-		trackId={track.id}
-		url={track.url}
-		title={track.title}
-		description={track.description ?? undefined}
-		discogs_url={track.discogs_url ?? undefined}
-		onsubmit={handleSubmit}
-	/>
+	<div class="card">
+		<TrackForm
+			mode="edit"
+			channel={{id: channel.id, slug: channel.slug}}
+			trackId={track.id}
+			url={track.url}
+			title={track.title}
+			description={track.description ?? undefined}
+			discogs_url={track.discogs_url ?? undefined}
+			onsubmit={handleSubmit}
+		/>
+	</div>
 {:else if !isSignedIn}
 	<p><a href={resolve('/auth')}>{m.auth_sign_in_to_edit()}</a></p>
 {:else}
 	<p>{m.track_edit_no_permission()}</p>
 {/if}
+
+<style>
+	.card {
+		background: var(--color-interface-elevated);
+		border: 1px solid var(--color-interface-border);
+		border-radius: var(--border-radius);
+		padding: 1.25rem;
+	}
+</style>

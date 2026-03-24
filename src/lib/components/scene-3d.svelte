@@ -233,7 +233,14 @@
 
 		// Background color
 		const parsed = parseCssColor(cfg.backgroundColor ?? 'oklch(15% 0.04 260)')
-		gsap.to(bg, {r: parsed.r, g: parsed.g, b: parsed.b, duration: 1.2, ease: 'power2.inOut', overwrite: true})
+		gsap.to(bg, {
+			r: parsed.r,
+			g: parsed.g,
+			b: parsed.b,
+			duration: 1.2,
+			ease: 'power2.inOut',
+			overwrite: true
+		})
 
 		// Rotation speed
 		gsap.to(meshRot, {speed: cfg.rotationSpeed ?? 0.3, duration: 0.8, overwrite: true})

@@ -11,7 +11,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
@@ -73,8 +73,11 @@
 			}
 		]
 	}))
-	let filteredAutoDecks = $derived.by(() => getAutoDecksForView(Object.values(appState.decks), filteredAutoView))
+	let filteredAutoDecks = $derived.by(() =>
+		getAutoDecksForView(Object.values(appState.decks), filteredAutoView)
+	)
 	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
+	let isFilteredAutoPlaying = $derived(filteredAutoDecks.some((d) => d.is_playing))
 	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
@@ -100,7 +103,10 @@
 	function playFilteredTracks() {
 		if (!filteredTracks.length) return
 		const ids = filteredTracks.map((t) => t.id)
-		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
+		loadDeckView(appState.active_deck_id, filteredAutoView, ids, {
+			title: filteredPlaylistTitle,
+			slug
+		})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
@@ -124,7 +130,11 @@
 				{/snippet}
 				<menu class="tags-menu">
 					{#each aggregatedTags as { value, count } (value)}
-						<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+						<button
+							type="button"
+							class:active={selectedTags.includes(value)}
+							onclick={() => toggleTag(value)}
+						>
 							{value} <span class="tag-count">({count})</span>
 						</button>
 					{/each}
@@ -137,13 +147,18 @@
 			debounce={150}
 		/>
 		{#if visibleTracks.length}
-			<button type="button" title={m.common_play()} onclick={playFilteredTracks}><Icon icon="play-fill" /></button>
-			<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}><Icon icon="next-fill" /></button>
+			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
+				><Icon icon="play-fill" /></button
+			>
+			<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}
+				><Icon icon="next-fill" /></button
+			>
 			{#if channel && canShowFilteredAutoRadio}
 				<AutoRadioButton
-					synced={isFilteredAutoActive && !isFilteredAutoDrifted}
+					synced={isFilteredAutoActive && isFilteredAutoPlaying && !isFilteredAutoDrifted}
 					title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
-					onclick={() => joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+					onclick={() =>
+						joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
 				/>
 			{/if}
 		{/if}

@@ -23,12 +23,15 @@ const validDirections = ['asc', 'desc'] as const
 const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
 
-/** Apply order/direction/limit/offset from URLSearchParams onto a View in place. */
+/** Apply order/direction/limit/offset from URLSearchParams onto a View in place.
+ *  Supports both `limit`/`offset` and `page`/`per` (page takes precedence). */
 function parseOptions(p: URLSearchParams, view: View): void {
 	const order = p.get('order')
-	if (order && (validOrders as readonly string[]).includes(order)) view.order = order as View['order']
+	if (order && (validOrders as readonly string[]).includes(order))
+		view.order = order as View['order']
 	const dir = p.get('direction')
-	if (dir && (validDirections as readonly string[]).includes(dir)) view.direction = dir as View['direction']
+	if (dir && (validDirections as readonly string[]).includes(dir))
+		view.direction = dir as View['direction']
 	const limit = p.get('limit')
 	if (limit) {
 		const n = Number(limit)
@@ -38,6 +41,16 @@ function parseOptions(p: URLSearchParams, view: View): void {
 	if (offset) {
 		const n = Number(offset)
 		if (n > 0) view.offset = n
+	}
+	const per = p.get('per')
+	if (per) {
+		const n = Number(per)
+		if (n > 0) view.limit = Math.min(n, 4000)
+	}
+	const pg = p.get('page')
+	if (pg) {
+		const n = Number(pg)
+		if (n > 1) view.offset = (n - 1) * (view.limit ?? 50)
 	}
 }
 
@@ -163,7 +176,8 @@ export function normalizeView(view?: View): View | undefined {
 			return Object.keys(normalized).length ? normalized : undefined
 		})
 		.filter((s): s is ViewSource => s !== undefined)
-	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset) return undefined
+	if (!sources.length && !view.order && !view.direction && !view.limit && !view.offset)
+		return undefined
 	const normalized: View = {sources: sources.length ? sources : [{}]}
 	if (view.order) normalized.order = view.order
 	if (view.direction) normalized.direction = view.direction

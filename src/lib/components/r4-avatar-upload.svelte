@@ -25,7 +25,9 @@
 			const res = await sdk.channels.createImage(/** @type {any} */ (file), slug)
 			if (!res.ok) {
 				const body = await res.json().catch(() => null)
-				throw new Error(body?.message || body?.error || `${m.avatar_upload_failed()} (${res.status})`)
+				throw new Error(
+					body?.message || body?.error || `${m.avatar_upload_failed()} (${res.status})`
+				)
 			}
 			const data = await res.json()
 			if (!data?.public_id) throw new Error(m.avatar_upload_missing_id())
@@ -77,7 +79,7 @@
 		border-radius: var(--border-radius);
 		border: 2px dashed var(--gray-6);
 		overflow: hidden;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		transition:
 			border-color 0.15s,
 			opacity 0.15s;
@@ -124,7 +126,7 @@
 		position: absolute;
 		inset: 0;
 		opacity: 0;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		width: 100%;
 		height: 100%;
 	}

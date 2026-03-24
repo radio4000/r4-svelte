@@ -33,7 +33,10 @@
 
 	{#if !isCheckEmail}
 		<footer>
-			<p>{m.auth_already_have_account_intro()} <a href={resolve('/auth/login')}>{m.auth_card_login_title()}</a></p>
+			<p>
+				{m.auth_already_have_account_intro()}
+				<a href={resolve('/auth/login')}>{m.auth_card_login_title()}</a>
+			</p>
 		</footer>
 	{/if}
 </article>

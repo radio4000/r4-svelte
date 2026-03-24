@@ -89,7 +89,9 @@
 			/>
 		</div>{/if}
 	{#if !hiddenColumns.includes('tags')}<div class="col-tags">{track.tags || ''}</div>{/if}
-	{#if !hiddenColumns.includes('mentions')}<div class="col-mentions">{track.mentions || ''}</div>{/if}
+	{#if !hiddenColumns.includes('mentions')}<div class="col-mentions">
+			{track.mentions || ''}
+		</div>{/if}
 	{#if !hiddenColumns.includes('discogs')}<div class="col-discogs">
 			<InlineEditCell
 				{track}
@@ -105,11 +107,17 @@
 		</div>{/if}
 	{#if !hiddenColumns.includes('meta')}<div class="col-meta">
 			{#if track.youtube_data}<span class="meta-indicator yt" title="YouTube metadata">Y</span>{/if}
-			{#if track.musicbrainz_data}<span class="meta-indicator mb" title="MusicBrainz metadata">M</span>{/if}
+			{#if track.musicbrainz_data}<span class="meta-indicator mb" title="MusicBrainz metadata"
+					>M</span
+				>{/if}
 			{#if track.discogs_data}<span class="meta-indicator dc" title="Discogs metadata">D</span>{/if}
 		</div>{/if}
-	{#if !hiddenColumns.includes('error')}<div class="col-error" class:has-error={track.playback_error}>
-			{#if track.playback_error}<span title={track.playback_error}>⚠ {track.playback_error}</span>{/if}
+	{#if !hiddenColumns.includes('error')}<div
+			class="col-error"
+			class:has-error={track.playback_error}
+		>
+			{#if track.playback_error}<span title={track.playback_error}>⚠ {track.playback_error}</span
+				>{/if}
 		</div>{/if}
 	{#if !hiddenColumns.includes('created')}<div class="col-date">
 			{new Date(track.created_at).toLocaleDateString()}

@@ -20,7 +20,9 @@
 	import type {Channel, Track, ImportOrigin} from '$lib/types'
 
 	// File System Access API not in TypeScript's default lib
-	type DirHandle = FileSystemDirectoryHandle & {entries(): AsyncIterable<[string, FileSystemHandle]>}
+	type DirHandle = FileSystemDirectoryHandle & {
+		entries(): AsyncIterable<[string, FileSystemHandle]>
+	}
 
 	interface FolderImportResult {
 		channel: Channel
@@ -95,7 +97,10 @@
 				}
 			}
 
-			await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
+			await writeImport(channel, tracks, {
+				type: 'folder',
+				importedAt: new Date().toISOString()
+			} as ImportOrigin)
 			return {channel, imported: tracks.length, source: 'r4download'}
 		}
 
@@ -169,11 +174,16 @@
 			}
 		}
 
-		await writeImport(channel, tracks, {type: 'folder', importedAt: new Date().toISOString()} as ImportOrigin)
+		await writeImport(channel, tracks, {
+			type: 'folder',
+			importedAt: new Date().toISOString()
+		} as ImportOrigin)
 		return {channel, imported: tracks.length, source: 'r4download'}
 	}
 
-	async function importJsonBackups(jsonHandles: FileSystemFileHandle[]): Promise<FolderImportResult[]> {
+	async function importJsonBackups(
+		jsonHandles: FileSystemFileHandle[]
+	): Promise<FolderImportResult[]> {
 		const out: FolderImportResult[] = []
 		for (const handle of jsonHandles) {
 			try {
@@ -200,13 +210,26 @@
 			const file = await handle.getFile()
 			const objectUrl = URL.createObjectURL(file)
 			const title = handle.name.slice(0, handle.name.lastIndexOf('.')) || handle.name
-			tracks.push({id: uuid(), slug, title, url: objectUrl, media_id: objectUrl, provider: 'file'} as Track)
+			tracks.push({
+				id: uuid(),
+				slug,
+				title,
+				url: objectUrl,
+				media_id: objectUrl,
+				provider: 'file'
+			} as Track)
 		}
-		await writeImport(channel, tracks, {type: 'audio-folder', importedAt: new Date().toISOString()} as ImportOrigin)
+		await writeImport(channel, tracks, {
+			type: 'audio-folder',
+			importedAt: new Date().toISOString()
+		} as ImportOrigin)
 		return {channel, imported: tracks.length, source: 'audio'}
 	}
 
-	async function scanDir(dirHandle: FileSystemDirectoryHandle, dirName: string): Promise<FolderImportResult[]> {
+	async function scanDir(
+		dirHandle: FileSystemDirectoryHandle,
+		dirName: string
+	): Promise<FolderImportResult[]> {
 		const jsonHandles: FileSystemFileHandle[] = []
 		let downloadJsonHandle: FileSystemFileHandle | null = null
 		const rootAudioHandles: FileSystemFileHandle[] = []

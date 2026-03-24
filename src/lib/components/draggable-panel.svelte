@@ -89,9 +89,7 @@
 
 <div
 	bind:this={panel}
-	class="panel"
-	class:minimized={isMinimized}
-	class:dragging={isDragging}
+	class={['panel', {minimized: isMinimized, dragging: isDragging}]}
 	style="transform: translate({position.x}px, {position.y}px)"
 >
 	<!-- svelte-ignore a11y_no_static_element_interactions -->

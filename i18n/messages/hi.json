@@ -509,7 +509,7 @@
 	"share_media_url_label": "मीडिया URL",
 	"share_native": "साझा करें",
 	"share_track_title": "ट्रैक साझा करें → {title}",
-	"shortcuts_action_gotoDebug": "debug पर जाएँ",
+	"shortcuts_action_gotoDocs": "docs पर जाएँ",
 	"shortcuts_action_gotoHome": "होम पर जाएँ",
 	"shortcuts_action_gotoSettings": "सेटिंग्स पर जाएँ",
 	"shortcuts_action_openSearch": "सर्च खोलें",

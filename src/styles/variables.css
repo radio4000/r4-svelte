@@ -1,5 +1,8 @@
 :root {
+	color-scheme: light dark;
+
 	/* layout */
+	--interface-margin: 0.2rem;
 	--scaling: 1;
 	--space-1: calc(0.2rem * var(--scaling));
 	--space-2: calc(0.5rem * var(--scaling));
@@ -8,7 +11,7 @@
 	--media-radius: var(--border-radius);
 	--track-artwork-size: 2rem;
 	--shadow-modal: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-	--deck-transition-fast: 200ms;
+	--deck-transition-fast: 150ms;
 	--deck-transition-ease: cubic-bezier(0.2, 0, 0, 1);
 
 	/* media-chrome icon size */
@@ -35,9 +38,9 @@
 	--color-interface-border: var(--gray-6);
 
 	/* panel backgrounds */
-	--header-bg: var(--color-interface);
-	--aside-bg: var(--gray-1);
-	--footer-bg: var(--color-interface);
+	--header-bg: var(--color-interface-elevated);
+	--aside-bg: var(--color-interface-elevated);
+	--footer-bg: var(--color-interface-elevated);
 
 	/* media queries can't use variables, but still, nice to declare what we use */
 	--breakpoint-xs: 520px;

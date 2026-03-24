@@ -1,6 +1,7 @@
 import posthog from 'posthog-js'
 import {appState} from '$lib/app-state.svelte'
 import {posthogKey} from '$lib/config'
+import {addCaptureEvent} from '$lib/collections/capture-events'
 import {logger} from '$lib/logger'
 
 const log = logger.ns('analytics').seal()
@@ -9,7 +10,7 @@ const POSTHOG_KEY = posthogKey
 const POSTHOG_HOST = 'https://eu.i.posthog.com'
 
 let initialized = false
-let identified = false
+// let identified = false
 
 /** Initialize PostHog. Only call this when the user has opted in. */
 function init() {
@@ -30,12 +31,13 @@ export function syncAnalyticsConsent(optIn: boolean) {
 	if (optIn) {
 		init()
 		posthog.opt_in_capturing()
+		// Disabled: all events are anonymous for privacy.
 		// If a user is already logged in when opting in, identify them now
-		const user = appState.user
-		if (user && !identified) {
-			identified = true
-			posthog.identify(user.id)
-		}
+		// const user = appState.user
+		// if (user && !identified) {
+		// 	identified = true
+		// 	posthog.identify(user.id)
+		// }
 		log.debug('opted in to analytics')
 	} else {
 		if (initialized) posthog.opt_out_capturing()
@@ -43,29 +45,38 @@ export function syncAnalyticsConsent(optIn: boolean) {
 	}
 }
 
-/**
- * Identify the current user. Call when a user logs in or on app load if already logged in.
- * No-op if the user has not opted in.
- */
-export function identify(userId: string, properties?: Record<string, unknown>) {
-	if (!appState.analytics_opt_in || !initialized) return
-	if (identified) return
-	identified = true
-	posthog.identify(userId, properties)
-}
+// Disabled: all events are anonymous for privacy.
+// export function identify(userId: string, properties?: Record<string, unknown>) {
+// 	if (!appState.analytics_opt_in || !initialized) return
+// 	if (identified) return
+// 	identified = true
+// 	posthog.identify(userId, properties)
+// }
 
-/**
- * Reset the PostHog identity (e.g. on logout).
- * Unlinks the person profile and creates a new anonymous ID.
- */
-export function reset() {
-	if (!initialized) return
-	identified = false
-	posthog.reset()
+// Disabled: all events are anonymous for privacy.
+// export function reset() {
+// 	if (!initialized) return
+// 	identified = false
+// 	posthog.reset()
+// }
+
+/** Capture an error/exception. No-op if the user has not opted in. */
+export function captureError(error: unknown) {
+	if (!appState.analytics_opt_in || !initialized) return
+	const err = error instanceof Error ? error : new Error(String(error))
+	posthog.capture('$exception', {
+		$exception_message: err.message,
+		$exception_stack_trace_raw: err.stack
+	})
+	log.debug('error captured', err.message)
 }
 
 /** Capture a custom event. No-op if the user has not opted in. */
-export function capture(event: string, properties?: Record<string, unknown>) {
-	if (!appState.analytics_opt_in || !initialized) return
+export function capture(event: string, properties?: Record<string, unknown>): string {
+	log.debug(event, properties)
+	const isPosthogInternalEvent = event.startsWith('$')
+	if (!isPosthogInternalEvent) addCaptureEvent(event, properties)
+	if (!appState.analytics_opt_in || !initialized) return ''
 	posthog.capture(event, properties)
+	return ''
 }

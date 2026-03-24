@@ -24,8 +24,6 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 ## skill mappings
 
-Load these before reading more code than you need.
-
 | task                                                           | load                                                                     |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | collection setup, adapters, sync mode, preload                 | `node_modules/@tanstack/db/skills/db-core/collection-setup/SKILL.md`     |
@@ -58,13 +56,11 @@ const query = useLiveQuery((q) => q.from({tracks: tracksCollection}).where(...))
 let tracks = $derived(query.data ?? [])
 ```
 
-Keep proving this locally. It is one of the easiest ways to lie to yourself.
-
 ### always use our `useLiveQuery` wrapper
 
 Always import from `$lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db` directly.
 
-The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), adds performance instrumentation, and is the verified path for app behavior.
+The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), cleans up replaced live query collections, and is the verified path for app behavior. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ### `queryFn` returns full truth for that fetch shape
 
@@ -101,11 +97,11 @@ That is how we handle array `includes`, overlap-style filtering, and similar cas
 
 Each TanStack debug route needs a distinct job.
 
-- `src/routes/_debug/tanstack/+page.svelte` shows live app state: collection sizes, cache keys, persistence.
-- `src/routes/_debug/tanstack/tutorial/+page.svelte` is the walkthrough for humans.
-- `src/routes/_debug/tanstack/tracks/+page.svelte` probes real track collection and backend wiring.
-- `src/routes/_debug/tanstack/channels/+page.svelte` probes real channel collection and backend wiring.
-- `src/routes/_debug/tanstack/error-handling/+page.svelte` keeps the error-state rough edge visible and should evolve into assertions.
+- `src/routes/docs/tanstack/+page.svelte` shows live app state: collection sizes, cache keys, persistence.
+- `src/routes/docs/tanstack/tutorial/+page.svelte` is the walkthrough for humans.
+- `src/routes/docs/tanstack/tracks/+page.svelte` probes real track collection and backend wiring.
+- `src/routes/docs/tanstack/channels/+page.svelte` probes real channel collection and backend wiring.
+- `src/routes/docs/tanstack/error-handling/+page.svelte` keeps the error-state rough edge visible and should evolve into assertions.
 
 Do not add more TanStack pages unless the route has a distinct verification job. Otherwise fold it into one of these.
 
@@ -130,7 +126,9 @@ Use [browser-testing.md](browser-testing.md) with `agent-browser` when verifying
 The live query fetches and reads.
 
 ```js
-const tracks = useLiveQuery((q) => q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.slug, slug)))
+const tracks = useLiveQuery((q) =>
+	q.from({tracks: tracksCollection}).where(({tracks}) => eq(tracks.slug, slug))
+)
 ```
 
 Use this when d2ts can express the filter directly.
@@ -181,7 +179,13 @@ function loadMore() {
 let hasMore = $derived(query.data?.length >= paginatedLimit)
 ```
 
-Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/_debug/tanstack/channels`.
+Use this instead of manual `fetchQuery` + `writeBatch` loops. Proven in `channels.svelte` and `/docs/tanstack/channels`.
+
+Caveats learned the hard way:
+
+- `.offset()` on a live query is applied locally by d2ts, not forwarded to Supabase. The sync layer always fetches from row 0 with `limit = offset + pageSize`. Do not use `.offset()` for server-side pagination.
+- For paged views, use `limit = currentPage * pageSize` (accumulate) and `.slice()` locally. The `queryFn` should delta-fetch: look up cached results for the same query shape with a smaller limit and only fetch the new rows. See `channels.ts` queryFn for the pattern.
+- Each dep change in `useLiveQuery` creates a new `createLiveQueryCollection`. Our wrapper calls `cleanup()` on the old collection to stop its d2ts pipeline and pending callbacks. Without this, stale collections cause delayed re-renders.
 
 ## references
 

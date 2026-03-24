@@ -92,7 +92,7 @@
 		padding: 0.15rem;
 		background: none;
 		border: none;
-		cursor: pointer;
+		cursor: var(--interactive-cursor, pointer);
 		opacity: 0.5;
 		color: inherit;
 

@@ -2,7 +2,14 @@
 	import {appState} from '$lib/app-state.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import {channelUrl, trackUrl, channelEmbed, copyToClipboard, canNativeShare, nativeShare} from '$lib/share'
+	import {
+		channelUrl,
+		trackUrl,
+		channelEmbed,
+		copyToClipboard,
+		canNativeShare,
+		nativeShare
+	} from '$lib/share'
 	import type {Track, Channel} from '$lib/types'
 	import * as m from '$lib/paraglide/messages'
 
@@ -16,7 +23,9 @@
 			? m.share_track_title({title: data?.track?.title ?? ''})
 			: m.share_channel_title({name: data?.channel?.name ?? ''})
 	)
-	const url = $derived(data ? (data.track ? trackUrl(data.channel, data.track) : channelUrl(data.channel)) : '')
+	const url = $derived(
+		data ? (data.track ? trackUrl(data.channel, data.track) : channelUrl(data.channel)) : ''
+	)
 	const mediaUrl = $derived(data?.track?.url ?? '')
 	const embed = $derived(data?.channel ? channelEmbed(data.channel) : '')
 

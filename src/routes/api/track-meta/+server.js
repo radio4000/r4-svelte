@@ -21,7 +21,8 @@ export async function POST({request}) {
 
 		const response = await fetch(url)
 		const data = await response.json()
-		if (!response.ok) return json({error: data.error?.message || 'YouTube API error'}, {status: response.status})
+		if (!response.ok)
+			return json({error: data.error?.message || 'YouTube API error'}, {status: response.status})
 
 		const videos = data.items.map((item) => ({
 			id: item.id,

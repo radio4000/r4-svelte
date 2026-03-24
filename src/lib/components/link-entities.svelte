@@ -40,7 +40,9 @@
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
 				const tagName = entity.slice(1).toLowerCase()
-				const next = urlTags.includes(tagName) ? urlTags.filter((t) => t !== tagName) : [...urlTags, tagName]
+				const next = urlTags.includes(tagName)
+					? urlTags.filter((t) => t !== tagName)
+					: [...urlTags, tagName]
 				href = next.length
 					? `${base}/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
 					: `${base}/${encodeURIComponent(slug)}/tracks`
@@ -71,7 +73,9 @@
 {#each parts as part, i (i)}
 	{#if part.type === 'link'}
 		{#if part.isTag && onTagClick}
-			<Tag onclick={() => onTagClick(part.content.slice(1))} value={part.content}>{part.content}</Tag>
+			<Tag onclick={() => onTagClick(part.content.slice(1))} value={part.content}
+				>{part.content}</Tag
+			>
 		{:else}
 			<Tag href={part.href} value={part.isTag ? part.content : undefined}>{part.content}</Tag>
 		{/if}

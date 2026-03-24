@@ -80,7 +80,9 @@
 
 	const _colorCanvas = document.createElement('canvas')
 	_colorCanvas.width = _colorCanvas.height = 1
-	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (_colorCanvas.getContext('2d'))
+	const _colorCtx = /** @type {CanvasRenderingContext2D} */ (
+		_colorCanvas.getContext('2d', {willReadFrequently: true})
+	)
 
 	function resolveCssColor(variableName, fallback = '#888888') {
 		const div = document.createElement('div')
@@ -126,15 +128,35 @@
 		// 4-tier visual hierarchy: broadcasting > active > favorite > normal
 		// mirrors the channel card: .playing uses --accent-3 bg, broadcasting shows a live badge
 		if (state.isBroadcasting) {
-			return {radius: 9, strokeColor: palette.broadcastingStroke, fillColor: palette.broadcastingFill, strokeWidth: 3}
+			return {
+				radius: 9,
+				strokeColor: palette.broadcastingStroke,
+				fillColor: palette.broadcastingFill,
+				strokeWidth: 3
+			}
 		}
 		if (state.isActive) {
-			return {radius: 8, strokeColor: palette.activeStroke, fillColor: palette.activeFill, strokeWidth: 2}
+			return {
+				radius: 8,
+				strokeColor: palette.activeStroke,
+				fillColor: palette.activeFill,
+				strokeWidth: 2
+			}
 		}
 		if (state.isFavorite) {
-			return {radius: 7, strokeColor: palette.favoriteStroke, fillColor: palette.favoriteFill, strokeWidth: 2}
+			return {
+				radius: 7,
+				strokeColor: palette.favoriteStroke,
+				fillColor: palette.favoriteFill,
+				strokeWidth: 2
+			}
 		}
-		return {radius: 5, strokeColor: palette.normalStroke, fillColor: palette.normalFill, strokeWidth: 1.5}
+		return {
+			radius: 5,
+			strokeColor: palette.normalStroke,
+			fillColor: palette.normalFill,
+			strokeWidth: 1.5
+		}
 	}
 
 	/** @returns {GeoJSON.FeatureCollection} */
@@ -281,7 +303,8 @@
 				const href = link.getAttribute('href')
 				if (!href) return
 				if (href.startsWith('#')) return
-				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) return
+				if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))
+					return
 				if (popupNavigationInFlight) return
 				clearPendingPopupLinkNavigation()
 				pendingPopupLinkNavigationTimer = setTimeout(() => {
@@ -339,7 +362,9 @@
 	function updateBroadcastLayer() {
 		if (!broadcastLayer || !mapReady) return
 		broadcastLayer.setChannels(
-			mapChannels.filter((c) => broadcastingIds.has(c.id)).map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
+			mapChannels
+				.filter((c) => broadcastingIds.has(c.id))
+				.map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
 		)
 	}
 
@@ -369,7 +394,9 @@
 				sources: {
 					satellite: {
 						type: 'raster',
-						tiles: ['https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+						tiles: [
+							'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+						],
 						tileSize: 256,
 						maxzoom: 19,
 						attribution: 'Powered by Esri'
@@ -429,7 +456,9 @@
 	/** @returns {import('geojson').FeatureCollection} */
 	function buildNightGeoJSON() {
 		const now = new Date()
-		const dayOfYear = Math.round((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000)
+		const dayOfYear = Math.round(
+			(now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86_400_000
+		)
 		const decDeg = -23.45 * Math.cos(((2 * Math.PI) / 365) * (dayOfYear + 10))
 		const dec = (decDeg * Math.PI) / 180
 		// Small epsilon avoids tan(0) singularity at equinoxes
@@ -455,7 +484,9 @@
 		}
 		return {
 			type: 'FeatureCollection',
-			features: [{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}]
+			features: [
+				{type: 'Feature', geometry: {type: 'Polygon', coordinates: [ring]}, properties: {}}
+			]
 		}
 	}
 
@@ -490,7 +521,12 @@
 				type: 'line',
 				source: 'graticule-source',
 				filter: ['!=', ['get', 'id'], 'equator'],
-				paint: {'line-color': '#6699bb', 'line-width': 1, 'line-opacity': 0.6, 'line-dasharray': [4, 4]},
+				paint: {
+					'line-color': '#6699bb',
+					'line-width': 1,
+					'line-opacity': 0.6,
+					'line-dasharray': [4, 4]
+				},
 				layout: {visibility: showGraticules ? 'visible' : 'none'}
 			})
 		}
@@ -633,7 +669,8 @@
 	$effect(() => {
 		const vis = showGraticules ? 'visible' : 'none'
 		if (!map || !mapReady) return
-		if (map.getLayer('graticule-equator')) map.setLayoutProperty('graticule-equator', 'visibility', vis)
+		if (map.getLayer('graticule-equator'))
+			map.setLayoutProperty('graticule-equator', 'visibility', vis)
 		if (map.getLayer('graticule-other')) map.setLayoutProperty('graticule-other', 'visibility', vis)
 	})
 
@@ -736,6 +773,10 @@
 
 	.map-controls menu.nav-grouped {
 		margin: 0;
+	}
+
+	:global(.maplibregl-map) {
+		font-family: var(--font-sans);
 	}
 
 	:global(.map-popup) {

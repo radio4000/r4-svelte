@@ -57,7 +57,9 @@
 <article class="constrained focused splash">
 	{#if !appState.user}
 		<p>
-			<a href={resolve('/auth') + '?redirect=' + resolve('/create-channel')}>{m.auth_sign_in_to_create()}</a>
+			<a href={resolve('/auth') + '?redirect=' + resolve('/create-channel')}
+				>{m.auth_sign_in_to_create()}</a
+			>
 		</p>
 	{:else if appState.channels?.length}
 		<p>
@@ -118,7 +120,7 @@
 	details {
 		color: var(--gray-10);
 		summary {
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 			list-style: none;
 		}
 		fieldset {

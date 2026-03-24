@@ -15,7 +15,12 @@
 	import Subpage from '$lib/components/subpage.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {getDateRange, generateYearPeriods, generateQuarterPeriods, generateMonthPeriods} from '$lib/dates.js'
+	import {
+		getDateRange,
+		generateYearPeriods,
+		generateQuarterPeriods,
+		generateMonthPeriods
+	} from '$lib/dates.js'
 
 	let slug = $derived(page.params.slug ?? '')
 
@@ -226,19 +231,26 @@
 		<PopoverMenu id="tags-data" closeOnClick={false}>
 			{#snippet trigger()}<Icon icon="filter-alt" />{filterLabelMap[filter]()}{/snippet}
 			<menu class="nav-vertical">
-				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}>{filterLabelMap.all()}</button>
+				<button class:active={filter === 'all'} onclick={() => (filter = 'all')}
+					>{filterLabelMap.all()}</button
+				>
 				<button class:active={filter === 'single-use'} onclick={() => (filter = 'single-use')}
 					>{filterLabelMap['single-use']()}</button
 				>
 				<button class:active={filter === 'frequent'} onclick={() => (filter = 'frequent')}
 					>{filterLabelMap.frequent()}</button
 				>
-				<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}>{filterLabelMap.rare()}</button>
+				<button class:active={filter === 'rare'} onclick={() => (filter = 'rare')}
+					>{filterLabelMap.rare()}</button
+				>
 			</menu>
 		</PopoverMenu>
 		<PopoverMenu id="tags-order" closeOnClick={false}>
 			{#snippet trigger()}
-				<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+				<Icon
+					icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+					strokeWidth={1.5}
+				/>
 				{sortLabelMap[sort]}
 			{/snippet}
 			<div class="row">
@@ -251,15 +263,24 @@
 					onclick={() => {
 						direction = direction === 'asc' ? 'desc' : 'asc'
 					}}
-					title={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
-					aria-label={direction === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()}
+					title={direction === 'asc'
+						? m.channels_tooltip_sort_asc()
+						: m.channels_tooltip_sort_desc()}
+					aria-label={direction === 'asc'
+						? m.channels_tooltip_sort_asc()
+						: m.channels_tooltip_sort_desc()}
 				>
-					<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+					<Icon
+						icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+						strokeWidth={1.5}
+					/>
 				</button>
 			</div>
 		</PopoverMenu>
 		<PopoverMenu id="tags-display" closeOnClick={false} style="margin-left: auto;">
-			{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[display]}{/snippet}
+			{#snippet trigger()}<Icon icon={displayIconMap[display]} />{displayLabelMap[
+					display
+				]}{/snippet}
 			<menu class="view-modes">
 				<button class:active={display === 'list'} onclick={() => (display = 'list')}>
 					<Icon icon="unordered-list" /><small>{m.tags_display_list()}</small>
@@ -361,7 +382,9 @@
 									<span class="count">{count} / {visibleTrackCount}</span>
 									<span
 										class="bar"
-										style="--pct: {visibleTrackCount ? ((count / visibleTrackCount) * 100).toFixed(1) : '0.0'}%"
+										style="--pct: {visibleTrackCount
+											? ((count / visibleTrackCount) * 100).toFixed(1)
+											: '0.0'}%"
 									></span>
 								</button>
 							</li>

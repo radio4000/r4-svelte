@@ -15,7 +15,7 @@
 		toggleShuffle: () => m.shortcuts_action_toggleShuffle(),
 		gotoHome: () => m.shortcuts_action_gotoHome(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
-		gotoDebug: () => m.shortcuts_action_gotoDebug(),
+		gotoDocs: () => m.shortcuts_action_gotoDocs(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 
@@ -46,7 +46,9 @@
 	</dl>
 
 	<footer>
-		<a href={resolve('/settings/keyboard')} onclick={() => (showModal = false)}>{m.shortcuts_edit()}</a>
+		<a href={resolve('/settings/keyboard')} onclick={() => (showModal = false)}
+			>{m.shortcuts_edit()}</a
+		>
 	</footer>
 </Dialog>
 

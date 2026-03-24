@@ -17,7 +17,9 @@
 	const d = appState.channels_display
 	let display = $state(d === 'grid' || d === 'list' || d === 'map' || d === 'infinite' ? d : 'grid')
 	const o = appState.channels_order
-	let order = $state(o === 'updated' || o === 'created' || o === 'name' || o === 'tracks' ? o : 'updated')
+	let order = $state(
+		o === 'updated' || o === 'created' || o === 'name' || o === 'tracks' ? o : 'updated'
+	)
 	/** @type {'asc' | 'desc'} */
 	let direction = $state(appState.channels_order_direction || 'desc')
 
@@ -39,7 +41,9 @@
 	let view = $state('featured')
 
 	const matches = (/** @type {any} */ c, /** @type {string} */ q) =>
-		!q || c.name?.toLowerCase().includes(q.toLowerCase()) || c.slug?.toLowerCase().includes(q.toLowerCase())
+		!q ||
+		c.name?.toLowerCase().includes(q.toLowerCase()) ||
+		c.slug?.toLowerCase().includes(q.toLowerCase())
 	let featuredMentions = $derived(
 		extractMentions(channel?.description ?? '')
 			.map((slug) => slug.slice(1))
@@ -70,7 +74,10 @@
 					const {data} = await sdk.channels.readFollowings(channel.id)
 					if (!data?.length) return []
 					const ids = data.map((c) => c.id)
-					const {data: enriched} = await sdk.supabase.from('channels_with_tracks').select('*').in('id', ids)
+					const {data: enriched} = await sdk.supabase
+						.from('channels_with_tracks')
+						.select('*')
+						.in('id', ids)
 					return dedupeById(/** @type {any[]} */ (enriched || data))
 				},
 				staleTime: 5 * 60 * 1000
@@ -123,7 +130,10 @@
 		</select>
 	{/if}
 	{#if visibleChannels.length}
-		<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: visibleChannels.length})} />
+		<SearchInput
+			bind:value={q}
+			placeholder={m.following_search_placeholder({count: visibleChannels.length})}
+		/>
 		<ChannelsViewControls bind:display bind:order bind:direction />
 	{/if}
 {/snippet}
@@ -133,8 +143,19 @@
 </svelte:head>
 
 <article class="channels-page fill-height">
-	<Subpage title={m.nav_following()} {loading} empty={visibleChannels.length === 0} emptyText={m.following_empty()}>
-		<ChannelsView channels={filteredFollowing} bind:display bind:order bind:direction showToolbar={false} />
+	<Subpage
+		title={m.nav_following()}
+		{loading}
+		empty={visibleChannels.length === 0}
+		emptyText={m.following_empty()}
+	>
+		<ChannelsView
+			channels={filteredFollowing}
+			bind:display
+			bind:order
+			bind:direction
+			showToolbar={false}
+		/>
 	</Subpage>
 </article>
 

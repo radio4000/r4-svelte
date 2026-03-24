@@ -573,7 +573,7 @@
 	"share_media_url_label": "メディア URL",
 	"share_native": "共有",
 	"share_track_title": "トラックを共有 → {title}",
-	"shortcuts_action_gotoDebug": "デバッグへ移動",
+	"shortcuts_action_gotoDocs": "ドキュメントへ移動",
 	"shortcuts_action_gotoHome": "ホームへ移動",
 	"shortcuts_action_gotoSettings": "設定へ移動",
 	"shortcuts_action_openSearch": "検索を開く",

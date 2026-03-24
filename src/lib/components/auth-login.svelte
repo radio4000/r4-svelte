@@ -68,7 +68,11 @@
 		loading = true
 		error = null
 		try {
-			const {data, error: authError} = await sdk.supabase.auth.verifyOtp({email, token: code, type: 'email'})
+			const {data, error: authError} = await sdk.supabase.auth.verifyOtp({
+				email,
+				token: code,
+				type: 'email'
+			})
 			if (authError) {
 				error = authError.message
 			} else if (data?.session) {
@@ -132,14 +136,17 @@
 	{/if}
 	<menu class="centerwrap">
 		{#if !showCode}
-			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button>
+			<button type="button" onclick={() => (showCode = true)}>{m.auth_enter_code_manually()}</button
+			>
 		{/if}
 		<!-- <ButtonFeedback onclick={() => sendMagicLink({rethrow: true})} success={m.auth_resend_success()}>
 			{m.auth_resend()}
 		</ButtonFeedback> -->
 	</menu>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
-	<p><button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button></p>
+	<p>
+		<button type="button" class="link" onclick={() => (step = 'email')}>← {m.common_back()}</button>
+	</p>
 {:else if step === 'email'}
 	<form
 		class="form"
@@ -174,7 +181,11 @@
 		</button>
 	</form>
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
-	<p><button type="button" class="link" onclick={() => (step = 'providers')}>← {m.common_back()}</button></p>
+	<p>
+		<button type="button" class="link" onclick={() => (step = 'providers')}
+			>← {m.common_back()}</button
+		>
+	</p>
 {:else}
 	<AuthProviders onEmailClick={handleEmailContinue} {redirect} />
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
@@ -190,5 +201,9 @@
 	p:has(button.link) {
 		text-align: center;
 		margin-top: 1rem;
+	}
+	menu.centerwrap {
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 </style>

@@ -2,13 +2,23 @@
 	import {channelAvatarUrl} from '$lib/utils'
 	import Icon from '$lib/components/icon.svelte'
 	/* keep 250 please, since it is what cloudinary has already generated */
-	let {id, alt = '', size = 250}: {id?: string | null; alt?: string | null; size?: number} = $props()
+	let {
+		id,
+		alt = '',
+		size = 250
+	}: {id?: string | null; alt?: string | null; size?: number} = $props()
 
 	let loaded = $state(false)
 </script>
 
 {#if id}
-	<img loading="lazy" src={channelAvatarUrl(id, size)} {alt} class:loaded onload={() => (loaded = true)} />
+	<img
+		loading="lazy"
+		src={channelAvatarUrl(id, size)}
+		{alt}
+		class:loaded
+		onload={() => (loaded = true)}
+	/>
 {:else}
 	<span class="fallback" role={alt ? 'img' : undefined} aria-label={alt || undefined}>
 		<Icon icon="user" />

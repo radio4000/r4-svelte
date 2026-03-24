@@ -1,78 +1,161 @@
 <script>
+	import {pushState} from '$app/navigation'
 	import {page} from '$app/state'
 	import {base, resolve} from '$app/paths'
 
 	let {data, children} = $props()
 
-	const currentSlug = $derived(page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index')
+	const currentSlug = $derived(
+		page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index'
+	)
+
+	const hasPlayground = $derived(/** @type {any} */ (page.data).playground === true)
+	const hasHtml = $derived(!!data.html)
+
+	const activeTab = $derived(
+		page.state.tab ?? (page.url.hash === '#playground' ? 'playground' : 'docs')
+	)
+
+	function setTab(tab) {
+		pushState(tab === 'docs' ? '' : '#playground', {tab})
+	}
 </script>
 
-<div class="docs-layout">
-	<nav class="docs-sidebar">
+<div class="docs">
+	<nav class="nav-vertical">
 		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
-		<a href={resolve('/docs/reference')} aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a>
+		<a
+			href={resolve('/docs/reference')}
+			aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a
+		>
 		<hr />
 		{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
-			<a href="{base}/docs/{doc}" aria-current={currentSlug === doc ? 'page' : undefined}>{doc}</a>
+			<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
+				>{doc}</a
+			>
+			{#if data.subroutes?.[doc]}
+				{#each data.subroutes[doc] as sub (sub)}
+					<a
+						class="subroute"
+						href={resolve(`/docs/${doc}/${sub}`)}
+						aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}>{sub}</a
+					>
+				{/each}
+			{/if}
 		{/each}
 	</nav>
 
-	<main class="docs-content article">
-		<div class="constrained">
-			{@render children()}
-		</div>
+	<main class="article">
+		{#if hasPlayground && hasHtml}
+			<menu class="tabs nav-grouped doc-tabs">
+				<button
+					aria-current={activeTab === 'docs' ? 'true' : undefined}
+					onclick={() => setTab('docs')}>Docs</button
+				>
+				<button
+					aria-current={activeTab === 'playground' ? 'true' : undefined}
+					onclick={() => setTab('playground')}>Playground</button
+				>
+			</menu>
+
+			<div class="doc-playground">
+				<article class="doc-prose constrained article" class:hidden-tab={activeTab !== 'docs'}>
+					<!-- eslint-disable svelte/no-at-html-tags -->
+					{@html data.html}
+				</article>
+				<div class="doc-output article" class:hidden-tab={activeTab !== 'playground'}>
+					{@render children()}
+				</div>
+			</div>
+		{:else}
+			<div class="constrained">
+				{@render children()}
+			</div>
+		{/if}
 	</main>
 </div>
 
 <style>
-	.docs-layout {
+	.docs {
 		display: grid;
 		grid-template-columns: max-content 1fr;
 		height: 100%;
 	}
 
-	.docs-sidebar {
-		display: flex;
-		flex-direction: column;
-		border-right: 1px solid var(--gray-4);
-		overflow-y: auto;
-		max-height: 100dvh;
-		position: sticky;
-		top: 0;
-		padding-block-start: 0.5rem;
+	.docs > nav {
+		border-top: 0;
+		border-left: 0;
+		border-bottom: 0;
 
 		a {
-			display: block;
-			padding: 0rem 0.5rem;
-			font-size: var(--font-3);
+			padding: 0.25rem 1rem 0.2rem 1rem;
+			font-size: var(--font-4);
+			text-transform: capitalize;
 
 			&[aria-current='page'] {
-				background: var(--accent-4);
+				background: var(--accent-7);
+			}
+
+			&.subroute {
+				padding-inline-start: 2rem;
+				font-size: var(--font-5);
 			}
 		}
 	}
 
-	.docs-content {
-		overflow-y: auto;
-		max-height: 100dvh;
-		padding: 1rem;
+	.docs > main {
+		padding: 1rem 0 0 1rem;
+		min-width: 0;
+	}
+
+	.doc-tabs {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		margin-block-end: 1rem;
+	}
+
+	.doc-playground {
+		min-width: 0;
+	}
+
+	.hidden-tab {
+		display: none;
 	}
 
 	@media (max-width: 640px) {
-		.docs-layout {
+		.docs {
 			grid-template-columns: 1fr;
 			grid-template-rows: auto 1fr;
 		}
 
-		.docs-sidebar {
+		.docs > nav {
 			flex-direction: row;
 			flex-wrap: wrap;
 			overflow-x: auto;
 			overflow-y: hidden;
-			max-height: unset;
 			position: static;
 			border-right: none;
 			border-bottom: 1px solid var(--gray-4);
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.doc-tabs {
+			display: none;
+		}
+
+		.hidden-tab {
+			display: block;
+		}
+
+		.doc-playground {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		.doc-prose {
+			padding-inline-end: 1rem;
+			border-right: 1px solid var(--gray-4);
 		}
 	}
 </style>

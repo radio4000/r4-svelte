@@ -50,7 +50,8 @@
 		<section>
 			<p><strong>{m.auth_password_reset_complete()}</strong></p>
 			<menu>
-				<a href={resolve('/settings')}><button class="primary">{m.settings_page_title()}</button></a>
+				<a href={resolve('/settings')}><button class="primary">{m.settings_page_title()}</button></a
+				>
 			</menu>
 		</section>
 	{:else}

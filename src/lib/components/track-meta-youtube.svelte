@@ -37,7 +37,9 @@
 			{#if data.channelTitle}
 				<dt>{m.track_meta_channel()}</dt>
 				<dd>
-					<a href={resolve(`/search?q=${encodeURIComponent(data.channelTitle)}`)}>{data.channelTitle}</a>
+					<a href={resolve(`/search?q=${encodeURIComponent(data.channelTitle)}`)}
+						>{data.channelTitle}</a
+					>
 				</dd>
 			{/if}
 

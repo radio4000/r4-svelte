@@ -36,9 +36,17 @@
 
 <article class="constrained">
 	{#if canAddTrack && channel}
-		<h2>{m.track_add_title()} <a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a></h2>
+		<h2>
+			{m.track_add_title()} <a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a>
+		</h2>
 
-		<TrackForm mode="create" {channel} url={initialUrl} discogs_url={initialDiscogsUrl} onsubmit={handleSubmit} />
+		<TrackForm
+			mode="create"
+			{channel}
+			url={initialUrl}
+			discogs_url={initialDiscogsUrl}
+			onsubmit={handleSubmit}
+		/>
 
 		<footer>
 			<small><a href={resolve('/bookmarklet')}>{m.track_add_bookmarklet()}</a></small>

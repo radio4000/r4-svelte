@@ -53,7 +53,11 @@ let updatedLocales = 0
 let updatedValues = 0
 
 for (const [locale, localeTranslations] of Object.entries(translations)) {
-	if (!localeTranslations || typeof localeTranslations !== 'object' || Array.isArray(localeTranslations)) {
+	if (
+		!localeTranslations ||
+		typeof localeTranslations !== 'object' ||
+		Array.isArray(localeTranslations)
+	) {
 		console.error(`Invalid translations for locale ${locale}: expected object`)
 		process.exit(1)
 	}
@@ -95,7 +99,9 @@ for (const [locale, localeTranslations] of Object.entries(translations)) {
 	}
 
 	if (localeChanges > 0) {
-		const sorted = Object.fromEntries(Object.entries(localeData).sort(([a], [b]) => a.localeCompare(b)))
+		const sorted = Object.fromEntries(
+			Object.entries(localeData).sort(([a], [b]) => a.localeCompare(b))
+		)
 		writeFileSync(localePath, JSON.stringify(sorted, null, '\t') + '\n')
 		updatedLocales++
 		updatedValues += localeChanges

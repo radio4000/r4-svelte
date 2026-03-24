@@ -17,7 +17,9 @@
 
 	const savedViews = $derived(viewsQuery.data ?? [])
 	const pinned = $derived(
-		savedViews.filter((v) => v.position != null).toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+		savedViews
+			.filter((v) => v.position != null)
+			.toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
 	)
 
 	/** Unified list: pinned views first (by position), then unpinned (alphabetically). */
@@ -64,7 +66,7 @@
 	<p><small>{m.views_pins_intro()}</small></p>
 
 	{#if !savedViews.length}
-		<p>{m.views_no_saved()} <a href="/_debug/views">{m.views_create_first()}</a>.</p>
+		<p>{m.views_no_saved()} <a href="/docs/views">{m.views_create_first()}</a>.</p>
 	{:else}
 		<menu class="nav-vertical">
 			{#each sortedViews() as item (item.sv.id)}
@@ -92,7 +94,8 @@
 						{#if !item.isPinned}
 							<button
 								class="btn danger"
-								onclick={() => confirm(m.views_delete_confirm({name: item.sv.name})) && deleteView(item.sv.id)}
+								onclick={() =>
+									confirm(m.views_delete_confirm({name: item.sv.name})) && deleteView(item.sv.id)}
 								aria-label={m.views_delete_label()}
 							>
 								<Icon icon="delete" />

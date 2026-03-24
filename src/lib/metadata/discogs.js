@@ -38,7 +38,11 @@ export async function pullDiscogs(provider, mediaId, discogsUrl) {
 				draft.discogs_data = normalizedDiscogsData
 			})
 		} else {
-			trackMetaCollection.insert({provider: provider ?? null, media_id: mediaId, discogs_data: normalizedDiscogsData})
+			trackMetaCollection.insert({
+				provider: provider ?? null,
+				media_id: mediaId,
+				discogs_data: normalizedDiscogsData
+			})
 		}
 		log.info('updated', normalizedDiscogsData)
 		return normalizedDiscogsData

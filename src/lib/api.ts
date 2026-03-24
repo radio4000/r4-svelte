@@ -2,11 +2,16 @@ import {tick} from 'svelte'
 import {goto} from '$app/navigation'
 import {appState, authStatus, addDeck} from '$lib/app-state.svelte'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
-import {leaveBroadcast, notifyBroadcastState, upsertRemoteBroadcast, getBroadcastingChannelId} from '$lib/broadcast'
+import {
+	leaveBroadcast,
+	notifyBroadcastState,
+	upsertRemoteBroadcast,
+	getBroadcastingChannelId
+} from '$lib/broadcast'
 import {logger} from '$lib/logger'
 import {capture} from '$lib/analytics'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray, isDbId} from '$lib/utils'
+import {shuffleArray, isDbId, uuid} from '$lib/utils'
 import {
 	getActiveQueue,
 	queueInsertManyAfter,
@@ -17,7 +22,7 @@ import {
 	queueRotate
 } from '$lib/player/queue'
 import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-import {addPlayHistoryEntry, endPlayHistoryEntry} from '$lib/collections/play-history'
+
 import type {Channel, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
 import {
 	weeklyShuffle,
@@ -81,7 +86,9 @@ type MediaPlayer = HTMLElement & {
 export function getMediaPlayer(deckId: number): MediaPlayer | null {
 	return (document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
 		document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
-		document.querySelector(`[data-deck="${deckId}"] audio.native-audio-player`)) as MediaPlayer | null
+		document.querySelector(
+			`[data-deck="${deckId}"] audio.native-audio-player`
+		)) as MediaPlayer | null
 }
 
 /** Wait until a media element exists for a deck. */
@@ -167,7 +174,13 @@ export async function playTrack(
 	}
 
 	// Set flag for user-initiated playback (respects autoplay setting for fresh decks)
-	const userInitiatedReasons = ['user_click_track', 'user_next', 'user_prev', 'play_channel', 'play_search']
+	const userInitiatedReasons = [
+		'user_click_track',
+		'user_next',
+		'user_prev',
+		'play_channel',
+		'play_search'
+	]
 	if (userInitiatedReasons.includes(startReason)) {
 		const deckAlreadyPlaying = deck.is_playing || deck.playlist_track
 		if (appState.autoplay_new_deck || deckAlreadyPlaying) {
@@ -184,15 +197,33 @@ export async function playTrack(
 
 	// Record play history (skip for ephemeral tracks — no channel/slug)
 	const previousTrackId = deck.playlist_track
+	const previousPlayId = deck.play_id
 	if (!isEphemeral && previousTrackId && previousTrackId !== id && endReason) {
 		const mediaController = document.querySelector(`media-controller#r5-deck-${deckId}`)
 		const actualPlayTime = mediaController?.getAttribute('mediacurrenttime')
 		const msPlayed = actualPlayTime ? Math.round(Number.parseFloat(actualPlayTime) * 1000) : 0
-		endPlayHistoryEntry(previousTrackId, {ms_played: msPlayed, reason_end: endReason})
+		capture('player:track_end', {
+			play_id: previousPlayId,
+			track_id: previousTrackId,
+			channel_slug: deck.playlist_slug,
+			end_reason: endReason,
+			ms_played: msPlayed
+		})
 	}
 	if (!isEphemeral && startReason && track.slug) {
-		addPlayHistoryEntry(track, {reason_start: startReason, shuffle: deck.shuffle})
-		capture('player:track_play', {channel_slug: track.slug, start_reason: startReason})
+		const playId = uuid()
+		deck.play_id = playId
+		capture('player:track_play', {
+			play_id: playId,
+			track_id: track.id,
+			channel_slug: track.slug,
+			title: track.title,
+			url: track.url,
+			start_reason: startReason,
+			shuffle: deck.shuffle,
+			auto_radio: !!deck.auto_radio,
+			broadcast: !!deck.listening_to_channel_id
+		})
 	}
 
 	deck.playlist_track = id
@@ -243,7 +274,11 @@ export async function playTrack(
 	}
 }
 
-export async function playChannel(deckId: number, {id, slug}: {id: string; slug: string}, trackId?: string) {
+export async function playChannel(
+	deckId: number,
+	{id, slug}: {id: string; slug: string},
+	trackId?: string
+) {
 	log.log('play_channel', {deckId, id, slug})
 	leaveBroadcast(deckId)
 	const d = getDeck(deckId)
@@ -252,14 +287,16 @@ export async function playChannel(deckId: number, {id, slug}: {id: string; slug:
 		d.auto_radio_drifted = undefined
 	}
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug).sort(sortByNewest)
+	const tracks = [...tracksCollection.state.values()]
+		.filter((t) => t?.slug === slug)
+		.sort(sortByNewest)
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return
 	}
 	const ids = tracks.map((t) => t.id)
-	await setPlaylist(deckId, ids)
-	capture('player:channel_play', {channel_slug: slug, is_shuffle: false})
+	loadDeckView(deckId, {sources: [{channels: [slug]}]}, ids)
+	capture('player:channel_play', {channel_slug: slug, shuffle: false})
 	await playTrack(deckId, trackId ?? ids[0], null, 'play_channel')
 }
 
@@ -307,14 +344,22 @@ export async function shufflePlayChannel(deckId, {id, slug}) {
 	}
 	const ids = tracks.map((t) => t.id)
 	const randomIndex = Math.floor(Math.random() * ids.length)
-	await setPlaylist(deckId, ids)
+	// order:'shuffle' records intent in the view; actual shuffle is still deck-local
+	// (deck.shuffle + playlist_tracks_shuffled). Unifying the two is a future step.
+	loadDeckView(deckId, {sources: [{channels: [slug]}], order: 'shuffle'}, ids)
 	const deck = getDeck(deckId)
 	if (deck) deck.shuffle = true
-	capture('player:channel_play', {channel_slug: slug, is_shuffle: true})
+	capture('player:channel_play', {channel_slug: slug, shuffle: true})
 	await playTrack(deckId, ids[randomIndex], null, 'play_channel')
 }
 
-export function setPlaylist(deckId: number, trackIds: string[], options: {title?: string; slug?: string} = {}) {
+/** Low-level queue setter. Always clears deck.view — callers that need
+ *  view-backed queues should use loadDeckView() instead. */
+export function setPlaylist(
+	deckId: number,
+	trackIds: string[],
+	options: {title?: string; slug?: string} = {}
+) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.playlist_tracks = trackIds
@@ -322,6 +367,22 @@ export function setPlaylist(deckId: number, trackIds: string[], options: {title?
 	const nextTitle = options.title?.trim()
 	deck.playlist_title = nextTitle || undefined
 	if (options.slug !== undefined) deck.playlist_slug = options.slug || undefined
+	deck.view = undefined
+}
+
+/** Load a queue into a deck from an explicit View.
+ *  Uses setPlaylist() for queue setup, then restores deck.view
+ *  with the normalized view — the only sanctioned view-aware queue load path. */
+export function loadDeckView(
+	deckId: number,
+	view: View,
+	trackIds: string[],
+	options: {title?: string; slug?: string} = {}
+) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	setPlaylist(deckId, trackIds, options)
+	deck.view = normalizeView(view)
 }
 
 /**
@@ -341,7 +402,13 @@ export function addToPlaylist(deckId, trackIds) {
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
-	log.log('addToPlaylist', {deckId, added: trackIds.length, before, after: deck.playlist_tracks.length})
+	deck.view = undefined
+	log.log('addToPlaylist', {
+		deckId,
+		added: trackIds.length,
+		before,
+		after: deck.playlist_tracks.length
+	})
 }
 
 /**
@@ -356,12 +423,18 @@ export function playNext(deckId, trackIds) {
 	const currentId = deck.playlist_track
 	if (!currentId) {
 		deck.playlist_tracks = ids
+		deck.view = undefined
 		return
 	}
 	deck.playlist_tracks = queueInsertManyAfter(deck.playlist_tracks, currentId, ids)
 	if (deck.shuffle) {
-		deck.playlist_tracks_shuffled = queueInsertManyAfter(deck.playlist_tracks_shuffled, currentId, ids)
+		deck.playlist_tracks_shuffled = queueInsertManyAfter(
+			deck.playlist_tracks_shuffled,
+			currentId,
+			ids
+		)
 	}
+	deck.view = undefined
 	log.log('play_next', {deckId, ids, after: currentId})
 }
 
@@ -377,14 +450,17 @@ export function removeFromQueue(deckId, trackId) {
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = queueRemove(deck.playlist_tracks_shuffled, trackId)
 	}
+	deck.view = undefined
 	log.log('remove_from_queue', {deckId, trackId})
 }
 
 export function toggleTheme() {
-	const isDark = document.documentElement.classList.contains('dark')
-	document.documentElement.classList.toggle('dark', !isDark)
-	document.documentElement.classList.toggle('light', isDark)
-	appState.theme = isDark ? 'light' : 'dark'
+	const cycle: Array<string | undefined> = [undefined, 'light', 'dark']
+	const current = appState.theme
+	const next = cycle[(cycle.indexOf(current) + 1) % cycle.length]
+	document.documentElement.classList.toggle('dark', next === 'dark')
+	document.documentElement.classList.toggle('light', next === 'light')
+	appState.theme = next
 }
 
 /** @param {number} deckId */
@@ -457,10 +533,8 @@ export async function togglePlayPause(deckId) {
 		return
 	}
 	if (player.paused) {
-		if (deck) deck.is_playing = true
 		player.play()
 	} else {
-		if (deck) deck.is_playing = false
 		player.pause()
 	}
 	maybeBroadcastNotify()
@@ -479,6 +553,7 @@ export function playFromHere(deckId, trackId) {
 	const fromHere = deck.playlist_tracks.slice(idx)
 	deck.playlist_tracks = fromHere
 	deck.playlist_tracks_shuffled = shuffleArray(fromHere)
+	deck.view = undefined
 	playTrack(deckId, trackId, null, 'user_click_track')
 	log.log('play_from_here', {deckId, trackId, remaining: fromHere.length})
 }
@@ -498,7 +573,35 @@ export function clearQueue(deckId) {
 		deck.playlist_tracks = []
 		deck.playlist_tracks_shuffled = []
 	}
+	deck.view = undefined
 	log.log('clear_queue', {deckId, kept: current})
+}
+
+/** Clear entire queue including current track */
+export function clearAllQueue(deckId: number) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	deck.playlist_tracks = []
+	deck.playlist_tracks_shuffled = []
+	deck.playlist_track = undefined
+	deck.view = undefined
+	log.log('clear_all_queue', {deckId})
+}
+
+/** Record a seek position and notify broadcast listeners */
+export function recordSeekPosition(deckId: number, seconds: number) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	deck.seeked_at = new Date().toISOString()
+	deck.seek_position = seconds
+	maybeBroadcastNotify()
+}
+
+/** Apply a partial remote state update to a deck (broadcast sync) */
+export function applyRemoteState(deckId: number, state: Partial<Deck>) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	Object.assign(deck, state)
 }
 
 /**
@@ -511,6 +614,9 @@ export function toggleShuffle(deckId) {
 	deck.shuffle = !deck.shuffle
 	if (deck.shuffle) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks || [])
+	}
+	if (deck.view) {
+		deck.view = {...deck.view, order: deck.shuffle ? 'shuffle' : undefined}
 	}
 }
 
@@ -566,7 +672,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 	if (result instanceof Promise) {
 		return result
 			.then(() => {
-				if (deck) deck.is_playing = true
 				log.log('play() succeeded')
 				maybeBroadcastNotify()
 			})
@@ -575,7 +680,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 				log.warn('play() was prevented:', error.message || error)
 			})
 	}
-	if (deck) deck.is_playing = true
 	maybeBroadcastNotify()
 	return Promise.resolve()
 }
@@ -614,12 +718,7 @@ export function seekTo(deckId, seconds) {
 		return
 	}
 	mediaEl.currentTime = seconds
-	const deck = getDeck(deckId)
-	if (deck) {
-		deck.seeked_at = new Date().toISOString()
-		deck.seek_position = seconds
-	}
-	maybeBroadcastNotify()
+	recordSeekPosition(deckId, seconds)
 }
 
 export function next(deckId: number, endReason: PlayEndReason) {
@@ -636,7 +735,11 @@ export function next(deckId: number, endReason: PlayEndReason) {
 	const nextId = queueNext(activeQueue, deck.playlist_track)
 	if (nextId) {
 		const startReason: PlayStartReason =
-			endReason === 'youtube_error' ? 'track_error' : endReason === 'user_next' ? 'user_next' : 'auto_next'
+			endReason === 'youtube_error'
+				? 'track_error'
+				: endReason === 'user_next'
+					? 'user_next'
+					: 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
@@ -669,9 +772,7 @@ export function previous(deckId: number, endReason: PlayEndReason) {
 export function eject(deckId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	deck.playlist_track = undefined
-	deck.playlist_tracks = []
-	deck.playlist_tracks_shuffled = []
+	clearAllQueue(deckId)
 	deck.hide_video_player = true
 	deck.shuffle = false
 	deck.is_playing = false
@@ -694,22 +795,24 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 
 	const rotationStartUnix = epochFromTracks(autoTracks)
 	const viewSeed = view ? serializeView(view) : undefined
-	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(
+		autoTracks,
+		rotationStartUnix,
+		Date.now(),
+		viewSeed
+	)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
 	const label = view ? viewLabel(view) : undefined
-	setPlaylist(
-		deckId,
-		shuffled.map((t) => t.id),
-		{title: label}
-	)
+	const ids = shuffled.map((t) => t.id)
+	if (view) loadDeckView(deckId, view, ids, {title: label})
+	else setPlaylist(deckId, ids, {title: label})
 	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	if (appState.decks[deckId]) {
 		appState.decks[deckId].auto_radio = true
 		appState.decks[deckId].auto_radio_drifted = false
-		appState.decks[deckId].view = view
 		appState.decks[deckId].auto_radio_rotation_start = rotationStartUnix
 	}
 
@@ -763,33 +866,36 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!autoTracks.length) return
 
 	const viewSeed = serializeView(view)
-	const {tracks: shuffled, totalDuration} = weeklyShuffle(autoTracks, rotationStartUnix, Date.now(), viewSeed)
+	const {tracks: shuffled, totalDuration} = weeklyShuffle(
+		autoTracks,
+		rotationStartUnix,
+		Date.now(),
+		viewSeed
+	)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 	const label = viewLabel(view) || undefined
 
+	const ids = shuffled.map((t) => t.id)
 	const isSameTrack = deck.playlist_track === snap.currentTrack.id
 	if (!isSameTrack) {
-		setPlaylist(
-			deckId,
-			shuffled.map((t) => t.id),
-			{title: label, slug}
-		)
+		loadDeckView(deckId, view, ids, {title: label, slug})
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	}
 
-	// Restore auto-radio flags after setPlaylist/playTrack
+	// Restore auto-radio flags after loadDeckView/playTrack
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
 		d.auto_radio_drifted = false
 		d.auto_radio_rotation_start = rotationStartUnix
-		d.view = view
 		if (label) d.playlist_title = label
 	}
 
 	if (isSameTrack) {
 		seekTo(deckId, snap.offsetSeconds)
+		// Ensure playing — user expects the button to always start playback
+		if (!getDeck(deckId)?.is_playing) togglePlayPause(deckId)
 	} else {
 		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 	}
@@ -803,7 +909,9 @@ export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
 	} else {
 		const channelTracks = tracks ?? (await loadChannelTracks(slug))
 		if (!hasAutoRadioCoverage(channelTracks)) return
-		joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {sources: [{channels: [slug]}]})
+		joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {
+			sources: [{channels: [slug]}]
+		})
 	}
 }
 

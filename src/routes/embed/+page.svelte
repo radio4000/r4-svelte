@@ -7,7 +7,7 @@
 	import {viewFromUrl, viewLabel, type View} from '$lib/views'
 	import {queryView} from '$lib/views.svelte'
 	import {appState, createDefaultDeck} from '$lib/app-state.svelte'
-	import {setPlaylist} from '$lib/api'
+	import {loadDeckView} from '$lib/api'
 	import {ensureTracksLoaded} from '$lib/collections/tracks'
 	import * as m from '$lib/paraglide/messages'
 
@@ -20,20 +20,16 @@
 */
 
 	const rawView: View = $derived.by(() => viewFromUrl(page.url))
-	const hasView = $derived(rawView.sources.some((s) => s.channels?.length || s.tags?.length || s.search))
+	const hasView = $derived(
+		rawView.sources.some((s) => s.channels?.length || s.tags?.length || s.search)
+	)
 
 	function viewToDecks(view: View): Record<number, ReturnType<typeof createDefaultDeck>> {
 		if (!view.sources.length) return {1: createDefaultDeck(1)}
 		return Object.fromEntries(
 			view.sources.map((source, i) => {
 				const id = i + 1
-				return [
-					id,
-					{
-						...createDefaultDeck(id),
-						view: {sources: [source], order: view.order, direction: view.direction, limit: view.limit}
-					}
-				]
+				return [id, createDefaultDeck(id)]
 			})
 		)
 	}
@@ -81,7 +77,12 @@
 	const deckViews = $derived(
 		rawView.sources.map((source, i) => ({
 			deckId: i + 1,
-			view: {sources: [source], order: rawView.order, direction: rawView.direction, limit: rawView.limit} satisfies View
+			view: {
+				sources: [source],
+				order: rawView.order,
+				direction: rawView.direction,
+				limit: rawView.limit
+			} satisfies View
 		}))
 	)
 
@@ -92,15 +93,18 @@
 		}
 	})
 
-	const viewQueries = $derived(deckViews.map(({deckId, view}) => ({deckId, view, query: queryView(() => view)})))
+	const viewQueries = $derived(
+		deckViews.map(({deckId, view}) => ({deckId, view, query: queryView(() => view)}))
+	)
 
 	$effect(() => {
 		for (const {deckId, view, query} of viewQueries) {
 			if (query.loading || !query.tracks.length) continue
 			const channels = view.sources[0]?.channels ?? []
 			const slug = channels.length === 1 ? channels[0] : undefined
-			setPlaylist(
+			loadDeckView(
 				deckId,
+				view,
 				query.tracks.map((t) => t.id),
 				{title: viewLabel(view), slug}
 			)

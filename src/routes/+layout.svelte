@@ -1,6 +1,5 @@
 <script>
 	import '../styles/style.css'
-	import {scale} from 'svelte/transition'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import AuthListener from '$lib/components/auth-listener.svelte'
 	import DraggablePanel from '$lib/components/draggable-panel.svelte'
@@ -12,12 +11,13 @@
 	import R4Loading from '$lib/components/r4-loading.svelte'
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
+	import AppUpdateBanner from '$lib/components/app-update-banner.svelte'
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '$lib/modes'
-	import {syncAnalyticsConsent, capture, identify, reset} from '$lib/analytics'
+	import {syncAnalyticsConsent, capture} from '$lib/analytics'
 	// import {setChannelsCtx} from '$lib/contexts'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
 	import {logger} from '$lib/logger'
@@ -48,9 +48,13 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
-	const compactDeckTransitionMs = 200
-	const compactDeckExitMs = 0
-	const compactDeckScaleStart = 0.95
+
+	/** @param {Element} _node */
+	function compactDeckTransition(_node) {
+		return {
+			duration: 0
+		}
+	}
 
 	// Ensure first client render uses persisted locale before any message call runs.
 	if (typeof window !== 'undefined') {
@@ -85,8 +89,6 @@
 		if (DISABLED_ROUTES.some((p) => page.route.id?.startsWith(p))) {
 			goto(DISABLED_ROUTE_FALLBACK, {replaceState: true})
 		}
-		const {registerSW} = await import('virtual:pwa-register')
-		registerSW({immediate: true})
 		trackAppPresence()
 		try {
 			await data.preloading
@@ -170,20 +172,23 @@
 		syncAnalyticsConsent(appState.analytics_opt_in ?? false)
 	})
 
-	// Identify or reset PostHog person profile when user session changes
-	$effect(() => {
-		const user = appState.user
-		if (user) {
-			identify(user.id)
-		} else {
-			reset()
-		}
-	})
+	// Disabled: all analytics events are anonymous for privacy.
+	// $effect(() => {
+	// 	const user = appState.user
+	// 	if (user) {
+	// 		identify(user.id)
+	// 	} else {
+	// 		reset()
+	// 	}
+	// })
 
 	// Apply pointer cursor preference
 	$effect(() => {
-		const value = appState.use_pointer_cursor ? 'pointer' : 'default'
-		document.documentElement.style.setProperty('--cursor', value)
+		if (appState.use_pointer_cursor) {
+			document.documentElement.style.removeProperty('--interactive-cursor')
+		} else {
+			document.documentElement.style.setProperty('--interactive-cursor', 'default')
+		}
 	})
 
 	// "Close" the database on page unload. I have not noticed any difference, but seems like a good thing to do.
@@ -229,6 +234,8 @@
 			<KeyboardShortcuts />
 			<ToolTip />
 
+			<AppUpdateBanner />
+
 			<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
 				{#if !appState.embed_mode}
 					{#key uiLocale}
@@ -253,8 +260,7 @@
 							<div
 								class="compact-deck-item"
 								style:--deck-accent={deckAccent(allDeckIds, deckId)}
-								in:scale={{start: compactDeckScaleStart, duration: compactDeckTransitionMs}}
-								out:scale={{start: compactDeckScaleStart, duration: compactDeckExitMs}}
+								transition:compactDeckTransition
 							>
 								<DeckCompactBar {deckId} />
 							</div>
@@ -295,7 +301,7 @@
 	.layout > :global(header) {
 		position: sticky;
 		top: 0;
-		height: 100dvh;
+		margin: var(--interface-margin);
 		flex-shrink: 0;
 	}
 
@@ -349,6 +355,7 @@
 		border-radius: 8px 8px 0 0;
 		overflow: hidden;
 		border-top: 1px solid var(--gray-6);
+		margin: 0 var(--interface-margin) var(--interface-margin);
 		/*
 		padding: 0.4rem 0.5rem;
 		 */
@@ -391,7 +398,11 @@
 		}
 
 		/* when any deck has visible content, cap page scroll area so decks get most of the viewport */
-		.content:has(:global(.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))))
+		.content:has(
+				:global(
+					.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+				)
+			)
 			.scroll-area {
 			flex: 0 1 auto;
 			max-height: 28dvh;
@@ -404,7 +415,6 @@
 
 		.compact-decks :global(.deck-compact-bar) {
 			min-width: 0;
-			padding-inline: 0.5rem;
 		}
 	}
 

@@ -74,7 +74,12 @@
 				importUrl()
 			}}
 		>
-			<input type="url" bind:value={url} placeholder={m.import_m3u_url_placeholder()} disabled={importing} />
+			<input
+				type="url"
+				bind:value={url}
+				placeholder={m.import_m3u_url_placeholder()}
+				disabled={importing}
+			/>
 			<button type="submit" disabled={importing || !url.trim()}>{m.import_from_url()}</button>
 		</form>
 

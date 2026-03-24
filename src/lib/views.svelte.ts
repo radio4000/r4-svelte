@@ -1,16 +1,18 @@
 import {fuzzySearch, shuffleArray} from '$lib/utils'
 import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-import {createQuery} from '@tanstack/svelte-query'
-import {eq, inArray} from '@tanstack/db'
+import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
+import {inArray} from '@tanstack/db'
 import {tracksCollection} from '$lib/collections/tracks'
 import {channelsCollection} from '$lib/collections/channels'
 import {sdk} from '@radio4000/sdk'
+import {searchTracks} from '$lib/search-fts'
 import {parseUrl} from 'media-now'
 import type {Channel, Deck, Track} from '$lib/types'
 import {viewURI, type View, type ViewSource} from '$lib/views'
 
 /** Max tracks fetched for client-side filtering (search, tags, channel+filter combos). */
 const MAX_CLIENT_TRACKS = 4000
+const EMPTY_STRINGS: string[] = []
 
 /**
  * Which fetch+filter path queryView should use for a View.
@@ -62,7 +64,8 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 	if (view.order === 'shuffle') {
 		data = shuffleArray(data)
 	} else {
-		const sortField = view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
+		const sortField =
+			view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'
 		const dir = view.direction === 'asc' ? 1 : -1
 		data = data.toSorted((a, b) => {
 			const va = a[sortField] ?? ''
@@ -92,8 +95,10 @@ function hydrateTracksFromRemote(data: Record<string, unknown>[]): Track[] {
 /** Reactive view query. Call during component init. Returns {tracks, channels, loading, strategy} with getters. */
 export function queryView(getView: () => View) {
 	// Stable $derived primitives — only change when actual query params change.
-	const channelSlugsCSV = $derived(getView().sources[0]?.channels?.join(',') || '')
-	const tagsCSV = $derived(getView().sources[0]?.tags?.toSorted().join(',') || '')
+	const channelSlugs = $derived(getView().sources[0]?.channels ?? EMPTY_STRINGS)
+	const channelSlugsKey = $derived(channelSlugs.join(','))
+	const tags = $derived(getView().sources[0]?.tags?.toSorted() ?? EMPTY_STRINGS)
+	const tagsKey = $derived(tags.join(','))
 	const searchTerm = $derived(getView().sources[0]?.search?.trim() || '')
 	const limit = $derived(getView().limit ?? 50)
 	const offset = $derived(getView().offset ?? 0)
@@ -101,11 +106,11 @@ export function queryView(getView: () => View) {
 
 	const channelsQuery = useLiveQuery(
 		(q) => {
-			const slugs = channelSlugsCSV ? channelSlugsCSV.split(',') : []
-			if (!slugs.length) return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
-			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, slugs))
+			if (!channelSlugs.length)
+				return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
+			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, channelSlugs))
 		},
-		[() => channelSlugsCSV]
+		[() => channelSlugsKey]
 	)
 
 	// Channel tracks: paginated when strategy=channel, full dump when strategy=channel-filtered
@@ -113,31 +118,36 @@ export function queryView(getView: () => View) {
 		(q) => {
 			if (strategy !== 'channel' && strategy !== 'channel-filtered')
 				return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
-			const slugs = channelSlugsCSV.split(',')
 			const fetchAll = strategy === 'channel-filtered'
 			return q
 				.from({tracks: tracksCollection})
-				.where(({tracks}) => inArray(tracks.slug, slugs))
+				.where(({tracks}) => inArray(tracks.slug, channelSlugs))
 				.orderBy(({tracks}) => tracks.created_at, 'desc')
 				.limit(fetchAll ? MAX_CLIENT_TRACKS : limit)
 				.offset(fetchAll ? 0 : offset)
 		},
-		[() => strategy, () => channelSlugsCSV, () => searchTerm, () => tagsCSV, () => limit, () => offset]
+		[
+			() => strategy,
+			() => channelSlugsKey,
+			() => searchTerm,
+			() => tagsKey,
+			() => limit,
+			() => offset
+		]
 	)
 
 	// Remote tags query: Supabase overlaps (broad "any" match).
 	// createQuery because TanStack DB's inArray can't do array-overlap client-side.
 	const tagsQuery = createQuery(() => {
-		const tags = tagsCSV ? tagsCSV.split(',') : []
 		return {
-			queryKey: ['tracks', 'tags', ...tags],
+			queryKey: ['tracks', 'tags', ...tags, 'limit', limit],
 			queryFn: async () => {
 				const {data, error} = await sdk.supabase
 					.from('channel_tracks')
 					.select('*')
 					.overlaps('tags', tags)
 					.order('created_at', {ascending: false})
-					.limit(MAX_CLIENT_TRACKS)
+					.limit(limit)
 				if (error) throw error
 				return hydrateTracksFromRemote(data || [])
 			},
@@ -146,18 +156,19 @@ export function queryView(getView: () => View) {
 		}
 	})
 
-	// Local FTS live query
-	const searchLiveQuery = useLiveQuery(
-		(q) => {
-			if (strategy !== 'search-only') return null
-			return q
-				.from({tracks: tracksCollection})
-				.where(({tracks}) => eq(tracks.fts, searchTerm))
-				.orderBy(({tracks}) => tracks.created_at, 'desc')
-				.limit(MAX_CLIENT_TRACKS)
-		},
-		[() => strategy, () => searchTerm]
-	)
+	// Remote FTS query (like tagsQuery — client-side eq() can't match tsvector)
+	const searchQuery = createQuery(() => {
+		return {
+			queryKey: ['tracks', 'search', searchTerm, 'limit', limit, 'offset', offset],
+			queryFn: async () => {
+				const {tracks, count} = await searchTracks(searchTerm, {limit, offset})
+				return {tracks: hydrateTracksFromRemote(tracks), count}
+			},
+			enabled: strategy === 'search-only' && !!searchTerm,
+			staleTime: 24 * 60 * 60 * 1000,
+			placeholderData: keepPreviousData
+		}
+	})
 
 	/** Raw tracks from whichever data source the current strategy uses. */
 	function rawTracks(): Track[] {
@@ -168,7 +179,7 @@ export function queryView(getView: () => View) {
 			case 'tags-only':
 				return (tagsQuery.data ?? []) as Track[]
 			case 'search-only':
-				return (searchLiveQuery.data ?? []) as Track[]
+				return (searchQuery.data?.tracks ?? []) as Track[]
 			default:
 				return []
 		}
@@ -180,12 +191,15 @@ export function queryView(getView: () => View) {
 		},
 		get tracks() {
 			const processed = processViewTracks(rawTracks(), getView())
-			if (strategy !== 'channel' && strategy !== 'empty') {
+			if (strategy !== 'channel' && strategy !== 'empty' && strategy !== 'search-only') {
 				return processed.slice(offset, offset + limit)
 			}
 			return processed
 		},
 		get count(): number {
+			if (strategy === 'search-only') {
+				return searchQuery.data?.count ?? 0
+			}
 			if (strategy === 'channel-filtered') {
 				return processViewTracks(rawTracks(), getView()).length
 			}
@@ -202,7 +216,7 @@ export function queryView(getView: () => View) {
 				case 'tags-only':
 					return tagsQuery.isPending
 				case 'search-only':
-					return !searchLiveQuery.isReady
+					return searchQuery.isPending
 				default:
 					return false
 			}

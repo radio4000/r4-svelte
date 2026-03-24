@@ -29,7 +29,11 @@
 	disabled={loading}
 	class:active={isPlaying}
 	onclick={play}
-	title={isPlaying ? `Pause ${channel.name}` : isChannelLoaded ? `Resume ${channel.name}` : `Play ${channel.name}`}
+	title={isPlaying
+		? `Pause ${channel.name}`
+		: isChannelLoaded
+			? `Resume ${channel.name}`
+			: `Play ${channel.name}`}
 	{...rest}
 >
 	<Icon icon={isPlaying ? 'pause' : 'play-fill'} />

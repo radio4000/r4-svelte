@@ -15,7 +15,8 @@
 
 	<br />
 	<p class="row row--vcenter">
-		{m.error_if_not_work()} &rarr; ② <a href={resolve('/recovery')} class="btn">{m.error_reset_app()}</a>
+		{m.error_if_not_work()} &rarr; ②
+		<a href={resolve('/recovery')} class="btn">{m.error_reset_app()}</a>
 	</p>
 </article>
 
@@ -24,5 +25,8 @@
 		margin: 0.5rem;
 		display: flex;
 		flex-flow: column;
+	}
+	.row--vcenter {
+		place-items: center;
 	}
 </style>

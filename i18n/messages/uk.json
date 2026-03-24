@@ -509,7 +509,7 @@
 	"share_media_url_label": "URL медіа",
 	"share_native": "Поділитися",
 	"share_track_title": "Поділитися треком → {title}",
-	"shortcuts_action_gotoDebug": "Перейти до debug",
+	"shortcuts_action_gotoDocs": "Перейти до docs",
 	"shortcuts_action_gotoHome": "Перейти додому",
 	"shortcuts_action_gotoSettings": "Перейти до налаштувань",
 	"shortcuts_action_openSearch": "Відкрити пошук",

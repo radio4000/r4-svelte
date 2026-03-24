@@ -128,7 +128,11 @@ class YouTube2Element extends HTMLElement {
 			// @ts-expect-error onVideoProgress is undocumented but works
 			this.api.addEventListener('onVideoProgress', () => {
 				const duration = this.api?.getDuration?.() ?? NaN
-				if (Number.isFinite(duration) && duration > 0 && Math.abs(duration - this.#lastDuration) > 0.25) {
+				if (
+					Number.isFinite(duration) &&
+					duration > 0 &&
+					Math.abs(duration - this.#lastDuration) > 0.25
+				) {
 					this.#lastDuration = duration
 					this.dispatchEvent(new Event('durationchange'))
 				}
@@ -155,7 +159,11 @@ class YouTube2Element extends HTMLElement {
 			this.dispatchEvent(new Event('pause'))
 		} else if (state === YT.PlayerState.ENDED) {
 			this.dispatchEvent(new Event('ended'))
-		} else if (state === YT.PlayerState.CUED && this.hasAttribute('autoplay') && !this.#autoplayAttempted) {
+		} else if (
+			state === YT.PlayerState.CUED &&
+			this.hasAttribute('autoplay') &&
+			!this.#autoplayAttempted
+		) {
 			// If video is cued and autoplay is enabled, start playing (only once per video)
 			log.debug('video cued with autoplay, calling playVideo()')
 			this.#autoplayAttempted = true
@@ -197,7 +205,8 @@ class YouTube2Element extends HTMLElement {
 		}
 	}
 
-	static #RE_VIDEO_ID = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/
+	static #RE_VIDEO_ID =
+		/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&\n?#]+)/
 
 	#extractVideoId(url) {
 		if (!url) return null

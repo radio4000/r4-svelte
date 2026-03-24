@@ -1,9 +1,11 @@
-/** Format seconds to "m:ss" (e.g. 185 → "3:05")
- * @param {number | null | undefined} seconds */
-export function formatDuration(seconds) {
-	if (!seconds) return ''
+/** Format seconds to "m:ss" (e.g. 185 → "3:05").
+ * Returns `fallback` for NaN/null/undefined/negative values (default: empty string).
+ * @param {number | null | undefined} seconds
+ * @param {string} [fallback] */
+export function formatDuration(seconds, fallback = '') {
+	if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return fallback
 	const mins = Math.floor(seconds / 60)
-	const secs = seconds % 60
+	const secs = Math.floor(seconds % 60)
 	return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
@@ -46,9 +48,12 @@ export function formatDate(date, locale = undefined) {
 export function formatTime(date, locale = undefined) {
 	const value = toValidDate(date)
 	if (!value) return ''
-	return new Intl.DateTimeFormat(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false}).format(
-		value
-	)
+	return new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false
+	}).format(value)
 }
 
 /** Label for a calendar day: "today", "yesterday", or a short locale date.
@@ -133,7 +138,8 @@ export function relativeDateSolar(dateString) {
 	const remainingDays = days % 365
 	const yearsString = years ? `${years} sun orbit${years > 1 ? 's' : ''}` : ''
 	const andString = years && remainingDays ? ', ' : ''
-	const daysString = remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
+	const daysString =
+		remainingDays === 0 ? '' : `${remainingDays} earth rotation${remainingDays > 1 ? 's' : ''}`
 	return `${yearsString}${andString}${daysString}` || 'today'
 }
 

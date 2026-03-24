@@ -68,7 +68,9 @@
 	let q = $state('')
 	let tracks = $derived(mentionsQuery.data ?? [])
 	const matchTrack = (t: Track, q: string) =>
-		!q || t.title?.toLowerCase().includes(q.toLowerCase()) || t.description?.toLowerCase().includes(q.toLowerCase())
+		!q ||
+		t.title?.toLowerCase().includes(q.toLowerCase()) ||
+		t.description?.toLowerCase().includes(q.toLowerCase())
 	let filteredTracks = $derived(tracks.filter((t) => matchTrack(t, q)))
 
 	function playMentionTracks() {
@@ -88,7 +90,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.mentions_title({handle: slug})}</title>
+	<title>{m.mentions_title({handle: `@${slug}`})}</title>
 </svelte:head>
 
 <ChannelNavControlsPortal controls={navControls} />
@@ -99,14 +101,18 @@
 			bind:value={q}
 			placeholder={m.mentions_search_placeholder({count: tracks.length, handle: `@${slug}`})}
 		/>
-		<button type="button" title={m.search_play_all()} onclick={playMentionTracks}><Icon icon="play-fill" /></button>
-		<button type="button" title={m.search_queue_all()} onclick={queueMentionTracks}><Icon icon="next-fill" /></button>
+		<button type="button" title={m.search_play_all()} onclick={playMentionTracks}
+			><Icon icon="play-fill" /></button
+		>
+		<button type="button" title={m.search_queue_all()} onclick={queueMentionTracks}
+			><Icon icon="next-fill" /></button
+		>
 	{/if}
 {/snippet}
 
 <section>
 	<Subpage
-		title={m.mentions_title({handle: slug})}
+		title={m.mentions_title({handle: `@${slug}`})}
 		loading={mentionsQuery.isPending}
 		error={mentionsQuery.isError}
 		errorText={m.mentions_error()}

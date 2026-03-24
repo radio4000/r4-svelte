@@ -5,7 +5,7 @@
 	import {appState} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {toggleShuffle} from '$lib/api'
+	import {toggleShuffle, clearQueue, clearAllQueue} from '$lib/api'
 	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import Icon from './icon.svelte'
@@ -53,7 +53,9 @@
 		return trackIds.map((id) => byId.get(id)).filter((t) => !!t)
 	})
 
-	let filteredQueueTracks = $derived(fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description']))
+	let filteredQueueTracks = $derived(
+		fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description'])
+	)
 
 	/** @param {string} tag */
 	function toggleTag(tag) {
@@ -61,11 +63,12 @@
 		searchQuery = searchQuery === query ? '' : query
 	}
 
-	function clearQueue() {
-		if (!deck) return
-		deck.playlist_tracks = []
-		deck.playlist_tracks_shuffled = []
-		deck.playlist_track = undefined
+	function handleClearQueue() {
+		if (deck?.is_playing) {
+			clearQueue(deckId)
+		} else {
+			clearAllQueue(deckId)
+		}
 	}
 </script>
 
@@ -77,11 +80,14 @@
 			debounce={150}
 		/>
 		{#if searchQuery !== ''}
-			<button onclick={() => (searchQuery = '')} {@attach tooltip({content: m.queue_clear_search()})}>
+			<button
+				onclick={() => (searchQuery = '')}
+				{@attach tooltip({content: m.queue_clear_search()})}
+			>
 				<Icon icon="close" />
 			</button>
 		{/if}
-		{#if trackIds.length > 1}
+		{#if trackIds.length > 2}
 			<button
 				onclick={() => toggleShuffle(deckId)}
 				class:active={deck?.shuffle}
@@ -90,11 +96,15 @@
 			>
 				<Icon icon="shuffle" />
 			</button>
-			{#if !appState.embed_mode}
-				<button onclick={clearQueue} {@attach tooltip({content: m.common_clear()})} title={m.common_clear()}>
-					<Icon icon="delete" />
-				</button>
-			{/if}
+		{/if}
+		{#if !appState.embed_mode && trackIds.length > 0 && (deck?.is_playing ? trackIds.length > 1 : true)}
+			<button
+				onclick={handleClearQueue}
+				{@attach tooltip({content: m.common_clear()})}
+				title={m.common_clear()}
+			>
+				<Icon icon="delete" />
+			</button>
 		{/if}
 	</div>
 
@@ -129,7 +139,7 @@
 		flex: 1;
 		min-height: 0;
 		width: 100%;
-		border-top: 1px solid var(--gray-6);
+		border-top: 1px solid var(--color-interface-border);
 	}
 
 	main {

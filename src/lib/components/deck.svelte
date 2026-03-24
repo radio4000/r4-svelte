@@ -1,7 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {appState} from '$lib/app-state.svelte'
-	import {playHistoryCollection} from '$lib/collections/play-history'
+	import {captureEventsCollection} from '$lib/collections/capture-events'
 	import Player from '$lib/components/player.svelte'
 	import QueuePanel from '$lib/components/queue-panel.svelte'
 
@@ -14,8 +14,12 @@
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
-	let hasHistory = $derived(playHistoryCollection.state.size > 0)
-	let hasContent = $derived((deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory)
+	let hasHistory = $derived(
+		[...captureEventsCollection.state.values()].some((e) => e.event === 'player:track_play')
+	)
+	let hasContent = $derived(
+		(deck?.playlist_tracks?.length ?? 0) > 0 || Boolean(deck?.playlist_track) || hasHistory
+	)
 
 	// Deck 1 hides when empty; additional decks are always visible
 	let visible = $derived(showPlayer && deck && (deckId !== 1 || hasContent))
@@ -23,7 +27,9 @@
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 
 	// Inline deck width from stored value
-	let deckStyle = $derived(deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : '')
+	let deckStyle = $derived(
+		deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : ''
+	)
 
 	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
 
@@ -99,23 +105,21 @@
 		min-width: 280px;
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
-		background: color-mix(in srgb, var(--deck-accent, var(--footer-bg)) 8%, var(--footer-bg));
+		background: var(--color-interface-elevated);
+		border-radius: var(--border-radius);
+		overflow: hidden;
 		position: relative;
-		opacity: 1;
-		transform: scale(1);
 	}
 
 	.deck:not(.expanded) {
-		transition:
-			opacity var(--deck-transition-fast) var(--deck-transition-ease),
-			transform var(--deck-transition-fast) var(--deck-transition-ease),
-			border-color var(--deck-transition-fast) var(--deck-transition-ease);
+		transition: border-color var(--deck-transition-fast) var(--deck-transition-ease);
 	}
 
 	.resize-handle {
 		width: 3px;
 		cursor: col-resize;
 		border-right: 1px solid var(--gray-7);
+		border-radius: var(--border-radius) 0 0 var(--border-radius);
 		flex-shrink: 0;
 		touch-action: none;
 		transition: border-color 120ms ease;
@@ -147,13 +151,14 @@
 			aspect-ratio: auto;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) :global(.queue-panel) {
+		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+			:global(.queue-panel) {
 			flex: 1 1 auto;
 			min-height: 0;
 		}
 
 		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
-			:global(.bottom-controls) {
+			:global(.controls) {
 			flex-wrap: wrap;
 		}
 
@@ -169,7 +174,6 @@
 		min-width: 0;
 		border: 0;
 		z-index: 200;
-		background: var(--footer-bg);
 	}
 
 	.deck.expanded .resize-handle {
@@ -195,9 +199,6 @@
 		min-width: 0;
 		overflow: hidden;
 		border: none;
-		opacity: 0;
-		transform: scale(0.95);
-		transition-duration: 0ms;
 		pointer-events: none;
 	}
 
@@ -230,7 +231,7 @@
 
 	/* Broadcast listener: no queue, so use less space */
 	.deck.listening {
-		width: 280px;
+		width: var(--deck-width, 280px);
 		min-width: 200px;
 		flex-shrink: 0;
 	}
@@ -244,9 +245,9 @@
 		pointer-events: none;
 	}
 
-	@media (prefers-reduced-motion: reduce) {
+	/* @media (prefers-reduced-motion: reduce) {
 		.deck:not(.expanded) {
 			transition: none;
 		}
-	}
+	} */
 </style>

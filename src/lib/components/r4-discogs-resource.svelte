@@ -241,7 +241,9 @@
 		}
 		return () => {
 			// Only remove tracks not referenced in any deck's current playlist
-			const activeDeckIds = new Set(Object.values(appState.decks).flatMap((d) => d.playlist_tracks ?? []))
+			const activeDeckIds = new Set(
+				Object.values(appState.decks).flatMap((d) => d.playlist_tracks ?? [])
+			)
 			for (const t of toRegister) {
 				if (!activeDeckIds.has(t.id) && tracksCollection.state.has(t.id)) {
 					tracksCollection.utils.writeDelete(t.id)
@@ -255,7 +257,10 @@
 		const deckId = appState.active_deck_id
 		const ids = allPlayableTracks.map((t) => t.id)
 		if (ids.length) {
-			setPlaylist(deckId, ids, {title: `${artistsDisplay} — ${resource?.title}`, slug: slug || undefined})
+			setPlaylist(deckId, ids, {
+				title: `${artistsDisplay} — ${resource?.title}`,
+				slug: slug || undefined
+			})
 		}
 		playTrack(deckId, trackId, null, 'user_click_track')
 	}
@@ -285,7 +290,9 @@
 		return artistsDisplay ? `${artistsDisplay} - ${trackName}` : trackName
 	}
 
-	const suggestionsList = $derived(resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : [])
+	const suggestionsList = $derived(
+		resource ? extractSuggestions(/** @type {DiscogsResource} */ (resource)) : []
+	)
 	const releaseStats = $derived.by(() => {
 		if (!trackRows.length) return ''
 		const total = trackRows.length
@@ -302,11 +309,14 @@
 		const items = []
 		const date = resource.released_formatted || (resource.year ? String(resource.year) : '')
 		if (date) items.push({icon: 'history', label: m.discogs_release_date(), value: date})
-		if (resource.country) items.push({icon: 'map', label: m.discogs_country(), value: resource.country})
+		if (resource.country)
+			items.push({icon: 'map', label: m.discogs_country(), value: resource.country})
 		const format = resource.formats?.[0]
 		if (format) {
 			const descParts =
-				format.descriptions?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d)).slice(0, 2) ?? []
+				format.descriptions
+					?.filter((d) => !d.includes('RPM') && !['Stereo', 'Mono'].includes(d))
+					.slice(0, 2) ?? []
 			const fmtStr = [format.name, ...descParts].join(' ')
 			if (fmtStr) items.push({icon: 'tv', label: m.discogs_format(), value: fmtStr})
 		}
@@ -323,7 +333,9 @@
 			''
 	)
 	const tracklistItems = $derived(
-		/** @type {DiscogsResource | null} */ (resource)?.tracklist?.filter((t) => t.type_ !== 'heading') ?? []
+		/** @type {DiscogsResource | null} */ (resource)?.tracklist?.filter(
+			(t) => t.type_ !== 'heading'
+		) ?? []
 	)
 </script>
 
@@ -345,7 +357,9 @@
 			<div class="release-info">
 				<h3>
 					{#if resource.uri}
-						<a href={resource.uri} target="_blank" rel="noopener noreferrer">{artistsDisplay} — {resource.title}</a>
+						<a href={resource.uri} target="_blank" rel="noopener noreferrer"
+							>{artistsDisplay} — {resource.title}</a
+						>
 					{:else}
 						{artistsDisplay} — {resource.title}
 					{/if}
@@ -471,7 +485,8 @@
 							name="tags"
 							value={tag}
 							checked={selectedTags.includes(tag)}
-							onchange={(e) => handleTagChange(tag, /** @type {HTMLInputElement} */ (e.target).checked)}
+							onchange={(e) =>
+								handleTagChange(tag, /** @type {HTMLInputElement} */ (e.target).checked)}
 						/>
 						{tag}
 					</label>
@@ -629,7 +644,7 @@
 
 		&.is-real {
 			opacity: 1;
-			cursor: pointer;
+			cursor: var(--interactive-cursor, pointer);
 		}
 	}
 

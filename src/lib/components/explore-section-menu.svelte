@@ -15,17 +15,6 @@
 	const isTracks = $derived(page.route.id?.startsWith('/tracks'))
 	const isTags = $derived(page.route.id?.startsWith('/tags'))
 
-	const activeIcon = $derived(
-		isHome
-			? conceptIcons.home
-			: isFeed
-				? conceptIcons.feed
-				: isChannels
-					? conceptIcons.channels
-					: isTracks
-						? conceptIcons.tracks
-						: conceptIcons.tags
-	)
 	const activeLabel = $derived(
 		isHome
 			? m.home_tab_home()
@@ -41,7 +30,7 @@
 
 <PopoverMenu triggerAttachment={tooltip({content: activeLabel})}>
 	{#snippet trigger()}
-		<Icon icon={activeIcon} />
+		<Icon icon="options-vertical" />
 		{activeLabel}
 	{/snippet}
 	<menu class="nav-vertical">

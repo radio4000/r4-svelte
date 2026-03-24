@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
-const ENTITY_REGEX = /(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
+const ENTITY_REGEX =
+	/(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
 
 // Simple function to test the text parsing logic without Svelte component complexity
 /** @param {any} text @param {{slug: string} | null} [track] */
@@ -49,7 +50,9 @@ function createLinkedParts(text, track = null) {
 // Helper to convert parts back to HTML for easier testing
 function partsToHtml(parts) {
 	return parts
-		.map((part) => (part.type === 'link' ? `<a href="${part.href}">${part.content}</a>` : part.content))
+		.map((part) =>
+			part.type === 'link' ? `<a href="${part.href}">${part.content}</a>` : part.content
+		)
 		.join('')
 }
 
@@ -75,7 +78,10 @@ describe('link-entities', () => {
 
 	test('handles multiple entities in one text', () => {
 		const track = {slug: 'oskar'}
-		const parts = createLinkedParts('Great #house track from @radio4000 with #electronic vibes', track)
+		const parts = createLinkedParts(
+			'Great #house track from @radio4000 with #electronic vibes',
+			track
+		)
 		const result = partsToHtml(parts)
 		expect(result).toBe(
 			'Great <a href="/search?q=%40oskar%20%23house">#house</a> track from <a href="/radio4000">@radio4000</a> with <a href="/search?q=%40oskar%20%23electronic">#electronic</a> vibes'
@@ -92,7 +98,9 @@ describe('link-entities', () => {
 		const track = {slug: 'dj-mix'}
 		const parts = createLinkedParts('Love this #deep-house track', track)
 		const result = partsToHtml(parts)
-		expect(result).toBe('Love this <a href="/search?q=%40dj-mix%20%23deep-house">#deep-house</a> track')
+		expect(result).toBe(
+			'Love this <a href="/search?q=%40dj-mix%20%23deep-house">#deep-house</a> track'
+		)
 	})
 
 	test('handles empty or null text', () => {
@@ -117,7 +125,9 @@ describe('link-entities', () => {
 		const track = {slug: 'MyChannel'}
 		const parts = createLinkedParts('Love #TECHNO and @OSKAR', track)
 		const result = partsToHtml(parts)
-		expect(result).toBe('Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/OSKAR">@OSKAR</a>')
+		expect(result).toBe(
+			'Love <a href="/search?q=%40MyChannel%20%23TECHNO">#TECHNO</a> and <a href="/OSKAR">@OSKAR</a>'
+		)
 	})
 
 	test('handles malicious content safely', () => {
@@ -125,7 +135,9 @@ describe('link-entities', () => {
 		const parts = createLinkedParts('Track with <script>alert("xss")</script> #techno', track)
 		const result = partsToHtml(parts)
 		// The <script> tag should be preserved as plain text, not executed
-		expect(result).toBe('Track with <script>alert("xss")</script> <a href="/search?q=%40test%20%23techno">#techno</a>')
+		expect(result).toBe(
+			'Track with <script>alert("xss")</script> <a href="/search?q=%40test%20%23techno">#techno</a>'
+		)
 		// Test that the parts are correctly separated
 		expect(parts.some((p) => p.type === 'text' && p.content.includes('<script>'))).toBe(true)
 	})

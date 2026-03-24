@@ -509,7 +509,7 @@
 	"share_media_url_label": "미디어 URL",
 	"share_native": "공유",
 	"share_track_title": "트랙 공유 → {title}",
-	"shortcuts_action_gotoDebug": "디버그로 가기",
+	"shortcuts_action_gotoDocs": "문서로 가기",
 	"shortcuts_action_gotoHome": "홈으로 가기",
 	"shortcuts_action_gotoSettings": "설정으로 가기",
 	"shortcuts_action_openSearch": "검색 열기",

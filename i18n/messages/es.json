@@ -573,7 +573,7 @@
 	"share_media_url_label": "URL del medio",
 	"share_native": "Compartir",
 	"share_track_title": "Compartir pista → {title}",
-	"shortcuts_action_gotoDebug": "Ir a depuración",
+	"shortcuts_action_gotoDocs": "Ir a docs",
 	"shortcuts_action_gotoHome": "Ir al inicio",
 	"shortcuts_action_gotoSettings": "Ir a ajustes",
 	"shortcuts_action_openSearch": "Abrir búsqueda",

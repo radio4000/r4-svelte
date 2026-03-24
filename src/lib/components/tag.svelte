@@ -24,9 +24,11 @@
 </script>
 
 {#if href}
-	<a {href} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</a>
+	<a {href} class={{playing: isPlaying, filtered: isFiltered}}>{@render children()}</a>
 {:else}
-	<button type="button" {onclick} class:playing={isPlaying} class:filtered={isFiltered}>{@render children()}</button>
+	<button type="button" {onclick} class={{playing: isPlaying, filtered: isFiltered}}
+		>{@render children()}</button
+	>
 {/if}
 
 <style>
@@ -41,15 +43,19 @@
 		border: none;
 		text-decoration: none;
 		font: inherit;
+		font-stretch: 90%;
 		color: var(--tag-color, inherit);
 		background: var(--tag-bg, var(--gray-3));
 		box-shadow: 0 0 0 1px var(--tag-border, transparent);
 		white-space: nowrap;
-		cursor: pointer;
 		transition:
 			background 0.15s,
 			color 0.15s,
 			box-shadow 0.15s;
+	}
+
+	button {
+		cursor: var(--interactive-cursor, pointer);
 	}
 
 	a.playing,
@@ -72,9 +78,10 @@
 
 	a:hover,
 	button:hover {
+		--tag-border: var(--gray-7);
 		background: var(--tag-bg-hover, var(--gray-2));
-		box-shadow: 0 0 0 1px var(--gray-6);
-		text-decoration: underline;
+		box-shadow: 0 0 0 1px var(--tag-border);
+		text-decoration: none;
 	}
 
 	a:active,

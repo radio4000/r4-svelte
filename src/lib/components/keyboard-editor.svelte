@@ -19,7 +19,7 @@
 		'toggleCompactDeck',
 		'gotoHome',
 		'gotoSettings',
-		'gotoDebug',
+		'gotoDocs',
 		'showShortcutsHelp'
 	]
 
@@ -30,7 +30,7 @@
 		toggleCompactDeck: () => m.shortcuts_action_toggleCompactDeck(),
 		gotoHome: () => m.shortcuts_action_gotoHome(),
 		gotoSettings: () => m.shortcuts_action_gotoSettings(),
-		gotoDebug: () => m.shortcuts_action_gotoDebug(),
+		gotoDocs: () => m.shortcuts_action_gotoDocs(),
 		showShortcutsHelp: () => m.shortcuts_action_showShortcutsHelp()
 	}
 
@@ -106,13 +106,15 @@
 						type="text"
 						value={key}
 						placeholder={m.shortcuts_key_placeholder()}
-						onchange={(e) => updateKeyBindingKey(key, /** @type {HTMLInputElement} */ (e.target).value)}
+						onchange={(e) =>
+							updateKeyBindingKey(key, /** @type {HTMLInputElement} */ (e.target).value)}
 						id={`${uid}-key-${i}`}
 					/>
 					<span>&rarr;</span>
 					<select
 						value={action}
-						onchange={(e) => updateKeyBindingAction(key, /** @type {HTMLSelectElement} */ (e.target).value)}
+						onchange={(e) =>
+							updateKeyBindingAction(key, /** @type {HTMLSelectElement} */ (e.target).value)}
 						id={`${uid}-action-${i}`}
 					>
 						{#each shortcutActions as name (name)}

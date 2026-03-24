@@ -12,7 +12,9 @@
 
 	let {data, channel = undefined} = $props()
 	let showRaw = $state(false)
-	const sourceProvider = $derived(data?.provider || (data?.url ? parseUrl(data.url)?.provider : null) || null)
+	const sourceProvider = $derived(
+		data?.provider || (data?.url ? parseUrl(data.url)?.provider : null) || null
+	)
 	const parsedTitle = $derived(data?.title ? parseTitle(data.title) : null)
 	const parsedArtist = $derived(parsedTitle?.artist || null)
 	const parsedRecording = $derived(parsedTitle?.title || null)
@@ -75,7 +77,9 @@
 
 			{#if data.description}
 				<dt><Icon icon="message-circle" size={14} /> {m.track_meta_description()}</dt>
-				<dd class="description"><LinkEntities slug={data.slug ?? undefined} text={data.description} /></dd>
+				<dd class="description">
+					<LinkEntities slug={data.slug ?? undefined} text={data.description} />
+				</dd>
 			{/if}
 
 			{#if data.duration}
@@ -87,8 +91,10 @@
 				<dt><Icon icon="tag" size={14} /> {m.track_meta_tags()}</dt>
 				<dd class="tags">
 					{#each data.tags as tag (tag)}
-						<Tag href={resolve('/search') + '?q=' + encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}
-							>#{tag}</Tag
+						<Tag
+							href={resolve('/search') +
+								'?q=' +
+								encodeURIComponent(data.slug ? `@${data.slug} #${tag}` : `#${tag}`)}>#{tag}</Tag
 						>
 					{/each}
 				</dd>

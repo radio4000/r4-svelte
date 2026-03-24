@@ -1,7 +1,12 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
+	import {
+		getChannelCtx,
+		getTracksQueryCtx,
+		setTrackDetailCtx,
+		getChannelNavCtx
+	} from '$lib/contexts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq, and} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -14,6 +19,12 @@
 
 	let {data, children} = $props()
 	const pathname = $derived(page.url.pathname)
+
+	const channelNavCtx = getChannelNavCtx()
+	$effect(() => {
+		channelNavCtx?.setControls(backSnippet)
+		return () => channelNavCtx?.setControls(undefined)
+	})
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -29,13 +40,17 @@
 	const relatedTracks = $derived.by(() => {
 		if (!trackMediaId || !track?.id) return []
 		return (tracksQuery.data ?? []).filter((t) => {
-			return t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+			return (
+				t.id !== track.id && t.media_id === trackMediaId && (t.provider ?? null) === trackProvider
+			)
 		})
 	})
 	const metaQuery = useLiveQuery((q) =>
 		q
 			.from({meta: trackMetaCollection})
-			.where(({meta}) => and(eq(meta.media_id, trackMediaId || ''), eq(meta.provider, trackProvider)))
+			.where(({meta}) =>
+				and(eq(meta.media_id, trackMediaId || ''), eq(meta.provider, trackProvider))
+			)
 			.orderBy(({meta}) => meta.media_id)
 			.limit(1)
 	)
@@ -48,8 +63,12 @@
 				: undefined
 	)
 	const isLoading = $derived(tracksQuery.isLoading)
-	const hasYoutubeInfo = $derived(Boolean(meta?.youtube_data && Object.keys(meta.youtube_data).length > 0))
-	const hasMusicbrainzInfo = $derived(Boolean(meta?.musicbrainz_data && 'recording' in meta.musicbrainz_data))
+	const hasYoutubeInfo = $derived(
+		Boolean(meta?.youtube_data && Object.keys(meta.youtube_data).length > 0)
+	)
+	const hasMusicbrainzInfo = $derived(
+		Boolean(meta?.musicbrainz_data && 'recording' in meta.musicbrainz_data)
+	)
 	const hasDiscogsInfo = $derived(
 		Boolean(track?.discogs_url || (meta?.discogs_data && Object.keys(meta.discogs_data).length > 0))
 	)
@@ -95,6 +114,12 @@
 	url={page.url.href}
 	type="music.song"
 />
+
+{#snippet backSnippet()}
+	<a class="btn ghost" href={`${resolve('/[slug]/tracks', {slug: data.slug})}#${data.tid}`}>
+		<Icon icon="arrow-left" />
+	</a>
+{/snippet}
 
 {#if isLoading}
 	<p>{m.common_loading()}</p>
