@@ -198,8 +198,6 @@
 							joinBroadcast(appState.active_deck_id, channel.id)
 						}}
 					/>
-				</div>
-				<menu class="channel-actions">
 					<BroadcastLiveControls
 						channelId={channel.id}
 						channelSlug={channel.slug}
@@ -211,6 +209,8 @@
 						onJoin={() => joinBroadcast(appState.active_deck_id, channel.id)}
 						onLeave={() => leaveBroadcast(appState.active_deck_id)}
 					/>
+				</div>
+				<menu class="channel-actions">
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
 						className="btn{anyChannelAutoDecks.length ? ' active' : ''}"
@@ -297,11 +297,17 @@
 	}
 
 	.info {
-		display: grid;
-		gap: 0.1rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		min-width: 0;
 		flex: 1;
 		min-width: 10rem;
+
+		:global(.deck-channel-header) {
+			flex: 1;
+			min-width: 0;
+		}
 	}
 
 	.info :global(.channel-page-title) {
@@ -323,6 +329,7 @@
 		display: flex;
 		align-items: center;
 		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	main {
