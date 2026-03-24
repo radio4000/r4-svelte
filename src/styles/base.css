@@ -178,6 +178,19 @@ button.channel-badge.drifted:hover {
 	font-style: normal;
 }
 
+kbd {
+	display: inline-block;
+	padding: 0.1em 0.35em;
+	font-family: var(--font-mono);
+	font-size: 0.8em;
+	line-height: 1.4;
+	color: var(--gray-11);
+	background: var(--gray-2);
+	border: 1px solid var(--gray-6);
+	border-bottom-width: 2px;
+	border-radius: 3px;
+}
+
 hr {
 	display: block;
 	border: 0;
