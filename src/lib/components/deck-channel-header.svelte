@@ -18,6 +18,7 @@
 	 *  track?: Track
 	 *  titleElement?: string
 	 *  titleClass?: string
+	 *  isBroadcastingChannel?: boolean
 	 *  onAutoClick?: (() => void) | undefined
 	 *  onBroadcastSyncClick?: (() => void) | undefined
 	 *  presenceCount?: number
@@ -29,6 +30,7 @@
 		track,
 		titleElement = 'h3',
 		titleClass = '',
+		isBroadcastingChannel = false,
 		onAutoClick,
 		onBroadcastSyncClick,
 		presenceCount = 0
@@ -69,16 +71,6 @@
 		{:else}
 			<span class="title-link">{derivedTitle}</span>
 		{/if}
-		{#if isBroadcasting}
-			<span
-				class="channel-badge live-pill"
-				title={m.status_broadcasting()}
-				aria-label={m.status_broadcasting()}
-			>
-				<Icon icon="cell-signal" size={14} />
-				{m.status_live_short()}
-			</span>
-		{/if}
 	</svelte:element>
 
 	<div class="meta-row">
@@ -104,6 +96,9 @@
 			{/if}
 		{:else if slug}
 			<a class="slug-link" href="/{slug}">@{slug}</a>
+			{#if isBroadcasting || isBroadcastingChannel}
+				<Icon icon="cell-signal" size={12} class="broadcasting-icon" />
+			{/if}
 		{/if}
 
 		{#each derivedTags as tag (tag.label)}
@@ -155,10 +150,8 @@
 		min-width: 0;
 	}
 
-	.live-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.2rem;
+	:global(.broadcasting-icon) {
+		color: var(--accent-9);
 		flex-shrink: 0;
 	}
 
