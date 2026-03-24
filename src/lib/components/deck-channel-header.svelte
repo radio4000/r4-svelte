@@ -39,7 +39,9 @@
 	const derivedTitle = $derived(deckTitle(deck, channel?.name))
 	const slug = $derived(deck?.playlist_slug)
 	const isPlaying = $derived(Boolean(deck?.is_playing))
-	const isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
+	const isBroadcasting = $derived(
+		Boolean(deck?.broadcasting_channel_id && deck.broadcasting_channel_id === channel?.id)
+	)
 	const showAutoButton = $derived(Boolean(deck?.auto_radio))
 	const isListening = $derived(Boolean(deck?.listening_to_channel_id))
 	const listeningWhoSlug = $derived(isListening ? channel?.slug : undefined)
