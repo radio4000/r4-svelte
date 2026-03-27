@@ -5,6 +5,7 @@
 
 <script>
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {appState} from '$lib/app-state.svelte'
 	import {loadDeckView, playTrack, shufflePlayChannel} from '$lib/api'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
@@ -115,6 +116,11 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
+	{#if channel?.slug}
+		<a class="btn" href={resolve('/[slug]', {slug: channel.slug})}>
+			<Icon icon="arrow-left" />
+		</a>
+	{/if}
 	<button type="button" class="btn" title="3D controls" onclick={() => (showControlsModal = true)}>
 		<Icon icon="circle-info" />
 	</button>

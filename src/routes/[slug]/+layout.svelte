@@ -245,13 +245,15 @@
 		{/if}
 
 		<menu class="channel-nav">
-			<ChannelSectionMenu
-				{slug}
-				{channel}
-				{canEdit}
-				isLocal={isLocalChannel(channel?.id)}
-				trackCount={allChannelTracks.length}
-			/>
+			{#if page.route.id !== '/[slug]/image'}
+				<ChannelSectionMenu
+					{slug}
+					{channel}
+					{canEdit}
+					isLocal={isLocalChannel(channel?.id)}
+					trackCount={allChannelTracks.length}
+				/>
+			{/if}
 			{#if channelNavControls}
 				<menu class="channel-nav-controls">
 					{@render channelNavControls()}
