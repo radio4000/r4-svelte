@@ -72,6 +72,11 @@ export function setUserInitiatedPlay(deckId: number, value: boolean) {
 	userInitiatedPlayMap.set(deckId, value)
 }
 
+/** Remove the user-initiated play flag when a deck is destroyed. */
+export function clearUserInitiatedPlay(deckId: number) {
+	userInitiatedPlayMap.delete(deckId)
+}
+
 type MediaPlayer = HTMLElement & {
 	paused: boolean
 	play(): Promise<void> | void

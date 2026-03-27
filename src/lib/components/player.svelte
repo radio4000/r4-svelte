@@ -17,7 +17,8 @@
 		getUserInitiatedPlay,
 		setUserInitiatedPlay,
 		resyncAutoRadio,
-		recordSeekPosition
+		recordSeekPosition,
+		clearUserInitiatedPlay
 	} from '$lib/api'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
@@ -432,6 +433,7 @@
 					class="close-deck"
 					onclick={() => {
 						const bchId = getBroadcastingChannelId()
+						clearUserInitiatedPlay(deckId)
 						removeDeck(deckId)
 						if (bchId) notifyBroadcastState(bchId)
 					}}

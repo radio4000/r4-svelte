@@ -4,6 +4,7 @@ import {
 	play,
 	seekTo,
 	setUserInitiatedPlay,
+	clearUserInitiatedPlay,
 	getMediaPlayer,
 	applyRemoteState
 } from '$lib/api'
@@ -154,6 +155,7 @@ export async function joinBroadcast(deckId, channelId) {
 		// Tear down all existing decks before applying broadcast state
 		for (const id of getSortedDeckIds()) {
 			stopBroadcastSync(id)
+			clearUserInitiatedPlay(id)
 			removeDeck(id)
 		}
 
@@ -197,6 +199,7 @@ export function leaveBroadcast(deckId) {
 			.map(([id]) => Number(id))
 		for (const id of decksToClose) {
 			stopBroadcastSync(id)
+			clearUserInitiatedPlay(id)
 			removeDeck(id)
 		}
 	} else {
@@ -605,7 +608,10 @@ async function applyBroadcastState(channelId, decks) {
 			return !d?.playlist_track || !incomingTrackIds.has(d.playlist_track)
 		})
 		const removeId = removeIdx >= 0 ? managedIds.splice(removeIdx, 1)[0] : managedIds.pop()
-		if (removeId != null) removeDeck(removeId)
+		if (removeId != null) {
+			clearUserInitiatedPlay(removeId)
+			removeDeck(removeId)
+		}
 		managedIds = getSortedDeckIds().filter(
 			(id) => appState.decks[id]?.listening_to_channel_id === channelId
 		)
