@@ -2,11 +2,10 @@ import {fuzzySearch, shuffleArray} from '$lib/utils'
 import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
 import {inArray} from '@tanstack/db'
-import {tracksCollection} from '$lib/collections/tracks'
+import {tracksCollection, normalizeTrackMedia} from '$lib/collections/tracks'
 import {channelsCollection} from '$lib/collections/channels'
 import {sdk} from '@radio4000/sdk'
 import {searchTracks} from '$lib/search-fts'
-import {parseUrl} from 'media-now'
 import type {Channel, Deck, Track} from '$lib/types'
 import {viewURI, type View, type ViewSource} from '$lib/views'
 
@@ -78,14 +77,7 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 
 /** Parse provider/media_id from URLs and upsert into local collection. */
 function hydrateTracksFromRemote(data: Record<string, unknown>[]): Track[] {
-	const tracks = (data as Track[]).map((track) => {
-		const parsed = track.url ? parseUrl(track.url) : null
-		return {
-			...track,
-			provider: track.provider ?? parsed?.provider ?? null,
-			media_id: track.media_id ?? parsed?.id ?? null
-		}
-	})
+	const tracks = (data as Track[]).map(normalizeTrackMedia)
 	tracksCollection.utils.writeBatch(() => {
 		for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 	})

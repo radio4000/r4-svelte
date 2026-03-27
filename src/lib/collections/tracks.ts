@@ -14,6 +14,18 @@ const log = logger.ns('tracks').seal()
 import {searchTracks} from '$lib/search-fts'
 import type {Track, TrackWithMeta} from '$lib/types'
 
+/** Parse provider/media_id from a track's URL, filling in any missing fields. */
+export function normalizeTrackMedia<
+	T extends {url?: string | null; provider?: string | null; media_id?: string | null}
+>(track: T): T {
+	const parsed = track.url ? parseUrl(track.url) : null
+	return {
+		...track,
+		provider: track.provider ?? parsed?.provider ?? null,
+		media_id: track.media_id ?? parsed?.id ?? null
+	}
+}
+
 type TrackQueryParams = {
 	slugEq?: string
 	slugIn?: string[]
@@ -133,14 +145,7 @@ export const tracksCollection = createCollection<Track, string>({
 				query = query.order('created_at', {ascending: false}).limit(params.limit || 50)
 				const {data, error} = await query
 				if (error) throw error
-				const tracks = ((data || []) as Track[]).map((track) => {
-					const parsed = track.url ? parseUrl(track.url) : null
-					return {
-						...track,
-						provider: track.provider ?? parsed?.provider ?? null,
-						media_id: track.media_id ?? parsed?.id ?? null
-					}
-				})
+				const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -150,14 +155,7 @@ export const tracksCollection = createCollection<Track, string>({
 			// Global: full-text search
 			if (params.ftsEq) {
 				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: params.limit || 50})
-				const tracks = rawTracks.map((track) => {
-					const parsed = track.url ? parseUrl(track.url) : null
-					return {
-						...track,
-						provider: track.provider ?? parsed?.provider ?? null,
-						media_id: track.media_id ?? parsed?.id ?? null
-					}
-				})
+				const tracks = rawTracks.map(normalizeTrackMedia)
 				tracksCollection.utils.writeBatch(() => {
 					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 				})
@@ -176,13 +174,7 @@ export const tracksCollection = createCollection<Track, string>({
 			if (serverTrack) {
 				// Merge view-only fields (e.g. slug) from the optimistic insert,
 				// since createTrack returns from the tracks table, not channel_tracks view.
-				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
-				const merged = {
-					...m.modified,
-					...serverTrack,
-					provider: serverTrack.provider ?? parsed?.provider ?? null,
-					media_id: serverTrack.media_id ?? parsed?.id ?? null
-				}
+				const merged = {...m.modified, ...normalizeTrackMedia(serverTrack)}
 				log.info('onInsert writeUpsert', {id: merged.id})
 				tracksCollection.utils.writeUpsert(merged)
 			}
@@ -198,12 +190,7 @@ export const tracksCollection = createCollection<Track, string>({
 				m.changes as Record<string, unknown>
 			)
 			if (serverTrack) {
-				const parsed = serverTrack.url ? parseUrl(serverTrack.url) : null
-				const normalized = {
-					...serverTrack,
-					provider: serverTrack.provider ?? parsed?.provider ?? null,
-					media_id: serverTrack.media_id ?? parsed?.id ?? null
-				}
+				const normalized = normalizeTrackMedia(serverTrack)
 				log.info('onUpdate writeUpsert', {id: normalized.id})
 				tracksCollection.utils.writeUpsert(normalized)
 			}
@@ -239,14 +226,7 @@ async function fetchTracksBySlug(
 
 	const {data, error} = await query
 	if (error) throw error
-	return ((data || []) as Track[]).map((track) => {
-		const parsed = track.url ? parseUrl(track.url) : null
-		return {
-			...track,
-			provider: track.provider ?? parsed?.provider ?? null,
-			media_id: track.media_id ?? parsed?.id ?? null
-		}
-	})
+	return ((data || []) as Track[]).map(normalizeTrackMedia)
 }
 
 async function handleTrackInsert(
@@ -485,14 +465,7 @@ export async function fetchRecentTracksForSlugs(
 			.gt('created_at', createdAfter)
 			.order('created_at', {ascending: false})
 		if (error) throw error
-		const tracks = ((data || []) as Track[]).map((track) => {
-			const parsed = track.url ? parseUrl(track.url) : null
-			return {
-				...track,
-				provider: track.provider ?? parsed?.provider ?? null,
-				media_id: track.media_id ?? parsed?.id ?? null
-			}
-		})
+		const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
 		tracksCollection.utils.writeBatch(() => {
 			for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 		})
@@ -517,14 +490,7 @@ export async function fetchRecentTracks({
 		.order('created_at', {ascending: false})
 		.range(offset, offset + limit - 1)
 	if (error) throw error
-	const tracks = ((data || []) as Track[]).map((track) => {
-		const parsed = track.url ? parseUrl(track.url) : null
-		return {
-			...track,
-			provider: track.provider ?? parsed?.provider ?? null,
-			media_id: track.media_id ?? parsed?.id ?? null
-		}
-	})
+	const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
 	tracksCollection.utils.writeBatch(() => {
 		for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 	})
