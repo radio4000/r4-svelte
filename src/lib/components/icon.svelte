@@ -2,6 +2,7 @@
 	import {
 		IconAdd,
 		IconArrowDown,
+		IconArrowLeft,
 		IconArrowUp,
 		IconBox3d,
 		IconCellSignal,
@@ -57,6 +58,8 @@
 		IconSidebarFillRight,
 		IconSignal,
 		IconSort,
+		IconSpeakers,
+		IconSpeakersFill,
 		IconSparkles,
 		IconTag,
 		IconTv,
@@ -74,6 +77,7 @@
 	const icons = {
 		add: IconAdd,
 		'arrow-down': IconArrowDown,
+		'arrow-left': IconArrowLeft,
 		'arrow-up': IconArrowUp,
 		'box-3d': IconBox3d,
 		'chart-scatter': IconChartScatter,
@@ -129,6 +133,8 @@
 		'sidebar-fill-right': IconSidebarFillRight,
 		signal: IconSignal,
 		sort: IconSort,
+		speakers: IconSpeakers,
+		'speakers-fill': IconSpeakersFill,
 		sparkles: IconSparkles,
 		tag: IconTag,
 		tv: IconTv,

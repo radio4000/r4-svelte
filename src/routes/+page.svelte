@@ -293,7 +293,7 @@
 									class="dashboard-card dashboard-card--row broadcast-deck-card"
 									class:has-meta={hasMeta}
 								>
-									<Icon icon={deck.is_playing ? 'play-fill' : 'pause'} size={14} />
+									<Icon icon={deck.is_playing ? 'speakers-fill' : 'speakers'} size={14} />
 									{#if deck.broadcasting_channel_id}
 										<Icon icon="cell-signal" size={14} />
 									{/if}
@@ -800,7 +800,6 @@
 			min-width: 0;
 			overflow: hidden;
 		}
-
 
 		.section--globe {
 			margin-bottom: 0;
