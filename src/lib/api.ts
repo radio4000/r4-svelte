@@ -408,6 +408,8 @@ export function addToPlaylist(deckId, trackIds) {
 		deck.playlist_tracks_shuffled = shuffleArray(deck.playlist_tracks)
 	}
 	deck.view = undefined
+	deck.auto_radio = undefined
+	deck.auto_radio_drifted = undefined
 	log.log('addToPlaylist', {
 		deckId,
 		added: trackIds.length,
@@ -429,6 +431,8 @@ export function playNext(deckId, trackIds) {
 	if (!currentId) {
 		deck.playlist_tracks = ids
 		deck.view = undefined
+		deck.auto_radio = undefined
+		deck.auto_radio_drifted = undefined
 		return
 	}
 	deck.playlist_tracks = queueInsertManyAfter(deck.playlist_tracks, currentId, ids)
@@ -440,6 +444,8 @@ export function playNext(deckId, trackIds) {
 		)
 	}
 	deck.view = undefined
+	deck.auto_radio = undefined
+	deck.auto_radio_drifted = undefined
 	log.log('play_next', {deckId, ids, after: currentId})
 }
 
@@ -456,6 +462,8 @@ export function removeFromQueue(deckId, trackId) {
 		deck.playlist_tracks_shuffled = queueRemove(deck.playlist_tracks_shuffled, trackId)
 	}
 	deck.view = undefined
+	deck.auto_radio = undefined
+	deck.auto_radio_drifted = undefined
 	log.log('remove_from_queue', {deckId, trackId})
 }
 
