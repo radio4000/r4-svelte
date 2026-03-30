@@ -242,7 +242,7 @@
 					>
 					<button
 						type="button"
-						class="danger"
+						class="menu-delete"
 						role="menuitem"
 						data-no-close
 						onclick={() => (showDeleteConfirm = true)}
@@ -402,5 +402,9 @@
 		article:hover & {
 			color: inherit;
 		}
+	}
+
+	.menu-delete {
+		color: var(--color-red);
 	}
 </style>
