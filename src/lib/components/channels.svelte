@@ -539,11 +539,12 @@
 
 <style>
 	.layout {
-		padding: 0;
+		padding: 0.5rem;
 		position: relative;
 		&.layout--map,
 		&.layout--infinite,
 		&.layout--tuner {
+			padding: 0;
 			display: flex;
 			flex-direction: column;
 			flex-grow: 1;
@@ -561,6 +562,8 @@
 			top: 0;
 			left: 0;
 			right: 0;
+			margin-inline: 0;
+			padding-inline: 0;
 			/* Default page controls layer: above content, below app overlays/fullscreen deck. */
 			z-index: 3;
 		}
@@ -573,6 +576,8 @@
 		align-items: center;
 		flex-wrap: wrap;
 		margin: 0;
+		margin-inline: -0.5rem;
+		padding-inline: 0.5rem;
 		z-index: 1;
 		padding-bottom: 1.5rem;
 		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);

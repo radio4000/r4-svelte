@@ -138,7 +138,7 @@
 
 <style>
 	.layout {
-		padding: 0;
+		padding: 0.5rem;
 	}
 
 	.filtermenu {
@@ -148,6 +148,8 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin: 0;
+		margin-inline: -0.5rem;
+		padding-inline: 0.5rem;
 		z-index: 1;
 		padding-bottom: 1.5rem;
 		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);
