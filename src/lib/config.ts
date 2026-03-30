@@ -27,6 +27,7 @@ export const appLegalUrl = env.PUBLIC_APP_LEGAL_URL ?? 'https://legal.radio4000.
 export const appChatUrl = env.PUBLIC_APP_CHAT_URL ?? 'https://matrix.to/#/#radio4000:matrix.org'
 export const appDiscordUrl = env.PUBLIC_APP_DISCORD_URL ?? 'https://discord.gg/ewYxG8cwZ5'
 export const appSocialUrl = env.PUBLIC_APP_SOCIAL_URL ?? 'https://bsky.app/profile/radio4000.com'
+export const appContactEmail = env.PUBLIC_APP_CONTACT_EMAIL ?? 'hello@radio4000.com'
 
 export type CommunityLink = {
 	label: string

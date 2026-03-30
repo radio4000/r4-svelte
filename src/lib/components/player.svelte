@@ -253,6 +253,7 @@
 	}
 
 	function handleEndTrack() {
+		if (deck?.listening_to_channel_id) return
 		next(deckId, 'track_completed')
 	}
 
