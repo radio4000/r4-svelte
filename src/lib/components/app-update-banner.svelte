@@ -30,8 +30,8 @@
 	[data-sw-update] {
 		max-width: 50ch;
 		position: fixed;
-		top: 0;
-		right: 0;
+		top: var(--interface-margin);
+		right: var(--interface-margin);
 		z-index: 9999;
 		display: flex;
 		flex-flow: column;
@@ -40,7 +40,7 @@
 		gap: 0.5rem;
 		padding: 1rem;
 		background: var(--accent-3);
-		border-left: 1px solid var(--accent-6);
-		border-bottom: 1px solid var(--accent-6);
+		border: 1px solid var(--accent-6);
+		border-radius: var(--border-radius);
 	}
 </style>
