@@ -149,7 +149,7 @@
 
 <style>
 	.layout {
-		padding: 0 0.5rem 0.5rem;
+		padding: 0.5rem;
 	}
 
 	.filtermenu {
@@ -161,9 +161,9 @@
 		margin: 0;
 		margin-inline: -0.5rem;
 		padding-inline: 0.5rem;
+		padding-block: 0.25rem;
 		z-index: 1;
-		padding-bottom: 1.5rem;
-		background: linear-gradient(to bottom, var(--color-interface) 60%, transparent);
+		background: var(--color-interface);
 	}
 
 	.filtermenu :global(.search-input) {
