@@ -33,6 +33,17 @@
 			<small>{appContactEmail}</small>
 		</a>
 	</menu>
+
+	<menu class="nav-vertical">
+		<a href="https://v1.radio4000.com/" target="_blank" rel="noreferrer">
+			<Icon icon="history" />
+			Radio4000 v1
+		</a>
+		<a href="https://v2.radio4000.com/" target="_blank" rel="noreferrer">
+			<Icon icon="history" />
+			Radio4000 v2
+		</a>
+	</menu>
 </article>
 
 <style>
