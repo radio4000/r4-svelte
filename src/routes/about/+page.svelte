@@ -78,36 +78,20 @@
 	}
 
 	figure {
-		max-height: 80dvh;
-		overflow: hidden;
 		margin-block-end: 2rem;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
 	}
 
 	img {
-		max-width: 100%;
-		height: auto;
-	}
-
-	figure {
+		display: block;
 		max-height: 80dvh;
-		overflow: hidden;
-		margin-block-end: 2rem;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	img {
-		max-width: 100%;
-		height: auto;
+		width: auto;
+		margin-inline: auto;
 	}
 
 	figcaption {
 		font-size: var(--font-3);
 		margin-top: 0.2rem;
+		text-align: center;
 	}
 
 	p,
@@ -117,5 +101,12 @@
 
 	ul {
 		padding-left: 2rem;
+	}
+
+	footer p {
+		display: flex;
+		justify-content: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 </style>
