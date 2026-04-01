@@ -23,14 +23,22 @@
 	)
 
 	const isPlaying = $derived(
-		Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
+		Object.values(appState.decks).some(
+			(d) =>
+				(d.playlist_slug === channel.slug || d.listening_to_channel_id === channel.id) &&
+				d.is_playing
+		)
 	)
 
 	/** @param {MouseEvent} e */
 	function handleDblClick(e) {
 		e.preventDefault()
 		if (e.target instanceof Element && e.target.closest('a, button')) return
-		playChannel(appState.active_deck_id, channel)
+		if (isBroadcasting) {
+			joinBroadcast(appState.active_deck_id, channel.id)
+		} else {
+			playChannel(appState.active_deck_id, channel)
+		}
 	}
 
 	function share() {
@@ -50,7 +58,7 @@
 >
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
-		<ButtonPlay {channel} />
+		<ButtonPlay {channel} {isBroadcasting} />
 	</figure>
 	<div class="body">
 		<div class="info">
@@ -106,21 +114,13 @@
 							onclick={() =>
 								isPlaying
 									? togglePlayPause(appState.active_deck_id)
-									: playChannel(appState.active_deck_id, channel)}
+									: isBroadcasting
+										? joinBroadcast(appState.active_deck_id, channel.id)
+										: playChannel(appState.active_deck_id, channel)}
 						>
-							<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
-							{isPlaying ? m.common_pause() : m.common_play()}
+							<Icon icon={isPlaying ? 'pause' : isBroadcasting ? 'signal' : 'play-fill'} />
+							{isPlaying ? m.common_pause() : isBroadcasting ? m.channel_card_join_broadcast() : m.common_play()}
 						</button>
-						{#if isBroadcasting}
-							<button
-								type="button"
-								role="menuitem"
-								onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
-							>
-								<Icon icon="signal" />
-								{m.channel_card_join_broadcast()}
-							</button>
-						{/if}
 						<button type="button" role="menuitem" onclick={share}>
 							<Icon icon="share" />
 							{m.channel_card_share()}
