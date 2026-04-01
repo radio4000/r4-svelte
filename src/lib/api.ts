@@ -238,7 +238,7 @@ export async function playTrack(
 		deck.seeked_at = deck.track_played_at
 		deck.seek_position = 0
 	}
-	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)))
+	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id) || ids.length > deck.playlist_tracks.length))
 		await setPlaylist(deckId, ids)
 	// Ensure ephemeral track is included in the current playlist
 	if (isEphemeral && !deck.playlist_tracks.includes(id)) {

@@ -248,6 +248,8 @@ export async function startBroadcast(channelId, trackId) {
 		log.log(`skipped ${label(channelId)} (no track)`)
 		return
 	}
+	const slug = channelsCollection.state.get(channelId)?.slug
+	if (slug) await ensureTracksLoaded(slug)
 	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)
