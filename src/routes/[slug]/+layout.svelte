@@ -346,6 +346,7 @@
 	.channel-nav {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		background: var(--gray-1);
 		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 		padding: 0.4rem;
@@ -353,5 +354,8 @@
 
 	.channel-nav-controls {
 		flex: 1;
+		min-width: 0;
+		align-items: center;
+		flex-wrap: wrap;
 	}
 </style>
