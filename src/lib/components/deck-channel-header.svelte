@@ -96,8 +96,8 @@
 			{#if hasDistinctWhom}
 				<a class="slug-link" href="/{listeningWhomSlug}">@{listeningWhomSlug}</a>
 			{/if}
-		{:else if slug}
-			<a class="slug-link" href="/{slug}">@{slug}</a>
+		{:else if slug || channel?.slug}
+			<a class="slug-link" href="/{slug || channel?.slug}">@{slug || channel?.slug}</a>
 			{#if isBroadcasting || isBroadcastingChannel}
 				<Icon icon="cell-signal" size={12} class="broadcasting-icon" />
 			{/if}
