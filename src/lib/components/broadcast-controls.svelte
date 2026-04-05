@@ -7,7 +7,7 @@
 		getBroadcastingChannelId,
 		isUserBroadcasting
 	} from '$lib/broadcast'
-	import {getMediaPlayer} from '$lib/api'
+	import {getMediaPlayer, playChannel} from '$lib/api'
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {channelPresence} from '$lib/presence.svelte'
@@ -33,7 +33,7 @@
 		return isUserBroadcasting(userChannelId)
 	})
 	let error = $state(/** @type {string|null} */ (null))
-	const canStartBroadcast = $derived(Boolean(deck?.playlist_track))
+	const canStartBroadcast = $derived(Boolean(deck?.playlist_track || channelSlug))
 
 	$effect(() => {
 		void deck?.playlist_track
@@ -63,6 +63,13 @@
 
 	async function start() {
 		error = null
+		if (!deck?.playlist_track) {
+			if (!channelSlug || !userChannelId) {
+				error = m.broadcast_requires_track()
+				return
+			}
+			await playChannel(deckId, {id: userChannelId, slug: channelSlug})
+		}
 		if (!deck?.playlist_track) {
 			error = m.broadcast_requires_track()
 			return
