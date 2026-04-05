@@ -245,7 +245,13 @@
 		}
 
 		nav:first-of-type {
-			margin-right: auto;
+			flex: 1;
+			justify-content: flex-start;
+		}
+
+		.nav-settings {
+			flex: 1;
+			justify-content: flex-end;
 		}
 
 		nav {
