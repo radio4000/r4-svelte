@@ -209,6 +209,15 @@
 		q.from({ch: channelsCollection}).where(({ch}) => not(isNull(ch.latitude)))
 	)
 	const globeChannels = $derived(globeChannelsQuery.data ?? [])
+	const favoriteMapChannels = $derived(follows.followedChannels.filter((ch) => ch.latitude != null))
+	const mapChannels = $derived(
+		isSignedIn && favoriteMapChannels.length > 0 ? favoriteMapChannels : globeChannels
+	)
+	const mapOverlayHref = $derived(
+		isSignedIn && favoriteMapChannels.length > 0
+			? resolve('/channels/favorites') + '?display=map'
+			: resolve('/channels/all') + '?display=map'
+	)
 
 	// Stats for not-logged-in users
 	let channelCount = $state(0)
@@ -527,13 +536,16 @@
 		<section class="section section--globe">
 			<div class="globe">
 				<MapChannels
-					channels={globeChannels}
+					channels={mapChannels}
 					globeMode={true}
 					zoom={1}
 					syncUrl={false}
 					showControls={false}
 					tileStyle="topo"
 				/>
+				<a href={mapOverlayHref} class="btn map-overlay-btn" aria-label={m.nav_map()}>
+					<Icon icon="globe" size={14} />
+				</a>
 			</div>
 		</section>
 	{:else if isSignedIn && authStatus.channelChecked}
@@ -624,11 +636,6 @@
 
 		<div class="loggedout-grid">
 			<section class="section section--globe section--globe--loggedout">
-				<header class="section-header">
-					<h2 class="section-title">
-						<a href={resolve('/channels/all') + '?display=map'}>Overview</a>
-					</h2>
-				</header>
 				<div class="globe">
 					<MapChannels
 						channels={globeChannels}
@@ -638,6 +645,13 @@
 						showControls={false}
 						tileStyle="topo"
 					/>
+					<a
+						href={resolve('/channels/all') + '?display=map'}
+						class="btn map-overlay-btn"
+						aria-label={m.nav_map()}
+					>
+						<Icon icon="globe" size={14} />
+					</a>
 				</div>
 			</section>
 
@@ -1029,6 +1043,7 @@
 	}
 
 	.globe {
+		position: relative;
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -1043,6 +1058,17 @@
 		}
 		:global(article .description) {
 			display: none;
+		}
+	}
+
+	.map-overlay-btn {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		z-index: 10;
+		opacity: 0.7;
+		&:hover {
+			opacity: 1;
 		}
 	}
 
