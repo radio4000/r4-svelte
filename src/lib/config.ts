@@ -45,7 +45,7 @@ export const communityLinks: CommunityLink[] = [
 /** Canonical icon name per UI concept — import instead of hardcoding icon strings */
 export const conceptIcons = {
 	home: 'radio',
-	channels: 'database',
+	channels: 'globe',
 	tracks: 'play-fill',
 	tags: 'tag',
 	search: 'search',
