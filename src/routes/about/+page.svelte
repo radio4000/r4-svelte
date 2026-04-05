@@ -83,8 +83,10 @@
 
 	img {
 		display: block;
+		max-width: 100%;
 		max-height: 80dvh;
 		width: auto;
+		height: auto;
 		margin-inline: auto;
 	}
 
