@@ -41,7 +41,7 @@
 		!follows.isLoading &&
 			!!userChannel &&
 			((userChannel.track_count ?? 0) === 0 ||
-				follows.followedChannels.length === 0 ||
+				follows.followedIds.length === 0 ||
 				!userChannel.image)
 	)
 
