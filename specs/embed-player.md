@@ -45,7 +45,7 @@ https://player.radio4000.com/embed?slug=good-time-radio
 Option B: URL param on any route — `?embed=1` strips chrome.
 
 ```
-https://beta.radio4000.com/@good-time-radio?embed=1
+https://radio4000.com/@good-time-radio?embed=1
 ```
 
 Option A is cleaner — dedicated entry point, easier to maintain, clear contract.

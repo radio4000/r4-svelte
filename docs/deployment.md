@@ -4,7 +4,7 @@
 
 Cloudflare is configured to deploy automatically:
 
-- pushes to main go to https://beta.radio4000.com
+- pushes to main go to https://radio4000.com
 - pull requests (non-draft) get their own, unique URL
 
 ## Standalone / self-hosted

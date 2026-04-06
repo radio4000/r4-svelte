@@ -2,7 +2,7 @@
 
 A beta exploring the future of Radio4000. Local-first (kinda) music player with R4 as the remote server.
 
-https://beta.radio4000.com
+https://radio4000.com
 
 ## Documentation
 

@@ -29,7 +29,7 @@ Always re-snapshot after interactions. Always wait after `open` (first snapshot 
 
 ## Part 2: testing Radio4000
 
-The app runs on http://localhost:5173 (dev) or https://beta.radio4000.com (prod). Start the dev server (`bun dev`) before testing.
+The app runs on http://localhost:5173 (dev) or https://radio4000.com (prod). Start the dev server (`bun dev`) before testing.
 
 Verify setup:
 
