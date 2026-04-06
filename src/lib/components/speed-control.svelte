@@ -25,7 +25,16 @@
 		const mediaElement = getMediaPlayer(deckId)
 		if (mediaElement && 'playbackRate' in mediaElement) mediaElement.playbackRate = speed
 		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
+		if (broadcastingChannelId) {
+			// Snapshot current position before notifying listeners. Without this,
+			// calculateSeekTime multiplies the full elapsed time since track_played_at
+			// by the new speed, jumping listeners to the wrong position.
+			if (mediaElement && typeof mediaElement.currentTime === 'number') {
+				deck.seek_position = mediaElement.currentTime
+				deck.seeked_at = new Date().toISOString()
+			}
+			notifyBroadcastState(broadcastingChannelId)
+		}
 	}
 </script>
 
