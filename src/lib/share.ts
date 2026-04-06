@@ -1,10 +1,13 @@
 import type {Channel, Track} from '$lib/types'
 import {appUrl, appPlayerUrl} from '$lib/config'
+import {resolve} from '$app/paths'
 
-export const channelUrl = (channel: Channel) => `${appUrl}/${channel.slug}`
+const origin = globalThis.location?.origin ?? appUrl
+
+export const channelUrl = (channel: Channel) => `${origin}${resolve(`/${channel.slug}`)}`
 
 export const trackUrl = (channel: Channel, track: Track) =>
-	`${appUrl}/${channel.slug}/tracks/${track.id}`
+	`${origin}${resolve(`/${channel.slug}/tracks/${track.id}`)}`
 
 export const channelEmbed = (channel: Channel) =>
 	`<iframe src="${appPlayerUrl}/v2/?slug=${channel.slug}" width="320" height="500"></iframe>`
