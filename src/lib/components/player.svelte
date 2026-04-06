@@ -299,6 +299,12 @@
 	let mediaDuration = $derived(deck?.media_duration ?? NaN)
 	let mediaCurrentTime = $derived(deck?.media_current_time ?? 0)
 
+	// Clear stale duration when track changes so the previous track's duration doesn't show
+	$effect(() => {
+		void deck?.playlist_track
+		if (deck) deck.media_duration = NaN
+	})
+
 	$effect(() => {
 		const el = mediaElement
 		if (!el) return
