@@ -558,7 +558,7 @@
 			/>
 		{/if}
 		<!-- 4. Channel/track info + deck toggle -->
-		<footer class="track-panel" onclick={() => (appState.active_deck_id = deckId)}>
+		<footer class="track-panel" class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)} onclick={() => (appState.active_deck_id = deckId)}>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
@@ -911,6 +911,10 @@
 		flex-shrink: 0;
 		cursor: var(--interactive-cursor, pointer);
 		background: var(--header-bg);
+	}
+
+	.track-panel.active-track {
+		background: var(--accent-3);
 	}
 
 	@media (max-width: 768px) {
