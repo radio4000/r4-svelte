@@ -340,19 +340,46 @@
 	// Media Session API — lock screen / notification controls
 	$effect(() => {
 		if (!('mediaSession' in navigator)) return
+		// With multiple decks, only the active one drives the OS media session
+		const deckCount = Object.keys(appState.decks).length
+		if (deckCount > 1 && appState.active_deck_id !== deckId) return
+
 		const t = displayTrack
 		const ch = displayChannel
-		if (!t) return
+
+		if (!t) {
+			navigator.mediaSession.metadata = null
+			navigator.mediaSession.setActionHandler('previoustrack', null)
+			navigator.mediaSession.setActionHandler('nexttrack', null)
+			return
+		}
+
+		const artwork =
+			provider === 'youtube' && t.media_id
+				? [{src: trackImageUrl(t.media_id), sizes: '480x360', type: 'image/jpeg'}]
+				: []
 
 		navigator.mediaSession.metadata = new MediaMetadata({
 			title: t.title ?? '',
 			artist: ch ? `${ch.name} (@${ch.slug})` : '',
 			album: t.description ?? '',
-			artwork: t.media_id ? [{src: trackImageUrl(t.media_id), sizes: '480x360', type: 'image/jpeg'}] : []
+			artwork
 		})
 
-		navigator.mediaSession.setActionHandler('previoustrack', canPrevFromQueue ? () => previous(deckId, 'user_prev') : null)
-		navigator.mediaSession.setActionHandler('nexttrack', canNextFromQueue ? () => next(deckId, 'user_next') : null)
+		navigator.mediaSession.playbackState = deck?.is_playing ? 'playing' : 'paused'
+
+		// Always register handlers — passing null removes the button on Android
+		navigator.mediaSession.setActionHandler('previoustrack', () => {
+			if (canPrevFromQueue) previous(deckId, 'user_prev')
+		})
+		navigator.mediaSession.setActionHandler('nexttrack', () => {
+			if (canNextFromQueue) next(deckId, 'user_next')
+		})
+
+		return () => {
+			navigator.mediaSession.setActionHandler('previoustrack', null)
+			navigator.mediaSession.setActionHandler('nexttrack', null)
+		}
 	})
 
 	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)
@@ -576,7 +603,11 @@
 			/>
 		{/if}
 		<!-- 4. Channel/track info + deck toggle -->
-		<footer class="track-panel" class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)} onclick={() => (appState.active_deck_id = deckId)}>
+		<footer
+			class="track-panel"
+			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
+			onclick={() => (appState.active_deck_id = deckId)}
+		>
 			{#if isListeningToBroadcast && broadcastingChannel}
 				<div class="header-info active-track-bg">
 					{#if displayTrack && displayChannel}
