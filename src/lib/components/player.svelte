@@ -337,6 +337,24 @@
 		}
 	})
 
+	// Media Session API — lock screen / notification controls
+	$effect(() => {
+		if (!('mediaSession' in navigator)) return
+		const t = displayTrack
+		const ch = displayChannel
+		if (!t) return
+
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title: t.title ?? '',
+			artist: ch ? `${ch.name} (@${ch.slug})` : '',
+			album: t.description ?? '',
+			artwork: t.media_id ? [{src: trackImageUrl(t.media_id), sizes: '480x360', type: 'image/jpeg'}] : []
+		})
+
+		navigator.mediaSession.setActionHandler('previoustrack', canPrevFromQueue ? () => previous(deckId, 'user_prev') : null)
+		navigator.mediaSession.setActionHandler('nexttrack', canNextFromQueue ? () => next(deckId, 'user_next') : null)
+	})
+
 	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)
 	$effect(() => {
 		if (!deck?.auto_radio || deck.auto_radio_rotation_start == null) return
