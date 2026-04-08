@@ -359,14 +359,22 @@
 				? [{src: trackImageUrl(t.media_id), sizes: '480x360', type: 'image/jpeg'}]
 				: []
 
-		navigator.mediaSession.metadata = new MediaMetadata({
+		const metadata = new MediaMetadata({
 			title: t.title ?? '',
 			artist: ch ? `${ch.name} (@${ch.slug})` : '',
 			album: t.description ?? '',
 			artwork
 		})
 
-		navigator.mediaSession.playbackState = deck?.is_playing ? 'playing' : 'paused'
+		const applyMetadata = () => {
+			navigator.mediaSession.metadata = metadata
+			navigator.mediaSession.playbackState = deck?.is_playing ? 'playing' : 'paused'
+		}
+
+		applyMetadata()
+		// Re-assert after a short delay: YouTube's iframe sets its own mediaSession
+		// metadata when playback starts, which overwrites ours on Android.
+		const timer = setTimeout(applyMetadata, 800)
 
 		// Always register handlers — passing null removes the button on Android
 		navigator.mediaSession.setActionHandler('previoustrack', () => {
@@ -377,6 +385,7 @@
 		})
 
 		return () => {
+			clearTimeout(timer)
 			navigator.mediaSession.setActionHandler('previoustrack', null)
 			navigator.mediaSession.setActionHandler('nexttrack', null)
 		}
