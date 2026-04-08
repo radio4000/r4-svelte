@@ -37,6 +37,9 @@
 				{m.auth_new_to_r4_intro({appName})}
 				<a href={resolve('/auth/create-account')}>{m.auth_card_create_title()}</a>
 			</p>
+			<p>
+				<a href={resolve('/auth/reset-password')}>{m.auth_reset_page_title()}</a>
+			</p>
 		</footer>
 	{/if}
 </article>
