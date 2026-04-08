@@ -9,6 +9,7 @@
 	import * as m from '$lib/paraglide/messages'
 	import {repoBlobUrl, repoUrl, repoCommitUrl} from '$lib/repo'
 	import BackLink from '$lib/components/back-link.svelte'
+	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')
@@ -93,6 +94,8 @@
 			Docs
 		</a>
 	</menu>
+
+	<LanguageSwitcher />
 
 	<p class="version"><AppBuildInfo /></p>
 </article>

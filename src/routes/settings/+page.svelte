@@ -4,7 +4,6 @@
 	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
-	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
 </script>
 
@@ -36,8 +35,6 @@
 			</button>
 		{/if}
 	</menu>
-
-	<LanguageSwitcher />
 
 	<menu class="nav-vertical">
 		<a href={resolve('/settings/appearance')}>
