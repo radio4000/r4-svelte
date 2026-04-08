@@ -89,6 +89,7 @@ The action inserts a row into `reports`. If the threshold is reached, hiding hap
 A route at `/spam` (or `/admin`) visible only to admins. Shows:
 
 **Stats**
+
 - Total hidden channels
 - Total reports (all time)
 - Channels hidden in the last 7 days
@@ -97,6 +98,7 @@ A route at `/spam` (or `/admin`) visible only to admins. Shows:
 Channels ordered by report count descending. Per row: slug, name, report count, `hidden_at`, date of first and most recent report.
 
 **Actions per channel**
+
 - **Restore** — clears `hidden_at`, deletes the channel's reports. For false positives.
 - **Ban** — calls the existing `ban_user_by_channel_slug()` function. For confirmed spam. This deletes the channel and blocks the account.
 
