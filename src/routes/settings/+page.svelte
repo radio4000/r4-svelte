@@ -1,7 +1,5 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {sdk} from '@radio4000/sdk'
-	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
 	import BackLink from '$lib/components/back-link.svelte'
@@ -16,25 +14,6 @@
 		<BackLink href={resolve('/menu')} />
 		<h1>{m.settings_title()}</h1>
 	</header>
-
-	<menu class="nav-vertical">
-		{#if !appState.user}
-			<a href={resolve('/auth')}>
-				<Icon icon="user" />
-				{m.auth_create_or_signin()}
-			</a>
-		{:else}
-			<a href={resolve('/settings/account')}>
-				<Icon icon="user" />
-				{m.settings_account()}
-				<small>{appState.user.email}</small>
-			</a>
-			<button onclick={() => sdk.auth.signOut()}>
-				<Icon icon="eject" />
-				{m.auth_log_out()}
-			</button>
-		{/if}
-	</menu>
 
 	<menu class="nav-vertical">
 		<a href={resolve('/settings/appearance')}>
