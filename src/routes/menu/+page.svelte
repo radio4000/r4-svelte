@@ -67,6 +67,10 @@
 			<Icon icon="circle-info" />
 			{m.nav_about()}
 		</a>
+		<a href={resolve('/apps')}>
+			<Icon icon="tv" />
+			{m.nav_apps()}
+		</a>
 		<a href={resolve('/menu/community')}>
 			<Icon icon="users" />
 			Community
