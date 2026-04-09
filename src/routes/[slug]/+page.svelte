@@ -213,9 +213,14 @@
 {#if channel}
 	<article>
 		<div class="channel-meta">
-			<div class="meta-row">
-				{#if channel.url}
+			{#if channel.url}
+				<div class="meta-row">
 					<p class="url"><a href={channel.url} target="_blank" rel="noopener">{channel.url}</a></p>
+				</div>
+			{/if}
+			<div class="meta-row">
+				{#if channel.description}
+					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 				{/if}
 				<p class="dates">
 					<small
@@ -225,9 +230,6 @@
 					>
 				</p>
 			</div>
-			{#if channel.description}
-				<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
-			{/if}
 		</div>
 
 		<section class="track-section">
@@ -283,7 +285,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
-		align-items: baseline;
+		align-items: flex-end;
 		gap: 0.5rem;
 	}
 
@@ -299,6 +301,7 @@
 		white-space: pre-line;
 		overflow-wrap: break-word;
 		font-stretch: 90%;
+		font-style: italic;
 	}
 
 	.url {
