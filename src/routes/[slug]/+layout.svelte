@@ -182,9 +182,20 @@
 		{#if channel}
 			<header>
 				<div class="avatar">
-					<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
-						<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
-					</a>
+					{#if isChannelLive}
+						<button
+							type="button"
+							class="avatar-btn"
+							title={m.channel_card_join_broadcast()}
+							onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+						>
+							<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+						</button>
+					{:else}
+						<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
+							<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+						</a>
+					{/if}
 				</div>
 				<div class="info">
 					<DeckChannelHeader
@@ -296,6 +307,15 @@
 	.avatar {
 		width: 3rem;
 		flex-shrink: 0;
+	}
+
+	.avatar-btn {
+		display: block;
+		padding: 0;
+		background: none;
+		border: none;
+		cursor: pointer;
+		width: 100%;
 	}
 
 	.info {
