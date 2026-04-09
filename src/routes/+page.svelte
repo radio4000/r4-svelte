@@ -634,111 +634,113 @@
 			</section>
 		{/if}
 
-		<div class="loggedout-grid">
-			<section class="section section--globe section--globe--loggedout">
-				<div class="globe">
-					<MapChannels
-						channels={globeChannels}
-						globeMode={true}
-						zoom={1.5}
-						syncUrl={false}
-						showControls={false}
-						tileStyle="topo"
-					/>
-					<a
-						href={resolve('/channels/all') + '?display=map'}
-						class="btn map-overlay-btn"
-						aria-label={m.nav_map()}
-					>
-						<Icon icon="globe" size={14} />
-					</a>
-				</div>
-			</section>
+		<section class="section section--globe section--globe--loggedout">
+			<div class="globe">
+				<MapChannels
+					channels={globeChannels}
+					globeMode={true}
+					zoom={1.5}
+					syncUrl={false}
+					showControls={false}
+					tileStyle="topo"
+				/>
+				<a
+					href={resolve('/channels/all') + '?display=map'}
+					class="btn map-overlay-btn"
+					aria-label={m.nav_map()}
+				>
+					<Icon icon="globe" size={14} />
+				</a>
+			</div>
+		</section>
+
+		<div class="loggedout-over-globe">
+			<div class="loggedout-grid">
+				{#if featuredChannels.length}
+					<section class="section section--featured-col">
+						<header class="section-header">
+							<h2 class="section-title">
+								<a href={resolve('/channels/featured')}>{m.home_featured()}</a>
+							</h2>
+							<menu>
+								{#if featuredFirst}
+									<button type="button" onclick={toggleFeaturedPlay}>
+										<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
+									</button>
+								{/if}
+								{#if featuredPool.length > featuredPickCount}
+									<button
+										type="button"
+										title={m.home_featured_refresh()}
+										onclick={pickFeatured}
+										disabled={shuffling}
+									>
+										<Icon icon="switch-alt" />
+									</button>
+								{/if}
+							</menu>
+						</header>
+						<ol class="grid grid--scroll">
+							{#each featuredChannels as channel (channel.id)}
+								<li><ChannelCard {channel} /></li>
+							{/each}
+						</ol>
+					</section>
+				{/if}
+			</div>
 
 			{#if featuredChannels.length}
-				<section class="section section--featured-col">
-					<header class="section-header">
-						<h2 class="section-title">
-							<a href={resolve('/channels/featured')}>{m.home_featured()}</a>
-						</h2>
-						<menu>
-							{#if featuredFirst}
-								<button type="button" onclick={toggleFeaturedPlay}>
-									<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
-								</button>
-							{/if}
-							{#if featuredPool.length > featuredPickCount}
-								<button
-									type="button"
-									title={m.home_featured_refresh()}
-									onclick={pickFeatured}
-									disabled={shuffling}
+				<CoverFlip
+					items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels}
+					orientation="horizontal"
+					class="featured-flip"
+				>
+					{#snippet item({item: channel, active})}
+						<div class="flip-card" class:active>
+							<ChannelCard {channel} />
+						</div>
+					{/snippet}
+					{#snippet active({item: channel})}
+						<p class="flip-label">
+							<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+							{#if channel.description}
+								<span class="flip-desc"
+									>— {channel.description.length > 140
+										? channel.description.slice(0, 140) + '…'
+										: channel.description}</span
 								>
-									<Icon icon="switch-alt" />
-								</button>
 							{/if}
-						</menu>
-					</header>
-					<ol class="grid grid--scroll">
-						{#each featuredChannels as channel (channel.id)}
-							<li><ChannelCard {channel} /></li>
+						</p>
+					{/snippet}
+				</CoverFlip>
+			{/if}
+
+			{#if showBroadcastCountWidget}
+				<section class="section">
+					<h2 class="section-title">
+						<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+					</h2>
+					<ol class="list">
+						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+							<li><ChannelCard channel={broadcast.channels} /></li>
 						{/each}
 					</ol>
 				</section>
 			{/if}
+
+			{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
+				<footer class="stats footer-stats">
+					{#if channelCount}<a href={resolve('/channels/all')}
+							>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
+						>{/if}
+					{#if trackCount}<a href={resolve('/tracks/recent')}
+							>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
+						>{/if}
+					{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span
+						>{/if}
+				</footer>
+			{/if}
 		</div>
-
-		{#if featuredChannels.length}
-			<CoverFlip
-				items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels}
-				orientation="horizontal"
-				class="featured-flip"
-			>
-				{#snippet item({item: channel, active})}
-					<div class="flip-card" class:active>
-						<ChannelCard {channel} />
-					</div>
-				{/snippet}
-				{#snippet active({item: channel})}
-					<p class="flip-label">
-						<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
-						{#if channel.description}
-							<span class="flip-desc"
-								>— {channel.description.length > 140
-									? channel.description.slice(0, 140) + '…'
-									: channel.description}</span
-							>
-						{/if}
-					</p>
-				{/snippet}
-			</CoverFlip>
-		{/if}
-
-		{#if showBroadcastCountWidget}
-			<section class="section">
-				<h2 class="section-title">
-					<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
-				</h2>
-				<ol class="list">
-					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-						<li><ChannelCard channel={broadcast.channels} /></li>
-					{/each}
-				</ol>
-			</section>
-		{/if}
-
-		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
-			<footer class="stats footer-stats">
-				{#if channelCount}<a href={resolve('/channels/all')}
-						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
-					>{/if}
-				{#if trackCount}<a href={resolve('/tracks/recent')}
-						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
-					>{/if}
-				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span
-					>{/if}
-			</footer>
-		{/if}
 	{/if}
 </div>
 
@@ -781,15 +783,23 @@
 	}
 
 	.section--globe {
-		flex: 1;
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
 		margin-bottom: 0;
+		position: sticky;
+		top: 0;
+		z-index: 0;
 
 		.section-header {
 			margin-bottom: 1rem;
 		}
+	}
+
+	.loggedout-over-globe {
+		position: relative;
+		z-index: 1;
+		background: var(--color-interface);
 	}
 
 	.section--featured-col {
@@ -815,9 +825,6 @@
 			overflow: hidden;
 		}
 
-		.section--globe {
-			margin-bottom: 0;
-		}
 	}
 
 	.dashboard-section {
@@ -1047,7 +1054,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		min-height: 300px;
+		min-height: 50dvh;
 		margin-top: -0.75rem;
 		background: transparent;
 		border: 1px solid var(--gray-6);
@@ -1063,8 +1070,8 @@
 
 	.map-overlay-btn {
 		position: absolute;
-		top: 0.5rem;
-		right: 0.5rem;
+		bottom: 0.5rem;
+		left: 0.5rem;
 		z-index: 10;
 		opacity: 0.7;
 		&:hover {
