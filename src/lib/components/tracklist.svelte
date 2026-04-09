@@ -183,7 +183,12 @@
 						</div>
 					{:else if item.track}
 						<div
-							class="virtual-item track-item"
+							class={{
+								'virtual-item': true,
+								'track-item': true,
+								'sticky-active':
+									deckId != null && appState.decks[deckId]?.playlist_track === item.track?.id
+							}}
 							role="option"
 							tabindex="-1"
 							aria-selected={selectedTrackId === item.track?.id}
@@ -335,5 +340,12 @@
 
 	.virtual-item {
 		box-sizing: border-box;
+	}
+
+	.sticky-active {
+		position: sticky;
+		top: 0;
+		bottom: 0;
+		z-index: 1;
 	}
 </style>
