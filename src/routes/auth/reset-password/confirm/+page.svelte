@@ -1,6 +1,7 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let password = $state('')
@@ -40,20 +41,19 @@
 </svelte:head>
 
 <article class="constrained focused splash">
-	<header>
-		<p><a href={resolve('/auth')}>{m.auth_page_title()}</a> / {m.auth_set_new_password()}</p>
-	</header>
+	<figure class="logo">
+		<IconR4 />
+	</figure>
 
 	<h1>{m.auth_set_new_password()}</h1>
 
 	{#if success}
 		<section>
 			<p><strong>{m.auth_password_reset_complete()}</strong></p>
-			<menu>
-				<a href={resolve('/settings')}><button class="primary">{m.settings_page_title()}</button></a
-				>
-			</menu>
 		</section>
+		<footer>
+			<p><a href={resolve('/auth/login')} class="btn primary">{m.auth_card_login_title()}</a></p>
+		</footer>
 	{:else}
 		<form class="form" onsubmit={handleSubmit}>
 			<fieldset>
@@ -85,19 +85,26 @@
 				{loading ? m.common_loading() : m.account_change_password()}
 			</button>
 		</form>
+		<footer>
+			<p><a href={resolve('/auth/login')}>{m.auth_card_login_title()}</a></p>
+		</footer>
 	{/if}
 </article>
 
 <style>
 	h1 {
-		margin: 3vh auto;
+		margin: 0 auto 1rem;
 		font-size: var(--font-7);
 		text-align: center;
 	}
+
 	section {
 		text-align: center;
 	}
-	menu {
-		margin-top: 1rem;
+
+	footer {
+		margin-top: 3rem;
+		text-align: center;
+		color: var(--gray-9);
 	}
 </style>

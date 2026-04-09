@@ -82,6 +82,7 @@
 	"auth_log_out": "Log out",
 	"auth_login_page_title": "Sign in",
 	"auth_login_title": "Sign in to {appName}",
+	"auth_magic_link_hint": "Leave blank to sign in with a magic link instead",
 	"auth_magic_link_sent": "We sent a sign-in link to {email}",
 	"auth_new_password": "New password",
 	"auth_new_to_r4_intro": "New to {appName}?",

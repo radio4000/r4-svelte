@@ -1,15 +1,37 @@
 <script>
+	import {sdk} from '@radio4000/sdk'
+	import {logger} from '$lib/logger'
 	import {resolve} from '$app/paths'
-	import R4PasswordReset from '$lib/components/r4-password-reset.svelte'
+	import {appChatUrl} from '$lib/config'
+	import IconR4 from '$lib/components/icon-r4.svelte'
 	import * as m from '$lib/paraglide/messages'
-	import {appChatUrl, appName} from '$lib/config'
 
+	const log = logger.ns('auth').seal()
+
+	let email = $state('')
+	let loading = $state(false)
+	let error = $state(/** @type {string | null} */ (null))
 	let emailSent = $state(false)
 
-	function handleResetPassword(event) {
-		const {error} = event.detail
-		if (!error) {
-			emailSent = true
+	async function handleSubmit(e) {
+		e.preventDefault()
+		loading = true
+		error = null
+		try {
+			const {error: authError} = await sdk.supabase.auth.signInWithOtp({
+				email,
+				options: {emailRedirectTo: window.location.origin + resolve('/auth/reset-password/confirm')}
+			})
+			if (authError) {
+				error = authError.message
+			} else {
+				emailSent = true
+			}
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to send reset email'
+			log.error('password reset failed:', err)
+		} finally {
+			loading = false
 		}
 	}
 </script>
@@ -19,23 +41,43 @@
 </svelte:head>
 
 <article class="constrained focused splash">
-	<header>
-		<p><a href={resolve('/auth')}>{m.auth_page_title()}</a> / {m.auth_reset_page_title()}</p>
-	</header>
+	<figure class="logo">
+		<IconR4 />
+	</figure>
 
 	<h1>{m.auth_reset_heading()}</h1>
-	<p>{m.auth_reset_prompt_email({appName})}</p>
-	<br />
-	<p>{m.auth_reset_instruction()}</p>
-	<br />
 
 	{#if emailSent}
-		<p><strong>{m.auth_reset_email_sent()}</strong></p>
+		<section>
+			<p><strong>{m.auth_reset_email_sent()}</strong></p>
+		</section>
 	{:else}
-		<R4PasswordReset onsubmit={handleResetPassword} />
+		<p class="subtitle">{m.auth_reset_instruction()}</p>
+		<form class="form" onsubmit={handleSubmit}>
+			<fieldset>
+				<label for="reset-email">{m.auth_email()}</label>
+				<input
+					id="reset-email"
+					type="email"
+					bind:value={email}
+					required
+					autocomplete="email"
+					placeholder={m.auth_email_placeholder()}
+				/>
+			</fieldset>
+			{#if error}
+				<p class="error" role="alert">{error}</p>
+			{/if}
+			<button type="submit" class="primary" disabled={loading}>
+				{loading ? m.common_sending() : m.auth_reset_page_title()}
+			</button>
+		</form>
 	{/if}
 
 	<footer>
+		<p>
+			<a href={resolve('/auth/login')}>{m.auth_card_login_title()}</a>
+		</p>
 		<p>
 			<small>
 				{m.auth_reset_help_intro()}
@@ -47,13 +89,24 @@
 
 <style>
 	h1 {
-		margin: 3vh auto;
+		margin: 0 auto 1rem;
 		font-size: var(--font-7);
+		text-align: center;
+	}
+
+	.subtitle {
+		text-align: center;
+		color: var(--gray-9);
+		margin-bottom: 1rem;
+	}
+
+	section {
 		text-align: center;
 	}
 
 	footer {
 		margin-top: 3rem;
 		text-align: center;
+		color: var(--gray-9);
 	}
 </style>
