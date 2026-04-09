@@ -43,15 +43,6 @@
 			<IconR4 />
 		</a>
 		<a
-			href={resolve('/channels')}
-			class="btn"
-			class:active={page.route.id?.startsWith('/channels')}
-			aria-label={m.nav_channels()}
-			{@attach tooltip({content: m.nav_channels()})}
-		>
-			<Icon icon={conceptIcons.channels} />
-		</a>
-		<a
 			href={resolve('/search')}
 			class="btn"
 			class:active={page.route.id?.startsWith('/search')}
