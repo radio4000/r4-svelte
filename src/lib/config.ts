@@ -51,7 +51,7 @@ export const conceptIcons = {
 	feed: 'history',
 	history: 'history',
 	broadcast: 'signal',
-	settings: 'options-vertical-encircled',
+	settings: 'options-vertical',
 	info: 'circle-info',
 	mentions: 'user',
 	following: 'sparkles',
