@@ -71,7 +71,3 @@ media-time-range {
 		display: none;
 	}
 }
-
-.track-panel article.active {
-	background: none;
-}

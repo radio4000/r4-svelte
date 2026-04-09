@@ -972,7 +972,7 @@
 	}
 
 	.track-panel.active-track {
-		background: var(--accent-3);
+		background: var(--header-bg);
 	}
 
 	@media (max-width: 768px) {

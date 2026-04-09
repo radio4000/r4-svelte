@@ -302,25 +302,12 @@
 			color: inherit;
 		}
 		.active & {
-			/*
-			background: var(--accent-9);
-			color: var(--gray-1);
-			 */
-			padding-inline: var(--space-1);
-			width: fit-content;
-			max-width: 100%;
+			color: var(--accent-10);
 		}
 	}
 
 	.active {
-		background: var(--accent-3);
-		outline: 1px solid var(--gray-5);
-		outline-offset: -1px;
-		border-radius: var(--border-radius);
-		--tag-bg: var(--accent-5);
-		--tag-bg-hover: var(--accent-7);
-		--tag-bg-active: var(--accent-8);
-		--tag-color: var(--accent-12);
+		background: transparent;
 	}
 
 	.selected {
