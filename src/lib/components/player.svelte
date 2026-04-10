@@ -24,7 +24,6 @@
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
 	import {
 		joinBroadcast,
-		leaveBroadcast,
 		getBroadcastingChannelId,
 		notifyBroadcastState
 	} from '$lib/broadcast.js'
@@ -490,6 +489,7 @@
 				</div>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
+				{#if !isListeningToBroadcast}
 				<button
 					class="close-deck"
 					onclick={() => {
@@ -502,6 +502,7 @@
 				>
 					<Icon icon="close" />
 				</button>
+				{/if}
 				<PopoverMenu align="right" closeOnClick={false}>
 					{#snippet trigger()}
 						<Icon icon="options-horizontal" />
@@ -541,7 +542,7 @@
 						aria-label={m.player_tooltip_compact()}
 						{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
 					>
-						<Icon icon="deck-panel" expanded />
+						<Icon icon="deck-panel" />
 					</button>
 				{/if}
 			</menu>
@@ -669,9 +670,6 @@
 		{#if !isListeningToBroadcast || !hasMultipleDecks || isLastDeck}
 			<menu class="controls" class:broadcast-controls={isListeningToBroadcast}>
 				{#if isListeningToBroadcast}
-					<button onclick={() => leaveBroadcast(deckId)} class="btn leave-btn">
-						{m.broadcasts_leave()}
-					</button>
 					<button
 						disabled
 						class="play status"
@@ -873,10 +871,6 @@
 
 	:global(.volume) {
 		margin-left: auto;
-	}
-
-	.leave-btn {
-		flex: 1;
 	}
 
 	.controls {

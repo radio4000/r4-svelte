@@ -7,7 +7,7 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
-	import {joinBroadcast} from '$lib/broadcast'
+	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
@@ -193,13 +193,24 @@
 		</menu>
 		<SpeedControl {deckId} {provider} />
 		<VolumeControl {deckId} />
+		{#if deck?.listening_to_channel_id}
+			<button
+				class="leave-btn primary"
+				onclick={() => leaveBroadcast(deckId)}
+				aria-label={m.broadcasts_leave()}
+				{@attach tooltip({content: m.broadcasts_leave()})}
+			>
+				<Icon icon="signal" />
+				{m.broadcasts_leave()}
+			</button>
+		{/if}
 		<button
 			class="expand"
 			onclick={() => (deck.compact = false)}
 			aria-label={m.player_compact_show_panel()}
 			{@attach tooltip({content: m.player_compact_show_panel()})}
 		>
-			<Icon icon="deck-panel" />
+			<Icon icon="deck-panel" expanded />
 		</button>
 	</div>
 </div>

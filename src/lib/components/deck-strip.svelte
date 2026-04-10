@@ -2,7 +2,9 @@
 	import {page} from '$app/state'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import {captureEventsCollection} from '$lib/collections/capture-events'
+	import {leaveBroadcast} from '$lib/broadcast.js'
 	import Deck from '$lib/components/deck.svelte'
+	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let deckIds = $derived(
@@ -30,6 +32,9 @@
 		})
 	)
 	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
+	let nonCompactListeningIds = $derived(
+		listeningDeckIds.filter((id) => !appState.decks[id]?.compact)
+	)
 </script>
 
 <aside
@@ -58,6 +63,20 @@
 			{/each}
 		</section>
 	{/if}
+	{#if nonCompactListeningIds.length}
+		<div class="leave-bar">
+			{#each nonCompactListeningIds as deckId (deckId)}
+				<button
+					class="leave-btn primary"
+					onclick={() => leaveBroadcast(deckId)}
+					aria-label={m.broadcasts_leave()}
+				>
+					<Icon icon="signal" />
+					{m.broadcasts_leave()}
+				</button>
+			{/each}
+		</div>
+	{/if}
 </aside>
 
 <style>
@@ -73,6 +92,16 @@
 
 		&:empty {
 			display: none;
+		}
+
+		.leave-bar {
+			display: flex;
+			flex-direction: column;
+			gap: 0.3rem;
+			padding: 0.4rem;
+			align-self: flex-end;
+			justify-content: flex-end;
+			flex-shrink: 0;
 		}
 
 		&.all-compact {
