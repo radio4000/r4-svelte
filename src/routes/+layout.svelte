@@ -27,6 +27,8 @@
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
 	import {queryClient} from '$lib/collections/query-client'
 	import {trackAppPresence, untrackAppPresence} from '$lib/presence.svelte'
+	import {leaveBroadcast} from '$lib/broadcast.js'
+	import Icon from '$lib/components/icon.svelte'
 
 	const log = logger.ns('layout').seal()
 
@@ -46,6 +48,11 @@
 	let compactDeckIds = $derived(
 		Object.values(appState.decks)
 			.filter((deck) => deck.compact)
+			.map((deck) => deck.id)
+	)
+	let listeningDeckIds = $derived(
+		Object.values(appState.decks)
+			.filter((deck) => deck.listening_to_channel_id)
 			.map((deck) => deck.id)
 	)
 
@@ -265,6 +272,17 @@
 								<DeckCompactBar {deckId} />
 							</div>
 						{/each}
+						{#if listeningDeckIds.length}
+							<div class="leave-broadcast-bar">
+								<button
+									class="primary"
+									onclick={() => listeningDeckIds.forEach((id) => leaveBroadcast(id))}
+								>
+									<Icon icon="signal" />
+									{m.broadcasts_leave()}
+								</button>
+							</div>
+						{/if}
 					</section>
 				</div>
 
@@ -384,6 +402,16 @@
 
 	.compact-decks:empty {
 		display: none;
+	}
+
+	.leave-broadcast-bar {
+		display: flex;
+		padding: 0.5rem;
+		border-top: 1px solid var(--gray-6);
+	}
+
+	.leave-broadcast-bar button {
+		flex: 1;
 	}
 
 	.compact-decks :global(.deck-compact-bar) {

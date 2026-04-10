@@ -67,7 +67,6 @@
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
 	let deckIds = $derived(Object.keys(appState.decks).map(Number))
-	let isLastDeck = $derived(deckIds.at(-1) === deckId)
 	let accentColor = $derived(deckAccent(deckIds, deckId))
 
 	// Both media player elements
@@ -667,28 +666,13 @@
 			{/if}
 		</footer>
 
-		{#if !isListeningToBroadcast || !hasMultipleDecks || isLastDeck}
-			<menu class="controls" class:broadcast-controls={isListeningToBroadcast}>
-				{#if isListeningToBroadcast}
-					<button
-						disabled
-						class="play status"
-						aria-label={deck?.is_playing
-							? m.player_broadcast_playing()
-							: m.player_broadcast_paused()}
-						title={deck?.is_playing ? m.player_broadcast_playing() : m.player_broadcast_paused()}
-					>
-						<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-					</button>
-				{:else}
-					{@render btnPrev()}
-					{@render btnPlay()}
-					{@render btnNext()}
-					<SpeedControl {deckId} {provider} />
-				{/if}
-				{#if !isListeningToBroadcast}
-					<VolumeControl {deckId} />
-				{/if}
+		{#if !isListeningToBroadcast}
+			<menu class="controls">
+				{@render btnPrev()}
+				{@render btnPlay()}
+				{@render btnNext()}
+				<SpeedControl {deckId} {provider} />
+				<VolumeControl {deckId} />
 			</menu>
 		{/if}
 	</section>
@@ -879,13 +863,6 @@
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
-	}
-
-	.broadcast-controls {
-		position: sticky;
-		bottom: 0;
-		background: var(--color-interface-elevated, var(--gray-1));
-		border-top: 1px solid var(--gray-5);
 	}
 
 	.layout-controls {

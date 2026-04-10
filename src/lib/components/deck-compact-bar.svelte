@@ -7,7 +7,7 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
-	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
+	import {joinBroadcast} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
@@ -166,43 +166,34 @@
 		{/if}
 	</div>
 	<div class="row-controls">
-		<menu class="controls">
-			<button
-				onclick={() => previous(deckId, 'user_prev')}
-				aria-label={m.player_compact_prev()}
-				disabled={!canPrevFromQueue}
-			>
-				<Icon icon="previous-fill" />
-			</button>
-			<button
-				class="play"
-				class:active={deck?.is_playing}
-				onclick={() => togglePlayPause(deckId)}
-				aria-label={m.player_compact_play_pause()}
-				disabled={!canPlayFromQueue}
-			>
-				<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
-			</button>
-			<button
-				onclick={() => next(deckId, 'user_next')}
-				aria-label={m.player_compact_next()}
-				disabled={!canNextFromQueue}
-			>
-				<Icon icon="next-fill" />
-			</button>
-		</menu>
-		<SpeedControl {deckId} {provider} />
-		<VolumeControl {deckId} />
-		{#if deck?.listening_to_channel_id}
-			<button
-				class="leave-btn primary"
-				onclick={() => leaveBroadcast(deckId)}
-				aria-label={m.broadcasts_leave()}
-				{@attach tooltip({content: m.broadcasts_leave()})}
-			>
-				<Icon icon="signal" />
-				{m.broadcasts_leave()}
-			</button>
+		{#if !deck?.listening_to_channel_id}
+			<menu class="controls">
+				<button
+					onclick={() => previous(deckId, 'user_prev')}
+					aria-label={m.player_compact_prev()}
+					disabled={!canPrevFromQueue}
+				>
+					<Icon icon="previous-fill" />
+				</button>
+				<button
+					class="play"
+					class:active={deck?.is_playing}
+					onclick={() => togglePlayPause(deckId)}
+					aria-label={m.player_compact_play_pause()}
+					disabled={!canPlayFromQueue}
+				>
+					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+				</button>
+				<button
+					onclick={() => next(deckId, 'user_next')}
+					aria-label={m.player_compact_next()}
+					disabled={!canNextFromQueue}
+				>
+					<Icon icon="next-fill" />
+				</button>
+			</menu>
+			<SpeedControl {deckId} {provider} />
+			<VolumeControl {deckId} />
 		{/if}
 		<button
 			class="expand"
