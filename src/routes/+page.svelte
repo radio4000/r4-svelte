@@ -790,10 +790,10 @@
 		position: sticky;
 		top: 0;
 		z-index: 0;
+	}
 
-		.section-header {
-			margin-bottom: 1rem;
-		}
+	.section--globe:not(.section--globe--loggedout) {
+		flex: 1;
 	}
 
 	.loggedout-over-globe {
