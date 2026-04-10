@@ -309,6 +309,19 @@
 		display: none;
 	}
 
+	/* Single deck expanded: take full content width */
+	.deckExpanded .scroll-area {
+		flex: 0 0 0;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	.deckExpanded :global(.deck-strip) {
+		flex: 1 1 auto;
+		max-width: none;
+		width: auto;
+	}
+
 	.content-wrapper {
 		display: flex;
 		flex-direction: column;
