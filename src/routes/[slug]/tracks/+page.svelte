@@ -37,7 +37,7 @@
 		} else {
 			url.searchParams.delete('q')
 		}
-		goto(`${url.pathname}${url.search}`, {replaceState: true})
+		goto(url, {replaceState: true})
 	})
 
 	let slug = $derived(page.params.slug)
@@ -79,11 +79,33 @@
 	let isFilteredAutoActive = $derived(filteredAutoDecks.length > 0)
 	let isFilteredAutoPlaying = $derived(filteredAutoDecks.some((d) => d.is_playing))
 	let isFilteredAutoDrifted = $derived(filteredAutoDecks.some((d) => d.auto_radio_drifted))
+	let targetTrackId = $derived.by(() => {
+		const hash = decodeURIComponent(page.url.hash.replace(/^#/, ''))
+		if (!hash) return null
+		return hash.startsWith('track-') ? hash.slice('track-'.length) : hash
+	})
+	let targetTrackElementId = $derived(targetTrackId ? `track-${targetTrackId}` : null)
+	let scrolledTrackElementId = $state<string | null>(null)
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
 		if (search) return search
 		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
 		return ''
+	})
+
+	$effect(() => {
+		const elementId = targetTrackElementId
+		if (!elementId || !tracksQuery.isReady || !visibleTracks.length) return
+		if (scrolledTrackElementId === elementId) return
+		if (!visibleTracks.some((track) => track.id === targetTrackId)) return
+
+		const target = document.getElementById(elementId)
+		if (!target) return
+
+		scrolledTrackElementId = elementId
+		requestAnimationFrame(() => {
+			target.scrollIntoView({block: 'center'})
+		})
 	})
 
 	function toggleTag(tag: string) {
@@ -97,7 +119,7 @@
 		} else {
 			url.searchParams.delete('tags')
 		}
-		goto(`${url.pathname}${url.search}`, {replaceState: true})
+		goto(url, {replaceState: true})
 	}
 
 	function playFilteredTracks() {
@@ -202,6 +224,7 @@
 					grouped={!isFiltering}
 					virtual={false}
 					playContext={true}
+					selectedTrackId={targetTrackId}
 					onTagClick={toggleTag}
 				/>
 			{/if}

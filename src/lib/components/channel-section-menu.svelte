@@ -4,29 +4,15 @@
 	import {conceptIcons} from '$lib/config'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let {slug, channel, canEdit, isLocal, trackCount = 0} = $props()
 
 	let routeId = $derived(page.route.id)
 
-	const activeIcon = $derived.by(() => {
-		if (routeId === '/[slug]') return conceptIcons.info
-		if (routeId?.startsWith('/[slug]/tracks')) return conceptIcons.tracks
-		if (routeId?.startsWith('/[slug]/tags')) return conceptIcons.tags
-		if (routeId?.startsWith('/[slug]/mentions')) return conceptIcons.mentions
-		if (routeId?.startsWith('/[slug]/following')) return conceptIcons.following
-		if (routeId?.startsWith('/[slug]/followers')) return conceptIcons.followers
-		if (routeId?.startsWith('/[slug]/map')) return conceptIcons.map
-		if (routeId?.startsWith('/[slug]/edit')) return conceptIcons.settings
-		if (routeId?.startsWith('/[slug]/batch-edit')) return conceptIcons.batchEdit
-		if (routeId?.startsWith('/[slug]/backup')) return conceptIcons.backup
-		if (routeId?.startsWith('/[slug]/delete')) return conceptIcons.delete
-		return conceptIcons.info
-	})
-
 	const activeLabel = $derived.by(() => {
-		if (routeId === '/[slug]') return 'Info'
+		if (routeId === '/[slug]') return m.home_tab_home()
 		if (routeId?.startsWith('/[slug]/tracks')) return m.nav_tracks()
 		if (routeId?.startsWith('/[slug]/tags')) return m.channel_tags_link()
 		if (routeId?.startsWith('/[slug]/mentions')) return 'Mentions'
@@ -37,19 +23,19 @@
 		if (routeId?.startsWith('/[slug]/batch-edit')) return m.batch_edit_nav_label()
 		if (routeId?.startsWith('/[slug]/backup')) return 'Backup'
 		if (routeId?.startsWith('/[slug]/delete')) return 'Delete'
-		return 'Info'
+		return m.home_tab_home()
 	})
 </script>
 
-<PopoverMenu>
+<PopoverMenu triggerAttachment={tooltip({content: activeLabel})}>
 	{#snippet trigger()}
-		<Icon icon={activeIcon} />
+		<Icon icon="options-vertical" />
 		{activeLabel}
 	{/snippet}
 	<menu class="nav-vertical">
 		<a href={resolve('/[slug]', {slug})} class:active={routeId === '/[slug]'}>
-			<Icon icon={conceptIcons.info} />
-			Info
+			<Icon icon={conceptIcons.home} />
+			{m.home_tab_home()}
 		</a>
 		<a
 			href={resolve('/[slug]/tracks', {slug})}

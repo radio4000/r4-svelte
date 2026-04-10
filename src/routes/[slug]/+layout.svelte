@@ -7,7 +7,7 @@
 	import type {Snippet} from 'svelte'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {joinBroadcast, leaveBroadcast} from '$lib/broadcast'
+	import {joinBroadcast, leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
@@ -35,10 +35,14 @@
 			channelNavControls = s
 		}
 	})
-	let isTrackDetail = $derived(Boolean(tid))
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
+	let isTrackDetail = $derived(Boolean(tid))
+	let authHref = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
+	let tracksHref = $derived(
+		tid ? `${resolve('/[slug]/tracks', {slug})}#track-${tid}` : resolve('/[slug]/tracks', {slug})
+	)
 
 	// --- Channel resolution ---
 	// Slug → ID on first hit, then query by stable ID.
@@ -136,8 +140,9 @@
 	// Redirect when the channel's slug drifts from the URL (e.g. after editing)
 	$effect(() => {
 		if (channel?.slug && channel.slug !== slug) {
-			const subpath = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
-			goto(subpath, {replaceState: true})
+			const url = new URL(page.url)
+			url.pathname = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
+			goto(url, {replaceState: true})
 		}
 	})
 
@@ -182,34 +187,40 @@
 	<div class="channel-sticky">
 		{#if channel}
 			<header>
-				<div class="avatar">
-					{#if isChannelLive}
-						<button
-							type="button"
-							class="avatar-btn"
-							title={m.channel_card_join_broadcast()}
-							onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
-						>
-							<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
-						</button>
-					{:else}
-						<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
-							<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
-						</a>
-					{/if}
+				<div class="channel-main">
+					<div class="avatar">
+						{#if isChannelLive}
+							<button
+								type="button"
+								class="avatar-btn"
+								title={m.channel_card_join_broadcast()}
+								onclick={() => joinBroadcast(appState.active_deck_id, channel.id)}
+							>
+								<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+							</button>
+						{:else}
+							<a href={resolve('/[slug]/image', {slug})} tabindex="-1">
+								<ChannelAvatar id={channel.image} alt={channel.name} size={80} />
+							</a>
+						{/if}
+					</div>
+					<div class="info">
+						<DeckChannelHeader
+							deck={channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0]}
+							{channel}
+							track={listeningTrack}
+							titleElement="h1"
+							titleClass="channel-page-title"
+							titleHref={resolve('/[slug]', {slug})}
+							onBroadcastSyncClick={() => {
+								if (!channelListeningDeck?.id) return
+								resyncBroadcastDeck(channelListeningDeck.id)
+							}}
+						/>
+					</div>
 				</div>
-				<div class="info">
-					<DeckChannelHeader
-						deck={channelListeningDeck ?? channelPlayingDeck ?? anyChannelAutoDecks[0]}
-						{channel}
-						track={listeningTrack}
-						titleElement="h1"
-						titleClass="channel-page-title"
-						onBroadcastSyncClick={() => {
-							if (!channel?.id) return
-							joinBroadcast(appState.active_deck_id, channel.id)
-						}}
-					/>
+
+				<div class="channel-broadcasting">
 					<BroadcastLiveControls
 						channelId={channel.id}
 						channelSlug={channel.slug}
@@ -222,6 +233,7 @@
 						onLeave={() => leaveBroadcast(appState.active_deck_id)}
 					/>
 				</div>
+
 				<menu class="channel-actions">
 					<ButtonPlay {channel} trackId={tid} />
 					<AutoRadioButton
@@ -238,7 +250,7 @@
 						<ButtonFollow {channel} />
 					{:else}
 						<a
-							href={`/auth?redirect=${encodeURIComponent(page.url.pathname)}`}
+							href={authHref}
 							class="btn"
 							{@attach tooltip({content: m.common_follow()})}
 						>
@@ -258,7 +270,7 @@
 
 		<menu class="channel-nav">
 			{#if isTrackDetail}
-				<a class="btn ghost" href={`${resolve('/[slug]/tracks', {slug})}#${tid}`}>
+				<a class="btn ghost" href={tracksHref}>
 					<Icon icon="arrow-left" />
 				</a>
 			{:else if page.route.id !== '/[slug]/image'}
@@ -302,11 +314,18 @@
 
 	header {
 		display: flex;
-		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.6rem;
+		align-items: center;
+		gap: 0.75rem;
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-4);
+	}
+
+	.channel-main {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1 1 0;
 	}
 
 	.avatar {
@@ -325,11 +344,10 @@
 
 	.info {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+		flex-direction: column;
+		align-items: flex-start;
 		min-width: 0;
-		flex: 1;
-		min-width: 10rem;
+		flex: 1 1 auto;
 
 		:global(.deck-channel-header) {
 			flex: 1;
@@ -352,11 +370,21 @@
 		font-size: var(--font-3);
 	}
 
+	.channel-broadcasting {
+		display: flex;
+		justify-content: center;
+		flex: 0 1 auto;
+		margin-inline: auto;
+	}
+
 	.channel-actions {
 		display: flex;
 		align-items: center;
-		flex-shrink: 0;
-		margin-left: auto;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+		margin: 0;
+		flex: 1 1 0;
+		justify-content: flex-end;
 	}
 
 	main {
@@ -382,5 +410,22 @@
 		min-width: 0;
 		align-items: center;
 		flex-wrap: wrap;
+	}
+
+	@media (max-width: 768px) {
+		.channel-main,
+		.channel-broadcasting,
+		.channel-actions {
+			flex: 1 1 100%;
+		}
+
+		.channel-broadcasting {
+			justify-content: flex-start;
+			margin-inline: 0;
+		}
+
+		.channel-actions {
+			justify-content: flex-start;
+		}
 	}
 </style>

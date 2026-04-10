@@ -64,7 +64,10 @@
 	.broadcast-live-controls {
 		display: flex;
 		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
 		gap: 0.25rem;
+		width: 100%;
 	}
 
 	.live-pill {

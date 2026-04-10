@@ -1,4 +1,5 @@
 <script>
+	import {resolve} from '$app/paths'
 	import Icon from '$lib/components/icon.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Tag from '$lib/components/tag.svelte'
@@ -18,6 +19,7 @@
 	 *  track?: Track
 	 *  titleElement?: string
 	 *  titleClass?: string
+	 *  titleHref?: string
 	 *  isBroadcastingChannel?: boolean
 	 *  onAutoClick?: (() => void) | undefined
 	 *  onBroadcastSyncClick?: (() => void) | undefined
@@ -30,6 +32,7 @@
 		track,
 		titleElement = 'h3',
 		titleClass = '',
+		titleHref,
 		isBroadcastingChannel = false,
 		onAutoClick,
 		onBroadcastSyncClick,
@@ -51,16 +54,26 @@
 		broadcastSyncDrifted ? m.player_sync_broadcast() : m.player_broadcast_synced()
 	)
 	const autoTitle = $derived(deck?.auto_radio_drifted ? m.auto_radio_resync() : m.auto_radio_join())
+	const resolvedSlugHref = $derived(slug ? resolve('/[slug]', {slug}) : undefined)
+	const resolvedChannelSlugHref = $derived(
+		channel?.slug ? resolve('/[slug]', {slug: channel.slug}) : undefined
+	)
+	const resolvedListeningWhomHref = $derived(
+		listeningWhomSlug ? resolve('/[slug]', {slug: listeningWhomSlug}) : undefined
+	)
 	const derivedTags = $derived(
 		extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
 			label: tag,
-			href: slug ? `/${slug}/tracks?tags=${encodeURIComponent(tag.slice(1))}` : undefined
+			href: slug
+				? `${resolve('/[slug]/tracks', {slug})}?tags=${encodeURIComponent(tag.slice(1))}`
+				: undefined
 		}))
 	)
 
 	const hasDistinctWhom = $derived(
 		Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug)
 	)
+	const resolvedTitleHref = $derived(titleHref ?? (slug ? `/${slug}` : undefined))
 	const titleClassNames = $derived(
 		['title-row', titleClass, isPlaying ? 'active' : ''].filter(Boolean).join(' ')
 	)
@@ -68,8 +81,8 @@
 
 <div class="deck-channel-header">
 	<svelte:element this={titleElement} class={titleClassNames}>
-		{#if slug}
-			<a href="/{slug}" class="title-link">{derivedTitle}</a>
+		{#if resolvedTitleHref}
+			<a href={resolvedTitleHref} class="title-link">{derivedTitle}</a>
 		{:else}
 			<span class="title-link">{derivedTitle}</span>
 		{/if}
@@ -77,7 +90,7 @@
 
 	<div class="meta-row">
 		{#if listeningWhoSlug}
-			<a class="slug-link" href="/{listeningWhoSlug}">@{listeningWhoSlug}</a>
+			<a class="slug-link" href={resolvedChannelSlugHref}>@{listeningWhoSlug}</a>
 			{#if onBroadcastSyncClick}
 				<button
 					type="button"
@@ -94,10 +107,12 @@
 				</button>
 			{/if}
 			{#if hasDistinctWhom}
-				<a class="slug-link" href="/{listeningWhomSlug}">@{listeningWhomSlug}</a>
+				<a class="slug-link" href={resolvedListeningWhomHref}>@{listeningWhomSlug}</a>
 			{/if}
-		{:else if slug || channel?.slug}
-			<a class="slug-link" href="/{slug || channel?.slug}">@{slug || channel?.slug}</a>
+		{:else if resolvedSlugHref || resolvedChannelSlugHref}
+			<a class="slug-link" href={resolvedSlugHref ?? resolvedChannelSlugHref}>
+				@{slug || channel?.slug}
+			</a>
 			{#if isBroadcasting || isBroadcastingChannel}
 				<Icon icon="cell-signal" size={12} class="broadcasting-icon" />
 			{/if}
