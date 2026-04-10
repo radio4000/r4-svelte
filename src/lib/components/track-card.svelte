@@ -170,7 +170,7 @@
 				>{m.common_cancel()}</button
 			>
 		{:else}
-			<menu>
+			<menu class="nav-vertical">
 				<button
 					type="button"
 					role="menuitem"
@@ -182,7 +182,7 @@
 							playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
 						}
 						menu?.close()
-					}}><Icon icon="play-fill" /></button
+					}}><Icon icon="play-fill" size={14} />{m.common_play()}</button
 				>
 				{#if !appState.embed_mode}
 					<button
@@ -192,7 +192,7 @@
 						onclick={() => {
 							playNext(deckId ?? appState.active_deck_id, track.id)
 							menu?.close()
-						}}><Icon icon="next-fill" /></button
+						}}><Icon icon="next-fill" size={14} />{m.track_play_next()}</button
 					>
 				{/if}
 				<button
@@ -202,14 +202,14 @@
 					onclick={async () => {
 						await playTrackInNewDeck(track.id, track.slug ?? undefined)
 						menu?.close()
-					}}><Icon icon="sidebar-fill-right" /></button
+					}}><Icon icon="sidebar-fill-right" size={14} />{m.track_card_play_in_deck()}</button
 				>
 				{#if !appState.embed_mode}
 					<button
 						type="button"
 						role="menuitem"
 						{@attach tooltip({content: m.track_add_to_radio()})}
-						onclick={addToRadio}><Icon icon="add" /></button
+						onclick={addToRadio}><Icon icon="add" size={14} />{m.track_add_to_radio()}</button
 					>
 				{/if}
 				{#if isRealTrack}
@@ -217,11 +217,9 @@
 						type="button"
 						role="menuitem"
 						{@attach tooltip({content: m.share_native()})}
-						onclick={shareTrack}><Icon icon="share" /></button
+						onclick={shareTrack}><Icon icon="share" size={14} />{m.share_native()}</button
 					>
 				{/if}
-			</menu>
-			<menu class="nav-vertical">
 				{#if onLocate}
 					<button type="button" role="menuitem" onclick={onLocate}
 						><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
