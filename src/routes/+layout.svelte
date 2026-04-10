@@ -274,10 +274,7 @@
 						{/each}
 						{#if listeningDeckIds.length}
 							<div class="leave-broadcast-bar">
-								<button
-									class="primary"
-									onclick={() => listeningDeckIds.forEach((id) => leaveBroadcast(id))}
-								>
+								<button onclick={() => listeningDeckIds.forEach((id) => leaveBroadcast(id))}>
 									<Icon icon="signal" />
 									{m.broadcasts_leave()}
 								</button>

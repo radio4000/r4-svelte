@@ -24,6 +24,7 @@
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
 	import {
 		joinBroadcast,
+		resyncBroadcastDeck,
 		getBroadcastingChannelId,
 		notifyBroadcastState
 	} from '$lib/broadcast.js'
@@ -481,7 +482,7 @@
 						titleClass="player-header-title"
 						onAutoClick={() => resyncAutoRadio(deckId)}
 						onBroadcastSyncClick={() => {
-							if (deck?.listening_to_channel_id) joinBroadcast(deckId, deck.listening_to_channel_id)
+							if (deck?.listening_to_channel_id) resyncBroadcastDeck(deckId)
 						}}
 						presenceCount={headerPresenceCount}
 					/>
@@ -618,42 +619,31 @@
 			onclick={() => (appState.active_deck_id = deckId)}
 		>
 			{#if isListeningToBroadcast && broadcastingChannel}
-				<div class="header-info active-track-bg">
-					{#if displayTrack && displayChannel}
-						{@const ytid =
-							!appState.hide_track_artwork && displayTrack.media_id ? displayTrack.media_id : null}
-						{@const trackHref =
-							!appState.embed_mode && isDbId(displayTrack.id)
-								? resolve(`/${displayChannel.slug}/tracks/${displayTrack.id}`)
-								: null}
-						{#if ytid}
-							{#if trackHref}
-								<a href={trackHref} class="track-artwork"
-									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></a
-								>
-							{:else}
-								<span class="track-artwork"
-									><img src={trackImageUrl(ytid)} alt={displayTrack.title} /></span
-								>
-							{/if}
-						{/if}
-						<div class="info">
-							<h3 class="title">
-								{#if trackHref}<a href={trackHref}>{displayTrack.title}</a
-									>{:else}{displayTrack.title}{/if}
-							</h3>
-							<p class="description">{m.player_broadcast_live()}</p>
-						</div>
-					{:else}
+				{#if displayTrack}
+					<div class="listening-track-panel active-track-bg">
+						<TrackCard
+							track={displayTrack}
+							{deckId}
+							canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
+							menuValign="top"
+							menuAlign="end"
+						/>
+						<span class="live-pill">
+							<Icon icon="cell-signal" size={12} />
+							{m.status_live_short()}
+						</span>
+					</div>
+				{:else}
+					<div class="header-info active-track-bg">
 						<div class="info">
 							<strong>{m.player_broadcast_live()}</strong>
 						</div>
-					{/if}
-					<span class="live-pill">
-						<Icon icon="cell-signal" size={12} />
-						{m.status_live_short()}
-					</span>
-				</div>
+						<span class="live-pill">
+							<Icon icon="cell-signal" size={12} />
+							{m.status_live_short()}
+						</span>
+					</div>
+				{/if}
 			{:else if displayTrack}
 				<TrackCard
 					track={displayTrack}
@@ -792,21 +782,6 @@
 		border-radius: 4px;
 	}
 
-	.track-artwork {
-		flex-shrink: 0;
-		width: 2.5rem;
-		height: 2.5rem;
-
-		img {
-			width: 100%;
-			height: 100%;
-			border-radius: var(--media-radius);
-			object-fit: cover;
-			object-position: center;
-			display: block;
-		}
-	}
-
 	.info {
 		flex: 1;
 		min-width: 0;
@@ -814,32 +789,6 @@
 		flex-direction: column;
 		align-items: flex-start;
 		line-height: 1.3;
-	}
-
-	.info .title {
-		font-size: var(--font-4);
-		font-weight: 600;
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.info .description {
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		color: var(--gray-9);
-	}
-
-	.info a {
-		color: inherit;
-		text-decoration: none;
-	}
-
-	.info a:visited {
-		color: inherit;
 	}
 
 	.live-pill {
@@ -944,6 +893,22 @@
 
 	.track-panel.active-track {
 		background: var(--header-bg);
+	}
+
+	.listening-track-panel {
+		display: flex;
+		align-items: center;
+		min-width: 0;
+		background: var(--header-bg);
+	}
+
+	.listening-track-panel :global(article) {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.listening-track-panel .live-pill {
+		padding-right: 0.5rem;
 	}
 
 	@media (max-width: 768px) {

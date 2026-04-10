@@ -187,6 +187,51 @@ export async function joinBroadcast(deckId, channelId) {
 	}
 }
 
+/**
+ * Re-sync a single listening deck to the current broadcast state without
+ * rebuilding the local listener deck layout.
+ * @param {number} deckId
+ */
+export async function resyncBroadcastDeck(deckId) {
+	const deck = appState.decks[deckId]
+	const channelId = deck?.listening_to_channel_id
+	if (!channelId) return
+
+	log.log(`resyncBroadcastDeck @${label(channelId)} deck:${deckId}`)
+
+	/** @type {BroadcastDeckState[] | null | undefined} */
+	let decks = broadcastsCollection.state.get(channelId)?.decks
+	if (!Array.isArray(decks) || !decks.length) {
+		try {
+			const {data} = /** @type {{data: Broadcast}} */ (
+				await sdk.supabase
+					.from('broadcast')
+					.select('*')
+					.eq('channel_id', channelId)
+					.single()
+					.throwOnError()
+			)
+			decks = data?.decks
+		} catch (error) {
+			log.error(`resync failed ${label(channelId)}:`, /** @type {Error} */ (error).message)
+			return
+		}
+	}
+	if (!Array.isArray(decks) || !decks.length) return
+
+	const localManagedIds = getSortedDeckIds().filter(
+		(id) => appState.decks[id]?.listening_to_channel_id === channelId
+	)
+	const localIndex = Math.max(0, localManagedIds.indexOf(deckId))
+	const matchedState =
+		(deck.playlist_track && decks.find((state) => state?.track_id === deck.playlist_track)) ??
+		decks[localIndex] ??
+		decks[0]
+	if (!matchedState) return
+
+	await syncDeckToBroadcastState(deckId, channelId, matchedState)
+}
+
 /** @param {number} deckId */
 export function leaveBroadcast(deckId) {
 	const channelId = appState.decks[deckId]?.listening_to_channel_id
@@ -657,68 +702,81 @@ async function applyBroadcastState(channelId, decks) {
 		const deckId = deckForBi[bi]
 		if (deckId == null) continue
 		const state = decks[bi]
-		const deck = appState.decks[deckId]
-		if (!deck) continue
+		void syncDeckToBroadcastState(deckId, channelId, state)
+	}
+}
 
-		if (!state?.track_id) {
-			applyRemoteState(deckId, {
-				listening_to_channel_id: channelId,
-				playlist_track: undefined,
-				is_playing: false
-			})
-			continue
-		}
+/**
+ * Apply one broadcast deck state onto one local listener deck while preserving
+ * local deck layout/UI fields such as compact/expanded/sidebar sizing.
+ * @param {number} deckId
+ * @param {string} channelId
+ * @param {BroadcastDeckState | undefined | null} state
+ */
+async function syncDeckToBroadcastState(deckId, channelId, state) {
+	const deck = appState.decks[deckId]
+	if (!deck) return
+
+	if (!state?.track_id) {
 		applyRemoteState(deckId, {
 			listening_to_channel_id: channelId,
-			...pickBroadcastFields(state)
+			listening_drifted: false,
+			playlist_track: undefined,
+			is_playing: false
 		})
-		const trackChanged =
-			deck.playlist_track !== state.track_id || deck.listening_to_channel_id !== channelId
-		if (trackChanged) {
-			void playBroadcastTrack(deckId, {
-				channel_id: channelId,
-				track_id: state.track_id,
-				track_played_at: state.track_played_at,
-				seeked_at: state.seeked_at,
-				seek_position: state.seek_position,
-				is_playing: state.is_playing,
-				volume: state.volume,
-				muted: state.muted,
-				speed: state.speed,
-				// Pass ephemeral track fields so listeners can reconstruct non-DB tracks
-				track_url: state.track_url,
-				track_title: state.track_title,
-				track_media_id: state.track_media_id
-			})
-		} else {
-			const mediaEl = getMediaPlayer(deckId)
-			if (mediaEl) {
-				if (typeof state?.volume === 'number') mediaEl.volume = state.volume
-				if (typeof state?.muted === 'boolean') mediaEl.muted = state.muted
-				if (typeof state?.is_playing === 'boolean') {
-					if (state.is_playing && mediaEl.paused) mediaEl.play()
-					if (!state.is_playing && !mediaEl.paused) mediaEl.pause()
-				}
-				if (typeof state?.speed === 'number' && 'playbackRate' in mediaEl)
-					mediaEl.playbackRate = state.speed
-			}
-			const track = tracksCollection.get(state.track_id)
-			if (track) {
-				const seekTime = calculateSeekTime(state, track)
-				if (seekTime !== undefined) {
-					const mediaEl = getMediaPlayer(deckId)
-					const alreadyClose =
-						mediaEl &&
-						typeof mediaEl.currentTime === 'number' &&
-						Math.abs(mediaEl.currentTime - seekTime) < DRIFT_TOLERANCE_SECONDS
-					if (!alreadyClose) {
-						const seekJobId = nextSeekJobId(deckId)
-						void seekWhenReady(deckId, seekTime, seekJobId)
-					}
-				}
-			}
+		return
+	}
+
+	const trackChanged =
+		deck.playlist_track !== state.track_id || deck.listening_to_channel_id !== channelId
+
+	applyRemoteState(deckId, {
+		listening_to_channel_id: channelId,
+		listening_drifted: false,
+		...pickBroadcastFields(state)
+	})
+	if (trackChanged) {
+		await playBroadcastTrack(deckId, {
+			channel_id: channelId,
+			track_id: state.track_id,
+			track_played_at: state.track_played_at,
+			seeked_at: state.seeked_at,
+			seek_position: state.seek_position,
+			is_playing: state.is_playing,
+			volume: state.volume,
+			muted: state.muted,
+			speed: state.speed,
+			track_url: state.track_url,
+			track_title: state.track_title,
+			track_media_id: state.track_media_id
+		})
+		return
+	}
+
+	const mediaEl = getMediaPlayer(deckId)
+	if (mediaEl) {
+		if (typeof state.volume === 'number') mediaEl.volume = state.volume
+		if (typeof state.muted === 'boolean') mediaEl.muted = state.muted
+		if (typeof state.is_playing === 'boolean') {
+			if (state.is_playing && mediaEl.paused) mediaEl.play()
+			if (!state.is_playing && !mediaEl.paused) mediaEl.pause()
+		}
+		if (typeof state.speed === 'number' && 'playbackRate' in mediaEl) {
+			mediaEl.playbackRate = state.speed
 		}
 	}
+
+	const track = tracksCollection.get(state.track_id)
+	if (!track) return
+	const seekTime = calculateSeekTime(state, track)
+	if (seekTime === undefined) return
+	const alreadyClose =
+		mediaEl &&
+		typeof mediaEl.currentTime === 'number' &&
+		Math.abs(mediaEl.currentTime - seekTime) < DRIFT_TOLERANCE_SECONDS
+	if (alreadyClose) return
+	const seekJobId = nextSeekJobId(deckId)
+	await seekWhenReady(deckId, seekTime, seekJobId)
 }
 
 /** Validate that listening_to_channel_id points to an active broadcast (checks all decks) */

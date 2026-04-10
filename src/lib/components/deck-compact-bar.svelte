@@ -7,7 +7,7 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
-	import {joinBroadcast} from '$lib/broadcast'
+	import {resyncBroadcastDeck} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
@@ -20,6 +20,7 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import PlayerProgress from '$lib/components/player-progress.svelte'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {isDbId} from '$lib/utils'
 
 	/** @type {{deckId: number}} */
 	let {deckId} = $props()
@@ -32,6 +33,35 @@
 		if (!id) return undefined
 		void tracksCollection.state.size
 		return tracksCollection.state.get(id)
+	})
+	let listeningBroadcastDeck = $derived.by(() => {
+		const channelId = deck?.listening_to_channel_id
+		if (!channelId) return undefined
+		const trackId = deck?.playlist_track
+		void broadcastsCollection.state.size
+		const states = broadcastsCollection.state.get(channelId)?.decks
+		if (!Array.isArray(states) || !states.length) return undefined
+		return (trackId && states.find((state) => state?.track_id === trackId)) || states[0]
+	})
+	let broadcastTrack = $derived.by(() => {
+		const state = listeningBroadcastDeck
+		if (!state?.track_id) return undefined
+		void tracksCollection.state.size
+		const loaded = tracksCollection.state.get(state.track_id)
+		if (loaded) return loaded
+		if (!state.track_url) return undefined
+		const parsed = parseUrl(state.track_url)
+		const now = new Date().toISOString()
+		return {
+			id: state.track_id,
+			url: state.track_url,
+			title: state.track_title ?? state.track_id,
+			media_id: state.track_media_id ?? null,
+			provider: parsed?.provider ?? null,
+			created_at: now,
+			updated_at: now,
+			slug: null
+		}
 	})
 
 	const channelQuery = useLiveQuery((q) =>
@@ -55,7 +85,8 @@
 	let lastTrack = $state()
 	let lastChannel = $state()
 	$effect(() => {
-		if (track) lastTrack = track
+		const currentTrack = track ?? broadcastTrack
+		if (currentTrack) lastTrack = currentTrack
 		else if (!deck?.playlist_track) lastTrack = undefined
 	})
 	$effect(() => {
@@ -63,7 +94,7 @@
 		else if (!deck?.playlist_track) lastChannel = undefined
 	})
 
-	let displayTrack = $derived(track ?? lastTrack)
+	let displayTrack = $derived(track ?? broadcastTrack ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
 	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
 	let broadcasterChannel = $derived.by(() => {
@@ -81,7 +112,7 @@
 		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
 	)
 	let trackHref = $derived(
-		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
+		!appState.embed_mode && displayTrack?.slug && displayTrack?.id && isDbId(displayTrack.id)
 			? resolve(`/${displayTrack.slug}/tracks/${displayTrack.id}`)
 			: undefined
 	)
@@ -114,7 +145,7 @@
 		<PlayerProgress
 			currentTime={mediaCurrentTime}
 			{mediaDuration}
-			trackDuration={track?.duration}
+			trackDuration={displayTrack?.duration}
 			onseek={(val) => {
 				if (deck) deck.media_current_time = val
 				const mediaElement = getMediaPlayer(deckId)
@@ -141,8 +172,7 @@
 				track={displayTrack}
 				isBroadcastingChannel={isChannelBroadcasting}
 				onAutoClick={() => resyncAutoRadio(deckId)}
-				onBroadcastSyncClick={() =>
-					deck?.listening_to_channel_id && joinBroadcast(deckId, deck.listening_to_channel_id)}
+				onBroadcastSyncClick={() => deck?.listening_to_channel_id && resyncBroadcastDeck(deckId)}
 			/>
 		</div>
 		{#if displayTrack}
@@ -164,6 +194,14 @@
 				/>
 			</div>
 		{/if}
+		<button
+			class="expand"
+			onclick={() => (deck.compact = false)}
+			aria-label={m.player_compact_show_panel()}
+			{@attach tooltip({content: m.player_compact_show_panel()})}
+		>
+			<Icon icon="deck-panel" expanded />
+		</button>
 	</div>
 	<div class="row-controls">
 		{#if !deck?.listening_to_channel_id}
@@ -195,14 +233,6 @@
 			<SpeedControl {deckId} {provider} />
 			<VolumeControl {deckId} />
 		{/if}
-		<button
-			class="expand"
-			onclick={() => (deck.compact = false)}
-			aria-label={m.player_compact_show_panel()}
-			{@attach tooltip({content: m.player_compact_show_panel()})}
-		>
-			<Icon icon="deck-panel" expanded />
-		</button>
 	</div>
 </div>
 
@@ -245,7 +275,8 @@
 	.header-info {
 		display: flex;
 		flex-direction: row;
-		align-items: stretch;
+		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 		min-width: 0;
 		flex: 1 1 auto;
@@ -264,13 +295,13 @@
 		gap: 0.5rem;
 		min-width: 0;
 		width: 100%;
-		flex: 1;
+		flex: 1 1 100%;
 	}
 
 	.track-panel {
 		min-width: 0;
-		width: 100%;
-		flex: 2;
+		width: auto;
+		flex: 1 1 0;
 		cursor: pointer;
 	}
 
@@ -285,7 +316,8 @@
 	}
 
 	.expand {
-		flex-shrink: 0;
+		flex: 0 0 auto;
+		align-self: center;
 	}
 
 	.track-panel :global(article) {
@@ -303,13 +335,20 @@
 	}
 
 	@media (min-width: 601px) {
+		.header-info {
+			flex-wrap: nowrap;
+			align-items: stretch;
+		}
+
 		.channel-panel {
 			width: auto;
 			min-width: 14rem;
+			flex: 0 1 auto;
 		}
 
 		.track-panel {
 			width: auto;
+			flex: 1 1 auto;
 		}
 	}
 

@@ -168,12 +168,13 @@
 	}
 
 	.deck.expanded {
-		position: fixed;
-		inset: 0;
-		width: 100%;
+		flex: 1 1 auto;
+		width: auto;
 		min-width: 0;
+		max-width: none;
+		height: 100%;
 		border: 0;
-		z-index: 200;
+		border-radius: 0;
 	}
 
 	.deck.expanded .resize-handle {
