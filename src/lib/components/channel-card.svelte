@@ -30,7 +30,11 @@
 	function handleDblClick(e) {
 		e.preventDefault()
 		if (e.target instanceof Element && e.target.closest('a, button')) return
-		playChannel(appState.active_deck_id, channel)
+		if (isBroadcasting) {
+			joinBroadcast(appState.active_deck_id, channel.id)
+		} else {
+			playChannel(appState.active_deck_id, channel)
+		}
 	}
 
 	function share() {
@@ -99,7 +103,7 @@
 					{#snippet trigger()}
 						<Icon icon="options-horizontal" />
 					{/snippet}
-					<menu>
+					<menu class="nav-vertical">
 						<button
 							type="button"
 							role="menuitem"
@@ -125,8 +129,6 @@
 							<Icon icon="share" />
 							{m.channel_card_share()}
 						</button>
-					</menu>
-					<menu class="nav-vertical">
 						<a class="btn" href={cardHref} role="menuitem"
 							><Icon icon="circle-info" /> {m.channel_card_visit()}</a
 						>
