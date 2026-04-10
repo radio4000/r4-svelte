@@ -10,6 +10,7 @@
 	import {repoBlobUrl, repoUrl, repoCommitUrl} from '$lib/repo'
 	import BackLink from '$lib/components/back-link.svelte'
 	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
+	import {appPresence} from '$lib/presence.svelte.js'
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')
@@ -17,6 +18,23 @@
 
 	const isSignedIn = $derived(!!appState.user)
 	const userChannel = $derived(appState.channel)
+
+	let channelCount = $state(0)
+	let trackCount = $state(0)
+	$effect(() => {
+		void sdk.supabase
+			.from('channels_with_tracks')
+			.select('*', {count: 'exact', head: true})
+			.then(({count}) => {
+				if (count) channelCount = count
+			})
+		void sdk.supabase
+			.from('channel_tracks')
+			.select('*', {count: 'exact', head: true})
+			.then(({count}) => {
+				if (count) trackCount = count
+			})
+	})
 </script>
 
 <svelte:head>
@@ -107,7 +125,16 @@
 
 	<LanguageSwitcher />
 
-	<p class="version"><AppBuildInfo /></p>
+	<footer class="meta-footer">
+		<p class="version"><AppBuildInfo /></p>
+		{#if channelCount || trackCount || appPresence.count}
+			<p class="stats">
+				{#if channelCount}<a href={resolve('/channels/all')}>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a>{/if}
+				{#if trackCount}<a href={resolve('/tracks/recent')}>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a>{/if}
+				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
+			</p>
+		{/if}
+	</footer>
 </article>
 
 <style>
@@ -131,8 +158,25 @@
 		}
 	}
 
-	.version {
+	.meta-footer {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
 		font-size: var(--font-2);
 		color: var(--gray-9);
+	}
+
+	.stats {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		a {
+			color: inherit;
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
 	}
 </style>

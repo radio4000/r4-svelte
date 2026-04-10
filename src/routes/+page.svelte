@@ -253,7 +253,7 @@
 		{/if}
 		{#if !isSignedIn}
 			{#if showBroadcastCountWidget}
-				<a class="btn" href={resolve('/channels/broadcasting')}>
+				<a class="btn broadcast-live-link" href={resolve('/channels/broadcasting')}>
 					<Icon icon="cell-signal" />
 					<span>{broadcastCount.toLocaleString()}</span>
 				</a>
@@ -655,6 +655,19 @@
 		</section>
 
 		<div class="loggedout-over-globe">
+			{#if showBroadcastCountWidget}
+				<section class="section">
+					<h2 class="section-title">
+						<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+					</h2>
+					<ol class="list">
+						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
+							<li><ChannelCard channel={broadcast.channels} /></li>
+						{/each}
+					</ol>
+				</section>
+			{/if}
+
 			<div class="loggedout-grid">
 				{#if featuredChannels.length}
 					<section class="section section--featured-col">
@@ -715,19 +728,6 @@
 				</CoverFlip>
 			{/if}
 
-			{#if showBroadcastCountWidget}
-				<section class="section">
-					<h2 class="section-title">
-						<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
-					</h2>
-					<ol class="list">
-						{#each activeBroadcasts as broadcast (broadcast.channel_id)}
-							<li><ChannelCard channel={broadcast.channels} /></li>
-						{/each}
-					</ol>
-				</section>
-			{/if}
-
 			{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 				<footer class="stats footer-stats">
 					{#if channelCount}<a href={resolve('/channels/all')}
@@ -774,6 +774,18 @@
 		margin-left: auto;
 	}
 
+	.broadcast-live-link {
+		color: var(--accent-9);
+		border-color: var(--accent-6);
+		background: var(--accent-2);
+
+		&:hover,
+		&:focus-visible {
+			border-color: var(--accent-7);
+			background: var(--accent-3);
+		}
+	}
+
 	:global(.my-channel) {
 		margin-left: auto;
 	}
@@ -809,7 +821,7 @@
 	}
 
 	.section--globe--loggedout .globe {
-		min-height: 33vh;
+		max-height: 55dvh;
 	}
 
 	.loggedout-grid {

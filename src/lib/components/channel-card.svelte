@@ -314,12 +314,18 @@
 	}
 
 	h3 {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.35rem;
 		font-weight: 600;
 		font-size: var(--font-6);
 		line-height: 1.2;
+		min-width: 0;
 	}
 
 	h3 a {
+		flex: 1;
+		min-width: 0;
 		text-decoration: none;
 		&:hover {
 			text-decoration: underline;
@@ -347,6 +353,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.2rem;
+		margin-left: auto;
+		flex-shrink: 0;
 	}
 
 	@keyframes live-pulse {

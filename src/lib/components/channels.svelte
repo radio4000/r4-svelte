@@ -353,9 +353,7 @@
 							position: 'right'
 						})}
 						>{m.channels_filter_option_broadcasting()}<span
-							class="channel-badge"
-							style:background="var(--color-red)"
-							style:color="white">{broadcastsCollection.state.size}</span
+							class="channel-badge live-pill">{broadcastsCollection.state.size}</span
 						></button
 					>
 				{/if}
