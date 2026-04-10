@@ -35,6 +35,7 @@
 			channelNavControls = s
 		}
 	})
+	let isTrackDetail = $derived(Boolean(tid))
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
@@ -256,7 +257,11 @@
 		{/if}
 
 		<menu class="channel-nav">
-			{#if page.route.id !== '/[slug]/image'}
+			{#if isTrackDetail}
+				<a class="btn ghost" href={`${resolve('/[slug]/tracks', {slug})}#${tid}`}>
+					<Icon icon="arrow-left" />
+				</a>
+			{:else if page.route.id !== '/[slug]/image'}
 				<ChannelSectionMenu
 					{slug}
 					{channel}
