@@ -4,6 +4,7 @@ node_modules
 /build
 .sprite
 rollup-visualizer.html
+.wrangler/
 
 # inlang generated artifacts
 ./i18n/project.inlang/cache/
