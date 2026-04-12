@@ -27,6 +27,8 @@
 		menuAlign?: 'left' | 'right' | 'end'
 		menuValign?: 'top' | 'bottom'
 		onLocate?: () => void
+		disableDoubleClickPlay?: boolean
+		linkTitleToTrack?: boolean
 		children?: Snippet<[Track]>
 		description?: Snippet
 	}
@@ -44,6 +46,8 @@
 		menuAlign,
 		menuValign,
 		onLocate,
+		disableDoubleClickPlay = false,
+		linkTitleToTrack = false,
 		children,
 		description
 	}: Props = $props()
@@ -62,6 +66,7 @@
 	const imageSrc = $derived(ytid ? trackImageUrl(ytid) : null)
 
 	const dblclick = (event: MouseEvent) => {
+		if (disableDoubleClickPlay) return
 		event.preventDefault()
 		const target = event.target as HTMLElement
 		// Let time element and hashtag/mention links navigate normally
@@ -128,7 +133,13 @@
 				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 			/>{/if}
 		<div class="text">
-			<h3 class={['title', {locatable: Boolean(onLocate)}]} onclick={onLocate}>{track.title}</h3>
+			<h3 class={['title', {locatable: Boolean(onLocate && !linkTitleToTrack)}]} onclick={onLocate}>
+				{#if linkTitleToTrack && isRealTrack && !appState.embed_mode}
+					<a href={permalink}>{track.title}</a>
+				{:else}
+					{track.title}
+				{/if}
+			</h3>
 			{#if description}
 				<p class="description">{@render description()}</p>
 			{:else if track.description}
@@ -298,6 +309,7 @@
 		:global(a) {
 			text-decoration: none;
 			color: inherit;
+			cursor: var(--interactive-cursor, pointer);
 		}
 		.active & {
 			color: var(--accent-10);

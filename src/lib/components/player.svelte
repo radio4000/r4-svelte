@@ -144,6 +144,7 @@
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
+	const isSyncedListeningMode = $derived(Boolean(isListeningToBroadcast || deck?.auto_radio))
 	let showDeckActions = $derived(!isListeningToBroadcast || isListeningGroupControlDeck)
 	let hasActiveDeckContextMenu = $derived(
 		Boolean(
@@ -698,6 +699,8 @@
 							track={displayTrack}
 							{deckId}
 							canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
+							disableDoubleClickPlay={true}
+							linkTitleToTrack={true}
 							menuValign="top"
 							menuAlign="end"
 						/>
@@ -710,7 +713,9 @@
 					canEdit={Boolean(channel && canEditChannel(channel.id))}
 					menuValign="top"
 					menuAlign="end"
-					onLocate={scrollToActive}
+					onLocate={isSyncedListeningMode ? undefined : scrollToActive}
+					disableDoubleClickPlay={isSyncedListeningMode}
+					linkTitleToTrack={isSyncedListeningMode}
 				/>
 			{/if}
 		</footer>
