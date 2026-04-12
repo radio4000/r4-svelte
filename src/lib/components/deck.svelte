@@ -299,9 +299,13 @@
 		pointer-events: none;
 	}
 
-	/* When video is hidden but queue is visible, let queue fill the height */
+	/* When video is hidden but queue is visible, queue fills the space */
 	.deck.hide-video:not(.hide-queue) :global(.video-hidden-placeholder) {
-		flex: 0 0 auto;
+		display: none;
+	}
+
+	.deck.hide-video:not(.hide-queue) :global(.queue-panel) {
+		flex: 1 1 auto;
 		min-height: 0;
 	}
 
