@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import {captureEventsCollection} from '$lib/collections/capture-events'
-	import {leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast'
+	import {resyncBroadcastDeck} from '$lib/broadcast'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {channelPresence} from '$lib/presence.svelte'
 	import Deck from '$lib/components/deck.svelte'
@@ -93,27 +93,19 @@
 			</section>
 		{/if}
 	</div>
-	{#if visibleListeningDeckIds.length}
-		<div class="exit-mode-bar">
-			<button
-				type="button"
-				class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
-				onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
-			>
-				{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
-				<Icon icon="signal" size={12} />
-				{visibleListeningDecksSynced ? 'Live' : 'Sync'}
-			</button>
-			<button
-				type="button"
-				class="exit-mode-btn"
-				onclick={() => visibleListeningDeckIds.forEach((id) => leaveBroadcast(id))}
-			>
-				<Icon icon="close" size={12} />
-				{m.broadcasts_leave()}
-			</button>
-		</div>
-	{/if}
+		{#if visibleListeningDeckIds.length}
+			<div class="exit-mode-bar">
+				<button
+					type="button"
+					class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
+					onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+				>
+					{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
+					<Icon icon="signal" size={12} />
+					{visibleListeningDecksSynced ? 'Live' : 'Sync'}
+				</button>
+			</div>
+		{/if}
 </aside>
 
 <style>
