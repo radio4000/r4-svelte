@@ -310,25 +310,33 @@
 										</div>
 									{/each}
 								</div>
-								<button
-									class="compact-group-edge right"
-									aria-label={m.player_compact_show_panel()}
-									onclick={() => toggleDeckCompact(compactListeningDeckIds[0])}
-								>
-									<Icon icon="deck-panel" expanded />
-								</button>
-							</div>
-						{/if}
-						{#if compactListeningDeckIds.length}
-							<div class="leave-broadcast-bar">
-								<button
-									class:active={compactListeningDecksSynced}
-									onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
-								>
-									{#if compactListenPresenceCount > 0}<PresenceCount count={compactListenPresenceCount} />{/if}
-									<Icon icon="signal" size={12} />
-									{compactListeningDecksSynced ? 'Live' : 'Sync'}
-								</button>
+								<div class="compact-group-actions">
+									<div class="compact-group-row">
+										<button
+											class:active={compactListeningDecksSynced}
+											onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+										>
+											{#if compactListenPresenceCount > 0}
+												<PresenceCount count={compactListenPresenceCount} />
+											{/if}
+											<Icon icon="signal" size={12} />
+											{compactListeningDecksSynced ? 'Live' : 'Sync'}
+										</button>
+										<button
+											onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+										>
+											<Icon icon="close" size={12} />
+											{m.broadcasts_leave()}
+										</button>
+									</div>
+									<button
+										class="compact-group-edge right"
+										aria-label={m.player_compact_show_panel()}
+										onclick={() => toggleDeckCompact(compactListeningDeckIds[0])}
+									>
+										<Icon icon="deck-panel" expanded />
+									</button>
+								</div>
 							</div>
 						{/if}
 					</section>
@@ -451,7 +459,7 @@
 	.compact-listening-group {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
-		align-items: stretch;
+		align-items: center;
 		min-width: 0;
 	}
 
@@ -467,34 +475,47 @@
 		justify-content: center;
 		padding-inline: 0.45rem;
 		border-radius: 0;
+		align-self: center;
+		min-height: auto;
 	}
 
 	.compact-group-edge.left {
 		border-right: 1px solid var(--gray-6);
 	}
 
-	.compact-group-edge.right {
+	.compact-group-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding: 0.25rem 0.35rem;
 		border-left: 1px solid var(--gray-6);
+		align-self: center;
+	}
+
+	.compact-group-row {
+		display: inline-flex;
+		gap: 0.2rem;
+	}
+
+	.compact-group-row button,
+	.compact-group-edge.right {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
+		font-size: var(--font-2);
+		white-space: nowrap;
+		padding: 0.2rem 0.45rem;
+		min-height: auto;
+	}
+
+	.compact-group-edge.right {
+		align-self: flex-end;
+		border-left: none;
 	}
 
 	.compact-decks:empty {
 		display: none;
-	}
-
-	.leave-broadcast-bar {
-		display: flex;
-		justify-content: flex-end;
-		padding: 0.25rem 0.5rem;
-		border-top: 1px solid var(--gray-6);
-	}
-
-	.leave-broadcast-bar button {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: var(--font-2);
-		padding: 0.2rem 0.6rem;
-		white-space: nowrap;
 	}
 
 	.compact-decks :global(.deck-compact-bar) {

@@ -24,16 +24,16 @@
 	import {playbackState, toAutoTracks} from '$lib/player/auto-radio'
 	import {
 		joinBroadcast,
+		leaveBroadcast,
 		resyncBroadcastDeck,
 		getBroadcastingChannelId,
 		notifyBroadcastState
 	} from '$lib/broadcast.js'
 	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/player/broadcast-utils'
 	import {appState, canEditChannel, removeDeck, deckAccent} from '$lib/app-state.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
-	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
@@ -163,6 +163,13 @@
 	let headerChannel = $derived(
 		isListeningToBroadcast ? (broadcastingChannel ?? displayChannel) : displayChannel
 	)
+	let secondaryHeaderChannel = $derived.by(() => {
+		if (!isListeningToBroadcast || !headerChannel || !displayChannel) return undefined
+		const same =
+			(headerChannel.id && displayChannel.id && headerChannel.id === displayChannel.id) ||
+			(headerChannel.slug && displayChannel.slug && headerChannel.slug === displayChannel.slug)
+		return same ? undefined : displayChannel
+	})
 
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
@@ -476,23 +483,18 @@
 			{/if}
 			{#if headerChannel}
 				<div class="header-channel">
-					{#if appState.embed_mode}
-						<span class="avatar-link">
-							<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-						</span>
-					{:else}
-						<a class="avatar-link" href={resolve(`/${headerChannel.slug}`)}>
-							<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-						</a>
-					{/if}
-					<DeckChannelHeader
-						{deck}
+					<ChannelMicroCard
 						channel={headerChannel}
-						track={displayTrack}
-						titleElement="div"
-						titleClass="player-header-title"
-						showModeMeta={false}
+						href={appState.embed_mode ? undefined : resolve('/[slug]', {slug: headerChannel.slug})}
 					/>
+					{#if secondaryHeaderChannel}
+						<ChannelMicroCard
+							channel={secondaryHeaderChannel}
+							href={appState.embed_mode
+								? undefined
+								: resolve('/[slug]', {slug: secondaryHeaderChannel.slug})}
+						/>
+					{/if}
 				</div>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
@@ -506,6 +508,14 @@
 							if (bchId) notifyBroadcastState(bchId)
 						}}
 						{@attach tooltip({content: m.player_tooltip_close_deck(), position: 'top'})}
+						>
+							<Icon icon="close" />
+						</button>
+				{:else if isListeningGroupControlDeck}
+					<button
+						class="close-deck"
+						onclick={() => listeningDeckIds.forEach((id) => leaveBroadcast(id))}
+						{@attach tooltip({content: m.broadcasts_leave(), position: 'top'})}
 					>
 						<Icon icon="close" />
 					</button>
@@ -767,33 +777,13 @@
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.35rem;
 		min-width: 0;
-		max-width: min(58vw, 20rem);
+		max-width: min(64vw, 26rem);
 	}
 
-	.header-channel :global(.deck-channel-header) {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.header-channel :global(.player-header-title) {
-		font-size: var(--font-4);
-		font-weight: 600;
-		line-height: 1;
-	}
-
-	.header-channel :global(.meta-row) {
-		font-size: var(--font-2);
-	}
-
-	.avatar-link {
+	.header-channel :global(.channel-micro-card) {
 		flex-shrink: 0;
-		line-height: 0;
-
-		:global(img) {
-			height: 2rem;
-		}
 	}
 
 	.header-id {
@@ -835,9 +825,9 @@
 		min-height: 1.35rem;
 	}
 
-		.controls .auto-sync.active :global(svg) {
-			color: var(--accent-9);
-		}
+	.controls .auto-sync.active :global(svg) {
+		color: var(--accent-9);
+	}
 
 
 	.layout-controls {
