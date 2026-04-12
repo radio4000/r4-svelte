@@ -245,14 +245,7 @@ export function leaveBroadcast(deckId) {
 	if (channelId) {
 		stopBroadcastStateListener(channelId)
 		stopBroadcastTableListener(channelId)
-		const decksToClose = Object.entries(appState.decks)
-			.filter(([, deck]) => deck.listening_to_channel_id === channelId)
-			.map(([id]) => Number(id))
-		for (const id of decksToClose) {
-			stopBroadcastSync(id)
-			clearUserInitiatedPlay(id)
-			removeDeck(id)
-		}
+		closeListeningDecksForChannel(channelId)
 	} else {
 		// Fallback: if invoked on a non-listening deck, preserve old behavior.
 		const deck = appState.decks[deckId]
@@ -691,7 +684,14 @@ function startBroadcastTableListener(channelId) {
 				table: 'broadcast',
 				filter: `channel_id=eq.${channelId}`
 			},
-			() => {
+			(payload) => {
+				if (payload?.eventType === 'DELETE') {
+					log.log(`table_delete @${label(channelId)} closing listeners`)
+					stopBroadcastStateListener(channelId)
+					stopBroadcastTableListener(channelId)
+					closeListeningDecksForChannel(channelId)
+					return
+				}
 				log.debug(`table_change @${label(channelId)}`)
 				const stateChannel = broadcastStateListeners.get(channelId)
 				if (stateChannel) {
@@ -712,6 +712,17 @@ function stopBroadcastTableListener(channelId) {
 	if (channel) {
 		channel.unsubscribe()
 		broadcastTableListeners.delete(channelId)
+	}
+}
+
+function closeListeningDecksForChannel(channelId) {
+	const decksToClose = Object.entries(appState.decks)
+		.filter(([, deck]) => deck.listening_to_channel_id === channelId)
+		.map(([id]) => Number(id))
+	for (const id of decksToClose) {
+		stopBroadcastSync(id)
+		clearUserInitiatedPlay(id)
+		removeDeck(id)
 	}
 }
 
@@ -867,8 +878,12 @@ async function syncDeckToBroadcastState(deckId, channelId, state) {
 
 /** Validate that listening_to_channel_id points to an active broadcast (checks all decks) */
 export async function validateListeningState() {
-	for (const deck of Object.values(appState.decks)) {
-		if (!deck.listening_to_channel_id) continue
+	const listeningDeckIds = Object.keys(appState.decks)
+		.map(Number)
+		.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	for (const id of listeningDeckIds) {
+		const deck = appState.decks[id]
+		if (!deck?.listening_to_channel_id) continue
 		try {
 			const {data} = await sdk.supabase
 				.from('broadcast')
@@ -876,10 +891,10 @@ export async function validateListeningState() {
 				.eq('channel_id', deck.listening_to_channel_id)
 				.single()
 			if (!data) {
-				deck.listening_to_channel_id = undefined
+				closeListeningDecksForChannel(deck.listening_to_channel_id)
 			}
 		} catch {
-			deck.listening_to_channel_id = undefined
+			closeListeningDecksForChannel(deck.listening_to_channel_id)
 		}
 	}
 }
