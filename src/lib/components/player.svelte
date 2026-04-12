@@ -140,6 +140,7 @@
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
+	let showDeckActions = $derived(!isListeningToBroadcast || isListeningGroupControlDeck)
 
 	const listenSlug = $derived(
 		deck?.listening_to_channel_id
@@ -509,45 +510,45 @@
 						<Icon icon="close" />
 					</button>
 				{/if}
-				<PopoverMenu align="right" closeOnClick={false}>
-					{#snippet trigger()}
-						<Icon icon="options-horizontal" />
-					{/snippet}
-					<menu class="deck-context-menu">
-						<button
-							onclick={() => toggleVideo(deckId)}
-							class:active={deck?.hide_video_player}
-							data-no-close
-						>
-							{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
-							<Icon icon="tv" size={14} />
-						</button>
-						{#if !isListeningToBroadcast}
+				{#if showDeckActions}
+					<PopoverMenu align="right" closeOnClick={false}>
+						{#snippet trigger()}
+							<Icon icon="options-horizontal" />
+						{/snippet}
+						<menu class="deck-context-menu">
 							<button
-								onclick={() => toggleQueuePanel(deckId)}
-								class:active={deck?.hide_queue_panel}
+								onclick={() => toggleVideo(deckId)}
+								class:active={deck?.hide_video_player}
 								data-no-close
 							>
-								{deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
-								<Icon icon="unordered-list" size={14} />
+								{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
+								<Icon icon="tv" size={14} />
 							</button>
-						{/if}
-							{#if isListeningGroupControlDeck}
+							{#if !isListeningToBroadcast}
 								<button
-									onclick={() => togglePlayerExpanded(deckId)}
-									class:active={deck?.expanded}
+									onclick={() => toggleQueuePanel(deckId)}
+									class:active={deck?.hide_queue_panel}
 									data-no-close
 								>
-									{@html m.player_tooltip_expand()}
-									<Icon icon="fullscreen" size={14} />
+									{deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
+									<Icon icon="unordered-list" size={14} />
 								</button>
 							{/if}
+							<button
+								onclick={() => togglePlayerExpanded(deckId)}
+								class:active={deck?.expanded}
+								data-no-close
+							>
+								{@html m.player_tooltip_expand()}
+								<Icon icon="fullscreen" size={14} />
+							</button>
 						</menu>
 					</PopoverMenu>
-					{#if isListeningGroupControlDeck && (hasMultipleDecks || !appState.embed_mode)}
-						<button
-							onclick={() => toggleDeckCompact(deckId)}
-							aria-label={m.player_tooltip_compact()}
+				{/if}
+				{#if showDeckActions && (hasMultipleDecks || !appState.embed_mode)}
+					<button
+						onclick={() => toggleDeckCompact(deckId)}
+						aria-label={m.player_tooltip_compact()}
 						{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
 					>
 						<Icon icon="deck-panel" />

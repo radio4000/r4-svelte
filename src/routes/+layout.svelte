@@ -12,6 +12,7 @@
 	import ToolTip from '$lib/components/tool-tip.svelte'
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
 	import AppUpdateBanner from '$lib/components/app-update-banner.svelte'
+	import {toggleDeckCompact} from '$lib/api'
 	import {onMount} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
@@ -51,6 +52,9 @@
 	let compactDeckIds = $derived(allDeckIds.filter((id) => Boolean(appState.decks[id]?.compact)))
 	let compactListeningDeckIds = $derived(
 		compactDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
+	let compactLocalDeckIds = $derived(
+		compactDeckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id)
 	)
 	let compactListeningDecksSynced = $derived(
 		compactListeningDeckIds.length > 0 &&
@@ -277,7 +281,7 @@
 						<DeckStrip />
 					</section>
 					<section class="compact-decks" aria-label={m.decks_compact_label()}>
-						{#each compactDeckIds as deckId (deckId)}
+						{#each compactLocalDeckIds as deckId (deckId)}
 							<div
 								class="compact-deck-item"
 								style:--deck-accent={deckAccent(allDeckIds, deckId)}
@@ -287,6 +291,35 @@
 							</div>
 						{/each}
 						{#if compactListeningDeckIds.length}
+							<div class="compact-listening-group">
+								<button
+									class="compact-group-edge left"
+									aria-label={m.broadcasts_leave()}
+									onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+								>
+									<Icon icon="close" size={12} />
+								</button>
+								<div class="compact-listening-list">
+									{#each compactListeningDeckIds as deckId (deckId)}
+										<div
+											class="compact-deck-item"
+											style:--deck-accent={deckAccent(allDeckIds, deckId)}
+											transition:compactDeckTransition
+										>
+											<DeckCompactBar {deckId} showEdgeControls={false} />
+										</div>
+									{/each}
+								</div>
+								<button
+									class="compact-group-edge right"
+									aria-label={m.player_compact_show_panel()}
+									onclick={() => toggleDeckCompact(compactListeningDeckIds[0])}
+								>
+									<Icon icon="deck-panel" expanded />
+								</button>
+							</div>
+						{/if}
+						{#if compactListeningDeckIds.length}
 							<div class="leave-broadcast-bar">
 								<button
 									class:active={compactListeningDecksSynced}
@@ -295,12 +328,6 @@
 									{#if compactListenPresenceCount > 0}<PresenceCount count={compactListenPresenceCount} />{/if}
 									<Icon icon="signal" size={12} />
 									{compactListeningDecksSynced ? 'Live' : 'Sync'}
-								</button>
-								<button
-									onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
-								>
-									<Icon icon="close" size={12} />
-									{m.broadcasts_leave()}
 								</button>
 							</div>
 						{/if}
@@ -419,6 +446,35 @@
 
 	.compact-deck-item {
 		min-width: 0;
+	}
+
+	.compact-listening-group {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: stretch;
+		min-width: 0;
+	}
+
+	.compact-listening-list {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.compact-group-edge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 0.45rem;
+		border-radius: 0;
+	}
+
+	.compact-group-edge.left {
+		border-right: 1px solid var(--gray-6);
+	}
+
+	.compact-group-edge.right {
+		border-left: 1px solid var(--gray-6);
 	}
 
 	.compact-decks:empty {

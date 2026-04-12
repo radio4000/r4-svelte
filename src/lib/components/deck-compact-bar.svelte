@@ -20,11 +20,10 @@
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
 	import Icon from '$lib/components/icon.svelte'
-	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import PresenceCount from '$lib/components/presence-count.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import PlayerProgress from '$lib/components/player-progress.svelte'
@@ -32,8 +31,8 @@
 	import {channelPresence} from '$lib/presence.svelte'
 	import {viewLabel} from '$lib/views'
 
-	/** @type {{deckId: number}} */
-	let {deckId} = $props()
+	/** @type {{deckId: number, showEdgeControls?: boolean}} */
+	let {deckId, showEdgeControls = true} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -88,19 +87,6 @@
 	)
 	let channel = $derived(channelQuery.data?.[0])
 
-	const broadcastQuery = useLiveQuery((q) =>
-		channel?.id
-			? q
-					.from({b: broadcastsCollection})
-					.where(({b}) => eq(b.channel_id, channel.id))
-					.findOne()
-			: q
-					.from({b: broadcastsCollection})
-					.orderBy(({b}) => b.channel_id, 'asc')
-					.limit(0)
-	)
-	let isChannelBroadcasting = $derived(Boolean(broadcastQuery.data))
-
 	let lastTrack = $state()
 	let lastChannel = $state()
 	$effect(() => {
@@ -115,7 +101,6 @@
 
 	let displayTrack = $derived(track ?? broadcastTrack ?? lastTrack)
 	let displayChannel = $derived(channel ?? lastChannel)
-	let displaySlug = $derived(displayChannel?.slug ?? displayTrack?.slug)
 	let broadcasterChannel = $derived.by(() => {
 		const channelId = deck?.listening_to_channel_id
 		if (!channelId) return undefined
@@ -125,6 +110,13 @@
 	let headerChannel = $derived(
 		deck?.listening_to_channel_id ? (broadcasterChannel ?? displayChannel) : displayChannel
 	)
+	let secondaryChannel = $derived.by(() => {
+		if (!deck?.listening_to_channel_id || !headerChannel || !displayChannel) return undefined
+		const same =
+			(headerChannel.id && displayChannel.id && headerChannel.id === displayChannel.id) ||
+			(headerChannel.slug && displayChannel.slug && headerChannel.slug === displayChannel.slug)
+		return same ? undefined : displayChannel
+	})
 	const listenSlug = $derived(
 		deck?.listening_to_channel_id
 			? (channelsCollection.state.get(deck.listening_to_channel_id)?.slug ??
@@ -132,9 +124,7 @@
 			: undefined
 	)
 	const broadcastSlug = $derived(
-		deck?.broadcasting_channel_id
-			? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug
-			: undefined
+		deck?.broadcasting_channel_id ? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug : undefined
 	)
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
@@ -151,19 +141,14 @@
 					? (channelPresence[deck.playlist_slug]?.byUri?.[autoUri] ?? 0)
 					: 0
 	)
-	let headerSlug = $derived(headerChannel?.slug ?? displaySlug)
-	let canEditTrackChannel = $derived(
-		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
-	)
+	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
 	let trackHref = $derived(
 		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
 			? resolve('/[slug]/tracks/[tid]', {slug: displayTrack.slug, tid: String(displayTrack.id)})
 			: undefined
 	)
 	let provider = $derived(
-		displayTrack?.provider ||
-			(displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) ||
-			null
+		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
 	)
 
 	let activeQueue = $derived(getActiveQueue(deck))
@@ -171,7 +156,6 @@
 	let canPrevFromQueue = $derived(canPrev(activeQueue, track?.id))
 	let canNextFromQueue = $derived(canNext(activeQueue, track?.id))
 
-	// Read media time from deck state (written by player.svelte)
 	let mediaDuration = $derived(deck?.media_duration ?? NaN)
 	let mediaCurrentTime = $derived(deck?.media_current_time ?? 0)
 </script>
@@ -190,7 +174,7 @@
 			currentTime={mediaCurrentTime}
 			{mediaDuration}
 			trackDuration={displayTrack?.duration}
-				disabled={Boolean(deck?.listening_to_channel_id || deck?.auto_radio)}
+			disabled={Boolean(deck?.listening_to_channel_id || deck?.auto_radio)}
 			onseek={(val) => {
 				if (deck) deck.media_current_time = val
 				const mediaElement = getMediaPlayer(deckId)
@@ -199,42 +183,34 @@
 		/>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
-		<button
-			class="close-deck"
-			onclick={() => {
-				const bchId = getBroadcastingChannelId()
-				clearUserInitiatedPlay(deckId)
-				removeDeck(deckId)
-				if (bchId) notifyBroadcastState(bchId)
-			}}
-			aria-label={m.player_tooltip_close_deck()}
-			{@attach tooltip({content: m.player_tooltip_close_deck()})}
-		>
-			<Icon icon="close" />
-		</button>
+		{#if showEdgeControls && (!deck?.listening_to_channel_id || isListeningGroupControlDeck)}
+			<button
+				class="close-deck"
+				onclick={() => {
+					const bchId = getBroadcastingChannelId()
+					clearUserInitiatedPlay(deckId)
+					removeDeck(deckId)
+					if (bchId) notifyBroadcastState(bchId)
+				}}
+				aria-label={m.player_tooltip_close_deck()}
+				{@attach tooltip({content: m.player_tooltip_close_deck()})}
+			>
+				<Icon icon="close" />
+			</button>
+		{/if}
 		<div class="channel-panel">
 			{#if headerChannel}
-				{#if appState.embed_mode}
-					<span class="avatar">
-						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					</span>
-				{:else if headerSlug}
-					<a class="avatar" href={resolve(`/${headerSlug}`)}>
-						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					</a>
-				{:else}
-					<span class="avatar">
-						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
-					</span>
-				{/if}
+				<ChannelMicroCard
+					channel={headerChannel}
+					href={appState.embed_mode ? undefined : resolve('/[slug]', {slug: headerChannel.slug})}
+				/>
 			{/if}
-			<DeckChannelHeader
-				{deck}
-				channel={headerChannel}
-				track={displayTrack}
-				isBroadcastingChannel={isChannelBroadcasting}
-				showModeMeta={false}
-			/>
+			{#if secondaryChannel}
+				<ChannelMicroCard
+					channel={secondaryChannel}
+					href={appState.embed_mode ? undefined : resolve('/[slug]', {slug: secondaryChannel.slug})}
+				/>
+			{/if}
 		</div>
 		{#if displayTrack}
 			<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
@@ -293,23 +269,23 @@
 				>
 					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 				</button>
-					<button
-						class="auto-sync"
-						class:active={!autoNotSynced}
-						title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
-						aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
-						onclick={() => resyncAutoRadio(deckId)}
-					>
-						{#if modePresenceCount > 0}
-							<PresenceCount count={modePresenceCount} />
-						{/if}
-						<Icon icon="infinite" size={12} />
-					</button>
+				<button
+					class="auto-sync"
+					class:active={!autoNotSynced}
+					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					onclick={() => resyncAutoRadio(deckId)}
+				>
+					{#if modePresenceCount > 0}
+						<PresenceCount count={modePresenceCount} />
+					{/if}
+					<Icon icon="infinite" size={12} />
+				</button>
 			{:else if !deck?.listening_to_channel_id}
 				<VolumeControl {deckId} />
 			{/if}
 		</menu>
-		{#if isListeningGroupControlDeck}
+		{#if showEdgeControls && isListeningGroupControlDeck}
 			<button
 				class="expand"
 				onclick={() => toggleDeckCompact(deckId)}
@@ -364,10 +340,18 @@
 	.channel-panel {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.3rem;
 		min-width: 0;
 		flex: 0 1 auto;
 		order: 1;
+	}
+
+	:global(.channel-panel .channel-micro-card) {
+		flex-shrink: 0;
+	}
+
+	.active-deck :global(.channel-panel .channel-micro-card) {
+		border-color: var(--accent-9);
 	}
 
 	.track-panel {
@@ -397,16 +381,6 @@
 		order: 5;
 	}
 
-	.avatar {
-		width: var(--track-artwork-size);
-		height: var(--track-artwork-size);
-	}
-
-	.active-deck .avatar {
-		outline: 2px solid var(--accent-9);
-		border-radius: var(--border-radius);
-	}
-
 	.track-panel :global(article) {
 		height: 100%;
 		outline: 0;
@@ -423,8 +397,8 @@
 
 	@media (min-width: 601px) {
 		.channel-panel {
-			min-width: 10rem;
-			flex: 0 1 16rem;
+			min-width: 8.5rem;
+			flex: 0 1 18rem;
 		}
 
 		.controls {
