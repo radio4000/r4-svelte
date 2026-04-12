@@ -19,7 +19,9 @@
 		deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
 	)
 	let videoMixListening = $derived(
-		listeningDeckIds.some((id) => Boolean(appState.decks[id]?.video_mix && !appState.decks[id]?.compact))
+		listeningDeckIds.some((id) =>
+			Boolean(appState.decks[id]?.video_mix && !appState.decks[id]?.compact)
+		)
 	)
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(
@@ -51,9 +53,7 @@
 	)
 	let visibleListeningDecksSynced = $derived(
 		visibleListeningDeckIds.length > 0 &&
-			visibleListeningDeckIds.every(
-				(id) => !appState.decks[id]?.listening_drifted && appState.decks[id]?.is_playing
-			)
+			visibleListeningDeckIds.every((id) => !appState.decks[id]?.listening_drifted)
 	)
 	let listenPresenceCount = $derived.by(() => {
 		let total = 0
@@ -90,7 +90,10 @@
 			</section>
 		{/if}
 		{#if listeningDeckIds.length}
-			<section class={['broadcasts', videoMixListening && 'video-mix']} aria-label={m.decks_broadcast_listeners()}>
+			<section
+				class={['broadcasts', videoMixListening && 'video-mix']}
+				aria-label={m.decks_broadcast_listeners()}
+			>
 				{#each listeningDeckIds as deckId (deckId)}
 					<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 						<Deck {deckId} />
@@ -99,19 +102,19 @@
 			</section>
 		{/if}
 	</div>
-		{#if visibleListeningDeckIds.length}
-			<div class="exit-mode-bar">
-				<button
-					type="button"
-					class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
-					onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
-				>
-					{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
-					<Icon icon="signal" size={12} />
-					{visibleListeningDecksSynced ? 'Live' : 'Sync'}
-				</button>
-			</div>
-		{/if}
+	{#if visibleListeningDeckIds.length}
+		<div class="exit-mode-bar">
+			<button
+				type="button"
+				class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
+				onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+			>
+				{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
+				<Icon icon="signal" size={12} />
+				{visibleListeningDecksSynced ? 'Live' : 'Sync'}
+			</button>
+		</div>
+	{/if}
 </aside>
 
 <style>
@@ -121,6 +124,8 @@
 		flex-shrink: 0;
 		min-height: 0;
 		margin: var(--interface-margin);
+		overflow: clip;
+		border-radius: var(--border-radius);
 
 		&:empty {
 			display: none;
@@ -153,6 +158,11 @@
 			flex: 0 0 auto;
 			min-height: 0;
 			min-width: max-content;
+			border-radius: var(--border-radius);
+
+			&:has(:global(.deck.broadcasting)) {
+				box-shadow: inset 0 0 0 1px var(--accent-9);
+			}
 		}
 
 		.broadcasts {
@@ -239,7 +249,9 @@
 			max-height: none;
 			aspect-ratio: auto;
 			opacity: var(--video-mix-opacity, 1);
-			transition: opacity 120ms ease, filter 220ms ease;
+			transition:
+				opacity 120ms ease,
+				filter 220ms ease;
 			z-index: var(--video-mix-z, 10);
 			pointer-events: none;
 			mix-blend-mode: screen;
@@ -277,6 +289,12 @@
 			width: 100%;
 			min-width: 0;
 			min-height: 0;
+		}
+
+		.local:has(:global(.deck.expanded:not(.compact))) {
+			flex: 1 1 auto;
+			min-width: 0;
+			width: 100%;
 		}
 
 		.exit-mode-bar {
@@ -382,11 +400,11 @@
 				&:has(
 					:global(
 						.deck:not(.compact):is(
-							:not(.hide-video),
-							.listening,
-							.auto,
-							:not(.listening):not(.auto):not(.hide-queue)
-						)
+								:not(.hide-video),
+								.listening,
+								.auto,
+								:not(.listening):not(.auto):not(.hide-queue)
+							)
 					)
 				) {
 					flex: 1 1 0;
@@ -403,11 +421,11 @@
 				&:has(
 					:global(
 						.deck:not(.compact):is(
-							:not(.hide-video),
-							.listening,
-							.auto,
-							:not(.listening):not(.auto):not(.hide-queue)
-						)
+								:not(.hide-video),
+								.listening,
+								.auto,
+								:not(.listening):not(.auto):not(.hide-queue)
+							)
 					)
 				) {
 					flex: 1 1 0;
@@ -424,11 +442,11 @@
 				&:has(
 					:global(
 						.deck:not(.compact):is(
-							:not(.hide-video),
-							.listening,
-							.auto,
-							:not(.listening):not(.auto):not(.hide-queue)
-						)
+								:not(.hide-video),
+								.listening,
+								.auto,
+								:not(.listening):not(.auto):not(.hide-queue)
+							)
 					)
 				) {
 					flex: 1 1 0;
@@ -444,11 +462,11 @@
 				&:has(
 					:global(
 						.deck:not(.compact):is(
-							:not(.hide-video),
-							.listening,
-							.auto,
-							:not(.listening):not(.auto):not(.hide-queue)
-						)
+								:not(.hide-video),
+								.listening,
+								.auto,
+								:not(.listening):not(.auto):not(.hide-queue)
+							)
 					)
 				) {
 					flex: 1 1 0;
