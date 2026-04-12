@@ -18,6 +18,9 @@
 	let listeningDeckIds = $derived(
 		deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
 	)
+	let videoMixListening = $derived(
+		listeningDeckIds.some((id) => Boolean(appState.decks[id]?.video_mix && !appState.decks[id]?.compact))
+	)
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(
 		deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact)
@@ -70,6 +73,7 @@
 		allDecksCompact && 'all-compact',
 		singleVisibleDeck && 'single-visible',
 		expandedListeningMultiDeck && 'expanded-listening',
+		videoMixListening && 'video-mix-listening',
 		appState.embed_mode && 'embed-mode'
 	]}
 >
@@ -84,7 +88,7 @@
 			</section>
 		{/if}
 		{#if listeningDeckIds.length}
-			<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
+			<section class={['broadcasts', videoMixListening && 'video-mix']} aria-label={m.decks_broadcast_listeners()}>
 				{#each listeningDeckIds as deckId (deckId)}
 					<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 						<Deck {deckId} />
@@ -168,6 +172,86 @@
 				flex: 1 1 auto;
 				min-width: 0;
 			}
+		}
+
+		/* Video mix: stack listening deck videos into one layered viewport */
+		.broadcasts.video-mix {
+			--video-mix-stage-height: clamp(16rem, 62dvh, 80dvh);
+			--video-mix-stage-gap: 0.2rem;
+			isolation: isolate;
+			position: relative;
+		}
+
+		/* In mix mode, deck rows should only use their intrinsic chrome height */
+		.broadcasts.video-mix .deck-item {
+			flex: 0 0 auto;
+		}
+
+		/* Reserve one shared stage below all listening deck rows */
+		.broadcasts.video-mix::after {
+			content: '';
+			display: block;
+			height: var(--video-mix-stage-height);
+			margin-top: var(--video-mix-stage-gap);
+			background: black;
+			border-radius: var(--border-radius);
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix) {
+			position: static;
+			overflow: visible;
+			min-width: 200px;
+			height: auto;
+			min-height: 0;
+		}
+
+		/* Compact the per-deck chrome so the shared video stage can grow */
+		.broadcasts.video-mix :global(.deck.listening.video-mix .header-top) {
+			padding: 0.2rem 0.35rem;
+			gap: 0.25rem;
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix .bottom-chrome) {
+			border-top-width: 0;
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix .track-panel article) {
+			padding-block: 0.18rem;
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix .controls) {
+			padding: 0.22rem 0.35rem 0.3rem;
+			gap: 0.15rem;
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix .video-hidden-placeholder) {
+			display: none;
+		}
+
+		.broadcasts.video-mix :global(.deck.listening.video-mix .video) {
+			position: absolute;
+			inset-block-end: 0;
+			inset-inline: 0;
+			width: 100%;
+			height: var(--video-mix-stage-height);
+			max-height: none;
+			aspect-ratio: auto;
+			opacity: var(--video-mix-opacity, 1);
+			transition: opacity 120ms ease, filter 220ms ease;
+			z-index: var(--video-mix-z, 10);
+			pointer-events: none;
+			mix-blend-mode: screen;
+			filter: saturate(1.2) contrast(1.08) brightness(0.95);
+		}
+
+		.broadcasts.video-mix .deck-item:nth-child(2n) :global(.deck.listening.video-mix .video) {
+			mix-blend-mode: lighten;
+			filter: hue-rotate(-8deg) saturate(1.25) contrast(1.1) brightness(0.92);
+		}
+
+		.broadcasts.video-mix .deck-item:nth-child(3n) :global(.deck.listening.video-mix .video) {
+			mix-blend-mode: color-dodge;
+			filter: hue-rotate(10deg) saturate(1.15) contrast(1.12) brightness(0.9);
 		}
 
 		.deck-item {

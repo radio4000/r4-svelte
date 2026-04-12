@@ -2,6 +2,8 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
+Last update (2026-04-12): implemented compact-deck mobile micro-channel responsiveness and broadcast multi-deck `video_mix` mode.
+
 ## Simplify: rely on types and primitives, fewer layers
 
 - **Broadcast field juggling** — `broadcast.js`: `pickBroadcastFields()` (line 29), `getBroadcastDeckState()` (line 426), ephemeral track construction (line 350). Three hand-rolled serializers. Align types so most disappear.

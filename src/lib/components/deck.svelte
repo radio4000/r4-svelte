@@ -13,6 +13,12 @@
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 	let isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
 	let isAutoRadio = $derived(Boolean(deck?.auto_radio))
+	let firstListeningDeckId = $derived.by(() =>
+		Object.keys(appState.decks)
+			.map(Number)
+			.sort((a, b) => a - b)
+			.find((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
@@ -29,9 +35,23 @@
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 
 	// Inline deck width from stored value
-	let deckStyle = $derived(
-		deck?.queue_panel_width ? `--deck-width: ${deck.queue_panel_width}px` : ''
-	)
+	let videoMixOpacity = $derived.by(() => {
+		if (!deck?.video_mix || !isListeningToBroadcast) return undefined
+		if (deck.muted) return 0
+		const volume = Number.isFinite(deck.volume) ? deck.volume : 1
+		return Math.max(0, Math.min(1, volume))
+	})
+	let videoMixZ = $derived(deckId === firstListeningDeckId ? 30 : deck?.is_playing ? 20 : 10)
+	let deckStyle = $derived.by(() => {
+		/** @type {string[]} */
+		const styles = []
+		if (deck?.queue_panel_width) styles.push(`--deck-width: ${deck.queue_panel_width}px`)
+		if (deck?.video_mix && isListeningToBroadcast) {
+			styles.push(`--video-mix-opacity: ${videoMixOpacity ?? 1}`)
+			styles.push(`--video-mix-z: ${videoMixZ}`)
+		}
+		return styles.join('; ')
+	})
 
 	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
 
@@ -79,6 +99,7 @@
 			expanded: deck?.expanded,
 			compact: deck?.compact,
 			listening: isListeningToBroadcast,
+			'video-mix': Boolean(deck?.video_mix && isListeningToBroadcast),
 			broadcasting: isBroadcasting,
 			auto: isAutoRadio,
 			'active-deck': isActiveDeck,
