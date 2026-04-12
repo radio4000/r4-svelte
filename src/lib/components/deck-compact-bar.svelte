@@ -180,7 +180,7 @@
 			currentTime={mediaCurrentTime}
 			{mediaDuration}
 			trackDuration={displayTrack?.duration}
-			disabled={Boolean(deck?.listening_to_channel_id)}
+				disabled={Boolean(deck?.listening_to_channel_id || deck?.auto_radio)}
 			onseek={(val) => {
 				if (deck) deck.media_current_time = val
 				const mediaElement = getMediaPlayer(deckId)
