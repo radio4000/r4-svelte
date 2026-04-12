@@ -283,9 +283,10 @@
 				>
 					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
 				</button>
-				<button
-					class:active={!autoNotSynced}
-					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					<button
+						class="auto-sync"
+						class:active={!autoNotSynced}
+						title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					onclick={() => resyncAutoRadio(deckId)}
 				>
@@ -373,6 +374,10 @@
 		flex: 0 0 auto;
 		min-width: 0;
 		order: 4;
+	}
+
+	.controls .auto-sync.active :global(svg) {
+		color: var(--accent-9);
 	}
 
 	.expand {

@@ -673,8 +673,8 @@
 			{:else if deck?.auto_radio}
 				{@const autoNotSynced = !!deck?.auto_radio_drifted || !deck?.is_playing}
 				{@render btnPlay()}
-				<button
-					class={['auto-sync', {active: !autoNotSynced}]}
+					<button
+						class={['auto-sync', {active: !autoNotSynced}]}
 					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					onclick={() => resyncAutoRadio(deckId)}
@@ -832,13 +832,17 @@
 		padding: 0.5rem;
 	}
 
-	.controls :global(.auto-btn) {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding-inline: 0.35rem;
-		min-height: 1.35rem;
-	}
+		.controls :global(.auto-btn) {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding-inline: 0.35rem;
+			min-height: 1.35rem;
+		}
+
+		.controls .auto-sync.active :global(svg) {
+			color: var(--accent-9);
+		}
 
 
 	.layout-controls {
