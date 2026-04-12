@@ -452,6 +452,7 @@
 		display: grid;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
+		column-gap: 0.3rem;
 		min-width: 0;
 	}
 
@@ -466,13 +467,13 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.35rem 0.6rem;
-		border-radius: 0;
+		border-radius: var(--border-radius);
 		align-self: center;
 		min-height: 2rem;
 	}
 
 	.compact-group-edge.left {
-		border-right: 1px solid var(--gray-6);
+		margin-right: 0.05rem;
 	}
 
 	.compact-group-actions {
@@ -480,7 +481,6 @@
 		align-items: center;
 		gap: 0.2rem;
 		padding: 0.25rem 0.35rem 0.25rem 0.25rem;
-		border-left: 1px solid var(--gray-6);
 		align-self: center;
 	}
 

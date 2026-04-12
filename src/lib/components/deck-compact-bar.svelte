@@ -340,14 +340,17 @@
 	.channel-panel {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.3rem;
+		row-gap: 0.2rem;
 		min-width: 0;
 		flex: 0 1 auto;
 		order: 1;
 	}
 
 	:global(.channel-panel .channel-micro-card) {
-		flex-shrink: 0;
+		flex: 0 1 auto;
+		max-width: 100%;
 	}
 
 	.active-deck :global(.channel-panel .channel-micro-card) {

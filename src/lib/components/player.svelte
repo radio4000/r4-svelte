@@ -759,14 +759,17 @@
 	.header-channel {
 		display: flex;
 		flex-direction: row;
-		align-items: center;
+		align-items: flex-start;
+		flex-wrap: wrap;
 		gap: 0.35rem;
+		row-gap: 0.2rem;
 		min-width: 0;
 		max-width: min(64vw, 26rem);
 	}
 
 	.header-channel :global(.channel-micro-card) {
-		flex-shrink: 0;
+		flex: 0 1 auto;
+		max-width: 100%;
 	}
 
 	.header-id {
