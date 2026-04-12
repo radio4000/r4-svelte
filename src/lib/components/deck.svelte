@@ -259,7 +259,7 @@
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */
-	.deck.hide-video :global(.video) {
+	.deck.hide-video :global(media-controller.video) {
 		position: absolute;
 		width: 0;
 		height: 0;

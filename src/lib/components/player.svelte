@@ -68,6 +68,15 @@
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
+	let listeningDeckIds = $derived(
+		Object.keys(appState.decks)
+			.map(Number)
+			.sort((a, b) => a - b)
+			.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
+	let isListeningGroupControlDeck = $derived(
+		!deck?.listening_to_channel_id || listeningDeckIds[0] === deckId
+	)
 	let deckIds = $derived(Object.keys(appState.decks).map(Number))
 	let accentColor = $derived(deckAccent(deckIds, deckId))
 
@@ -523,20 +532,22 @@
 								<Icon icon="unordered-list" size={14} />
 							</button>
 						{/if}
+							{#if isListeningGroupControlDeck}
+								<button
+									onclick={() => togglePlayerExpanded(deckId)}
+									class:active={deck?.expanded}
+									data-no-close
+								>
+									{@html m.player_tooltip_expand()}
+									<Icon icon="fullscreen" size={14} />
+								</button>
+							{/if}
+						</menu>
+					</PopoverMenu>
+					{#if isListeningGroupControlDeck && (hasMultipleDecks || !appState.embed_mode)}
 						<button
-							onclick={() => togglePlayerExpanded(deckId)}
-							class:active={deck?.expanded}
-							data-no-close
-						>
-							{@html m.player_tooltip_expand()}
-							<Icon icon="fullscreen" size={14} />
-						</button>
-					</menu>
-				</PopoverMenu>
-				{#if hasMultipleDecks || !appState.embed_mode}
-					<button
-						onclick={() => toggleDeckCompact(deckId)}
-						aria-label={m.player_tooltip_compact()}
+							onclick={() => toggleDeckCompact(deckId)}
+							aria-label={m.player_tooltip_compact()}
 						{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
 					>
 						<Icon icon="deck-panel" />
@@ -611,7 +622,7 @@
 		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
 	</media-controller>
 	{#if deck?.hide_video_player}
-		<div class="video-hidden-placeholder" aria-label="Radio4000" data-clickable="true">
+		<div class="video video-hidden-placeholder" aria-label="Radio4000" data-clickable="true">
 			<IconR4 />
 		</div>
 	{/if}
@@ -881,21 +892,16 @@
 	}
 
 	.video-hidden-placeholder {
-		display: grid;
-		place-items: center;
-		width: 100%;
-		aspect-ratio: 16 / 9;
-		max-height: 25dvh;
-		background:
-			radial-gradient(circle at center, color-mix(in srgb, var(--accent-9) 15%, transparent), transparent 65%),
-			black;
-		color: color-mix(in srgb, var(--accent-9) 60%, white);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		color: var(--header-bg);
 	}
 
 	.video-hidden-placeholder :global(svg) {
-		width: min(40%, 10rem);
+		width: min(42%, 11rem);
 		height: auto;
-		opacity: 0.65;
 	}
 
 	.native-audio-player {

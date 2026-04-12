@@ -12,7 +12,8 @@
 		previous,
 		getMediaPlayer,
 		resyncAutoRadio,
-		clearUserInitiatedPlay
+		clearUserInitiatedPlay,
+		toggleDeckCompact
 	} from '$lib/api'
 	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
@@ -36,6 +37,15 @@
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
+	let listeningDeckIds = $derived(
+		Object.keys(appState.decks)
+			.map(Number)
+			.sort((a, b) => a - b)
+			.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
+	let isListeningGroupControlDeck = $derived(
+		!deck?.listening_to_channel_id || listeningDeckIds[0] === deckId
+	)
 
 	let track = $derived.by(() => {
 		const id = deck?.playlist_track
@@ -299,14 +309,16 @@
 				<VolumeControl {deckId} />
 			{/if}
 		</menu>
-		<button
-			class="expand"
-			onclick={() => (deck.compact = false)}
-			aria-label={m.player_compact_show_panel()}
-			{@attach tooltip({content: m.player_compact_show_panel()})}
-		>
-			<Icon icon="deck-panel" expanded />
-		</button>
+		{#if isListeningGroupControlDeck}
+			<button
+				class="expand"
+				onclick={() => toggleDeckCompact(deckId)}
+				aria-label={m.player_compact_show_panel()}
+				{@attach tooltip({content: m.player_compact_show_panel()})}
+			>
+				<Icon icon="deck-panel" expanded />
+			</button>
+		{/if}
 	</div>
 </div>
 
