@@ -287,15 +287,14 @@
 						class="auto-sync"
 						class:active={!autoNotSynced}
 						title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
-					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
-					onclick={() => resyncAutoRadio(deckId)}
-				>
-					{#if modePresenceCount > 0}
-						<PresenceCount count={modePresenceCount} />
-					{/if}
-					<Icon icon="infinite" size={12} />
-					{autoNotSynced ? 'Sync' : 'Auto'}
-				</button>
+						aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+						onclick={() => resyncAutoRadio(deckId)}
+					>
+						{#if modePresenceCount > 0}
+							<PresenceCount count={modePresenceCount} />
+						{/if}
+						<Icon icon="infinite" size={12} />
+					</button>
 			{:else if !deck?.listening_to_channel_id}
 				<VolumeControl {deckId} />
 			{/if}

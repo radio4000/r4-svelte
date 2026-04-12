@@ -40,6 +40,11 @@
 	let visibleListeningDeckIds = $derived(
 		visibleDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
 	)
+	let expandedListeningMultiDeck = $derived(
+		visibleListeningDeckIds.length > 0 &&
+			visibleDeckIds.length > 1 &&
+			visibleListeningDeckIds.some((id) => Boolean(appState.decks[id]?.expanded))
+	)
 	let visibleListeningDecksSynced = $derived(
 		visibleListeningDeckIds.length > 0 &&
 			visibleListeningDeckIds.every(
@@ -64,6 +69,7 @@
 		'deck-strip',
 		allDecksCompact && 'all-compact',
 		singleVisibleDeck && 'single-visible',
+		expandedListeningMultiDeck && 'expanded-listening',
 		appState.embed_mode && 'embed-mode'
 	]}
 >
@@ -210,6 +216,26 @@
 				width: fit-content;
 				max-width: 72vw;
 				min-width: 0;
+			}
+
+			&.expanded-listening {
+				.deck-sections {
+					flex-direction: column;
+					width: 100%;
+					max-width: none;
+				}
+
+				.local,
+				.broadcasts {
+					width: 100%;
+					min-width: 0;
+				}
+
+				:global(.deck.expanded:not(.compact)) {
+					width: 100% !important;
+					min-width: 0;
+					flex: 1 1 auto;
+				}
 			}
 
 			&.single-visible .deck-sections {
