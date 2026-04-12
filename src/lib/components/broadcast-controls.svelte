@@ -103,7 +103,7 @@
 				title={m.broadcast_stop_button()}
 				aria-label={m.broadcast_stop_button()}
 			>
-				<Icon icon="cell-signal" strokeWidth={1.7} />
+				<Icon icon="signal" strokeWidth={1.7} />
 				{#if !compact}{m.broadcast_stop_button()}{/if}
 			</button>
 		{:else if canStartBroadcast}
@@ -113,7 +113,7 @@
 				title={m.broadcast_start_button()}
 				aria-label={m.broadcast_start_button()}
 			>
-				<Icon icon="cell-signal" strokeWidth={1.7} />
+				<Icon icon="signal" strokeWidth={1.7} />
 				{#if !compact}{m.broadcast_start_button()}{/if}
 			</button>
 		{:else}
@@ -123,7 +123,7 @@
 				title={m.broadcast_requires_track()}
 				aria-label={m.broadcast_requires_track()}
 			>
-				<Icon icon="cell-signal" strokeWidth={1.7} />
+				<Icon icon="signal" strokeWidth={1.7} />
 				{#if !compact}{m.broadcast_start_button()}{/if}
 			</button>
 		{/if}
@@ -135,7 +135,7 @@
 	</div>
 {:else}
 	<a class="btn" href={resolve('/auth')} class:compact title={m.broadcast_login_prompt()}>
-		<Icon icon="cell-signal" strokeWidth={1.7} />
+		<Icon icon="signal" strokeWidth={1.7} />
 		{#if !compact}{m.broadcast_login_prompt()}{/if}
 	</a>
 {/if}

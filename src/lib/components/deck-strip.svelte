@@ -2,7 +2,12 @@
 	import {page} from '$app/state'
 	import {appState, deckAccent} from '$lib/app-state.svelte'
 	import {captureEventsCollection} from '$lib/collections/capture-events'
+	import {leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {channelPresence} from '$lib/presence.svelte'
 	import Deck from '$lib/components/deck.svelte'
+	import Icon from '$lib/components/icon.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let deckIds = $derived(
@@ -30,6 +35,28 @@
 		})
 	)
 	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
+
+	// Non-compact decks in live mode — shared exit bar
+	let visibleListeningDeckIds = $derived(
+		visibleDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
+	)
+	let visibleListeningDecksSynced = $derived(
+		visibleListeningDeckIds.length > 0 &&
+			visibleListeningDeckIds.every(
+				(id) => !appState.decks[id]?.listening_drifted && appState.decks[id]?.is_playing
+			)
+	)
+	let listenPresenceCount = $derived.by(() => {
+		let total = 0
+		for (const id of visibleListeningDeckIds) {
+			const channelId = appState.decks[id]?.listening_to_channel_id
+			if (!channelId) continue
+			const slug = channelsCollection.state.get(channelId)?.slug
+			if (!slug) continue
+			total += channelPresence[slug]?.broadcast ?? 0
+		}
+		return total
+	})
 </script>
 
 <aside
@@ -40,35 +67,55 @@
 		appState.embed_mode && 'embed-mode'
 	]}
 >
-	{#if localDeckIds.length}
-		<section class="local">
-			{#each localDeckIds as deckId (deckId)}
-				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
-					<Deck {deckId} />
-				</div>
-			{/each}
-		</section>
-	{/if}
-	{#if listeningDeckIds.length}
-		<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
-			{#each listeningDeckIds as deckId (deckId)}
-				<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
-					<Deck {deckId} />
-				</div>
-			{/each}
-		</section>
+	<div class="deck-sections">
+		{#if localDeckIds.length}
+			<section class="local">
+				{#each localDeckIds as deckId (deckId)}
+					<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
+						<Deck {deckId} />
+					</div>
+				{/each}
+			</section>
+		{/if}
+		{#if listeningDeckIds.length}
+			<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
+				{#each listeningDeckIds as deckId (deckId)}
+					<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
+						<Deck {deckId} />
+					</div>
+				{/each}
+			</section>
+		{/if}
+	</div>
+	{#if visibleListeningDeckIds.length}
+		<div class="exit-mode-bar">
+			<button
+				type="button"
+				class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
+				onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+			>
+				{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
+				<Icon icon="signal" size={12} />
+				{visibleListeningDecksSynced ? 'Live' : 'Sync'}
+			</button>
+			<button
+				type="button"
+				class="exit-mode-btn"
+				onclick={() => visibleListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+			>
+				<Icon icon="close" size={12} />
+				{m.broadcasts_leave()}
+			</button>
+		</div>
 	{/if}
 </aside>
 
 <style>
 	.deck-strip {
 		display: flex;
-		flex-direction: row;
-		gap: 0.3rem;
+		flex-direction: column;
 		flex-shrink: 0;
 		min-height: 0;
-		overflow-x: auto;
-		overflow-y: hidden;
 		margin: var(--interface-margin);
 
 		&:empty {
@@ -84,6 +131,16 @@
 		/* hide close button in embed mode when only one deck */
 		&.embed-mode:not(:has(.deck-item:nth-child(2))) :global(.close-deck) {
 			display: none;
+		}
+
+		.deck-sections {
+			display: flex;
+			flex-direction: row;
+			gap: 0.3rem;
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-x: auto;
+			overflow-y: hidden;
 		}
 
 		.local {
@@ -103,7 +160,8 @@
 			flex: 1 1 auto;
 			min-width: min-content;
 
-			:global(.deck.listening) {
+			:global(.deck.listening),
+			:global(.deck.auto) {
 				min-width: 0;
 				flex: 1 1 auto;
 			}
@@ -129,16 +187,37 @@
 			}
 		}
 
-		@media (min-width: 769px) {
-			width: fit-content;
-			max-width: 72vw;
-			min-width: 0;
-			padding-inline: 0;
+		.exit-mode-bar {
+			display: flex;
+			padding: 0.3rem 0.4rem 0;
+			flex-shrink: 0;
+		}
 
-			&.single-visible {
+		.exit-mode-btn {
+			flex: 1;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.3rem;
+			font-size: var(--font-2);
+			padding: 0.25rem 0.6rem;
+			border-radius: var(--border-radius);
+			white-space: nowrap;
+		}
+
+		@media (min-width: 769px) {
+			.deck-sections {
+				width: fit-content;
+				max-width: 72vw;
+				min-width: 0;
+			}
+
+			&.single-visible .deck-sections {
 				width: 100%;
 				max-width: none;
+			}
 
+			&.single-visible {
 				.local,
 				.broadcasts {
 					flex: 1 1 auto;
@@ -161,7 +240,8 @@
 					flex: 1 1 auto;
 				}
 
-				:global(.deck.listening:not(.compact)) {
+				:global(.deck.listening:not(.compact)),
+				:global(.deck.auto:not(.compact)) {
 					width: 100%;
 					min-width: 0;
 				}
@@ -170,9 +250,12 @@
 
 		/* "fill deck": non-compact with at least one visible panel (video or queue) */
 		@media (max-width: 768px) {
-			flex-direction: column;
-			height: auto;
-			overflow-y: auto;
+			.deck-sections {
+				flex-direction: column;
+				height: auto;
+				overflow-y: auto;
+				overflow-x: hidden;
+			}
 
 			&:not(.all-compact) {
 				flex: 0 1 auto;
@@ -180,7 +263,9 @@
 
 				/* grow to fill available height when any deck has visible content */
 				&:has(
-					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+					:global(
+						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+					)
 				) {
 					flex: 1 1 0;
 					min-height: 100%;
@@ -194,7 +279,9 @@
 
 				/* sections with fill decks share the strip height */
 				&:has(
-					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+					:global(
+						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+					)
 				) {
 					flex: 1 1 0;
 					min-height: 0;
@@ -208,7 +295,9 @@
 
 				/* sections with fill decks share the strip height */
 				&:has(
-					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+					:global(
+						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+					)
 				) {
 					flex: 1 1 0;
 					min-height: 0;
@@ -221,10 +310,16 @@
 				min-height: 0;
 
 				&:has(
-					:global(.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue)))
+					:global(
+						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+					)
 				) {
 					flex: 1 1 0;
 				}
+			}
+
+			.exit-mode-bar {
+				padding-top: 0.2rem;
 			}
 		}
 	}

@@ -25,6 +25,8 @@ import {capture} from '$lib/analytics'
 const log = logger.ns('broadcast').seal()
 const RE_YT_PARAM = /[?&]v=([^&]+)/
 const RE_YT_SHORT = /youtu\.be\/([^?]+)/
+const BROADCAST_IDLE_STOP_MS = 10000
+const BROADCAST_LIVENESS_INTERVAL_MS = 1000
 
 /** Extract type-validated broadcast fields for deck state */
 function pickBroadcastFields(broadcast) {
@@ -78,6 +80,10 @@ const broadcastChannels = new Map()
  * @type {Map<string, {channel: any, intervalId: ReturnType<typeof setInterval>}>}
  */
 const broadcastStateChannels = new Map()
+/** Broadcaster cleanup monitors keyed by channelId
+ * @type {Map<string, {intervalId: ReturnType<typeof setInterval>, idleSinceMs: number | null, stopping: boolean}>}
+ */
+const broadcastLivenessMonitors = new Map()
 
 /** Listener realtime state channels keyed by channelId
  * @type {Map<string, any>}
@@ -387,6 +393,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 	if (!track_id) return false
 
 	// Check if track is already loaded; if not, reconstruct from broadcast-included data
+	/** @type {import('$lib/types').Track | undefined} */
 	let track = tracksCollection.get(track_id)
 	if (!track) {
 		if (broadcast.track_url) {
@@ -422,6 +429,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 			}
 		}
 	}
+	if (!track) return false
 
 	const seekTime = calculateSeekTime(broadcast, track)
 	// Ensure autoplay can start from a user-initiated join
@@ -465,11 +473,87 @@ function getSortedDeckIds() {
 		.sort((a, b) => a - b)
 }
 
+function getBroadcasterDeckIds() {
+	return getSortedDeckIds().filter((id) => !appState.decks[id]?.listening_to_channel_id)
+}
+
+function startBroadcastLivenessMonitor(channelId) {
+	if (broadcastLivenessMonitors.has(channelId)) return
+	const intervalId = setInterval(() => {
+		void evaluateBroadcastLiveness(channelId)
+	}, BROADCAST_LIVENESS_INTERVAL_MS)
+	const monitor = {
+		intervalId,
+		idleSinceMs: null,
+		stopping: false
+	}
+	broadcastLivenessMonitors.set(channelId, monitor)
+}
+
+function stopBroadcastLivenessMonitor(channelId) {
+	const monitor = broadcastLivenessMonitors.get(channelId)
+	if (!monitor) return
+	clearInterval(monitor.intervalId)
+	broadcastLivenessMonitors.delete(channelId)
+}
+
+async function evaluateBroadcastLiveness(channelId) {
+	const monitor = broadcastLivenessMonitors.get(channelId)
+	if (!monitor || monitor.stopping) return
+
+	const deckIds = getBroadcasterDeckIds()
+	if (!deckIds.length) {
+		monitor.stopping = true
+		log.log(`auto_stop_no_decks @${label(channelId)}`)
+		try {
+			await stopBroadcast(channelId)
+		} catch (error) {
+			log.warn('auto_stop_no_decks_failed', {
+				channelId,
+				error: /** @type {Error} */ (error).message
+			})
+		} finally {
+			monitor.stopping = false
+		}
+		return
+	}
+
+	const hasPlayingTrack = deckIds.some((id) => {
+		const deck = appState.decks[id]
+		return Boolean(deck?.playlist_track && deck?.is_playing)
+	})
+	if (hasPlayingTrack) {
+		monitor.idleSinceMs = null
+		return
+	}
+
+	const now = Date.now()
+	if (monitor.idleSinceMs == null) {
+		monitor.idleSinceMs = now
+		return
+	}
+	if (now - monitor.idleSinceMs < BROADCAST_IDLE_STOP_MS) return
+
+	monitor.stopping = true
+	log.log(`auto_stop_idle @${label(channelId)} after ${BROADCAST_IDLE_STOP_MS}ms`)
+	try {
+		await stopBroadcast(channelId)
+	} catch (error) {
+		log.warn('auto_stop_idle_failed', {
+			channelId,
+			error: /** @type {Error} */ (error).message
+		})
+		monitor.idleSinceMs = now
+	} finally {
+		monitor.stopping = false
+	}
+}
+
 function getBroadcastDeckState() {
 	// Mirror the broadcaster workspace: send all local (non-listener) decks.
 	// Previous channel/track-based filtering could drop some open decks, causing
 	// listeners to open fewer decks than the broadcaster.
-	let ids = getSortedDeckIds().filter((id) => !appState.decks[id]?.listening_to_channel_id)
+	let ids = getBroadcasterDeckIds()
 	if (!ids.length && appState.decks[appState.active_deck_id]) {
 		ids = [appState.active_deck_id]
 	}
@@ -544,6 +628,7 @@ function startBroadcastState(channelId) {
 
 	const intervalId = setInterval(broadcastStateUpdate, 5000, channelId)
 	broadcastStateChannels.set(channelId, {channel, intervalId})
+	startBroadcastLivenessMonitor(channelId)
 }
 
 function stopBroadcastState(channelId) {
@@ -558,6 +643,7 @@ function stopBroadcastState(channelId) {
 		clearTimeout(timer)
 		tableWriteTimers.delete(channelId)
 	}
+	stopBroadcastLivenessMonitor(channelId)
 }
 
 function startBroadcastStateListener(channelId) {

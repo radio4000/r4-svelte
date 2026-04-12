@@ -85,7 +85,7 @@
 						aria-label={m.status_broadcasting()}
 						{@attach tooltip({content: m.status_broadcasting()})}
 					>
-						<Icon icon="cell-signal" />
+						<Icon icon="signal" />
 					</a>
 				{/if}
 				{#if isAutoRadio}

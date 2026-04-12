@@ -15,6 +15,14 @@ broadcaster: appState.decks → broadcast.decks (remote) → realtime → listen
 - `upsertRemoteBroadcast` — pushes current deck state to remote (called automatically on track changes)
 - `calculateSeekTime` — computes expected listener seek position from broadcast state (speed-aware)
 
+## Broadcaster cleanup
+
+Broadcast cleanup is handled inside `broadcast.js` liveness monitoring (not UI handlers):
+
+- If no local broadcaster deck is left (all decks closed or only listener decks remain), broadcast stops.
+- If no local broadcaster deck has a currently playing track for `10s`, broadcast stops.
+- `beforeunload` cleanup still runs from layout to clear local state when tab closes.
+
 ## Drift and resync
 
 Listeners continuously compare local playback against expected broadcast position.
@@ -23,13 +31,14 @@ Listeners continuously compare local playback against expected broadcast positio
 - Re-seek is skipped if already within a `2s` tolerance.
 - `deck.listening_drifted` is computed in `player.svelte` from this expected position.
 
-## Header UI
+## Deck UI
 
-Deck/channel headers now show listening context as linked `@who` + sync-broadcast icon + linked `@whom`:
+Deck/channel headers show listening context as linked `@who` + linked `@whom`:
 
 - `who` = broadcaster slug
 - `whom` = current track slug when available, fallback to playlist/listening slug
-- sync icon button reflects drift state and can trigger re-sync (`joinBroadcast`)
+
+In the deck player, a full-width Live mode button sits below the header and above the video. It includes mode status, listener count, and re-sync action when drifted (`resyncBroadcastDeck`).
 
 ## Files
 

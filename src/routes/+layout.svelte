@@ -27,8 +27,11 @@
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
 	import {queryClient} from '$lib/collections/query-client'
 	import {trackAppPresence, untrackAppPresence} from '$lib/presence.svelte'
-	import {leaveBroadcast} from '$lib/broadcast.js'
+	import {leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast.js'
+	import {channelsCollection} from '$lib/collections/channels'
+	import {channelPresence} from '$lib/presence.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 
 	const log = logger.ns('layout').seal()
 
@@ -50,11 +53,28 @@
 			.filter((deck) => deck.compact)
 			.map((deck) => deck.id)
 	)
-	let listeningDeckIds = $derived(
+	let compactListeningDeckIds = $derived(
 		Object.values(appState.decks)
-			.filter((deck) => deck.listening_to_channel_id)
+			.filter((deck) => deck.compact && deck.listening_to_channel_id)
 			.map((deck) => deck.id)
 	)
+	let compactListeningDecksSynced = $derived(
+		compactListeningDeckIds.length > 0 &&
+			compactListeningDeckIds.every(
+				(id) => !appState.decks[id]?.listening_drifted && appState.decks[id]?.is_playing
+			)
+	)
+	let compactListenPresenceCount = $derived.by(() => {
+		let total = 0
+		for (const id of compactListeningDeckIds) {
+			const channelId = appState.decks[id]?.listening_to_channel_id
+			if (!channelId) continue
+			const slug = channelsCollection.state.get(channelId)?.slug
+			if (!slug) continue
+			total += channelPresence[slug]?.broadcast ?? 0
+		}
+		return total
+	})
 
 	/** @param {Element} _node */
 	function compactDeckTransition(_node) {
@@ -272,10 +292,20 @@
 								<DeckCompactBar {deckId} />
 							</div>
 						{/each}
-						{#if listeningDeckIds.length}
+						{#if compactListeningDeckIds.length}
 							<div class="leave-broadcast-bar">
-								<button onclick={() => listeningDeckIds.forEach((id) => leaveBroadcast(id))}>
-									<Icon icon="signal" />
+								<button
+									class:active={compactListeningDecksSynced}
+									onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+								>
+									{#if compactListenPresenceCount > 0}<PresenceCount count={compactListenPresenceCount} />{/if}
+									<Icon icon="signal" size={12} />
+									{compactListeningDecksSynced ? 'Live' : 'Sync'}
+								</button>
+								<button
+									onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+								>
+									<Icon icon="close" size={12} />
 									{m.broadcasts_leave()}
 								</button>
 							</div>
@@ -403,12 +433,18 @@
 
 	.leave-broadcast-bar {
 		display: flex;
-		padding: 0.5rem;
+		justify-content: flex-end;
+		padding: 0.25rem 0.5rem;
 		border-top: 1px solid var(--gray-6);
 	}
 
 	.leave-broadcast-bar button {
-		flex: 1;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: var(--font-2);
+		padding: 0.2rem 0.6rem;
+		white-space: nowrap;
 	}
 
 	.compact-decks :global(.deck-compact-bar) {
@@ -438,7 +474,8 @@
 		/* when any deck has visible content, cap page scroll area so decks get most of the viewport */
 		.content:has(
 				:global(
-					.deck-strip .deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+					.deck-strip
+						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
 				)
 			)
 			.scroll-area {
