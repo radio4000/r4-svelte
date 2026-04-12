@@ -200,7 +200,7 @@
 	const globeChannelsQuery = useLiveQuery((q) =>
 		q.from({ch: channelsCollection}).where(({ch}) => not(isNull(ch.latitude)))
 	)
-	const globeChannels = $derived(globeChannelsQuery.data ?? [])
+	const globeChannels = $derived((globeChannelsQuery.data ?? []).filter((ch) => (ch.track_count ?? 0) > 10))
 	const favoriteMapChannels = $derived(follows.followedChannels.filter((ch) => ch.latitude != null))
 	const mapChannels = $derived(
 		isSignedIn && favoriteMapChannels.length > 0 ? favoriteMapChannels : globeChannels

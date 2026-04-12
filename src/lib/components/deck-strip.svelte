@@ -283,6 +283,11 @@
 			}
 		}
 
+		/* When an expanded deck is present, non-expanded siblings must not grow */
+		.local:has(:global(.deck.expanded:not(.compact))) .deck-item {
+			flex: 0 0 auto;
+		}
+
 		/* Expanded decks should always consume available strip space */
 		.deck-item:has(:global(.deck.expanded:not(.compact))) {
 			flex: 1 1 0;

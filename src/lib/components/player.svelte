@@ -25,7 +25,6 @@
 	import {
 		joinBroadcast,
 		leaveBroadcast,
-		resyncBroadcastDeck,
 		getBroadcastingChannelId,
 		notifyBroadcastState
 	} from '$lib/broadcast.js'
@@ -744,26 +743,7 @@
 					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 				</button>
 			{:else if isListeningToBroadcast}
-				{@const broadcastNotSynced = !!deck?.listening_drifted}
 				<VolumeControl {deckId} />
-				{#if !hasListeningMultiDeck}
-					<button
-						class={['auto-sync', {active: !broadcastNotSynced}]}
-						title={broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced()}
-						aria-label={broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced()}
-						onclick={() => resyncBroadcastDeck(deckId)}
-						{@attach tooltip({
-							content: broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced(),
-							position: 'top'
-						})}
-					>
-						{#if headerPresenceCount > 0}
-							<PresenceCount count={headerPresenceCount} />
-						{/if}
-						<Icon icon="signal" size={14} />
-						<span>{broadcastNotSynced ? 'Sync' : 'Live'}</span>
-					</button>
-				{/if}
 			{/if}
 		</menu>
 	</section>

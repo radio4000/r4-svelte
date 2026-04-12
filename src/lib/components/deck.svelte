@@ -227,7 +227,7 @@
 		display: none;
 	}
 
-	.deck.expanded:not(.hide-queue) :global(.video) {
+	.deck.expanded:not(.hide-queue):not(.auto) :global(.video) {
 		max-height: 25dvh;
 	}
 
@@ -299,8 +299,9 @@
 		pointer-events: none;
 	}
 
-	/* When video is hidden but queue is visible, queue fills the space */
-	.deck.hide-video:not(.hide-queue) :global(.video-hidden-placeholder) {
+	/* When video is hidden but queue is visible, queue fills the space.
+	   Auto/listening decks have no queue in the DOM — show the placeholder there. */
+	.deck.hide-video:not(.hide-queue):not(.auto):not(.listening) :global(.video-hidden-placeholder) {
 		display: none;
 	}
 
