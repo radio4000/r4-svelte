@@ -48,16 +48,27 @@
 			.map(Number)
 			.sort((a, b) => a - b)
 	)
-	let compactDeckIds = $derived(
-		Object.values(appState.decks)
-			.filter((deck) => deck.compact)
-			.map((deck) => deck.id)
-	)
+	let compactDeckIds = $derived(allDeckIds.filter((id) => Boolean(appState.decks[id]?.compact)))
 	let compactListeningDeckIds = $derived(
-		Object.values(appState.decks)
-			.filter((deck) => deck.compact && deck.listening_to_channel_id)
-			.map((deck) => deck.id)
+		compactDeckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
 	)
+	let compactRenderDeckIds = $derived.by(() => {
+		let hasListening = false
+		/** @type {number[]} */
+		const ids = []
+		for (const id of compactDeckIds) {
+			const deck = appState.decks[id]
+			if (!deck?.listening_to_channel_id) {
+				ids.push(id)
+				continue
+			}
+			if (!hasListening) {
+				hasListening = true
+				ids.push(id)
+			}
+		}
+		return ids
+	})
 	let compactListeningDecksSynced = $derived(
 		compactListeningDeckIds.length > 0 &&
 			compactListeningDeckIds.every(
@@ -283,7 +294,7 @@
 						<DeckStrip />
 					</section>
 					<section class="compact-decks" aria-label={m.decks_compact_label()}>
-						{#each compactDeckIds as deckId (deckId)}
+						{#each compactRenderDeckIds as deckId (deckId)}
 							<div
 								class="compact-deck-item"
 								style:--deck-accent={deckAccent(allDeckIds, deckId)}

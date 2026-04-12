@@ -508,8 +508,18 @@ export function toggleVideo(deckId) {
 export function toggleDeckCompact(deckId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	deck.compact = !deck.compact
-	if (deck.compact && deck.expanded) deck.expanded = false
+	const newValue = !deck.compact
+	if (deck.listening_to_channel_id) {
+		for (const d of Object.values(appState.decks)) {
+			if (d.listening_to_channel_id) {
+				d.compact = newValue
+				if (newValue && d.expanded) d.expanded = false
+			}
+		}
+	} else {
+		deck.compact = newValue
+		if (deck.compact && deck.expanded) deck.expanded = false
+	}
 }
 
 /** @param {number} deckId */

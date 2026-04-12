@@ -610,6 +610,11 @@
 		{/if}
 		<media-loading-indicator slot="centered-chrome"></media-loading-indicator>
 	</media-controller>
+	{#if deck?.hide_video_player}
+		<div class="video-hidden-placeholder" aria-label="Radio4000" data-clickable="true">
+			<IconR4 />
+		</div>
+	{/if}
 
 	<!-- 3. Queue/history (injected by deck) -->
 	{@render children?.()}
@@ -620,7 +625,7 @@
 				currentTime={mediaCurrentTime}
 				{mediaDuration}
 				trackDuration={track?.duration}
-					disabled={isListeningToBroadcast || Boolean(deck?.auto_radio)}
+				disabled={isListeningToBroadcast || Boolean(deck?.auto_radio)}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					if (mediaElement) mediaElement.currentTime = val
@@ -895,6 +900,24 @@
 
 	.video:not(:has(.native-audio-player)) {
 		aspect-ratio: 16 / 9;
+	}
+
+	.video-hidden-placeholder {
+		display: grid;
+		place-items: center;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		max-height: 25dvh;
+		background:
+			radial-gradient(circle at center, color-mix(in srgb, var(--accent-9) 15%, transparent), transparent 65%),
+			black;
+		color: color-mix(in srgb, var(--accent-9) 60%, white);
+	}
+
+	.video-hidden-placeholder :global(svg) {
+		width: min(40%, 10rem);
+		height: auto;
+		opacity: 0.65;
 	}
 
 	.native-audio-player {
