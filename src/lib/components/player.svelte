@@ -747,8 +747,6 @@
 					<Icon icon="infinite" size={14} />
 					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 				</button>
-			{:else if isListeningToBroadcast}
-				<VolumeControl {deckId} />
 			{/if}
 		</menu>
 	</section>

@@ -99,22 +99,22 @@
 						<Deck {deckId} />
 					</div>
 				{/each}
+				{#if visibleListeningDeckIds.length}
+					<div class="exit-mode-bar">
+						<button
+							type="button"
+							class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
+							onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+						>
+							{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
+							<Icon icon="signal" size={12} />
+							{visibleListeningDecksSynced ? 'Live' : 'Sync'}
+						</button>
+					</div>
+				{/if}
 			</section>
 		{/if}
 	</div>
-	{#if visibleListeningDeckIds.length}
-		<div class="exit-mode-bar">
-			<button
-				type="button"
-				class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
-				onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
-			>
-				{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
-				<Icon icon="signal" size={12} />
-				{visibleListeningDecksSynced ? 'Live' : 'Sync'}
-			</button>
-		</div>
-	{/if}
 </aside>
 
 <style>
