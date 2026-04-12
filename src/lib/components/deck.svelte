@@ -299,6 +299,12 @@
 		pointer-events: none;
 	}
 
+	/* When video is hidden but queue is visible, let queue fill the height */
+	.deck.hide-video:not(.hide-queue) :global(.video-hidden-placeholder) {
+		flex: 0 0 auto;
+		min-height: 0;
+	}
+
 	/* @media (prefers-reduced-motion: reduce) {
 		.deck:not(.expanded) {
 			transition: none;
