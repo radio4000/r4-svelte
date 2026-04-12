@@ -28,6 +28,7 @@ export interface Deck {
 	volume: number
 	muted?: boolean
 	hide_video_player: boolean
+	video_mix?: boolean
 	compact: boolean
 	expanded: boolean
 	hide_queue_panel: boolean

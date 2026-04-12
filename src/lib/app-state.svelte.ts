@@ -14,6 +14,7 @@ export function createDefaultDeck(id: number): Deck {
 		volume: 1,
 		muted: false,
 		hide_video_player: false,
+		video_mix: false,
 		compact: false,
 		expanded: false,
 		hide_queue_panel: false,

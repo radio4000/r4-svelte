@@ -46,6 +46,7 @@
 		{"name": "deck.muted", "desc": "Muted state."},
 		{"name": "deck.speed", "desc": "Playback speed."},
 		{"name": "deck.hide_video_player", "desc": "Hide/show video."},
+		{"name": "deck.video_mix", "desc": "Broadcast multi-deck video layering mode."},
 		{"name": "deck.compact", "desc": "Compact player UI."},
 		{"name": "deck.expanded", "desc": "Fullscreen player UI."},
 		{"name": "deck.hide_queue_panel", "desc": "Hide/show sidebar."},

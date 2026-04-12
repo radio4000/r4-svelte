@@ -77,6 +77,11 @@
 	let isListeningGroupControlDeck = $derived(
 		!deck?.listening_to_channel_id || listeningDeckIds[0] === deckId
 	)
+	let hasListeningMultiDeck = $derived(listeningDeckIds.length > 1)
+	let listeningVideoMixActive = $derived.by(() => {
+		if (!hasListeningMultiDeck) return false
+		return listeningDeckIds.some((id) => Boolean(appState.decks[id]?.video_mix))
+	})
 	let deckIds = $derived(Object.keys(appState.decks).map(Number))
 	let accentColor = $derived(deckAccent(deckIds, deckId))
 
@@ -141,6 +146,14 @@
 	let userHasPlayed = $state(false)
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 	let showDeckActions = $derived(!isListeningToBroadcast || isListeningGroupControlDeck)
+	let hasActiveDeckContextMenu = $derived(
+		Boolean(
+			deck?.hide_video_player ||
+				deck?.expanded ||
+				(!isListeningToBroadcast && deck?.hide_queue_panel) ||
+				(isListeningToBroadcast && hasListeningMultiDeck && listeningVideoMixActive)
+		)
+	)
 
 	const listenSlug = $derived(
 		deck?.listening_to_channel_id
@@ -300,6 +313,25 @@
 		if (!mediaElement) return
 		recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
 	}
+
+	function toggleListeningVideoMix() {
+		const next = !listeningVideoMixActive
+		for (const id of listeningDeckIds) {
+			const listeningDeck = appState.decks[id]
+			if (!listeningDeck?.listening_to_channel_id) continue
+			listeningDeck.video_mix = next
+			if (next) listeningDeck.hide_video_player = false
+		}
+	}
+
+	$effect(() => {
+		if (deck?.video_mix && !isListeningToBroadcast) deck.video_mix = false
+		if (hasListeningMultiDeck) return
+		for (const id of listeningDeckIds) {
+			const listeningDeck = appState.decks[id]
+			if (listeningDeck?.video_mix) listeningDeck.video_mix = false
+		}
+	})
 
 	$effect(() => {
 		const el = mediaElement
@@ -467,7 +499,7 @@
 	})
 </script>
 
-<div class="player">
+<div class="player" class:video-mix={Boolean(deck?.video_mix && isListeningToBroadcast && hasListeningMultiDeck)}>
 	<!-- 1. Top bar: logo + player controls -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
@@ -521,7 +553,11 @@
 					</button>
 				{/if}
 				{#if showDeckActions}
-					<PopoverMenu align="right" closeOnClick={false}>
+					<PopoverMenu
+						align="right"
+						closeOnClick={false}
+						btnClass={hasActiveDeckContextMenu ? 'active' : undefined}
+					>
 						{#snippet trigger()}
 							<Icon icon="options-horizontal" />
 						{/snippet}
@@ -542,6 +578,16 @@
 								>
 									{deck?.hide_queue_panel ? m.queue_hidden() : m.queue_visible()}
 									<Icon icon="unordered-list" size={14} />
+								</button>
+							{/if}
+							{#if isListeningToBroadcast && hasListeningMultiDeck}
+								<button
+									onclick={toggleListeningVideoMix}
+									class:active={listeningVideoMixActive}
+									data-no-close
+								>
+									Video mix
+									<Icon icon="gradient" size={14} />
 								</button>
 							{/if}
 							<button
@@ -855,6 +901,10 @@
 	.top-layout-controls {
 		justify-content: flex-end;
 		margin-left: auto;
+	}
+
+	.top-layout-controls :global(.popover-menu > button.active) {
+		color: var(--accent-9);
 	}
 
 	.video {
