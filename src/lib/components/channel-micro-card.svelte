@@ -5,7 +5,9 @@
 	/** @type {{channel?: import('$lib/types').Channel, href?: string | undefined, className?: string}} */
 	let {channel, href, className = ''} = $props()
 
-	let linkHref = $derived(href ?? (channel?.slug ? resolve('/[slug]', {slug: channel.slug}) : undefined))
+	let linkHref = $derived(
+		href ?? (channel?.slug ? resolve('/[slug]', {slug: channel.slug}) : undefined)
+	)
 </script>
 
 {#if channel}

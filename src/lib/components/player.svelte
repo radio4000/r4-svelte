@@ -149,9 +149,9 @@
 	let hasActiveDeckContextMenu = $derived(
 		Boolean(
 			deck?.hide_video_player ||
-				deck?.expanded ||
-				(!isListeningToBroadcast && deck?.hide_queue_panel) ||
-				(isListeningToBroadcast && hasListeningMultiDeck && listeningVideoMixActive)
+			deck?.expanded ||
+			(!isListeningToBroadcast && deck?.hide_queue_panel) ||
+			(isListeningToBroadcast && hasListeningMultiDeck && listeningVideoMixActive)
 		)
 	)
 
@@ -499,7 +499,10 @@
 	})
 </script>
 
-<div class="player" class:video-mix={Boolean(deck?.video_mix && isListeningToBroadcast && hasListeningMultiDeck)}>
+<div
+	class="player"
+	class:video-mix={Boolean(deck?.video_mix && isListeningToBroadcast && hasListeningMultiDeck)}
+>
 	<!-- 1. Top bar: logo + player controls -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header class="header" onclick={() => (appState.active_deck_id = deckId)}>
@@ -540,9 +543,9 @@
 							if (bchId) notifyBroadcastState(bchId)
 						}}
 						{@attach tooltip({content: m.player_tooltip_close_deck(), position: 'top'})}
-						>
-							<Icon icon="close" />
-						</button>
+					>
+						<Icon icon="close" />
+					</button>
 				{:else if isListeningGroupControlDeck}
 					<button
 						class="close-deck"
@@ -570,7 +573,7 @@
 								{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 								<Icon icon="tv" size={14} />
 							</button>
-							{#if !isListeningToBroadcast}
+							{#if !isListeningToBroadcast && !deck?.auto_radio}
 								<button
 									onclick={() => toggleQueuePanel(deckId)}
 									class:active={deck?.hide_queue_panel}
@@ -689,19 +692,19 @@
 			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
 			onclick={() => (appState.active_deck_id = deckId)}
 		>
-				{#if isListeningToBroadcast && broadcastingChannel}
-					{#if displayTrack}
-						<div class="listening-track-panel active-track-bg">
-							<TrackCard
-								track={displayTrack}
-								{deckId}
-								canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
-								menuValign="top"
-								menuAlign="end"
-							/>
-						</div>
-					{/if}
-				{:else if displayTrack}
+			{#if isListeningToBroadcast && broadcastingChannel}
+				{#if displayTrack}
+					<div class="listening-track-panel active-track-bg">
+						<TrackCard
+							track={displayTrack}
+							{deckId}
+							canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
+							menuValign="top"
+							menuAlign="end"
+						/>
+					</div>
+				{/if}
+			{:else if displayTrack}
 				<TrackCard
 					track={displayTrack}
 					{deckId}
@@ -714,21 +717,25 @@
 		</footer>
 
 		<menu class="controls">
-			{#if !isListeningToBroadcast && !deck?.auto_radio && !deck?.broadcasting_channel_id}
+			{#if !isListeningToBroadcast && !deck?.auto_radio}
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
 				<SpeedControl {deckId} {provider} />
 				<VolumeControl {deckId} />
 			{:else if deck?.auto_radio}
-				{@const autoNotSynced = !!deck?.auto_radio_drifted || !deck?.is_playing}
+				{@const autoNotSynced = !!deck?.auto_radio_drifted}
 				{@render btnPlay()}
-					<button
-						class={['auto-sync', {active: !autoNotSynced}]}
+				<VolumeControl {deckId} />
+				<button
+					class={['auto-sync', {active: !autoNotSynced}]}
 					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					onclick={() => resyncAutoRadio(deckId)}
-					{@attach tooltip({content: autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join(), position: 'top'})}
+					{@attach tooltip({
+						content: autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join(),
+						position: 'top'
+					})}
 				>
 					{#if headerPresenceCount > 0}
 						<PresenceCount count={headerPresenceCount} />
@@ -736,9 +743,25 @@
 					<Icon icon="infinite" size={14} />
 					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 				</button>
+			{:else if isListeningToBroadcast}
+				{@const broadcastNotSynced = !!deck?.listening_drifted}
 				<VolumeControl {deckId} />
-			{:else if !isListeningToBroadcast}
-				<VolumeControl {deckId} />
+				<button
+					class={['auto-sync', {active: !broadcastNotSynced}]}
+					title={broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced()}
+					aria-label={broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced()}
+					onclick={() => resyncBroadcastDeck(deckId)}
+					{@attach tooltip({
+						content: broadcastNotSynced ? m.auto_radio_resync() : m.player_broadcast_synced(),
+						position: 'top'
+					})}
+				>
+					{#if headerPresenceCount > 0}
+						<PresenceCount count={headerPresenceCount} />
+					{/if}
+					<Icon icon="signal" size={14} />
+					<span>{broadcastNotSynced ? 'Sync' : 'Live'}</span>
+				</button>
 			{/if}
 		</menu>
 	</section>
@@ -860,7 +883,6 @@
 	.controls .auto-sync.active :global(svg) {
 		color: var(--accent-9);
 	}
-
 
 	.layout-controls {
 		align-items: center;

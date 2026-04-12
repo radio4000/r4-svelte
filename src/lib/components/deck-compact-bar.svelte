@@ -124,7 +124,9 @@
 			: undefined
 	)
 	const broadcastSlug = $derived(
-		deck?.broadcasting_channel_id ? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug : undefined
+		deck?.broadcasting_channel_id
+			? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug
+			: undefined
 	)
 	const autoUri = $derived(
 		deck?.auto_radio && deck.playlist_slug
@@ -141,14 +143,18 @@
 					? (channelPresence[deck.playlist_slug]?.byUri?.[autoUri] ?? 0)
 					: 0
 	)
-	let canEditTrackChannel = $derived(Boolean(displayChannel?.id && canEditChannel(displayChannel.id)))
+	let canEditTrackChannel = $derived(
+		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
+	)
 	let trackHref = $derived(
 		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
 			? resolve('/[slug]/tracks/[tid]', {slug: displayTrack.slug, tid: String(displayTrack.id)})
 			: undefined
 	)
 	let provider = $derived(
-		displayTrack?.provider || (displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) || null
+		displayTrack?.provider ||
+			(displayTrack?.url ? parseUrl(displayTrack.url)?.provider : null) ||
+			null
 	)
 
 	let activeQueue = $derived(getActiveQueue(deck))
@@ -232,7 +238,7 @@
 			</div>
 		{/if}
 		<menu class="controls">
-			{#if !deck?.listening_to_channel_id && !deck?.auto_radio && !deck?.broadcasting_channel_id}
+			{#if !deck?.listening_to_channel_id && !deck?.auto_radio}
 				<button
 					onclick={() => previous(deckId, 'user_prev')}
 					aria-label={m.player_compact_prev()}
@@ -259,7 +265,7 @@
 				<SpeedControl {deckId} {provider} />
 				<VolumeControl {deckId} />
 			{:else if deck?.auto_radio}
-				{@const autoNotSynced = !!deck?.auto_radio_drifted || !deck?.is_playing}
+				{@const autoNotSynced = !!deck?.auto_radio_drifted}
 				<button
 					class="play"
 					class:active={deck?.is_playing}

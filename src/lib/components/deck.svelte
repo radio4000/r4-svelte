@@ -140,10 +140,6 @@
 		transition: border-color var(--deck-transition-fast) var(--deck-transition-ease);
 	}
 
-	.deck.broadcasting {
-		box-shadow: inset 0 0 0 1px var(--deck-accent, var(--accent-9));
-	}
-
 	.resize-handle {
 		width: 3px;
 		cursor: col-resize;
