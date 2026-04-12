@@ -638,25 +638,19 @@
 			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
 			onclick={() => (appState.active_deck_id = deckId)}
 		>
-			{#if isListeningToBroadcast && broadcastingChannel}
-				{#if displayTrack}
-					<div class="listening-track-panel active-track-bg">
-						<TrackCard
-							track={displayTrack}
-							{deckId}
-							canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
-							menuValign="top"
-							menuAlign="end"
-						/>
-					</div>
-				{:else}
-					<div class="header-info active-track-bg">
-						<div class="info">
-							<strong>{m.player_broadcast_live()}</strong>
+				{#if isListeningToBroadcast && broadcastingChannel}
+					{#if displayTrack}
+						<div class="listening-track-panel active-track-bg">
+							<TrackCard
+								track={displayTrack}
+								{deckId}
+								canEdit={Boolean(displayChannel && canEditChannel(displayChannel.id))}
+								menuValign="top"
+								menuAlign="end"
+							/>
 						</div>
-					</div>
-				{/if}
-			{:else if displayTrack}
+					{/if}
+				{:else if displayTrack}
 				<TrackCard
 					track={displayTrack}
 					{deckId}
@@ -801,25 +795,9 @@
 		color: var(--accent-9);
 	}
 
-	.header-info {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.3rem 0.5rem;
-	}
-
 	.active-track-bg {
 		background: var(--accent-2);
 		border-radius: 4px;
-	}
-
-	.info {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		line-height: 1.3;
 	}
 
 	:global(.volume) {
@@ -837,13 +815,13 @@
 		padding: 0.5rem;
 	}
 
-		.controls :global(.auto-btn) {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			padding-inline: 0.35rem;
-			min-height: 1.35rem;
-		}
+	.controls :global(.auto-btn) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 0.35rem;
+		min-height: 1.35rem;
+	}
 
 		.controls .auto-sync.active :global(svg) {
 			color: var(--accent-9);

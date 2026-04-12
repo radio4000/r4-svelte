@@ -18,7 +18,6 @@
 	let listeningDeckIds = $derived(
 		deckIds.filter((id) => Boolean(appState.decks[id]?.listening_to_channel_id))
 	)
-	let renderedListeningDeckIds = $derived(listeningDeckIds.slice(0, 1))
 	let localDeckIds = $derived(deckIds.filter((id) => !appState.decks[id]?.listening_to_channel_id))
 	let allDecksCompact = $derived(
 		deckIds.length > 0 && deckIds.every((id) => appState.decks[id]?.compact)
@@ -35,24 +34,7 @@
 			return (deck.playlist_tracks?.length ?? 0) > 0 || Boolean(deck.playlist_track) || hasHistory
 		})
 	)
-	let visibleRenderDeckIds = $derived.by(() => {
-		let hasListening = false
-		/** @type {number[]} */
-		const ids = []
-		for (const id of visibleDeckIds) {
-			const deck = appState.decks[id]
-			if (!deck?.listening_to_channel_id) {
-				ids.push(id)
-				continue
-			}
-			if (!hasListening) {
-				hasListening = true
-				ids.push(id)
-			}
-		}
-		return ids
-	})
-	let singleVisibleDeck = $derived(appState.embed_mode && visibleRenderDeckIds.length === 1)
+	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
 
 	// Non-compact decks in live mode — shared exit bar
 	let visibleListeningDeckIds = $derived(
@@ -101,9 +83,9 @@
 				{/each}
 			</section>
 		{/if}
-		{#if renderedListeningDeckIds.length}
+		{#if listeningDeckIds.length}
 			<section class="broadcasts" aria-label={m.decks_broadcast_listeners()}>
-				{#each renderedListeningDeckIds as deckId (deckId)}
+				{#each listeningDeckIds as deckId (deckId)}
 					<div class="deck-item" style:--deck-accent={deckAccent(deckIds, deckId)}>
 						<Deck {deckId} />
 					</div>
