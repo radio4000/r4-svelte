@@ -368,7 +368,7 @@
 					<div class="dashboard-grid">
 						{#if showTrackWidget}
 							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
+								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
 								href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
 							>
 								<Icon icon="unordered-list" size={16} />
@@ -380,7 +380,7 @@
 						{/if}
 						{#if showFavoritesWidget}
 							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
+								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
 								href={resolve('/channels/favorites')}
 							>
 								<Icon icon="favorite-fill" size={16} />
@@ -392,7 +392,7 @@
 						{/if}
 						{#if showFavoriteBroadcastWidget}
 							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
+								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
 								href={resolve('/channels/broadcasting')}
 							>
 								<Icon icon="signal" size={16} />
@@ -404,7 +404,7 @@
 						{/if}
 						{#if showBroadcastCountWidget}
 							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
+								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
 								href={resolve('/channels/broadcasting')}
 							>
 								<Icon icon="signal" size={16} />
@@ -423,15 +423,17 @@
 					<div class="dashboard-grid">
 						{#if tagsLoading}
 							<div
-								class="dashboard-card dashboard-card--row dashboard-card--tag loading-placeholder"
+								class="dashboard-card dashboard-card--row dashboard-card--tag dashboard-card--pill loading-placeholder"
 							>
 								<small>…</small>
 							</div>
 						{/if}
 						{#each userChannelTopTags as { value, count } (value)}
-							<div class="dashboard-card dashboard-card--row dashboard-card--tag">
+							<div
+								class="dashboard-card dashboard-card--row dashboard-card--tag dashboard-card--pill"
+							>
 								<button
-									class="btn ghost"
+									class="btn ghost tag-pill-action"
 									onclick={() => playChannelTag(value)}
 									title="Play #{value}"
 								>
@@ -440,18 +442,16 @@
 								<a
 									class="dashboard-label--tag"
 									href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
-										`?tags=${encodeURIComponent(value)}`}>#{value}</a
+										`?tags=${encodeURIComponent(value)}`}
+									>#{value} <small class="tag-count">{count}</small></a
 								>
-								<small class="tag-count">{count}</small>
-								<div class="tag-actions">
-									<a
-										class="btn ghost"
-										href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
-										title="Search #{value} globally"
-									>
-										<Icon icon="search" />
-									</a>
-								</div>
+								<a
+									class="btn ghost tag-pill-action"
+									href={resolve('/search/tracks') + `?q=${encodeURIComponent('#' + value)}`}
+									title="Search #{value} globally"
+								>
+									<Icon icon="search" />
+								</a>
 							</div>
 						{/each}
 						{#if showOnboarding}
@@ -530,7 +530,7 @@
 					tileStyle="topo"
 				/>
 				<a href={mapOverlayHref} class="btn map-overlay-btn" aria-label={m.nav_map()}>
-					<Icon icon="fullscreen-alt" size={14} />
+					<Icon icon="fullscreen" size={14} />
 				</a>
 			</div>
 		</section>
@@ -635,7 +635,7 @@
 					class="btn map-overlay-btn"
 					aria-label={m.nav_map()}
 				>
-					<Icon icon="fullscreen-alt" size={14} />
+					<Icon icon="fullscreen" size={14} />
 				</a>
 			</div>
 		</section>
@@ -837,13 +837,13 @@
 	.dashboard-group {
 		display: flex;
 		flex-direction: column;
-		gap: 0.3rem;
+		gap: 0.25rem;
 	}
 
 	.dashboard-grid {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.4rem;
+		gap: 0.3rem;
 	}
 
 	.dashboard-card {
@@ -863,11 +863,24 @@
 		overflow: hidden;
 	}
 
+	.dashboard-card--pill {
+		padding: 0.22rem 0.38rem;
+		border-radius: 999px;
+		gap: 0.28rem;
+		background: var(--color-interface-elevated);
+	}
+
+	.dashboard-card--pill :global(svg) {
+		width: 0.92rem;
+		height: 0.92rem;
+	}
+
 	.dashboard-card--row > span:not(.channel-widget-avatar):not(.tag-count):not(.audience-counts) {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		min-width: 0;
+		font-size: var(--font-2);
 	}
 
 	.dashboard-card--row > a.dashboard-label--tag {
@@ -875,12 +888,16 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		min-width: 0;
-		flex-shrink: 1;
+		flex: 1 1 auto;
 	}
 
 	.dashboard-label--tag {
 		text-decoration: none;
-		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		min-width: 0;
+		flex-shrink: 1;
 		&:hover {
 			text-decoration: underline;
 		}
@@ -889,13 +906,19 @@
 	.tag-count {
 		font-size: var(--font-2);
 		color: light-dark(var(--gray-9), var(--gray-8));
-		margin-right: auto;
+		margin: 0;
+		flex-shrink: 0;
 	}
 
 	.tag-actions {
 		display: flex;
 		gap: 0.1rem;
 		flex-shrink: 0;
+	}
+
+	.tag-pill-action {
+		flex: 0 0 auto;
+		padding-inline: 0.28rem;
 	}
 
 	.dashboard-card--link {
@@ -923,7 +946,8 @@
 
 	.broadcast-count {
 		margin-left: auto;
-		font-size: var(--font-4);
+		font-size: var(--font-2);
+		font-weight: 700;
 	}
 
 	.broadcast-deck-card {
