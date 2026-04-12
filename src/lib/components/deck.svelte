@@ -11,6 +11,7 @@
 	let deck = $derived(appState.decks[deckId])
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
+	let isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
 	let isAutoRadio = $derived(Boolean(deck?.auto_radio))
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
@@ -78,6 +79,7 @@
 			expanded: deck?.expanded,
 			compact: deck?.compact,
 			listening: isListeningToBroadcast,
+			broadcasting: isBroadcasting,
 			auto: isAutoRadio,
 			'active-deck': isActiveDeck,
 			resizing,
@@ -115,6 +117,10 @@
 
 	.deck:not(.expanded) {
 		transition: border-color var(--deck-transition-fast) var(--deck-transition-ease);
+	}
+
+	.deck.broadcasting {
+		box-shadow: inset 0 0 0 1px var(--deck-accent, var(--accent-9));
 	}
 
 	.resize-handle {

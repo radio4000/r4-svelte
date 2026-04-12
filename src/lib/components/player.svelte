@@ -568,23 +568,6 @@
 		</div>
 	</header>
 
-	{#if deck?.broadcasting_channel_id}
-		<div class="mode-row">
-			<div class="mode-action live broadcasting" aria-live="polite">
-				<span class="mode-main">
-					<Icon icon="signal" size={14} />
-					{m.status_live_short()}
-				</span>
-				<span class="mode-text">{m.player_broadcast_live()}</span>
-				{#if headerPresenceCount > 0}
-					<span class="mode-stat">
-						<PresenceCount count={headerPresenceCount} />
-					</span>
-				{/if}
-			</div>
-		</div>
-	{/if}
-
 	<!-- 2. Media player -->
 	<media-controller id={mediaControllerId} class="video" data-clickable="true">
 		{#if provider === 'youtube'}
@@ -886,12 +869,16 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: none;
+		aspect-ratio: auto;
 		background: transparent;
 		color: color-mix(in srgb, var(--gray-9) 55%, transparent);
 	}
 
 	.video-hidden-placeholder :global(svg) {
-		width: min(42%, 11rem);
+		width: min(24%, 6rem);
 		height: auto;
 		opacity: 0.9;
 	}
@@ -932,65 +919,6 @@
 
 	.track-panel.active-track {
 		background: var(--header-bg);
-	}
-
-	.mode-row {
-		padding: 0 0.5rem 0.4rem;
-	}
-
-	.mode-action {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		width: 100%;
-		padding: 0.45rem 0.6rem;
-		border: 1px solid var(--gray-6);
-		border-radius: var(--border-radius);
-		background: var(--header-bg);
-		color: inherit;
-		font: inherit;
-		text-align: left;
-	}
-
-	.mode-action.live,
-	.mode-action.auto {
-		cursor: var(--interactive-cursor, pointer);
-	}
-
-	.mode-action.broadcasting {
-		cursor: default;
-	}
-
-	.mode-main {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: var(--font-2);
-		font-weight: 700;
-		flex-shrink: 0;
-	}
-
-	.mode-text {
-		font-size: var(--font-2);
-		font-weight: 500;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.mode-stat {
-		display: flex;
-		align-items: center;
-		margin-left: auto;
-	}
-
-	.mode-action.synced,
-	.mode-action.auto {
-		color: var(--accent-9);
-	}
-
-	.mode-action.drifted {
-		color: var(--orange-9);
 	}
 
 	.listening-track-panel {
