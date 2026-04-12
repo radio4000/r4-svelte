@@ -58,9 +58,7 @@
 	)
 	let compactListeningDecksSynced = $derived(
 		compactListeningDeckIds.length > 0 &&
-			compactListeningDeckIds.every(
-				(id) => !appState.decks[id]?.listening_drifted && appState.decks[id]?.is_playing
-			)
+			compactListeningDeckIds.every((id) => !appState.decks[id]?.listening_drifted)
 	)
 	let compactListenPresenceCount = $derived.by(() => {
 		let total = 0
