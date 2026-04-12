@@ -112,6 +112,7 @@
 	"auth_use_magic_link": "Use magic link instead",
 	"auth_use_password_instead": "Use password instead",
 	"auto_radio_join": "Start playing in auto-radio mode",
+	"auto_radio_leave": "Exit auto radio",
 	"auto_radio_resync": "Resync auto radio",
 	"avatar_upload_button": "Upload avatar",
 	"avatar_upload_failed": "Upload failed",

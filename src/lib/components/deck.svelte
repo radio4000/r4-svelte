@@ -11,6 +11,7 @@
 	let deck = $derived(appState.decks[deckId])
 	let showPlayer = $derived(page.url.searchParams.get('player') !== 'false')
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
+	let isAutoRadio = $derived(Boolean(deck?.auto_radio))
 
 	// For deck 1: only show when there are tracks queued/playing or any history exists.
 	// Read collection size directly to avoid spinning up one full live query per deck.
@@ -77,6 +78,7 @@
 			expanded: deck?.expanded,
 			compact: deck?.compact,
 			listening: isListeningToBroadcast,
+			auto: isAutoRadio,
 			'active-deck': isActiveDeck,
 			resizing,
 			'hide-queue': deck?.hide_queue_panel,
@@ -89,7 +91,7 @@
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
 			<Player {deckId} {scrollToActive}>
-				{#if !isListeningToBroadcast}
+				{#if !isListeningToBroadcast && !isAutoRadio}
 					<QueuePanel {deckId} bind:scrollToActive />
 				{/if}
 			</Player>
@@ -139,11 +141,17 @@
 		}
 
 		/* deck has at least one visible panel (video or queue): fill available height */
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue)) {
+		.deck:not(.compact):not(.expanded):is(
+				:not(.hide-video),
+				:not(.listening):not(.auto):not(.hide-queue)
+			) {
 			height: 100%;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+		.deck:not(.compact):not(.expanded):is(
+				:not(.hide-video),
+				:not(.listening):not(.auto):not(.hide-queue)
+			)
 			:global(.video:not(:has(.native-audio-player))) {
 			flex: 1 1 auto;
 			min-height: 0;
@@ -151,13 +159,19 @@
 			aspect-ratio: auto;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+		.deck:not(.compact):not(.expanded):is(
+				:not(.hide-video),
+				:not(.listening):not(.auto):not(.hide-queue)
+			)
 			:global(.queue-panel) {
 			flex: 1 1 auto;
 			min-height: 0;
 		}
 
-		.deck:not(.compact):not(.expanded):is(:not(.hide-video), :not(.listening):not(.hide-queue))
+		.deck:not(.compact):not(.expanded):is(
+				:not(.hide-video),
+				:not(.listening):not(.auto):not(.hide-queue)
+			)
 			:global(.controls) {
 			flex-wrap: wrap;
 		}
@@ -230,11 +244,18 @@
 		max-height: calc(100dvh - 10rem);
 	}
 
-	/* Broadcast listener: no queue, so use less space */
-	.deck.listening {
+	/* Broadcast listener / auto-radio: no queue, so use less space */
+	.deck.listening,
+	.deck.auto {
 		width: var(--deck-width, 280px);
 		min-width: 200px;
 		flex-shrink: 0;
+	}
+
+	/* Auto-radio: video fills available height (no queue competing for space) */
+	.deck.auto :global(.video) {
+		max-height: none;
+		flex: 1;
 	}
 
 	/* Hide video via CSS — keeps media element in the DOM for audio playback */

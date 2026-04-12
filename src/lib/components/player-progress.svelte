@@ -1,8 +1,8 @@
 <script>
 	import {formatDuration} from '$lib/dates'
 
-	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void}} */
-	let {currentTime, mediaDuration, trackDuration, onseek} = $props()
+	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void, disabled?: boolean}} */
+	let {currentTime, mediaDuration, trackDuration, onseek, disabled = false} = $props()
 
 	let duration = $derived(Number.isFinite(mediaDuration) ? mediaDuration : (trackDuration ?? NaN))
 	let hasDuration = $derived(Number.isFinite(duration) && duration > 0)
@@ -18,7 +18,7 @@
 		step="any"
 		value={currentTime}
 		oninput={(e) => onseek?.(Number(e.currentTarget.value))}
-		disabled={!hasDuration}
+		disabled={disabled || !hasDuration}
 		style="--range-fill: {fill}%"
 	/>
 	<time>{formatDuration(duration, '-:--')}</time>

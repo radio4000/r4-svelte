@@ -2,12 +2,19 @@
 	import {eq} from '@tanstack/svelte-db'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {appState, canEditChannel, removeDeck} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {togglePlayPause, next, previous, getMediaPlayer, resyncAutoRadio} from '$lib/api'
-	import {resyncBroadcastDeck} from '$lib/broadcast'
+	import {
+		togglePlayPause,
+		next,
+		previous,
+		getMediaPlayer,
+		resyncAutoRadio,
+		clearUserInitiatedPlay
+	} from '$lib/api'
+	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '$lib/paraglide/messages'
@@ -17,10 +24,12 @@
 	import SpeedControl from '$lib/components/speed-control.svelte'
 	import VolumeControl from '$lib/components/volume-control.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import PlayerProgress from '$lib/components/player-progress.svelte'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {isDbId} from '$lib/utils'
+	import {channelPresence} from '$lib/presence.svelte'
+	import {viewLabel} from '$lib/views'
 
 	/** @type {{deckId: number}} */
 	let {deckId} = $props()
@@ -106,14 +115,39 @@
 	let headerChannel = $derived(
 		deck?.listening_to_channel_id ? (broadcasterChannel ?? displayChannel) : displayChannel
 	)
+	const listenSlug = $derived(
+		deck?.listening_to_channel_id
+			? (channelsCollection.state.get(deck.listening_to_channel_id)?.slug ??
+					broadcastsCollection.state.get(deck.listening_to_channel_id)?.channels?.slug)
+			: undefined
+	)
+	const broadcastSlug = $derived(
+		deck?.broadcasting_channel_id
+			? channelsCollection.state.get(deck.broadcasting_channel_id)?.slug
+			: undefined
+	)
+	const autoUri = $derived(
+		deck?.auto_radio && deck.playlist_slug
+			? viewLabel(deck.view ?? {sources: [{channels: [deck.playlist_slug]}]}) ||
+					`@${deck.playlist_slug}`
+			: undefined
+	)
+	const modePresenceCount = $derived(
+		deck?.listening_to_channel_id && listenSlug
+			? (channelPresence[listenSlug]?.broadcast ?? 0)
+			: deck?.broadcasting_channel_id && broadcastSlug
+				? (channelPresence[broadcastSlug]?.broadcast ?? 0)
+				: autoUri && deck?.playlist_slug
+					? (channelPresence[deck.playlist_slug]?.byUri?.[autoUri] ?? 0)
+					: 0
+	)
 	let headerSlug = $derived(headerChannel?.slug ?? displaySlug)
-	let headerSlugHref = $derived(headerSlug ? `/${headerSlug}` : undefined)
 	let canEditTrackChannel = $derived(
 		Boolean(displayChannel?.id && canEditChannel(displayChannel.id))
 	)
 	let trackHref = $derived(
-		!appState.embed_mode && displayTrack?.slug && displayTrack?.id && isDbId(displayTrack.id)
-			? resolve(`/${displayTrack.slug}/tracks/${displayTrack.id}`)
+		!appState.embed_mode && displayTrack?.slug && displayTrack?.id
+			? resolve('/[slug]/tracks/[tid]', {slug: displayTrack.slug, tid: String(displayTrack.id)})
 			: undefined
 	)
 	let provider = $derived(
@@ -132,7 +166,7 @@
 	let mediaCurrentTime = $derived(deck?.media_current_time ?? 0)
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div
 	class="deck-compact-bar"
 	class:active-deck={isActiveDeck}
@@ -146,6 +180,7 @@
 			currentTime={mediaCurrentTime}
 			{mediaDuration}
 			trackDuration={displayTrack?.duration}
+			disabled={Boolean(deck?.listening_to_channel_id)}
 			onseek={(val) => {
 				if (deck) deck.media_current_time = val
 				const mediaElement = getMediaPlayer(deckId)
@@ -154,16 +189,33 @@
 		/>
 	{/if}
 	<div class="header-info" class:active-track-bg={Boolean(displayTrack)}>
+		<button
+			class="close-deck"
+			onclick={() => {
+				const bchId = getBroadcastingChannelId()
+				clearUserInitiatedPlay(deckId)
+				removeDeck(deckId)
+				if (bchId) notifyBroadcastState(bchId)
+			}}
+			aria-label={m.player_tooltip_close_deck()}
+			{@attach tooltip({content: m.player_tooltip_close_deck()})}
+		>
+			<Icon icon="close" />
+		</button>
 		<div class="channel-panel">
 			{#if headerChannel}
 				{#if appState.embed_mode}
 					<span class="avatar">
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</span>
-				{:else}
-					<a class="avatar" href={headerSlugHref}>
+				{:else if headerSlug}
+					<a class="avatar" href={resolve(`/${headerSlug}`)}>
 						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
 					</a>
+				{:else}
+					<span class="avatar">
+						<ChannelAvatar id={headerChannel.image} alt={headerChannel.name} />
+					</span>
 				{/if}
 			{/if}
 			<DeckChannelHeader
@@ -171,12 +223,11 @@
 				channel={headerChannel}
 				track={displayTrack}
 				isBroadcastingChannel={isChannelBroadcasting}
-				onAutoClick={() => resyncAutoRadio(deckId)}
-				onBroadcastSyncClick={() => deck?.listening_to_channel_id && resyncBroadcastDeck(deckId)}
+				showModeMeta={false}
 			/>
 		</div>
 		{#if displayTrack}
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 			<div
 				class="track-panel"
 				onclick={(e) => {
@@ -194,18 +245,8 @@
 				/>
 			</div>
 		{/if}
-		<button
-			class="expand"
-			onclick={() => (deck.compact = false)}
-			aria-label={m.player_compact_show_panel()}
-			{@attach tooltip({content: m.player_compact_show_panel()})}
-		>
-			<Icon icon="deck-panel" expanded />
-		</button>
-	</div>
-	<div class="row-controls">
-		{#if !deck?.listening_to_channel_id}
-			<menu class="controls">
+		<menu class="controls">
+			{#if !deck?.listening_to_channel_id && !deck?.auto_radio && !deck?.broadcasting_channel_id}
 				<button
 					onclick={() => previous(deckId, 'user_prev')}
 					aria-label={m.player_compact_prev()}
@@ -229,10 +270,43 @@
 				>
 					<Icon icon="next-fill" />
 				</button>
-			</menu>
-			<SpeedControl {deckId} {provider} />
-			<VolumeControl {deckId} />
-		{/if}
+				<SpeedControl {deckId} {provider} />
+				<VolumeControl {deckId} />
+			{:else if deck?.auto_radio}
+				{@const autoNotSynced = !!deck?.auto_radio_drifted || !deck?.is_playing}
+				<button
+					class="play"
+					class:active={deck?.is_playing}
+					onclick={() => togglePlayPause(deckId)}
+					aria-label={m.player_compact_play_pause()}
+					disabled={!canPlayFromQueue}
+				>
+					<Icon icon={deck?.is_playing ? 'pause' : 'play-fill'} />
+				</button>
+				<button
+					class:active={!autoNotSynced}
+					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					onclick={() => resyncAutoRadio(deckId)}
+				>
+					{#if modePresenceCount > 0}
+						<PresenceCount count={modePresenceCount} />
+					{/if}
+					<Icon icon="infinite" size={12} />
+					{autoNotSynced ? 'Sync' : 'Auto'}
+				</button>
+			{:else if !deck?.listening_to_channel_id}
+				<VolumeControl {deckId} />
+			{/if}
+		</menu>
+		<button
+			class="expand"
+			onclick={() => (deck.compact = false)}
+			aria-label={m.player_compact_show_panel()}
+			{@attach tooltip({content: m.player_compact_show_panel()})}
+		>
+			<Icon icon="deck-panel" expanded />
+		</button>
 	</div>
 </div>
 
@@ -240,24 +314,12 @@
 	.deck-compact-bar {
 		min-height: 49px;
 		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		padding-bottom: 0.5rem;
+		flex-direction: row;
+		flex-wrap: wrap;
 		border-top: 1px solid var(--gray-6);
 		background: var(--color-interface-elevated);
 		min-width: 0;
 		overflow: hidden;
-	}
-
-	.row-controls {
-		display: flex;
-		align-items: center;
-		gap: 0.2rem;
-		flex: 1 1 100%;
-		min-width: 0;
-		width: 100%;
-		justify-content: flex-start;
-		flex-wrap: wrap;
 	}
 
 	.deck-compact-bar :global(.progress) {
@@ -267,42 +329,56 @@
 		padding-bottom: 0;
 	}
 
-	.controls {
-		align-items: center;
-		flex: 0 0 auto;
-	}
-
 	.header-info {
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		flex-wrap: wrap;
-		gap: 0.5rem;
+		flex-wrap: nowrap;
+		gap: 0.25rem;
 		min-width: 0;
 		flex: 1 1 auto;
 		width: 100%;
 		min-height: 2rem;
+		padding-inline: 0.4rem;
+		padding-block: 0.25rem;
 	}
 
-	.header-info,
-	.row-controls {
-		padding-inline: 0.5rem;
+	.close-deck {
+		order: 0;
+		flex: 0 0 auto;
+		align-self: center;
 	}
 
 	.channel-panel {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.4rem;
 		min-width: 0;
-		width: 100%;
-		flex: 1 1 100%;
+		flex: 0 1 auto;
+		order: 1;
 	}
 
 	.track-panel {
 		min-width: 0;
-		width: auto;
 		flex: 1 1 0;
 		cursor: pointer;
+		order: 3;
+	}
+
+	.controls {
+		display: flex;
+		align-items: center;
+		flex-wrap: nowrap;
+		gap: 0.25rem;
+		flex: 0 0 auto;
+		min-width: 0;
+		order: 4;
+	}
+
+	.expand {
+		flex: 0 0 auto;
+		align-self: center;
+		order: 5;
 	}
 
 	.avatar {
@@ -313,11 +389,6 @@
 	.active-deck .avatar {
 		outline: 2px solid var(--accent-9);
 		border-radius: var(--border-radius);
-	}
-
-	.expand {
-		flex: 0 0 auto;
-		align-self: center;
 	}
 
 	.track-panel :global(article) {
@@ -335,27 +406,17 @@
 	}
 
 	@media (min-width: 601px) {
-		.header-info {
-			flex-wrap: nowrap;
-			align-items: stretch;
-		}
-
 		.channel-panel {
-			width: auto;
-			min-width: 14rem;
-			flex: 0 1 auto;
+			min-width: 10rem;
+			flex: 0 1 16rem;
 		}
 
-		.track-panel {
-			width: auto;
-			flex: 1 1 auto;
+		.controls {
+			margin-left: auto;
 		}
-	}
 
-	@media (min-width: 769px) {
-		.deck-compact-bar {
-			flex-direction: row;
-			flex-wrap: wrap;
+		.controls :global(.volume) {
+			margin-left: 0;
 		}
 	}
 </style>

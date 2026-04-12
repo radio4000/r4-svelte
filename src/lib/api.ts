@@ -493,7 +493,14 @@ export function toggleQueuePanel(deckId) {
 export function toggleVideo(deckId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	deck.hide_video_player = !deck.hide_video_player
+	const newValue = !deck.hide_video_player
+	if (deck.listening_to_channel_id) {
+		for (const d of Object.values(appState.decks)) {
+			if (d.listening_to_channel_id) d.hide_video_player = newValue
+		}
+	} else {
+		deck.hide_video_player = newValue
+	}
 	maybeBroadcastNotify()
 }
 
@@ -509,10 +516,19 @@ export function toggleDeckCompact(deckId) {
 export function togglePlayerExpanded(deckId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	deck.expanded = !deck.expanded
-	if (deck.expanded && deck.compact) deck.compact = false
-	if (deck.expanded && deck.hide_video_player) {
-		deck.hide_video_player = false
+	const newValue = !deck.expanded
+	if (deck.listening_to_channel_id) {
+		for (const d of Object.values(appState.decks)) {
+			if (d.listening_to_channel_id) {
+				d.expanded = newValue
+				if (newValue && d.compact) d.compact = false
+				if (newValue && d.hide_video_player) d.hide_video_player = false
+			}
+		}
+	} else {
+		deck.expanded = newValue
+		if (deck.expanded && deck.compact) deck.compact = false
+		if (deck.expanded && deck.hide_video_player) deck.hide_video_player = false
 	}
 }
 
@@ -828,10 +844,12 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	if (view) loadDeckView(deckId, view, ids, {title: label})
 	else setPlaylist(deckId, ids, {title: label})
 	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
+	// playTrack → setPlaylist clears deck.view; restore it so resyncAutoRadio can run
 	if (appState.decks[deckId]) {
 		appState.decks[deckId].auto_radio = true
 		appState.decks[deckId].auto_radio_drifted = false
 		appState.decks[deckId].auto_radio_rotation_start = rotationStartUnix
+		if (view) appState.decks[deckId].view = view
 	}
 
 	await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
@@ -868,6 +886,15 @@ async function seekToAutoRadioOffset(
  * Uses the stored rotation params to recompute the expected track + offset,
  * navigating to the right track if needed, then seeking.
  */
+/** Exit auto-radio mode on a deck, leaving playback running at the current position. */
+export function leaveAutoRadio(deckId: number) {
+	const deck = getDeck(deckId)
+	if (!deck) return
+	deck.auto_radio = undefined
+	deck.auto_radio_drifted = undefined
+	deck.auto_radio_rotation_start = undefined
+}
+
 export async function resyncAutoRadio(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck?.auto_radio || !deck.view || deck.auto_radio_rotation_start == null) return

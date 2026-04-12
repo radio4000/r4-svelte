@@ -24,6 +24,7 @@
 	 *  onAutoClick?: (() => void) | undefined
 	 *  onBroadcastSyncClick?: (() => void) | undefined
 	 *  presenceCount?: number
+	 *  showModeMeta?: boolean
 	 * }}
 	 */
 	let {
@@ -36,7 +37,8 @@
 		isBroadcastingChannel = false,
 		onAutoClick,
 		onBroadcastSyncClick,
-		presenceCount = 0
+		presenceCount = 0,
+		showModeMeta = true
 	} = $props()
 
 	const derivedTitle = $derived(deckTitle(deck, channel?.name))
@@ -91,7 +93,7 @@
 	<div class="meta-row">
 		{#if listeningWhoSlug}
 			<a class="slug-link" href={resolvedChannelSlugHref}>@{listeningWhoSlug}</a>
-			{#if onBroadcastSyncClick}
+			{#if showModeMeta && onBroadcastSyncClick}
 				<button
 					type="button"
 					class={[
@@ -113,8 +115,8 @@
 			<a class="slug-link" href={resolvedSlugHref ?? resolvedChannelSlugHref}>
 				@{slug || channel?.slug}
 			</a>
-			{#if isBroadcasting || isBroadcastingChannel}
-				<Icon icon="cell-signal" size={12} class="broadcasting-icon" />
+			{#if showModeMeta && (isBroadcasting || isBroadcastingChannel)}
+				<Icon icon="signal" size={12} class="broadcasting-icon" />
 			{/if}
 		{/if}
 
@@ -126,7 +128,7 @@
 			{/if}
 		{/each}
 
-		{#if showAutoButton}
+		{#if showModeMeta && showAutoButton}
 			<AutoRadioButton
 				className="auto-btn active"
 				synced={!!deck?.is_playing && !deck?.auto_radio_drifted}
@@ -136,7 +138,7 @@
 				onclick={onAutoClick}
 			/>
 		{/if}
-		{#if presenceCount > 0}
+		{#if showModeMeta && presenceCount > 0}
 			<PresenceCount count={presenceCount} />
 		{/if}
 	</div>

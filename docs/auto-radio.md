@@ -57,7 +57,7 @@ All infinity auto controls now use one shared UI component: `components/auto-rad
 
 Accessibility: with `prefers-reduced-motion: reduce`, the synced icon falls back to a static accent stroke (no animation).
 
-In deck and channel headers, the Auto button now sits after the linked `@slug` and linked `#tags` metadata row.
+In deck player UI, Auto mode appears as a full-width action row below the channel header and above the video. It combines icon, status text, presence count, and resync action in one button.
 
 `resyncAutoRadio` now re-applies the stored view (`processViewTracks`) before recomputing the deterministic shuffle, so filtered/tag/search auto-radio resyncs correctly.
 

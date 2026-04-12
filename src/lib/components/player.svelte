@@ -32,6 +32,7 @@
 	import {appState, canEditChannel, removeDeck, deckAccent} from '$lib/app-state.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SpeedControl from '$lib/components/speed-control.svelte'
@@ -480,28 +481,24 @@
 						track={displayTrack}
 						titleElement="div"
 						titleClass="player-header-title"
-						onAutoClick={() => resyncAutoRadio(deckId)}
-						onBroadcastSyncClick={() => {
-							if (deck?.listening_to_channel_id) resyncBroadcastDeck(deckId)
-						}}
-						presenceCount={headerPresenceCount}
+						showModeMeta={false}
 					/>
 				</div>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
 				{#if !isListeningToBroadcast}
-				<button
-					class="close-deck"
-					onclick={() => {
-						const bchId = getBroadcastingChannelId()
-						clearUserInitiatedPlay(deckId)
-						removeDeck(deckId)
-						if (bchId) notifyBroadcastState(bchId)
-					}}
-					{@attach tooltip({content: m.player_tooltip_close_deck(), position: 'top'})}
-				>
-					<Icon icon="close" />
-				</button>
+					<button
+						class="close-deck"
+						onclick={() => {
+							const bchId = getBroadcastingChannelId()
+							clearUserInitiatedPlay(deckId)
+							removeDeck(deckId)
+							if (bchId) notifyBroadcastState(bchId)
+						}}
+						{@attach tooltip({content: m.player_tooltip_close_deck(), position: 'top'})}
+					>
+						<Icon icon="close" />
+					</button>
 				{/if}
 				<PopoverMenu align="right" closeOnClick={false}>
 					{#snippet trigger()}
@@ -548,6 +545,23 @@
 			</menu>
 		</div>
 	</header>
+
+	{#if deck?.broadcasting_channel_id}
+		<div class="mode-row">
+			<div class="mode-action live broadcasting" aria-live="polite">
+				<span class="mode-main">
+					<Icon icon="signal" size={14} />
+					{m.status_live_short()}
+				</span>
+				<span class="mode-text">{m.player_broadcast_live()}</span>
+				{#if headerPresenceCount > 0}
+					<span class="mode-stat">
+						<PresenceCount count={headerPresenceCount} />
+					</span>
+				{/if}
+			</div>
+		</div>
+	{/if}
 
 	<!-- 2. Media player -->
 	<media-controller id={mediaControllerId} class="video" data-clickable="true">
@@ -606,13 +620,14 @@
 				currentTime={mediaCurrentTime}
 				{mediaDuration}
 				trackDuration={track?.duration}
+				disabled={isListeningToBroadcast}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					if (mediaElement) mediaElement.currentTime = val
 				}}
 			/>
 		{/if}
-		<!-- 4. Channel/track info + deck toggle -->
+		<!-- 4. Channel/track info + mode info -->
 		<footer
 			class="track-panel"
 			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
@@ -628,20 +643,12 @@
 							menuValign="top"
 							menuAlign="end"
 						/>
-						<span class="live-pill">
-							<Icon icon="cell-signal" size={12} />
-							{m.status_live_short()}
-						</span>
 					</div>
 				{:else}
 					<div class="header-info active-track-bg">
 						<div class="info">
 							<strong>{m.player_broadcast_live()}</strong>
 						</div>
-						<span class="live-pill">
-							<Icon icon="cell-signal" size={12} />
-							{m.status_live_short()}
-						</span>
 					</div>
 				{/if}
 			{:else if displayTrack}
@@ -656,15 +663,34 @@
 			{/if}
 		</footer>
 
-		{#if !isListeningToBroadcast}
-			<menu class="controls">
+		<menu class="controls">
+			{#if !isListeningToBroadcast && !deck?.auto_radio && !deck?.broadcasting_channel_id}
 				{@render btnPrev()}
 				{@render btnPlay()}
 				{@render btnNext()}
 				<SpeedControl {deckId} {provider} />
 				<VolumeControl {deckId} />
-			</menu>
-		{/if}
+			{:else if deck?.auto_radio}
+				{@const autoNotSynced = !!deck?.auto_radio_drifted || !deck?.is_playing}
+				{@render btnPlay()}
+				<button
+					class={['auto-sync', {active: !autoNotSynced}]}
+					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
+					onclick={() => resyncAutoRadio(deckId)}
+					{@attach tooltip({content: autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join(), position: 'top'})}
+				>
+					{#if headerPresenceCount > 0}
+						<PresenceCount count={headerPresenceCount} />
+					{/if}
+					<Icon icon="infinite" size={14} />
+					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
+				</button>
+				<VolumeControl {deckId} />
+			{:else if !isListeningToBroadcast}
+				<VolumeControl {deckId} />
+			{/if}
+		</menu>
 	</section>
 </div>
 
@@ -791,28 +817,29 @@
 		line-height: 1.3;
 	}
 
-	.live-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		flex-shrink: 0;
-		font-size: var(--font-2);
-		font-weight: 600;
-		color: var(--accent-9);
-		margin-left: auto;
-	}
-
 	:global(.volume) {
 		margin-left: auto;
 	}
 
 	.controls {
+		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.25rem;
 		min-width: 0;
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
 	}
+
+	.controls :global(.auto-btn) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 0.35rem;
+		min-height: 1.35rem;
+	}
+
 
 	.layout-controls {
 		align-items: center;
@@ -886,18 +913,87 @@
 	}
 
 	.track-panel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.5rem;
 		flex-shrink: 0;
 		cursor: var(--interactive-cursor, pointer);
 		background: var(--header-bg);
+
+		:global(article) {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
 	}
 
 	.track-panel.active-track {
 		background: var(--header-bg);
 	}
 
+	.mode-row {
+		padding: 0 0.5rem 0.4rem;
+	}
+
+	.mode-action {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid var(--gray-6);
+		border-radius: var(--border-radius);
+		background: var(--header-bg);
+		color: inherit;
+		font: inherit;
+		text-align: left;
+	}
+
+	.mode-action.live,
+	.mode-action.auto {
+		cursor: var(--interactive-cursor, pointer);
+	}
+
+	.mode-action.broadcasting {
+		cursor: default;
+	}
+
+	.mode-main {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: var(--font-2);
+		font-weight: 700;
+		flex-shrink: 0;
+	}
+
+	.mode-text {
+		font-size: var(--font-2);
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.mode-stat {
+		display: flex;
+		align-items: center;
+		margin-left: auto;
+	}
+
+	.mode-action.synced,
+	.mode-action.auto {
+		color: var(--accent-9);
+	}
+
+	.mode-action.drifted {
+		color: var(--orange-9);
+	}
+
 	.listening-track-panel {
 		display: flex;
 		align-items: center;
+		flex: 1 1 auto;
 		min-width: 0;
 		background: var(--header-bg);
 	}
@@ -905,10 +1001,6 @@
 	.listening-track-panel :global(article) {
 		flex: 1 1 auto;
 		min-width: 0;
-	}
-
-	.listening-track-panel .live-pill {
-		padding-right: 0.5rem;
 	}
 
 	@media (max-width: 768px) {
