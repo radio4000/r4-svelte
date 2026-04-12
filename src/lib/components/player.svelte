@@ -887,12 +887,13 @@
 		align-items: center;
 		justify-content: center;
 		background: transparent;
-		color: var(--header-bg);
+		color: color-mix(in srgb, var(--gray-9) 55%, transparent);
 	}
 
 	.video-hidden-placeholder :global(svg) {
 		width: min(42%, 11rem);
 		height: auto;
+		opacity: 0.9;
 	}
 
 	.native-audio-player {
