@@ -1,3 +1,10 @@
+<script module>
+	/** @type {readonly ['carto', 'topo', 'satellite']} */
+	export const TILE_STYLES = /** @type {const} */ (['carto', 'topo', 'satellite'])
+	/** @type {'satellite'} */
+	export const TILE_SATELLITE = 'satellite'
+</script>
+
 <script>
 	import {goto} from '$app/navigation'
 	import maplibregl from 'maplibre-gl'

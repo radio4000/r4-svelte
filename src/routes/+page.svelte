@@ -12,7 +12,7 @@
 	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
 	import {getChannelTags, extractHashtags} from '$lib/utils'
 	import {playChannel, togglePlayPause, loadDeckView, playTrack, sortByNewest} from '$lib/api'
-	import {findPlayingDeck, findLoadedDeck, isBroadcasting} from '$lib/deck'
+	import {isBroadcasting} from '$lib/deck'
 	import {authStatus} from '$lib/app-state.svelte'
 	import {appPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import {sdk} from '@radio4000/sdk'
@@ -114,14 +114,6 @@
 	const userChannelIsBroadcasting = $derived(isBroadcasting(appState.decks, userChannel?.id))
 
 	// User channel play state
-	const userChannelPlayingDeckId = $derived(findPlayingDeck(appState.decks, userChannel?.slug)?.id)
-	const userChannelLoadedDeckId = $derived(findLoadedDeck(appState.decks, userChannel?.slug)?.id)
-	const userChannelIsPlaying = $derived(!!userChannelPlayingDeckId)
-	function toggleUserChannelPlay() {
-		if (!userChannel) return
-		if (userChannelLoadedDeckId) togglePlayPause(userChannelLoadedDeckId)
-		else playChannel(appState.active_deck_id, userChannel)
-	}
 
 	$effect(() => {
 		const slug = userChannel?.slug
@@ -254,7 +246,7 @@
 		{#if !isSignedIn}
 			{#if showBroadcastCountWidget}
 				<a class="btn broadcast-live-link" href={resolve('/channels/broadcasting')}>
-					<Icon icon="cell-signal" />
+					<Icon icon="signal" />
 					<span>{broadcastCount.toLocaleString()}</span>
 				</a>
 			{/if}
@@ -270,13 +262,7 @@
 			{/if}
 		{/if}
 		{#if userChannel}
-			<MyChannelControls
-				channel={userChannel}
-				deckId={userChannelLoadedDeckId ?? appState.active_deck_id}
-				isPlaying={userChannelIsPlaying}
-				isBroadcasting={userChannelIsBroadcasting}
-				onPlayPause={toggleUserChannelPlay}
-			/>
+			<MyChannelControls channel={userChannel} />
 		{/if}
 	</menu>
 
@@ -304,7 +290,7 @@
 								>
 									<Icon icon={deck.is_playing ? 'speakers-fill' : 'speakers'} size={14} />
 									{#if deck.broadcasting_channel_id}
-										<Icon icon="cell-signal" size={14} />
+										<Icon icon="signal" size={14} />
 									{/if}
 									<span class="broadcast-track-title">{current?.title ?? '—'}</span>
 									{#if next}
@@ -372,6 +358,61 @@
 									{/if}
 								</div>
 							{/each}
+						{/if}
+					</div>
+				</div>
+			{/if}
+
+			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget || showBroadcastCountWidget}
+				<div class="dashboard-group">
+					<div class="dashboard-grid">
+						{#if showTrackWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+							>
+								<Icon icon="unordered-list" size={16} />
+								<span>{m.home_dashboard_tracks()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{userChannelTrackCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showFavoritesWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/favorites')}
+							>
+								<Icon icon="favorite-fill" size={16} />
+								<span>{m.home_dashboard_favorites()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{follows.followedChannels.length.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showFavoriteBroadcastWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="signal" size={16} />
+								<span>{m.home_dashboard_favorites_broadcasting()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{favoriteBroadcastCount.toLocaleString()}</strong
+								>
+							</a>
+						{/if}
+						{#if showBroadcastCountWidget}
+							<a
+								class="dashboard-card dashboard-card--link dashboard-card--row"
+								href={resolve('/channels/broadcasting')}
+							>
+								<Icon icon="signal" size={16} />
+								<span>{m.home_dashboard_live_radios()}</span>
+								<strong class="dashboard-value broadcast-count"
+									>{broadcastCount.toLocaleString()}</strong
+								>
+							</a>
 						{/if}
 					</div>
 				</div>
@@ -466,61 +507,6 @@
 					{/if}
 				</div>
 			{/if}
-
-			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget || showBroadcastCountWidget}
-				<div class="dashboard-group">
-					<div class="dashboard-grid">
-						{#if showTrackWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
-								href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-							>
-								<Icon icon="unordered-list" size={16} />
-								<span>{m.home_dashboard_tracks()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{userChannelTrackCount.toLocaleString()}</strong
-								>
-							</a>
-						{/if}
-						{#if showFavoritesWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
-								href={resolve('/channels/favorites')}
-							>
-								<Icon icon="favorite-fill" size={16} />
-								<span>{m.home_dashboard_favorites()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{follows.followedChannels.length.toLocaleString()}</strong
-								>
-							</a>
-						{/if}
-						{#if showFavoriteBroadcastWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
-								href={resolve('/channels/broadcasting')}
-							>
-								<Icon icon="cell-signal" size={16} />
-								<span>{m.home_dashboard_favorites_broadcasting()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{favoriteBroadcastCount.toLocaleString()}</strong
-								>
-							</a>
-						{/if}
-						{#if showBroadcastCountWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row"
-								href={resolve('/channels/broadcasting')}
-							>
-								<Icon icon="cell-signal" size={16} />
-								<span>{m.home_dashboard_live_radios()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{broadcastCount.toLocaleString()}</strong
-								>
-							</a>
-						{/if}
-					</div>
-				</div>
-			{/if}
 		</section>
 
 		{#if favoriteBroadcasts.length}
@@ -544,7 +530,7 @@
 					tileStyle="topo"
 				/>
 				<a href={mapOverlayHref} class="btn map-overlay-btn" aria-label={m.nav_map()}>
-					<Icon icon="globe" size={14} />
+					<Icon icon="fullscreen-alt" size={14} />
 				</a>
 			</div>
 		</section>
@@ -649,7 +635,7 @@
 					class="btn map-overlay-btn"
 					aria-label={m.nav_map()}
 				>
-					<Icon icon="globe" size={14} />
+					<Icon icon="fullscreen-alt" size={14} />
 				</a>
 			</div>
 		</section>
@@ -836,7 +822,6 @@
 			min-width: 0;
 			overflow: hidden;
 		}
-
 	}
 
 	.dashboard-section {

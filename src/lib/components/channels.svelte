@@ -352,8 +352,8 @@
 							content: m.channels_filter_tooltip_broadcasting(),
 							position: 'right'
 						})}
-						>{m.channels_filter_option_broadcasting()}<span
-							class="channel-badge live-pill">{broadcastsCollection.state.size}</span
+						>{m.channels_filter_option_broadcasting()}<span class="channel-badge live-pill"
+							>{broadcastsCollection.state.size}</span
 						></button
 					>
 				{/if}
@@ -488,7 +488,13 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default {channels} {openSlug} loading={channelsQuery.isLoading} />
+			<MapChannels.default
+				{channels}
+				{openSlug}
+				loading={channelsQuery.isLoading}
+				globeMode={true}
+				tileStyle="satellite"
+			/>
 		{/await}
 	{:else if display === 'tuner'}
 		<SpectrumScanner {channels} />

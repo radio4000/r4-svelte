@@ -1,11 +1,7 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {
-		getChannelCtx,
-		getTracksQueryCtx,
-		setTrackDetailCtx,
-	} from '$lib/contexts'
+	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq, and} from '@tanstack/db'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'

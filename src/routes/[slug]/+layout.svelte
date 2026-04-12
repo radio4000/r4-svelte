@@ -7,20 +7,24 @@
 	import type {Snippet} from 'svelte'
 	import {eq} from '@tanstack/db'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {joinBroadcast, leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast'
+	import {joinBroadcast, leaveBroadcast, startBroadcast, stopBroadcast} from '$lib/broadcast'
+	import PresenceCount from '$lib/components/presence-count.svelte'
 	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {tracksCollection, checkTracksFreshness} from '$lib/collections/tracks'
+	import {tracksCollection, checkTracksFreshness, ensureTracksLoaded} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {toggleChannelAutoRadio} from '$lib/api'
+	import {
+		getMediaPlayer,
+		joinAutoRadio,
+		playChannel,
+		resyncAutoRadio,
+		togglePlayPause
+	} from '$lib/api'
 	import {findAutoDecksForChannel, findChannelPlayingDeck, findListeningDeck} from '$lib/deck'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
-	import ButtonPlay from '$lib/components/button-play.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-	import BroadcastLiveControls from '$lib/components/broadcast-live-controls.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
@@ -121,13 +125,25 @@
 	)
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let anyChannelAutoDecks = $derived(findAutoDecksForChannel(appState.decks, channel?.slug))
-	let channelHasAutoDrifted = $derived(anyChannelAutoDecks.some((d) => d.auto_radio_drifted))
 	let channelPlayingDeck = $derived(
 		findChannelPlayingDeck(appState.decks, appState.active_deck_id, channel?.slug)
 	)
 	let channelListeningDeck = $derived(
 		findListeningDeck(appState.decks, appState.active_deck_id, channel?.id)
 	)
+	let activeDeck = $derived(appState.decks[appState.active_deck_id])
+	let isChannelLoaded = $derived(Boolean(channel?.slug && activeDeck?.playlist_slug === channel.slug))
+	let isChannelPlaying = $derived(Boolean(isChannelLoaded && activeDeck?.is_playing))
+	let isAutoEnabled = $derived(Boolean(activeDeck?.auto_radio && activeDeck?.playlist_slug === slug))
+	let activeAutoDrifted = $derived(Boolean(isAutoEnabled && activeDeck?.auto_radio_drifted))
+	let autoPresenceCount = $derived(
+		channel?.slug ? (channelPresence[channel.slug]?.byUri?.[`@${channel.slug}`] ?? 0) : 0
+	)
+	let livePresenceCount = $derived(channel?.slug ? (channelPresence[channel.slug]?.broadcast ?? 0) : 0)
+	let playLoading = $state(false)
+	let liveLoading = $state(false)
+	let playTooltip = $derived(isChannelPlaying ? m.player_tooltip_pause() : m.player_tooltip_play())
+	let playLabel = $derived(playTooltip.replace(/\s*<kbd>[^<]*<\/kbd>/gi, '').replace(/<[^>]+>/g, '').trim())
 	let listeningTrack = $derived.by(() => {
 		const trackId = channelListeningDeck?.playlist_track
 		if (!trackId) return undefined
@@ -141,8 +157,8 @@
 	$effect(() => {
 		if (channel?.slug && channel.slug !== slug) {
 			const url = new URL(page.url)
-			url.pathname = page.url.pathname.replace(`/${slug}`, `/${channel.slug}`)
-			goto(url, {replaceState: true})
+			url.pathname = page.url.pathname.replace(`/${slug}`, resolve('/[slug]', {slug: channel.slug}))
+			goto(`${url.pathname}${url.search}${url.hash}`, {replaceState: true})
 		}
 	})
 
@@ -160,6 +176,75 @@
 			checkTracksFreshness(slug)
 		}
 	})
+
+	async function onLiveAction() {
+		if (!channel || liveLoading) return
+		liveLoading = true
+		try {
+			if (canEdit) {
+				if (isChannelLive) {
+					await stopBroadcast(channel.id)
+					const deck = appState.decks[appState.active_deck_id]
+					if (deck) deck.broadcasting_channel_id = undefined
+					return
+				}
+
+				const deckId = appState.active_deck_id
+				const deck = appState.decks[deckId]
+				if (!deck?.playlist_track || deck.playlist_slug !== channel.slug) {
+					await playChannel(deckId, {id: channel.id, slug: channel.slug}, tid)
+				}
+				const player = getMediaPlayer(deckId)
+				if (player?.paused) player.play()
+				const trackId = appState.decks[deckId]?.playlist_track
+				if (!trackId) return
+				await startBroadcast(channel.id, trackId)
+				if (appState.decks[deckId]) appState.decks[deckId].broadcasting_channel_id = channel.id
+				return
+			}
+
+			if (isListeningToChannel) {
+				leaveBroadcast(appState.active_deck_id)
+				return
+			}
+			if (isChannelLive) {
+				await joinBroadcast(appState.active_deck_id, channel.id)
+				return
+			}
+		} finally {
+			liveLoading = false
+		}
+	}
+
+	async function onPlayAction() {
+		if (!channel || playLoading) return
+		if (isChannelLoaded) {
+			togglePlayPause(appState.active_deck_id)
+			return
+		}
+		playLoading = true
+		try {
+			await playChannel(appState.active_deck_id, channel, tid)
+		} finally {
+			playLoading = false
+		}
+	}
+
+	async function onAutoAction() {
+		if (!channel) return
+		const deckId = appState.active_deck_id
+		const deck = appState.decks[deckId]
+		if (deck?.listening_to_channel_id) {
+			leaveBroadcast(deckId)
+		}
+		if (deck?.auto_radio && deck.playlist_slug === slug) {
+			void resyncAutoRadio(deckId)
+			return
+		}
+		await ensureTracksLoaded(slug)
+		const tracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+		await joinAutoRadio(deckId, tracks, {sources: [{channels: [slug]}]})
+	}
 
 	// --- Context providers ---
 
@@ -212,58 +297,84 @@
 							titleElement="h1"
 							titleClass="channel-page-title"
 							titleHref={resolve('/[slug]', {slug})}
-							onBroadcastSyncClick={() => {
-								if (!channelListeningDeck?.id) return
-								resyncBroadcastDeck(channelListeningDeck.id)
-							}}
+							showModeMeta={false}
 						/>
 					</div>
 				</div>
 
-				<div class="channel-broadcasting">
-					<BroadcastLiveControls
-						channelId={channel.id}
-						channelSlug={channel.slug}
-						deckId={appState.active_deck_id}
-						isLive={isChannelLive}
-						{canEdit}
-						isListening={isListeningToChannel}
-						presenceCount={channelPresence[channel.slug]?.total ?? 0}
-						onJoin={() => joinBroadcast(appState.active_deck_id, channel.id)}
-						onLeave={() => leaveBroadcast(appState.active_deck_id)}
-					/>
-				</div>
-
 				<menu class="channel-actions">
-					<ButtonPlay {channel} trackId={tid} />
-					<AutoRadioButton
-						className="btn{anyChannelAutoDecks.length ? ' active' : ''}"
-						synced={Boolean(anyChannelAutoDecks.length) &&
-							anyChannelAutoDecks.some((d) => d.is_playing) &&
-							!channelHasAutoDrifted}
-						{@attach tooltip({
-							content: channelHasAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
-						})}
-						onclick={() => toggleChannelAutoRadio(slug, allChannelTracks)}
-					/>
-					{#if (appState.channels?.length ?? 0) > 0}
-						<ButtonFollow {channel} />
-					{:else}
-						<a
-							href={authHref}
-							class="btn"
-							{@attach tooltip({content: m.common_follow()})}
+					<div class="mode-action-group" role="group" aria-label="Channel actions">
+						<button
+							type="button"
+							class={['mode-action', 'live', {active: canEdit ? isChannelLive : isListeningToChannel}]}
+							onclick={onLiveAction}
+							disabled={liveLoading || (!canEdit && !isChannelLive && !isListeningToChannel)}
+							{@attach tooltip({
+								content: canEdit
+									? isChannelLive
+										? m.broadcast_stop_button()
+										: m.broadcast_start_button()
+									: isListeningToChannel
+										? m.broadcasts_leave()
+										: isChannelLive
+											? m.broadcasts_join()
+											: m.status_live_short()
+							})}
 						>
-							<Icon icon="favorite" />
-						</a>
-					{/if}
-					<button
-						type="button"
-						onclick={() => (appState.modal_share = {channel})}
-						{@attach tooltip({content: m.share_native()})}
-					>
-						<Icon icon="share" />
-					</button>
+							<Icon icon="signal" size={14} />
+							<span>{m.status_live_short()}</span>
+							{#if livePresenceCount > 0}
+								<PresenceCount count={livePresenceCount} />
+							{/if}
+						</button>
+
+						<button
+							type="button"
+							class={['mode-action', 'play', {active: isChannelPlaying}]}
+							onclick={onPlayAction}
+							disabled={playLoading}
+							{@attach tooltip({content: playTooltip})}
+						>
+							<Icon icon={isChannelPlaying ? 'pause' : 'play-fill'} size={14} />
+							<span>{playLabel}</span>
+						</button>
+
+						<button
+							type="button"
+							class={[
+								'mode-action',
+								'auto',
+								{active: isAutoEnabled, drifted: activeAutoDrifted}
+							]}
+							onclick={onAutoAction}
+							{@attach tooltip({
+								content: activeAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
+							})}
+						>
+							<Icon icon="infinite" size={14} />
+							<span>Auto</span>
+							{#if autoPresenceCount > 0}
+								<PresenceCount count={autoPresenceCount} />
+							{/if}
+						</button>
+					</div>
+
+					<div class="channel-secondary-actions">
+						{#if (appState.channels?.length ?? 0) > 0}
+							<ButtonFollow {channel} />
+						{:else}
+							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
+								<Icon icon="favorite" />
+							</a>
+						{/if}
+						<button
+							type="button"
+							onclick={() => (appState.modal_share = {channel})}
+							{@attach tooltip({content: m.share_native()})}
+						>
+							<Icon icon="share" />
+						</button>
+					</div>
 				</menu>
 			</header>
 		{/if}
@@ -316,16 +427,18 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.5rem;
 		padding: 0.5rem;
 		border-bottom: 1px solid var(--gray-4);
+		min-width: 0;
 	}
 
 	.channel-main {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		flex: 1 1 0;
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 
 	.avatar {
@@ -370,21 +483,68 @@
 		font-size: var(--font-3);
 	}
 
-	.channel-broadcasting {
-		display: flex;
-		justify-content: center;
-		flex: 0 1 auto;
-		margin-inline: auto;
-	}
-
 	.channel-actions {
 		display: flex;
 		align-items: center;
-		flex-wrap: wrap;
-		gap: 0.25rem;
+		gap: 0.3rem;
 		margin: 0;
-		flex: 1 1 0;
-		justify-content: flex-end;
+		flex: 0 0 100%;
+		justify-content: center;
+		min-width: 0;
+	}
+
+	.mode-action-group {
+		display: inline-flex;
+		align-items: stretch;
+		gap: 0;
+		flex-wrap: nowrap;
+		min-width: 0;
+		border: 1px solid var(--gray-7);
+		border-radius: var(--border-radius);
+	}
+
+	.mode-action {
+		font-size: var(--font-2);
+		font-weight: 600;
+		gap: 0.35rem;
+		border: none;
+		border-right: 1px solid var(--gray-6);
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.mode-action:last-child {
+		border-right: none;
+	}
+
+	.mode-action:first-child {
+		border-radius: var(--border-radius) 0 0 var(--border-radius);
+	}
+
+	.mode-action:last-child {
+		border-radius: 0 var(--border-radius) var(--border-radius) 0;
+	}
+
+	.mode-action:hover {
+		background: var(--gray-3);
+	}
+
+	.mode-action.active {
+		color: var(--accent-9);
+		border-right-color: var(--gray-6);
+		background: transparent;
+	}
+
+	.mode-action.auto.drifted {
+		color: var(--orange-9);
+	}
+
+	.channel-secondary-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		flex-wrap: nowrap;
 	}
 
 	main {
@@ -412,20 +572,15 @@
 		flex-wrap: wrap;
 	}
 
-	@media (max-width: 768px) {
-		.channel-main,
-		.channel-broadcasting,
+	@media (min-width: 820px) {
 		.channel-actions {
-			flex: 1 1 100%;
+			flex: 0 1 auto;
+			margin-left: auto;
+			justify-content: flex-end;
 		}
 
-		.channel-broadcasting {
-			justify-content: flex-start;
-			margin-inline: 0;
-		}
-
-		.channel-actions {
-			justify-content: flex-start;
+		.mode-action {
+			padding: 0.35rem 0.55rem;
 		}
 	}
 </style>

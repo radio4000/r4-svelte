@@ -30,6 +30,8 @@ Possible improvements. Roughly by priority. Verify before implementing.
 
 ## Needs research
 
+- Broadcast hard-fail cleanup — current auto-stop is client-side (idle/no-deck monitor). Consider server-side TTL/heartbeat expiry for cases like sudden process kill or network drop during tab close.
+
 - Views beyond tracks — Views are currently tracks-centric: `ViewSource` describes track filters (`channels`, `tags`, `search`), `queryView` returns tracks, `processViewTracks` sorts/filters tracks. Explore whether Views could describe channels or mixed results too (e.g. `searchChannelsCombined` already runs parallel to `queryView` on search pages). Questions: would a `ViewResult` with `{tracks, channels}` simplify search pages further, or would it over-abstract a simple parallel call? Would saved views benefit from storing channel results? Is the current split (Views = tracks, channel search = separate) actually the clearest pattern? May conclude the current design is right and the abstraction isn't worth it.
 
 - `fetchQuery` usage review — `queryClient.fetchQuery` appears in component bodies (`followers`, `following`, `related` pages). Review whether these belong in a collection or loader instead.

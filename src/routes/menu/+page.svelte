@@ -129,9 +129,14 @@
 		<p class="version"><AppBuildInfo /></p>
 		{#if channelCount || trackCount || appPresence.count}
 			<p class="stats">
-				{#if channelCount}<a href={resolve('/channels/all')}>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a>{/if}
-				{#if trackCount}<a href={resolve('/tracks/recent')}>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a>{/if}
-				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span>{/if}
+				{#if channelCount}<a href={resolve('/channels/all')}
+						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
+					>{/if}
+				{#if trackCount}<a href={resolve('/tracks/recent')}
+						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
+					>{/if}
+				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span
+					>{/if}
 			</p>
 		{/if}
 	</footer>
