@@ -30,3 +30,4 @@ Deck ID 1 (the default) is hidden until it has queued tracks or an active track.
 - On small screens with multiple non-compact decks, the main page content area is capped so decks can use most of the viewport height.
 - Compact decks still render their hidden `deck.svelte` instance (for audio continuity), but collapse to zero height in the mobile strip.
 - Visible compact controls live in the bottom compact section (`deck-compact-bar.svelte` in `+layout.svelte`).
+- On compact decks, mobile view prioritizes channel micro cards (horizontal scroll, truncated slugs) and hides track row to keep controls usable.

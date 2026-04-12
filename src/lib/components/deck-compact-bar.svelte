@@ -412,4 +412,42 @@
 			margin-left: 0;
 		}
 	}
+
+	@media (max-width: 600px) {
+		.header-info {
+			padding-inline: 0.25rem;
+			gap: 0.2rem;
+		}
+
+		.channel-panel {
+			flex: 1 1 auto;
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.channel-panel::-webkit-scrollbar {
+			display: none;
+		}
+
+		:global(.channel-panel .channel-micro-card) {
+			min-height: 1.35rem;
+			padding: 0.08rem 0.25rem 0.08rem 0.08rem;
+		}
+
+		:global(.channel-panel .channel-micro-card .slug) {
+			max-width: 8ch;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.track-panel {
+			display: none;
+		}
+
+		.controls {
+			margin-left: auto;
+			gap: 0.15rem;
+		}
+	}
 </style>
