@@ -38,6 +38,7 @@
 		})
 	)
 	let singleVisibleDeck = $derived(appState.embed_mode && visibleDeckIds.length === 1)
+	let singleVisibleNonCompactDeck = $derived(visibleDeckIds.length === 1)
 
 	// Non-compact decks in live mode — shared exit bar
 	let visibleListeningDeckIds = $derived(
@@ -72,6 +73,7 @@
 		'deck-strip',
 		allDecksCompact && 'all-compact',
 		singleVisibleDeck && 'single-visible',
+		singleVisibleNonCompactDeck && 'single-visible-noncompact',
 		expandedListeningMultiDeck && 'expanded-listening',
 		videoMixListening && 'video-mix-listening',
 		appState.embed_mode && 'embed-mode'
@@ -269,6 +271,14 @@
 			}
 		}
 
+		/* Expanded decks should always consume available strip space */
+		.deck-item:has(:global(.deck.expanded:not(.compact))) {
+			flex: 1 1 0;
+			width: 100%;
+			min-width: 0;
+			min-height: 0;
+		}
+
 		.exit-mode-bar {
 			display: flex;
 			padding: 0.3rem 0.4rem 0;
@@ -292,6 +302,11 @@
 				width: fit-content;
 				max-width: 72vw;
 				min-width: 0;
+			}
+
+			.deck-sections:has(:global(.deck.expanded:not(.compact))) {
+				width: 100%;
+				max-width: none;
 			}
 
 			&.expanded-listening {
@@ -366,7 +381,12 @@
 				/* grow to fill available height when any deck has visible content */
 				&:has(
 					:global(
-						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+						.deck:not(.compact):is(
+							:not(.hide-video),
+							.listening,
+							.auto,
+							:not(.listening):not(.auto):not(.hide-queue)
+						)
 					)
 				) {
 					flex: 1 1 0;
@@ -382,7 +402,12 @@
 				/* sections with fill decks share the strip height */
 				&:has(
 					:global(
-						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+						.deck:not(.compact):is(
+							:not(.hide-video),
+							.listening,
+							.auto,
+							:not(.listening):not(.auto):not(.hide-queue)
+						)
 					)
 				) {
 					flex: 1 1 0;
@@ -398,7 +423,12 @@
 				/* sections with fill decks share the strip height */
 				&:has(
 					:global(
-						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+						.deck:not(.compact):is(
+							:not(.hide-video),
+							.listening,
+							.auto,
+							:not(.listening):not(.auto):not(.hide-queue)
+						)
 					)
 				) {
 					flex: 1 1 0;
@@ -413,7 +443,12 @@
 
 				&:has(
 					:global(
-						.deck:not(.compact):is(:not(.hide-video), :not(.listening):not(.auto):not(.hide-queue))
+						.deck:not(.compact):is(
+							:not(.hide-video),
+							.listening,
+							.auto,
+							:not(.listening):not(.auto):not(.hide-queue)
+						)
 					)
 				) {
 					flex: 1 1 0;
@@ -422,6 +457,24 @@
 
 			.exit-mode-bar {
 				padding-top: 0.2rem;
+			}
+
+			/* One visible non-compact deck should fill height even when video is hidden */
+			&.single-visible-noncompact {
+				flex: 1 1 0;
+				min-height: 100%;
+			}
+
+			&.single-visible-noncompact .deck-sections,
+			&.single-visible-noncompact .local,
+			&.single-visible-noncompact .broadcasts,
+			&.single-visible-noncompact .deck-item {
+				flex: 1 1 0;
+				min-height: 0;
+			}
+
+			&.single-visible-noncompact :global(.deck:not(.compact)) {
+				height: 100%;
 			}
 		}
 	}

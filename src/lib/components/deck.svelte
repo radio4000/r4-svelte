@@ -170,6 +170,8 @@
 		/* deck has at least one visible panel (video or queue): fill available height */
 		.deck:not(.compact):not(.expanded):is(
 				:not(.hide-video),
+				.listening,
+				.auto,
 				:not(.listening):not(.auto):not(.hide-queue)
 			) {
 			height: 100%;
@@ -177,6 +179,8 @@
 
 		.deck:not(.compact):not(.expanded):is(
 				:not(.hide-video),
+				.listening,
+				.auto,
 				:not(.listening):not(.auto):not(.hide-queue)
 			)
 			:global(.video:not(:has(.native-audio-player))) {
@@ -188,6 +192,8 @@
 
 		.deck:not(.compact):not(.expanded):is(
 				:not(.hide-video),
+				.listening,
+				.auto,
 				:not(.listening):not(.auto):not(.hide-queue)
 			)
 			:global(.queue-panel) {
@@ -197,6 +203,8 @@
 
 		.deck:not(.compact):not(.expanded):is(
 				:not(.hide-video),
+				.listening,
+				.auto,
 				:not(.listening):not(.auto):not(.hide-queue)
 			)
 			:global(.controls) {
@@ -209,11 +217,12 @@
 	}
 
 	.deck.expanded {
-		flex: 1 1 auto;
-		width: auto;
+		flex: 1 1 0;
+		width: 100%;
 		min-width: 0;
 		max-width: none;
 		height: 100%;
+		min-height: 0;
 		border: 0;
 		border-radius: 0;
 	}
