@@ -284,17 +284,17 @@
 			{:else if !deck?.listening_to_channel_id}
 				<VolumeControl {deckId} />
 			{/if}
+			{#if showEdgeControls && isListeningGroupControlDeck}
+				<button
+					class="expand"
+					onclick={() => toggleDeckCompact(deckId)}
+					aria-label={m.player_compact_show_panel()}
+					{@attach tooltip({content: m.player_compact_show_panel()})}
+				>
+					<Icon icon="deck-panel" expanded />
+				</button>
+			{/if}
 		</menu>
-		{#if showEdgeControls && isListeningGroupControlDeck}
-			<button
-				class="expand"
-				onclick={() => toggleDeckCompact(deckId)}
-				aria-label={m.player_compact_show_panel()}
-				{@attach tooltip({content: m.player_compact_show_panel()})}
-			>
-				<Icon icon="deck-panel" expanded />
-			</button>
-		{/if}
 	</div>
 </div>
 
@@ -307,7 +307,7 @@
 		border-top: 1px solid var(--gray-6);
 		background: var(--color-interface-elevated);
 		min-width: 0;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.deck-compact-bar :global(.progress) {
@@ -321,7 +321,7 @@
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		flex-wrap: nowrap;
+		flex-wrap: wrap;
 		gap: 0.25rem;
 		min-width: 0;
 		flex: 1 1 auto;
@@ -340,54 +340,92 @@
 	.channel-panel {
 		display: flex;
 		align-items: center;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 0.3rem;
-		row-gap: 0.2rem;
 		min-width: 0;
-		flex: 0 1 auto;
+		flex: 0 0 auto;
+		max-width: 100%;
+		overflow-x: auto;
+		scrollbar-width: none;
 		order: 1;
+		align-self: center;
+	}
+
+	.channel-panel::-webkit-scrollbar {
+		display: none;
 	}
 
 	:global(.channel-panel .channel-micro-card) {
-		flex: 0 1 auto;
-		max-width: 100%;
-	}
-
-	.active-deck :global(.channel-panel .channel-micro-card) {
-		border-color: var(--accent-9);
+		flex: 0 0 auto;
+		max-width: max-content;
+		align-self: center;
 	}
 
 	.track-panel {
 		min-width: 0;
-		flex: 1 1 0;
+		flex: 1 1 14rem;
+		width: auto;
+		max-width: none;
 		cursor: pointer;
-		order: 3;
+		order: 2;
 	}
 
 	.controls {
 		display: flex;
 		align-items: center;
+		justify-content: flex-end;
 		flex-wrap: nowrap;
 		gap: 0.25rem;
-		flex: 0 0 auto;
+		flex: 1 0 100%;
+		width: 100%;
 		min-width: 0;
-		order: 4;
+		order: 3;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.controls::-webkit-scrollbar {
+		display: none;
 	}
 
 	.controls .auto-sync.active :global(svg) {
 		color: var(--accent-9);
 	}
 
+	.controls :global(.speed),
+	.controls :global(.volume) {
+		flex: 1 1 7rem;
+		min-width: 0;
+		max-width: none;
+	}
+
+	/* Force compact controls to be fully shrinkable despite component defaults */
+	.controls :global(.speed .speed-btn) {
+		min-width: 0;
+	}
+
+	.controls :global(.speed .range),
+	.controls :global(.volume .range),
+	.controls :global(.volume media-mute-button),
+	.controls :global(.volume .btn) {
+		min-width: 0;
+	}
+
 	.expand {
 		flex: 0 0 auto;
 		align-self: center;
-		order: 5;
+		margin-left: auto;
+		order: 3;
 	}
 
 	.track-panel :global(article) {
 		height: 100%;
 		outline: 0;
 		outline-offset: 0;
+	}
+
+	.track-panel :global(.popover-menu) {
+		flex: 0 0 auto;
 	}
 
 	.track-panel :global(.card) {
@@ -398,36 +436,17 @@
 		max-width: 100%;
 	}
 
-	@media (min-width: 601px) {
-		.channel-panel {
-			min-width: 8.5rem;
-			flex: 0 1 18rem;
-		}
-
-		.controls {
-			margin-left: auto;
-		}
-
-		.controls :global(.volume) {
-			margin-left: 0;
-		}
-	}
-
-	@media (max-width: 600px) {
+	@media (max-width: 767px) {
 		.header-info {
 			padding-inline: 0.25rem;
 			gap: 0.2rem;
+			align-items: center;
 		}
 
 		.channel-panel {
-			flex: 1 1 auto;
-			flex-wrap: nowrap;
-			overflow-x: auto;
-			scrollbar-width: none;
-		}
-
-		.channel-panel::-webkit-scrollbar {
-			display: none;
+			flex: 0 0 auto;
+			order: 1;
+			max-width: 100%;
 		}
 
 		:global(.channel-panel .channel-micro-card) {
@@ -442,12 +461,66 @@
 		}
 
 		.track-panel {
-			display: none;
+			display: block;
+			flex: 1 1 14rem;
+			width: auto;
+			max-width: none;
 		}
 
 		.controls {
-			margin-left: auto;
 			gap: 0.15rem;
+			flex: 1 1 auto;
+			width: 100%;
+			flex-wrap: nowrap;
+		}
+
+		.controls :global(.speed),
+		.controls :global(.volume) {
+			flex: 1 1 5rem;
+			max-width: none;
+		}
+
+		.controls :global(.speed .speed-btn),
+		.controls :global(.volume .btn),
+		.controls :global(.volume media-mute-button) {
+			min-width: 0;
+			padding-inline: 0.25rem;
+			font-size: var(--font-1);
+		}
+
+		.expand {
+			align-self: center;
+			margin-left: auto;
+		}
+	}
+
+	@media (min-width: 768px) {
+		.header-info {
+			align-items: center;
+			flex-wrap: nowrap;
+		}
+
+		.track-panel {
+			order: 3;
+			flex: 1 1 18rem;
+			width: auto;
+			max-width: none;
+		}
+
+		.controls {
+			order: 4;
+			flex: 0 1 auto;
+			width: auto;
+			overflow-x: visible;
+		}
+
+		.controls :global(.speed),
+		.controls :global(.volume) {
+			flex: 1 1 6.75rem;
+		}
+
+		.expand {
+			order: 5;
 		}
 	}
 </style>
