@@ -16,8 +16,8 @@
 	let tileStyle = $state('topo')
 	let initialZoom = $derived.by(() => {
 		const urlZoom = Number(page.url.searchParams.get('zoom'))
-		if (Number.isFinite(urlZoom)) return Math.max(urlZoom, 6)
-		return 15
+		if (Number.isFinite(urlZoom)) return urlZoom
+		return 1.5
 	})
 </script>
 
