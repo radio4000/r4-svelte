@@ -2,17 +2,21 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {goto} from '$app/navigation'
+	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {queryClient} from '$lib/collections/query-client'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {relativeDate} from '$lib/dates'
-	import {extractHashtags, channelAvatarUrl} from '$lib/utils'
+	import {dedupeById, extractHashtags, channelAvatarUrl} from '$lib/utils'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist, togglePlayPause} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getAutoDecksForView} from '$lib/views.svelte'
@@ -105,6 +109,84 @@
 	let selectedPlaylistTitle = $derived(
 		selectedTags.length > 0 ? selectedTags.map((t) => `#${t}`).join(' ') : undefined
 	)
+	const follows = getFollowedChannels()
+	let channelFollowers = $state<import('$lib/types').Channel[]>([])
+	let channelFollowing = $state<import('$lib/types').Channel[]>([])
+	let commonLoading = $state(false)
+
+	function normalizeChannels(rows: any[]): import('$lib/types').Channel[] {
+		return rows.filter((c) => typeof c?.id === 'string' && typeof c?.slug === 'string')
+	}
+
+	function compactOverlapText(items: import('$lib/types').Channel[]) {
+		if (items.length === 0) return ''
+		const names = items.slice(0, 2).map((c) => `@${c.slug}`)
+		const rest = Math.max(0, items.length - names.length)
+		return rest > 0 ? `${names.join(', ')} and ${rest} others` : names.join(', ')
+	}
+
+	$effect(() => {
+		if (!channel?.id || follows.followedIds.length === 0) {
+			channelFollowers = []
+			channelFollowing = []
+			commonLoading = false
+			return
+		}
+		let stale = false
+		commonLoading = true
+		Promise.all([
+			queryClient.fetchQuery({
+				queryKey: ['channel-followers', channel.id],
+				queryFn: async () => {
+					const {data} = await sdk.channels.readFollowers(channel.id)
+					if (!data?.length) return []
+					const ids = data.map((c) => c.id)
+					const {data: enriched} = await sdk.supabase
+						.from('channels_with_tracks')
+						.select('*')
+						.in('id', ids)
+					return normalizeChannels(dedupeById((enriched || data) as any[]))
+				},
+				staleTime: 5 * 60 * 1000
+			}),
+			queryClient.fetchQuery({
+				queryKey: ['channel-following', channel.id],
+				queryFn: async () => {
+					const {data} = await sdk.channels.readFollowings(channel.id)
+					if (!data?.length) return []
+					const ids = data.map((c) => c.id)
+					const {data: enriched} = await sdk.supabase
+						.from('channels_with_tracks')
+						.select('*')
+						.in('id', ids)
+					return normalizeChannels(dedupeById((enriched || data) as any[]))
+				},
+				staleTime: 5 * 60 * 1000
+			})
+		])
+			.then(([followers, following]) => {
+				if (stale) return
+				channelFollowers = followers
+				channelFollowing = following
+				commonLoading = false
+			})
+			.catch(() => {
+				if (stale) return
+				channelFollowers = []
+				channelFollowing = []
+				commonLoading = false
+			})
+
+		return () => {
+			stale = true
+		}
+	})
+
+	let followedIdSet = $derived(new Set(follows.followedIds))
+	let commonFollowers = $derived(channelFollowers.filter((c) => c.id && followedIdSet.has(c.id)))
+	let commonFollowing = $derived(channelFollowing.filter((c) => c.id && followedIdSet.has(c.id)))
+	let previewCommonFollowers = $derived(commonFollowers.slice(0, 4))
+	let previewCommonFollowing = $derived(commonFollowing.slice(0, 4))
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -231,6 +313,36 @@
 				</p>
 			</div>
 		</div>
+		{#if appState.user && follows.followedIds.length > 0}
+			<section class="common-follows compact">
+				{#if previewCommonFollowers.length > 0}
+					<div class="compact-row">
+						<div class="compact-avatars">
+							{#each previewCommonFollowers as c (c.id)}
+								<ChannelAvatar id={c.image} alt={c.name} size={24} />
+							{/each}
+						</div>
+						<p>Followed by {compactOverlapText(commonFollowers)}</p>
+					</div>
+				{/if}
+				{#if previewCommonFollowing.length > 0}
+					<div class="compact-row">
+						<div class="compact-avatars">
+							{#each previewCommonFollowing as c (c.id)}
+								<ChannelAvatar id={c.image} alt={c.name} size={24} />
+							{/each}
+						</div>
+						<p>
+							Also follows {compactOverlapText(commonFollowing)}
+							<a href={resolve('/[slug]/following/common', {slug})}>more</a>
+						</p>
+					</div>
+				{/if}
+				{#if !commonLoading && previewCommonFollowers.length === 0 && previewCommonFollowing.length === 0}
+					<small class="common-empty">No overlap yet</small>
+				{/if}
+			</section>
+		{/if}
 
 		<section class="track-section">
 			{#if tracksQuery.isReady && displayTracks.length > 0}
@@ -325,6 +437,54 @@
 			background: var(--gray-1);
 			border-top: 1px solid var(--gray-4);
 		}
+	}
+
+	.common-follows {
+		padding: 0.5rem;
+		display: grid;
+		gap: 0.45rem;
+		border-top: 1px solid var(--gray-4);
+	}
+
+	.common-follows.compact {
+		font-size: var(--font-2);
+	}
+
+	.compact-row {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 1.8rem;
+	}
+
+	.compact-row p {
+		margin: 0;
+		color: var(--gray-11);
+		line-height: 1.25;
+	}
+
+	.compact-row p a {
+		margin-left: 0.35rem;
+	}
+
+	.compact-avatars {
+		display: inline-flex;
+		align-items: center;
+		margin-right: 0.2rem;
+	}
+
+	.compact-avatars :global(img),
+	.compact-avatars :global(svg) {
+		width: 1.2rem;
+		height: 1.2rem;
+		border-radius: 999px;
+		border: 1px solid var(--gray-1);
+		margin-right: -0.35rem;
+		background: var(--gray-2);
+	}
+
+	.common-empty {
+		color: var(--gray-10);
 	}
 
 	.empty {

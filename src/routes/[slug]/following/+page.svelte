@@ -1,8 +1,10 @@
 <script>
+	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {dedupeById, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
 	import ChannelsView from '$lib/components/channels-view.svelte'
@@ -31,6 +33,8 @@
 
 	const channelCtx = getChannelCtx()
 	let channel = $derived(channelCtx.data)
+	const follows = getFollowedChannels()
+	let commonMode = $derived(page.url.searchParams.get('common') === '1')
 
 	let q = $state('')
 	let following = $state([])
@@ -53,7 +57,11 @@
 		view === 'featured' && (featuredLoading || featuredChannels.length > 0) ? 'featured' : 'all'
 	)
 	let visibleChannels = $derived(activeView === 'featured' ? featuredChannels : following)
-	let filteredFollowing = $derived(visibleChannels.filter((c) => matches(c, q)))
+	let commonIds = $derived(new Set(follows.followedIds))
+	let scopedChannels = $derived(
+		commonMode ? visibleChannels.filter((c) => c.id && commonIds.has(c.id)) : visibleChannels
+	)
+	let filteredFollowing = $derived(scopedChannels.filter((c) => matches(c, q)))
 	let loading = $derived(followingLoading || (activeView === 'featured' && featuredLoading))
 
 	$effect(() => {
@@ -129,25 +137,25 @@
 			<option value="all">{m.views_tags_all()}</option>
 		</select>
 	{/if}
-	{#if visibleChannels.length}
+	{#if scopedChannels.length}
 		<SearchInput
 			bind:value={q}
-			placeholder={m.following_search_placeholder({count: visibleChannels.length})}
+			placeholder={m.following_search_placeholder({count: scopedChannels.length})}
 		/>
 		<ChannelsViewControls bind:display bind:order bind:direction />
 	{/if}
 {/snippet}
 
 <svelte:head>
-	<title>{m.nav_following()} - {channel?.name}</title>
+	<title>{commonMode ? `Common following - ${channel?.name}` : `${m.nav_following()} - ${channel?.name}`}</title>
 </svelte:head>
 
 <article class="channels-page fill-height">
 	<Subpage
-		title={m.nav_following()}
+		title={commonMode ? 'Common following' : m.nav_following()}
 		{loading}
-		empty={visibleChannels.length === 0}
-		emptyText={m.following_empty()}
+		empty={scopedChannels.length === 0}
+		emptyText={commonMode ? 'No common follows yet.' : m.following_empty()}
 	>
 		<ChannelsView
 			channels={filteredFollowing}
