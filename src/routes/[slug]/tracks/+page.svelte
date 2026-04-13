@@ -196,7 +196,7 @@
 {#if showFiltersModal}
 	<Dialog bind:showModal={showFiltersModal}>
 		{#snippet header()}
-			<h2>{m.views_filters_label()}</h2>
+			<h2>Tags filter</h2>
 		{/snippet}
 		<section class="filters-dialog">
 			<p class="filters-stats"><strong>{visibleTracks.length}</strong> / {allTracks.length} {m.nav_tracks()}</p>
@@ -213,21 +213,39 @@
 			<section class="filters-dialog-panel">
 				<h3>{m.views_tags_label()}</h3>
 				<div class="tags-toolbar">
-					<input type="search" bind:value={tagsSearch} placeholder={m.views_search_placeholder()} />
-					<select bind:value={tagsSort}>
-						<option value="count">{m.tags_sort_count()}</option>
-						<option value="alpha">{m.tags_sort_alpha()}</option>
-					</select>
-					<button
-						type="button"
-						class="ghost"
-						title={
-							tagsDirection === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
-						}
-						onclick={() => (tagsDirection = tagsDirection === 'asc' ? 'desc' : 'asc')}
-					>
-						<Icon icon={tagsDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
-					</button>
+					<div class="tags-search-row">
+						<input type="search" bind:value={tagsSearch} placeholder="Search tags" />
+						<button
+							type="button"
+							class="ghost"
+							title={
+								tagsDirection === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
+							}
+							onclick={() => (tagsDirection = tagsDirection === 'asc' ? 'desc' : 'asc')}
+						>
+							<Icon icon={tagsDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
+						</button>
+					</div>
+					<menu class="tags-sort-mode">
+						<button
+							type="button"
+							class:active={tagsSort === 'count'}
+							onclick={() => (tagsSort = 'count')}
+							title={m.tags_sort_count()}
+						>
+							<Icon icon="hash" />
+							{m.tags_sort_count()}
+						</button>
+						<button
+							type="button"
+							class:active={tagsSort === 'alpha'}
+							onclick={() => (tagsSort = 'alpha')}
+							title={m.tags_sort_alpha()}
+						>
+							<Icon icon="sort" />
+							{m.tags_sort_alpha()}
+						</button>
+					</menu>
 				</div>
 				<menu class="tags-menu">
 					{#each visibleTags as { value, count } (value)}
@@ -353,7 +371,19 @@
 
 	.tags-toolbar {
 		display: grid;
+		gap: 0.35rem;
+	}
+
+	.tags-search-row {
+		display: grid;
 		grid-template-columns: 1fr auto;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.tags-sort-mode {
+		display: flex;
+		flex-wrap: wrap;
 		gap: 0.35rem;
 	}
 
