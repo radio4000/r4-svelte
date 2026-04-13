@@ -8,7 +8,7 @@
 	import Subpage from '$lib/components/subpage.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import Dialog from '$lib/components/dialog.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack} from '$lib/api'
@@ -26,6 +26,7 @@
 	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
 	let order: View['order'] = $state('created')
 	let direction: View['direction'] = $state('desc')
+	let showFiltersModal = $state(false)
 
 	// Sync search input → URL (debounced by SearchInput)
 	$effect(() => {
@@ -48,6 +49,7 @@
 	let isSearching = $derived(searchValue !== '' || selectedTags.length > 0)
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
 	let isFiltering = $derived(isSearching || isSorting)
+	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0) + (isSorting ? 1 : 0))
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
 			sources: [
@@ -139,34 +141,35 @@
 			filteredTracks.map((t) => t.id)
 		)
 	}
+
+	function clearTrackFilters() {
+		order = 'created'
+		direction = 'desc'
+		const url = new URL(page.url)
+		url.searchParams.delete('tags')
+		url.searchParams.delete('q')
+		goto(url, {replaceState: true})
+	}
 </script>
 
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
 	{#if allTracks.length}
-		{#if aggregatedTags.length > 0}
-			<PopoverMenu>
-				{#snippet trigger()}
-					<Icon icon="hash" />{selectedTags.length > 0 ? `(${selectedTags.length})` : ''}
-				{/snippet}
-				<menu class="tags-menu">
-					{#each aggregatedTags as { value, count } (value)}
-						<button
-							type="button"
-							class:active={selectedTags.includes(value)}
-							onclick={() => toggleTag(value)}
-						>
-							{value} <span class="tag-count">({count})</span>
-						</button>
-					{/each}
-				</menu>
-			</PopoverMenu>
-		{/if}
+		<button
+			type="button"
+			class="filter-toggle"
+			title={m.views_filters_label()}
+			onclick={() => (showFiltersModal = true)}
+		>
+			<Icon icon="filter-alt" />
+			{activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
+		</button>
 		<SearchInput
 			bind:value={searchInput}
 			placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
 			debounce={150}
+			autofocus={page.state.focus === true}
 		/>
 		{#if visibleTracks.length}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
@@ -184,15 +187,73 @@
 				/>
 			{/if}
 		{/if}
-		<PopoverMenu closeOnClick={false} style="margin-left: auto;">
-			{#snippet trigger()}<Icon
-					icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
-					strokeWidth={1.5}
-				/>{/snippet}
-			<SortControls bind:order bind:direction />
-		</PopoverMenu>
 	{/if}
 {/snippet}
+
+{#if showFiltersModal}
+	<Dialog bind:showModal={showFiltersModal}>
+		{#snippet header()}
+			<h2>{m.views_filters_label()}</h2>
+		{/snippet}
+		<section class="filters-dialog">
+			<p class="filters-stats"><strong>{visibleTracks.length}</strong> / {allTracks.length} {m.nav_tracks()}</p>
+			{#if activeFilterCount > 0}
+				<menu class="row filter-tags">
+					{#if searchValue}
+						<li><span class="chip">"{searchValue}"</span></li>
+					{/if}
+					{#if isSorting}
+						<li><span class="chip">{order} · {direction}</span></li>
+					{/if}
+					{#each selectedTags as tag (tag)}
+						<li><button type="button" class="chip" onclick={() => toggleTag(tag)}>{tag} ×</button></li>
+					{/each}
+				</menu>
+			{/if}
+			<section class="filters-dialog-panel">
+				<h3>{m.views_display_label()}</h3>
+				<SortControls bind:order bind:direction />
+			</section>
+			{#if aggregatedTags.length > 0}
+				<section class="filters-dialog-panel">
+					<h3>{m.views_tags_label()}</h3>
+					<menu class="tags-menu">
+						{#each aggregatedTags as { value, count } (value)}
+							<button
+								type="button"
+								class:active={selectedTags.includes(value)}
+								onclick={() => toggleTag(value)}
+							>
+								#{value} <span class="tag-count">({count})</span>
+							</button>
+						{/each}
+					</menu>
+				</section>
+			{/if}
+			<menu class="row filter-actions">
+				{#if visibleTracks.length}
+					<button type="button" title={m.common_play()} onclick={playFilteredTracks}
+						><Icon icon="play-fill" /> {m.common_play()}</button
+					>
+					<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}
+						><Icon icon="next-fill" /> {m.common_queue()}</button
+					>
+					{#if channel && canShowFilteredAutoRadio}
+						<AutoRadioButton
+							synced={isFilteredAutoActive && isFilteredAutoPlaying && !isFilteredAutoDrifted}
+							title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
+							onclick={() =>
+								joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
+						/>
+					{/if}
+				{/if}
+				{#if activeFilterCount > 0}
+					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button>
+				{/if}
+			</menu>
+		</section>
+	</Dialog>
+{/if}
 
 {#if channel}
 	<Subpage
@@ -248,6 +309,39 @@
 		gap: 0.35rem;
 	}
 
+	.filter-toggle {
+		font-size: var(--font-3);
+	}
+
+	.filters-dialog {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.filters-stats {
+		margin: 0;
+	}
+
+	.filters-dialog-panel {
+		display: grid;
+		gap: 0.35rem;
+		h3 {
+			margin: 0;
+		}
+	}
+
+	.tags-menu {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		max-height: min(40vh, 26rem);
+		overflow: auto;
+		button.active {
+			background: var(--accent-5);
+			color: var(--accent-11);
+		}
+	}
+
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
@@ -255,6 +349,12 @@
 
 	.filter-tags {
 		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.filter-actions {
+		flex-wrap: wrap;
+		gap: 0.35rem;
 	}
 
 	.empty {
