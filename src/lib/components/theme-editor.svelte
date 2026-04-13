@@ -1,4 +1,5 @@
 <script>
+	import {browser} from '$app/environment'
 	import {Debounced} from 'runed'
 	import {appState} from '$lib/app-state.svelte'
 	import {applyCustomCssVariables} from '$lib/apply-css-variables'
@@ -34,7 +35,9 @@
 		}
 	})
 
-	const prefersLight = $derived(window.matchMedia('(prefers-color-scheme: light)').matches)
+	const prefersLight = $derived(
+		browser ? window.matchMedia('(prefers-color-scheme: light)').matches : true
+	)
 	const currentTheme = $derived(appState.theme ?? (prefersLight ? 'light' : 'dark'))
 
 	const isActiveVariable = (variable) => {
