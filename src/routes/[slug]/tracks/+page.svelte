@@ -7,6 +7,7 @@
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
@@ -27,6 +28,10 @@
 	let tagsSort = $state<'count' | 'alpha'>('count')
 	let tagsDirection = $state<'asc' | 'desc'>('desc')
 	let showFiltersModal = $state(false)
+	const tagsSortOptions = [
+		{value: 'count' as const, icon: 'hash' as const, label: () => m.tags_sort_count()},
+		{value: 'alpha' as const, icon: 'sort' as const, label: () => m.tags_sort_alpha()}
+	]
 
 	// Sync search input → URL (debounced by SearchInput)
 	$effect(() => {
@@ -48,6 +53,7 @@
 	let aggregatedTags = $derived(getChannelTags(allTracks))
 	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0)
 	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0))
+	let selectedTagsSort = $derived(tagsSortOptions.find((option) => option.value === tagsSort) ?? tagsSortOptions[0])
 	let visibleTags = $derived.by(() => {
 		const q = tagsSearch.trim().toLowerCase()
 		const filtered = aggregatedTags.filter((tag) => !q || tag.value.includes(q))
@@ -218,6 +224,25 @@
 				<div class="tags-toolbar">
 					<div class="tags-search-row">
 						<input type="search" bind:value={tagsSearch} placeholder="Search tags" />
+						<PopoverMenu>
+							{#snippet trigger()}
+								<Icon icon={selectedTagsSort.icon} />
+								{selectedTagsSort.label()}
+							{/snippet}
+							<menu class="tags-sort-options nav-vertical">
+								{#each tagsSortOptions as option (option.value)}
+									<button
+										type="button"
+										class:active={tagsSort === option.value}
+										onclick={() => (tagsSort = option.value)}
+										title={option.label()}
+									>
+										<Icon icon={option.icon} />
+										{option.label()}
+									</button>
+								{/each}
+							</menu>
+						</PopoverMenu>
 						<button
 							type="button"
 							class="ghost"
@@ -229,26 +254,6 @@
 							<Icon icon={tagsDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
 						</button>
 					</div>
-					<menu class="tags-sort-mode">
-						<button
-							type="button"
-							class:active={tagsSort === 'count'}
-							onclick={() => (tagsSort = 'count')}
-							title={m.tags_sort_count()}
-						>
-							<Icon icon="hash" />
-							{m.tags_sort_count()}
-						</button>
-						<button
-							type="button"
-							class:active={tagsSort === 'alpha'}
-							onclick={() => (tagsSort = 'alpha')}
-							title={m.tags_sort_alpha()}
-						>
-							<Icon icon="sort" />
-							{m.tags_sort_alpha()}
-						</button>
-					</menu>
 				</div>
 				<menu class="tags-menu">
 					{#each visibleTags as { value, count } (value)}
@@ -379,15 +384,17 @@
 
 	.tags-search-row {
 		display: grid;
-		grid-template-columns: 1fr auto;
+		grid-template-columns: minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: 0.35rem;
 	}
 
-	.tags-sort-mode {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.35rem;
+	.tags-sort-options {
+		min-width: 10rem;
+	}
+
+	.tags-sort-options button {
+		justify-content: flex-start;
 	}
 
 	.tag-count {
