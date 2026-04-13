@@ -200,7 +200,9 @@
 	const globeChannelsQuery = useLiveQuery((q) =>
 		q.from({ch: channelsCollection}).where(({ch}) => not(isNull(ch.latitude)))
 	)
-	const globeChannels = $derived((globeChannelsQuery.data ?? []).filter((ch) => (ch.track_count ?? 0) > 10))
+	const globeChannels = $derived(
+		(globeChannelsQuery.data ?? []).filter((ch) => (ch.track_count ?? 0) > 10)
+	)
 	const favoriteMapChannels = $derived(follows.followedChannels.filter((ch) => ch.latitude != null))
 	const mapChannels = $derived(
 		isSignedIn && favoriteMapChannels.length > 0 ? favoriteMapChannels : globeChannels
@@ -235,7 +237,7 @@
 	<title>{m.home_title({appName})}</title>
 </svelte:head>
 
-<div class="homepage">
+<div class="homepage" class:signed-in={isSignedIn}>
 	<menu class="filtermenu">
 		<ExploreSectionMenu />
 		{#if isSignedIn && authStatus.channelChecked && !userChannel}
@@ -780,18 +782,25 @@
 		margin-bottom: 1.5rem;
 	}
 
+	.homepage.signed-in > .section:not(.section--globe) {
+		position: relative;
+		z-index: 1;
+		background: var(--color-interface);
+	}
+
 	.section--globe {
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
 		margin-bottom: 0;
-		position: sticky;
-		top: 0;
+		position: relative;
 		z-index: 0;
 	}
 
-	.section--globe:not(.section--globe--loggedout) {
+	.homepage.signed-in .section--globe:not(.section--globe--loggedout) {
 		flex: 1;
+		position: sticky;
+		bottom: 0;
 	}
 
 	.loggedout-over-globe {
