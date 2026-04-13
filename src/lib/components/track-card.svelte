@@ -208,7 +208,7 @@
 		bind:this={menu}
 		btnClass="ghost trackcard-contextBtn"
 		align={menuAlign}
-		valign={menuValign}
+		valign={menuValign ?? 'top'}
 	>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" />
