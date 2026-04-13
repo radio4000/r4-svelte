@@ -729,11 +729,15 @@
 				<SpeedControl {deckId} {provider} />
 				<VolumeControl {deckId} />
 			{:else if deck?.auto_radio}
-				{@const autoNotSynced = !!deck?.auto_radio_drifted}
 				{@render btnPlay()}
 				<VolumeControl {deckId} />
+			{/if}
+		</menu>
+		{#if deck?.auto_radio}
+			{@const autoNotSynced = !!deck?.auto_radio_drifted}
+			<div class="sync-footer">
 				<button
-					class={['auto-sync', {active: !autoNotSynced}]}
+					class={['sync-btn', {active: !autoNotSynced}]}
 					title={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					onclick={() => resyncAutoRadio(deckId)}
@@ -748,8 +752,8 @@
 					<Icon icon="infinite" size={14} />
 					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 				</button>
-			{/if}
-		</menu>
+			</div>
+		{/if}
 	</section>
 </div>
 
@@ -866,7 +870,19 @@
 		min-height: 1.35rem;
 	}
 
-	.controls .auto-sync.active :global(svg) {
+	.sync-footer {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 0.5rem 0.5rem;
+	}
+
+	.sync-footer .sync-btn {
+		min-height: 1.7rem;
+		gap: 0.25rem;
+	}
+
+	.sync-footer .sync-btn.active :global(svg) {
 		color: var(--accent-9);
 	}
 
