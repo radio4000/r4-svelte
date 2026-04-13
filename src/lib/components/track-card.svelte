@@ -299,6 +299,26 @@
 				<h2>{m.common_delete()}</h2>
 			{/snippet}
 			<p>{m.track_delete_confirm({title: track.title})}</p>
+			<article class="delete-track-preview">
+				<div class="card">
+					{#if ytid && showImage && !appState.hide_track_artwork}
+						<img
+							src={imageSrc}
+							alt={track.title}
+							class="artwork"
+							loading={(index ?? 0) > 20 ? 'lazy' : undefined}
+						/>
+					{/if}
+					<div class="text">
+						<h3 class="title">{track.title}</h3>
+						{#if track.description}
+							<p class="description">
+								<LinkEntities slug={track.slug} text={track.description} />
+							</p>
+						{/if}
+					</div>
+				</div>
+			</article>
 			{#snippet footer()}
 				<menu class="row">
 					<button type="button" class="danger" onclick={handleDelete}>{m.common_confirm()}</button>
@@ -480,6 +500,21 @@
 		article:hover & {
 			color: inherit;
 		}
+	}
+
+	.delete-track-preview {
+		margin: 0.5rem 0;
+		border: 1px solid var(--gray-5);
+		border-radius: var(--border-radius);
+		background: var(--color-interface-elevated);
+	}
+
+	.delete-track-preview .card {
+		cursor: default;
+	}
+
+	.delete-track-preview :global(a) {
+		pointer-events: none;
 	}
 
 	.menu-delete {
