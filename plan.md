@@ -2,7 +2,7 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-Last update (2026-04-13): fixed appearance settings SSR crash, improved search/track filter UX, and updated track-card media interactions.
+Last update (2026-04-13): fixed appearance settings SSR crash, improved search/track filter UX, updated track-card media interactions, and refined homepage/tag-filter UI.
 
 ## Done (2026-04-13)
 
@@ -12,6 +12,8 @@ Last update (2026-04-13): fixed appearance settings SSR crash, improved search/t
 - Channel `/[slug]/tracks` tag dropdown replaced with modal filter panel (tags, sorting, actions, result count).
 - Track-card delete action now uses modal dialog confirmation.
 - Track artwork is now one-click play/pause with centered overlay state.
+- Homepage (logged-in): tags row sizing/alignment adjusted, onboarding todo moved to info panel style, and header actions use standard button background.
+- Channel `/[slug]/tracks` tags dialog: "Tags filter" title, "Search tags" placeholder, and icon-based sort controls (mode + direction).
 
 ## Simplify: rely on types and primitives, fewer layers
 
