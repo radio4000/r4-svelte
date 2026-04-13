@@ -8,7 +8,11 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {queryClient} from '$lib/collections/query-client'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {eq} from '@tanstack/db'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
+	import {computeChannelMatchScore} from '$lib/channel-match-score'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import LinkEntities from '$lib/components/link-entities.svelte'
@@ -112,7 +116,6 @@
 	const follows = getFollowedChannels()
 	let channelFollowers = $state<import('$lib/types').Channel[]>([])
 	let channelFollowing = $state<import('$lib/types').Channel[]>([])
-	let commonLoading = $state(false)
 
 	function normalizeChannels(rows: any[]): import('$lib/types').Channel[] {
 		return rows.filter((c) => typeof c?.id === 'string' && typeof c?.slug === 'string')
@@ -129,11 +132,9 @@
 		if (!channel?.id || follows.followedIds.length === 0) {
 			channelFollowers = []
 			channelFollowing = []
-			commonLoading = false
 			return
 		}
 		let stale = false
-		commonLoading = true
 		Promise.all([
 			queryClient.fetchQuery({
 				queryKey: ['channel-followers', channel.id],
@@ -168,13 +169,11 @@
 				if (stale) return
 				channelFollowers = followers
 				channelFollowing = following
-				commonLoading = false
 			})
 			.catch(() => {
 				if (stale) return
 				channelFollowers = []
 				channelFollowing = []
-				commonLoading = false
 			})
 
 		return () => {
@@ -187,6 +186,36 @@
 	let commonFollowing = $derived(channelFollowing.filter((c) => c.id && followedIdSet.has(c.id)))
 	let previewCommonFollowers = $derived(commonFollowers.slice(0, 4))
 	let previewCommonFollowing = $derived(commonFollowing.slice(0, 4))
+
+	// "Follows you" — the viewed channel is in the user's followers list
+	let followsYou = $derived(
+		Boolean(appState.channel?.id && channelFollowers.some((c) => c.id === appState.channel?.id))
+	)
+
+	// Match score — computed from user's own tracks vs this channel's tracks
+	let userChannelSlug = $derived(appState.channel?.slug ?? '')
+	const userTracksQuery = useLiveQuery(
+		(q) =>
+			userChannelSlug
+				? q
+						.from({tracks: tracksCollection})
+						.where(({tracks}) => eq(tracks.slug, userChannelSlug))
+						.orderBy(({tracks}) => tracks.created_at, 'desc')
+				: null,
+		[() => userChannelSlug]
+	)
+	let userChannelTracks = $derived(userTracksQuery.data ?? [])
+	let matchScore = $derived(computeChannelMatchScore(userChannelTracks, allTracks))
+	let showMatchScore = $derived(
+		Boolean(
+			appState.user &&
+			channel &&
+			appState.channel &&
+			!canEdit &&
+			userChannelTracks.length > 0 &&
+			allTracks.length > 0
+		)
+	)
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -313,35 +342,56 @@
 				</p>
 			</div>
 		</div>
-		{#if appState.user && follows.followedIds.length > 0}
-			<section class="common-follows compact">
-				{#if previewCommonFollowers.length > 0}
-					<div class="compact-row">
-						<div class="compact-avatars">
-							{#each previewCommonFollowers as c (c.id)}
-								<ChannelAvatar id={c.image} alt={c.name} size={24} />
-							{/each}
+
+		{#if appState.user && !canEdit}
+			{@const hasAnyOverlap =
+				followsYou ||
+				previewCommonFollowers.length > 0 ||
+				previewCommonFollowing.length > 0 ||
+				showMatchScore}
+			{#if hasAnyOverlap}
+				<section class="common-follows compact">
+					{#if showMatchScore}
+						<div class="compact-row match-score-row">
+							{#if matchScore.url.base > 0}
+								<span>{matchScore.url.overlap} {m.channel_match_tracks()}</span>
+							{/if}
+							{#if matchScore.tag.base > 0}
+								<span>{matchScore.tag.overlap} {m.channel_match_tags()}</span>
+							{/if}
+							{#if matchScore.artistTitle.base > 0}
+								<span>{matchScore.artistTitle.overlap} {m.channel_match_artists()}</span>
+							{/if}
 						</div>
-						<p>Followed by {compactOverlapText(commonFollowers)}</p>
-					</div>
-				{/if}
-				{#if previewCommonFollowing.length > 0}
-					<div class="compact-row">
-						<div class="compact-avatars">
-							{#each previewCommonFollowing as c (c.id)}
-								<ChannelAvatar id={c.image} alt={c.name} size={24} />
-							{/each}
+					{/if}
+					{#if followsYou}
+						<div class="compact-row follows-you-row">
+							<Icon icon="favorite-fill" size={14} />
+							<p>{m.channel_follows_you()}</p>
 						</div>
-						<p>
-							Also follows {compactOverlapText(commonFollowing)}
-							<a href={resolve('/[slug]/following/common', {slug})}>more</a>
-						</p>
-					</div>
-				{/if}
-				{#if !commonLoading && previewCommonFollowers.length === 0 && previewCommonFollowing.length === 0}
-					<small class="common-empty">No overlap yet</small>
-				{/if}
-			</section>
+					{/if}
+					{#if previewCommonFollowers.length > 0}
+						<a href={resolve('/[slug]/followers/in-common', {slug})} class="compact-row">
+							<div class="compact-avatars">
+								{#each previewCommonFollowers as c (c.id)}
+									<ChannelAvatar id={c.image} alt={c.name} size={24} />
+								{/each}
+							</div>
+							<p>{m.channel_match_followed_by({names: compactOverlapText(commonFollowers)})}</p>
+						</a>
+					{/if}
+					{#if previewCommonFollowing.length > 0}
+						<a href={resolve('/[slug]/following/in-common', {slug})} class="compact-row">
+							<div class="compact-avatars">
+								{#each previewCommonFollowing as c (c.id)}
+									<ChannelAvatar id={c.image} alt={c.name} size={24} />
+								{/each}
+							</div>
+							<p>{m.channel_match_also_follows({names: compactOverlapText(commonFollowing)})}</p>
+						</a>
+					{/if}
+				</section>
+			{/if}
 		{/if}
 
 		<section class="track-section">
@@ -450,21 +500,40 @@
 		font-size: var(--font-2);
 	}
 
+	.match-score-row {
+		gap: 0.5rem;
+		padding-bottom: 0.3rem;
+		border-bottom: 1px solid var(--gray-3);
+		flex-wrap: wrap;
+		color: var(--gray-10);
+	}
+
+	.match-score-row span {
+		white-space: nowrap;
+	}
+
+	.follows-you-row {
+		color: var(--accent-9);
+		gap: 0.35rem;
+	}
+
+	.follows-you-row p {
+		color: var(--accent-9) !important;
+	}
+
 	.compact-row {
 		display: flex;
 		align-items: center;
 		gap: 0.45rem;
 		min-height: 1.8rem;
+		color: inherit;
+		text-decoration: none;
 	}
 
 	.compact-row p {
 		margin: 0;
 		color: var(--gray-11);
 		line-height: 1.25;
-	}
-
-	.compact-row p a {
-		margin-left: 0.35rem;
 	}
 
 	.compact-avatars {
@@ -481,10 +550,6 @@
 		border: 1px solid var(--gray-1);
 		margin-right: -0.35rem;
 		background: var(--gray-2);
-	}
-
-	.common-empty {
-		color: var(--gray-10);
 	}
 
 	.empty {

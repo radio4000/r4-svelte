@@ -1,81 +1,68 @@
 # Channel matching score (0-100)
 
-This score is shown for signed-in users on channel pages, next to the follow/favorite button.
-
-Goal: provide a transparent overlap score between **your main channel** and the viewed channel.
-
-## Formula
-
-`score = url_match + artist_title_match`
-
-- `url_match = url_coverage * 60`
-- `artist_title_match = artist_title_coverage * 40`
-- `total = round(url_match + artist_title_match)`
-- final score is clamped to `0..100`
-
-Weights are defined in code:
-
-- `url`: `60`
-- `artistTitle`: `40`
+Shown on channel homepages for signed-in users (not on own channel). Provides a transparent overlap score between **your main channel** and the viewed channel, with a brief breakdown.
 
 File: `src/lib/channel-match-score.ts`
 
+## Formula
+
+`score = url_match + tag_match + artist_title_match`
+
+Weights:
+
+- `url`: `50` — exact track overlap (canonical URL or `provider:media_id`)
+- `tag`: `30` — shared tags (curated taste signals, highest user-intent signal)
+- `artistTitle`: `20` — shared `Artist - Title` pairs across both catalogs
+
+`total = clamp(round(url + tag + artistTitle), 0, 100)`
+
 ## Inputs
 
-For both channels we build unique sets:
+For each channel we build three sets:
 
-1. URL key set
-- Uses `provider:media_id` when available (or parsed from URL via `media-now`).
-- Falls back to normalized URL string.
-
-2. Artist+Title key set
-- Parses track title with the pattern `Artist - Title`.
-- Normalizes to lowercase ASCII-ish tokens (diacritics removed, punctuation stripped).
-- Tracks without a parsable `Artist - Title` are ignored for this part.
+1. **URL key set** — `provider:media_id` when available, otherwise normalized URL string.
+2. **Tag set** — all unique tags across all tracks, normalized to lowercase ASCII.
+3. **Artist+Title set** — parses `Artist - Title` from track title; both parts must be present.
 
 ## Coverage overlap (directional)
 
-For each set:
+For each dimension:
 
-- `overlap = intersection(A, B)`
-- `base = size(B)` where `B` is the viewed channel set
+- `overlap = |A ∩ B|`
+- `base = |B|` (viewed channel set size)
 - `ratio = overlap / base`
-- if `base = 0`, ratio is `1` (neutral, not a penalty)
+- if `base = 0`: `ratio = 0` — no data means no score, not a free pass
 
-Direction matters:
-
-- `A = your channel keys`
-- `B = viewed channel keys`
-
-This means if all keys from the viewed channel exist in your channel, coverage is 100% for that part.
+Direction: **A = your channel**, **B = viewed channel**. Score answers "how much of this channel would I already know/like?"
 
 Examples:
 
 - Same channel vs itself: `100%`
 - Viewed channel is a strict subset of yours: `100%`
 - You are a subset of viewed channel: `< 100%`
+- Viewed channel has no parseable tags: tag dimension contributes `0` (not `30`)
+
+## Display
+
+Shown as: `{total}% · {label}` with per-dimension breakdown (`tracks`, `tags`, `artists`).
+
+Labels by range: `low overlap` (0–19), `some overlap` (20–44), `good match` (45–74), `strong match` (75–100).
+
+Dimensions only shown when `base > 0` (i.e., the viewed channel has data for that dimension).
 
 ## Why this model
 
-- deterministic
-- explainable
-- cheap to compute client-side
-- easy to evolve
+- deterministic and explainable
+- cheap to compute client-side from already-loaded track data
+- `base = 0 → 0` ensures empty dimensions don't inflate scores
+- tags are high-intent signals (user-curated) — weight 30 reflects this
 
 ## Planned extensions
 
-To keep compatibility, future dimensions can be added as new weighted parts while keeping total at 100.
+Future dimensions can be added while keeping total at 100 by rebalancing weights.
 
-Possible additions:
+Candidates:
 
-- tag overlap
+- recency overlap (recently played tracks)
 - same labels / years / countries (from metadata)
-- recency overlap (what both channels played recently)
-- diversity/novelty balance (not only duplicates)
-
-When adding a new part:
-
-1. define its extraction method
-2. define its overlap ratio
-3. rebalance weights so total remains exactly 100
-4. document it here before release
+- diversity/novelty balance

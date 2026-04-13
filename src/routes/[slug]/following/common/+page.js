@@ -1,5 +1,5 @@
 import {redirect} from '@sveltejs/kit'
 
 export function load({params}) {
-	throw redirect(307, `/${params.slug}/following?common=1`)
+	throw redirect(307, `/${params.slug}/following/in-common`)
 }

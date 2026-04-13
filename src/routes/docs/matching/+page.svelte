@@ -62,14 +62,15 @@
 {/if}
 
 <p>
-	<strong>Score:</strong> {score.total}%
+	<strong>Score:</strong>
+	{score.total}%
 </p>
 <p>
 	URL: {Math.round(score.url.ratio * 100)}% ({score.url.overlap}/{score.url.base})
 </p>
 <p>
-	Artist+Title: {Math.round(score.artistTitle.ratio * 100)}%
-	({score.artistTitle.overlap}/{score.artistTitle.base})
+	Artist+Title: {Math.round(score.artistTitle.ratio * 100)}% ({score.artistTitle.overlap}/{score
+		.artistTitle.base})
 </p>
 
 <details>

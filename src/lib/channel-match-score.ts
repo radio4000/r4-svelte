@@ -2,8 +2,9 @@ import {parseUrl} from 'media-now'
 import type {Track} from '$lib/types'
 
 export const CHANNEL_MATCH_WEIGHTS = {
-	url: 60,
-	artistTitle: 40
+	url: 50,
+	tag: 30,
+	artistTitle: 20
 } as const
 
 export interface MatchScorePart {
@@ -19,6 +20,7 @@ export interface MatchScorePart {
 export interface ChannelMatchScore {
 	total: number
 	url: MatchScorePart
+	tag: MatchScorePart
 	artistTitle: MatchScorePart
 }
 
@@ -66,49 +68,71 @@ function getArtistTitleKey(track: Track): string | null {
 	return `${artist}::${name}`
 }
 
-function ratio(left: Set<string>, right: Set<string>) {
-	let overlap = 0
-	for (const v of left) {
-		if (right.has(v)) overlap += 1
-	}
-	const base = right.size
-	if (base === 0) {
-		return {overlap, base, ratio: 1}
-	}
-	return {
-		overlap,
-		base,
-		ratio: overlap / base
-	}
-}
-
 function buildSet(tracks: Track[], getKey: (track: Track) => string | null) {
 	const items = tracks.map(getKey).filter((v): v is string => Boolean(v))
 	return new Set(items)
 }
 
+function buildTagSet(tracks: Track[]): Set<string> {
+	const tags = new Set<string>()
+	for (const track of tracks) {
+		if (track.tags) {
+			for (const tag of track.tags) {
+				const normalized = normalizeText(tag)
+				if (normalized) tags.add(normalized)
+			}
+		}
+	}
+	return tags
+}
+
+/**
+ * Directional coverage: how much of the target (right) set is covered by the source (left).
+ * ratio = overlap / right.size
+ * When right is empty (base = 0): ratio = 0 — no data means no score, not a free pass.
+ */
+function coverageRatio(left: Set<string>, right: Set<string>) {
+	let overlap = 0
+	for (const v of left) {
+		if (right.has(v)) overlap += 1
+	}
+	const base = right.size
+	return {overlap, base, ratio: base === 0 ? 0 : overlap / base}
+}
+
 function buildPart(weight: number, left: Set<string>, right: Set<string>): MatchScorePart {
-	const {overlap, base, ratio: overlapRatio} = ratio(left, right)
+	const {overlap, base, ratio} = coverageRatio(left, right)
 	return {
 		weight,
 		left: left.size,
 		right: right.size,
 		overlap,
 		base,
-		ratio: overlapRatio,
-		score: overlapRatio * weight
+		ratio,
+		score: ratio * weight
 	}
 }
 
-export function computeChannelMatchScore(myTracks: Track[], targetTracks: Track[]): ChannelMatchScore {
+export function computeChannelMatchScore(
+	myTracks: Track[],
+	targetTracks: Track[]
+): ChannelMatchScore {
 	const myUrlSet = buildSet(myTracks, getCanonicalUrlKey)
 	const targetUrlSet = buildSet(targetTracks, getCanonicalUrlKey)
+	const myTagSet = buildTagSet(myTracks)
+	const targetTagSet = buildTagSet(targetTracks)
 	const myArtistTitleSet = buildSet(myTracks, getArtistTitleKey)
 	const targetArtistTitleSet = buildSet(targetTracks, getArtistTitleKey)
 
 	const url = buildPart(CHANNEL_MATCH_WEIGHTS.url, myUrlSet, targetUrlSet)
-	const artistTitle = buildPart(CHANNEL_MATCH_WEIGHTS.artistTitle, myArtistTitleSet, targetArtistTitleSet)
-	const total = Math.max(0, Math.min(100, Math.round(url.score + artistTitle.score)))
+	const tag = buildPart(CHANNEL_MATCH_WEIGHTS.tag, myTagSet, targetTagSet)
+	const artistTitle = buildPart(
+		CHANNEL_MATCH_WEIGHTS.artistTitle,
+		myArtistTitleSet,
+		targetArtistTitleSet
+	)
 
-	return {total, url, artistTitle}
+	const total = Math.max(0, Math.min(100, Math.round(url.score + tag.score + artistTitle.score)))
+
+	return {total, url, tag, artistTitle}
 }

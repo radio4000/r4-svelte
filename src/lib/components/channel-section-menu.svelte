@@ -5,9 +5,12 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import {appState} from '$lib/app-state.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	let {slug, channel, canEdit, isLocal, trackCount = 0} = $props()
+
+	let showInCommon = $derived(Boolean(appState.user && !canEdit))
 
 	let routeId = $derived(page.route.id)
 
@@ -16,7 +19,9 @@
 		if (routeId?.startsWith('/[slug]/tracks')) return m.nav_tracks()
 		if (routeId?.startsWith('/[slug]/tags')) return m.channel_tags_link()
 		if (routeId?.startsWith('/[slug]/mentions')) return 'Mentions'
+		if (routeId?.startsWith('/[slug]/following/in-common')) return m.nav_in_common()
 		if (routeId?.startsWith('/[slug]/following')) return m.nav_following()
+		if (routeId?.startsWith('/[slug]/followers/in-common')) return m.nav_in_common()
 		if (routeId?.startsWith('/[slug]/followers')) return m.nav_followers()
 		if (routeId?.startsWith('/[slug]/map')) return m.nav_map()
 		if (routeId?.startsWith('/[slug]/edit')) return m.common_edit()
@@ -55,20 +60,34 @@
 			<Icon icon={conceptIcons.mentions} />
 			Mentions
 		</a>
-		<a
-			href={resolve('/[slug]/following', {slug})}
-			class:active={routeId?.startsWith('/[slug]/following')}
-		>
+		<a href={resolve('/[slug]/following', {slug})} class:active={routeId === '/[slug]/following'}>
 			<Icon icon={conceptIcons.following} />
 			{m.nav_following()}
 		</a>
-		<a
-			href={resolve('/[slug]/followers', {slug})}
-			class:active={routeId?.startsWith('/[slug]/followers')}
-		>
+		{#if showInCommon}
+			<a
+				href={resolve('/[slug]/following/in-common', {slug})}
+				class="sub"
+				class:active={routeId?.startsWith('/[slug]/following/in-common')}
+			>
+				<Icon icon="favorite" />
+				{m.nav_in_common()}
+			</a>
+		{/if}
+		<a href={resolve('/[slug]/followers', {slug})} class:active={routeId === '/[slug]/followers'}>
 			<Icon icon={conceptIcons.followers} />
 			{m.nav_followers()}
 		</a>
+		{#if showInCommon}
+			<a
+				href={resolve('/[slug]/followers/in-common', {slug})}
+				class="sub"
+				class:active={routeId?.startsWith('/[slug]/followers/in-common')}
+			>
+				<Icon icon="favorite" />
+				{m.nav_in_common()}
+			</a>
+		{/if}
 		{#if channel?.longitude && channel?.latitude}
 			<a href={resolve('/[slug]/map', {slug})} class:active={routeId?.startsWith('/[slug]/map')}>
 				<Icon icon={conceptIcons.map} />
@@ -107,3 +126,11 @@
 		{/if}
 	</menu>
 </PopoverMenu>
+
+<style>
+	.sub {
+		padding-left: 1.8rem;
+		font-size: var(--font-3);
+		color: var(--gray-10);
+	}
+</style>
