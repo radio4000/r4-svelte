@@ -375,6 +375,12 @@
 				hasMatchInfo}
 			{#if hasAnyOverlap}
 				<section class="common-follows compact">
+					{#if followsYou}
+						<div class="compact-row follows-you-row">
+							<Icon icon="favorite-fill" size={14} />
+							<p>{m.channel_follows_you()}</p>
+						</div>
+					{/if}
 					{#if hasMatchInfo}
 						<div class="compact-row match-score-row">
 							<span><Icon icon="flower-alt" size={14} /> {matchScore.total}% match</span>
@@ -392,12 +398,6 @@
 								<Icon icon="hashtag" size={14} />
 								{matchScore.tag.overlap} {m.channel_match_tags()}
 							</a>
-						</div>
-					{/if}
-					{#if followsYou}
-						<div class="compact-row follows-you-row">
-							<Icon icon="favorite-fill" size={14} />
-							<p>{m.channel_follows_you()}</p>
 						</div>
 					{/if}
 					{#if previewCommonFollowers.length > 0}
