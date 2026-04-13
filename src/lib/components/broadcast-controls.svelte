@@ -33,7 +33,12 @@
 		return isUserBroadcasting(userChannelId)
 	})
 	let error = $state(/** @type {string|null} */ (null))
-	const canStartBroadcast = $derived(Boolean(deck?.playlist_track || channelSlug))
+	const playingDeck = $derived.by(() =>
+		Object.values(appState.decks).find((d) => Boolean(d?.is_playing && d?.playlist_track))
+	)
+	const canStartBroadcast = $derived(
+		Boolean(deck?.playlist_track || playingDeck?.playlist_track || channelSlug)
+	)
 
 	$effect(() => {
 		void deck?.playlist_track
@@ -63,25 +68,44 @@
 
 	async function start() {
 		error = null
-		if (!deck?.playlist_track) {
+		let sourceDeckId = deckId
+		let trackId = deck?.playlist_track
+		let startedByAutoPlay = false
+
+		// If something is currently playing elsewhere, broadcast that current track instead of switching.
+		if (!trackId && playingDeck?.playlist_track) {
+			sourceDeckId = playingDeck.id
+			trackId = playingDeck.playlist_track
+		}
+
+		// Only auto-play the user's channel if no deck is currently playing.
+		if (!trackId) {
 			if (!channelSlug || !userChannelId) {
 				error = m.broadcast_requires_track()
 				return
 			}
 			await playChannel(deckId, {id: userChannelId, slug: channelSlug})
+			sourceDeckId = deckId
+			trackId = appState.decks[deckId]?.playlist_track
+			startedByAutoPlay = true
 		}
-		if (!deck?.playlist_track) {
+
+		if (!trackId) {
 			error = m.broadcast_requires_track()
 			return
 		}
 
-		const player = getMediaPlayer(deckId)
-		if (player?.paused) player.play()
+		if (startedByAutoPlay) {
+			const player = getMediaPlayer(sourceDeckId)
+			if (player?.paused) player.play()
+		}
 
-		if (userChannelId && deck.playlist_track) {
+		if (userChannelId) {
 			try {
-				await startBroadcast(userChannelId, deck.playlist_track)
-				deck.broadcasting_channel_id = userChannelId
+				await startBroadcast(userChannelId, trackId)
+				if (appState.decks[sourceDeckId]) {
+					appState.decks[sourceDeckId].broadcasting_channel_id = userChannelId
+				}
 			} catch (e) {
 				error = /** @type {Error} */ (e).message
 			}

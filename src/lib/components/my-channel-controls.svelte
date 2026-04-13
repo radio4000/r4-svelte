@@ -41,15 +41,39 @@
 			if (deck) deck.broadcasting_channel_id = undefined
 			return
 		}
-		if (!deck?.playlist_track || deck.playlist_slug !== channel.slug) {
-			await playChannel(deckId, channel)
+
+		const activeDeck = appState.decks[appState.active_deck_id]
+		const currentlyPlayingDeck =
+			activeDeck?.is_playing && activeDeck?.playlist_track
+				? activeDeck
+				: Object.values(appState.decks).find((d) => Boolean(d?.is_playing && d?.playlist_track))
+
+		let sourceDeckId = deckId
+		let trackId = deck?.playlist_track
+		let startedByAutoPlay = false
+
+		// If any deck is already playing, broadcast that current track as-is.
+		if (currentlyPlayingDeck?.playlist_track) {
+			sourceDeckId = currentlyPlayingDeck.id
+			trackId = currentlyPlayingDeck.playlist_track
 		}
-		const player = getMediaPlayer(deckId)
-		if (player?.paused) player.play()
-		const trackId = appState.decks[deckId]?.playlist_track
+
+		// Only auto-play this channel if nothing is currently playing.
+		if (!trackId) {
+			await playChannel(deckId, channel)
+			sourceDeckId = deckId
+			trackId = appState.decks[deckId]?.playlist_track
+			startedByAutoPlay = true
+		}
+
+		if (startedByAutoPlay) {
+			const player = getMediaPlayer(sourceDeckId)
+			if (player?.paused) player.play()
+		}
+
 		if (!trackId) return
 		await startBroadcast(channel.id, trackId)
-		if (appState.decks[deckId]) appState.decks[deckId].broadcasting_channel_id = channel.id
+		if (appState.decks[sourceDeckId]) appState.decks[sourceDeckId].broadcasting_channel_id = channel.id
 	}
 
 	function onPlayAction() {
