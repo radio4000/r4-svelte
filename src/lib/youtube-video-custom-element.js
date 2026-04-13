@@ -25,28 +25,29 @@ class YouTube2Element extends HTMLElement {
 
 	constructor() {
 		super()
-		this.attachShadow({mode: 'open'})
 		this.#loadComplete = new Promise((resolve) => {
 			this.#resolveLoad = resolve
 		})
 	}
 
 	async connectedCallback() {
-		if (!this.shadowRoot) return
+		// Use light DOM for better fullscreen compatibility in embedded YouTube controls.
+		this.style.display = 'block'
+		this.style.width = '100%'
+		this.style.height = '200px'
 
-		// Create iframe with proper YouTube embed params
-		this.shadowRoot.innerHTML = `
-			<style>
-				:host { display: block; width: 100%; height: 200px; }
-				iframe { width: 100%; height: 100%; }
-			</style>
-			<iframe
-				id="player"
-				frameborder="0"
-				allowfullscreen
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-			></iframe>
-		`
+		if (!this.querySelector('iframe#player')) {
+			const iframe = document.createElement('iframe')
+			iframe.id = 'player'
+			iframe.frameBorder = '0'
+			iframe.allowFullscreen = true
+			iframe.allow =
+				'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen'
+			iframe.referrerPolicy = 'strict-origin-when-cross-origin'
+			iframe.style.width = '100%'
+			iframe.style.height = '100%'
+			this.replaceChildren(iframe)
+		}
 
 		try {
 			await this.loadYouTubeAPI()
@@ -67,7 +68,7 @@ class YouTube2Element extends HTMLElement {
 
 	async #initializePlayer() {
 		log.debug('initializePlayer')
-		const iframe = this.shadowRoot?.querySelector('iframe')
+		const iframe = this.querySelector('iframe')
 
 		if (iframe && !iframe.src) {
 			const src = this.getAttribute('src')
