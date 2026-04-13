@@ -1,4 +1,7 @@
 <script>
+	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
+	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
@@ -32,12 +35,18 @@
 	let q = $state('')
 	let followers = $state([])
 	let loading = $state(true)
+	let showInCommon = $derived(Boolean(appState.user && appState.channel?.id && channel?.id))
 
 	const matches = (/** @type {any} */ c, /** @type {string} */ q) =>
 		!q ||
 		c.name?.toLowerCase().includes(q.toLowerCase()) ||
 		c.slug?.toLowerCase().includes(q.toLowerCase())
 	let filteredFollowers = $derived(followers.filter((c) => matches(c, q)))
+
+	function onViewChange(next) {
+		if (next !== 'in-common') return
+		goto(resolve('/[slug]/followers/in-common', {slug: page.params.slug ?? ''}))
+	}
 
 	$effect(() => {
 		if (!channel?.id) return
@@ -71,6 +80,12 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
+	{#if showInCommon}
+		<select value="all" aria-label={m.nav_followers()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+			<option value="all">{m.views_tags_all()}</option>
+			<option value="in-common">{m.nav_in_common()}</option>
+		</select>
+	{/if}
 	{#if followers.length}
 		<SearchInput
 			bind:value={q}

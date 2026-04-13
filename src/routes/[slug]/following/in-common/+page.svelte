@@ -1,4 +1,7 @@
 <script>
+	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
+	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
@@ -46,6 +49,16 @@
 	)
 	let filteredChannels = $derived(commonFollowing.filter((c) => matches(c, q)))
 
+	function onViewChange(next) {
+		if (next === 'in-common') return
+		const base = resolve('/[slug]/following', {slug: page.params.slug ?? ''})
+		if (next === 'all') {
+			goto(`${base}?view=all`)
+			return
+		}
+		goto(base)
+	}
+
 	$effect(() => {
 		if (!channel?.id) return
 		loading = true
@@ -78,6 +91,11 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
+	<select value="in-common" aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+		<option value="featured">{m.channel_section_featured_channels()}</option>
+		<option value="all">{m.views_tags_all()}</option>
+		<option value="in-common">{m.nav_in_common()}</option>
+	</select>
 	{#if commonFollowing.length}
 		<SearchInput
 			bind:value={q}

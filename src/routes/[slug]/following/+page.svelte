@@ -1,4 +1,7 @@
 <script>
+	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
+	import {page} from '$app/state'
 	import {sdk} from '@radio4000/sdk'
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
@@ -45,6 +48,7 @@
 		c.name?.toLowerCase().includes(q.toLowerCase()) ||
 		c.slug?.toLowerCase().includes(q.toLowerCase())
 
+	let showInCommon = $derived(Boolean(appState.user && appState.channel?.id && channel?.id))
 	let featuredMentions = $derived(
 		extractMentions(channel?.description ?? '')
 			.map((slug) => slug.slice(1))
@@ -60,10 +64,21 @@
 	$effect(() => {
 		if (!channel?.id) return
 		q = ''
-		view = 'featured'
+		view = page.url.searchParams.get('view') === 'all' ? 'all' : 'featured'
 		featuredChannels = []
 		featuredLoading = false
 	})
+
+	function onViewChange(next) {
+		if (next === 'in-common') {
+			goto(resolve('/[slug]/following/in-common', {slug: page.params.slug ?? ''}))
+			return
+		}
+		const url = new URL(page.url)
+		if (next === 'all') url.searchParams.set('view', 'all')
+		else url.searchParams.delete('view')
+		goto(url, {replaceState: true})
+	}
 
 	$effect(() => {
 		if (!channel?.id) return
@@ -124,10 +139,13 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	{#if featuredChannels.length > 0}
-		<select bind:value={view} aria-label={m.nav_following()}>
+	{#if featuredChannels.length > 0 || showInCommon}
+		<select value={view} aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
 			<option value="featured">{m.channel_section_featured_channels()}</option>
 			<option value="all">{m.views_tags_all()}</option>
+			{#if showInCommon}
+				<option value="in-common">{m.nav_in_common()}</option>
+			{/if}
 		</select>
 	{/if}
 	{#if visibleChannels.length}
