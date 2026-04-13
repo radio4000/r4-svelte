@@ -128,6 +128,13 @@
 		return rest > 0 ? `${names.join(', ')} and ${rest} others` : names.join(', ')
 	}
 
+	function formatCoordinate(value: number, positive: string, negative: string) {
+		const abs = Math.abs(value)
+		const rounded = Number(abs.toFixed(4))
+		const compact = String(rounded)
+		return `${compact}${value >= 0 ? positive : negative}`
+	}
+
 	$effect(() => {
 		if (!channel?.id || follows.followedIds.length === 0) {
 			channelFollowers = []
@@ -221,6 +228,15 @@
 			(matchScore.url.overlap > 0 || matchScore.tag.overlap > 0 || matchScore.artistTitle.overlap > 0)
 	)
 	let matchingSourceSlug = $derived(appState.channel?.slug ?? '')
+	let hasCoordinates = $derived(
+		Number.isFinite(Number(channel?.latitude)) && Number.isFinite(Number(channel?.longitude))
+	)
+	let coordinatesLabel = $derived.by(() => {
+		if (!hasCoordinates) return ''
+		const lat = Number(channel?.latitude)
+		const lng = Number(channel?.longitude)
+		return `${formatCoordinate(lat, 'N', 'S')} ${formatCoordinate(lng, 'E', 'W')}`
+	})
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -339,6 +355,9 @@
 					<p class="description"><LinkEntities slug={channel.slug} text={channel.description} /></p>
 				{/if}
 				<p class="dates">
+					{#if hasCoordinates}
+						<a href={resolve('/[slug]/map', {slug})} class="coords-link">{coordinatesLabel}</a>
+					{/if}
 					<small
 						>{m.channel_updated({
 							date: relativeDate(channel.latest_track_at ?? channel.updated_at)
@@ -468,6 +487,15 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.35rem;
+	}
+
+	.coords-link {
+		color: inherit;
+		font-size: var(--font-2);
+		letter-spacing: 0.01em;
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		text-underline-offset: 0.08em;
 	}
 
 	.description {
