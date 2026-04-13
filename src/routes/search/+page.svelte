@@ -14,7 +14,7 @@
 	import Pagination from '$lib/components/pagination.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
-	import {getTopChannelSlugs, getTopTagValues} from '$lib/utils'
+	import {featuredScore, getTopTagValues, seededRandom, shuffleArray, shuffleSeed} from '$lib/utils'
 	import {resolve} from '$app/paths'
 	import {trap} from '$lib/focus'
 	import {fromAction} from 'svelte/attachments'
@@ -34,6 +34,7 @@
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '50') || 50))
+	const featuredSuggestionsSeed = shuffleSeed()
 
 	// Track results (View pipeline)
 	const viewQuery = queryView(() => view)
@@ -41,8 +42,26 @@
 	const totalCount = $derived(viewQuery.count)
 	const tracksLoading = $derived(viewQuery.loading)
 
-	const featuredChannelSlugs = $derived(getTopChannelSlugs(channelsCollection.state.values(), 3))
-	const featuredTags = $derived(getTopTagValues([...tracksCollection.state.values()], 6))
+	const featuredChannelPool = $derived.by(() =>
+		[...channelsCollection.state.values()]
+			.filter((c) => c?.slug && (c.track_count ?? 0) > 0)
+			.toSorted((a, b) => featuredScore(b) - featuredScore(a))
+			.slice(0, 120)
+	)
+	const featuredChannelSlugs = $derived.by(() =>
+		shuffleArray(
+			featuredChannelPool.map((c) => c.slug),
+			seededRandom(`${featuredSuggestionsSeed}:channels`)
+		).slice(0, 3)
+	)
+	const featuredTags = $derived.by(() => {
+		const featuredSlugs = new Set(featuredChannelPool.slice(0, 40).map((channel) => channel.slug))
+		const featuredTracks = [...tracksCollection.state.values()].filter(
+			(track) => track?.slug && featuredSlugs.has(track.slug)
+		)
+		const tagPool = getTopTagValues(featuredTracks.length ? featuredTracks : [...tracksCollection.state.values()], 32)
+		return shuffleArray(tagPool, seededRandom(`${featuredSuggestionsSeed}:tags`)).slice(0, 6)
+	})
 
 	// --- Channel results (parallel, outside View) ---
 	// Stable keys so pagination (page/offset) changes don't re-trigger the channel search.
