@@ -358,24 +358,21 @@
 				<section class="common-follows compact">
 					{#if hasMatchInfo}
 						<div class="compact-row match-score-row">
-							<Icon icon="flower-alt" size={14} />
-							{#if matchScore.url.base > 0}
-								<a
-									href={resolve('/[slug]/tracks', {slug}) +
-										`?matching=${encodeURIComponent(matchingSourceSlug)}`}
-									>{matchScore.url.overlap} {m.channel_match_tracks()}</a
-								>
-							{/if}
-							{#if matchScore.tag.base > 0}
-								<a
-									href={resolve('/[slug]/tags', {slug}) +
-										`?matching=${encodeURIComponent(matchingSourceSlug)}`}
-									>{matchScore.tag.overlap} {m.channel_match_tags()}</a
-								>
-							{/if}
-							{#if matchScore.artistTitle.base > 0}
-								<span>{matchScore.artistTitle.overlap} {m.channel_match_artists()}</span>
-							{/if}
+							<span><Icon icon="flower-alt" size={14} /> {matchScore.total}% score</span>
+							<a
+								href={resolve('/[slug]/tracks', {slug}) +
+									`?matching=${encodeURIComponent(matchingSourceSlug)}`}
+							>
+								<Icon icon="play-fill" size={14} />
+								{matchScore.url.overlap} {m.channel_match_tracks()}
+							</a>
+							<a
+								href={resolve('/[slug]/tags', {slug}) +
+									`?matching=${encodeURIComponent(matchingSourceSlug)}`}
+							>
+								<Icon icon="hashtag" size={14} />
+								{matchScore.tag.overlap} {m.channel_match_tags()}
+							</a>
 						</div>
 					{/if}
 					{#if followsYou}
