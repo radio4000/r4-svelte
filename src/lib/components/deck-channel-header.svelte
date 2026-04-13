@@ -63,14 +63,18 @@
 	const resolvedListeningWhomHref = $derived(
 		listeningWhomSlug ? resolve('/[slug]', {slug: listeningWhomSlug}) : undefined
 	)
-	const derivedTags = $derived(
-		extractHashtags(deck?.playlist_title ?? '').map((tag) => ({
-			label: tag,
-			href: slug
-				? `${resolve('/[slug]/tracks', {slug})}?tags=${encodeURIComponent(tag.slice(1))}`
-				: undefined
+	const derivedTags = $derived.by(() => {
+		const tags = new Set(
+			extractHashtags(deck?.playlist_title ?? '').map((tag) => tag.replace(/^#/, '').toLowerCase())
+		)
+		for (const source of deck?.view?.sources ?? []) {
+			for (const tag of source?.tags ?? []) tags.add(tag.toLowerCase())
+		}
+		return [...tags].map((value) => ({
+			label: `#${value}`,
+			href: slug ? `${resolve('/[slug]/tracks', {slug})}?tags=${encodeURIComponent(value)}` : undefined
 		}))
-	)
+	})
 
 	const hasDistinctWhom = $derived(
 		Boolean(listeningWhomSlug && listeningWhomSlug !== listeningWhoSlug)
