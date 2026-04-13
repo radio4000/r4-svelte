@@ -2,7 +2,16 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-Last update (2026-04-12): implemented compact-deck mobile micro-channel responsiveness and broadcast multi-deck `video_mix` mode.
+Last update (2026-04-13): fixed appearance settings SSR crash, improved search/track filter UX, and updated track-card media interactions.
+
+## Done (2026-04-13)
+
+- `/settings/appearance` 500 fixed by guarding browser-only theme detection.
+- Channel page description color moved closer to body text.
+- Global search track action controls now include filter status and quick clear.
+- Channel `/[slug]/tracks` tag dropdown replaced with modal filter panel (tags, sorting, actions, result count).
+- Track-card delete action now uses modal dialog confirmation.
+- Track artwork is now one-click play/pause with centered overlay state.
 
 ## Simplify: rely on types and primitives, fewer layers
 
