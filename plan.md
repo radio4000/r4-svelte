@@ -18,6 +18,8 @@ Last update (2026-04-13): fixed appearance settings SSR crash, improved search/t
 - Added transparent channel matching score model (0-100) near follow button + docs in `docs/matching.md`.
 - Channel `/[slug]/tracks` now supports URL-shareable deterministic random order via `order=shuffle&seed=...` (with reshuffle generating a new seed).
 - Channel `/[slug]/tracks` tags modal no longer shows global sort chip (`shuffle · desc` etc.) and keeps header title/actions inline and responsive.
+- Map markers now show a distinct broadcast halo for currently broadcasting channels (with favorite-live variant color).
+- `/search` featured suggestion chips (channels + tags) now randomize from the featured pool on each page load.
 
 ## Simplify: rely on types and primitives, fewer layers
 
