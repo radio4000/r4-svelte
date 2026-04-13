@@ -216,6 +216,10 @@
 			allTracks.length > 0
 		)
 	)
+	let hasMatchInfo = $derived(
+		showMatchScore &&
+			(matchScore.url.overlap > 0 || matchScore.tag.overlap > 0 || matchScore.artistTitle.overlap > 0)
+	)
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -348,11 +352,12 @@
 				followsYou ||
 				previewCommonFollowers.length > 0 ||
 				previewCommonFollowing.length > 0 ||
-				showMatchScore}
+				hasMatchInfo}
 			{#if hasAnyOverlap}
 				<section class="common-follows compact">
-					{#if showMatchScore}
+					{#if hasMatchInfo}
 						<div class="compact-row match-score-row">
+							<Icon icon="flower-alt" size={14} />
 							{#if matchScore.url.base > 0}
 								<span>{matchScore.url.overlap} {m.channel_match_tracks()}</span>
 							{/if}
