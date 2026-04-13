@@ -965,6 +965,9 @@
 	/* Listening/auto decks should let media fill available deck height. */
 	:global(.deck.listening) .video,
 	:global(.deck.auto) .video {
+		display: block;
+		height: 100%;
+		min-height: 0;
 		max-height: none;
 		aspect-ratio: auto;
 	}

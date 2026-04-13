@@ -86,6 +86,8 @@ class YouTube2Element extends HTMLElement {
 		try {
 			// @ts-expect-error iframe may be null/undefined at type-check time but is guaranteed present here
 			this.api = new globalThis.YT.Player(iframe, {
+				width: '100%',
+				height: '100%',
 				playerVars: {
 					controls: this.hasAttribute('controls') ? 1 : 0,
 					fs: 1,
