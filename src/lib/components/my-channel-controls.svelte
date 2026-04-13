@@ -4,6 +4,8 @@
 	import {startBroadcast, stopBroadcast} from '$lib/broadcast'
 	import {getMediaPlayer, playChannel, togglePlayPause, toggleChannelAutoRadio} from '$lib/api'
 	import {findAutoDecksForChannel, findLoadedDeck, findPlayingDeck} from '$lib/deck'
+	import {tracksCollection} from '$lib/collections/tracks'
+	import {hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -23,6 +25,11 @@
 		findLoadedDeck(appState.decks, channel.slug)?.id ?? appState.active_deck_id
 	)
 	const isPlaying = $derived(Boolean(findPlayingDeck(appState.decks, channel.slug)))
+	const canShowAutoButton = $derived.by(() => {
+		void tracksCollection.state.size
+		const channelTracks = [...tracksCollection.state.values()].filter((track) => track.slug === channel.slug)
+		return hasAutoRadioCoverage(channelTracks)
+	})
 	const livePresenceCount = $derived(channelPresence[channel.slug]?.broadcast ?? 0)
 	const autoPresenceCount = $derived(
 		channelPresence[channel.slug]?.byUri?.[`@${channel.slug}`] ?? 0
@@ -104,17 +111,19 @@
 		{/if}
 	</button>
 
-	<button
-		type="button"
-		class:active={isAutoEnabled}
-		onclick={onAutoAction}
-		{@attach tooltip({content: m.auto_radio_join()})}
-	>
-		<Icon icon="infinite" size={14} />
-		{#if autoPresenceCount > 0}
-			<PresenceCount count={autoPresenceCount} />
-		{/if}
-	</button>
+	{#if canShowAutoButton}
+		<button
+			type="button"
+			class:active={isAutoEnabled}
+			onclick={onAutoAction}
+			{@attach tooltip({content: m.auto_radio_join()})}
+		>
+			<Icon icon="infinite" size={14} />
+			{#if autoPresenceCount > 0}
+				<PresenceCount count={autoPresenceCount} />
+			{/if}
+		</button>
+	{/if}
 
 	<button
 		type="button"

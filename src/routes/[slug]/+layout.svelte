@@ -21,6 +21,7 @@
 		resyncAutoRadio,
 		togglePlayPause
 	} from '$lib/api'
+	import {hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {findAutoDecksForChannel, findChannelPlayingDeck, findListeningDeck} from '$lib/deck'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
@@ -139,6 +140,7 @@
 	let isAutoEnabled = $derived(
 		Boolean(activeDeck?.auto_radio && activeDeck?.playlist_slug === slug)
 	)
+	let canShowAutoButton = $derived(hasAutoRadioCoverage(allChannelTracks))
 	let activeAutoDrifted = $derived(Boolean(isAutoEnabled && activeDeck?.auto_radio_drifted))
 	let autoPresenceCount = $derived(
 		channel?.slug ? (channelPresence[channel.slug]?.byUri?.[`@${channel.slug}`] ?? 0) : 0
@@ -313,87 +315,91 @@
 					</div>
 				</div>
 
-				<menu class="channel-actions">
-					<div class="mode-action-group" role="group" aria-label="Channel actions">
-						{#if canEdit || isChannelLive || isListeningToChannel}
+				<div class="channel-controls">
+					<menu class="channel-actions">
+						<div class="mode-action-group" role="group" aria-label="Channel actions">
+							{#if canEdit || isChannelLive || isListeningToChannel}
+								<button
+									type="button"
+									class={[
+										'mode-action',
+										'live',
+										{active: canEdit ? isChannelLive : isListeningToChannel}
+									]}
+									onclick={onLiveAction}
+									disabled={liveLoading}
+									{@attach tooltip({
+										content: canEdit
+											? isChannelLive
+												? m.broadcast_stop_button()
+												: m.broadcast_start_button()
+											: isListeningToChannel
+												? m.broadcasts_leave()
+												: m.broadcasts_join()
+									})}
+								>
+									<Icon icon="signal" size={14} />
+									<span>
+										{#if canEdit}
+											{isChannelLive ? m.broadcast_stop_button() : m.broadcast_start_button()}
+										{:else if isListeningToChannel}
+											{m.status_live_short()}
+										{:else}
+											{m.broadcasts_join()}
+										{/if}
+									</span>
+									{#if livePresenceCount > 0}
+										<PresenceCount count={livePresenceCount} />
+									{/if}
+								</button>
+							{/if}
+
+							{#if canShowAutoButton}
+								<button
+									type="button"
+									class={['mode-action', 'auto', {active: isAutoEnabled, drifted: activeAutoDrifted}]}
+									onclick={onAutoAction}
+									{@attach tooltip({
+										content: activeAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
+									})}
+								>
+									<Icon icon="infinite" size={14} />
+									<span>Auto</span>
+									{#if autoPresenceCount > 0}
+										<PresenceCount count={autoPresenceCount} />
+									{/if}
+								</button>
+							{/if}
+
 							<button
 								type="button"
-								class={[
-									'mode-action',
-									'live',
-									{active: canEdit ? isChannelLive : isListeningToChannel}
-								]}
-								onclick={onLiveAction}
-								disabled={liveLoading}
-								{@attach tooltip({
-									content: canEdit
-										? isChannelLive
-											? m.broadcast_stop_button()
-											: m.broadcast_start_button()
-										: isListeningToChannel
-											? m.broadcasts_leave()
-											: m.broadcasts_join()
-								})}
+								class={['mode-action', 'play', {active: isChannelPlaying}]}
+								onclick={onPlayAction}
+								disabled={playLoading}
+								{@attach tooltip({content: playTooltip})}
 							>
-								<Icon icon="signal" size={14} />
-								<span>
-									{#if canEdit}
-										{isChannelLive ? m.broadcast_stop_button() : m.broadcast_start_button()}
-									{:else if isListeningToChannel}
-										{m.status_live_short()}
-									{:else}
-										{m.broadcasts_join()}
-									{/if}
-								</span>
-								{#if livePresenceCount > 0}
-									<PresenceCount count={livePresenceCount} />
-								{/if}
+								<Icon icon={isChannelPlaying ? 'pause' : 'play-fill'} size={14} />
+								<span>{playLabel}</span>
 							</button>
+						</div>
+					</menu>
+
+					<div class="channel-secondary-actions">
+						{#if (appState.channels?.length ?? 0) > 0}
+							<ButtonFollow {channel} />
+						{:else}
+							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
+								<Icon icon="favorite" />
+							</a>
 						{/if}
-
 						<button
 							type="button"
-							class={['mode-action', 'auto', {active: isAutoEnabled, drifted: activeAutoDrifted}]}
-							onclick={onAutoAction}
-							{@attach tooltip({
-								content: activeAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()
-							})}
+							onclick={() => (appState.modal_share = {channel})}
+							{@attach tooltip({content: m.share_native()})}
 						>
-							<Icon icon="infinite" size={14} />
-							<span>Auto</span>
-							{#if autoPresenceCount > 0}
-								<PresenceCount count={autoPresenceCount} />
-							{/if}
-						</button>
-
-						<button
-							type="button"
-							class={['mode-action', 'play', {active: isChannelPlaying}]}
-							onclick={onPlayAction}
-							disabled={playLoading}
-							{@attach tooltip({content: playTooltip})}
-						>
-							<Icon icon={isChannelPlaying ? 'pause' : 'play-fill'} size={14} />
-							<span>{playLabel}</span>
+							<Icon icon="share" />
 						</button>
 					</div>
-				</menu>
-
-				<div class="channel-secondary-actions">
-					{#if (appState.channels?.length ?? 0) > 0}
-						<ButtonFollow {channel} />
-					{:else}
-						<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
-							<Icon icon="favorite" />
-						</a>
-					{/if}
-					<button
-						type="button"
-						onclick={() => (appState.modal_share = {channel})}
-						{@attach tooltip({content: m.share_native()})}
-					>
-						<Icon icon="share" />
-					</button>
 				</div>
 			</header>
 		{/if}
@@ -444,7 +450,7 @@
 
 	header {
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
 		align-items: center;
 		gap: 0.4rem;
 		padding: 0.5rem;
@@ -456,8 +462,19 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		flex: 1 1 auto;
-		min-width: min(10rem, 100%);
+		width: 100%;
+		min-width: 0;
+	}
+
+	@media (min-width: 500px) {
+		header {
+			flex-direction: row;
+			justify-content: space-between;
+		}
+		.channel-main {
+			width: auto;
+			flex: 1 1 auto;
+		}
 	}
 
 	.avatar {
@@ -502,12 +519,18 @@
 		font-size: var(--font-3);
 	}
 
+	.channel-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		flex: 0 0 auto;
+	}
+
 	.channel-actions {
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
 		margin: 0;
-		flex: 0 0 auto;
 	}
 
 	.mode-action-group {
@@ -561,8 +584,6 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		flex: 0 0 auto;
-		margin-inline-start: auto;
 	}
 
 	main {
@@ -584,10 +605,12 @@
 	}
 
 	.channel-nav-controls {
+		display: flex;
 		flex: 1;
 		min-width: 0;
 		align-items: center;
 		flex-wrap: wrap;
+		gap: 0.25rem;
 	}
 
 	@media (min-width: 820px) {
