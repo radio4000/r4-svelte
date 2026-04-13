@@ -106,9 +106,9 @@
 							class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
 							onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
 						>
-							{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
 							<Icon icon="signal" size={12} />
 							{visibleListeningDecksSynced ? 'Live' : 'Sync'}
+							{#if listenPresenceCount > 0}<PresenceCount count={listenPresenceCount} />{/if}
 						</button>
 					</div>
 				{/if}

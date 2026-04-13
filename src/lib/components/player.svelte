@@ -748,11 +748,11 @@
 						position: 'top'
 					})}
 				>
+					<Icon icon="infinite" size={14} />
+					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 					{#if headerPresenceCount > 0}
 						<PresenceCount count={headerPresenceCount} />
 					{/if}
-					<Icon icon="infinite" size={14} />
-					<span>{autoNotSynced ? 'Sync' : 'Auto'}</span>
 				</button>
 			</div>
 		{/if}
