@@ -2,7 +2,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import * as m from '$lib/paraglide/messages'
 
-	let {showModal = $bindable(), header = undefined, children} = $props()
+	let {showModal = $bindable(), header = undefined, footer = undefined, children} = $props()
 
 	let dialog = $state()
 	let mousedownTarget = $state()
@@ -24,8 +24,8 @@
 		if (e.target === dialog && mousedownTarget === dialog) dialog.close()
 	}}
 >
-	<div>
-		<header>
+	<div class="dialog-panel">
+		<header class="dialog-header">
 			{@render header?.()}
 			<button
 				onclick={() => dialog.close()}
@@ -35,7 +35,14 @@
 				<Icon icon="close" />
 			</button>
 		</header>
-		{@render children?.()}
+		<section class="dialog-body">
+			{@render children?.()}
+		</section>
+		{#if footer}
+			<footer class="dialog-footer">
+				{@render footer()}
+			</footer>
+		{/if}
 	</div>
 </dialog>
 
@@ -46,6 +53,7 @@
 		width: 100%;
 		background: none;
 		padding: calc(0.2px + 13vh) 12px 13vh;
+		overflow: hidden;
 	}
 	dialog[open] {
 		animation: modal-in var(--duration) ease-out;
@@ -73,10 +81,13 @@
 			opacity: 0;
 		}
 	}
-	dialog > div {
+	.dialog-panel {
 		max-width: 640px;
 		margin: auto;
-		flex: 1;
+		width: min(100%, 640px);
+		max-height: min(74vh, 760px);
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr) auto;
 		background: var(--color-interface-elevated);
 		box-shadow:
 			lch(0 0 0 / 0.15) 0px 4px 40px,
@@ -88,13 +99,32 @@
 		border-radius: var(--border-radius);
 		padding: 1em;
 		transform-origin: 50% 50% 0px;
+		overflow: hidden;
 	}
-	header {
+	.dialog-header {
 		display: flex;
 		justify-content: space-between;
-		margin-bottom: 1rem;
+		align-items: center;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		background: inherit;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid var(--gray-4);
 	}
-	header :global(h2) {
+	.dialog-header :global(h2) {
 		margin: 0;
+	}
+	.dialog-body {
+		overflow: auto;
+		padding-block: 0.75rem;
+	}
+	.dialog-footer {
+		position: sticky;
+		bottom: 0;
+		z-index: 1;
+		background: inherit;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--gray-4);
 	}
 </style>
