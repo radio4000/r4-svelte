@@ -34,7 +34,7 @@
 		globeMode = $bindable(false),
 		showGraticules = $bindable(true),
 		showDayNight = $bindable(true),
-		tileStyle = $bindable('carto')
+		tileStyle = $bindable('satellite')
 	} = $props()
 
 	/** @type {maplibregl.Map | null} */

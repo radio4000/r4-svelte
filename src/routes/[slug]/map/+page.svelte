@@ -12,7 +12,7 @@
 	let showGraticules = $state(true)
 	let showDayNight = $state(true)
 	/** @type {'carto' | 'topo' | 'satellite'} */
-	let tileStyle = $state('topo')
+	let tileStyle = $state('satellite')
 	const initialZoom = 3
 </script>
 
