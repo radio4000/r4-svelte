@@ -8,6 +8,8 @@
 	import SearchShell from '$lib/components/search-shell.svelte'
 	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import {playTrack, setPlaylist, loadDeckView} from '$lib/api'
+	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {trap} from '$lib/focus'
@@ -70,11 +72,29 @@
 							: m.search_track_other({count: tracks.length})}
 					</h2>
 					<Pagination {currentPage} {pageSize} {totalCount} defaultPageSize={50} />
-					<SearchTrackMenu {tracks} title={search.value.trim()} {view} />
+					<SearchTrackMenu
+						{tracks}
+						title={search.value.trim()}
+						{view}
+						basePath="/search/tracks"
+					/>
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
-						<li><TrackCard {track} {index} showSlug={true} /></li>
+						<li>
+							<TrackCard
+								{track}
+								{index}
+								showSlug={true}
+								onPlay={(trackId) => {
+									const ids = tracks.map((t) => t.id)
+									if (view)
+										loadDeckView(appState.active_deck_id, view, ids, {title: search.value.trim()})
+									else setPlaylist(appState.active_deck_id, ids, {title: search.value.trim()})
+									playTrack(appState.active_deck_id, trackId, null, 'play_search')
+								}}
+							/>
+						</li>
 					{/each}
 				</ul>
 			</section>
