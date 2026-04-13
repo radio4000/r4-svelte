@@ -14,6 +14,8 @@ Last update (2026-04-13): fixed appearance settings SSR crash, improved search/t
 - Track artwork is now one-click play/pause with centered overlay state.
 - Homepage (logged-in): tags row sizing/alignment adjusted, onboarding todo moved to info panel style, and header actions use standard button background.
 - Channel `/[slug]/tracks` tags dialog: "Tags filter" title, "Search tags" placeholder, and icon-based sort controls (mode + direction).
+- Channel homepage now shows common follow overlap previews and links to common-following view.
+- Added transparent channel matching score model (0-100) near follow button + docs in `docs/matching.md`.
 
 ## Simplify: rely on types and primitives, fewer layers
 
