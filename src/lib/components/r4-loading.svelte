@@ -60,13 +60,29 @@
 		gap: 1rem;
 
 		.logo {
-			display: contents;
+			display: inline-flex;
 			color: currentColor;
+			animation: logo-breathe 1.15s ease-in-out infinite;
 			:global(svg) {
 				width: 2rem;
 				height: auto;
 				display: block;
 			}
+		}
+	}
+
+	@keyframes logo-breathe {
+		0% {
+			color: var(--accent-10);
+			opacity: 1;
+		}
+		50% {
+			color: transparent;
+			opacity: 0.42;
+		}
+		100% {
+			color: var(--accent-10);
+			opacity: 1;
 		}
 	}
 </style>
