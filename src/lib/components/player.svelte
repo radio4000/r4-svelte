@@ -679,6 +679,7 @@
 				currentTime={mediaCurrentTime}
 				{mediaDuration}
 				trackDuration={track?.duration}
+				isPlaying={Boolean(deck?.is_playing)}
 				disabled={isListeningToBroadcast || Boolean(deck?.auto_radio)}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
@@ -958,9 +959,6 @@
 		}
 	}
 
-	.bottom-chrome:has(.active) {
-		border-top: 0;
-	}
 
 	.track-panel {
 		display: flex;

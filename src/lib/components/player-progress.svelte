@@ -1,8 +1,8 @@
 <script>
 	import {formatDuration} from '$lib/dates'
 
-	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void, disabled?: boolean}} */
-	let {currentTime, mediaDuration, trackDuration, onseek, disabled = false} = $props()
+	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void, disabled?: boolean, isPlaying?: boolean}} */
+	let {currentTime, mediaDuration, trackDuration, onseek, disabled = false, isPlaying = false} = $props()
 
 	let duration = $derived(Number.isFinite(mediaDuration) ? mediaDuration : (trackDuration ?? NaN))
 	let hasDuration = $derived(Number.isFinite(duration) && duration > 0)
@@ -19,6 +19,7 @@
 		value={currentTime}
 		oninput={(e) => onseek?.(Number(e.currentTarget.value))}
 		disabled={disabled || !hasDuration}
+		class:inactive={!isPlaying && !disabled}
 		style="--range-fill: {fill}%"
 	/>
 	<time>{formatDuration(duration, '-:--')}</time>
@@ -41,5 +42,18 @@
 	.progress input {
 		flex: 1;
 		z-index: 1;
+	}
+
+	.progress input.inactive {
+		--range-color: var(--gray-6);
+	}
+
+	.progress input.inactive::-webkit-slider-thumb {
+		background: var(--accent-9);
+	}
+
+	.progress input.inactive::-moz-range-thumb {
+		background: var(--accent-9);
+		border-color: var(--accent-9);
 	}
 </style>

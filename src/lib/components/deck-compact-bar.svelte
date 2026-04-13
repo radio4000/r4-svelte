@@ -89,14 +89,17 @@
 
 	let lastTrack = $state()
 	let lastChannel = $state()
-	$effect(() => {
+	let shouldResetFallbackState = $derived(
+		!deck || (!deck.playlist_track && (deck.playlist_tracks?.length ?? 0) === 0)
+	)
+	$effect.pre(() => {
 		const currentTrack = track ?? broadcastTrack
 		if (currentTrack) lastTrack = currentTrack
-		else if (!deck?.playlist_track) lastTrack = undefined
+		else if (shouldResetFallbackState) lastTrack = undefined
 	})
-	$effect(() => {
+	$effect.pre(() => {
 		if (channel) lastChannel = channel
-		else if (!deck?.playlist_track) lastChannel = undefined
+		else if (shouldResetFallbackState) lastChannel = undefined
 	})
 
 	let displayTrack = $derived(track ?? broadcastTrack ?? lastTrack)
@@ -180,6 +183,7 @@
 			currentTime={mediaCurrentTime}
 			{mediaDuration}
 			trackDuration={displayTrack?.duration}
+			isPlaying={Boolean(deck?.is_playing)}
 			disabled={Boolean(deck?.listening_to_channel_id || deck?.auto_radio)}
 			onseek={(val) => {
 				if (deck) deck.media_current_time = val
