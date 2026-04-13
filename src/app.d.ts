@@ -9,6 +9,7 @@ declare global {
 		// interface PageData {}
 		interface PageState {
 			tab?: string
+			focus?: boolean
 		}
 		// interface Platform {}
 	}

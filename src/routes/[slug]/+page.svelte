@@ -74,7 +74,7 @@
 	$effect(() => {
 		const q = searchInput.trim()
 		if (!q) return
-		goto(`/${slug}/tracks?q=${encodeURIComponent(q)}`)
+		goto(`/${slug}/tracks?q=${encodeURIComponent(q)}`, {state: {focus: true}})
 	})
 
 	// Tag multi-selection — empty means "Latest"
