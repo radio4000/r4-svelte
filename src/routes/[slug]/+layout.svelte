@@ -23,6 +23,7 @@
 	} from '$lib/api'
 	import {hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {findAutoDecksForChannel, findChannelPlayingDeck, findListeningDeck} from '$lib/deck'
+	import {computeChannelMatchScore} from '$lib/channel-match-score'
 	import ButtonFollow from '$lib/components/button-follow.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
@@ -150,6 +151,17 @@
 	)
 	let playLoading = $state(false)
 	let liveLoading = $state(false)
+	let userChannelSlug = $derived(appState.channel?.slug ?? '')
+	let userChannelTracks = $derived.by(() => {
+		if (!userChannelSlug) return []
+		void tracksCollection.state.size
+		return [...tracksCollection.state.values()].filter((t) => t.slug === userChannelSlug)
+	})
+	let matchScore = $derived(computeChannelMatchScore(userChannelTracks, allChannelTracks))
+	let showMatchScore = $derived(Boolean(appState.user && channel && appState.channel && userChannelTracks.length > 0))
+	let matchTitle = $derived(
+		`Match ${matchScore.total}% · URL ${Math.round(matchScore.url.ratio * 100)}% · Artist+Title ${Math.round(matchScore.artistTitle.ratio * 100)}%`
+	)
 	let playTooltip = $derived(isChannelPlaying ? m.player_tooltip_pause() : m.player_tooltip_play())
 	let playLabel = $derived(
 		playTooltip
@@ -187,6 +199,12 @@
 	$effect(() => {
 		if (slug) {
 			checkTracksFreshness(slug)
+		}
+	})
+
+	$effect(() => {
+		if (userChannelSlug) {
+			void ensureTracksLoaded(userChannelSlug)
 		}
 	})
 
@@ -386,7 +404,9 @@
 
 					<div class="channel-secondary-actions">
 						{#if (appState.channels?.length ?? 0) > 0}
-							<ButtonFollow {channel} />
+							<div class="follow-match" title={showMatchScore ? matchTitle : undefined}>
+								<ButtonFollow {channel} label={showMatchScore ? `${matchScore.total}%` : undefined} />
+							</div>
 						{:else}
 							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
 								<Icon icon="favorite" />
@@ -584,6 +604,10 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
+	}
+
+	.follow-match {
+		display: inline-flex;
 	}
 
 	main {
