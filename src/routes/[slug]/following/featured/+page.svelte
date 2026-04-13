@@ -53,16 +53,16 @@
 			.map((slug) => slug.slice(1))
 			.slice(0, FEATURED_LIMIT)
 	)
-	let commonIds = $derived(new Set(follows.followedIds))
-	let commonFollowing = $derived(
-		following.filter((/** @type {any} */ c) => c.id && commonIds.has(c.id))
-	)
-	let filteredChannels = $derived(commonFollowing.filter((c) => matches(c, q)))
+	let filteredChannels = $derived(featuredChannels.filter((c) => matches(c, q)))
 	let hasFeatured = $derived(featuredChannels.length > 0)
+	let commonIds = $derived(new Set(follows.followedIds))
 	let isOtherChannel = $derived(
 		Boolean(appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id)
 	)
-	let showInCommon = $derived(isOtherChannel && commonFollowing.length > 0)
+	let commonFollowingCount = $derived(
+		following.filter((/** @type {any} */ c) => c.id && commonIds.has(c.id)).length
+	)
+	let showInCommon = $derived(isOtherChannel && commonFollowingCount > 0)
 
 	function followingBasePath() {
 		return resolve('/[slug]/following', {slug: page.params.slug ?? ''})
@@ -74,11 +74,11 @@
 			goto(`${base}/featured`)
 			return
 		}
-		if (next === 'all') {
-			goto(base)
+		if (next === 'in-common') {
+			goto(`${base}/in-common`)
 			return
 		}
-		goto(`${base}/in-common`)
+		goto(base)
 	}
 
 	$effect(() => {
@@ -142,8 +142,8 @@
 	})
 
 	$effect(() => {
-		if (!channel?.id || loading || follows.isLoading) return
-		if (!showInCommon) goto(followingBasePath(), {replaceState: true})
+		if (!channel?.id || featuredLoading) return
+		if (!hasFeatured) goto(followingBasePath(), {replaceState: true})
 	})
 </script>
 
@@ -151,7 +151,7 @@
 
 {#snippet navControls()}
 	<select
-		value="in-common"
+		value="featured"
 		aria-label={m.nav_following()}
 		onchange={(e) => onViewChange(e.currentTarget.value)}
 	>
@@ -163,20 +163,20 @@
 			<option value="in-common">{m.nav_in_common()}</option>
 		{/if}
 	</select>
-	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: commonFollowing.length})} />
+	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: featuredChannels.length})} />
 	<ChannelsViewControls bind:display bind:order bind:direction />
 {/snippet}
 
 <svelte:head>
-	<title>{m.nav_in_common()} - {channel?.name}</title>
+	<title>{m.channel_section_featured_channels()} - {channel?.name}</title>
 </svelte:head>
 
 <article class="channels-page fill-height">
 	<Subpage
-		title={m.nav_in_common()}
-		{loading}
-		empty={commonFollowing.length === 0}
-		emptyText={m.in_common_empty()}
+		title={m.channel_section_featured_channels()}
+		loading={loading || featuredLoading}
+		empty={!featuredLoading && featuredChannels.length === 0}
+		emptyText={m.following_empty()}
 	>
 		<ChannelsView
 			channels={filteredChannels}

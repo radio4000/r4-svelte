@@ -32,8 +32,8 @@
 		linkToMap = true,
 		showControls = true,
 		globeMode = $bindable(false),
-		showGraticules = $bindable(false),
-		showDayNight = $bindable(false),
+		showGraticules = $bindable(true),
+		showDayNight = $bindable(true),
 		tileStyle = $bindable('carto')
 	} = $props()
 

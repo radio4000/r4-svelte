@@ -6,6 +6,7 @@
 	import {getChannelCtx} from '$lib/contexts'
 	import {queryClient} from '$lib/collections/query-client'
 	import {appState} from '$lib/app-state.svelte'
+	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import {dedupeById, extractMentions} from '$lib/utils'
 	import {findChannelBySlug} from '$lib/search'
 	import ChannelsView from '$lib/components/channels-view.svelte'
@@ -34,55 +35,60 @@
 
 	const channelCtx = getChannelCtx()
 	let channel = $derived(channelCtx.data)
+	const follows = getFollowedChannels()
 
 	let q = $state('')
 	let following = $state([])
 	let featuredChannels = $state([])
-	let followingLoading = $state(true)
+	let loading = $state(true)
 	let featuredLoading = $state(false)
-	/** @type {'featured' | 'all'} */
-	let view = $state('featured')
 
-	const matches = (/** @type {any} */ c, /** @type {string} */ q) =>
-		!q ||
-		c.name?.toLowerCase().includes(q.toLowerCase()) ||
-		c.slug?.toLowerCase().includes(q.toLowerCase())
+	const matches = (/** @type {any} */ c, /** @type {string} */ query) =>
+		!query ||
+		c.name?.toLowerCase().includes(query.toLowerCase()) ||
+		c.slug?.toLowerCase().includes(query.toLowerCase())
 
-	let showInCommon = $derived(Boolean(appState.user && appState.channel?.id && channel?.id))
 	let featuredMentions = $derived(
 		extractMentions(channel?.description ?? '')
 			.map((slug) => slug.slice(1))
 			.slice(0, FEATURED_LIMIT)
 	)
-	let activeView = $derived(
-		view === 'featured' && (featuredLoading || featuredChannels.length > 0) ? 'featured' : 'all'
+	let filteredFollowing = $derived(following.filter((c) => matches(c, q)))
+	let hasFeatured = $derived(featuredChannels.length > 0)
+	let commonIds = $derived(new Set(follows.followedIds))
+	let isOtherChannel = $derived(
+		Boolean(appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id)
 	)
-	let visibleChannels = $derived(activeView === 'featured' ? featuredChannels : following)
-	let filteredFollowing = $derived(visibleChannels.filter((c) => matches(c, q)))
-	let loading = $derived(followingLoading || (activeView === 'featured' && featuredLoading))
+	let commonFollowingCount = $derived(
+		following.filter((/** @type {any} */ c) => c.id && commonIds.has(c.id)).length
+	)
+	let showInCommon = $derived(isOtherChannel && commonFollowingCount > 0)
 
-	$effect(() => {
-		if (!channel?.id) return
-		q = ''
-		view = page.url.searchParams.get('view') === 'all' ? 'all' : 'featured'
-		featuredChannels = []
-		featuredLoading = false
-	})
+	function followingBasePath() {
+		return resolve('/[slug]/following', {slug: page.params.slug ?? ''})
+	}
 
 	function onViewChange(next) {
-		if (next === 'in-common') {
-			goto(resolve('/[slug]/following/in-common', {slug: page.params.slug ?? ''}))
+		const base = followingBasePath()
+		if (next === 'featured') {
+			goto(`${base}/featured`)
 			return
 		}
-		const url = new URL(page.url)
-		if (next === 'all') url.searchParams.set('view', 'all')
-		else url.searchParams.delete('view')
-		goto(url, {replaceState: true})
+		if (next === 'in-common') {
+			goto(`${base}/in-common`)
+			return
+		}
+		goto(base)
 	}
 
 	$effect(() => {
 		if (!channel?.id) return
-		followingLoading = true
+		q = ''
+	})
+
+	$effect(() => {
+		if (!channel?.id) return
+		loading = true
 		queryClient
 			.fetchQuery({
 				queryKey: ['channel-following', channel.id],
@@ -100,11 +106,11 @@
 			})
 			.then((data) => {
 				following = data
-				followingLoading = false
+				loading = false
 			})
 			.catch(() => {
 				following = []
-				followingLoading = false
+				loading = false
 			})
 	})
 
@@ -139,22 +145,17 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	{#if featuredChannels.length > 0}
-		<select value={view} aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+	<select value="all" aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+		{#if hasFeatured}
 			<option value="featured">{m.channel_section_featured_channels()}</option>
-			<option value="all">{m.views_tags_all()}</option>
-			{#if showInCommon}
-				<option value="in-common">{m.nav_in_common()}</option>
-			{/if}
-		</select>
-	{/if}
-	{#if visibleChannels.length}
-		<SearchInput
-			bind:value={q}
-			placeholder={m.following_search_placeholder({count: visibleChannels.length})}
-		/>
-		<ChannelsViewControls bind:display bind:order bind:direction />
-	{/if}
+		{/if}
+		<option value="all">{m.views_tags_all()}</option>
+		{#if showInCommon}
+			<option value="in-common">{m.nav_in_common()}</option>
+		{/if}
+	</select>
+	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: following.length})} />
+	<ChannelsViewControls bind:display bind:order bind:direction />
 {/snippet}
 
 <svelte:head>

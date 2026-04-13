@@ -8,11 +8,11 @@
 	const channel = $derived(channelCtx.data)
 	const hasLocation = $derived(channel?.latitude && channel?.longitude)
 
-	let globeMode = $state(false)
-	let showGraticules = $state(false)
-	let showDayNight = $state(false)
+	let globeMode = $state(true)
+	let showGraticules = $state(true)
+	let showDayNight = $state(true)
 	/** @type {'carto' | 'topo' | 'satellite'} */
-	let tileStyle = $state('carto')
+	let tileStyle = $state('topo')
 </script>
 
 <article class="map-page fill-height">
