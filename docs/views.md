@@ -57,6 +57,7 @@ After `?`, global to all sources:
 - `limit` — 1–4000
 - `offset` — ≥ 0, pairs with `limit`
 - `tagsMode` — `any` (default), `all`
+- `seed` — optional deterministic shuffle seed (used when `order=shuffle`) to share the same randomized order by URL
 
 ## Saving and pinning views
 

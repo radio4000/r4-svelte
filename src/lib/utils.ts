@@ -6,6 +6,11 @@ export function uuid() {
 	return crypto.randomUUID()
 }
 
+/** Short, URL-friendly seed for deterministic shuffles. */
+export function shuffleSeed(): string {
+	return crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+}
+
 const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /** Returns true if the string is a valid UUID (i.e. a real DB-persisted record ID, not an ephemeral one). */
@@ -48,6 +53,24 @@ export function shuffleArray<T>(arr: Array<T>, rand: () => number = Math.random)
 		array[i] = t
 	}
 	return array
+}
+
+/**
+ * Deterministic PRNG factory from a string seed.
+ * Returns numbers in [0, 1), suitable for `shuffleArray`.
+ */
+export function seededRandom(seed: string): () => number {
+	let h = 1779033703 ^ seed.length
+	for (let i = 0; i < seed.length; i += 1) {
+		h = Math.imul(h ^ seed.charCodeAt(i), 3432918353)
+		h = (h << 13) | (h >>> 19)
+	}
+	return () => {
+		h = Math.imul(h ^ (h >>> 16), 2246822507)
+		h = Math.imul(h ^ (h >>> 13), 3266489909)
+		h ^= h >>> 16
+		return (h >>> 0) / 4294967296
+	}
 }
 
 /**

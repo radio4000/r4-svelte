@@ -23,6 +23,10 @@ const EMPTY_STRINGS: string[] = []
  */
 export type ViewStrategy = 'channel' | 'channel-filtered' | 'tags-only' | 'search-only' | 'empty'
 
+type ProcessViewTracksOptions = {
+	shuffleRand?: () => number
+}
+
 /** Decide which fetch strategy to use based on the first source of a View. */
 export function resolveViewStrategy(source?: ViewSource): ViewStrategy {
 	const hasChannels = !!source?.channels?.length
@@ -45,7 +49,11 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
  * Post-process raw tracks: tag post-filtering, fuzzy search, sort/shuffle.
  * This is the "refine locally" stage — input comes from a broad fetch (FTS, overlaps, or channel dump).
  */
-export function processViewTracks(tracks: Track[], view: View): Track[] {
+export function processViewTracks(
+	tracks: Track[],
+	view: View,
+	options: ProcessViewTracksOptions = {}
+): Track[] {
 	let data = tracks
 	const q = view.sources[0]
 	// Tag post-filter: channel+tags always needs it; tags-only needs it for tagsMode=all
@@ -61,7 +69,7 @@ export function processViewTracks(tracks: Track[], view: View): Track[] {
 		data = fuzzySearch(q.search, data, ['title', 'description'])
 	}
 	if (view.order === 'shuffle') {
-		data = shuffleArray(data)
+		data = shuffleArray(data, options.shuffleRand ?? Math.random)
 	} else {
 		const sortField =
 			view.order === 'name' ? 'title' : view.order === 'updated' ? 'updated_at' : 'created_at'

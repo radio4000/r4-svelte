@@ -16,6 +16,8 @@ Last update (2026-04-13): fixed appearance settings SSR crash, improved search/t
 - Channel `/[slug]/tracks` tags dialog: "Tags filter" title, "Search tags" placeholder, and icon-based sort controls (mode + direction).
 - Channel homepage now shows common follow overlap previews and links to common-following view.
 - Added transparent channel matching score model (0-100) near follow button + docs in `docs/matching.md`.
+- Channel `/[slug]/tracks` now supports URL-shareable deterministic random order via `order=shuffle&seed=...` (with reshuffle generating a new seed).
+- Channel `/[slug]/tracks` tags modal no longer shows global sort chip (`shuffle · desc` etc.) and keeps header title/actions inline and responsive.
 
 ## Simplify: rely on types and primitives, fewer layers
 

@@ -18,11 +18,26 @@
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import {getChannelTags} from '$lib/utils'
+	import {getChannelTags, seededRandom, shuffleSeed} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
 	import type {Track} from '$lib/types'
 	import type {View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
+
+	const viewOrderValues = ['shuffle', 'updated', 'created', 'name', 'tracks'] as const
+	const viewDirectionValues = ['asc', 'desc'] as const
+
+	function readViewOrder(value: string | null): View['order'] {
+		return viewOrderValues.includes((value ?? '') as (typeof viewOrderValues)[number])
+			? (value as View['order'])
+			: 'created'
+	}
+
+	function readViewDirection(value: string | null): View['direction'] {
+		return viewDirectionValues.includes((value ?? '') as (typeof viewDirectionValues)[number])
+			? (value as View['direction'])
+			: 'desc'
+	}
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -31,8 +46,12 @@
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
 	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
 	let matchingSlug = $derived((page.url.searchParams.get('matching') ?? '').trim().toLowerCase())
-	let order: View['order'] = $state('created')
-	let direction: View['direction'] = $state('desc')
+	let urlOrder = $derived(readViewOrder(page.url.searchParams.get('order')))
+	let urlDirection = $derived(readViewDirection(page.url.searchParams.get('direction')))
+	let urlSeed = $derived((page.url.searchParams.get('seed') ?? '').trim())
+	let order = $state<View['order']>('created')
+	let direction = $state<View['direction']>('desc')
+	let randomSeed = $state('')
 	let reshuffleKey = $state(0)
 	let tagsSearch = $state('')
 	let tagsSort = $state<'count' | 'alpha'>('count')
@@ -69,6 +88,39 @@
 			url.searchParams.delete('q')
 		}
 		goto(url, {replaceState: true})
+	})
+
+	$effect(() => {
+		order = urlOrder
+		direction = urlDirection
+		randomSeed = urlSeed
+	})
+
+	$effect(() => {
+		if (order === 'shuffle' && !randomSeed) randomSeed = shuffleSeed()
+	})
+
+	$effect(() => {
+		const currentOrder = page.url.searchParams.get('order') ?? ''
+		const currentDirection = page.url.searchParams.get('direction') ?? ''
+		const currentSeed = page.url.searchParams.get('seed') ?? ''
+		const nextOrder = order !== 'created' ? order : ''
+		const nextDirection = direction !== 'desc' ? direction : ''
+		const nextSeed = order === 'shuffle' ? randomSeed.trim() : ''
+		if (
+			currentOrder === nextOrder &&
+			currentDirection === nextDirection &&
+			currentSeed === nextSeed
+		)
+			return
+		const url = new URL(page.url)
+		if (nextOrder) url.searchParams.set('order', nextOrder)
+		else url.searchParams.delete('order')
+		if (nextDirection) url.searchParams.set('direction', nextDirection)
+		else url.searchParams.delete('direction')
+		if (nextSeed) url.searchParams.set('seed', nextSeed)
+		else url.searchParams.delete('seed')
+		goto(url, {replaceState: true, noScroll: true})
 	})
 
 	let slug = $derived(page.params.slug)
@@ -124,7 +176,7 @@
 				],
 				order: isSorting ? order : undefined,
 				direction: isSorting ? direction : undefined
-			})
+			}, order === 'shuffle' ? {shuffleRand: seededRandom(randomSeed || 'default-seed')} : undefined)
 		})()
 	)
 	let baseVisibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
@@ -230,11 +282,21 @@
 	function clearTrackFilters() {
 		order = 'created'
 		direction = 'desc'
+		randomSeed = ''
 		const url = new URL(page.url)
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
 		url.searchParams.delete('matching')
+		url.searchParams.delete('order')
+		url.searchParams.delete('direction')
+		url.searchParams.delete('seed')
 		goto(url, {replaceState: true})
+	}
+
+	function handleReshuffle() {
+		if (order !== 'shuffle') order = 'shuffle'
+		randomSeed = shuffleSeed()
+		reshuffleKey += 1
 	}
 </script>
 
@@ -261,7 +323,7 @@
 			{#snippet trigger()}
 				<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
 			{/snippet}
-			<SortControls bind:order bind:direction onreshuffle={() => (reshuffleKey += 1)} />
+			<SortControls bind:order bind:direction onreshuffle={handleReshuffle} />
 		</PopoverMenu>
 		{#if hasFilteredResults}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
@@ -288,7 +350,11 @@
 			<header class="modal-header">
 				<h2>Tags filter</h2>
 				{#if activeFilterCount > 0}
-					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button>
+					<div class="modal-header-actions">
+						<button type="button" class="ghost" onclick={clearTrackFilters}>
+							{m.common_clear()}
+						</button>
+					</div>
 				{/if}
 			</header>
 		{/snippet}
@@ -301,9 +367,6 @@
 				<menu class="row filter-tags">
 					{#if searchValue}
 						<li><span class="chip">"{searchValue}"</span></li>
-					{/if}
-					{#if isSorting}
-						<li><span class="chip">{order} · {direction}</span></li>
 					{/if}
 					{#if matchingSlug}
 						<li>
@@ -494,6 +557,19 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.modal-header h2 {
+		margin: 0;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.modal-header-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 	}
 
 	.empty {
