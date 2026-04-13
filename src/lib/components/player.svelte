@@ -942,6 +942,13 @@
 		background: black;
 	}
 
+	/* Listening/auto decks should let media fill available deck height. */
+	:global(.deck.listening) .video,
+	:global(.deck.auto) .video {
+		max-height: none;
+		aspect-ratio: auto;
+	}
+
 	.video:not(:has(.native-audio-player)) {
 		aspect-ratio: 16 / 9;
 	}

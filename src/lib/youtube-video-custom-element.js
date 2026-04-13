@@ -36,7 +36,7 @@ class YouTube2Element extends HTMLElement {
 		// Use light DOM for better fullscreen compatibility in embedded YouTube controls.
 		this.style.display = 'block'
 		this.style.width = '100%'
-		this.style.height = '200px'
+		this.style.height = '100%'
 
 		if (!this.querySelector('iframe#player')) {
 			const iframe = document.createElement('iframe')
