@@ -878,8 +878,10 @@
 	}
 
 	.sync-footer .sync-btn {
+		width: 100%;
 		min-height: 1.7rem;
 		gap: 0.25rem;
+		justify-content: center;
 	}
 
 	.sync-footer .sync-btn.active :global(svg) {
