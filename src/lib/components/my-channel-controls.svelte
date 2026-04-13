@@ -27,7 +27,9 @@
 	const isPlaying = $derived(Boolean(findPlayingDeck(appState.decks, channel.slug)))
 	const canShowAutoButton = $derived.by(() => {
 		void tracksCollection.state.size
-		const channelTracks = [...tracksCollection.state.values()].filter((track) => track.slug === channel.slug)
+		const channelTracks = [...tracksCollection.state.values()].filter(
+			(track) => track.slug === channel.slug
+		)
 		return hasAutoRadioCoverage(channelTracks)
 	})
 	const livePresenceCount = $derived(channelPresence[channel.slug]?.broadcast ?? 0)
@@ -80,7 +82,8 @@
 
 		if (!trackId) return
 		await startBroadcast(channel.id, trackId)
-		if (appState.decks[sourceDeckId]) appState.decks[sourceDeckId].broadcasting_channel_id = channel.id
+		if (appState.decks[sourceDeckId])
+			appState.decks[sourceDeckId].broadcasting_channel_id = channel.id
 	}
 
 	function onPlayAction() {

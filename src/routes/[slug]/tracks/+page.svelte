@@ -53,7 +53,9 @@
 	let aggregatedTags = $derived(getChannelTags(allTracks))
 	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0)
 	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0))
-	let selectedTagsSort = $derived(tagsSortOptions.find((option) => option.value === tagsSort) ?? tagsSortOptions[0])
+	let selectedTagsSort = $derived(
+		tagsSortOptions.find((option) => option.value === tagsSort) ?? tagsSortOptions[0]
+	)
 	let visibleTags = $derived.by(() => {
 		const q = tagsSearch.trim().toLowerCase()
 		const filtered = aggregatedTags.filter((tag) => !q || tag.value.includes(q))
@@ -208,14 +210,19 @@
 			<h2>Tags filter</h2>
 		{/snippet}
 		<section class="filters-dialog">
-			<p class="filters-stats"><strong>{visibleTracks.length}</strong> / {allTracks.length} {m.nav_tracks()}</p>
+			<p class="filters-stats">
+				<strong>{visibleTracks.length}</strong> / {allTracks.length}
+				{m.nav_tracks()}
+			</p>
 			{#if activeFilterCount > 0}
 				<menu class="row filter-tags">
 					{#if searchValue}
 						<li><span class="chip">"{searchValue}"</span></li>
 					{/if}
 					{#each selectedTags as tag (tag)}
-						<li><button type="button" class="chip" onclick={() => toggleTag(tag)}>{tag} ×</button></li>
+						<li>
+							<button type="button" class="chip" onclick={() => toggleTag(tag)}>{tag} ×</button>
+						</li>
 					{/each}
 				</menu>
 			{/if}
@@ -246,9 +253,9 @@
 						<button
 							type="button"
 							class="ghost"
-							title={
-								tagsDirection === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
-							}
+							title={tagsDirection === 'asc'
+								? m.channels_tooltip_sort_asc()
+								: m.channels_tooltip_sort_desc()}
 							onclick={() => (tagsDirection = tagsDirection === 'asc' ? 'desc' : 'asc')}
 						>
 							<Icon icon={tagsDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
@@ -257,7 +264,11 @@
 				</div>
 				<menu class="tags-menu">
 					{#each visibleTags as { value, count } (value)}
-						<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+						<button
+							type="button"
+							class:active={selectedTags.includes(value)}
+							onclick={() => toggleTag(value)}
+						>
 							#{value} <span class="tag-count">({count})</span>
 						</button>
 					{/each}
@@ -276,14 +287,17 @@
 					{#if channel && canShowFilteredAutoRadio}
 						<AutoRadioButton
 							synced={isFilteredAutoActive && isFilteredAutoPlaying && !isFilteredAutoDrifted}
-							title={isFilteredAutoDrifted ? m.auto_radio_resync() : m.tracks_auto_radio_selection()}
+							title={isFilteredAutoDrifted
+								? m.auto_radio_resync()
+								: m.tracks_auto_radio_selection()}
 							onclick={() =>
 								joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
 						/>
 					{/if}
 				{/if}
 				{#if activeFilterCount > 0}
-					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button>
+					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button
+					>
 				{/if}
 			</menu>
 		{/snippet}

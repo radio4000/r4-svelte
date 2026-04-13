@@ -979,7 +979,6 @@
 		}
 	}
 
-
 	.track-panel {
 		display: flex;
 		flex-direction: row;

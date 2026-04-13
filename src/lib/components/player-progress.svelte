@@ -2,7 +2,14 @@
 	import {formatDuration} from '$lib/dates'
 
 	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void, disabled?: boolean, isPlaying?: boolean}} */
-	let {currentTime, mediaDuration, trackDuration, onseek, disabled = false, isPlaying = false} = $props()
+	let {
+		currentTime,
+		mediaDuration,
+		trackDuration,
+		onseek,
+		disabled = false,
+		isPlaying = false
+	} = $props()
 
 	let duration = $derived(Number.isFinite(mediaDuration) ? mediaDuration : (trackDuration ?? NaN))
 	let hasDuration = $derived(Number.isFinite(duration) && duration > 0)

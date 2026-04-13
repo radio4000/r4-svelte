@@ -125,7 +125,11 @@
 	function handleArtworkClick(event: MouseEvent) {
 		event.preventDefault()
 		event.stopPropagation()
-		if (active && matchedDeckId != null && appState.decks[matchedDeckId]?.playlist_track === track.id) {
+		if (
+			active &&
+			matchedDeckId != null &&
+			appState.decks[matchedDeckId]?.playlist_track === track.id
+		) {
 			togglePlayPause(matchedDeckId)
 			return
 		}

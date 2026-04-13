@@ -72,7 +72,9 @@
 		}
 		return [...tags].map((value) => ({
 			label: `#${value}`,
-			href: slug ? `${resolve('/[slug]/tracks', {slug})}?tags=${encodeURIComponent(value)}` : undefined
+			href: slug
+				? `${resolve('/[slug]/tracks', {slug})}?tags=${encodeURIComponent(value)}`
+				: undefined
 		}))
 	})
 

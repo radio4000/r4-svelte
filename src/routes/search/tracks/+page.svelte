@@ -72,12 +72,7 @@
 							: m.search_track_other({count: tracks.length})}
 					</h2>
 					<Pagination {currentPage} {pageSize} {totalCount} defaultPageSize={50} />
-					<SearchTrackMenu
-						{tracks}
-						title={search.value.trim()}
-						{view}
-						basePath="/search/tracks"
-					/>
+					<SearchTrackMenu {tracks} title={search.value.trim()} {view} basePath="/search/tracks" />
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}

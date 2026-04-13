@@ -22,7 +22,9 @@
 	const isSearchAutoPlaying = $derived(searchAutoDecks.some((d) => d.is_playing))
 	const isSearchAutoDrifted = $derived(searchAutoDecks.some((d) => d.auto_radio_drifted))
 	const source = $derived(view?.sources?.[0] ?? {})
-	const hasSortFilter = $derived((view?.order ?? 'created') !== 'created' || view?.direction === 'asc')
+	const hasSortFilter = $derived(
+		(view?.order ?? 'created') !== 'created' || view?.direction === 'asc'
+	)
 	const hasLimitFilter = $derived(Boolean(view?.limit))
 	const filterCount = $derived.by(() => {
 		let count = 0
