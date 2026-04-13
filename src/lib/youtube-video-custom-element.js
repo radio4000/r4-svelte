@@ -1,6 +1,8 @@
 import {logger} from '$lib/logger'
 
 const log = logger.ns('youtube-video').seal()
+const YOUTUBE_IFRAME_ALLOW =
+	'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 
 /** You always think this isn't so complicated, but it is. We did this player so many times. Last attempt to not write it was using the `<youtube-video>` element from the media-chrome project. But that also failed since it doesn't do the extra tricks needed to ensure playback */
 class YouTube2Element extends HTMLElement {
@@ -40,10 +42,7 @@ class YouTube2Element extends HTMLElement {
 			const iframe = document.createElement('iframe')
 			iframe.id = 'player'
 			iframe.frameBorder = '0'
-			iframe.allowFullscreen = true
-			iframe.allow =
-				'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen'
-			iframe.referrerPolicy = 'strict-origin-when-cross-origin'
+			this.#applyIframePermissions(iframe)
 			iframe.style.width = '100%'
 			iframe.style.height = '100%'
 			this.replaceChildren(iframe)
@@ -89,6 +88,7 @@ class YouTube2Element extends HTMLElement {
 			this.api = new globalThis.YT.Player(iframe, {
 				playerVars: {
 					controls: this.hasAttribute('controls') ? 1 : 0,
+					fs: 1,
 					autoplay: this.hasAttribute('autoplay') ? 1 : 0,
 					mute: this.hasAttribute('muted') ? 1 : 0,
 					playsinline: this.hasAttribute('playsinline') ? 1 : 0,
@@ -100,8 +100,9 @@ class YouTube2Element extends HTMLElement {
 					showinfo: 0 // Hide video info (deprecated but kept for older embeds)
 				},
 				events: {
-					onReady: () => {
+					onReady: (event) => {
 						this.isLoaded = true
+						this.#applyIframePermissions(event?.target?.getIframe?.())
 						this.#resolveLoad?.()
 						log.debug('ready')
 
@@ -370,6 +371,14 @@ class YouTube2Element extends HTMLElement {
 		} else {
 			log.debug('YouTube API script already exists')
 		}
+	}
+
+	#applyIframePermissions(iframe) {
+		if (!(iframe instanceof HTMLIFrameElement)) return
+		iframe.setAttribute('allowfullscreen', '')
+		iframe.allowFullscreen = true
+		iframe.setAttribute('allow', YOUTUBE_IFRAME_ALLOW)
+		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
 	}
 }
 
