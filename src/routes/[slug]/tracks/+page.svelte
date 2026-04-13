@@ -72,6 +72,9 @@
 		})
 	)
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let hasFilteredResults = $derived(
+		isFiltering && filteredTracks.length > 0 && filteredTracks.length < allTracks.length
+	)
 	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
 	let filteredAutoView: View = $derived.by(() => ({
@@ -133,14 +136,14 @@
 	}
 
 	function playFilteredTracks() {
-		if (!filteredTracks.length) return
+		if (!hasFilteredResults) return
 		const ids = filteredTracks.map((t) => t.id)
 		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueFilteredTracks() {
-		if (!filteredTracks.length) return
+		if (!hasFilteredResults) return
 		addToPlaylist(
 			appState.active_deck_id,
 			filteredTracks.map((t) => t.id)
@@ -174,7 +177,7 @@
 			debounce={150}
 			autofocus={page.state.focus === true}
 		/>
-		{#if visibleTracks.length}
+		{#if hasFilteredResults}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
 				><Icon icon="play-fill" /></button
 			>
@@ -258,7 +261,7 @@
 		</section>
 		{#snippet footer()}
 			<menu class="row filter-actions">
-				{#if visibleTracks.length}
+				{#if hasFilteredResults}
 					<button type="button" title={m.common_play()} onclick={playFilteredTracks}
 						><Icon icon="play-fill" /> {m.common_play()}</button
 					>
