@@ -227,7 +227,7 @@
 		display: none;
 	}
 
-	.deck.expanded:not(.hide-queue):not(.auto) :global(.video) {
+	.deck.expanded:not(.hide-queue):not(.auto):not(.listening) :global(.video) {
 		max-height: 25dvh;
 	}
 
