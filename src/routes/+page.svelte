@@ -744,7 +744,6 @@
 		align-items: center;
 		margin: 0 0 1rem;
 		z-index: 1;
-		background: var(--color-interface);
 	}
 
 	.filtermenu:first-child {
