@@ -189,9 +189,7 @@
 			return Boolean(key && matchingTrackKeys.has(key))
 		})
 	})
-	let hasFilteredResults = $derived(
-		isFiltering && visibleTracks.length > 0 && visibleTracks.length < allTracks.length
-	)
+	let hasActionableSelection = $derived(isFiltering && visibleTracks.length > 0)
 	let filteredAutoRadioTracks = $derived(toAutoTracks(visibleTracks))
 	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(visibleTracks))
 	let filteredAutoView: View = $derived.by(() => ({
@@ -265,14 +263,14 @@
 	}
 
 	function playFilteredTracks() {
-		if (!hasFilteredResults) return
+		if (!hasActionableSelection) return
 		const ids = visibleTracks.map((t) => t.id)
 		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
 	function queueFilteredTracks() {
-		if (!hasFilteredResults) return
+		if (!hasActionableSelection) return
 		addToPlaylist(
 			appState.active_deck_id,
 			visibleTracks.map((t) => t.id)
@@ -325,7 +323,7 @@
 			{/snippet}
 			<SortControls bind:order bind:direction onreshuffle={handleReshuffle} />
 		</PopoverMenu>
-		{#if hasFilteredResults}
+		{#if hasActionableSelection}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
 				><Icon icon="play-fill" /></button
 			>
