@@ -33,6 +33,7 @@
 	let matchingSlug = $derived((page.url.searchParams.get('matching') ?? '').trim().toLowerCase())
 	let order: View['order'] = $state('created')
 	let direction: View['direction'] = $state('desc')
+	let reshuffleKey = $state(0)
 	let tagsSearch = $state('')
 	let tagsSort = $state<'count' | 'alpha'>('count')
 	let tagsDirection = $state<'asc' | 'desc'>('desc')
@@ -110,17 +111,21 @@
 		})
 	})
 	let filteredTracks = $derived(
-		processViewTracks(allTracks, {
-			sources: [
-				{
-					tags: selectedTags.length ? selectedTags : undefined,
-					tagsMode: 'all',
-					search: searchValue || undefined
-				}
-			],
-			order: isSorting ? order : undefined,
-			direction: isSorting ? direction : undefined
-		})
+		(() => {
+			// Force recomputation when user explicitly reshuffles.
+			if (order === 'shuffle') void reshuffleKey
+			return processViewTracks(allTracks, {
+				sources: [
+					{
+						tags: selectedTags.length ? selectedTags : undefined,
+						tagsMode: 'all',
+						search: searchValue || undefined
+					}
+				],
+				order: isSorting ? order : undefined,
+				direction: isSorting ? direction : undefined
+			})
+		})()
 	)
 	let baseVisibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
 	let visibleTracks = $derived.by(() => {
@@ -256,7 +261,7 @@
 			{#snippet trigger()}
 				<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
 			{/snippet}
-			<SortControls bind:order bind:direction />
+			<SortControls bind:order bind:direction onreshuffle={() => (reshuffleKey += 1)} />
 		</PopoverMenu>
 		{#if hasFilteredResults}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
