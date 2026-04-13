@@ -42,9 +42,12 @@ function getDeck(deckId: number): Deck | undefined {
 	return appState.decks[deckId]
 }
 
-function shouldForkDeckForManualTrackStart(deck: Deck, startReason: PlayStartReason): boolean {
-	if (!deck.auto_radio && !deck.listening_to_channel_id) return false
-	return startReason === 'user_click_track' || startReason === 'play_search'
+function isNormalPlayStart(startReason: PlayStartReason): boolean {
+	return (
+		startReason === 'user_click_track' ||
+		startReason === 'play_search' ||
+		startReason === 'play_channel'
+	)
 }
 
 /** Notify broadcast listeners if currently broadcasting */
@@ -165,18 +168,12 @@ export async function playTrack(
 		log.log('play_track_created_deck', {deckId})
 	}
 
-	if (shouldForkDeckForManualTrackStart(deck, startReason)) {
-		const newDeck = addDeck()
-		appState.active_deck_id = newDeck.id
-		log.log('play_track_fork_from_mode_deck', {
-			fromDeckId: deckId,
-			toDeckId: newDeck.id,
-			startReason,
-			auto: !!deck.auto_radio,
-			live: !!deck.listening_to_channel_id
-		})
-		deckId = newDeck.id
-		deck = newDeck
+	// Switching from live/auto to a normal play action should reuse this deck and clear mode state.
+	if (isNormalPlayStart(startReason)) {
+		if (deck.listening_to_channel_id) leaveBroadcast(deckId)
+		deck.auto_radio = undefined
+		deck.auto_radio_drifted = undefined
+		deck.auto_radio_rotation_start = undefined
 	}
 
 	const track = tracksCollection.get(id)
@@ -257,12 +254,7 @@ export async function playTrack(
 		deck.seeked_at = deck.track_played_at
 		deck.seek_position = 0
 	}
-	if (
-		!isEphemeral &&
-		(!deck.playlist_tracks.length ||
-			!deck.playlist_tracks.includes(id) ||
-			ids.length > deck.playlist_tracks.length)
-	)
+	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id)))
 		await setPlaylist(deckId, ids)
 	// Ensure ephemeral track is included in the current playlist
 	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
@@ -335,6 +327,7 @@ export async function playChannel(
  */
 export async function playTrackInNewDeck(trackId, slug) {
 	const deck = addDeck()
+	deck.compact = true
 	appState.active_deck_id = deck.id
 	if (slug && !tracksCollection.get(trackId)) {
 		await ensureTracksLoaded(slug)
@@ -611,12 +604,6 @@ export async function togglePlayPause(deckId) {
 export function playFromHere(deckId, trackId) {
 	const deck = getDeck(deckId)
 	if (!deck) return
-	if (shouldForkDeckForManualTrackStart(deck, 'user_click_track')) {
-		const track = tracksCollection.get(trackId)
-		void playTrackInNewDeck(trackId, track?.slug ?? undefined)
-		log.log('play_from_here_forked_to_new_deck', {deckId, trackId})
-		return
-	}
 	const idx = deck.playlist_tracks.indexOf(trackId)
 	if (idx === -1) return
 	const fromHere = deck.playlist_tracks.slice(idx)
