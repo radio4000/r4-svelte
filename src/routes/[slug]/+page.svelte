@@ -220,6 +220,7 @@
 		showMatchScore &&
 			(matchScore.url.overlap > 0 || matchScore.tag.overlap > 0 || matchScore.artistTitle.overlap > 0)
 	)
+	let matchingSourceSlug = $derived(appState.channel?.slug ?? '')
 
 	const activeDeck = $derived(appState.decks[appState.active_deck_id])
 
@@ -359,10 +360,18 @@
 						<div class="compact-row match-score-row">
 							<Icon icon="flower-alt" size={14} />
 							{#if matchScore.url.base > 0}
-								<span>{matchScore.url.overlap} {m.channel_match_tracks()}</span>
+								<a
+									href={resolve('/[slug]/tracks', {slug}) +
+										`?matching=${encodeURIComponent(matchingSourceSlug)}`}
+									>{matchScore.url.overlap} {m.channel_match_tracks()}</a
+								>
 							{/if}
 							{#if matchScore.tag.base > 0}
-								<span>{matchScore.tag.overlap} {m.channel_match_tags()}</span>
+								<a
+									href={resolve('/[slug]/tags', {slug}) +
+										`?matching=${encodeURIComponent(matchingSourceSlug)}`}
+									>{matchScore.tag.overlap} {m.channel_match_tags()}</a
+								>
 							{/if}
 							{#if matchScore.artistTitle.base > 0}
 								<span>{matchScore.artistTitle.overlap} {m.channel_match_artists()}</span>
@@ -515,6 +524,13 @@
 
 	.match-score-row span {
 		white-space: nowrap;
+	}
+
+	.match-score-row a {
+		white-space: nowrap;
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
 	}
 
 	.follows-you-row {

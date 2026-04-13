@@ -2,6 +2,9 @@
 	import {replaceState} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {getTracksQueryCtx} from '$lib/contexts'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {eq} from '@tanstack/db'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
 	import {page} from '$app/state'
@@ -23,6 +26,7 @@
 	} from '$lib/dates.js'
 
 	let slug = $derived(page.params.slug ?? '')
+	let matchingSlug = $derived((page.url.searchParams.get('matching') ?? '').trim().toLowerCase())
 
 	// Get tracks from layout (query stays alive during navigation)
 	const tracksQuery = getTracksQueryCtx()
@@ -31,6 +35,23 @@
 	let channel = $derived(channelCtx.data)
 	let tracks = $derived(tracksQuery.data || [])
 	let allTags = $derived(getChannelTags(tracks))
+	const matchingTracksQuery = useLiveQuery(
+		(q) =>
+			matchingSlug
+				? q
+						.from({tracks: tracksCollection})
+						.where(({tracks}) => eq(tracks.slug, matchingSlug))
+						.orderBy(({tracks}) => tracks.created_at, 'desc')
+				: null,
+		[() => matchingSlug]
+	)
+	let matchingTags = $derived.by(() => {
+		const set = new Set()
+		for (const track of matchingTracksQuery.data ?? []) {
+			for (const tag of track.tags ?? []) set.add(tag.toLowerCase())
+		}
+		return set
+	})
 
 	const filterValues = ['all', 'single-use', 'frequent', 'rare']
 	const periodValues = ['year', 'solstice', 'month']
@@ -145,6 +166,10 @@
 	let filteredTags = $derived.by(() => {
 		// Exclude tags already in the chain
 		let tags = periodTags.filter((t) => !chainLower.includes(t.value.toLowerCase()))
+		if (matchingSlug) {
+			if (matchingTags.size === 0) return []
+			tags = tags.filter((t) => matchingTags.has(t.value.toLowerCase()))
+		}
 		if (filter === 'single-use') tags = tags.filter((t) => t.count === 1)
 		else if (filter === 'frequent') tags = tags.filter((t) => t.count >= 5)
 		else if (filter === 'rare') tags = tags.filter((t) => t.count >= 1 && t.count <= 4)
@@ -206,7 +231,13 @@
 	})
 
 	$effect(() => {
+		if (!matchingSlug || matchingSlug === slug) return
+		void ensureTracksLoaded(matchingSlug)
+	})
+
+	$effect(() => {
 		const parts = []
+		if (matchingSlug) parts.push(`matching=${encodeURIComponent(matchingSlug)}`)
 		if (display !== 'list') parts.push(`display=${encodeURIComponent(display)}`)
 		if (sort !== 'count') parts.push(`sort=${encodeURIComponent(sort)}`)
 		if (direction !== 'desc') parts.push(`direction=${encodeURIComponent(direction)}`)

@@ -3,6 +3,10 @@
 	import {goto} from '$app/navigation'
 	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {eq} from '@tanstack/db'
+	import {parseUrl} from 'media-now'
 	import Tracklist from '$lib/components/tracklist.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
@@ -10,11 +14,13 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
+	import SortControls from '$lib/components/sort-controls.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
+	import type {Track} from '$lib/types'
 	import type {View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
 
@@ -24,6 +30,9 @@
 	let searchInput = $state(page.url.searchParams.get('q') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
 	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
+	let matchingSlug = $derived((page.url.searchParams.get('matching') ?? '').trim().toLowerCase())
+	let order: View['order'] = $state('created')
+	let direction: View['direction'] = $state('desc')
 	let tagsSearch = $state('')
 	let tagsSort = $state<'count' | 'alpha'>('count')
 	let tagsDirection = $state<'asc' | 'desc'>('desc')
@@ -32,6 +41,15 @@
 		{value: 'count' as const, icon: 'hash' as const, label: () => m.tags_sort_count()},
 		{value: 'alpha' as const, icon: 'sort' as const, label: () => m.tags_sort_alpha()}
 	]
+
+	function getCanonicalUrlKey(track: Track): string | null {
+		const parsed = parseUrl(track.url || '') as {provider?: string; media_id?: string; mediaId?: string}
+		const provider = track.provider || parsed.provider
+		const mediaId = track.media_id || parsed.media_id || parsed.mediaId
+		if (provider && mediaId) return `${provider}:${mediaId}`
+		const url = track.url?.trim().toLowerCase()
+		return url || null
+	}
 
 	// Sync search input → URL (debounced by SearchInput)
 	$effect(() => {
@@ -48,11 +66,28 @@
 
 	let slug = $derived(page.params.slug)
 	let channel = $derived(channelCtx.data)
+	const matchingTracksQuery = useLiveQuery(
+		(q) =>
+			matchingSlug
+				? q
+						.from({tracks: tracksCollection})
+						.where(({tracks}) => eq(tracks.slug, matchingSlug))
+						.orderBy(({tracks}) => tracks.created_at, 'desc')
+				: null,
+		[() => matchingSlug]
+	)
+	let matchingTracks = $derived((matchingTracksQuery.data ?? []) as Track[])
+	let matchingTrackKeys = $derived.by(
+		() => new Set(matchingTracks.map(getCanonicalUrlKey).filter((v): v is string => Boolean(v)))
+	)
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let aggregatedTags = $derived(getChannelTags(allTracks))
-	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0)
-	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0))
+	let isSorting = $derived(order !== 'created' || direction !== 'desc')
+	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0 || isSorting || Boolean(matchingSlug))
+	let activeFilterCount = $derived(
+		selectedTags.length + (searchValue ? 1 : 0) + (isSorting ? 1 : 0) + (matchingSlug ? 1 : 0)
+	)
 	let selectedTagsSort = $derived(
 		tagsSortOptions.find((option) => option.value === tagsSort) ?? tagsSortOptions[0]
 	)
@@ -76,15 +111,26 @@
 					tagsMode: 'all',
 					search: searchValue || undefined
 				}
-			]
+			],
+			order: isSorting ? order : undefined,
+			direction: isSorting ? direction : undefined
 		})
 	)
-	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let baseVisibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
+	let visibleTracks = $derived.by(() => {
+		if (!matchingSlug) return baseVisibleTracks
+		if (matchingSlug === slug) return baseVisibleTracks
+		if (matchingTrackKeys.size === 0) return []
+		return baseVisibleTracks.filter((track) => {
+			const key = getCanonicalUrlKey(track)
+			return Boolean(key && matchingTrackKeys.has(key))
+		})
+	})
 	let hasFilteredResults = $derived(
-		isFiltering && filteredTracks.length > 0 && filteredTracks.length < allTracks.length
+		isFiltering && visibleTracks.length > 0 && visibleTracks.length < allTracks.length
 	)
-	let filteredAutoRadioTracks = $derived(toAutoTracks(filteredTracks))
-	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(filteredTracks))
+	let filteredAutoRadioTracks = $derived(toAutoTracks(visibleTracks))
+	let canShowFilteredAutoRadio = $derived(hasAutoRadioCoverage(visibleTracks))
 	let filteredAutoView: View = $derived.by(() => ({
 		sources: [
 			{
@@ -111,7 +157,13 @@
 		const search = searchValue.trim()
 		if (search) return search
 		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
+		if (matchingSlug) return `@${matchingSlug}`
 		return ''
+	})
+
+	$effect(() => {
+		if (!matchingSlug || matchingSlug === slug) return
+		void ensureTracksLoaded(matchingSlug)
 	})
 
 	$effect(() => {
@@ -145,7 +197,7 @@
 
 	function playFilteredTracks() {
 		if (!hasFilteredResults) return
-		const ids = filteredTracks.map((t) => t.id)
+		const ids = visibleTracks.map((t) => t.id)
 		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
@@ -154,11 +206,13 @@
 		if (!hasFilteredResults) return
 		addToPlaylist(
 			appState.active_deck_id,
-			filteredTracks.map((t) => t.id)
+			visibleTracks.map((t) => t.id)
 		)
 	}
 
 	function clearTrackFilters() {
+		order = 'created'
+		direction = 'desc'
 		const url = new URL(page.url)
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
@@ -176,7 +230,7 @@
 			title={m.views_filters_label()}
 			onclick={() => (showFiltersModal = true)}
 		>
-			<Icon icon="filter-alt" />
+			<Icon icon="hashtag" />
 			{activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
 		</button>
 		<SearchInput
@@ -219,6 +273,12 @@
 					{#if searchValue}
 						<li><span class="chip">"{searchValue}"</span></li>
 					{/if}
+					{#if isSorting}
+						<li><span class="chip">{order} · {direction}</span></li>
+					{/if}
+					{#if matchingSlug}
+						<li><span class="chip">@{matchingSlug}</span></li>
+					{/if}
 					{#each selectedTags as tag (tag)}
 						<li>
 							<button type="button" class="chip" onclick={() => toggleTag(tag)}>{tag} ×</button>
@@ -226,6 +286,10 @@
 					{/each}
 				</menu>
 			{/if}
+			<section class="filters-dialog-panel">
+				<h3>{m.views_display_label()}</h3>
+				<SortControls bind:order bind:direction />
+			</section>
 			<section class="filters-dialog-panel">
 				<h3>{m.views_tags_label()}</h3>
 				<div class="tags-toolbar">
@@ -340,7 +404,7 @@
 			{/if}
 
 			<footer>
-				{#if isFiltering && tracksQuery.isReady && filteredTracks.length === 0}
+				{#if isFiltering && tracksQuery.isReady && visibleTracks.length === 0}
 					<p class="empty">{m.tracks_empty_filter()}</p>
 				{:else if tracksQuery.isLoading && (channel.track_count ?? 0) > 0}
 					<p class="empty">{m.channel_loading_tracks()}</p>
