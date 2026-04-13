@@ -280,7 +280,12 @@
 {#if showFiltersModal}
 	<Dialog bind:showModal={showFiltersModal}>
 		{#snippet header()}
-			<h2>Tags filter</h2>
+			<header class="modal-header">
+				<h2>Tags filter</h2>
+				{#if activeFilterCount > 0}
+					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button>
+				{/if}
+			</header>
 		{/snippet}
 		<section class="filters-dialog">
 			<p class="filters-stats">
@@ -356,32 +361,6 @@
 				</menu>
 			</section>
 		</section>
-		{#snippet footer()}
-			<menu class="row filter-actions">
-				{#if hasFilteredResults}
-					<button type="button" title={m.common_play()} onclick={playFilteredTracks}
-						><Icon icon="play-fill" /> {m.common_play()}</button
-					>
-					<button type="button" title={m.common_queue()} onclick={queueFilteredTracks}
-						><Icon icon="next-fill" /> {m.common_queue()}</button
-					>
-					{#if channel && canShowFilteredAutoRadio}
-						<AutoRadioButton
-							synced={isFilteredAutoActive && isFilteredAutoPlaying && !isFilteredAutoDrifted}
-							title={isFilteredAutoDrifted
-								? m.auto_radio_resync()
-								: m.tracks_auto_radio_selection()}
-							onclick={() =>
-								joinAutoRadio(appState.active_deck_id, filteredAutoRadioTracks, filteredAutoView)}
-						/>
-					{/if}
-				{/if}
-				{#if activeFilterCount > 0}
-					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button
-					>
-				{/if}
-			</menu>
-		{/snippet}
 	</Dialog>
 {/if}
 
@@ -505,9 +484,11 @@
 		gap: 0.35rem;
 	}
 
-	.filter-actions {
-		flex-wrap: wrap;
-		gap: 0.35rem;
+	.modal-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
 	}
 
 	.empty {
