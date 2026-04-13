@@ -2,13 +2,14 @@
 	import type {Snippet} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {playTrack, playNext, playTrackInNewDeck} from '$lib/api'
+	import {playTrack, addToPlaylist, playTrackInNewDeck, togglePlayPause} from '$lib/api'
 	import {deleteTrack} from '$lib/collections/tracks'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {appState} from '$lib/app-state.svelte'
 	import type {Track, Channel} from '$lib/types'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
+	import Dialog from './dialog.svelte'
 	import LinkEntities from './link-entities.svelte'
 	import {tooltip} from './tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
@@ -61,6 +62,17 @@
 		}
 		return Object.values(appState.decks).some((d) => d.playlist_track === track?.id)
 	})
+	const matchedDeckId = $derived.by(() => {
+		if (deckId != null) return deckId
+		for (const [id, deck] of Object.entries(appState.decks)) {
+			if (deck?.playlist_track === track?.id) return Number(id)
+		}
+		return appState.active_deck_id
+	})
+	const isTrackPlaying = $derived.by(() => {
+		const targetDeck = appState.decks[matchedDeckId]
+		return Boolean(targetDeck?.playlist_track === track?.id && targetDeck?.is_playing)
+	})
 	const ytid = $derived(!showImage || appState.hide_track_artwork ? null : track.media_id)
 	// default, mqdefault, hqdefault, sddefault, maxresdefault
 	const imageSrc = $derived(ytid ? trackImageUrl(ytid) : null)
@@ -72,6 +84,7 @@
 		// Let time element and hashtag/mention links navigate normally
 		if (target.closest('time')) return
 		if (
+			target.closest('button') ||
 			(target instanceof HTMLAnchorElement && target !== event.currentTarget) ||
 			target.closest('a[href*="/search"]') ||
 			target.closest('button.tag-link')
@@ -89,7 +102,8 @@
 	const addToRadio = () => {
 		if (!appState.user) {
 			const addPath = resolve('/add') + (track.url ? `?url=${encodeURIComponent(track.url)}` : '')
-			goto(resolve('/auth') + `?redirect=${encodeURIComponent(addPath)}`)
+			const authPath = resolve('/auth') + `?redirect=${encodeURIComponent(addPath)}`
+			goto(authPath)
 			return
 		}
 		appState.modal_track_add = {track}
@@ -105,14 +119,29 @@
 		if (channel) appState.modal_share = {track, channel}
 	}
 
-	let showDeleteConfirm = $state(false)
+	let showDeleteDialog = $state(false)
 	let menu = $state<{close: () => void}>()
+
+	function handleArtworkClick(event: MouseEvent) {
+		event.preventDefault()
+		event.stopPropagation()
+		if (active && matchedDeckId != null && appState.decks[matchedDeckId]?.playlist_track === track.id) {
+			togglePlayPause(matchedDeckId)
+			return
+		}
+		if (onPlay) {
+			onPlay(track.id)
+			return
+		}
+		playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+	}
 
 	async function handleDelete() {
 		if (!track.slug) return
 		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
 		if (!channel) return
 		await deleteTrack({id: channel.id, slug: channel.slug}, track.id)
+		showDeleteDialog = false
 		menu?.close()
 	}
 </script>
@@ -126,12 +155,25 @@
 			if (e.detail >= 2) e.preventDefault()
 		}}
 	>
-		{#if ytid && showImage && !appState.hide_track_artwork}<img
-				src={imageSrc}
-				alt={track.title}
-				class="artwork"
-				loading={(index ?? 0) > 20 ? 'lazy' : undefined}
-			/>{/if}
+		{#if ytid && showImage && !appState.hide_track_artwork}
+			<button
+				type="button"
+				class="artwork-trigger"
+				title={isTrackPlaying ? m.common_pause() : m.common_play()}
+				onclick={handleArtworkClick}
+				ondblclick={(event) => event.stopPropagation()}
+			>
+				<img
+					src={imageSrc}
+					alt={track.title}
+					class="artwork"
+					loading={(index ?? 0) > 20 ? 'lazy' : undefined}
+				/>
+				<span class={['artwork-overlay', {visible: selected || active}]}>
+					<Icon icon={isTrackPlaying ? 'pause' : 'play-fill'} size={16} />
+				</span>
+			</button>
+		{/if}
 		<div class="text">
 			<h3 class={['title', {locatable: Boolean(onLocate && !linkTitleToTrack)}]} onclick={onLocate}>
 				{#if linkTitleToTrack && isRealTrack && !appState.embed_mode}
@@ -165,102 +207,106 @@
 	<PopoverMenu
 		bind:this={menu}
 		btnClass="ghost trackcard-contextBtn"
-		onclose={() => (showDeleteConfirm = false)}
 		align={menuAlign}
 		valign={menuValign}
 	>
 		{#snippet trigger()}
 			<Icon icon="options-horizontal" />
 		{/snippet}
-		{#if showDeleteConfirm}
-			<p>{m.track_delete_confirm({title: track.title})}</p>
-			<button type="button" class="danger" role="menuitem" data-no-close onclick={handleDelete}
-				>{m.common_confirm()}</button
+		<menu class="nav-vertical">
+			<button
+				type="button"
+				role="menuitem"
+				{@attach tooltip({content: m.common_play()})}
+				onclick={() => {
+					if (onPlay) {
+						onPlay(track.id)
+					} else {
+						playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
+					}
+					menu?.close()
+				}}><Icon icon="play-fill" size={14} />{m.common_play()}</button
 			>
-			<button type="button" role="menuitem" onclick={() => menu?.close()}
-				>{m.common_cancel()}</button
-			>
-		{:else}
-			<menu class="nav-vertical">
+			{#if !appState.embed_mode}
 				<button
 					type="button"
 					role="menuitem"
-					{@attach tooltip({content: m.common_play()})}
+					{@attach tooltip({content: m.track_play_next()})}
 					onclick={() => {
-						if (onPlay) {
-							onPlay(track.id)
-						} else {
-							playTrack(deckId ?? appState.active_deck_id, track.id, null, 'user_click_track')
-						}
+						addToPlaylist(deckId ?? appState.active_deck_id, [track.id])
 						menu?.close()
-					}}><Icon icon="play-fill" size={14} />{m.common_play()}</button
+					}}><Icon icon="next-fill" size={14} />{m.track_play_next()}</button
 				>
-				{#if !appState.embed_mode}
-					<button
-						type="button"
-						role="menuitem"
-						{@attach tooltip({content: m.track_play_next()})}
-						onclick={() => {
-							playNext(deckId ?? appState.active_deck_id, track.id)
-							menu?.close()
-						}}><Icon icon="next-fill" size={14} />{m.track_play_next()}</button
-					>
-				{/if}
+			{/if}
+			<button
+				type="button"
+				role="menuitem"
+				{@attach tooltip({content: m.track_card_play_in_deck()})}
+				onclick={async () => {
+					await playTrackInNewDeck(track.id, track.slug ?? undefined)
+					menu?.close()
+				}}><Icon icon="sidebar-fill-right" size={14} />{m.track_card_play_in_deck()}</button
+			>
+			{#if !appState.embed_mode}
 				<button
 					type="button"
 					role="menuitem"
-					{@attach tooltip({content: m.track_card_play_in_deck()})}
-					onclick={async () => {
-						await playTrackInNewDeck(track.id, track.slug ?? undefined)
-						menu?.close()
-					}}><Icon icon="sidebar-fill-right" size={14} />{m.track_card_play_in_deck()}</button
+					{@attach tooltip({content: m.track_add_to_radio()})}
+					onclick={addToRadio}><Icon icon="add" size={14} />{m.track_add_to_radio()}</button
 				>
-				{#if !appState.embed_mode}
-					<button
-						type="button"
-						role="menuitem"
-						{@attach tooltip({content: m.track_add_to_radio()})}
-						onclick={addToRadio}><Icon icon="add" size={14} />{m.track_add_to_radio()}</button
-					>
-				{/if}
-				{#if isRealTrack}
-					<button
-						type="button"
-						role="menuitem"
-						{@attach tooltip({content: m.share_native()})}
-						onclick={shareTrack}><Icon icon="share" size={14} />{m.share_native()}</button
-					>
-				{/if}
-				{#if onLocate}
-					<button type="button" role="menuitem" onclick={onLocate}
-						><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
-					>
-				{/if}
-				{#if isRealTrack && !appState.embed_mode}
-					<a class="btn" href={permalink} role="menuitem"
-						><Icon icon="circle-info" size={14} />{m.track_go_to()}</a
-					>
-				{:else if track.url && !appState.embed_mode}
-					<a class="btn" href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
-						><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
-					>
-				{/if}
-				{#if canEdit}
-					<button type="button" role="menuitem" onclick={editTrack}
-						><Icon icon="settings" size={14} />{m.common_edit()}</button
-					>
-					<button
-						type="button"
-						class="menu-delete"
-						role="menuitem"
-						data-no-close
-						onclick={() => (showDeleteConfirm = true)}
-						><Icon icon="delete" size={14} />{m.common_delete()}</button
-					>
-				{/if}
-			</menu>
-		{/if}
+			{/if}
+			{#if isRealTrack}
+				<button
+					type="button"
+					role="menuitem"
+					{@attach tooltip({content: m.share_native()})}
+					onclick={shareTrack}><Icon icon="share" size={14} />{m.share_native()}</button
+				>
+			{/if}
+			{#if onLocate}
+				<button type="button" role="menuitem" onclick={onLocate}
+					><Icon icon="arrow-down" size={14} />{m.track_card_locate_in_list()}</button
+				>
+			{/if}
+			{#if isRealTrack && !appState.embed_mode}
+				<a href={permalink} role="menuitem"
+					><Icon icon="circle-info" size={14} />{m.track_go_to()}</a
+				>
+			{:else if track.url && !appState.embed_mode}
+				<a href={track.url} target="_blank" rel="noopener noreferrer" role="menuitem"
+					><Icon icon="circle-info" size={14} />{m.track_card_open_video()}</a
+				>
+			{/if}
+			{#if canEdit}
+				<button type="button" role="menuitem" onclick={editTrack}
+					><Icon icon="settings" size={14} />{m.common_edit()}</button
+				>
+				<button
+					type="button"
+					class="menu-delete"
+					role="menuitem"
+					onclick={() => {
+						menu?.close()
+						showDeleteDialog = true
+					}}><Icon icon="delete" size={14} />{m.common_delete()}</button
+				>
+			{/if}
+		</menu>
 	</PopoverMenu>
+	{#if showDeleteDialog}
+		<Dialog bind:showModal={showDeleteDialog}>
+			{#snippet header()}
+				<h2>{m.common_delete()}</h2>
+			{/snippet}
+			<p>{m.track_delete_confirm({title: track.title})}</p>
+			<menu class="row">
+				<button type="button" class="danger" onclick={handleDelete}>{m.common_confirm()}</button>
+				<button type="button" class="ghost" onclick={() => (showDeleteDialog = false)}
+					>{m.common_cancel()}</button
+				>
+			</menu>
+		</Dialog>
+	{/if}
 	{@render children?.(track)}
 </article>
 
@@ -285,6 +331,33 @@
 		object-position: center;
 		align-self: center;
 		border-radius: var(--media-radius);
+	}
+
+	.artwork-trigger {
+		position: relative;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		border-radius: var(--media-radius);
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+
+	.artwork-overlay {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		color: white;
+		background: color-mix(in srgb, var(--gray-12) 42%, transparent);
+		opacity: 0;
+		transition: opacity 0.15s;
+	}
+
+	.artwork-overlay.visible,
+	.artwork-trigger:hover .artwork-overlay,
+	.artwork-trigger:focus-visible .artwork-overlay {
+		opacity: 1;
 	}
 
 	.text {
