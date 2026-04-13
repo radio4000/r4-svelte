@@ -521,7 +521,6 @@
 					zoom={1}
 					syncUrl={false}
 					showControls={false}
-					tileStyle="satellite"
 				/>
 				<a href={mapOverlayHref} class="btn map-overlay-btn" aria-label={m.nav_map()}>
 					<Icon icon="fullscreen" size={14} />
@@ -622,7 +621,6 @@
 					zoom={1.5}
 					syncUrl={false}
 					showControls={false}
-					tileStyle="satellite"
 				/>
 				<a
 					href={resolve('/channels/all') + '?display=map'}

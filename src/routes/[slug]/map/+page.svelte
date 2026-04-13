@@ -1,6 +1,11 @@
 <script>
 	import {getChannelCtx} from '$lib/contexts'
 	import MapChannels from '$lib/components/map-channels.svelte'
+	import {
+		DEFAULT_MAP_SHOW_DAY_NIGHT,
+		DEFAULT_MAP_SHOW_GRATICULES,
+		DEFAULT_MAP_TILE_STYLE
+	} from '$lib/config'
 	import Subpage from '$lib/components/subpage.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -9,10 +14,10 @@
 	const hasLocation = $derived(channel?.latitude && channel?.longitude)
 
 	let globeMode = $state(true)
-	let showGraticules = $state(true)
-	let showDayNight = $state(true)
+	let showGraticules = $state(DEFAULT_MAP_SHOW_GRATICULES)
+	let showDayNight = $state(DEFAULT_MAP_SHOW_DAY_NIGHT)
 	/** @type {'carto' | 'topo' | 'satellite'} */
-	let tileStyle = $state('satellite')
+	let tileStyle = $state(DEFAULT_MAP_TILE_STYLE)
 	const initialZoom = 3
 </script>
 

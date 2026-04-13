@@ -1,8 +1,5 @@
 <script module>
-	/** @type {readonly ['carto', 'topo', 'satellite']} */
-	export const TILE_STYLES = /** @type {const} */ (['carto', 'topo', 'satellite'])
-	/** @type {'satellite'} */
-	export const TILE_SATELLITE = 'satellite'
+	export {MAP_TILE_STYLES as TILE_STYLES, DEFAULT_MAP_TILE_STYLE as TILE_SATELLITE} from '$lib/config'
 </script>
 
 <script>
@@ -16,6 +13,11 @@
 	import {BroadcastLayer} from './map-broadcast-layer.js'
 	import {channelsCollection} from '$lib/collections/channels'
 	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	import {
+		DEFAULT_MAP_SHOW_DAY_NIGHT,
+		DEFAULT_MAP_SHOW_GRATICULES,
+		DEFAULT_MAP_TILE_STYLE
+	} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 	const channelActivity = $derived(getChannelActivity())
 
@@ -32,9 +34,9 @@
 		linkToMap = true,
 		showControls = true,
 		globeMode = $bindable(false),
-		showGraticules = $bindable(true),
-		showDayNight = $bindable(true),
-		tileStyle = $bindable('satellite')
+		showGraticules = $bindable(DEFAULT_MAP_SHOW_GRATICULES),
+		showDayNight = $bindable(DEFAULT_MAP_SHOW_DAY_NIGHT),
+		tileStyle = $bindable(DEFAULT_MAP_TILE_STYLE)
 	} = $props()
 
 	/** @type {maplibregl.Map | null} */

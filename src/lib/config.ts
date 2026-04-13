@@ -62,6 +62,12 @@ export const conceptIcons = {
 	delete: 'delete'
 } as const
 
+export const MAP_TILE_STYLES = ['carto', 'topo', 'satellite'] as const
+export type MapTileStyle = (typeof MAP_TILE_STYLES)[number]
+export const DEFAULT_MAP_TILE_STYLE: MapTileStyle = 'satellite'
+export const DEFAULT_MAP_SHOW_DAY_NIGHT = true
+export const DEFAULT_MAP_SHOW_GRATICULES = true
+
 export const posthogKey =
 	env.PUBLIC_POSTHOG_KEY ?? 'phc_hjAzrJR1oqwdWF2chYKVdAkAQAXtTgd576iTuMTfuEO'
 export const posthogHost = env.PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com'

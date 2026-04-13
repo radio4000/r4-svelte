@@ -493,7 +493,6 @@
 				{openSlug}
 				loading={channelsQuery.isLoading}
 				globeMode={true}
-				tileStyle="satellite"
 			/>
 		{/await}
 	{:else if display === 'tuner'}
