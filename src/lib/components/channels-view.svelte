@@ -85,7 +85,7 @@
 
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
-			<MapChannels.default channels={sortedChannels} {openSlug} />
+			<MapChannels.default channels={sortedChannels} {openSlug} tileStyle="topo" zoom={1.5} />
 		{/await}
 	{:else if display === 'infinite'}
 		{@const InfiniteCanvas = (await import('./infinite-canvas-ogl.svelte')).default}
