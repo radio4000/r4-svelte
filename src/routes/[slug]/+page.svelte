@@ -116,6 +116,7 @@
 	const follows = getFollowedChannels()
 	let channelFollowers = $state<import('$lib/types').Channel[]>([])
 	let channelFollowing = $state<import('$lib/types').Channel[]>([])
+	let ownChannelFollowers = $state<import('$lib/types').Channel[]>([])
 
 	function normalizeChannels(rows: any[]): import('$lib/types').Channel[] {
 		return rows.filter((c) => typeof c?.id === 'string' && typeof c?.slug === 'string')
@@ -136,7 +137,7 @@
 	}
 
 	$effect(() => {
-		if (!channel?.id || follows.followedIds.length === 0) {
+		if (!channel?.id) {
 			channelFollowers = []
 			channelFollowing = []
 			return
@@ -188,15 +189,50 @@
 		}
 	})
 
+	$effect(() => {
+		const ownChannelId = appState.channel?.id
+		if (!ownChannelId) {
+			ownChannelFollowers = []
+			return
+		}
+		let stale = false
+		queryClient
+			.fetchQuery({
+				queryKey: ['channel-followers', ownChannelId],
+				queryFn: async () => {
+					const {data} = await sdk.channels.readFollowers(ownChannelId)
+					if (!data?.length) return []
+					const ids = data.map((c) => c.id)
+					const {data: enriched} = await sdk.supabase
+						.from('channels_with_tracks')
+						.select('*')
+						.in('id', ids)
+					return normalizeChannels(dedupeById((enriched || data) as any[]))
+				},
+				staleTime: 5 * 60 * 1000
+			})
+			.then((followers) => {
+				if (stale) return
+				ownChannelFollowers = followers
+			})
+			.catch(() => {
+				if (stale) return
+				ownChannelFollowers = []
+			})
+		return () => {
+			stale = true
+		}
+	})
+
 	let followedIdSet = $derived(new Set(follows.followedIds))
 	let commonFollowers = $derived(channelFollowers.filter((c) => c.id && followedIdSet.has(c.id)))
 	let commonFollowing = $derived(channelFollowing.filter((c) => c.id && followedIdSet.has(c.id)))
 	let previewCommonFollowers = $derived(commonFollowers.slice(0, 4))
 	let previewCommonFollowing = $derived(commonFollowing.slice(0, 4))
 
-	// "Follows you" — the viewed channel is in the user's followers list
+	// "Follows you" — the viewed channel appears in your own channel followers.
 	let followsYou = $derived(
-		Boolean(appState.channel?.id && channelFollowers.some((c) => c.id === appState.channel?.id))
+		Boolean(channel?.id && ownChannelFollowers.some((c) => c.id === channel.id))
 	)
 
 	// Match score — computed from user's own tracks vs this channel's tracks
