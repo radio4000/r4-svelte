@@ -25,6 +25,7 @@
 	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
 	let tagsSearch = $state('')
 	let tagsSort = $state<'count' | 'alpha'>('count')
+	let tagsDirection = $state<'asc' | 'desc'>('desc')
 	let showFiltersModal = $state(false)
 
 	// Sync search input → URL (debounced by SearchInput)
@@ -50,9 +51,14 @@
 	let visibleTags = $derived.by(() => {
 		const q = tagsSearch.trim().toLowerCase()
 		const filtered = aggregatedTags.filter((tag) => !q || tag.value.includes(q))
-		return filtered.toSorted((a, b) =>
-			tagsSort === 'alpha' ? a.value.localeCompare(b.value) : b.count - a.count || a.value.localeCompare(b.value)
-		)
+		const direction = tagsDirection === 'asc' ? 1 : -1
+		return filtered.toSorted((a, b) => {
+			const base =
+				tagsSort === 'alpha'
+					? a.value.localeCompare(b.value)
+					: a.count - b.count || a.value.localeCompare(b.value)
+			return base * direction
+		})
 	})
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
@@ -212,6 +218,16 @@
 						<option value="count">{m.tags_sort_count()}</option>
 						<option value="alpha">{m.tags_sort_alpha()}</option>
 					</select>
+					<button
+						type="button"
+						class="ghost"
+						title={
+							tagsDirection === 'asc' ? m.channels_tooltip_sort_asc() : m.channels_tooltip_sort_desc()
+						}
+						onclick={() => (tagsDirection = tagsDirection === 'asc' ? 'desc' : 'asc')}
+					>
+						<Icon icon={tagsDirection === 'asc' ? 'funnel-ascending' : 'funnel-descending'} />
+					</button>
 				</div>
 				<menu class="tags-menu">
 					{#each visibleTags as { value, count } (value)}
