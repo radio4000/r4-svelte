@@ -43,7 +43,13 @@
 	]
 
 	function getCanonicalUrlKey(track: Track): string | null {
-		const parsed = parseUrl(track.url || '') as {provider?: string; media_id?: string; mediaId?: string}
+		let parsed = {} as {provider?: string; media_id?: string; mediaId?: string}
+		try {
+			parsed = (parseUrl(track.url || '') ||
+				{}) as {provider?: string; media_id?: string; mediaId?: string}
+		} catch {
+			parsed = {}
+		}
 		const provider = track.provider || parsed.provider
 		const mediaId = track.media_id || parsed.media_id || parsed.mediaId
 		if (provider && mediaId) return `${provider}:${mediaId}`
@@ -195,6 +201,12 @@
 		goto(url, {replaceState: true})
 	}
 
+	function clearMatchingFilter() {
+		const url = new URL(page.url)
+		url.searchParams.delete('matching')
+		goto(url, {replaceState: true})
+	}
+
 	function playFilteredTracks() {
 		if (!hasFilteredResults) return
 		const ids = visibleTracks.map((t) => t.id)
@@ -216,6 +228,7 @@
 		const url = new URL(page.url)
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
+		url.searchParams.delete('matching')
 		goto(url, {replaceState: true})
 	}
 </script>
@@ -239,6 +252,12 @@
 			debounce={150}
 			autofocus={page.state.focus === true}
 		/>
+		<PopoverMenu closeOnClick={false} style="margin-left: auto;">
+			{#snippet trigger()}
+				<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+			{/snippet}
+			<SortControls bind:order bind:direction />
+		</PopoverMenu>
 		{#if hasFilteredResults}
 			<button type="button" title={m.common_play()} onclick={playFilteredTracks}
 				><Icon icon="play-fill" /></button
@@ -277,7 +296,9 @@
 						<li><span class="chip">{order} · {direction}</span></li>
 					{/if}
 					{#if matchingSlug}
-						<li><span class="chip">@{matchingSlug}</span></li>
+						<li>
+							<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+						</li>
 					{/if}
 					{#each selectedTags as tag (tag)}
 						<li>
@@ -286,10 +307,6 @@
 					{/each}
 				</menu>
 			{/if}
-			<section class="filters-dialog-panel">
-				<h3>{m.views_display_label()}</h3>
-				<SortControls bind:order bind:direction />
-			</section>
 			<section class="filters-dialog-panel">
 				<h3>{m.views_tags_label()}</h3>
 				<div class="tags-toolbar">
@@ -379,8 +396,11 @@
 		{/snippet}
 		<section>
 			<header>
-				{#if isFiltering && selectedTags.length > 0}
+				{#if isFiltering && (selectedTags.length > 0 || matchingSlug)}
 					<menu class="row filter-tags">
+						{#if matchingSlug}
+							<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+						{/if}
 						{#each selectedTags as tag (tag)}
 							<button type="button" class="chip" onclick={() => toggleTag(tag)}>
 								{tag} ×
