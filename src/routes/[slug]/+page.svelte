@@ -302,6 +302,7 @@
 		overflow-wrap: break-word;
 		font-stretch: 90%;
 		font-style: italic;
+		color: light-dark(var(--gray-11), var(--gray-9));
 	}
 
 	.url {
