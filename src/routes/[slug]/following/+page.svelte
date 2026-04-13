@@ -139,7 +139,7 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	{#if featuredChannels.length > 0 || showInCommon}
+	{#if featuredChannels.length > 0}
 		<select value={view} aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
 			<option value="featured">{m.channel_section_featured_channels()}</option>
 			<option value="all">{m.views_tags_all()}</option>
