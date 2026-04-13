@@ -22,8 +22,16 @@ out vec4 outColor;
 uniform float uTime;
 uniform float uPhase;
 uniform vec3 uColor;
+uniform float uMode;
 void main() {
   float d = length(vUv - 0.5) * 2.0;
+  if (uMode < 0.5) {
+    // Soft core "badge" to make broadcaster marker feel more 3D/icon-like.
+    float core = clamp(1.0 - d, 0.0, 1.0);
+    float alpha = pow(core, 2.2) * 0.42;
+    outColor = vec4(uColor, alpha);
+    return;
+  }
   float t = fract(uTime * 0.6 + uPhase);
   float ring = 1.0 - abs(d - t) / 0.1;
   ring = clamp(ring, 0.0, 1.0);
@@ -65,12 +73,34 @@ function readAccentColor() {
 	return new Float32Array([r / 255, g / 255, b / 255])
 }
 
+/**
+ * Read and normalize a CSS variable color to sRGB floats.
+ * @param {string} variableName
+ * @param {string} fallback
+ */
+function readCssColor(variableName, fallback) {
+	const canvas = document.createElement('canvas')
+	canvas.width = canvas.height = 1
+	const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'))
+	const div = document.createElement('div')
+	div.style.color = `var(${variableName})`
+	div.style.position = 'absolute'
+	div.style.visibility = 'hidden'
+	document.body.append(div)
+	const raw = getComputedStyle(div).color
+	div.remove()
+	ctx.fillStyle = raw || fallback
+	ctx.fillRect(0, 0, 1, 1)
+	const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+	return new Float32Array([r / 255, g / 255, b / 255])
+}
+
 export class BroadcastLayer {
 	constructor() {
 		this.id = 'broadcast-3d'
 		this.type = 'custom'
 		this.renderingMode = '2d'
-		/** @type {Array<{id: string, lng: number, lat: number}>} */
+		/** @type {Array<{id: string, lng: number, lat: number, variant?: 'broadcasting' | 'favorite_broadcasting'}>} */
 		this.channels = []
 		this.startTime = performance.now()
 		/** @type {maplibregl.Map | null} */
@@ -84,7 +114,9 @@ export class BroadcastLayer {
 		this._uTime = null
 		this._uPhase = null
 		this._uColor = null
+		this._uMode = null
 		this.accentColor = new Float32Array([1, 0.5, 0])
+		this.favoriteBroadcastColor = new Float32Array([1, 0.75, 0])
 	}
 
 	/** @param {maplibregl.Map} map @param {WebGL2RenderingContext} gl */
@@ -117,6 +149,7 @@ export class BroadcastLayer {
 		this._uTime = gl.getUniformLocation(prog, 'uTime')
 		this._uPhase = gl.getUniformLocation(prog, 'uPhase')
 		this._uColor = gl.getUniformLocation(prog, 'uColor')
+		this._uMode = gl.getUniformLocation(prog, 'uMode')
 
 		const positions = new Float32Array([-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5])
 		const uvs = new Float32Array([0, 0, 1, 0, 1, 1, 0, 1])
@@ -147,6 +180,7 @@ export class BroadcastLayer {
 		gl.bindVertexArray(null)
 
 		this.accentColor = readAccentColor()
+		this.favoriteBroadcastColor = readCssColor('--accent-6', '#ffbb00')
 	}
 
 	/** @param {WebGL2RenderingContext} gl @param {{modelViewProjectionMatrix: number[]}} options */
@@ -165,14 +199,27 @@ export class BroadcastLayer {
 
 		const mvp = new Float32Array(modelViewProjectionMatrix)
 
-		for (const {lng, lat} of this.channels) {
+		for (const {lng, lat, variant} of this.channels) {
+			const isFavoriteBroadcast = variant === 'favorite_broadcasting'
 			const mc = maplibregl.MercatorCoordinate.fromLngLat([lng, lat], 0)
-			const s = mc.meterInMercatorCoordinateUnits() * RADIUS_METERS * 2
+			const radiusMeters = isFavoriteBroadcast ? RADIUS_METERS * 1.15 : RADIUS_METERS
+			const s = mc.meterInMercatorCoordinateUnits() * radiusMeters * 2
 			// column-major scale + translate model matrix
 			const model = new Float32Array([s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1, 0, mc.x, mc.y, mc.z, 1])
 			const finalMatrix = mat4mul(mvp, model)
+			gl.uniform3fv(
+				this._uColor,
+				isFavoriteBroadcast ? this.favoriteBroadcastColor : this.accentColor
+			)
+
+			// Draw a subtle core first.
+			gl.uniform1f(this._uMode, 0)
+			gl.uniform1f(this._uPhase, 0)
+			gl.uniformMatrix4fv(this._uMatrix, false, finalMatrix)
+			gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
 
 			for (let i = 0; i < RING_COUNT; i++) {
+				gl.uniform1f(this._uMode, 1)
 				gl.uniform1f(this._uPhase, i / RING_COUNT)
 				gl.uniformMatrix4fv(this._uMatrix, false, finalMatrix)
 				gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
@@ -202,7 +249,7 @@ export class BroadcastLayer {
 		this.map = null
 	}
 
-	/** @param {Array<{id: string, lng: number, lat: number}>} channels */
+	/** @param {Array<{id: string, lng: number, lat: number, variant?: 'broadcasting' | 'favorite_broadcasting'}>} channels */
 	setChannels(channels) {
 		this.channels = channels
 		if (this.map) this.map.triggerRepaint()

@@ -113,6 +113,8 @@
 		normalFill: resolveCssColor('--gray-8'),
 		favoriteStroke: resolveCssColor('--accent-9'),
 		favoriteFill: resolveCssColor('--accent-6'),
+		favoriteBroadcastStroke: resolveCssColor('--accent-11'),
+		favoriteBroadcastFill: resolveCssColor('--accent-6'),
 		activeStroke: resolveCssColor('--accent-11'),
 		activeFill: resolveCssColor('--accent-9'),
 		// broadcasting: light accent fill (same var as channel-card's .playing bg) + thick stroke
@@ -132,8 +134,16 @@
 
 	function getMarkerStyle(channel) {
 		const state = getChannelState(channel)
-		// 4-tier visual hierarchy: broadcasting > active > favorite > normal
-		// mirrors the channel card: .playing uses --accent-3 bg, broadcasting shows a live badge
+		// 5-tier visual hierarchy: favorite+broadcasting > broadcasting > active > favorite > normal
+		// mirrors channel card semantics while preserving favorite identity during live broadcast.
+		if (state.isFavorite && state.isBroadcasting) {
+			return {
+				radius: 10,
+				strokeColor: palette.favoriteBroadcastStroke,
+				fillColor: palette.favoriteBroadcastFill,
+				strokeWidth: 3
+			}
+		}
 		if (state.isBroadcasting) {
 			return {
 				radius: 9,
@@ -371,7 +381,12 @@
 		broadcastLayer.setChannels(
 			mapChannels
 				.filter((c) => broadcastingIds.has(c.id))
-				.map((c) => ({id: c.id, lng: c.longitude, lat: c.latitude}))
+				.map((c) => ({
+					id: c.id,
+					lng: c.longitude,
+					lat: c.latitude,
+					variant: favoriteIds.has(c.id) ? 'favorite_broadcasting' : 'broadcasting'
+				}))
 		)
 	}
 
