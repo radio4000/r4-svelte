@@ -294,10 +294,12 @@
 	}
 
 	function handleVolumeChange(e) {
-		// Providers can emit synthetic volumechange during initialization/load.
-		// Keep deck volume authoritative and only sync trusted/user-originated changes.
-		if (!e.isTrusted) return
+		// YouTube/SoundCloud wrappers dispatch synthetic volumechange events.
+		// Accept those when they originate from the active media element.
+		const fromProviderElement = e?.target && e.target === mediaElement
+		if (!e.isTrusted && !fromProviderElement) return
 		const {volume} = e.target
+		if (!Number.isFinite(volume)) return
 		if (!deck) return
 		const muted = Boolean(e.target.muted)
 		if (deck.volume === volume && deck.muted === muted) return
