@@ -32,6 +32,17 @@
 
 {#if data}
 	<menu class="meta-toolbar">
+		<button
+			type="button"
+			onclick={() => {
+				appState.modal_track_add = {track: data}
+			}}
+			title={m.track_add_to_radio()}
+			aria-label={m.track_add_to_radio()}
+			disabled={!appState.user}
+		>
+			<Icon icon="add" />
+		</button>
 		{#if channel && data}
 			<button
 				type="button"
