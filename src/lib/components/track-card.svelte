@@ -299,12 +299,14 @@
 				<h2>{m.common_delete()}</h2>
 			{/snippet}
 			<p>{m.track_delete_confirm({title: track.title})}</p>
-			<menu class="row">
-				<button type="button" class="danger" onclick={handleDelete}>{m.common_confirm()}</button>
-				<button type="button" class="ghost" onclick={() => (showDeleteDialog = false)}
-					>{m.common_cancel()}</button
-				>
-			</menu>
+			{#snippet footer()}
+				<menu class="row">
+					<button type="button" class="danger" onclick={handleDelete}>{m.common_confirm()}</button>
+					<button type="button" class="ghost" onclick={() => (showDeleteDialog = false)}
+						>{m.common_cancel()}</button
+					>
+				</menu>
+			{/snippet}
 		</Dialog>
 	{/if}
 	{@render children?.(track)}
@@ -341,6 +343,12 @@
 		border-radius: var(--media-radius);
 		overflow: hidden;
 		flex-shrink: 0;
+	}
+
+	.artwork-trigger:hover,
+	.artwork-trigger:focus-visible,
+	.artwork-trigger:active {
+		background: transparent;
 	}
 
 	.artwork-overlay {
