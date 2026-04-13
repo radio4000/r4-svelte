@@ -184,6 +184,7 @@
 			type: 'FeatureCollection',
 			features: mapChannels.map((c) => {
 				const style = untrack(() => getMarkerStyle(c))
+				const state = untrack(() => getChannelState(c))
 				/** @type {GeoJSON.Feature} */
 				return {
 					type: 'Feature',
@@ -195,7 +196,11 @@
 						strokeColor: style.strokeColor,
 						fillColor: style.fillColor,
 						strokeWidth: style.strokeWidth,
-						isBroadcasting: broadcastingIds.has(c.id)
+						isBroadcasting: state.isBroadcasting,
+						isFavorite: state.isFavorite,
+						broadcastRingColor: state.isFavorite
+							? palette.favoriteBroadcastStroke
+							: palette.broadcastingStroke
 					}
 				}
 			})
@@ -208,6 +213,7 @@
 			type: 'FeatureCollection',
 			features: mapChannels.map((c) => {
 				const style = untrack(() => getMarkerStyle(c))
+				const state = untrack(() => getChannelState(c))
 				/** @type {GeoJSON.Feature} */
 				return {
 					type: 'Feature',
@@ -219,7 +225,11 @@
 						strokeColor: style.strokeColor,
 						fillColor: style.fillColor,
 						strokeWidth: style.strokeWidth,
-						isBroadcasting: broadcastingIds.has(c.id)
+						isBroadcasting: state.isBroadcasting,
+						isFavorite: state.isFavorite,
+						broadcastRingColor: state.isFavorite
+							? palette.favoriteBroadcastStroke
+							: palette.broadcastingStroke
 					}
 				}
 			})
@@ -231,6 +241,20 @@
 		if (!m || !fc) return
 		if (!m.getSource('channels-source')) {
 			m.addSource('channels-source', {type: 'geojson', data: fc})
+			m.addLayer({
+				id: 'channels-broadcast-ring',
+				type: 'circle',
+				source: 'channels-source',
+				filter: ['==', ['get', 'isBroadcasting'], true],
+				paint: {
+					'circle-radius': ['+', ['get', 'radius'], 8],
+					'circle-color': 'rgba(0, 0, 0, 0)',
+					'circle-stroke-color': ['get', 'broadcastRingColor'],
+					'circle-stroke-width': ['case', ['==', ['get', 'isFavorite'], true], 3.5, 2.5],
+					'circle-opacity': 0.9,
+					'circle-blur': 0.1
+				}
+			})
 			m.addLayer({
 				id: 'channels-layer',
 				type: 'circle',
@@ -265,6 +289,22 @@
 		} else {
 			const source = /** @type {GeoJSONSource | undefined} */ (m.getSource('channels-source'))
 			source?.setData(fc)
+			if (!m.getLayer('channels-broadcast-ring')) {
+				m.addLayer({
+					id: 'channels-broadcast-ring',
+					type: 'circle',
+					source: 'channels-source',
+					filter: ['==', ['get', 'isBroadcasting'], true],
+					paint: {
+						'circle-radius': ['+', ['get', 'radius'], 8],
+						'circle-color': 'rgba(0, 0, 0, 0)',
+						'circle-stroke-color': ['get', 'broadcastRingColor'],
+						'circle-stroke-width': ['case', ['==', ['get', 'isFavorite'], true], 3.5, 2.5],
+						'circle-opacity': 0.9,
+						'circle-blur': 0.1
+					}
+				})
+			}
 		}
 	}
 
