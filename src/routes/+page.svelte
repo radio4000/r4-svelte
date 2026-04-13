@@ -420,7 +420,7 @@
 				</div>
 			{/if}
 
-			{#if userChannelTopTags.length > 0 || tagsLoading || showOnboarding}
+			{#if userChannelTopTags.length > 0 || tagsLoading}
 				<div class="dashboard-group">
 					<div class="dashboard-grid">
 						{#if tagsLoading}
@@ -445,7 +445,7 @@
 									class="dashboard-label--tag"
 									href={resolve('/[slug]/tracks', {slug: userChannel.slug}) +
 										`?tags=${encodeURIComponent(value)}`}
-									>#{value} <small class="tag-count">{count}</small></a
+									>#{value} <span class="tag-count">{count}</span></a
 								>
 								<a
 									class="btn ghost tag-pill-action"
@@ -456,58 +456,50 @@
 								</a>
 							</div>
 						{/each}
-						{#if showOnboarding}
-							{#if appState.show_onboarding_hint}
-								<div class="dashboard-card onboarding dismissible">
-									<button
-										class="dismiss-btn"
-										onclick={() => (appState.show_onboarding_hint = false)}
-										aria-label="Close"
-									>
-										<Icon icon="close" />
-									</button>
-									<ol class="todo-list">
-										<li>
-											<input
-												type="checkbox"
-												disabled
-												checked={(userChannel.track_count ?? 0) > 0}
-											/>
-											<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
-												>{m.home_onboarding_add_track()}</a
-											>
-										</li>
-										<li>
-											<input
-												type="checkbox"
-												disabled
-												checked={follows.followedChannels.length > 0}
-											/>
-											<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
-										</li>
-										<li>
-											<input type="checkbox" disabled checked={!!userChannel.image} />
-											<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
-												>{m.home_onboarding_add_image()}</a
-											>
-										</li>
-									</ol>
-								</div>
-							{/if}
-						{/if}
 					</div>
-					{#if showOnboarding && !appState.show_onboarding_hint}
-						<div class="onboarding-toggle-row">
-							<button
-								class="btn onboarding-toggle"
-								onclick={() => (appState.show_onboarding_hint = true)}
-								title="Show getting started"
-							>
-								<Icon icon="circle-info" />
-							</button>
-						</div>
-					{/if}
 				</div>
+			{/if}
+
+			{#if showOnboarding}
+				{#if appState.show_onboarding_hint}
+					<section class="section onboarding-section dismissible">
+						<button
+							class="dismiss-btn"
+							onclick={() => (appState.show_onboarding_hint = false)}
+							aria-label="Close"
+						>
+							<Icon icon="close" />
+						</button>
+						<ol class="todo-list">
+							<li>
+								<input type="checkbox" disabled checked={(userChannel.track_count ?? 0) > 0} />
+								<a href={resolve('/[slug]/tracks', {slug: userChannel.slug})}
+									>{m.home_onboarding_add_track()}</a
+								>
+							</li>
+							<li>
+								<input type="checkbox" disabled checked={follows.followedChannels.length > 0} />
+								<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+							</li>
+							<li>
+								<input type="checkbox" disabled checked={!!userChannel.image} />
+								<a href={resolve('/[slug]/edit', {slug: userChannel.slug})}
+									>{m.home_onboarding_add_image()}</a
+								>
+							</li>
+						</ol>
+					</section>
+				{:else}
+					<div class="onboarding-toggle-row">
+						<button
+							class="btn onboarding-toggle"
+							onclick={() => (appState.show_onboarding_hint = true)}
+							title="Show getting started"
+						>
+							<Icon icon="circle-info" />
+						</button>
+					</div>
+				{/if}
 			{/if}
 		</section>
 
@@ -752,6 +744,7 @@
 		align-items: center;
 		margin: 0 0 1rem;
 		z-index: 1;
+		background: var(--color-interface);
 	}
 
 	.filtermenu:first-child {
@@ -879,6 +872,10 @@
 		background: var(--color-interface-elevated);
 	}
 
+	.dashboard-card--tag {
+		min-height: 2rem;
+	}
+
 	.dashboard-card--pill :global(svg) {
 		width: 0.92rem;
 		height: 0.92rem;
@@ -916,18 +913,17 @@
 		font-size: var(--font-2);
 		color: light-dark(var(--gray-9), var(--gray-8));
 		margin: 0;
-		flex-shrink: 0;
-	}
-
-	.tag-actions {
-		display: flex;
-		gap: 0.1rem;
+		display: inline-flex;
+		align-items: center;
+		line-height: 1;
 		flex-shrink: 0;
 	}
 
 	.tag-pill-action {
 		flex: 0 0 auto;
 		padding-inline: 0.28rem;
+		min-height: 1.4rem;
+		min-width: 1.4rem;
 	}
 
 	.dashboard-card--link {
@@ -957,6 +953,9 @@
 		margin-left: auto;
 		font-size: var(--font-2);
 		font-weight: 700;
+		display: inline-flex;
+		align-items: center;
+		line-height: 1;
 	}
 
 	.broadcast-deck-card {
@@ -1163,9 +1162,16 @@
 		justify-content: flex-end;
 	}
 
-	.onboarding {
-		grid-column: 1 / -1;
+	.onboarding-section {
+		max-width: 56rem;
+		margin-inline: auto;
+		padding: 1.25rem;
+		border-radius: 0.75rem;
+		background: light-dark(var(--gray-2), var(--gray-2));
+		border: 1px solid light-dark(var(--gray-4), var(--gray-4));
+	}
 
+	.onboarding-section {
 		.todo-list {
 			list-style: none;
 			padding: 0;

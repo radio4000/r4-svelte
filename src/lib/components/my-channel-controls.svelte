@@ -147,7 +147,7 @@
 		border: none;
 		border-right: 1px solid var(--gray-6);
 		border-radius: 0;
-		background: transparent;
+		background: var(--button-bg, var(--gray-1));
 		box-shadow: none;
 	}
 
@@ -159,7 +159,7 @@
 	/* Active state: accent color only, keep divider intact */
 	.my-channel-controls button.active {
 		border-right-color: var(--gray-6);
-		background: transparent;
+		background: var(--accent-3);
 	}
 
 	.channel-link {
