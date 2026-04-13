@@ -40,7 +40,12 @@ class YouTube2Element extends HTMLElement {
 				:host { display: block; width: 100%; height: 200px; }
 				iframe { width: 100%; height: 100%; }
 			</style>
-			<iframe id="player" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+			<iframe
+				id="player"
+				frameborder="0"
+				allowfullscreen
+				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+			></iframe>
 		`
 
 		try {
