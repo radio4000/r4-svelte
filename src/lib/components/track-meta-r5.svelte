@@ -5,6 +5,7 @@
 	import Tag from '$lib/components/tag.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
+	import {playTrack} from '$lib/api'
 	import {parseUrl} from 'media-now/parse-url'
 	import {parseTitle} from 'media-now/parse-title'
 	import {appState} from '$lib/app-state.svelte'
@@ -32,6 +33,15 @@
 
 {#if data}
 	<menu class="meta-toolbar">
+		<button
+			type="button"
+			onclick={() => playTrack(appState.active_deck_id, data.id, null, 'user_click_track')}
+			title={m.common_play()}
+			aria-label={m.common_play()}
+		>
+			<Icon icon="play-fill" />
+			{m.common_play()}
+		</button>
 		<button
 			type="button"
 			onclick={() => {
@@ -156,6 +166,7 @@
 <style>
 	.meta-toolbar {
 		justify-content: flex-end;
+		gap: 0.35rem;
 		margin-top: 0.5rem;
 	}
 
