@@ -9,9 +9,8 @@
 	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import Dialog from '$lib/components/dialog.svelte'
-	import SortControls from '$lib/components/sort-controls.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
@@ -24,8 +23,8 @@
 	let searchInput = $state(page.url.searchParams.get('q') ?? '')
 	let selectedTags = $derived(page.url.searchParams.get('tags')?.split(',').filter(Boolean) ?? [])
 	let searchValue = $derived(page.url.searchParams.get('q') ?? '')
-	let order: View['order'] = $state('created')
-	let direction: View['direction'] = $state('desc')
+	let tagsSearch = $state('')
+	let tagsSort = $state<'count' | 'alpha'>('count')
 	let showFiltersModal = $state(false)
 
 	// Sync search input → URL (debounced by SearchInput)
@@ -46,10 +45,15 @@
 	let allTracks = $derived(tracksQuery.data || [])
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let aggregatedTags = $derived(getChannelTags(allTracks))
-	let isSearching = $derived(searchValue !== '' || selectedTags.length > 0)
-	let isSorting = $derived(order !== 'created' || direction !== 'desc')
-	let isFiltering = $derived(isSearching || isSorting)
-	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0) + (isSorting ? 1 : 0))
+	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0)
+	let activeFilterCount = $derived(selectedTags.length + (searchValue ? 1 : 0))
+	let visibleTags = $derived.by(() => {
+		const q = tagsSearch.trim().toLowerCase()
+		const filtered = aggregatedTags.filter((tag) => !q || tag.value.includes(q))
+		return filtered.toSorted((a, b) =>
+			tagsSort === 'alpha' ? a.value.localeCompare(b.value) : b.count - a.count || a.value.localeCompare(b.value)
+		)
+	})
 	let filteredTracks = $derived(
 		processViewTracks(allTracks, {
 			sources: [
@@ -58,9 +62,7 @@
 					tagsMode: 'all',
 					search: searchValue || undefined
 				}
-			],
-			order: isSorting ? order : undefined,
-			direction: isSorting ? direction : undefined
+			]
 		})
 	)
 	let visibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
@@ -127,10 +129,7 @@
 	function playFilteredTracks() {
 		if (!filteredTracks.length) return
 		const ids = filteredTracks.map((t) => t.id)
-		loadDeckView(appState.active_deck_id, filteredAutoView, ids, {
-			title: filteredPlaylistTitle,
-			slug
-		})
+		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
@@ -143,8 +142,6 @@
 	}
 
 	function clearTrackFilters() {
-		order = 'created'
-		direction = 'desc'
 		const url = new URL(page.url)
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
@@ -167,7 +164,7 @@
 		</button>
 		<SearchInput
 			bind:value={searchInput}
-			placeholder={m.tracks_filter_placeholder({count: allTracks.length})}
+			placeholder={`${visibleTracks.length}/${allTracks.length}`}
 			debounce={150}
 			autofocus={page.state.focus === true}
 		/>
@@ -202,34 +199,30 @@
 					{#if searchValue}
 						<li><span class="chip">"{searchValue}"</span></li>
 					{/if}
-					{#if isSorting}
-						<li><span class="chip">{order} · {direction}</span></li>
-					{/if}
 					{#each selectedTags as tag (tag)}
 						<li><button type="button" class="chip" onclick={() => toggleTag(tag)}>{tag} ×</button></li>
 					{/each}
 				</menu>
 			{/if}
 			<section class="filters-dialog-panel">
-				<h3>{m.views_display_label()}</h3>
-				<SortControls bind:order bind:direction />
+				<h3>{m.views_tags_label()}</h3>
+				<div class="tags-toolbar">
+					<input type="search" bind:value={tagsSearch} placeholder={m.views_search_placeholder()} />
+					<select bind:value={tagsSort}>
+						<option value="count">{m.tags_sort_count()}</option>
+						<option value="alpha">{m.tags_sort_alpha()}</option>
+					</select>
+				</div>
+				<menu class="tags-menu">
+					{#each visibleTags as { value, count } (value)}
+						<button type="button" class:active={selectedTags.includes(value)} onclick={() => toggleTag(value)}>
+							#{value} <span class="tag-count">({count})</span>
+						</button>
+					{/each}
+				</menu>
 			</section>
-			{#if aggregatedTags.length > 0}
-				<section class="filters-dialog-panel">
-					<h3>{m.views_tags_label()}</h3>
-					<menu class="tags-menu">
-						{#each aggregatedTags as { value, count } (value)}
-							<button
-								type="button"
-								class:active={selectedTags.includes(value)}
-								onclick={() => toggleTag(value)}
-							>
-								#{value} <span class="tag-count">({count})</span>
-							</button>
-						{/each}
-					</menu>
-				</section>
-			{/if}
+		</section>
+		{#snippet footer()}
 			<menu class="row filter-actions">
 				{#if visibleTracks.length}
 					<button type="button" title={m.common_play()} onclick={playFilteredTracks}
@@ -251,7 +244,7 @@
 					<button type="button" class="ghost" onclick={clearTrackFilters}>{m.common_clear()}</button>
 				{/if}
 			</menu>
-		</section>
+		{/snippet}
 	</Dialog>
 {/if}
 
@@ -334,12 +327,18 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem;
-		max-height: min(40vh, 26rem);
+		max-height: min(32vh, 20rem);
 		overflow: auto;
 		button.active {
 			background: var(--accent-5);
 			color: var(--accent-11);
 		}
+	}
+
+	.tags-toolbar {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 0.35rem;
 	}
 
 	.tag-count {
