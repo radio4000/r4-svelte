@@ -512,19 +512,26 @@
 	}
 
 	.match-score-row {
-		gap: 0.5rem;
+		gap: clamp(0.3rem, 1.4vw, 0.55rem);
+		row-gap: 0.35rem;
 		padding-bottom: 0.3rem;
 		border-bottom: 1px solid var(--gray-3);
 		flex-wrap: wrap;
+		align-items: center;
 		color: var(--gray-10);
+		font-size: clamp(0.72rem, 2.8vw, var(--font-2));
 	}
 
-	.match-score-row span {
+	.match-score-row span,
+	.match-score-row a {
+		display: inline-flex;
+		align-items: center;
+		gap: clamp(0.16rem, 0.9vw, 0.28rem);
 		white-space: nowrap;
+		line-height: 1.2;
 	}
 
 	.match-score-row a {
-		white-space: nowrap;
 		color: inherit;
 		text-decoration: underline;
 		text-decoration-style: dotted;
