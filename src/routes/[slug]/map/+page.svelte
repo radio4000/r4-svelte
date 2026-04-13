@@ -1,5 +1,4 @@
 <script>
-	import {page} from '$app/state'
 	import {getChannelCtx} from '$lib/contexts'
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import Subpage from '$lib/components/subpage.svelte'
@@ -14,11 +13,7 @@
 	let showDayNight = $state(true)
 	/** @type {'carto' | 'topo' | 'satellite'} */
 	let tileStyle = $state('topo')
-	let initialZoom = $derived.by(() => {
-		const urlZoom = Number(page.url.searchParams.get('zoom'))
-		if (Number.isFinite(urlZoom)) return urlZoom
-		return 1.5
-	})
+	const initialZoom = 3
 </script>
 
 <article class="map-page fill-height">
