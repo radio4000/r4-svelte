@@ -377,7 +377,7 @@
 				<section class="common-follows compact">
 					{#if hasMatchInfo}
 						<div class="compact-row match-score-row">
-							<span><Icon icon="flower-alt" size={14} /> {matchScore.total}% score</span>
+							<span><Icon icon="flower-alt" size={14} /> {matchScore.total}% match</span>
 							<a
 								href={resolve('/[slug]/tracks', {slug}) +
 									`?matching=${encodeURIComponent(matchingSourceSlug)}`}
