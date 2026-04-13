@@ -180,6 +180,15 @@
 				flex: 1 1 auto;
 			}
 
+			/* Listening/auto-radio deck: lift the 25dvh video cap so it fills available height */
+			:global(.deck.listening:not(.compact):not(.hide-video) .video),
+			:global(.deck.auto:not(.compact):not(.hide-video) .video) {
+				flex: 1 1 auto;
+				min-height: 0;
+				max-height: none;
+				aspect-ratio: auto;
+			}
+
 			.deck-item {
 				flex: 1 1 auto;
 				min-width: 0;
