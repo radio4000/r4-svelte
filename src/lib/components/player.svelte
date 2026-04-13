@@ -942,6 +942,26 @@
 		background: black;
 	}
 
+	.video:not(:has(.native-audio-player)) {
+		aspect-ratio: 16 / 9;
+	}
+
+	/* Ensure custom media elements always fill the media-controller box. */
+	.video :global(youtube-video),
+	.video :global(soundcloud-player) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		min-height: 0;
+	}
+
+	/* YouTube API may set explicit iframe dimensions; force it to fill its container. */
+	.video :global(youtube-video iframe) {
+		width: 100% !important;
+		height: 100% !important;
+		max-height: none !important;
+	}
+
 	/* Listening/auto decks should let media fill available deck height. */
 	:global(.deck.listening) .video,
 	:global(.deck.auto) .video {
@@ -949,8 +969,9 @@
 		aspect-ratio: auto;
 	}
 
-	.video:not(:has(.native-audio-player)) {
-		aspect-ratio: 16 / 9;
+	:global(.deck.listening) .video:not(:has(.native-audio-player)),
+	:global(.deck.auto) .video:not(:has(.native-audio-player)) {
+		aspect-ratio: auto;
 	}
 
 	.video-hidden-placeholder {

@@ -375,6 +375,12 @@ class YouTube2Element extends HTMLElement {
 
 	#applyIframePermissions(iframe) {
 		if (!(iframe instanceof HTMLIFrameElement)) return
+		iframe.style.display = 'block'
+		iframe.style.width = '100%'
+		iframe.style.height = '100%'
+		iframe.style.maxHeight = 'none'
+		iframe.removeAttribute('width')
+		iframe.removeAttribute('height')
 		iframe.setAttribute('allowfullscreen', '')
 		iframe.allowFullscreen = true
 		iframe.setAttribute('allow', YOUTUBE_IFRAME_ALLOW)
