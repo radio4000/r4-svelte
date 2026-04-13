@@ -206,6 +206,13 @@
 		}
 	}
 
+	function clearMatchingFilter() {
+		const url = new URL(page.url)
+		url.searchParams.delete('matching')
+		const queryString = url.searchParams.size ? `?${url.searchParams.toString()}` : ''
+		replaceState(resolve('/[slug]/tags', {slug}) + queryString, {})
+	}
+
 	// Animated tag count
 	const tagCount = new Tween(0, {duration: 400, easing: cubicOut})
 	$effect(() => {
@@ -381,6 +388,11 @@
 					</div>
 				</div>
 			{/if}
+			{#if matchingSlug}
+				<menu class="row filter-tags">
+					<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+				</menu>
+			{/if}
 
 			{#if tracksQuery.isLoading}
 				<p style="margin: 1rem;">{m.channel_loading_tracks()}</p>
@@ -517,6 +529,12 @@
 		li:hover .bar {
 			height: 1rem;
 		}
+	}
+
+	.filter-tags {
+		margin: 0 0.5rem 0.5rem;
+		flex-wrap: wrap;
+		gap: 0.35rem;
 	}
 
 	.cloud {
