@@ -111,11 +111,12 @@
 	</section>
 {/if}
 
-<article class="constrained">
+<article class="constrained about-actions">
 	<footer>
 		<p>
 			<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
 			<a href={resolve('/')} class="btn">{m.common_start_exploring()}</a>
+			<a href={resolve('/community')} class="btn ghost">Community</a>
 		</p>
 	</footer>
 </article>
@@ -162,6 +163,13 @@
 		justify-content: center;
 		gap: 0.5rem;
 		flex-wrap: wrap;
+	}
+
+	.about-actions {
+		position: sticky;
+		bottom: 0;
+		padding-bottom: 0.5rem;
+		background: color-mix(in srgb, var(--color-interface) 92%, transparent);
 	}
 
 	:global(.featured-flip) {
