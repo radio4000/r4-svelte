@@ -286,10 +286,12 @@
 					aria-label={autoNotSynced ? m.auto_radio_resync() : m.auto_radio_join()}
 					onclick={() => resyncAutoRadio(deckId)}
 				>
-					{#if modePresenceCount > 0}
-						<PresenceCount count={modePresenceCount} />
-					{/if}
 					<Icon icon="infinite" size={12} />
+					<span class="auto-sync-label">{autoNotSynced ? 'sync' : 'auto'}</span>
+					<span class="live-circle" aria-hidden="true">◉</span>
+					{#if modePresenceCount > 0}
+						<span class="live-count">{modePresenceCount}</span>
+					{/if}
 				</button>
 			{:else if !deck?.listening_to_channel_id}
 				<VolumeControl {deckId} />
@@ -482,6 +484,30 @@
 			flex: 1 1 auto;
 			width: 100%;
 			flex-wrap: nowrap;
+		}
+
+		.controls .auto-sync {
+			flex: 1 1 auto;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.3rem;
+			overflow: hidden;
+		}
+
+		.controls .auto-sync .auto-sync-label {
+			font-size: var(--font-1);
+			white-space: nowrap;
+		}
+
+		.controls .auto-sync .live-circle {
+			font-size: 0.55em;
+			color: var(--accent-9);
+		}
+
+		.controls .auto-sync .live-count {
+			font-size: var(--font-1);
+			color: var(--gray-11);
 		}
 
 		.controls :global(.speed),
