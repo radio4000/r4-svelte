@@ -662,6 +662,12 @@
 		z-index: 0;
 	}
 
+	.homepage:not(.signed-in) .loggedout-over-globe,
+	.homepage:not(.signed-in) .welcome-section {
+		position: relative;
+		z-index: 5;
+	}
+
 	.loggedout-over-globe {
 		position: relative;
 		z-index: 2;
