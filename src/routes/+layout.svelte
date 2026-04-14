@@ -519,8 +519,8 @@
 		.layout > :global(header) {
 			position: sticky;
 			top: 0;
-			height: var(--app-header-size, auto);
-			min-height: var(--app-header-size, auto);
+			height: auto;
+			min-height: auto;
 			margin: 0;
 			width: 100%;
 			align-self: stretch;
