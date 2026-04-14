@@ -458,6 +458,8 @@
 			--app-nav-btn-size: calc(var(--app-header-size) * 0.58);
 			align-items: center;
 			flex-direction: row;
+			justify-content: space-between;
+			gap: 0.35rem;
 			border-right: none;
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 			inline-size: 100%;
@@ -472,18 +474,24 @@
 		}
 
 		nav:first-of-type {
-			flex: 1;
+			flex: 0 0 auto;
 			justify-content: flex-start;
 		}
 
 		.nav-settings {
-			flex: 1;
+			flex: 0 0 auto;
 			justify-content: flex-end;
 		}
 
 		nav {
 			flex-direction: row;
-			justify-content: flex-end;
+			flex: 0 0 auto;
+			justify-content: flex-start;
+			gap: 0.2rem;
+		}
+
+		.user {
+			margin: 0;
 		}
 
 		header.labels-none nav :global(.btn.nav-btn) {
