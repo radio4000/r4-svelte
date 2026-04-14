@@ -140,7 +140,7 @@
 			aria-label="Menu"
 			{@attach tooltip({content: 'Menu'})}
 		>
-			<Icon icon={conceptIcons.settings} />
+			<Icon icon="menu" />
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
