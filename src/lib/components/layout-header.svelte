@@ -34,22 +34,24 @@
 	<nav class="nav-secondary">
 		<a
 			href={resolve('/')}
-			class="btn home-link"
+			class="btn home-link icon-label-below"
 			class:active={page.route.id === '/'}
 			aria-label={appName}
 			style:color={activeDeckColor}
 			{@attach tooltip({content: appName})}
 		>
 			<IconR4 />
+			<span class="btn-label">{appName}</span>
 		</a>
 		<a
 			href={resolve('/search')}
-			class="btn"
+			class="btn icon-label-below"
 			class:active={page.route.id?.startsWith('/search')}
 			aria-label={m.nav_search()}
 			{@attach tooltip({content: m.nav_search()})}
 		>
 			<Icon icon={conceptIcons.search} />
+			<span class="btn-label">{m.nav_search()}</span>
 		</a>
 	</nav>
 
@@ -101,23 +103,25 @@
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
-					class="btn"
+					class="btn icon-label-below"
 					class:active={page.route.id?.startsWith('/create-channel')}
 					aria-label={m.home_create_channel()}
 					{@attach tooltip({content: m.home_create_channel()})}
 				>
 					<Icon icon="user" />
+					<span class="btn-label">{m.home_create_channel()}</span>
 				</a>
 			{/if}
 			{#if !isSignedIn}
 				<a
 					href={resolve('/auth')}
-					class="btn"
+					class="btn icon-label-below"
 					class:active={page.route.id?.startsWith('/auth')}
 					aria-label={m.auth_create_or_signin()}
 					{@attach tooltip({content: m.auth_create_or_signin()})}
 				>
 					<Icon icon="user" />
+					<span class="btn-label">{m.auth_create_or_signin()}</span>
 				</a>
 			{/if}
 		{/await}
@@ -126,21 +130,23 @@
 	<nav class="nav-settings">
 		<a
 			href={resolve('/history')}
-			class="btn"
+			class="btn icon-label-below"
 			class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
 			aria-label={m.nav_history()}
 			{@attach tooltip({content: m.nav_history()})}
 		>
 			<Icon icon={conceptIcons.history} />
+			<span class="btn-label">{m.nav_history()}</span>
 		</a>
 		<a
 			href={resolve('/menu')}
-			class="btn settings-link"
+			class="btn settings-link icon-label-below"
 			class:active={page.route.id?.startsWith('/menu') || page.route.id?.startsWith('/settings')}
 			aria-label="Menu"
 			{@attach tooltip({content: 'Menu'})}
 		>
 			<Icon icon="menu" />
+			<span class="btn-label">Menu</span>
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>

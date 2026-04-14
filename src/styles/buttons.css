@@ -241,6 +241,29 @@ button.chip.active:hover,
 	background: var(--accent-9);
 }
 
+.btn.icon-label-below,
+button.icon-label-below {
+	flex-direction: column;
+	gap: 0.12rem;
+	padding: 0.2rem 0.32rem;
+	min-width: 2.35rem;
+	min-height: 2.55rem;
+}
+
+.btn.icon-label-right,
+button.icon-label-right {
+	flex-direction: row;
+	gap: 0.3rem;
+	padding: 0.2rem 0.42rem;
+}
+
+.btn-label {
+	font-size: var(--font-1);
+	line-height: 1;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+}
+
 .chip-group {
 	display: inline-flex;
 	align-items: stretch;
