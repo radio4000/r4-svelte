@@ -500,25 +500,6 @@
 			</section>
 		{/if}
 
-		<section class="section section--globe section--globe--loggedout">
-			<div class="globe">
-				<MapChannels
-					channels={globeChannels}
-					globeMode={true}
-					zoom={1.5}
-					syncUrl={false}
-					showControls={false}
-				/>
-				<a
-					href={resolve('/channels/all') + '?display=map'}
-					class="btn map-overlay-btn"
-					aria-label={m.nav_map()}
-				>
-					<Icon icon="fullscreen" size={14} />
-				</a>
-			</div>
-		</section>
-
 		<div class="loggedout-over-globe">
 			{#if showBroadcastCountWidget}
 				<section class="section">
@@ -606,6 +587,25 @@
 				</footer>
 			{/if}
 		</div>
+
+		<section class="section section--globe section--globe--loggedout">
+			<div class="globe">
+				<MapChannels
+					channels={globeChannels}
+					globeMode={true}
+					zoom={1.5}
+					syncUrl={false}
+					showControls={false}
+				/>
+				<a
+					href={resolve('/channels/all') + '?display=map'}
+					class="btn map-overlay-btn"
+					aria-label={m.nav_map()}
+				>
+					<Icon icon="fullscreen" size={14} />
+				</a>
+			</div>
+		</section>
 	{/if}
 </div>
 
@@ -676,6 +676,11 @@
 
 	.homepage.signed-in .section--globe:not(.section--globe--loggedout) {
 		flex: 1;
+		position: sticky;
+		bottom: 0;
+	}
+
+	.homepage:not(.signed-in) .section--globe--loggedout {
 		position: sticky;
 		bottom: 0;
 	}
