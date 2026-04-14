@@ -283,7 +283,8 @@
 <style>
 	header {
 		--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.34), 3.3rem);
-		--app-nav-gap: 0.16rem;
+		--app-nav-glyph-size: clamp(1rem, calc(var(--app-nav-btn-size) * 0.52), 1.7rem);
+		--app-nav-gap: 0.22rem;
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
@@ -381,6 +382,11 @@
 		}
 	}
 
+	nav :global(.btn.nav-btn svg) {
+		width: var(--app-nav-glyph-size);
+		height: var(--app-nav-glyph-size);
+	}
+
 	.channel-link:not(.nav-btn) {
 		width: 2rem;
 		height: 2rem;
@@ -388,7 +394,7 @@
 
 	.channel-link.nav-btn {
 		padding: 0.2rem 0.32rem 0.25rem;
-		--channel-avatar-size: clamp(1.2rem, calc(var(--app-nav-btn-size) - 1.1rem), 2rem);
+		--channel-avatar-size: var(--app-nav-glyph-size);
 
 		:global(img, .fallback, svg) {
 			width: var(--channel-avatar-size);
@@ -412,14 +418,12 @@
 
 	header.labels-below :global(.btn.nav-btn) {
 		flex-direction: column;
-		--app-nav-gap: 0.12rem;
 	}
 
 	header.labels-right :global(.btn.nav-btn) {
 		flex-direction: row;
 		justify-content: flex-start;
 		min-width: min(100%, calc(var(--app-header-size) - 0.55rem));
-		--app-nav-gap: 0.36rem;
 	}
 
 	header.labels-right nav :global(.btn.nav-btn .btn-label) {
