@@ -1,5 +1,6 @@
 <script>
 	import {
+		IconBook,
 		IconAdd,
 		IconArrowDown,
 		IconArrowLeft,
@@ -79,6 +80,7 @@
 	const {children, icon = '', title, className = '', size = 18, ...rest} = $props()
 
 	const icons = {
+		book: IconBook,
 		add: IconAdd,
 		'arrow-down': IconArrowDown,
 		'arrow-left': IconArrowLeft,

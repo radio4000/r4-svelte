@@ -148,7 +148,7 @@
 						href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
 						class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
 					>
-						<Icon icon="tag" />
+						<Icon icon="book" />
 						{m.track_detail_nav_discogs()}
 					</a>
 					<a
