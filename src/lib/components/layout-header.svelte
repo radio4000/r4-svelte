@@ -1,6 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
+	import {onMount} from 'svelte'
 	import {appState} from '$lib/app-state.svelte'
 	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
 	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
@@ -28,13 +29,111 @@
 	const isAutoRadio = $derived(autoDecks.length > 0)
 	const deckIds = $derived(Object.keys(appState.decks).map(Number))
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
+
+	const DESKTOP_MIN = 68
+	const DESKTOP_MAX = 240
+	const DESKTOP_DEFAULT = 104
+	const DESKTOP_EXTENDED_THRESHOLD = 128
+	const MOBILE_MIN = 52
+	const MOBILE_MAX = 132
+	const MOBILE_DEFAULT = 78
+	const MOBILE_EXTENDED_THRESHOLD = 92
+	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
+	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
+
+	let isMobileViewport = $state(false)
+	let headerSize = $state(DESKTOP_DEFAULT)
+	let headerMode = $state(/** @type {'compact' | 'extended'} */ ('compact'))
+	let resizing = $state(false)
+
+	function clamp(value, min, max) {
+		return Math.min(max, Math.max(min, value))
+	}
+
+	function sizeBounds(mobile) {
+		return mobile ? [MOBILE_MIN, MOBILE_MAX] : [DESKTOP_MIN, DESKTOP_MAX]
+	}
+
+	function storageKey(mobile) {
+		return mobile ? STORAGE_KEY_MOBILE : STORAGE_KEY_DESKTOP
+	}
+
+	function detectMobileViewport() {
+		return typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+	}
+
+	function applyModeFromSize() {
+		const threshold = isMobileViewport ? MOBILE_EXTENDED_THRESHOLD : DESKTOP_EXTENDED_THRESHOLD
+		headerMode = headerSize >= threshold ? 'extended' : 'compact'
+	}
+
+	function loadSizeForViewport(mobile) {
+		const [min, max] = sizeBounds(mobile)
+		const fallback = mobile ? MOBILE_DEFAULT : DESKTOP_DEFAULT
+		const raw =
+			typeof localStorage !== 'undefined' ? Number(localStorage.getItem(storageKey(mobile))) : NaN
+		headerSize = Number.isFinite(raw) ? clamp(raw, min, max) : fallback
+		applyModeFromSize()
+	}
+
+	function persistSize() {
+		if (typeof localStorage === 'undefined') return
+		localStorage.setItem(storageKey(isMobileViewport), String(Math.round(headerSize)))
+	}
+
+	function handleResizeStart(event) {
+		event.preventDefault()
+		const startPointer = isMobileViewport ? event.clientY : event.clientX
+		const startSize = headerSize
+		const [min, max] = sizeBounds(isMobileViewport)
+		resizing = true
+
+		const handleMove = (moveEvent) => {
+			const currentPointer = isMobileViewport ? moveEvent.clientY : moveEvent.clientX
+			const delta = currentPointer - startPointer
+			headerSize = clamp(startSize + delta, min, max)
+			applyModeFromSize()
+		}
+
+		const stop = () => {
+			resizing = false
+			persistSize()
+			window.removeEventListener('pointermove', handleMove)
+			window.removeEventListener('pointerup', stop)
+			window.removeEventListener('pointercancel', stop)
+		}
+
+		window.addEventListener('pointermove', handleMove)
+		window.addEventListener('pointerup', stop)
+		window.addEventListener('pointercancel', stop)
+	}
+
+	onMount(() => {
+		isMobileViewport = detectMobileViewport()
+		loadSizeForViewport(isMobileViewport)
+		const onViewportResize = () => {
+			const nextMobile = detectMobileViewport()
+			if (nextMobile !== isMobileViewport) {
+				isMobileViewport = nextMobile
+				loadSizeForViewport(nextMobile)
+			}
+		}
+		window.addEventListener('resize', onViewportResize)
+		return () => window.removeEventListener('resize', onViewportResize)
+	})
 </script>
 
-<header>
+<header
+	class:compact={headerMode === 'compact'}
+	class:extended={headerMode === 'extended'}
+	class:mobile={isMobileViewport}
+	class:resizing
+	style={`--app-header-size:${headerSize}px;`}
+>
 	<nav class="nav-secondary">
 		<a
 			href={resolve('/')}
-			class="btn home-link icon-label-below"
+			class="btn home-link nav-btn"
 			class:active={page.route.id === '/'}
 			aria-label={appName}
 			style:color={activeDeckColor}
@@ -45,7 +144,7 @@
 		</a>
 		<a
 			href={resolve('/search')}
-			class="btn icon-label-below"
+			class="btn nav-btn"
 			class:active={page.route.id?.startsWith('/search')}
 			aria-label={m.nav_search()}
 			{@attach tooltip({content: m.nav_search()})}
@@ -65,12 +164,12 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
-				<AddTrackDialog class="icon-label-below" label="Add" />
+				<AddTrackDialog class="nav-btn" label="Add" />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
 					class={[
 						'btn',
-						'icon-label-below',
+						'nav-btn',
 						'channel-link',
 						{broadcasting: isBroadcasting, active: page.params?.slug === userChannel.slug}
 					]}
@@ -85,27 +184,29 @@
 				{#if isBroadcasting}
 					<a
 						href={resolve(`/${userChannel.slug}`)}
-						class="btn ghost broadcasting-btn"
+						class="btn ghost broadcasting-btn nav-btn"
 						aria-label={m.status_broadcasting()}
 						{@attach tooltip({content: m.status_broadcasting()})}
 					>
 						<Icon icon="signal" />
+						<span class="btn-label">{m.status_live_short()}</span>
 					</a>
 				{/if}
 				{#if isAutoRadio}
 					<a
 						href={resolve(`/${userChannel.slug}`)}
-						class="btn ghost auto-btn"
+						class="btn ghost auto-btn nav-btn"
 						aria-label={m.auto_radio_join()}
 						{@attach tooltip({content: m.auto_radio_join()})}
 					>
 						<Icon icon="infinite" />
+						<span class="btn-label">Auto</span>
 					</a>
 				{/if}
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
-					class="btn icon-label-below"
+					class="btn nav-btn"
 					class:active={page.route.id?.startsWith('/create-channel')}
 					aria-label={m.home_create_channel()}
 					{@attach tooltip({content: m.home_create_channel()})}
@@ -117,7 +218,7 @@
 			{#if !isSignedIn}
 				<a
 					href={resolve('/auth')}
-					class="btn icon-label-below"
+					class="btn nav-btn"
 					class:active={page.route.id?.startsWith('/auth')}
 					aria-label={m.auth_create_or_signin()}
 					{@attach tooltip({content: m.auth_create_or_signin()})}
@@ -132,7 +233,7 @@
 	<nav class="nav-settings">
 		<a
 			href={resolve('/history')}
-			class="btn icon-label-below"
+			class="btn nav-btn"
 			class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
 			aria-label={m.nav_history()}
 			{@attach tooltip({content: m.nav_history()})}
@@ -142,7 +243,7 @@
 		</a>
 		<a
 			href={resolve('/menu')}
-			class="btn settings-link icon-label-below"
+			class="btn settings-link nav-btn"
 			class:active={page.route.id?.startsWith('/menu') || page.route.id?.startsWith('/settings')}
 			aria-label="Menu"
 			{@attach tooltip({content: 'Menu'})}
@@ -152,18 +253,28 @@
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
+	<div
+		class="header-resize-handle"
+		role="separator"
+		aria-label="Resize app menu"
+		aria-orientation={isMobileViewport ? 'horizontal' : 'vertical'}
+		onpointerdown={handleResizeStart}
+	></div>
 </header>
 
 <style>
 	header {
+		--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.34), 3.3rem);
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
 		padding: 0.3rem;
+		inline-size: var(--app-header-size);
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		z-index: 50;
+		position: relative;
 	}
 
 	nav {
@@ -188,22 +299,29 @@
 		justify-content: flex-start;
 	}
 
-	.home-link:not(.icon-label-below) {
+	.home-link:not(.nav-btn) {
 		padding: 0;
 	}
 
-	nav :global(.btn.icon-label-below) {
-		min-width: 3.1rem;
-		min-height: 3.2rem;
-		padding: 0.26rem 0.42rem;
+	nav :global(.btn.nav-btn) {
+		min-width: var(--app-nav-btn-size);
+		min-height: var(--app-nav-btn-size);
+		height: auto;
+		width: auto;
+		padding: 0.26rem 0.38rem;
+		transition:
+			min-width 120ms ease,
+			min-height 120ms ease,
+			padding 120ms ease;
 	}
 
-	nav :global(.btn.icon-label-below .btn-label) {
+	nav :global(.btn.nav-btn .btn-label) {
 		display: block;
-		max-width: 7ch;
+		max-width: 10ch;
 		text-align: center;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.user {
@@ -242,15 +360,14 @@
 		}
 	}
 
-	.channel-link:not(.icon-label-below) {
+	.channel-link:not(.nav-btn) {
 		width: 2rem;
 		height: 2rem;
 	}
 
-	.channel-link.icon-label-below {
+	.channel-link.nav-btn {
 		padding: 0.2rem 0.32rem 0.25rem;
-		min-height: 3.2rem;
-		--channel-avatar-size: 1.5rem;
+		--channel-avatar-size: clamp(1.2rem, calc(var(--app-nav-btn-size) - 1.1rem), 2rem);
 
 		:global(img, .fallback, svg) {
 			width: var(--channel-avatar-size);
@@ -268,6 +385,25 @@
 		white-space: nowrap;
 	}
 
+	header.compact :global(.btn.nav-btn .btn-label) {
+		display: none;
+	}
+
+	header.extended.mobile :global(.btn.nav-btn) {
+		flex-direction: column;
+	}
+
+	header.extended:not(.mobile) :global(.btn.nav-btn) {
+		flex-direction: row;
+		justify-content: flex-start;
+		min-width: min(100%, calc(var(--app-header-size) - 0.55rem));
+	}
+
+	header.extended:not(.mobile) nav :global(.btn.nav-btn .btn-label) {
+		text-align: left;
+		max-width: none;
+	}
+
 	/* Active indicator: left bar on desktop instead of background fill */
 	nav :global(.btn.active) {
 		color: var(--accent-9);
@@ -279,10 +415,14 @@
 
 	@media (max-width: 768px) {
 		header {
+			--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.42), 3.4rem);
 			align-items: center;
 			flex-direction: row;
 			border-right: none;
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
+			inline-size: auto;
+			block-size: var(--app-header-size);
+			min-block-size: var(--app-header-size);
 		}
 
 		nav:first-of-type {
@@ -300,12 +440,40 @@
 			justify-content: flex-end;
 		}
 
+		header.compact nav :global(.btn.nav-btn) {
+			min-width: var(--app-nav-btn-size);
+			min-height: var(--app-nav-btn-size);
+			padding-inline: 0.3rem;
+		}
+
 		/* Active indicator: top bar on mobile */
 		nav :global(.btn.active) {
 			box-shadow:
 				lch(0 0 0 / 0.06) 0px 4px 4px -1px,
 				lch(0 0 0 / 0.12) 0px 1px 1px 0px,
 				inset 0 2px 0 var(--accent-9);
+		}
+	}
+
+	.header-resize-handle {
+		position: absolute;
+		top: 0;
+		right: -4px;
+		width: 8px;
+		height: 100%;
+		cursor: ew-resize;
+		z-index: 2;
+	}
+
+	@media (max-width: 768px) {
+		.header-resize-handle {
+			left: 0;
+			right: 0;
+			top: auto;
+			bottom: -4px;
+			width: 100%;
+			height: 8px;
+			cursor: ns-resize;
 		}
 	}
 	@media (min-width: 768px) {
