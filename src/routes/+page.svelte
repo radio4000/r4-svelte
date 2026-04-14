@@ -18,7 +18,6 @@
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import MyChannelControls from '$lib/components/my-channel-controls.svelte'
 
-	import CoverFlip from '$lib/components/cover-flip.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import {not, isNull} from '@tanstack/db'
@@ -548,32 +547,6 @@
 				{/if}
 			</div>
 
-			{#if featuredChannels.length}
-				<CoverFlip
-					items={featuredPool.length > featuredChannels.length ? featuredPool : featuredChannels}
-					orientation="horizontal"
-					class="featured-flip"
-				>
-					{#snippet item({item: channel, active})}
-						<div class="flip-card" class:active>
-							<ChannelCard {channel} />
-						</div>
-					{/snippet}
-					{#snippet active({item: channel})}
-						<p class="flip-label">
-							<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
-							{#if channel.description}
-								<span class="flip-desc"
-									>— {channel.description.length > 140
-										? channel.description.slice(0, 140) + '…'
-										: channel.description}</span
-								>
-							{/if}
-						</p>
-					{/snippet}
-				</CoverFlip>
-			{/if}
-
 			{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 				<footer class="stats footer-stats">
 					{#if channelCount}<a href={resolve('/channels/all')}
@@ -1004,27 +977,4 @@
 		}
 	}
 
-	:global(.featured-flip) {
-		gap: 0.25rem;
-	}
-
-	.flip-card {
-		width: 250px;
-
-		:global(.body) {
-			display: none;
-		}
-	}
-
-	.flip-desc {
-		color: var(--gray-10);
-	}
-
-	.flip-label {
-		text-align: center;
-		font-size: var(--font-4);
-		padding: 0.5rem;
-		/* avoid jumping descriptions */
-		min-height: 6rem;
-	}
 </style>

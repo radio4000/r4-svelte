@@ -1,8 +1,32 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {appName, appShortName} from '$lib/config'
+	import {getFeaturedPool} from '$lib/collections/featured'
+	import {featuredScore} from '$lib/utils'
+	import CoverFlip from '$lib/components/cover-flip.svelte'
+	import ChannelCard from '$lib/components/channel-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import BackLink from '$lib/components/back-link.svelte'
+
+	const FEATURED_DAYS = 30
+
+	let featuredChannels = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
+	let featuredLoaded = $state(false)
+
+	$effect(() => {
+		if (featuredLoaded) return
+		featuredLoaded = true
+		void (async () => {
+			try {
+				const pool = await getFeaturedPool(FEATURED_DAYS)
+				featuredChannels = pool
+					.toSorted((a, b) => featuredScore(b) - featuredScore(a))
+					.slice(0, 12)
+			} catch (e) {
+				console.warn('[about] failed to load featured channels', e)
+			}
+		})()
+	})
 </script>
 
 <svelte:head>
@@ -64,6 +88,27 @@
 </figure>
 
 <article class="constrained">
+	{#if featuredChannels.length}
+		<CoverFlip items={featuredChannels} orientation="horizontal" class="featured-flip">
+			{#snippet item({item: channel, active})}
+				<div class="flip-card" class:active>
+					<ChannelCard {channel} />
+				</div>
+			{/snippet}
+			{#snippet active({item: channel})}
+				<p class="flip-label">
+					<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+					{#if channel.description}
+						<span class="flip-desc"
+							>— {channel.description.length > 140
+								? channel.description.slice(0, 140) + '…'
+								: channel.description}</span
+						>
+					{/if}
+				</p>
+			{/snippet}
+		</CoverFlip>
+	{/if}
 	<footer>
 		<p>
 			<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
@@ -110,5 +155,29 @@
 		justify-content: center;
 		gap: 0.5rem;
 		flex-wrap: wrap;
+	}
+
+	:global(.featured-flip) {
+		gap: 0.25rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.flip-card {
+		width: 250px;
+
+		:global(.body) {
+			display: none;
+		}
+	}
+
+	.flip-desc {
+		color: var(--gray-10);
+	}
+
+	.flip-label {
+		text-align: center;
+		font-size: var(--font-4);
+		padding: 0.5rem;
+		min-height: 6rem;
 	}
 </style>
