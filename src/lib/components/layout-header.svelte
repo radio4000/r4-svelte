@@ -272,10 +272,24 @@
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
 	<div
-		class="header-resize-handle"
+		class="header-resize-handle header-resize-handle-desktop"
 		role="separator"
 		aria-label="Resize app menu"
-		aria-orientation={isMobileViewport ? 'horizontal' : 'vertical'}
+		aria-orientation="vertical"
+		onpointerdown={handleResizeStart}
+	></div>
+	<div
+		class="header-resize-handle header-resize-handle-mobile header-resize-handle-mobile-left"
+		role="separator"
+		aria-label="Resize app menu"
+		aria-orientation="horizontal"
+		onpointerdown={handleResizeStart}
+	></div>
+	<div
+		class="header-resize-handle header-resize-handle-mobile header-resize-handle-mobile-right"
+		role="separator"
+		aria-label="Resize app menu"
+		aria-orientation="horizontal"
 		onpointerdown={handleResizeStart}
 	></div>
 </header>
@@ -451,6 +465,9 @@
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 			inline-size: 100%;
 			width: 100%;
+			min-inline-size: 100%;
+			min-width: 100%;
+			max-inline-size: none;
 			block-size: clamp(min-content, var(--app-header-size), max-content);
 			min-block-size: min-content;
 			max-block-size: max-content;
@@ -489,23 +506,41 @@
 
 	.header-resize-handle {
 		position: absolute;
+		z-index: 2;
+	}
+
+	.header-resize-handle-desktop {
+		position: absolute;
 		top: 0;
 		right: -4px;
 		width: 8px;
 		height: 100%;
 		cursor: ew-resize;
-		z-index: 2;
+	}
+
+	.header-resize-handle-mobile {
+		display: none;
 	}
 
 	@media (max-width: 768px) {
-		.header-resize-handle {
-			left: 0;
-			right: 0;
-			top: auto;
-			bottom: -4px;
-			width: 100%;
-			height: 8px;
+		.header-resize-handle-desktop {
+			display: none;
+		}
+
+		.header-resize-handle-mobile {
+			display: block;
+			top: -4px;
+			width: 14px;
+			height: 14px;
 			cursor: ns-resize;
+		}
+
+		.header-resize-handle-mobile-left {
+			left: 0;
+		}
+
+		.header-resize-handle-mobile-right {
+			right: 0;
 		}
 	}
 </style>
