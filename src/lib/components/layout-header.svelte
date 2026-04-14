@@ -33,12 +33,13 @@
 	const DESKTOP_MIN = 68
 	const DESKTOP_MAX = 200
 	const DESKTOP_DEFAULT = 104
-	const DESKTOP_LABEL_RIGHT_THRESHOLD = 104
-	const DESKTOP_LABEL_BELOW_THRESHOLD = 168
+	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
+	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
 	const MOBILE_MIN = 52
 	const MOBILE_MAX = 120
 	const MOBILE_DEFAULT = 78
 	const MOBILE_LABEL_BELOW_THRESHOLD = 80
+	const MOBILE_LABEL_RIGHT_THRESHOLD = 108
 	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
 	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
 
@@ -65,15 +66,19 @@
 
 	function applyModeFromSize() {
 		if (isMobileViewport) {
+			if (headerSize >= MOBILE_LABEL_RIGHT_THRESHOLD) {
+				labelLayout = 'right'
+				return
+			}
 			labelLayout = headerSize >= MOBILE_LABEL_BELOW_THRESHOLD ? 'below' : 'none'
-			return
-		}
-		if (headerSize >= DESKTOP_LABEL_BELOW_THRESHOLD) {
-			labelLayout = 'below'
 			return
 		}
 		if (headerSize >= DESKTOP_LABEL_RIGHT_THRESHOLD) {
 			labelLayout = 'right'
+			return
+		}
+		if (headerSize >= DESKTOP_LABEL_BELOW_THRESHOLD) {
+			labelLayout = 'below'
 			return
 		}
 		labelLayout = 'none'
@@ -410,14 +415,14 @@
 		--app-nav-gap: 0.12rem;
 	}
 
-	header.labels-right:not(.mobile) :global(.btn.nav-btn) {
+	header.labels-right :global(.btn.nav-btn) {
 		flex-direction: row;
 		justify-content: flex-start;
 		min-width: min(100%, calc(var(--app-header-size) - 0.55rem));
 		--app-nav-gap: 0.36rem;
 	}
 
-	header.labels-right:not(.mobile) nav :global(.btn.nav-btn .btn-label) {
+	header.labels-right nav :global(.btn.nav-btn .btn-label) {
 		text-align: left;
 		max-width: none;
 	}
