@@ -289,13 +289,15 @@
 		flex-flow: column nowrap;
 		gap: 1rem;
 		padding: 0.3rem;
-		inline-size: var(--app-header-size);
+		inline-size: fit-content;
+		min-inline-size: var(--app-header-size);
 		max-inline-size: max-content;
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		z-index: 50;
 		position: relative;
+		overflow: visible;
 	}
 
 	nav {
@@ -449,9 +451,9 @@
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 			inline-size: 100%;
 			width: 100%;
-			block-size: var(--app-header-size);
+			block-size: auto;
 			min-block-size: var(--app-header-size);
-			max-block-size: 120px;
+			max-block-size: none;
 			box-sizing: border-box;
 		}
 
@@ -504,11 +506,6 @@
 			width: 100%;
 			height: 8px;
 			cursor: ns-resize;
-		}
-	}
-	@media (min-width: 768px) {
-		header {
-			overflow-y: auto;
 		}
 	}
 </style>
