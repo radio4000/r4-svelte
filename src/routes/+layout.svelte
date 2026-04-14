@@ -519,7 +519,8 @@
 		.layout > :global(header) {
 			position: sticky;
 			top: 0;
-			height: auto;
+			height: var(--app-header-size, auto);
+			min-height: var(--app-header-size, auto);
 			order: 2;
 			z-index: 40;
 		}

@@ -451,9 +451,9 @@
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 			inline-size: 100%;
 			width: 100%;
-			block-size: auto;
-			min-block-size: var(--app-header-size);
-			max-block-size: none;
+			block-size: clamp(min-content, var(--app-header-size), max-content);
+			min-block-size: min-content;
+			max-block-size: max-content;
 			box-sizing: border-box;
 		}
 
