@@ -640,9 +640,10 @@
 		margin-bottom: 0;
 	}
 
-	.homepage.signed-in > .section:not(.section--globe) {
+	.homepage.signed-in > .section:not(.section--globe):not(.dashboard-section) {
 		position: relative;
 		z-index: 1;
+		background: var(--color-interface);
 	}
 
 	.section--globe {
