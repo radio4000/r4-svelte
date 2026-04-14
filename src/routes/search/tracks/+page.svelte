@@ -78,7 +78,6 @@
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
 						<li class="track-with-channel">
-							<ChannelMicroCard slug={track.slug} />
 							<TrackCard
 								{track}
 								{index}
@@ -90,6 +89,7 @@
 									playTrack(appState.active_deck_id, trackId, null, 'play_search')
 								}}
 							/>
+							<ChannelMicroCard slug={track.slug} />
 						</li>
 					{/each}
 				</ul>

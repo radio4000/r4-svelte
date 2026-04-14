@@ -187,6 +187,7 @@
 							class={{
 								'virtual-item': true,
 								'track-item': true,
+								'track-with-channel': showSlug,
 								'sticky-active':
 									deckId != null && appState.decks[deckId]?.playlist_track === item.track?.id
 							}}
@@ -202,9 +203,10 @@
 								selected={selectedTrackId === item.track?.id}
 								onPlay={playContext ? playFromList : undefined}
 								{canEdit}
-								{showSlug}
+								showSlug={false}
 								{onTagClick}
 							/>
+							{#if showSlug}<ChannelMicroCard slug={item.track.slug} />{/if}
 							{@render footer?.({track: item.track})}
 						</div>
 					{/if}
@@ -244,7 +246,6 @@
 									data-track-id={track.id}
 									onclick={(event) => selectTrackFromEvent(event, track.id)}
 								>
-									{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 									<TrackCard
 										{track}
 										{index}
@@ -255,6 +256,7 @@
 										showSlug={false}
 										{onTagClick}
 									/>
+									{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 									{@render footer?.({track})}
 								</li>
 							{/each}
@@ -289,7 +291,6 @@
 					data-track-id={track.id}
 					onclick={(event) => selectTrackFromEvent(event, track.id)}
 				>
-					{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 					<TrackCard
 						{track}
 						{index}
@@ -300,6 +301,7 @@
 						showSlug={false}
 						{onTagClick}
 					/>
+					{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 					{@render footer?.({track})}
 				</li>
 			{/each}

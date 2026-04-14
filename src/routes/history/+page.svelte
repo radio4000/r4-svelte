@@ -188,7 +188,6 @@
 								{#if reason}<Icon icon={reason.icon} size={13} />{/if}
 							</span>
 							<div class="track-col">
-								<ChannelMicroCard slug={histTrack.slug} />
 								<TrackCard track={histTrack} onPlay={() => playHistoryTrack(play)}>
 									{#snippet description()}
 										{#if endData?.ms_played || p.shuffle}
@@ -202,6 +201,7 @@
 										{/if}
 									{/snippet}
 								</TrackCard>
+								<ChannelMicroCard slug={histTrack.slug} />
 							</div>
 						</li>
 					{/each}
@@ -280,10 +280,21 @@
 
 	.track-col {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
 		min-width: 0;
 		overflow: hidden;
-		padding-block-start: 0.3rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-col :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-col :global(.card) {
+		padding-inline-start: 0;
 	}
 
 	.play-time {

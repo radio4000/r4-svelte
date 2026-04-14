@@ -129,8 +129,8 @@
 			<ul class="list">
 				{#each group.tracks as track (track.id)}
 					<li class="track-with-channel">
-						<ChannelMicroCard slug={track.slug} />
 						<TrackCard {track} />
+						<ChannelMicroCard slug={track.slug} />
 					</li>
 				{/each}
 			</ul>

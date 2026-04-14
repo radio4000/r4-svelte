@@ -61,7 +61,11 @@
 	}
 
 	.slug {
+		display: block;
 		font-size: var(--font-2);
+		max-width: 20vw;
 		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 </style>
