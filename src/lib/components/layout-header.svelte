@@ -443,10 +443,12 @@
 			flex-direction: row;
 			border-right: none;
 			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
-			inline-size: auto;
+			inline-size: 100%;
+			width: 100%;
 			block-size: var(--app-header-size);
 			min-block-size: var(--app-header-size);
 			max-block-size: 120px;
+			box-sizing: border-box;
 		}
 
 		nav:first-of-type {
