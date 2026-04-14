@@ -283,8 +283,8 @@
 <style>
 	header {
 		--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.34), 3.3rem);
-		--app-nav-glyph-size: clamp(1rem, calc(var(--app-nav-btn-size) * 0.52), 1.7rem);
-		--app-nav-gap: 0.22rem;
+		--app-nav-glyph-size: clamp(0.88rem, calc(var(--app-nav-btn-size) * 0.42), 1.32rem);
+		--app-nav-gap: 0.34rem;
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
