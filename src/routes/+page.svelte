@@ -636,6 +636,10 @@
 		margin-bottom: 1rem;
 	}
 
+	.homepage:not(.signed-in) .section {
+		margin-bottom: 0;
+	}
+
 	.homepage.signed-in > .section:not(.section--globe) {
 		position: relative;
 		z-index: 1;
@@ -676,6 +680,8 @@
 		flex-direction: column;
 		flex: 1;
 		min-height: 0;
+		padding: 0.6rem 0.5rem;
+		gap: 0.6rem;
 	}
 
 	.section--featured-col {
