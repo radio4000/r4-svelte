@@ -596,6 +596,11 @@
 		}
 	}
 
+	.homepage.signed-in {
+		gap: 1rem;
+		background: var(--color-interface);
+	}
+
 	.homepage:not(.signed-in) {
 		padding: 0;
 	}
@@ -633,16 +638,22 @@
 	}
 
 	.section {
-		margin-bottom: 1rem;
+		margin-bottom: 0;
 	}
 
 	.homepage:not(.signed-in) .section {
 		margin-bottom: 0;
 	}
 
+	.homepage > .section:not(.section--globe) {
+		position: relative;
+		z-index: 6;
+		background: var(--color-interface);
+	}
+
 	.homepage.signed-in > .section:not(.section--globe):not(.dashboard-section) {
 		position: relative;
-		z-index: 1;
+		z-index: 6;
 		background: var(--color-interface);
 	}
 
@@ -675,7 +686,7 @@
 
 	.loggedout-over-globe {
 		position: relative;
-		z-index: 2;
+		z-index: 6;
 		background: var(--color-interface);
 		display: flex;
 		flex-direction: column;
@@ -693,6 +704,7 @@
 
 	.section--globe--loggedout .globe {
 		max-height: 55dvh;
+		z-index: 0;
 	}
 
 	.loggedout-grid {
