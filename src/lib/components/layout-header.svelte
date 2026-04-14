@@ -311,6 +311,7 @@
 
 	nav {
 		flex-direction: column;
+		margin: 0;
 
 		@media (min-width: 768px) {
 			/* vertical version has more space */
@@ -340,6 +341,7 @@
 		min-height: var(--app-nav-btn-size);
 		height: auto;
 		width: auto;
+		margin: 0;
 		padding: 0.26rem 0.38rem;
 		gap: var(--app-nav-gap);
 		transition:
