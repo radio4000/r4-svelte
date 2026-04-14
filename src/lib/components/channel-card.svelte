@@ -10,7 +10,6 @@
 	import LinkEntities from './link-entities.svelte'
 	import ButtonFollow from './button-follow.svelte'
 	import PopoverMenu from './popover-menu.svelte'
-	import ButtonPlay from './button-play.svelte'
 	import Icon from './icon.svelte'
 
 	/** @type {{channel: import('$lib/types').Channel, href?: string, updatedAtHref?: string, children?: import('svelte').Snippet}}*/
@@ -26,15 +25,24 @@
 		Object.values(appState.decks).some((d) => d.playlist_slug === channel.slug && d.is_playing)
 	)
 
-	/** @param {MouseEvent} e */
-	function handleDblClick(e) {
-		e.preventDefault()
-		if (e.target instanceof Element && e.target.closest('a, button')) return
+	/** @param {MouseEvent} [event] */
+	function triggerPrimaryAction(event) {
+		event?.preventDefault()
 		if (isBroadcasting) {
 			joinBroadcast(appState.active_deck_id, channel.id)
-		} else {
-			playChannel(appState.active_deck_id, channel)
+			return
 		}
+		if (isPlaying) {
+			togglePlayPause(appState.active_deck_id)
+			return
+		}
+		playChannel(appState.active_deck_id, channel)
+	}
+
+	/** @param {MouseEvent} e */
+	function handleDblClick(e) {
+		if (e.target instanceof Element && e.target.closest('a, button')) return
+		triggerPrimaryAction(e)
 	}
 
 	function share() {
@@ -54,7 +62,17 @@
 >
 	<figure>
 		<ChannelAvatar id={channel.image} alt={channel.name} />
-		<ButtonPlay {channel} />
+		<button
+			class:active={isPlaying}
+			onclick={triggerPrimaryAction}
+			title={isBroadcasting
+				? m.channel_card_join_broadcast()
+				: isPlaying
+					? m.common_pause()
+					: m.common_play()}
+		>
+			<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
+		</button>
 	</figure>
 	<div class="body">
 		<div class="info">
@@ -107,13 +125,14 @@
 						<button
 							type="button"
 							role="menuitem"
-							onclick={() =>
-								isPlaying
-									? togglePlayPause(appState.active_deck_id)
-									: playChannel(appState.active_deck_id, channel)}
+							onclick={triggerPrimaryAction}
 						>
-							<Icon icon={isPlaying ? 'pause' : 'play-fill'} />
-							{isPlaying ? m.common_pause() : m.common_play()}
+							<Icon icon={isBroadcasting ? 'signal' : isPlaying ? 'pause' : 'play-fill'} />
+							{isBroadcasting
+								? m.channel_card_join_broadcast()
+								: isPlaying
+									? m.common_pause()
+									: m.common_play()}
 						</button>
 						{#if isBroadcasting}
 							<button
