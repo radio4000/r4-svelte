@@ -171,7 +171,7 @@
 		<PinsNav />
 	</nav> -->
 
-	<nav class="user">
+	<nav class="user-nav">
 		{#await preloading then}
 			<EditTrackDialog />
 			<ShareDialog />
@@ -359,7 +359,7 @@
 		white-space: nowrap;
 	}
 
-	.user {
+	.user-nav {
 		margin-top: auto;
 		margin-bottom: auto;
 	}
@@ -490,7 +490,7 @@
 			gap: 0.2rem;
 		}
 
-		.user {
+		.user-nav {
 			margin: 0;
 		}
 
