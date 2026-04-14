@@ -520,6 +520,12 @@
 			position: sticky;
 			top: 0;
 			height: auto;
+			order: 2;
+			z-index: 40;
+		}
+
+		.content-wrapper {
+			order: 1;
 		}
 
 		.content {
