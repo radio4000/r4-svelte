@@ -41,7 +41,7 @@
 			{@attach tooltip({content: appName})}
 		>
 			<IconR4 />
-			<span class="btn-label">{appName}</span>
+			<span class="btn-label">Home</span>
 		</a>
 		<a
 			href={resolve('/search')}
