@@ -2,7 +2,7 @@
 	import {resolve} from '$app/paths'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 
-	/** @type {{channel?: import('$lib/types').Channel, slug?: string, href?: string | undefined, className?: string}} */
+	/** @type {{channel?: import('$lib/types').Channel, slug?: string | null, href?: string | undefined, className?: string}} */
 	let {channel, slug: slugProp, href, className = ''} = $props()
 
 	let effectiveSlug = $derived(channel?.slug ?? slugProp)
