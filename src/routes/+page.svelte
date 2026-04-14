@@ -639,7 +639,6 @@
 	.homepage.signed-in > .section:not(.section--globe) {
 		position: relative;
 		z-index: 1;
-		background: var(--color-interface);
 	}
 
 	.section--globe {
@@ -660,11 +659,12 @@
 	.homepage:not(.signed-in) .section--globe--loggedout {
 		position: sticky;
 		bottom: 0;
+		z-index: 0;
 	}
 
 	.loggedout-over-globe {
 		position: relative;
-		z-index: 1;
+		z-index: 2;
 		background: var(--color-interface);
 		display: flex;
 		flex-direction: column;
@@ -710,6 +710,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+		padding: 0.45rem;
+		border-radius: var(--border-radius);
+		background: var(--color-interface);
 	}
 
 	.dashboard-grid {
