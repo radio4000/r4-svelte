@@ -453,7 +453,7 @@
 
 	@media (max-width: 768px) {
 		header {
-			--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.42), 3.4rem);
+			--app-nav-btn-size: calc(var(--app-header-size) * 0.58);
 			align-items: center;
 			flex-direction: row;
 			border-right: none;
