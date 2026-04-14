@@ -605,11 +605,11 @@
 		top: 0.5rem;
 		align-items: center;
 		margin: 0 0 0.6rem;
-		z-index: 1;
+		z-index: 30;
 	}
 
 	.filtermenu:first-child {
-		z-index: 2;
+		z-index: 31;
 	}
 
 	.create-channel-action {
