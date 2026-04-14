@@ -31,19 +31,20 @@
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 
 	const DESKTOP_MIN = 68
-	const DESKTOP_MAX = 240
+	const DESKTOP_MAX = 200
 	const DESKTOP_DEFAULT = 104
-	const DESKTOP_EXTENDED_THRESHOLD = 128
+	const DESKTOP_LABEL_RIGHT_THRESHOLD = 104
+	const DESKTOP_LABEL_BELOW_THRESHOLD = 168
 	const MOBILE_MIN = 52
-	const MOBILE_MAX = 132
+	const MOBILE_MAX = 120
 	const MOBILE_DEFAULT = 78
-	const MOBILE_EXTENDED_THRESHOLD = 92
+	const MOBILE_LABEL_BELOW_THRESHOLD = 80
 	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
 	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
 
 	let isMobileViewport = $state(false)
 	let headerSize = $state(DESKTOP_DEFAULT)
-	let headerMode = $state(/** @type {'compact' | 'extended'} */ ('compact'))
+	let labelLayout = $state(/** @type {'none' | 'right' | 'below'} */ ('none'))
 	let resizing = $state(false)
 
 	function clamp(value, min, max) {
@@ -63,8 +64,19 @@
 	}
 
 	function applyModeFromSize() {
-		const threshold = isMobileViewport ? MOBILE_EXTENDED_THRESHOLD : DESKTOP_EXTENDED_THRESHOLD
-		headerMode = headerSize >= threshold ? 'extended' : 'compact'
+		if (isMobileViewport) {
+			labelLayout = headerSize >= MOBILE_LABEL_BELOW_THRESHOLD ? 'below' : 'none'
+			return
+		}
+		if (headerSize >= DESKTOP_LABEL_BELOW_THRESHOLD) {
+			labelLayout = 'below'
+			return
+		}
+		if (headerSize >= DESKTOP_LABEL_RIGHT_THRESHOLD) {
+			labelLayout = 'right'
+			return
+		}
+		labelLayout = 'none'
 	}
 
 	function loadSizeForViewport(mobile) {
@@ -124,8 +136,9 @@
 </script>
 
 <header
-	class:compact={headerMode === 'compact'}
-	class:extended={headerMode === 'extended'}
+	class:labels-none={labelLayout === 'none'}
+	class:labels-right={labelLayout === 'right'}
+	class:labels-below={labelLayout === 'below'}
 	class:mobile={isMobileViewport}
 	class:resizing
 	style={`--app-header-size:${headerSize}px;`}
@@ -265,11 +278,13 @@
 <style>
 	header {
 		--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.34), 3.3rem);
+		--app-nav-gap: 0.16rem;
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
 		padding: 0.3rem;
 		inline-size: var(--app-header-size);
+		max-inline-size: 200px;
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
@@ -309,6 +324,7 @@
 		height: auto;
 		width: auto;
 		padding: 0.26rem 0.38rem;
+		gap: var(--app-nav-gap);
 		transition:
 			min-width 120ms ease,
 			min-height 120ms ease,
@@ -385,21 +401,23 @@
 		white-space: nowrap;
 	}
 
-	header.compact :global(.btn.nav-btn .btn-label) {
+	header.labels-none :global(.btn.nav-btn .btn-label) {
 		display: none;
 	}
 
-	header.extended.mobile :global(.btn.nav-btn) {
+	header.labels-below :global(.btn.nav-btn) {
 		flex-direction: column;
+		--app-nav-gap: 0.12rem;
 	}
 
-	header.extended:not(.mobile) :global(.btn.nav-btn) {
+	header.labels-right:not(.mobile) :global(.btn.nav-btn) {
 		flex-direction: row;
 		justify-content: flex-start;
 		min-width: min(100%, calc(var(--app-header-size) - 0.55rem));
+		--app-nav-gap: 0.36rem;
 	}
 
-	header.extended:not(.mobile) nav :global(.btn.nav-btn .btn-label) {
+	header.labels-right:not(.mobile) nav :global(.btn.nav-btn .btn-label) {
 		text-align: left;
 		max-width: none;
 	}
@@ -423,6 +441,7 @@
 			inline-size: auto;
 			block-size: var(--app-header-size);
 			min-block-size: var(--app-header-size);
+			max-block-size: 120px;
 		}
 
 		nav:first-of-type {
@@ -440,7 +459,7 @@
 			justify-content: flex-end;
 		}
 
-		header.compact nav :global(.btn.nav-btn) {
+		header.labels-none nav :global(.btn.nav-btn) {
 			min-width: var(--app-nav-btn-size);
 			min-height: var(--app-nav-btn-size);
 			padding-inline: 0.3rem;
