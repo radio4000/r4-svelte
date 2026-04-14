@@ -30,8 +30,8 @@
 	const deckIds = $derived(Object.keys(appState.decks).map(Number))
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 
-	const DESKTOP_MIN = 60
-	const DESKTOP_MAX = 148
+	const DESKTOP_MIN = 1
+	const DESKTOP_MAX = 10000
 	const DESKTOP_DEFAULT = 84
 	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
 	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
@@ -289,9 +289,9 @@
 		flex-flow: column nowrap;
 		gap: 1rem;
 		padding: 0.3rem;
-		inline-size: var(--app-header-size);
-		min-inline-size: var(--app-header-size);
-		max-inline-size: var(--app-header-size);
+		inline-size: clamp(min-content, var(--app-header-size), max-content);
+		min-inline-size: min-content;
+		max-inline-size: max-content;
 		background: var(--header-bg);
 		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
