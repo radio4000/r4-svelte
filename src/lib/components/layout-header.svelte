@@ -463,9 +463,9 @@
 			min-inline-size: 100%;
 			min-width: 100%;
 			max-inline-size: none;
-			block-size: clamp(min-content, var(--app-header-size), max-content);
-			min-block-size: min-content;
-			max-block-size: max-content;
+			block-size: var(--app-header-size);
+			min-block-size: var(--app-header-size);
+			max-block-size: none;
 			box-sizing: border-box;
 		}
 
