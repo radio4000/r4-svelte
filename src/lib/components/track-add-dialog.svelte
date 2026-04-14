@@ -11,6 +11,8 @@
 	import * as m from '$lib/paraglide/messages'
 	import type {Track} from '$lib/types'
 
+	let {class: className = '', label = ''} = $props()
+
 	let showModal = $state(false)
 	let recentTracks = $state<Track[]>([])
 	let trackData = $state({url: '', title: '', description: '', discogs_url: ''})
@@ -90,7 +92,7 @@
 <svelte:window onkeydown={handleKeyDown} />
 
 <button
-	class="btn"
+	class={['btn', className]}
 	class:active={showModal}
 	onclick={() => open()}
 	aria-label={m.track_add_title()}
@@ -98,6 +100,7 @@
 	{@attach tooltip({content: m.track_add_title()})}
 >
 	<Icon icon="add"></Icon>
+	{#if label}<span class="btn-label">{label}</span>{/if}
 </button>
 
 <Dialog bind:showModal>

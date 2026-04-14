@@ -65,11 +65,12 @@
 			<ShareDialog />
 			<ShortcutsDialog />
 			{#if userChannel}
-				<AddTrackDialog />
+				<AddTrackDialog class="icon-label-below" label="Add" />
 				<a
 					href={resolve(`/${userChannel.slug}`)}
 					class={[
 						'btn',
+						'icon-label-below',
 						'channel-link',
 						{broadcasting: isBroadcasting, active: page.params?.slug === userChannel.slug}
 					]}
@@ -79,6 +80,7 @@
 				>
 					<ChannelAvatar id={userChannel.image} alt={userChannel.name} />
 					{#if isBroadcasting}<span class="broadcast-dot"></span>{/if}
+					<span class="btn-label channel-slug-label">@{userChannel.slug}</span>
 				</a>
 				{#if isBroadcasting}
 					<a
@@ -226,8 +228,6 @@
 	.channel-link {
 		padding: 0.15rem;
 		overflow: hidden;
-		width: 2rem;
-		height: 2rem;
 		flex-shrink: 0;
 
 		:global(img, svg) {
@@ -236,6 +236,28 @@
 			border-radius: calc(var(--border-radius) - 0.15rem);
 			object-fit: cover;
 		}
+	}
+
+	.channel-link:not(.icon-label-below) {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	.channel-link.icon-label-below {
+		padding: 0.2rem 0.32rem 0.25rem;
+		min-height: 3.2rem;
+
+		:global(img, svg) {
+			width: 1.5rem;
+			height: 1.5rem;
+		}
+	}
+
+	.channel-slug-label {
+		max-width: 8ch;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	/* Active indicator: left bar on desktop instead of background fill */
