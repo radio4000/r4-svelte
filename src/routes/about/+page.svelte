@@ -171,6 +171,9 @@
 		justify-content: center;
 		gap: 0.5rem;
 		flex-wrap: wrap;
+		width: 100%;
+		margin: 0 auto;
+		padding: 0;
 	}
 
 	:global(.featured-flip) {
