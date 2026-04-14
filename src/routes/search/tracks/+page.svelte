@@ -8,6 +8,7 @@
 	import SearchShell from '$lib/components/search-shell.svelte'
 	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import {playTrack, setPlaylist, loadDeckView} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -76,11 +77,11 @@
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
-						<li>
+						<li class="track-with-channel">
+							<ChannelMicroCard slug={track.slug} />
 							<TrackCard
 								{track}
 								{index}
-								showSlug={true}
 								onPlay={(trackId) => {
 									const ids = tracks.map((t) => t.id)
 									if (view)
@@ -116,6 +117,23 @@
 </article>
 
 <style>
+	.track-with-channel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-with-channel :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-with-channel :global(.card) {
+		padding-inline-start: 0;
+	}
+
 	article {
 		display: flex;
 		flex-direction: column;

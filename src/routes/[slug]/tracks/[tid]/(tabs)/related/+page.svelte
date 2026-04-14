@@ -7,6 +7,7 @@
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const detail = getTrackDetailCtx()
@@ -51,9 +52,31 @@
 {#if relatedTracks.length > 0}
 	<ul class="list">
 		{#each relatedTracks as track (track.id)}
-			<li><TrackCard {track} showSlug={true} /></li>
+			<li class="track-with-channel">
+				<ChannelMicroCard slug={track.slug} />
+				<TrackCard {track} />
+			</li>
 		{/each}
 	</ul>
 {:else}
 	<p>{m.track_related_empty({appShortName})}</p>
 {/if}
+
+<style>
+	.track-with-channel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-with-channel :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-with-channel :global(.card) {
+		padding-inline-start: 0;
+	}
+</style>

@@ -1,6 +1,7 @@
 <script>
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import {listboxNav} from '$lib/components/listbox-nav.svelte'
 	import {playTrack, setPlaylist} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
@@ -236,12 +237,14 @@
 								{@const track = item.track}
 								{@const index = item.index}
 								<li
+									class={{'track-with-channel': showSlug}}
 									role="option"
 									aria-selected="false"
 									id="track-{track.id}"
 									data-track-id={track.id}
 									onclick={(event) => selectTrackFromEvent(event, track.id)}
 								>
+									{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 									<TrackCard
 										{track}
 										{index}
@@ -249,7 +252,7 @@
 										selected={selectedTrackId === track.id}
 										onPlay={playContext ? playFromList : undefined}
 										{canEdit}
-										{showSlug}
+										showSlug={false}
 										{onTagClick}
 									/>
 									{@render footer?.({track})}
@@ -279,12 +282,14 @@
 		>
 			{#each tracks as track, index (track.id)}
 				<li
+					class={{'track-with-channel': showSlug}}
 					role="option"
 					aria-selected="false"
 					id="track-{track.id}"
 					data-track-id={track.id}
 					onclick={(event) => selectTrackFromEvent(event, track.id)}
 				>
+					{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}
 					<TrackCard
 						{track}
 						{index}
@@ -292,7 +297,7 @@
 						selected={selectedTrackId === track.id}
 						onPlay={playContext ? playFromList : undefined}
 						{canEdit}
-						{showSlug}
+						showSlug={false}
 						{onTagClick}
 					/>
 					{@render footer?.({track})}
@@ -303,6 +308,23 @@
 {/if}
 
 <style>
+	.track-with-channel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-with-channel :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-with-channel :global(.card) {
+		padding-inline-start: 0;
+	}
+
 	h3 {
 		text-align: center;
 	}

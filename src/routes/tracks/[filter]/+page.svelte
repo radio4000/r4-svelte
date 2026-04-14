@@ -6,6 +6,7 @@
 	import {loadFeaturedChannelTracks} from '$lib/collections/featured'
 	import {groupByDay} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
@@ -127,7 +128,10 @@
 			<p class="day-header">{group.label}</p>
 			<ul class="list">
 				{#each group.tracks as track (track.id)}
-					<li><TrackCard {track} showSlug={true} /></li>
+					<li class="track-with-channel">
+						<ChannelMicroCard slug={track.slug} />
+						<TrackCard {track} />
+					</li>
 				{/each}
 			</ul>
 		{/each}
@@ -169,6 +173,23 @@
 	.filtermenu :global(.search-input) {
 		flex: 1 1 0;
 		min-width: 6rem;
+	}
+
+	.track-with-channel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-with-channel :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-with-channel :global(.card) {
+		padding-inline-start: 0;
 	}
 
 	.day-header {

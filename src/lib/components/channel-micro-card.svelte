@@ -2,28 +2,33 @@
 	import {resolve} from '$app/paths'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 
-	/** @type {{channel?: import('$lib/types').Channel, href?: string | undefined, className?: string}} */
-	let {channel, href, className = ''} = $props()
+	/** @type {{channel?: import('$lib/types').Channel, slug?: string, href?: string | undefined, className?: string}} */
+	let {channel, slug: slugProp, href, className = ''} = $props()
 
+	let effectiveSlug = $derived(channel?.slug ?? slugProp)
 	let linkHref = $derived(
-		href ?? (channel?.slug ? resolve('/[slug]', {slug: channel.slug}) : undefined)
+		href ?? (effectiveSlug ? resolve('/[slug]', {slug: effectiveSlug}) : undefined)
 	)
 </script>
 
-{#if channel}
+{#if effectiveSlug}
 	{#if linkHref}
 		<a class={['channel-micro-card', className]} href={linkHref}>
-			<span class="avatar">
-				<ChannelAvatar id={channel.image} alt={channel.name} />
-			</span>
-			<span class="slug">@{channel.slug}</span>
+			{#if channel}
+				<span class="avatar">
+					<ChannelAvatar id={channel.image} alt={channel.name} />
+				</span>
+			{/if}
+			<span class="slug">@{effectiveSlug}</span>
 		</a>
 	{:else}
 		<span class={['channel-micro-card', className]}>
-			<span class="avatar">
-				<ChannelAvatar id={channel.image} alt={channel.name} />
-			</span>
-			<span class="slug">@{channel.slug}</span>
+			{#if channel}
+				<span class="avatar">
+					<ChannelAvatar id={channel.image} alt={channel.name} />
+				</span>
+			{/if}
+			<span class="slug">@{effectiveSlug}</span>
 		</span>
 	{/if}
 {/if}

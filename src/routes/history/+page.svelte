@@ -13,6 +13,7 @@
 	import {getLocale} from '$lib/paraglide/runtime'
 	import {dayLabel, formatDurationCompact} from '$lib/dates.js'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import DateTime from '$lib/components/date-time.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import type {Track, PlayStartReason} from '$lib/types'
@@ -178,6 +179,7 @@
 						{@const p = play.properties ?? {}}
 						{@const endData = endDataByPlayId.get(play.id)}
 						{@const reason = getStartReason(p.start_reason as string)}
+						{@const histTrack = toTrack(play)}
 						<li class="play-row">
 							<small class="play-time">
 								<DateTime date={play.created_at} {locale} />
@@ -185,22 +187,22 @@
 							<span class="reason-icon" title={reason?.label?.()}>
 								{#if reason}<Icon icon={reason.icon} size={13} />{/if}
 							</span>
-							<TrackCard
-								track={toTrack(play)}
-								showSlug={true}
-								onPlay={() => playHistoryTrack(play)}
-							>
-								{#snippet description()}
-									{#if endData?.ms_played || p.shuffle}
-										<small class="play-metas">
-											{#if endData?.ms_played}<span class="play-meta"
-													>{formatDurationCompact(endData.ms_played)}</span
-												>{/if}
-											{#if p.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span>{/if}
-										</small>
-									{/if}
-								{/snippet}
-							</TrackCard>
+							<div class="track-col">
+								<ChannelMicroCard slug={histTrack.slug} />
+								<TrackCard track={histTrack} onPlay={() => playHistoryTrack(play)}>
+									{#snippet description()}
+										{#if endData?.ms_played || p.shuffle}
+											<small class="play-metas">
+												{#if endData?.ms_played}<span class="play-meta"
+														>{formatDurationCompact(endData.ms_played)}</span
+													>{/if}
+												{#if p.shuffle}<span class="play-meta">{m.history_flag_shuffled()}</span
+													>{/if}
+											</small>
+										{/if}
+									{/snippet}
+								</TrackCard>
+							</div>
 						</li>
 					{/each}
 				</ul>
@@ -274,6 +276,14 @@
 		padding-left: 0.5rem;
 		align-items: center;
 		overflow: hidden;
+	}
+
+	.track-col {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		overflow: hidden;
+		padding-block-start: 0.3rem;
 	}
 
 	.play-time {

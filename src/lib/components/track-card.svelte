@@ -173,9 +173,6 @@
 					class="artwork"
 					loading={(index ?? 0) > 20 ? 'lazy' : undefined}
 				/>
-				<span class={['artwork-overlay', {visible: selected || active}]}>
-					<Icon icon={isTrackPlaying ? 'pause' : 'play-fill'} size={16} />
-				</span>
 			</button>
 		{/if}
 		<div class="text">
@@ -380,23 +377,6 @@
 		box-shadow: none;
 		border-color: transparent;
 		outline: none;
-	}
-
-	.artwork-overlay {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		color: white;
-		background: color-mix(in srgb, var(--gray-12) 42%, transparent);
-		opacity: 0;
-		transition: opacity 0.15s;
-	}
-
-	.artwork-overlay.visible,
-	.artwork-trigger:hover .artwork-overlay,
-	.artwork-trigger:focus-visible .artwork-overlay {
-		opacity: 1;
 	}
 
 	.text {

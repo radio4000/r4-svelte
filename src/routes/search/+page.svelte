@@ -5,6 +5,7 @@
 	import {queryView} from '$lib/views.svelte'
 	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
 	import TrackCard from '$lib/components/track-card.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import {playTrack, setPlaylist, loadDeckView} from '$lib/api'
 	import {appState} from '$lib/app-state.svelte'
@@ -59,7 +60,10 @@
 		const featuredTracks = [...tracksCollection.state.values()].filter(
 			(track) => track?.slug && featuredSlugs.has(track.slug)
 		)
-		const tagPool = getTopTagValues(featuredTracks.length ? featuredTracks : [...tracksCollection.state.values()], 32)
+		const tagPool = getTopTagValues(
+			featuredTracks.length ? featuredTracks : [...tracksCollection.state.values()],
+			32
+		)
 		return shuffleArray(tagPool, seededRandom(`${featuredSuggestionsSeed}:tags`)).slice(0, 6)
 	})
 
@@ -153,11 +157,11 @@
 				</header>
 				<ul class="list">
 					{#each tracks as track, index (track.id)}
-						<li>
+						<li class="track-with-channel">
+							<ChannelMicroCard slug={track.slug} />
 							<TrackCard
 								{track}
 								{index}
-								showSlug={true}
 								onPlay={(trackId) => {
 									const ids = tracks.map((t) => t.id)
 									if (view)
@@ -194,6 +198,23 @@
 </article>
 
 <style>
+	.track-with-channel {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.35rem;
+		padding-inline: 0.5rem;
+	}
+
+	.track-with-channel :global(article) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.track-with-channel :global(.card) {
+		padding-inline-start: 0;
+	}
+
 	article {
 		display: flex;
 		flex-direction: column;
