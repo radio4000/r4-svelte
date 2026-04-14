@@ -596,10 +596,6 @@
 		}
 	}
 
-	.homepage:not(.signed-in) {
-		min-height: 100%;
-	}
-
 	.filtermenu {
 		position: sticky;
 		top: 0.5rem;
