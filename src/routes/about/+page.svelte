@@ -111,15 +111,13 @@
 	</section>
 {/if}
 
-<article class="constrained about-actions">
-	<footer>
-		<menu class="about-actions-group">
-			<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
-			<a href={resolve('/')} class="btn">{m.common_start_exploring()}</a>
-			<a href={resolve('/menu/community')} class="btn ghost">Community</a>
-		</menu>
-	</footer>
-</article>
+<footer class="about-actions">
+	<menu class="about-actions-group constrained">
+		<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
+		<a href={resolve('/')} class="btn">{m.common_start_exploring()}</a>
+		<a href={resolve('/menu/community')} class="btn ghost">Community</a>
+	</menu>
+</footer>
 
 <style>
 	article {
@@ -159,14 +157,13 @@
 	}
 
 	.about-actions {
-		footer {
-			padding: 1rem 0.5rem 0.5rem;
-			text-align: center;
-			position: sticky;
-			bottom: 0;
-			background: var(--gray-1);
-			border-top: 1px solid var(--gray-4);
-		}
+		padding: 1rem 0.5rem 0.5rem;
+		text-align: center;
+		position: sticky;
+		bottom: 0;
+		background: var(--gray-1);
+		border-top: 1px solid var(--gray-4);
+		z-index: 2;
 	}
 
 	.about-actions-group {
