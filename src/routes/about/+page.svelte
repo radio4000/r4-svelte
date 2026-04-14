@@ -125,7 +125,7 @@
 	}
 
 	figure {
-		margin-block-end: 2rem;
+		margin-block-end: 1.25rem;
 	}
 
 	img {
@@ -153,11 +153,12 @@
 	}
 
 	.about-slideshow {
-		margin-bottom: 1.5rem;
+		margin: 0 auto 0.9rem;
+		padding-inline: 0.5rem;
 	}
 
 	.about-actions {
-		padding: 1rem 0.5rem 0.5rem;
+		padding: 0.65rem 0.5rem 0.35rem;
 		text-align: center;
 		position: sticky;
 		bottom: 0;
@@ -169,7 +170,7 @@
 	.about-actions-group {
 		display: flex;
 		justify-content: center;
-		gap: 0.5rem;
+		gap: 0.35rem;
 		flex-wrap: wrap;
 		width: 100%;
 		margin: 0 auto;

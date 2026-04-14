@@ -584,7 +584,7 @@
 
 <style>
 	.homepage {
-		padding: 0.5rem;
+		padding: 0.35rem 0.5rem;
 		display: flex;
 		flex-direction: column;
 		flex: 1;
@@ -600,7 +600,7 @@
 		position: sticky;
 		top: 0.5rem;
 		align-items: center;
-		margin: 0 0 1rem;
+		margin: 0 0 0.6rem;
 		z-index: 1;
 	}
 
@@ -629,7 +629,7 @@
 	}
 
 	.section {
-		margin-bottom: 1.5rem;
+		margin-bottom: 1rem;
 	}
 
 	.homepage.signed-in > .section:not(.section--globe) {
@@ -656,6 +656,9 @@
 	.homepage:not(.signed-in) .section--globe--loggedout {
 		position: sticky;
 		bottom: 0;
+		width: 100%;
+		max-width: 72rem;
+		margin-inline: auto;
 	}
 
 	.loggedout-over-globe {
@@ -666,6 +669,9 @@
 		flex-direction: column;
 		flex: 1;
 		min-height: 0;
+		width: 100%;
+		max-width: 72rem;
+		margin-inline: auto;
 	}
 
 	.section--featured-col {
