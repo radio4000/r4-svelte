@@ -596,6 +596,10 @@
 		}
 	}
 
+	.homepage:not(.signed-in) {
+		padding: 0;
+	}
+
 	.filtermenu {
 		position: sticky;
 		top: 0.5rem;
@@ -656,9 +660,6 @@
 	.homepage:not(.signed-in) .section--globe--loggedout {
 		position: sticky;
 		bottom: 0;
-		width: 100%;
-		max-width: 72rem;
-		margin-inline: auto;
 	}
 
 	.loggedout-over-globe {
@@ -669,9 +670,6 @@
 		flex-direction: column;
 		flex: 1;
 		min-height: 0;
-		width: 100%;
-		max-width: 72rem;
-		margin-inline: auto;
 	}
 
 	.section--featured-col {
@@ -867,6 +865,12 @@
 		}
 	}
 
+	.homepage:not(.signed-in) .stats {
+		max-width: none;
+		margin-inline: 0;
+		padding-inline: 0.5rem;
+	}
+
 	.globe {
 		position: relative;
 		flex: 1;
@@ -938,6 +942,14 @@
 				margin-block: 0.3rem;
 			}
 		}
+	}
+
+	.homepage:not(.signed-in) .welcome-section {
+		max-width: none;
+		margin-inline: 0;
+		border-radius: 0;
+		border-left: 0;
+		border-right: 0;
 	}
 
 	.welcome-menu {
