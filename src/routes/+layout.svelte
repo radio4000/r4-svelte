@@ -521,6 +521,9 @@
 			top: 0;
 			height: var(--app-header-size, auto);
 			min-height: var(--app-header-size, auto);
+			margin: 0;
+			width: 100%;
+			align-self: stretch;
 			order: 2;
 			z-index: 40;
 		}
