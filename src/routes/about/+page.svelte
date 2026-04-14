@@ -87,8 +87,8 @@
 	<figcaption>{m.about_cave_caption()}</figcaption>
 </figure>
 
-<article class="constrained">
-	{#if featuredChannels.length}
+{#if featuredChannels.length}
+	<section class="about-slideshow">
 		<CoverFlip items={featuredChannels} orientation="horizontal" class="featured-flip">
 			{#snippet item({item: channel, active})}
 				<div class="flip-card" class:active>
@@ -108,7 +108,10 @@
 				</p>
 			{/snippet}
 		</CoverFlip>
-	{/if}
+	</section>
+{/if}
+
+<article class="constrained">
 	<footer>
 		<p>
 			<a href={resolve('/create-channel')} class="btn primary">{m.channel_create_title()}</a>
@@ -150,6 +153,10 @@
 		padding-left: 2rem;
 	}
 
+	.about-slideshow {
+		margin-bottom: 1.5rem;
+	}
+
 	footer p {
 		display: flex;
 		justify-content: center;
@@ -159,7 +166,7 @@
 
 	:global(.featured-flip) {
 		gap: 0.25rem;
-		margin-bottom: 1.5rem;
+		margin-bottom: 0;
 	}
 
 	.flip-card {

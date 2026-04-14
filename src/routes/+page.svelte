@@ -662,12 +662,15 @@
 		position: relative;
 		z-index: 1;
 		background: var(--color-interface);
+		display: flex;
+		flex-direction: column;
 	}
 
 	.section--featured-col {
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		justify-content: flex-start;
+		min-height: clamp(22rem, 48dvh, 44rem);
 	}
 
 	.section--globe--loggedout .globe {
@@ -678,13 +681,13 @@
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 0.5rem;
-		flex: 1;
+		flex: 1 0 auto;
 		min-height: 0;
-		overflow: hidden;
+		overflow: visible;
 
 		& > section {
 			min-width: 0;
-			overflow: hidden;
+			overflow: visible;
 		}
 	}
 
