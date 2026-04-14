@@ -596,6 +596,10 @@
 		}
 	}
 
+	.homepage:not(.signed-in) {
+		min-height: 100dvh;
+	}
+
 	.filtermenu {
 		position: sticky;
 		top: 0.5rem;
@@ -664,7 +668,8 @@
 		background: var(--color-interface);
 		display: flex;
 		flex-direction: column;
-		min-height: clamp(32rem, 70dvh, 72rem);
+		flex: 1;
+		min-height: 0;
 	}
 
 	.section--featured-col {
