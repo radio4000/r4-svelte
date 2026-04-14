@@ -664,13 +664,13 @@
 		background: var(--color-interface);
 		display: flex;
 		flex-direction: column;
+		min-height: clamp(32rem, 70dvh, 72rem);
 	}
 
 	.section--featured-col {
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
-		min-height: clamp(22rem, 48dvh, 44rem);
 	}
 
 	.section--globe--loggedout .globe {
@@ -681,13 +681,13 @@
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 0.5rem;
-		flex: 1 0 auto;
+		flex: 1;
 		min-height: 0;
-		overflow: visible;
+		overflow: hidden;
 
 		& > section {
 			min-width: 0;
-			overflow: visible;
+			overflow: hidden;
 		}
 	}
 
