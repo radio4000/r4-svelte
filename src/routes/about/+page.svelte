@@ -169,7 +169,6 @@
 		position: sticky;
 		bottom: 0;
 		padding-bottom: 0.5rem;
-		background: color-mix(in srgb, var(--color-interface) 92%, transparent);
 	}
 
 	:global(.featured-flip) {
