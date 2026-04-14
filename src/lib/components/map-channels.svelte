@@ -1,5 +1,8 @@
 <script module>
-	export {MAP_TILE_STYLES as TILE_STYLES, DEFAULT_MAP_TILE_STYLE as TILE_SATELLITE} from '$lib/config'
+	export {
+		MAP_TILE_STYLES as TILE_STYLES,
+		DEFAULT_MAP_TILE_STYLE as TILE_SATELLITE
+	} from '$lib/config'
 </script>
 
 <script>

@@ -65,8 +65,11 @@
 	function getCanonicalUrlKey(track: Track): string | null {
 		let parsed = {} as {provider?: string; media_id?: string; mediaId?: string}
 		try {
-			parsed = (parseUrl(track.url || '') ||
-				{}) as {provider?: string; media_id?: string; mediaId?: string}
+			parsed = (parseUrl(track.url || '') || {}) as {
+				provider?: string
+				media_id?: string
+				mediaId?: string
+			}
 		} catch {
 			parsed = {}
 		}
@@ -143,7 +146,9 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let aggregatedTags = $derived(getChannelTags(allTracks))
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
-	let isFiltering = $derived(searchValue !== '' || selectedTags.length > 0 || isSorting || Boolean(matchingSlug))
+	let isFiltering = $derived(
+		searchValue !== '' || selectedTags.length > 0 || isSorting || Boolean(matchingSlug)
+	)
 	let activeFilterCount = $derived(
 		selectedTags.length + (searchValue ? 1 : 0) + (isSorting ? 1 : 0) + (matchingSlug ? 1 : 0)
 	)
@@ -166,17 +171,21 @@
 		(() => {
 			// Force recomputation when user explicitly reshuffles.
 			if (order === 'shuffle') void reshuffleKey
-			return processViewTracks(allTracks, {
-				sources: [
-					{
-						tags: selectedTags.length ? selectedTags : undefined,
-						tagsMode: 'all',
-						search: searchValue || undefined
-					}
-				],
-				order: isSorting ? order : undefined,
-				direction: isSorting ? direction : undefined
-			}, order === 'shuffle' ? {shuffleRand: seededRandom(randomSeed || 'default-seed')} : undefined)
+			return processViewTracks(
+				allTracks,
+				{
+					sources: [
+						{
+							tags: selectedTags.length ? selectedTags : undefined,
+							tagsMode: 'all',
+							search: searchValue || undefined
+						}
+					],
+					order: isSorting ? order : undefined,
+					direction: isSorting ? direction : undefined
+				},
+				order === 'shuffle' ? {shuffleRand: seededRandom(randomSeed || 'default-seed')} : undefined
+			)
 		})()
 	)
 	let baseVisibleTracks = $derived(isFiltering ? filteredTracks : allTracks)
@@ -319,7 +328,10 @@
 		/>
 		<PopoverMenu closeOnClick={false} style="margin-left: auto;">
 			{#snippet trigger()}
-				<Icon icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'} strokeWidth={1.5} />
+				<Icon
+					icon={direction === 'asc' ? 'funnel-ascending' : 'funnel-descending'}
+					strokeWidth={1.5}
+				/>
 			{/snippet}
 			<SortControls bind:order bind:direction onreshuffle={handleReshuffle} />
 		</PopoverMenu>
@@ -368,7 +380,9 @@
 					{/if}
 					{#if matchingSlug}
 						<li>
-							<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+							<button type="button" class="chip" onclick={clearMatchingFilter}
+								>@{matchingSlug} ×</button
+							>
 						</li>
 					{/if}
 					{#each selectedTags as tag (tag)}
@@ -444,7 +458,9 @@
 				{#if isFiltering && (selectedTags.length > 0 || matchingSlug)}
 					<menu class="row filter-tags">
 						{#if matchingSlug}
-							<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+							<button type="button" class="chip" onclick={clearMatchingFilter}
+								>@{matchingSlug} ×</button
+							>
 						{/if}
 						{#each selectedTags as tag (tag)}
 							<button type="button" class="chip" onclick={() => toggleTag(tag)}>

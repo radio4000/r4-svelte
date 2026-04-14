@@ -57,7 +57,9 @@
 	let hasFeatured = $derived(featuredChannels.length > 0)
 	let commonIds = $derived(new Set(follows.followedIds))
 	let isOtherChannel = $derived(
-		Boolean(appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id)
+		Boolean(
+			appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id
+		)
 	)
 	let commonFollowingCount = $derived(
 		following.filter((/** @type {any} */ c) => c.id && commonIds.has(c.id)).length
@@ -145,7 +147,11 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	<select value="all" aria-label={m.nav_following()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+	<select
+		value="all"
+		aria-label={m.nav_following()}
+		onchange={(e) => onViewChange(e.currentTarget.value)}
+	>
 		{#if hasFeatured}
 			<option value="featured">{m.channel_section_featured_channels()}</option>
 		{/if}
@@ -154,7 +160,10 @@
 			<option value="in-common">{m.nav_in_common()}</option>
 		{/if}
 	</select>
-	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: following.length})} />
+	<SearchInput
+		bind:value={q}
+		placeholder={m.following_search_placeholder({count: following.length})}
+	/>
 	<ChannelsViewControls bind:display bind:order bind:direction />
 {/snippet}
 

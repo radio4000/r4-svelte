@@ -56,7 +56,6 @@
 	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
 	let deckEl = $state(/** @type {HTMLElement | undefined} */ (undefined))
 
-
 	// Resize handle state
 	let resizing = $state(false)
 

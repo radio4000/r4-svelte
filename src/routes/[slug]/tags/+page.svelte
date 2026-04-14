@@ -390,7 +390,8 @@
 			{/if}
 			{#if matchingSlug}
 				<menu class="row filter-tags">
-					<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button>
+					<button type="button" class="chip" onclick={clearMatchingFilter}>@{matchingSlug} ×</button
+					>
 				</menu>
 			{/if}
 

@@ -86,7 +86,11 @@
 <ChannelNavControlsPortal controls={navControls} />
 
 {#snippet navControls()}
-	<select value="in-common" aria-label={m.nav_followers()} onchange={(e) => onViewChange(e.currentTarget.value)}>
+	<select
+		value="in-common"
+		aria-label={m.nav_followers()}
+		onchange={(e) => onViewChange(e.currentTarget.value)}
+	>
 		<option value="all">{m.views_tags_all()}</option>
 		<option value="in-common">{m.nav_in_common()}</option>
 	</select>

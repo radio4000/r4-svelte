@@ -618,11 +618,7 @@
 								{@html m.player_tooltip_expand()}
 								<Icon icon="fullscreen" size={14} />
 							</button>
-							<button
-								class:active={isFullscreen}
-								onclick={toggleFullscreen}
-								data-no-close
-							>
+							<button class:active={isFullscreen} onclick={toggleFullscreen} data-no-close>
 								{isFullscreen ? 'Exit full screen' : 'Full screen'}
 								<Icon icon="fullscreen-alt" size={14} />
 							</button>

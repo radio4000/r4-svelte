@@ -55,11 +55,17 @@
 			<Icon icon={conceptIcons.mentions} />
 			Mentions
 		</a>
-		<a href={resolve('/[slug]/following', {slug})} class:active={routeId?.startsWith('/[slug]/following')}>
+		<a
+			href={resolve('/[slug]/following', {slug})}
+			class:active={routeId?.startsWith('/[slug]/following')}
+		>
 			<Icon icon={conceptIcons.following} />
 			{m.nav_following()}
 		</a>
-		<a href={resolve('/[slug]/followers', {slug})} class:active={routeId?.startsWith('/[slug]/followers')}>
+		<a
+			href={resolve('/[slug]/followers', {slug})}
+			class:active={routeId?.startsWith('/[slug]/followers')}
+		>
 			<Icon icon={conceptIcons.followers} />
 			{m.nav_followers()}
 		</a>

@@ -57,7 +57,9 @@
 	let hasFeatured = $derived(featuredChannels.length > 0)
 	let commonIds = $derived(new Set(follows.followedIds))
 	let isOtherChannel = $derived(
-		Boolean(appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id)
+		Boolean(
+			appState.user && appState.channel?.id && channel?.id && appState.channel.id !== channel.id
+		)
 	)
 	let commonFollowingCount = $derived(
 		following.filter((/** @type {any} */ c) => c.id && commonIds.has(c.id)).length
@@ -163,7 +165,10 @@
 			<option value="in-common">{m.nav_in_common()}</option>
 		{/if}
 	</select>
-	<SearchInput bind:value={q} placeholder={m.following_search_placeholder({count: featuredChannels.length})} />
+	<SearchInput
+		bind:value={q}
+		placeholder={m.following_search_placeholder({count: featuredChannels.length})}
+	/>
 	<ChannelsViewControls bind:display bind:order bind:direction />
 {/snippet}
 

@@ -261,7 +261,9 @@
 	)
 	let hasMatchInfo = $derived(
 		showMatchScore &&
-			(matchScore.url.overlap > 0 || matchScore.tag.overlap > 0 || matchScore.artistTitle.overlap > 0)
+			(matchScore.url.overlap > 0 ||
+				matchScore.tag.overlap > 0 ||
+				matchScore.artistTitle.overlap > 0)
 	)
 	let matchingSourceSlug = $derived(appState.channel?.slug ?? '')
 	let hasCoordinates = $derived(
@@ -425,14 +427,16 @@
 									`?matching=${encodeURIComponent(matchingSourceSlug)}`}
 							>
 								<Icon icon="play-fill" size={14} />
-								{matchScore.url.overlap} {m.channel_match_tracks()}
+								{matchScore.url.overlap}
+								{m.channel_match_tracks()}
 							</a>
 							<a
 								href={resolve('/[slug]/tags', {slug}) +
 									`?matching=${encodeURIComponent(matchingSourceSlug)}`}
 							>
 								<Icon icon="hashtag" size={14} />
-								{matchScore.tag.overlap} {m.channel_match_tags()}
+								{matchScore.tag.overlap}
+								{m.channel_match_tags()}
 							</a>
 						</div>
 					{/if}
