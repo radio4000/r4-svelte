@@ -30,9 +30,9 @@
 	const deckIds = $derived(Object.keys(appState.decks).map(Number))
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 
-	const DESKTOP_MIN = 96
-	const DESKTOP_MAX = 260
-	const DESKTOP_DEFAULT = 116
+	const DESKTOP_MIN = 72
+	const DESKTOP_MAX = 180
+	const DESKTOP_DEFAULT = 96
 	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
 	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
 	const MOBILE_MIN = 52
