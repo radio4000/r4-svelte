@@ -36,10 +36,9 @@
 	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
 	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
 	const MOBILE_MIN = 52
-	const MOBILE_MAX = 120
+	const MOBILE_MAX = 92
 	const MOBILE_DEFAULT = 78
 	const MOBILE_LABEL_BELOW_THRESHOLD = 80
-	const MOBILE_LABEL_RIGHT_THRESHOLD = 108
 	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
 	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
 
@@ -66,10 +65,6 @@
 
 	function applyModeFromSize() {
 		if (isMobileViewport) {
-			if (headerSize >= MOBILE_LABEL_RIGHT_THRESHOLD) {
-				labelLayout = 'right'
-				return
-			}
 			labelLayout = headerSize >= MOBILE_LABEL_BELOW_THRESHOLD ? 'below' : 'none'
 			return
 		}
