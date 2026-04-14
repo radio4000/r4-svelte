@@ -230,7 +230,11 @@
 		overflow: hidden;
 		flex-shrink: 0;
 
-		:global(img, svg) {
+		:global(img, .fallback) {
+			flex: none;
+		}
+
+		:global(img, .fallback, svg) {
 			width: 100%;
 			height: 100%;
 			border-radius: calc(var(--border-radius) - 0.15rem);
@@ -246,10 +250,14 @@
 	.channel-link.icon-label-below {
 		padding: 0.2rem 0.32rem 0.25rem;
 		min-height: 3.2rem;
+		--channel-avatar-size: 1.5rem;
 
-		:global(img, svg) {
-			width: 1.5rem;
-			height: 1.5rem;
+		:global(img, .fallback, svg) {
+			width: var(--channel-avatar-size);
+			height: var(--channel-avatar-size);
+			min-width: var(--channel-avatar-size);
+			min-height: var(--channel-avatar-size);
+			aspect-ratio: 1;
 		}
 	}
 
