@@ -364,15 +364,22 @@
 		padding: 0;
 		border: 0;
 		background: transparent;
+		box-shadow: none;
+		min-width: 0;
+		min-height: 0;
 		border-radius: var(--media-radius);
 		overflow: hidden;
 		flex-shrink: 0;
 	}
 
 	.artwork-trigger:hover,
+	.artwork-trigger:focus,
 	.artwork-trigger:focus-visible,
 	.artwork-trigger:active {
 		background: transparent;
+		box-shadow: none;
+		border-color: transparent;
+		outline: none;
 	}
 
 	.artwork-overlay {
