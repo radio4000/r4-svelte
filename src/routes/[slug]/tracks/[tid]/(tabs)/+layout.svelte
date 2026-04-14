@@ -109,12 +109,17 @@
 {:else if !track || !channel}
 	<p>{m.track_not_found()}</p>
 {:else}
-	<ul class="list track-current" class:playing={isTrackPlaying}>
-		<li><TrackCard {track} {canEdit} /></li>
-	</ul>
-	<article>
+	<div class="track-sticky">
+		<ul class="list track-current" class:playing={isTrackPlaying}>
+			<li><TrackCard {track} {canEdit} /></li>
+		</ul>
 		<header>
 			<div class="tabs track-tabs">
+				<nav class="track-tabs-back" aria-label="Back">
+					<a href={resolve('/[slug]/tracks', {slug: data.slug})} aria-label="Back to tracks">
+						<Icon icon="arrow-left" />
+					</a>
+				</nav>
 				<nav aria-label={m.track_meta_title()}>
 					<a
 						href={resolve(`/${data.slug}/tracks/${data.tid}`)}
@@ -167,16 +172,23 @@
 				{/if}
 			</div>
 		</header>
+	</div>
 
-		<main class="meta">
-			{@render children()}
-		</main>
-	</article>
+	<main class="meta">
+		{@render children()}
+	</main>
 {/if}
 
 <style>
+	.track-sticky {
+		position: sticky;
+		top: var(--channel-sticky-height, 0);
+		z-index: 10;
+		background: var(--gray-1);
+	}
+
 	.track-tabs {
-		margin: 0.5rem 0;
+		margin: 0;
 		display: flex;
 		flex-wrap: nowrap;
 		overflow-x: auto;
@@ -190,6 +202,10 @@
 		align-items: stretch;
 		flex-shrink: 0;
 		min-width: max-content;
+	}
+
+	.track-tabs-back {
+		border-right: 1px solid var(--gray-5);
 	}
 
 	.track-tabs-secondary {
@@ -213,7 +229,7 @@
 
 	.track-current {
 		margin: 0;
-		padding: 1.5rem;
+		padding: 0.75rem 1rem;
 	}
 
 	.track-current.playing {

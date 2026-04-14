@@ -35,6 +35,7 @@
 
 	let {children} = $props()
 	let channelNavControls = $state<Snippet | undefined>(undefined)
+	let channelStickyHeight = $state(0)
 	setChannelNavCtx({
 		setControls: (s) => {
 			channelNavControls = s
@@ -288,8 +289,8 @@
 	{/if}
 </svelte:head>
 
-<div class="channel-layout fill-height">
-	<div class="channel-sticky">
+<div class="channel-layout fill-height" style="--channel-sticky-height: {channelStickyHeight}px">
+	<div class="channel-sticky" bind:clientHeight={channelStickyHeight}>
 		{#if channel}
 			<header>
 				<div class="channel-main">
