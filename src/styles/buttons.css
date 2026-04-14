@@ -245,9 +245,10 @@ button.chip.active:hover,
 button.icon-label-below {
 	flex-direction: column;
 	gap: 0.12rem;
-	padding: 0.2rem 0.32rem;
-	min-width: 2.35rem;
-	min-height: 2.55rem;
+	padding: 0.26rem 0.42rem;
+	min-width: 3.1rem;
+	min-height: 3.2rem;
+	height: auto;
 }
 
 .btn.icon-label-right,

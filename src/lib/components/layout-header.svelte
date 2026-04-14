@@ -186,8 +186,22 @@
 		justify-content: flex-start;
 	}
 
-	.home-link {
+	.home-link:not(.icon-label-below) {
 		padding: 0;
+	}
+
+	nav :global(.btn.icon-label-below) {
+		min-width: 3.1rem;
+		min-height: 3.2rem;
+		padding: 0.26rem 0.42rem;
+	}
+
+	nav :global(.btn.icon-label-below .btn-label) {
+		display: block;
+		max-width: 7ch;
+		text-align: center;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.user {
