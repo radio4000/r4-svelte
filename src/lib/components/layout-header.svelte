@@ -512,8 +512,8 @@
 	.header-resize-handle-desktop {
 		position: absolute;
 		top: 0;
-		right: -4px;
-		width: 8px;
+		right: 0;
+		width: 12px;
 		height: 100%;
 		cursor: ew-resize;
 	}
