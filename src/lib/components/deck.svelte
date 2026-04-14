@@ -54,6 +54,8 @@
 	})
 
 	let scrollToActive = $state(/** @type {(() => void) | undefined} */ (undefined))
+	let deckEl = $state(/** @type {HTMLElement | undefined} */ (undefined))
+
 
 	// Resize handle state
 	let resizing = $state(false)
@@ -109,11 +111,12 @@
 		}}
 		data-deck={deckId}
 		style={deckStyle}
+		bind:this={deckEl}
 	>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
-			<Player {deckId} {scrollToActive}>
+			<Player {deckId} {scrollToActive} {deckEl}>
 				{#if !isListeningToBroadcast && !isAutoRadio}
 					<QueuePanel {deckId} bind:scrollToActive />
 				{/if}

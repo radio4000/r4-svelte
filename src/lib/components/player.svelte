@@ -61,8 +61,8 @@
 
 	const log = logger.ns('player').seal()
 
-	/** @type {{deckId: number, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
-	let {deckId, children, scrollToActive} = $props()
+	/** @type {{deckId: number, deckEl?: HTMLElement, children?: import('svelte').Snippet, scrollToActive?: (() => void) | undefined}} */
+	let {deckId, deckEl, children, scrollToActive} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
@@ -140,6 +140,20 @@
 		)
 	)
 	const syncTotalDuration = $derived(syncAutoTracks.reduce((sum, t) => sum + t.duration, 0))
+
+	let isFullscreen = $state(false)
+	$effect(() => {
+		const handler = () => (isFullscreen = !!document.fullscreenElement)
+		document.addEventListener('fullscreenchange', handler)
+		return () => document.removeEventListener('fullscreenchange', handler)
+	})
+	function toggleFullscreen() {
+		if (document.fullscreenElement) {
+			document.exitFullscreen()
+		} else {
+			deckEl?.requestFullscreen()
+		}
+	}
 
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
@@ -596,6 +610,7 @@
 								</button>
 							{/if}
 							<button
+								class="expand-player-toggle"
 								onclick={() => togglePlayerExpanded(deckId)}
 								class:active={deck?.expanded}
 								data-no-close
@@ -603,11 +618,20 @@
 								{@html m.player_tooltip_expand()}
 								<Icon icon="fullscreen" size={14} />
 							</button>
+							<button
+								class:active={isFullscreen}
+								onclick={toggleFullscreen}
+								data-no-close
+							>
+								{isFullscreen ? 'Exit full screen' : 'Full screen'}
+								<Icon icon="fullscreen-alt" size={14} />
+							</button>
 						</menu>
 					</PopoverMenu>
 				{/if}
 				{#if showDeckActions && (hasMultipleDecks || !appState.embed_mode)}
 					<button
+						class="compact-toggle"
 						onclick={() => toggleDeckCompact(deckId)}
 						aria-label={m.player_tooltip_compact()}
 						{@attach tooltip({content: m.player_tooltip_compact(), position: 'top'})}
@@ -1046,6 +1070,10 @@
 		.controls {
 			gap: 0.1rem;
 			justify-content: flex-start;
+		}
+
+		.expand-player-toggle {
+			display: none;
 		}
 	}
 </style>
