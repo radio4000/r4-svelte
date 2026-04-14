@@ -116,7 +116,7 @@
 		<header>
 			<div class="tabs track-tabs">
 				<nav class="track-tabs-back" aria-label="Back">
-					<a href={resolve('/[slug]/tracks', {slug: data.slug})} aria-label="Back to tracks">
+					<a href={`/${data.slug}/tracks#track-${data.tid}`} aria-label="Back to tracks">
 						<Icon icon="arrow-left" />
 					</a>
 				</nav>

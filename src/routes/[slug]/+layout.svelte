@@ -46,9 +46,6 @@
 	let tid = $derived(page.params.tid)
 	let isTrackDetail = $derived(Boolean(tid))
 	let authHref = $derived(`/auth?redirect=${encodeURIComponent(page.url.pathname)}`)
-	let tracksHref = $derived(
-		tid ? `${resolve('/[slug]/tracks', {slug})}#track-${tid}` : resolve('/[slug]/tracks', {slug})
-	)
 
 	// --- Channel resolution ---
 	// Slug → ID on first hit, then query by stable ID.
@@ -416,26 +413,24 @@
 			</header>
 		{/if}
 
-		<menu class="channel-nav">
-			{#if isTrackDetail}
-				<a class="btn ghost" href={tracksHref}>
-					<Icon icon="arrow-left" />
-				</a>
-			{:else if page.route.id !== '/[slug]/image'}
-				<ChannelSectionMenu
-					{slug}
-					{channel}
-					{canEdit}
-					isLocal={isLocalChannel(channel?.id)}
-					trackCount={allChannelTracks.length}
-				/>
-			{/if}
-			{#if channelNavControls}
-				<menu class="channel-nav-controls">
-					{@render channelNavControls()}
-				</menu>
-			{/if}
-		</menu>
+		{#if !isTrackDetail}
+			<menu class="channel-nav">
+				{#if page.route.id !== '/[slug]/image'}
+					<ChannelSectionMenu
+						{slug}
+						{channel}
+						{canEdit}
+						isLocal={isLocalChannel(channel?.id)}
+						trackCount={allChannelTracks.length}
+					/>
+				{/if}
+				{#if channelNavControls}
+					<menu class="channel-nav-controls">
+						{@render channelNavControls()}
+					</menu>
+				{/if}
+			</menu>
+		{/if}
 	</div>
 
 	<main>
