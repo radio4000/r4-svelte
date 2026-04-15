@@ -393,7 +393,7 @@
 	/* Active menu item: no accent color, only interface background */
 	nav :global(.btn.active) {
 		color: inherit;
-		background: var(--color-interface);
+		background: var(--color-interface-elevated);
 		border-color: transparent;
 		box-shadow: none;
 	}
@@ -444,7 +444,7 @@
 		/* Active menu item keeps same style on mobile */
 		nav :global(.btn.active) {
 			color: inherit;
-			background: var(--color-interface);
+			background: var(--color-interface-elevated);
 			border-color: transparent;
 			box-shadow: none;
 		}
