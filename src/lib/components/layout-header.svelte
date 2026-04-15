@@ -282,7 +282,6 @@
 
 	nav :global(.btn.nav-btn) {
 		min-width: var(--app-nav-btn-size);
-		min-height: var(--app-nav-btn-size);
 		height: auto;
 		width: auto;
 		margin: 0;
@@ -399,6 +398,10 @@
 	}
 
 	@media (max-width: 768px) {
+		nav :global(.btn.nav-btn) {
+			min-height: var(--app-nav-btn-size);
+		}
+
 		header {
 			--app-nav-btn-size: calc(var(--app-header-size) * 0.58);
 			align-items: center;
