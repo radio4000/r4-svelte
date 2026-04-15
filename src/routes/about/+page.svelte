@@ -71,6 +71,11 @@
 	<figcaption>{m.about_moon_caption()}</figcaption>
 </figure>
 
+<figure>
+	<img src="/images/illustrations/une-caverne-pendant-la-nuit.jpg" alt={m.about_cave_alt()} />
+	<figcaption>{m.about_cave_caption()}</figcaption>
+</figure>
+
 <article class="constrained">
 	<p>{m.about_features_intro()}</p>
 	<ul>
@@ -81,11 +86,6 @@
 		<li>{m.about_feature_no_trackers()}</li>
 	</ul>
 </article>
-
-<figure>
-	<img src="/images/illustrations/une-caverne-pendant-la-nuit.jpg" alt={m.about_cave_alt()} />
-	<figcaption>{m.about_cave_caption()}</figcaption>
-</figure>
 
 {#if featuredChannels.length}
 	<section class="about-slideshow">
