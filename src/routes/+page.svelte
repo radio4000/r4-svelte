@@ -450,7 +450,7 @@
 		<!-- Not logged in -->
 		<div class="loggedout-top-row" class:modal-open={appState.show_welcome_hint}>
 			{#if appState.show_welcome_hint}
-				<section class="section welcome-section dismissible">
+				<section class="section welcome-section dismissible top-row-welcome">
 					<button
 						class="dismiss-btn"
 						onclick={() => (appState.show_welcome_hint = false)}
@@ -479,7 +479,7 @@
 			{/if}
 
 			{#if showBroadcastCountWidget}
-				<section class="section">
+				<section class="section top-row-live">
 					<h2 class="section-title">
 						<a href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
 					</h2>
@@ -670,6 +670,14 @@
 		.loggedout-top-row.modal-open {
 			grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
 			align-items: start;
+		}
+
+		.loggedout-top-row.modal-open .top-row-live {
+			order: 0;
+		}
+
+		.loggedout-top-row.modal-open .top-row-welcome {
+			order: 1;
 		}
 	}
 
