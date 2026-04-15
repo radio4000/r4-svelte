@@ -17,8 +17,6 @@
 	import {sdk} from '@radio4000/sdk'
 	import ChannelCard from '$lib/components/channel-card.svelte'
 	import MyChannelControls from '$lib/components/my-channel-controls.svelte'
-
-	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import {not, isNull} from '@tanstack/db'
 	import Icon from '$lib/components/icon.svelte'
@@ -106,7 +104,6 @@
 	const favoriteBroadcastRows = $derived.by(() =>
 		broadcastRows.filter((broadcast) => favoriteChannelIds.has(broadcast.channel_id))
 	)
-	const favoriteBroadcasts = $derived.by(() => favoriteBroadcastRows.slice(0, 10))
 	const broadcastCount = $derived(broadcastRows.length)
 	const favoriteBroadcastCount = $derived(favoriteBroadcastRows.length)
 	const userChannelIsBroadcasting = $derived(isBroadcasting(appState.decks, userChannel?.id))
@@ -218,7 +215,6 @@
 
 <div class="homepage" class:signed-in={isSignedIn}>
 	<menu class="filtermenu">
-		<ExploreSectionMenu />
 		{#if isSignedIn && authStatus.channelChecked && !userChannel}
 			<a href={resolve('/create-channel')} class="btn primary create-channel-action">
 				<Icon icon="add" />{m.home_create_channel()}
@@ -377,16 +373,6 @@
 			{/if}
 		</section>
 
-		{#if favoriteBroadcasts.length}
-			<section class="section">
-				<h2 class="section-title">{m.home_favorites_broadcasting()}</h2>
-				<ol class="list">
-					{#each favoriteBroadcasts as broadcast (broadcast.channel_id)}
-						<li><ChannelCard channel={broadcast.channels} /></li>
-					{/each}
-				</ol>
-			</section>
-		{/if}
 		<section class="section section--globe">
 			<div class="globe">
 				<MapChannels
@@ -661,8 +647,7 @@
 	}
 
 	.homepage:not(.signed-in) .section--globe--loggedout {
-		position: sticky;
-		bottom: 0;
+		position: relative;
 		z-index: 0;
 	}
 
