@@ -404,6 +404,10 @@
 		box-shadow: none;
 	}
 
+	nav :global(.btn.active svg) {
+		color: var(--accent-9);
+	}
+
 	@media (max-width: 768px) {
 		nav :global(.btn.nav-btn) {
 			min-height: var(--app-nav-btn-size);
