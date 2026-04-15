@@ -1004,6 +1004,13 @@
 		aspect-ratio: auto;
 	}
 
+	:global(.deck.listening) .video-hidden-placeholder,
+	:global(.deck.auto) .video-hidden-placeholder {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.video-hidden-placeholder {
 		display: flex;
 		align-items: center;
