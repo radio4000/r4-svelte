@@ -119,16 +119,6 @@
 			<span class="btn-label">Home</span>
 		</a>
 		<a
-			href={resolve('/search')}
-			class="btn nav-btn"
-			class:active={page.route.id?.startsWith('/search')}
-			aria-label={m.nav_search()}
-			{@attach tooltip({content: m.nav_search()})}
-		>
-			<Icon icon={conceptIcons.search} />
-			<span class="btn-label">{m.nav_search()}</span>
-		</a>
-		<a
 			href={resolve('/explore')}
 			class="btn nav-btn"
 			class:active={
