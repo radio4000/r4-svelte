@@ -9,6 +9,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
+	import PageHeader from '$lib/components/page-header.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -58,7 +59,7 @@
 </svelte:head>
 
 <div class="layout">
-	<menu class="filtermenu">
+	<PageHeader>
 		<ExploreSectionMenu />
 
 		<!-- <PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
@@ -101,7 +102,7 @@
 				</button>
 			</menu>
 		</PopoverMenu>
-	</menu>
+	</PageHeader>
 
 	{#if visibleTags.length}
 		{#if displayParam === 'cloud'}
@@ -141,23 +142,8 @@
 		padding: 0.5rem;
 	}
 
-	.filtermenu {
-		position: sticky;
-		top: 0;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		margin: 0;
-		margin-inline: -0.5rem;
-		padding-inline: 0.5rem;
-		padding-block: 0.25rem;
-		z-index: 1;
-		background: var(--color-interface);
-	}
-
-	.filtermenu :global(.search-input) {
-		flex: 1 1 0;
-		min-width: 6rem;
+	:global(.page-header) {
+		margin-bottom: 0.25rem;
 	}
 
 	.tag-list {

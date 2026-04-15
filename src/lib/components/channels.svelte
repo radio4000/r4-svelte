@@ -30,6 +30,7 @@
 	import SearchInput from './search-input.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
+	import PageHeader from './page-header.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -325,7 +326,7 @@
 </script>
 
 <div class={`layout layout--${display}`}>
-	<menu class="filtermenu">
+	<PageHeader wrap={true}>
 		{#if tabs}{@render tabs()}{/if}
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
 			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
@@ -484,7 +485,7 @@
 				/>
 			{/if}
 		</PopoverMenu>
-	</menu>
+	</PageHeader>
 
 	{#if filter === 'featured' && broadcastsCollection.state.size > 0}
 		<p class="featured-live-link-wrap">
@@ -568,9 +569,9 @@
 		&.layout--tuner :global(.scanner) {
 			flex: 1;
 		}
-		&.layout--infinite .filtermenu,
-		&.layout--map .filtermenu,
-		&.layout--tuner .filtermenu {
+		&.layout--infinite :global(.page-header),
+		&.layout--map :global(.page-header),
+		&.layout--tuner :global(.page-header) {
 			position: absolute;
 			top: 0;
 			left: 0;
@@ -580,20 +581,6 @@
 			/* Default page controls layer: above content, below app overlays/fullscreen deck. */
 			z-index: 3;
 		}
-	}
-
-	.filtermenu {
-		position: sticky;
-		top: 0;
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		margin: 0;
-		margin-inline: -0.5rem;
-		padding-inline: 0.5rem;
-		padding-block: 0.25rem;
-		z-index: 1;
-		background: var(--color-interface);
 	}
 
 	footer p {
@@ -621,7 +608,7 @@
 		}
 	}
 
-	.filtermenu :global(.search-input) {
+	.layout :global(.page-header .search-input) {
 		flex: 1 1 0;
 		min-width: 6rem;
 	}

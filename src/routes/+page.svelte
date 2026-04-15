@@ -21,6 +21,7 @@
 	import MapChannels from '$lib/components/map-channels.svelte'
 	import {not, isNull} from '@tanstack/db'
 	import Icon from '$lib/components/icon.svelte'
+	import PageHeader from '$lib/components/page-header.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import * as m from '$lib/paraglide/messages'
 
@@ -223,7 +224,7 @@
 </svelte:head>
 
 <div class="homepage" class:signed-in={isSignedIn}>
-	<menu class="filtermenu">
+	<PageHeader>
 		<SearchInput bind:value={homeSearch} debounce={300} placeholder={m.header_search_placeholder()} />
 		{#if isSignedIn && authStatus.channelChecked && !userChannel}
 			<a href={resolve('/create-channel')} class="btn primary create-channel-action">
@@ -245,7 +246,7 @@
 		{#if userChannel}
 			<MyChannelControls channel={userChannel} />
 		{/if}
-	</menu>
+	</PageHeader>
 
 	{#if isSignedIn && userChannel}
 		<!-- Logged in with channel -->
@@ -585,23 +586,16 @@
 		padding: 0;
 	}
 
-	.filtermenu {
+	.homepage > :global(.page-header) {
 		position: sticky;
 		top: 0.5rem;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
 		margin: 0 0 0.6rem;
-		z-index: 30;
+		z-index: 31;
 	}
 
-	.filtermenu :global(.search-input) {
+	.homepage > :global(.page-header .search-input) {
 		flex: 1 1 12rem;
 		min-width: 8rem;
-	}
-
-	.filtermenu:first-child {
-		z-index: 31;
 	}
 
 	.create-channel-action {

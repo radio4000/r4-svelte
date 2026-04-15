@@ -11,6 +11,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
+	import PageHeader from '$lib/components/page-header.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const DAY_OPTIONS = [7, 30, 90, 180]
@@ -65,23 +66,21 @@
 </svelte:head>
 
 <div class="feed">
-	<div class="sticky-header">
-		<div class="feed-nav">
-			<ExploreSectionMenu />
+	<PageHeader>
+		<ExploreSectionMenu />
 
-			<PopoverMenu style="margin-left: auto;">
-				{#snippet trigger()}
-					<Icon icon="history" />
-					{days}d
-				{/snippet}
-				<menu class="nav-vertical">
-					{#each DAY_OPTIONS as n (n)}
-						<button class:active={days === n} onclick={() => setDays(n)}>{n} days</button>
-					{/each}
-				</menu>
-			</PopoverMenu>
-		</div>
-	</div>
+		<PopoverMenu style="margin-left: auto;">
+			{#snippet trigger()}
+				<Icon icon="history" />
+				{days}d
+			{/snippet}
+			<menu class="nav-vertical">
+				{#each DAY_OPTIONS as n (n)}
+					<button class:active={days === n} onclick={() => setDays(n)}>{n} days</button>
+				{/each}
+			</menu>
+		</PopoverMenu>
+	</PageHeader>
 
 	{#if feedTracks.length}
 		{#each feedTracks as group (group.label)}
@@ -126,23 +125,8 @@
 		padding: 0.5rem;
 	}
 
-	.sticky-header {
-		position: sticky;
-		top: 0;
-		z-index: 3;
-		background: var(--color-interface);
+	:global(.page-header) {
 		padding-bottom: 0.25rem;
-		margin-inline: -0.5rem;
-		padding-inline: 0.5rem;
-
-		:global(.list) {
-			margin: 0;
-		}
-	}
-
-	.feed-nav {
-		display: flex;
-		align-items: center;
 	}
 
 	.day-header {
