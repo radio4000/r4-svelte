@@ -246,7 +246,6 @@
 		min-inline-size: min-content;
 		max-inline-size: max-content;
 		background: var(--color-interface);
-		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		z-index: 50;
 		position: relative;
@@ -408,8 +407,6 @@
 			flex-direction: row;
 			justify-content: space-between;
 			gap: 0.35rem;
-			border-right: none;
-			border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
 			inline-size: 100%;
 			width: 100%;
 			min-inline-size: 100%;
