@@ -35,6 +35,7 @@ input[type='url'] {
 	font-size: var(--font-4);
 }
 
+select,
 textarea,
 input[type='email'],
 input[type='search'],
@@ -44,7 +45,7 @@ input[type='text'],
 input[type='url'] {
 	min-height: 2rem;
 	padding: 0 0.5rem;
-	background: var(--gray-2);
+	background: var(--gray-1);
 	color: var(--gray-12);
 	border-radius: var(--border-radius);
 	/*border: 0;*/
