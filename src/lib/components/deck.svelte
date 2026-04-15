@@ -143,9 +143,9 @@
 	}
 
 	.resize-handle {
-		width: 0;
+		width: 3px;
 		cursor: col-resize;
-		border-right: 1px solid var(--gray-7);
+		border-right: 1px solid transparent;
 		border-radius: var(--border-radius) 0 0 var(--border-radius);
 		flex-shrink: 0;
 		touch-action: none;
