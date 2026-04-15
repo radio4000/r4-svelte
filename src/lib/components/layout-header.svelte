@@ -32,12 +32,12 @@
 
 	const DESKTOP_MIN = 1
 	const DESKTOP_MAX = 10000
-	const DESKTOP_DEFAULT = 84
+	const DESKTOP_DEFAULT = 188
 	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
 	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
 	const MOBILE_MIN = 52
 	const MOBILE_MAX = 92
-	const MOBILE_DEFAULT = 78
+	const MOBILE_DEFAULT = 90
 	const MOBILE_LABEL_BELOW_THRESHOLD = 80
 	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
 	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
@@ -301,7 +301,7 @@
 		inline-size: clamp(min-content, var(--app-header-size), max-content);
 		min-inline-size: min-content;
 		max-inline-size: max-content;
-		background: var(--header-bg);
+		background: var(--color-interface);
 		border-right: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		z-index: 50;
@@ -342,7 +342,7 @@
 		height: auto;
 		width: auto;
 		margin: 0;
-		padding: 0.26rem 0.38rem;
+		padding: 0.26rem 0.56rem;
 		gap: var(--app-nav-gap);
 		transition:
 			min-width 120ms ease,
@@ -497,7 +497,7 @@
 		header.labels-none nav :global(.btn.nav-btn) {
 			min-width: var(--app-nav-btn-size);
 			min-height: var(--app-nav-btn-size);
-			padding-inline: 0.3rem;
+			padding-inline: 0.5rem;
 		}
 
 		/* Active indicator: top bar on mobile */
