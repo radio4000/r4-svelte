@@ -224,13 +224,13 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
+		{#if showBroadcastCountWidget}
+			<a class="btn broadcast-live-link" href={resolve('/channels/broadcasting')}>
+				<Icon icon="signal" />
+				<span>{broadcastCount.toLocaleString()}</span>
+			</a>
+		{/if}
 		{#if !isSignedIn}
-			{#if showBroadcastCountWidget}
-				<a class="btn broadcast-live-link" href={resolve('/channels/broadcasting')}>
-					<Icon icon="signal" />
-					<span>{broadcastCount.toLocaleString()}</span>
-				</a>
-			{/if}
 			{#if !appState.show_welcome_hint}
 				<button
 					class="btn"
@@ -251,7 +251,7 @@
 		<!-- Logged in with channel -->
 
 		<section class="section dashboard-section">
-			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget || showBroadcastCountWidget}
+			{#if showTrackWidget || showFavoritesWidget || showFavoriteBroadcastWidget}
 				<div class="dashboard-group">
 					<div class="dashboard-grid">
 						{#if showTrackWidget}
@@ -287,18 +287,6 @@
 								<span>{m.home_dashboard_favorites_broadcasting()}</span>
 								<strong class="dashboard-value broadcast-count"
 									>{favoriteBroadcastCount.toLocaleString()}</strong
-								>
-							</a>
-						{/if}
-						{#if showBroadcastCountWidget}
-							<a
-								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
-								href={resolve('/channels/broadcasting')}
-							>
-								<Icon icon="signal" size={16} />
-								<span>{m.home_dashboard_live_radios()}</span>
-								<strong class="dashboard-value broadcast-count"
-									>{broadcastCount.toLocaleString()}</strong
 								>
 							</a>
 						{/if}
