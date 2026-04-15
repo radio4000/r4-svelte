@@ -9,14 +9,14 @@ const channelActivity = $derived.by(() => {
 	void tracksCollection.state.size
 	void channelsCollection.state.size
 	void followsCollection.state.size
-	void broadcastsCollection.state.size
+	const broadcastRows = [...broadcastsCollection.state.values()]
 
 	return deriveChannelActivityState({
 		decks: appState.decks,
 		tracksState: tracksCollection.state,
 		channelsState: channelsCollection.state,
 		followsState: followsCollection.state,
-		broadcastRows: [...broadcastsCollection.state.values()]
+		broadcastRows
 	})
 })
 
