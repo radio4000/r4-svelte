@@ -367,18 +367,25 @@
 	// Clear stale duration when track changes so the previous track's duration doesn't show
 	$effect(() => {
 		void deck?.playlist_track
-		if (deck) deck.media_duration = NaN
+		if (deck) {
+			deck.media_duration = NaN
+			deck.media_current_time = 0
+		}
 	})
 
 	$effect(() => {
+		const trackId = deck?.playlist_track
+		if (!trackId) return
 		const el = mediaElement
 		if (!el) return
 		const onTime = () => {
-			if (deck) deck.media_current_time = el.currentTime ?? 0
+			if (!deck || deck.playlist_track !== trackId) return
+			deck.media_current_time = el.currentTime ?? 0
 		}
 		const onDuration = () => {
+			if (!deck || deck.playlist_track !== trackId) return
 			const d = el.duration
-			if (deck) deck.media_duration = Number.isFinite(d) && d > 0 ? d : NaN
+			deck.media_duration = Number.isFinite(d) && d > 0 ? d : NaN
 		}
 		el.addEventListener('timeupdate', onTime)
 		el.addEventListener('durationchange', onDuration)
