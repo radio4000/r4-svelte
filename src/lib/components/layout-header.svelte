@@ -286,6 +286,9 @@
 		margin: 0;
 		padding: var(--app-nav-pad-block) var(--app-nav-pad-inline);
 		gap: var(--app-nav-gap);
+		border-color: transparent;
+		background: transparent;
+		box-shadow: none;
 		transition:
 			min-width 120ms ease,
 			min-height 120ms ease,
@@ -387,13 +390,12 @@
 		max-width: none;
 	}
 
-	/* Active indicator: left bar on desktop instead of background fill */
+	/* Active menu item: no accent color, only interface background */
 	nav :global(.btn.active) {
-		color: var(--accent-9);
-		box-shadow:
-			lch(0 0 0 / 0.06) 0px 4px 4px -1px,
-			lch(0 0 0 / 0.12) 0px 1px 1px 0px,
-			inset 2px 0 0 var(--accent-9);
+		color: inherit;
+		background: var(--color-interface);
+		border-color: transparent;
+		box-shadow: none;
 	}
 
 	@media (max-width: 768px) {
@@ -439,12 +441,12 @@
 			margin: 0;
 		}
 
-		/* Active indicator: top bar on mobile */
+		/* Active menu item keeps same style on mobile */
 		nav :global(.btn.active) {
-			box-shadow:
-				lch(0 0 0 / 0.06) 0px 4px 4px -1px,
-				lch(0 0 0 / 0.12) 0px 1px 1px 0px,
-				inset 0 2px 0 var(--accent-9);
+			color: inherit;
+			background: var(--color-interface);
+			border-color: transparent;
+			box-shadow: none;
 		}
 	}
 
