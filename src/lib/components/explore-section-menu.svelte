@@ -1,20 +1,12 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {conceptIcons} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
-	const isSignedIn = $derived(!!appState.user)
-	const isFeed = $derived(
-		page.route.id === '/feed' ||
-			page.route.id === '/explore/feed' ||
-			page.route.id === '/tracks/network' ||
-			page.route.id === '/explore/tracks/network'
-	)
 	const isChannels = $derived(
 		page.route.id?.startsWith('/channels') || page.route.id?.startsWith('/explore/channels')
 	)
@@ -24,15 +16,13 @@
 	const isTags = $derived(page.route.id?.startsWith('/tags') || page.route.id?.startsWith('/explore/tags'))
 
 	const activeLabel = $derived(
-		isFeed
-			? m.nav_feed()
-			: isChannels
-				? m.explore_tab_channels()
-				: isTracks
-					? m.explore_tab_tracks()
-					: isTags
-						? m.explore_tab_tags()
-						: m.nav_explore()
+		isChannels
+			? m.explore_tab_channels()
+			: isTracks
+				? m.explore_tab_tracks()
+				: isTags
+					? m.explore_tab_tags()
+					: m.nav_explore()
 	)
 </script>
 
@@ -54,11 +44,5 @@
 			<Icon icon={conceptIcons.tags} />
 			{m.explore_tab_tags()}
 		</a>
-		{#if isSignedIn}
-			<a href={resolve('/explore/tracks/network')} class:active={isFeed}>
-				<Icon icon={conceptIcons.feed} />
-				{m.nav_feed()}
-			</a>
-		{/if}
 	</menu>
 </PopoverMenu>

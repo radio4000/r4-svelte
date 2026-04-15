@@ -118,6 +118,7 @@
 					onclick={() => goto(resolve('/explore/tracks/featured'))}
 					>{m.explore_tracks_filter_featured()}</button
 				>
+				<button onclick={() => goto(resolve('/explore/tracks/network'))}>{m.nav_feed()}</button>
 			</menu>
 		</PopoverMenu>
 

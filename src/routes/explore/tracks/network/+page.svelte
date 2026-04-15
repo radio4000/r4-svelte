@@ -12,9 +12,18 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
 	import PageHeader from '$lib/components/page-header.svelte'
+	import SearchInput from '$lib/components/search-input.svelte'
+	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const DAY_OPTIONS = [7, 30, 90, 180]
+	let search = $state('')
+
+	$effect(() => {
+		const q = search.trim()
+		if (!q) return
+		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replaceState: true})
+	})
 
 	// Days filter from URL param, default 30
 	const days = $derived.by(() => {
@@ -68,6 +77,25 @@
 <div class="feed">
 	<PageHeader>
 		<ExploreSectionMenu />
+
+		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
+			{#snippet trigger()}
+				<Icon icon="filter-alt" />
+				{m.nav_feed()}
+			{/snippet}
+			<menu class="nav-vertical">
+				<button onclick={() => goto(resolve('/explore/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
+				>
+				<button onclick={() => goto(resolve('/explore/tracks/featured'))}
+					>{m.explore_tracks_filter_featured()}</button
+				>
+				<button class:active={true} onclick={() => goto(resolve('/explore/tracks/network'))}
+					>{m.nav_feed()}</button
+				>
+			</menu>
+		</PopoverMenu>
+
+		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
 
 		<PopoverMenu style="margin-left: auto;">
 			{#snippet trigger()}
