@@ -352,6 +352,7 @@
 
 	nav :global(.btn.nav-btn .btn-label) {
 		display: block;
+		font-size: var(--font-3);
 		max-width: 10ch;
 		text-align: center;
 		overflow: hidden;
