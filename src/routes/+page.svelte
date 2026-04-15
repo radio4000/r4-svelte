@@ -895,7 +895,6 @@
 		min-height: 50dvh;
 		margin-top: -0.75rem;
 		background: transparent;
-		border: 1px solid var(--gray-6);
 		border-radius: var(--border-radius);
 		:global(.map) {
 			flex: 1;
