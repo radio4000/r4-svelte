@@ -25,7 +25,7 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const FEATURED_COUNT = 3
-	const FEATURED_COUNT_LOGGEDOUT = 6
+	const FEATURED_COUNT_LOGGEDOUT = 20
 	const FEATURED_DAYS = 30
 
 	const isSignedIn = $derived(!!appState.user)
