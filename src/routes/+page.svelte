@@ -270,7 +270,7 @@
 						{#if showFavoritesWidget}
 							<a
 								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
-								href={resolve('/channels/favorites')}
+								href={resolve('/[slug]/following/featured', {slug: userChannel.slug})}
 							>
 								<Icon icon="favorite-fill" size={16} />
 								<span>{m.home_dashboard_favorites()}</span>
