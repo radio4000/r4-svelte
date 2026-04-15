@@ -1,7 +1,6 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {page} from '$app/state'
 	import {appName} from '$lib/config'
 	import {tracksCollection, fetchRecentTracksForSlugs} from '$lib/collections/tracks'
 	import {groupByDay} from '$lib/utils'
@@ -16,7 +15,6 @@
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
-	const DAY_OPTIONS = [7, 30, 90, 180]
 	let search = $state('')
 
 	$effect(() => {
@@ -25,11 +23,7 @@
 		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replaceState: true})
 	})
 
-	// Days filter from URL param, default 30
-	const days = $derived.by(() => {
-		const n = parseInt(page.url.searchParams.get('days') ?? '')
-		return DAY_OPTIONS.includes(n) ? n : 30
-	})
+	const days = 30
 
 	const follows = getFollowedChannels()
 
@@ -61,13 +55,6 @@
 		)
 	})
 
-	function setDays(n) {
-		const q = new URL(page.url).searchParams
-		if (n === 30) q.delete('days')
-		else q.set('days', String(n))
-		const qs = q.toString()
-		goto(qs ? `?${qs}` : resolve('/explore/tracks/network'), {replaceState: true, keepFocus: true})
-	}
 </script>
 
 <svelte:head>
@@ -97,17 +84,6 @@
 
 		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
 
-		<PopoverMenu style="margin-left: auto;">
-			{#snippet trigger()}
-				<Icon icon="history" />
-				{days}d
-			{/snippet}
-			<menu class="nav-vertical">
-				{#each DAY_OPTIONS as n (n)}
-					<button class:active={days === n} onclick={() => setDays(n)}>{n} days</button>
-				{/each}
-			</menu>
-		</PopoverMenu>
 	</PageHeader>
 
 	{#if feedTracks.length}
