@@ -23,7 +23,7 @@ export const baseColors = [
 		name: '--accent-dark',
 		label: () => m.theme_color_accent_dark_label(),
 		description: () => m.theme_color_accent_desc(),
-		default: 'oklch(0.8 0.14 222)',
+		default: '#732ff1',
 		theme: 'dark'
 	},
 	{
