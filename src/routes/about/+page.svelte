@@ -124,6 +124,13 @@
 		margin-inline: auto;
 	}
 
+	article.focused.constrained {
+		position: sticky;
+		top: 0;
+		z-index: 20;
+		background: var(--color-interface);
+	}
+
 	figure {
 		margin-block-end: 1.25rem;
 	}
