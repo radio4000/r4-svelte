@@ -221,11 +221,11 @@
 					href={resolve('/create-channel')}
 					class="btn nav-btn"
 					class:active={page.route.id?.startsWith('/create-channel')}
-					aria-label={m.home_create_channel()}
-					{@attach tooltip({content: m.home_create_channel()})}
+					aria-label={m.nav_channels()}
+					{@attach tooltip({content: m.nav_channels()})}
 				>
 					<Icon icon="user" />
-					<span class="btn-label">{m.home_create_channel()}</span>
+					<span class="btn-label">{m.nav_channels()}</span>
 				</a>
 			{/if}
 			{#if !isSignedIn}
@@ -233,11 +233,11 @@
 					href={resolve('/auth')}
 					class="btn nav-btn"
 					class:active={page.route.id?.startsWith('/auth')}
-					aria-label={m.auth_create_or_signin()}
-					{@attach tooltip({content: m.auth_create_or_signin()})}
+					aria-label={m.nav_sign_in()}
+					{@attach tooltip({content: m.nav_sign_in()})}
 				>
 					<Icon icon="user" />
-					<span class="btn-label">{m.auth_create_or_signin()}</span>
+					<span class="btn-label">{m.nav_sign_in()}</span>
 				</a>
 			{/if}
 		{/await}
@@ -258,11 +258,11 @@
 			href={resolve('/menu')}
 			class="btn settings-link nav-btn"
 			class:active={page.route.id?.startsWith('/menu') || page.route.id?.startsWith('/settings')}
-			aria-label="Menu"
-			{@attach tooltip({content: 'Menu'})}
+			aria-label={m.nav_settings()}
+			{@attach tooltip({content: m.nav_settings()})}
 		>
 			<Icon icon="menu" />
-			<span class="btn-label">Menu</span>
+			<span class="btn-label">{m.nav_settings()}</span>
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
