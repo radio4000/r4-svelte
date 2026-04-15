@@ -38,7 +38,6 @@
 	const MOBILE_MIN = 52
 	const MOBILE_MAX = 92
 	const MOBILE_DEFAULT = 90
-	const MOBILE_LABEL_BELOW_THRESHOLD = 80
 	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
 	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
 
@@ -65,7 +64,7 @@
 
 	function applyModeFromSize() {
 		if (isMobileViewport) {
-			labelLayout = headerSize >= MOBILE_LABEL_BELOW_THRESHOLD ? 'below' : 'none'
+			labelLayout = 'below'
 			return
 		}
 		if (headerSize >= DESKTOP_LABEL_RIGHT_THRESHOLD) {
@@ -95,6 +94,8 @@
 
 	function handleResizeStart(event) {
 		event.preventDefault()
+		event.stopPropagation()
+		event.currentTarget?.setPointerCapture?.(event.pointerId)
 		const startPointer = isMobileViewport ? event.clientY : event.clientX
 		const startSize = headerSize
 		const [min, max] = sizeBounds(isMobileViewport)
@@ -513,13 +514,15 @@
 	.header-resize-handle {
 		position: absolute;
 		z-index: 2;
+		touch-action: none;
+		user-select: none;
 	}
 
 	.header-resize-handle-desktop {
 		position: absolute;
 		top: 0;
-		right: 0;
-		width: 12px;
+		right: -2px;
+		width: 16px;
 		height: 100%;
 		cursor: ew-resize;
 	}
@@ -535,9 +538,9 @@
 
 		.header-resize-handle-mobile {
 			display: block;
-			top: -4px;
-			width: 14px;
-			height: 14px;
+			top: -8px;
+			width: 22px;
+			height: 22px;
 			cursor: ns-resize;
 		}
 
