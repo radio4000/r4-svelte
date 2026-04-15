@@ -486,6 +486,16 @@
 		</PopoverMenu>
 	</menu>
 
+	{#if filter === 'featured' && broadcastsCollection.state.size > 0}
+		<p class="featured-live-link-wrap">
+			<a class="btn featured-live-link" href={resolve('/explore/channels/broadcasting')}>
+				<Icon icon="signal" />
+				<span>{m.home_broadcasting()}</span>
+				<strong>{broadcastsCollection.state.size.toLocaleString()}</strong>
+			</a>
+		</p>
+	{/if}
+
 	{#if display === 'map'}
 		{#await import('./map-channels.svelte') then MapChannels}
 			<MapChannels.default
@@ -592,6 +602,23 @@
 		justify-content: center;
 		gap: 0.5rem;
 		margin: 2rem 0.5rem 1rem;
+	}
+
+	.featured-live-link-wrap {
+		margin: 0.25rem 0.5rem 0.5rem;
+	}
+
+	.featured-live-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--accent-9);
+		border-color: var(--accent-6);
+		background: var(--accent-2);
+
+		strong {
+			font-variant-numeric: tabular-nums;
+		}
 	}
 
 	.filtermenu :global(.search-input) {

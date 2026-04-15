@@ -230,12 +230,6 @@
 				<Icon icon="add" />{m.home_create_channel()}
 			</a>
 		{/if}
-		{#if showBroadcastCountWidget}
-			<a class="btn broadcast-live-link" href={resolve('/channels/broadcasting')}>
-				<Icon icon="signal" />
-				<span>{broadcastCount.toLocaleString()}</span>
-			</a>
-		{/if}
 		{#if !isSignedIn}
 			{#if !appState.show_welcome_hint}
 				<button
@@ -610,18 +604,6 @@
 
 	.create-channel-action {
 		margin-left: auto;
-	}
-
-	.broadcast-live-link {
-		color: var(--accent-9);
-		border-color: var(--accent-6);
-		background: var(--accent-2);
-
-		&:hover,
-		&:focus-visible {
-			border-color: var(--accent-7);
-			background: var(--accent-3);
-		}
 	}
 
 	:global(.my-channel) {
