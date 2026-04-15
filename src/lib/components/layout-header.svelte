@@ -342,7 +342,7 @@
 		height: auto;
 		width: auto;
 		margin: 0;
-		padding: 0.26rem 0.56rem;
+		padding: 0.12rem 0.56rem;
 		gap: var(--app-nav-gap);
 		transition:
 			min-width 120ms ease,
