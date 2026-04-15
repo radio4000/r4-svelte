@@ -9,7 +9,12 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const isSignedIn = $derived(!!appState.user)
-	const isFeed = $derived(page.route.id === '/feed' || page.route.id === '/explore/feed')
+	const isFeed = $derived(
+		page.route.id === '/feed' ||
+			page.route.id === '/explore/feed' ||
+			page.route.id === '/tracks/network' ||
+			page.route.id === '/explore/tracks/network'
+	)
 	const isChannels = $derived(
 		page.route.id?.startsWith('/channels') || page.route.id?.startsWith('/explore/channels')
 	)
@@ -50,7 +55,7 @@
 			{m.explore_tab_tags()}
 		</a>
 		{#if isSignedIn}
-			<a href={resolve('/explore/feed')} class:active={isFeed}>
+			<a href={resolve('/explore/tracks/network')} class:active={isFeed}>
 				<Icon icon={conceptIcons.feed} />
 				{m.nav_feed()}
 			</a>
