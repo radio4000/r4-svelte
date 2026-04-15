@@ -561,12 +561,13 @@
 		border-top: 1px solid var(--gray-4);
 
 		footer {
-			padding: 1rem 0.5rem 0.5rem;
+			padding: 0.4rem;
+			margin: 0;
 			text-align: center;
 			position: sticky;
 			bottom: 0;
 			background: var(--gray-1);
-			border-top: 1px solid var(--gray-4);
+			border: 0;
 		}
 	}
 
