@@ -530,13 +530,18 @@
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		flex: 0 0 auto;
+		flex: 1 1 auto;
+		min-width: 0;
+		width: 100%;
 	}
 
 	.channel-actions {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.3rem;
+		flex: 1 1 auto;
+		min-width: 0;
 		margin: 0;
 	}
 
@@ -591,6 +596,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
+		margin-left: auto;
+		flex: 0 0 auto;
 	}
 
 	main {
