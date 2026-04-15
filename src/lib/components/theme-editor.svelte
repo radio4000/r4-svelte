@@ -18,7 +18,7 @@
 
 	const log = logger.ns('theme').seal()
 
-	const uid = $props.id()
+	const uid = 'theme-editor'
 
 	/** @type {{name: string, value: string} | null} */
 	let pendingUpdate = $state(null)
