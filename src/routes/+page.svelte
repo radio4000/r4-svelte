@@ -448,36 +448,36 @@
 		{/if}
 	{:else}
 		<!-- Not logged in -->
-		{#if appState.show_welcome_hint}
-			<section class="section welcome-section dismissible">
-				<button
-					class="dismiss-btn"
-					onclick={() => (appState.show_welcome_hint = false)}
-					aria-label="Close"
-				>
-					<Icon icon="close" />
-				</button>
-				<h1>{m.welcome_title({appName})}</h1>
-				<p class="tagline">{m.welcome_tagline_channel()}</p>
-				<p class="tagline">{m.welcome_tagline_metadata()}</p>
-				<ul class="feature-list">
-					<li>{m.welcome_feature_archive()}</li>
-					<li>{m.welcome_feature_decks()}</li>
-					<li>{m.welcome_feature_follow()}</li>
-					<li>{m.welcome_feature_open()}</li>
-				</ul>
-				<menu class="welcome-menu">
-					<a
-						href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')}
-						class="btn primary">{m.header_start_your_radio()}</a
+		<div class="loggedout-top-row" class:modal-open={appState.show_welcome_hint}>
+			{#if appState.show_welcome_hint}
+				<section class="section welcome-section dismissible">
+					<button
+						class="dismiss-btn"
+						onclick={() => (appState.show_welcome_hint = false)}
+						aria-label="Close"
 					>
-					<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
-					<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
-				</menu>
-			</section>
-		{/if}
+						<Icon icon="close" />
+					</button>
+					<h1>{m.welcome_title({appName})}</h1>
+					<p class="tagline">{m.welcome_tagline_channel()}</p>
+					<p class="tagline">{m.welcome_tagline_metadata()}</p>
+					<ul class="feature-list">
+						<li>{m.welcome_feature_archive()}</li>
+						<li>{m.welcome_feature_decks()}</li>
+						<li>{m.welcome_feature_follow()}</li>
+						<li>{m.welcome_feature_open()}</li>
+					</ul>
+					<menu class="welcome-menu">
+						<a
+							href={resolve('/auth/create-account') + '?redirect=' + resolve('/create-channel')}
+							class="btn primary">{m.header_start_your_radio()}</a
+						>
+						<a href={resolve('/auth/login')} class="btn">{m.nav_sign_in()}</a>
+						<a href={resolve('/about')} class="btn ghost">{m.nav_about()}</a>
+					</menu>
+				</section>
+			{/if}
 
-		<div class="loggedout-over-globe">
 			{#if showBroadcastCountWidget}
 				<section class="section">
 					<h2 class="section-title">
@@ -490,7 +490,9 @@
 					</ol>
 				</section>
 			{/if}
+		</div>
 
+		<div class="loggedout-over-globe">
 			<div class="loggedout-grid">
 				{#if featuredChannels.length}
 					<section class="section section--featured-col">
@@ -651,9 +653,24 @@
 	}
 
 	.homepage:not(.signed-in) .loggedout-over-globe,
+	.homepage:not(.signed-in) .loggedout-top-row,
 	.homepage:not(.signed-in) .welcome-section {
 		position: relative;
 		z-index: 5;
+	}
+
+	.loggedout-top-row {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.6rem;
+		padding: 0.6rem 0.5rem 0;
+	}
+
+	@media (min-width: 980px) {
+		.loggedout-top-row.modal-open {
+			grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 1fr);
+			align-items: start;
+		}
 	}
 
 	.loggedout-over-globe {
