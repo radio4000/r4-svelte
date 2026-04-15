@@ -246,23 +246,29 @@
 	</section>
 </div>
 
-<div class="color-grid">
-	{#each grays as name (name)}
-		<div class="color-swatch">
-			<figure style="background-color: var({name})"></figure>
-			<code>{name}</code>
-		</div>
-	{/each}
-</div>
+<section class="palette-group">
+	<header class="palette-header"><code>--gray</code></header>
+	<div class="color-grid">
+		{#each grays as name, i (name)}
+			<div class="color-swatch" title={name}>
+				<figure style="background-color: var({name})"></figure>
+				<code>{i + 1}</code>
+			</div>
+		{/each}
+	</div>
+</section>
 
-<div class="color-grid">
-	{#each accents as name (name)}
-		<div class="color-swatch">
-			<figure style="background-color: var({name})"></figure>
-			<code>{name}</code>
-		</div>
-	{/each}
-</div>
+<section class="palette-group">
+	<header class="palette-header"><code>--accent</code></header>
+	<div class="color-grid">
+		{#each accents as name, i (name)}
+			<div class="color-swatch" title={name}>
+				<figure style="background-color: var({name})"></figure>
+				<code>{i + 1}</code>
+			</div>
+		{/each}
+	</div>
+</section>
 
 <style>
 	.box {
@@ -307,19 +313,20 @@
 
 	.color-grid {
 		display: grid;
-		grid-template-columns: repeat(12, 1fr);
-		/*grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));*/
-		gap: 0.2rem;
-		margin: 0.5rem;
+		grid-template-columns: repeat(auto-fit, minmax(3rem, 1fr));
+		gap: 0.25rem;
+		margin: 0;
 
 		figure {
-			height: 4rem;
+			height: clamp(2.25rem, 9vw, 4rem);
 		}
 
 		code {
 			font-size: var(--font-3);
 			font-family: inherit;
-			padding: 0.2rem;
+			padding: 0.2rem 0.3rem;
+			text-align: center;
+			display: block;
 		}
 	}
 
@@ -328,5 +335,13 @@
 		border-radius: var(--border-radius);
 		overflow: hidden;
 		background: var(--gray-2);
+	}
+
+	.palette-group {
+		margin: 0.5rem;
+	}
+
+	.palette-header {
+		margin: 0 0 0.25rem;
 	}
 </style>
