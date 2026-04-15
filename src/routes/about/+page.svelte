@@ -153,8 +153,11 @@
 	}
 
 	.about-slideshow {
-		margin: 0 auto 0.9rem;
-		padding-inline: 0.5rem;
+		width: 100%;
+		max-width: 100%;
+		margin: 0 0 0.9rem;
+		padding-inline: 0;
+		overflow-x: clip;
 	}
 
 	.about-actions {
@@ -178,8 +181,11 @@
 	}
 
 	:global(.featured-flip) {
+		width: 100%;
+		max-width: 100%;
 		gap: 0.25rem;
 		margin-bottom: 0;
+		overflow-x: clip;
 	}
 
 	.flip-card {
@@ -199,5 +205,11 @@
 		font-size: var(--font-4);
 		padding: 0.5rem;
 		min-height: 6rem;
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	.flip-desc {
+		overflow-wrap: anywhere;
 	}
 </style>
