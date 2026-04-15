@@ -128,6 +128,22 @@
 			<Icon icon={conceptIcons.search} />
 			<span class="btn-label">{m.nav_search()}</span>
 		</a>
+		<a
+			href={resolve('/explore')}
+			class="btn nav-btn"
+			class:active={
+				page.route.id?.startsWith('/explore') ||
+				page.route.id?.startsWith('/channels') ||
+				page.route.id?.startsWith('/tracks') ||
+				page.route.id?.startsWith('/tags') ||
+				page.route.id?.startsWith('/feed')
+			}
+			aria-label={m.nav_explore()}
+			{@attach tooltip({content: m.nav_explore()})}
+		>
+			<Icon icon={conceptIcons.channels} />
+			<span class="btn-label">{m.nav_explore()}</span>
+		</a>
 	</nav>
 
 	<!-- <nav class="pins">

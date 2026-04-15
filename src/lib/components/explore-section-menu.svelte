@@ -9,22 +9,25 @@
 	import * as m from '$lib/paraglide/messages'
 
 	const isSignedIn = $derived(!!appState.user)
-	const isHome = $derived(page.route.id === '/')
-	const isFeed = $derived(page.route.id === '/feed')
-	const isChannels = $derived(page.route.id?.startsWith('/channels'))
-	const isTracks = $derived(page.route.id?.startsWith('/tracks'))
-	const isTags = $derived(page.route.id?.startsWith('/tags'))
+	const isFeed = $derived(page.route.id === '/feed' || page.route.id === '/explore/feed')
+	const isChannels = $derived(
+		page.route.id?.startsWith('/channels') || page.route.id?.startsWith('/explore/channels')
+	)
+	const isTracks = $derived(
+		page.route.id?.startsWith('/tracks') || page.route.id?.startsWith('/explore/tracks')
+	)
+	const isTags = $derived(page.route.id?.startsWith('/tags') || page.route.id?.startsWith('/explore/tags'))
 
 	const activeLabel = $derived(
-		isHome
-			? m.home_tab_home()
-			: isFeed
-				? m.nav_feed()
-				: isChannels
-					? m.explore_tab_channels()
-					: isTracks
-						? m.explore_tab_tracks()
-						: m.explore_tab_tags()
+		isFeed
+			? m.nav_feed()
+			: isChannels
+				? m.explore_tab_channels()
+				: isTracks
+					? m.explore_tab_tracks()
+					: isTags
+						? m.explore_tab_tags()
+						: m.nav_explore()
 	)
 </script>
 
@@ -34,24 +37,20 @@
 		{activeLabel}
 	{/snippet}
 	<menu class="nav-vertical">
-		<a href={resolve('/')} class:active={isHome}>
-			<Icon icon={conceptIcons.home} />
-			{m.home_tab_home()}
-		</a>
-		<a href={resolve('/channels/featured')} class:active={isChannels}>
+		<a href={resolve('/explore/channels/featured')} class:active={isChannels}>
 			<Icon icon={conceptIcons.channels} />
 			{m.explore_tab_channels()}
 		</a>
-		<a href={resolve('/tracks/recent')} class:active={isTracks}>
+		<a href={resolve('/explore/tracks/recent')} class:active={isTracks}>
 			<Icon icon={conceptIcons.tracks} />
 			{m.explore_tab_tracks()}
 		</a>
-		<a href={resolve('/tags/featured')} class:active={isTags}>
+		<a href={resolve('/explore/tags/featured')} class:active={isTags}>
 			<Icon icon={conceptIcons.tags} />
 			{m.explore_tab_tags()}
 		</a>
 		{#if isSignedIn}
-			<a href={resolve('/feed')} class:active={isFeed}>
+			<a href={resolve('/explore/feed')} class:active={isFeed}>
 				<Icon icon={conceptIcons.feed} />
 				{m.nav_feed()}
 			</a>

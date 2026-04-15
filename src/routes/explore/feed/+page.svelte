@@ -56,7 +56,7 @@
 		if (n === 30) q.delete('days')
 		else q.set('days', String(n))
 		const qs = q.toString()
-		goto(qs ? `?${qs}` : resolve('/feed'), {replaceState: true, keepFocus: true})
+		goto(qs ? `?${qs}` : resolve('/explore/feed'), {replaceState: true, keepFocus: true})
 	}
 </script>
 

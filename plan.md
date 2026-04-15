@@ -2,7 +2,11 @@
 
 Possible improvements. Roughly by priority. Verify before implementing.
 
-Last update (2026-04-13): fixed appearance settings SSR crash, improved search/track filter UX, updated track-card media interactions, and refined homepage/tag-filter UI.
+Last update (2026-04-15): migrated browse routes to canonical `/explore/*` paths (with legacy redirects), added Explore app-nav entry, and simplified homepage top navigation.
+
+## Done (2026-04-15)
+
+- Browse routes are now canonical under `/explore/*`; legacy `/channels/*`, `/tracks/*`, `/tags/*`, and `/feed` redirect there.
 
 ## Done (2026-04-13)
 

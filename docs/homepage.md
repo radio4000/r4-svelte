@@ -5,12 +5,14 @@
 | Route                 | Purpose                                                       |
 | --------------------- | ------------------------------------------------------------- |
 | `/`                   | Personalized homepage — your channel, followed channels, feed |
-| `/feed`               | Reverse-chronological track timeline from followed channels   |
-| `/channels/favorites` | Signed-in favorites filter in the channel browser             |
-| `/channels/*`         | Channel browser                                               |
-| `/tracks/*`           | Track browser                                                 |
-| `/tags/*`             | Tag browser                                                   |
-| `/explore/*`          | Legacy URLs redirecting to the routes above                   |
+| `/explore/feed`       | Reverse-chronological track timeline from followed channels   |
+| `/explore/channels/*` | Channel browser                                               |
+| `/explore/tracks/*`   | Track browser                                                 |
+| `/explore/tags/*`     | Tag browser                                                   |
+| `/feed`               | Legacy redirect to `/explore/feed`                            |
+| `/channels/*`         | Legacy redirects to `/explore/channels/*`                     |
+| `/tracks/*`           | Legacy redirects to `/explore/tracks/*`                       |
+| `/tags/*`             | Legacy redirects to `/explore/tags/*`                         |
 
 ---
 
@@ -55,7 +57,7 @@ The feed improves over time as the user browses channels: every channel page vis
 
 ## Featured channels algorithm
 
-Used on the homepage (top 3) and as the default filter on `/channels/featured` (top 12).
+Used on the homepage (top 3) and as the default filter on `/explore/channels/featured` (top 12).
 
 ```ts
 function featuredScore(channel) {
@@ -81,7 +83,7 @@ Quality pool: `trackCountGte: 10, imageNotNull: true, limit: 50` fetched from re
 
 ## Browse routes
 
-`/channels/featured` is the old explore page, moved. It uses `<Channels defaultFilter="featured" />`. The `featured` filter:
+`/explore/channels/featured` is the canonical browse entry for channels. It uses `<Channels defaultFilter="featured" />`. The `featured` filter:
 
 - Fetches a quality pool from remote (track_count ≥ 10, has image, limit 50)
 - Scores client-side with `featuredScore`
@@ -89,9 +91,9 @@ Quality pool: `trackCountGte: 10, imageNotNull: true, limit: 50` fetched from re
 - Hides sort controls (pre-ranked, sorting would be confusing)
 - Info button (circle-info icon) opens a dialog explaining the ranking
 
-`featured` is also the new default for `channels_filter` in `appState`.
+`featured` is also the default for `channels_filter` in `appState`.
 
-Legacy `/explore/*` URLs remain as redirect shims so old links and bookmarks still work.
+Legacy `/channels/*`, `/tracks/*`, `/tags/*`, and `/feed` URLs remain as redirect shims so old links and bookmarks still work.
 
 ---
 
@@ -101,10 +103,10 @@ Legacy `/explore/*` URLs remain as redirect shims so old links and bookmarks sti
 | ------------------------------------------- | ---------------------------------------------- |
 | `src/routes/+page.svelte`                   | Personalized homepage                          |
 | `src/routes/+page.js`                       | Homepage route config                          |
-| `src/routes/channels/[filter]/+page.svelte` | Channel browser                                |
-| `src/routes/tracks/[filter]/+page.svelte`   | Track browser                                  |
-| `src/routes/tags/[filter]/+page.svelte`     | Tag browser                                    |
-| `src/routes/explore/**/+page.js`            | Legacy redirect shims                          |
+| `src/routes/explore/channels/[filter]/+page.svelte` | Channel browser                       |
+| `src/routes/explore/tracks/[filter]/+page.svelte`   | Track browser                         |
+| `src/routes/explore/tags/[filter]/+page.svelte`     | Tag browser                           |
+| `src/routes/feed/**/+page.js`, `src/routes/channels/**/+page.js`, `src/routes/tracks/**/+page.js`, `src/routes/tags/**/+page.js` | Legacy redirect shims |
 | `src/lib/components/channels.svelte`        | Added `featured` filter + `defaultFilter` prop |
 | `src/lib/utils.ts`                          | `featuredScore(channel)`                       |
 | `src/lib/components/layout-header.svelte`   | Header nav                                     |

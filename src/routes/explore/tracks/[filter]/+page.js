@@ -1,7 +1,10 @@
 import {redirect} from '@sveltejs/kit'
 
-const VALID = new Set(['recent', 'featured'])
+export const ssr = false
 
-export function load({params}) {
-	redirect(307, VALID.has(params.filter) ? `/tracks/${params.filter}` : '/tracks/recent')
+const validFilters = ['recent', 'featured']
+
+export function load({params, url}) {
+	if (!validFilters.includes(params.filter)) redirect(307, `/explore/tracks/recent${url.search}`)
+	return {filter: params.filter}
 }

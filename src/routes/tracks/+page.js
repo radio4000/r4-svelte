@@ -1,5 +1,5 @@
 import {redirect} from '@sveltejs/kit'
 
-export function load() {
-	redirect(307, '/tracks/recent')
+export function load({url}) {
+	redirect(307, `/explore/tracks/recent${url.search}`)
 }

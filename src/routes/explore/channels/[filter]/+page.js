@@ -1,16 +1,21 @@
 import {redirect} from '@sveltejs/kit'
 
-const VALID = new Set([
-	'featured',
-	'all',
-	'broadcasting',
-	'with-artwork',
-	'imported',
-	'with-more-than-10-tracks',
-	'with-more-than-100-tracks',
-	'with-more-than-1000-tracks'
-])
+export const ssr = false
 
-export function load({params}) {
-	redirect(307, VALID.has(params.filter) ? `/channels/${params.filter}` : '/channels/all')
+const slugToFilter = {
+	featured: 'featured',
+	all: 'all',
+	favorites: 'favorites',
+	broadcasting: 'broadcasting',
+	'with-artwork': 'artwork',
+	imported: 'imported',
+	'with-more-than-10-tracks': '10+',
+	'with-more-than-100-tracks': '100+',
+	'with-more-than-1000-tracks': '1000+'
+}
+
+export function load({params, url}) {
+	const filter = slugToFilter[params.filter]
+	if (!filter) redirect(307, `/explore/channels/all${url.search}`)
+	return {filter}
 }

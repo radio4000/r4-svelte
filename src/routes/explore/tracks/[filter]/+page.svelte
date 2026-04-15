@@ -110,11 +110,11 @@
 			<menu class="nav-vertical">
 				<button
 					class:active={filterParam === 'recent'}
-					onclick={() => goto(resolve('/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
+					onclick={() => goto(resolve('/explore/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
 				>
 				<button
 					class:active={filterParam === 'featured'}
-					onclick={() => goto(resolve('/tracks/featured'))}
+					onclick={() => goto(resolve('/explore/tracks/featured'))}
 					>{m.explore_tracks_filter_featured()}</button
 				>
 			</menu>

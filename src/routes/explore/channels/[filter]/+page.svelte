@@ -11,7 +11,7 @@
 	<title>{m.explore_title({appName})}</title>
 </svelte:head>
 
-<Channels filter={data.filter} filterBasePath="/channels" searchHref="/search/channels">
+<Channels filter={data.filter} filterBasePath="/explore/channels" searchHref="/search/channels">
 	{#snippet tabs()}
 		<ExploreSectionMenu />
 	{/snippet}
