@@ -351,32 +351,34 @@
 		{@const isAutoActive = autoDecks.length > 0}
 		{@const isAutoPlaying = autoDecks.some((d) => d.is_playing)}
 		{@const isAutoDrifted = autoDecks.some((d) => d.auto_radio_drifted)}
-		<button
-			type="button"
-			onclick={() =>
-				activeDeck?.is_playing
-					? togglePlayPause(appState.active_deck_id)
-					: playTracks(tagFilteredTracks, selectedPlaylistTitle)}
-			title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
-		>
-			<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} />
-		</button>
-		<button
-			type="button"
-			onclick={() => queueTracks(tagFilteredTracks)}
-			title={m.search_queue_all()}
-		>
-			<Icon icon="next-fill" />
-		</button>
-		{#if hasAutoRadioCoverage(tagFilteredTracks)}
-			<AutoRadioButton
-				synced={isAutoActive && isAutoPlaying && !isAutoDrifted}
-				title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+		<div class="play-actions-group">
+			<button
+				type="button"
 				onclick={() =>
-					autoView &&
-					joinAutoRadio(appState.active_deck_id, toAutoTracks(tagFilteredTracks), autoView)}
-			/>
-		{/if}
+					activeDeck?.is_playing
+						? togglePlayPause(appState.active_deck_id)
+						: playTracks(tagFilteredTracks, selectedPlaylistTitle)}
+				title={activeDeck?.is_playing ? m.common_pause() : m.channel_play_latest()}
+			>
+				<Icon icon={activeDeck?.is_playing ? 'pause' : 'play-fill'} />
+			</button>
+			<button
+				type="button"
+				onclick={() => queueTracks(tagFilteredTracks)}
+				title={m.search_queue_all()}
+			>
+				<Icon icon="next-fill" />
+			</button>
+			{#if hasAutoRadioCoverage(tagFilteredTracks)}
+				<AutoRadioButton
+					synced={isAutoActive && isAutoPlaying && !isAutoDrifted}
+					title={isAutoDrifted ? m.auto_radio_resync() : m.auto_radio_join()}
+					onclick={() =>
+						autoView &&
+						joinAutoRadio(appState.active_deck_id, toAutoTracks(tagFilteredTracks), autoView)}
+				/>
+			{/if}
+		</div>
 	{/if}
 {/snippet}
 
@@ -652,5 +654,12 @@
 	.tag-count {
 		opacity: 0.6;
 		font-size: 0.85em;
+	}
+
+	.play-actions-group {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		margin-inline: auto;
 	}
 </style>
