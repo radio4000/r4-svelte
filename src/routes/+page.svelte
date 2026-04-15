@@ -879,6 +879,7 @@
 		margin-top: -0.75rem;
 		background: transparent;
 		border-radius: var(--border-radius);
+		overflow: hidden;
 		:global(.map) {
 			flex: 1;
 			min-height: 0;

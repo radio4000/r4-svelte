@@ -143,7 +143,7 @@
 	}
 
 	.resize-handle {
-		width: 3px;
+		width: 0;
 		cursor: col-resize;
 		border-right: 1px solid var(--gray-7);
 		border-radius: var(--border-radius) 0 0 var(--border-radius);
