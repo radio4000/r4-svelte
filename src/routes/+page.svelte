@@ -707,7 +707,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		padding: 0.45rem;
 		border-radius: var(--border-radius);
 		background: var(--color-interface);
 	}
