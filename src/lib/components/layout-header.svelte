@@ -33,18 +33,15 @@
 	const DESKTOP_MIN = 1
 	const DESKTOP_MAX = 10000
 	const DESKTOP_DEFAULT = 188
-	const DESKTOP_LABEL_BELOW_THRESHOLD = 104
-	const DESKTOP_LABEL_RIGHT_THRESHOLD = 168
 	const MOBILE_MIN = 52
 	const MOBILE_MAX = 92
 	const MOBILE_DEFAULT = 90
-	const STORAGE_KEY_DESKTOP = 'r5:layout-header-size:desktop'
-	const STORAGE_KEY_MOBILE = 'r5:layout-header-size:mobile'
+	const STORAGE_KEY_LABELS_VISIBLE = 'r5:layout-header-labels-visible'
 
 	let isMobileViewport = $state(false)
 	let headerSize = $state(DESKTOP_DEFAULT)
+	let labelsVisible = $state(true)
 	let labelLayout = $state(/** @type {'none' | 'right' | 'below'} */ ('none'))
-	let resizing = $state(false)
 
 	function clamp(value, min, max) {
 		return Math.min(max, Math.max(min, value))
@@ -54,75 +51,40 @@
 		return mobile ? [MOBILE_MIN, MOBILE_MAX] : [DESKTOP_MIN, DESKTOP_MAX]
 	}
 
-	function storageKey(mobile) {
-		return mobile ? STORAGE_KEY_MOBILE : STORAGE_KEY_DESKTOP
-	}
-
 	function detectMobileViewport() {
 		return typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
 	}
 
 	function applyModeFromSize() {
-		if (isMobileViewport) {
-			labelLayout = 'below'
-			return
-		}
-		if (headerSize >= DESKTOP_LABEL_RIGHT_THRESHOLD) {
-			labelLayout = 'right'
-			return
-		}
-		if (headerSize >= DESKTOP_LABEL_BELOW_THRESHOLD) {
-			labelLayout = 'below'
-			return
-		}
-		labelLayout = 'none'
+		if (!labelsVisible) labelLayout = 'none'
+		else labelLayout = isMobileViewport ? 'below' : 'right'
 	}
 
 	function loadSizeForViewport(mobile) {
 		const [min, max] = sizeBounds(mobile)
 		const fallback = mobile ? MOBILE_DEFAULT : DESKTOP_DEFAULT
-		const raw =
-			typeof localStorage !== 'undefined' ? Number(localStorage.getItem(storageKey(mobile))) : NaN
-		headerSize = Number.isFinite(raw) ? clamp(raw, min, max) : fallback
+		headerSize = clamp(fallback, min, max)
 		applyModeFromSize()
 	}
 
-	function persistSize() {
+	function persistLabelsVisible() {
 		if (typeof localStorage === 'undefined') return
-		localStorage.setItem(storageKey(isMobileViewport), String(Math.round(headerSize)))
+		localStorage.setItem(STORAGE_KEY_LABELS_VISIBLE, labelsVisible ? '1' : '0')
 	}
 
-	function handleResizeStart(event) {
-		event.preventDefault()
-		event.stopPropagation()
-		event.currentTarget?.setPointerCapture?.(event.pointerId)
-		const startPointer = isMobileViewport ? event.clientY : event.clientX
-		const startSize = headerSize
-		const [min, max] = sizeBounds(isMobileViewport)
-		resizing = true
-
-		const handleMove = (moveEvent) => {
-			const currentPointer = isMobileViewport ? moveEvent.clientY : moveEvent.clientX
-			const delta = currentPointer - startPointer
-			headerSize = clamp(startSize + delta, min, max)
-			applyModeFromSize()
-		}
-
-		const stop = () => {
-			resizing = false
-			persistSize()
-			window.removeEventListener('pointermove', handleMove)
-			window.removeEventListener('pointerup', stop)
-			window.removeEventListener('pointercancel', stop)
-		}
-
-		window.addEventListener('pointermove', handleMove)
-		window.addEventListener('pointerup', stop)
-		window.addEventListener('pointercancel', stop)
+	function toggleLabels() {
+		labelsVisible = !labelsVisible
+		applyModeFromSize()
+		persistLabelsVisible()
 	}
 
 	onMount(() => {
 		isMobileViewport = detectMobileViewport()
+		const stored =
+			typeof localStorage !== 'undefined'
+				? localStorage.getItem(STORAGE_KEY_LABELS_VISIBLE)
+				: null
+		labelsVisible = stored == null ? true : stored === '1'
 		loadSizeForViewport(isMobileViewport)
 		const onViewportResize = () => {
 			const nextMobile = detectMobileViewport()
@@ -141,8 +103,8 @@
 	class:labels-right={labelLayout === 'right'}
 	class:labels-below={labelLayout === 'below'}
 	class:mobile={isMobileViewport}
-	class:resizing
 	style={`--app-header-size:${headerSize}px;`}
+	ondblclick={toggleLabels}
 >
 	<nav class="nav-secondary">
 		<a
@@ -267,27 +229,6 @@
 		</a>
 		<InternetIndicator href={resolve('/import')} />
 	</nav>
-	<div
-		class="header-resize-handle header-resize-handle-desktop"
-		role="separator"
-		aria-label="Resize app menu"
-		aria-orientation="vertical"
-		onpointerdown={handleResizeStart}
-	></div>
-	<div
-		class="header-resize-handle header-resize-handle-mobile header-resize-handle-mobile-left"
-		role="separator"
-		aria-label="Resize app menu"
-		aria-orientation="horizontal"
-		onpointerdown={handleResizeStart}
-	></div>
-	<div
-		class="header-resize-handle header-resize-handle-mobile header-resize-handle-mobile-right"
-		role="separator"
-		aria-label="Resize app menu"
-		aria-orientation="horizontal"
-		onpointerdown={handleResizeStart}
-	></div>
 </header>
 
 <style>
@@ -511,45 +452,4 @@
 		}
 	}
 
-	.header-resize-handle {
-		position: absolute;
-		z-index: 2;
-		touch-action: none;
-		user-select: none;
-	}
-
-	.header-resize-handle-desktop {
-		position: absolute;
-		top: 0;
-		right: -2px;
-		width: 16px;
-		height: 100%;
-		cursor: ew-resize;
-	}
-
-	.header-resize-handle-mobile {
-		display: none;
-	}
-
-	@media (max-width: 768px) {
-		.header-resize-handle-desktop {
-			display: none;
-		}
-
-		.header-resize-handle-mobile {
-			display: block;
-			top: -8px;
-			width: 22px;
-			height: 22px;
-			cursor: ns-resize;
-		}
-
-		.header-resize-handle-mobile-left {
-			left: 0;
-		}
-
-		.header-resize-handle-mobile-right {
-			right: 0;
-		}
-	}
 </style>
