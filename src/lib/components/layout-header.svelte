@@ -236,6 +236,8 @@
 		--app-nav-btn-size: clamp(2.05rem, calc(var(--app-header-size) * 0.34), 3.3rem);
 		--app-nav-glyph-size: clamp(0.88rem, calc(var(--app-nav-btn-size) * 0.42), 1.32rem);
 		--app-nav-gap: 0.34rem;
+		--app-nav-pad-inline: clamp(0.4rem, calc(var(--app-nav-btn-size) * 0.17), 0.62rem);
+		--app-nav-pad-block: clamp(0rem, calc(var(--app-nav-btn-size) * 0.06), 0.18rem);
 		display: flex;
 		flex-flow: column nowrap;
 		gap: 1rem;
@@ -284,7 +286,7 @@
 		height: auto;
 		width: auto;
 		margin: 0;
-		padding: 0.12rem 0.56rem;
+		padding: var(--app-nav-pad-block) var(--app-nav-pad-inline);
 		gap: var(--app-nav-gap);
 		transition:
 			min-width 120ms ease,
@@ -435,12 +437,6 @@
 
 		.user-nav {
 			margin: 0;
-		}
-
-		header.labels-none nav :global(.btn.nav-btn) {
-			min-width: var(--app-nav-btn-size);
-			min-height: var(--app-nav-btn-size);
-			padding-inline: 0.5rem;
 		}
 
 		/* Active indicator: top bar on mobile */
