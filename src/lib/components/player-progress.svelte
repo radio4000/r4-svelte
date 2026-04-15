@@ -14,6 +14,8 @@
 	let duration = $derived(Number.isFinite(mediaDuration) ? mediaDuration : (trackDuration ?? NaN))
 	let hasDuration = $derived(Number.isFinite(duration) && duration > 0)
 	let fill = $derived(hasDuration ? ((currentTime / duration) * 100).toFixed(1) : '0')
+	let remainingTime = $derived(hasDuration ? Math.max(0, duration - currentTime) : NaN)
+	let showRemaining = $derived(hasDuration && remainingTime / duration <= 0.1)
 </script>
 
 <menu class="progress">
@@ -29,6 +31,9 @@
 		class:inactive={!isPlaying && !disabled}
 		style="--range-fill: {fill}%"
 	/>
+	{#if showRemaining}
+		<time class="remaining-time">-{formatDuration(remainingTime, '-:--')}</time>
+	{/if}
 	<time>{formatDuration(duration, '-:--')}</time>
 </menu>
 
@@ -44,6 +49,10 @@
 		color: var(--gray-9);
 		font-variant-numeric: tabular-nums;
 		flex-shrink: 0;
+	}
+
+	.progress .remaining-time {
+		color: var(--accent-9);
 	}
 
 	.progress input {
