@@ -6,7 +6,6 @@
 	import {updateChannel} from '$lib/collections/channels'
 	import MapPicker from '$lib/components/map-picker.svelte'
 	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
@@ -97,14 +96,6 @@
 	<title>{m.channel_edit_page_title({name: channel?.name || m.channel_page_fallback()})}</title>
 </svelte:head>
 
-<ChannelNavControlsPortal controls={navControls} />
-
-{#snippet navControls()}
-	<button class="primary" type="button" onclick={handleSubmit} disabled={!hasChanges || submitting}>
-		{submitting ? m.common_save() + '…' : m.common_save()}
-	</button>
-{/snippet}
-
 <article>
 	{#if canEdit && channel}
 		<div class="card">
@@ -191,6 +182,12 @@
 			</form>
 		</div>
 
+		<div class="form-footer">
+			<button class="primary" type="button" onclick={handleSubmit} disabled={!hasChanges || submitting}>
+				{submitting ? m.common_save() + '…' : m.common_save()}
+			</button>
+		</div>
+
 		<p class="delete-link">
 			<a href={resolve('/[slug]/delete', {slug: channel.slug})}>{m.channel_delete_button()}</a>
 		</p>
@@ -237,6 +234,11 @@
 	}
 	.map-container :global(.map) {
 		height: 100%;
+	}
+
+	.form-footer {
+		display: flex;
+		justify-content: flex-end;
 	}
 
 	.delete-link {
