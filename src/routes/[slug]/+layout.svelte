@@ -27,6 +27,7 @@
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
 	import Icon from '$lib/components/icon.svelte'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ChannelSectionMenu from '$lib/components/channel-section-menu.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {watchPresence, unwatchPresence, channelPresence} from '$lib/presence.svelte'
@@ -401,13 +402,51 @@
 								<Icon icon="favorite" />
 							</a>
 						{/if}
-						<button
-							type="button"
-							onclick={() => (appState.modal_share = {channel})}
-							{@attach tooltip({content: m.share_native()})}
-						>
-							<Icon icon="share" />
-						</button>
+						<PopoverMenu triggerAttachment={tooltip({content: m.common_more()})}>
+							{#snippet trigger()}<Icon icon="options-vertical" />{/snippet}
+							<menu class="nav-vertical">
+								{#if canEdit}
+									<a
+										href={resolve('/[slug]/edit', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/edit')}
+									>
+										<Icon icon="edit" />
+										{m.common_edit()}
+									</a>
+									<a
+										href={resolve('/[slug]/batch-edit', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/batch-edit')}
+									>
+										<Icon icon="unordered-list" />
+										{m.batch_edit_nav_label()}
+									</a>
+									<a
+										href={resolve('/[slug]/backup', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/backup')}
+									>
+										<Icon icon="document-download" />
+										Backup
+									</a>
+									<hr />
+								{:else if isLocalChannel(channel?.id)}
+									<a
+										href={resolve('/[slug]/delete', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/delete')}
+									>
+										<Icon icon="delete" />
+										{m.channel_delete_heading()}
+									</a>
+									<hr />
+								{/if}
+								<button
+									type="button"
+									onclick={() => (appState.modal_share = {channel})}
+								>
+									<Icon icon="share" />
+									{m.share_native()}
+								</button>
+							</menu>
+						</PopoverMenu>
 					</div>
 				</div>
 			</header>
@@ -419,8 +458,6 @@
 					<ChannelSectionMenu
 						{slug}
 						{channel}
-						{canEdit}
-						isLocal={isLocalChannel(channel?.id)}
 						trackCount={allChannelTracks.length}
 					/>
 				{/if}
@@ -460,8 +497,7 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0.5rem;
-		border-bottom: 1px solid var(--gray-4);
+		padding: 0.5rem 0.5rem 0.75rem;
 		min-width: 0;
 	}
 
@@ -548,11 +584,9 @@
 	.mode-action-group {
 		display: inline-flex;
 		align-items: stretch;
-		gap: 0;
+		gap: 0.1rem;
 		flex-wrap: nowrap;
 		min-width: 0;
-		border: 1px solid var(--gray-7);
-		border-radius: var(--border-radius);
 	}
 
 	.mode-action {
@@ -560,32 +594,30 @@
 		font-weight: 600;
 		gap: 0.35rem;
 		border: none;
-		border-right: 1px solid var(--gray-6);
-		border-radius: 0;
-		background: transparent;
+		border-radius: var(--border-radius);
 		box-shadow: none;
 	}
 
-	.mode-action:last-child {
-		border-right: none;
-	}
-
-	.mode-action:first-child {
-		border-radius: var(--border-radius) 0 0 var(--border-radius);
-	}
-
-	.mode-action:last-child {
-		border-radius: 0 var(--border-radius) var(--border-radius) 0;
-	}
-
 	.mode-action:hover {
-		background: var(--gray-3);
+		background: var(--gray-4);
+	}
+
+	.mode-action.play {
+		background: var(--accent-3);
+		color: var(--accent-11);
+	}
+
+	.mode-action.play:hover {
+		background: var(--accent-4);
 	}
 
 	.mode-action.active {
 		color: var(--accent-9);
-		border-right-color: var(--gray-6);
-		background: transparent;
+		background: var(--accent-3);
+	}
+
+	.mode-action.play.active {
+		background: var(--accent-4);
 	}
 
 	.mode-action.auto.drifted {
@@ -613,9 +645,9 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
+		gap: 0.25rem;
 		background: var(--gray-1);
-		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
-		padding: 0.4rem;
+		padding: 0.4rem 0.5rem;
 	}
 
 	.channel-nav-controls {
