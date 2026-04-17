@@ -152,25 +152,15 @@
 <style>
 	.my-channel-controls {
 		margin: 0 0 0 auto;
+		gap: 0.1rem;
 	}
 
-	/* Flatten individual button borders so the group border takes over */
 	.my-channel-controls button {
 		border: none;
-		border-right: 1px solid var(--gray-6);
-		border-radius: 0;
-		background: var(--button-bg, var(--gray-1));
 		box-shadow: none;
 	}
 
-	.my-channel-controls button:hover {
-		border-color: var(--gray-6);
-		background: var(--gray-3);
-	}
-
-	/* Active state: accent color only, keep divider intact */
 	.my-channel-controls button.active {
-		border-right-color: var(--gray-6);
 		background: var(--accent-3);
 	}
 
@@ -181,7 +171,6 @@
 		padding: 0.2rem 0.45rem;
 		min-height: 2rem;
 		text-decoration: none;
-		border-left: 1px solid var(--gray-6);
 	}
 
 	.avatar {
