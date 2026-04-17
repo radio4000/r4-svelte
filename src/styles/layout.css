@@ -73,7 +73,6 @@
 .list > li,
 .list > div,
 .virtual-item.track-item {
-	border-bottom: 1px solid var(--gray-3);
 
 	&:hover {
 		background: light-dark(var(--gray-2), var(--gray-2));
@@ -82,7 +81,6 @@
 	}
 
 	&[aria-selected='true'] {
-		background: var(--accent-2);
 		&:hover {
 			--tag-border: var(--accent-6);
 		}
@@ -90,7 +88,6 @@
 
 	/* when inside panel, raise the level 1 step */
 	.queue-panel & {
-		border-bottom: 1px solid var(--gray-4);
 		&:hover {
 			background: var(--gray-3);
 		}

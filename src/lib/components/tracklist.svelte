@@ -331,10 +331,6 @@
 		text-align: center;
 	}
 
-	.timeline .list > li:first-child {
-		border-top: 1px solid var(--gray-4);
-	}
-
 	.month:not(:first-of-type) {
 		margin-top: 0.5rem;
 	}

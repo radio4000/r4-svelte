@@ -280,7 +280,7 @@
 			{/if}
 			{#if canEdit}
 				<button type="button" role="menuitem" onclick={editTrack}
-					><Icon icon="settings" size={14} />{m.common_edit()}</button
+					><Icon icon="edit" size={14} />{m.common_edit()}</button
 				>
 				<button
 					type="button"
@@ -384,6 +384,7 @@
 		flex-flow: column;
 		justify-content: center;
 		min-width: 0;
+		gap: 0.1rem;
 	}
 
 	.title {
@@ -413,10 +414,6 @@
 	}
 
 	.selected {
-		background: var(--gray-2);
-		border-radius: var(--border-radius);
-		outline: 1px solid var(--accent-7);
-		outline-offset: -1px;
 		--tag-bg: var(--accent-4);
 		--tag-bg-hover: var(--accent-5);
 		--tag-bg-active: var(--accent-6);
