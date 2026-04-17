@@ -99,14 +99,14 @@ Legacy `/channels/*`, `/tracks/*`, `/tags/*`, and `/feed` URLs remain as redirec
 
 ## Files
 
-| File                                        | Role                                           |
-| ------------------------------------------- | ---------------------------------------------- |
-| `src/routes/+page.svelte`                   | Personalized homepage                          |
-| `src/routes/+page.js`                       | Homepage route config                          |
-| `src/routes/explore/channels/[filter]/+page.svelte` | Channel browser                       |
-| `src/routes/explore/tracks/[filter]/+page.svelte`   | Track browser                         |
-| `src/routes/explore/tags/[filter]/+page.svelte`     | Tag browser                           |
-| `src/routes/feed/**/+page.js`, `src/routes/channels/**/+page.js`, `src/routes/tracks/**/+page.js`, `src/routes/tags/**/+page.js` | Legacy redirect shims |
-| `src/lib/components/channels.svelte`        | Added `featured` filter + `defaultFilter` prop |
-| `src/lib/utils.ts`                          | `featuredScore(channel)`                       |
-| `src/lib/components/layout-header.svelte`   | Header nav                                     |
+| File                                                                                                                             | Role                                           |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `src/routes/+page.svelte`                                                                                                        | Personalized homepage                          |
+| `src/routes/+page.js`                                                                                                            | Homepage route config                          |
+| `src/routes/explore/channels/[filter]/+page.svelte`                                                                              | Channel browser                                |
+| `src/routes/explore/tracks/[filter]/+page.svelte`                                                                                | Track browser                                  |
+| `src/routes/explore/tags/[filter]/+page.svelte`                                                                                  | Tag browser                                    |
+| `src/routes/feed/**/+page.js`, `src/routes/channels/**/+page.js`, `src/routes/tracks/**/+page.js`, `src/routes/tags/**/+page.js` | Legacy redirect shims                          |
+| `src/lib/components/channels.svelte`                                                                                             | Added `featured` filter + `defaultFilter` prop |
+| `src/lib/utils.ts`                                                                                                               | `featuredScore(channel)`                       |
+| `src/lib/components/layout-header.svelte`                                                                                        | Header nav                                     |
