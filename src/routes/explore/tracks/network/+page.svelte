@@ -7,11 +7,8 @@
 	import {getFollowedChannels} from '$lib/followed-channels.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	let search = $state('')
@@ -61,42 +58,35 @@
 
 <div class="feed">
 	<ExplorePageHeader>
+		{#snippet filterChips()}
+			<a href={resolve('/explore/tracks/recent')} class="btn chip">{m.explore_tracks_filter_recent()}</a>
+			<a href={resolve('/explore/tracks/featured')} class="btn chip">{m.explore_tracks_filter_featured()}</a>
+			<a href={resolve('/explore/tracks/network')} class="btn chip active">{m.nav_feed()}</a>
+		{/snippet}
 		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
-		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
-			<menu class="nav-vertical">
-				<button onclick={() => goto(resolve('/explore/tracks/recent'))}
-					>{m.explore_tracks_filter_recent()}</button
-				>
-				<button onclick={() => goto(resolve('/explore/tracks/featured'))}
-					>{m.explore_tracks_filter_featured()}</button
-				>
-				<button class:active={true} onclick={() => goto(resolve('/explore/tracks/network'))}
-					>{m.nav_feed()}</button
-				>
-			</menu>
-		</PopoverMenu>
 	</ExplorePageHeader>
 
-	{#if feedTracks.length}
-		{#each feedTracks as group (group.label)}
-			<p class="day-header">{group.label}</p>
-			<ul class="list">
-				{#each group.tracks as track (track.id)}
-					<li class="track-with-channel">
-						<TrackCard {track} />
-						<ChannelMicroCard slug={track.slug} />
-					</li>
-				{/each}
-			</ul>
-		{/each}
-	{:else if follows.isLoading || (follows.followedIds.length > 0 && maxLoadedDays === 0)}
-		<p class="empty">{m.common_loading()}</p>
-	{:else if follows.followedIds.length === 0}
-		<p class="empty">{m.home_feed_no_follows()}</p>
-	{:else}
-		<p class="empty">{m.home_feed_empty({days})}</p>
-	{/if}
+	<div class="content">
+		{#if feedTracks.length}
+			{#each feedTracks as group (group.label)}
+				<p class="day-header">{group.label}</p>
+				<ul class="list">
+					{#each group.tracks as track (track.id)}
+						<li class="track-with-channel">
+							<TrackCard {track} />
+							<ChannelMicroCard slug={track.slug} />
+						</li>
+					{/each}
+				</ul>
+			{/each}
+		{:else if follows.isLoading || (follows.followedIds.length > 0 && maxLoadedDays === 0)}
+			<p class="empty">{m.common_loading()}</p>
+		{:else if follows.followedIds.length === 0}
+			<p class="empty">{m.home_feed_no_follows()}</p>
+		{:else}
+			<p class="empty">{m.home_feed_empty({days})}</p>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -118,11 +108,11 @@
 	}
 
 	.feed {
-		padding: 0.5rem;
+		padding: 0;
 	}
 
-	:global(.page-header) {
-		padding-bottom: 0.25rem;
+	.content {
+		padding: 0.25rem 0.5rem 0.5rem;
 	}
 
 	.day-header {

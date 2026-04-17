@@ -86,46 +86,55 @@
 		</PopoverMenu>
 	</ExplorePageHeader>
 
-	{#if visibleTags.length}
-		{#if displayParam === 'cloud'}
-			<div class="cloud">
-				{#each visibleTags as { tag, count } (tag)}
-					<a
-						href={tagSearchHref(tag)}
-						style="font-size: calc(0.75rem + {((count / maxCount) * 1.2).toFixed(2)}rem)"
-						title="{count} tracks"
-					>
-						{tag}
-					</a>
-				{/each}
-			</div>
-		{:else}
-			<ol class="list tag-list">
-				{#each visibleTags as { tag, count } (tag)}
-					<li>
-						<a class="row" href={tagSearchHref(tag)}>
-							<span class="tag-value">#{tag}</span>
-							<span class="count">{count}</span>
-							<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
+	<div class="content">
+		{#if visibleTags.length}
+			{#if displayParam === 'cloud'}
+				<div class="cloud">
+					{#each visibleTags as { tag, count } (tag)}
+						<a
+							href={tagSearchHref(tag)}
+							style="font-size: calc(0.75rem + {((count / maxCount) * 1.2).toFixed(2)}rem)"
+							title="{count} tracks"
+						>
+							{tag}
 						</a>
-					</li>
-				{/each}
-			</ol>
+					{/each}
+				</div>
+			{:else}
+				<ol class="list tag-list">
+					{#each visibleTags as { tag, count } (tag)}
+						<li>
+							<a class="row" href={tagSearchHref(tag)}>
+								<span class="tag-value">#{tag}</span>
+								<span class="count">{count}</span>
+								<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
+							</a>
+						</li>
+					{/each}
+				</ol>
+			{/if}
+		{:else if tagsQuery.isReady}
+			<p class="empty">—</p>
+		{:else}
+			<p class="empty">…</p>
 		{/if}
-	{:else if tagsQuery.isReady}
-		<p class="empty">—</p>
-	{:else}
-		<p class="empty">…</p>
-	{/if}
+	</div>
 </div>
 
 <style>
 	.layout {
-		padding: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 	}
 
-	:global(.page-header) {
-		margin-bottom: 0.25rem;
+	.content {
+		padding: 0.25rem 0.5rem 0.5rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.tag-list {
@@ -134,7 +143,10 @@
 		}
 
 		a.row {
+			display: flex;
+			align-items: center;
 			width: 100%;
+			flex-wrap: nowrap;
 			text-decoration: none;
 			color: inherit;
 

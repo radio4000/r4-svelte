@@ -326,79 +326,26 @@
 
 <div class={`layout layout--${display}`}>
 	<ExplorePageHeader>
+		{#snippet filterChips()}
+			<button class="btn chip" class:active={filter === 'featured'} onclick={() => setFilter('featured')}>{m.channels_filter_option_featured()}</button>
+			{#if follows.followedIds.length}
+				<button class="btn chip" class:active={filter === 'favorites'} onclick={() => setFilter('favorites')}>{m.nav_favorites()}</button>
+			{/if}
+			{#if broadcastsCollection.state.size}
+				<button class="btn chip" class:active={filter === 'broadcasting'} onclick={() => setFilter('broadcasting')}>{m.channels_filter_option_broadcasting()}<span class="channel-badge live-pill">{broadcastsCollection.state.size}</span></button>
+			{/if}
+			<button class="btn chip" class:active={filter === '10+'} onclick={() => setFilter('10+')}>{m.channels_filter_option_10()}</button>
+			<button class="btn chip" class:active={filter === '100+'} onclick={() => setFilter('100+')}>{m.channels_filter_option_100()}</button>
+			<button class="btn chip" class:active={filter === '1000+'} onclick={() => setFilter('1000+')}>{m.channels_filter_option_1000()}</button>
+			<button class="btn chip" class:active={filter === 'all'} onclick={() => setFilter('all')}>{m.channels_filter_option_all()}</button>
+			<button class="btn chip" class:active={filter === 'artwork'} onclick={() => setFilter('artwork')}>{m.channels_filter_option_artwork()}</button>
+			{#if appState.local_channel_ids?.length}
+				<button class="btn chip" class:active={filter === 'imported'} onclick={() => setFilter('imported')}>{m.channels_filter_option_imported()}</button>
+			{/if}
+		{/snippet}
 		{#if searchHref}
 			<SearchInput bind:value={searchValue} debounce={300} placeholder={m.search_placeholder()} />
 		{/if}
-		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
-			<menu class="nav-vertical">
-				<button
-					class:active={filter === 'featured'}
-					onclick={() => setFilter('featured')}
-					{@attach tooltip({content: m.channels_filter_tooltip_featured(), position: 'right'})}
-					>{m.channels_filter_option_featured()}</button
-				>
-				{#if follows.followedIds.length}
-					<button
-						class:active={filter === 'favorites'}
-						onclick={() => setFilter('favorites')}
-						{@attach tooltip({content: m.nav_favorites(), position: 'right'})}
-						>{m.nav_favorites()}</button
-					>
-				{/if}
-				{#if broadcastsCollection.state.size}
-					<button
-						class:active={filter === 'broadcasting'}
-						onclick={() => setFilter('broadcasting')}
-						{@attach tooltip({
-							content: m.channels_filter_tooltip_broadcasting(),
-							position: 'right'
-						})}
-						>{m.channels_filter_option_broadcasting()}<span class="channel-badge live-pill"
-							>{broadcastsCollection.state.size}</span
-						></button
-					>
-				{/if}
-				<button
-					class:active={filter === '10+'}
-					onclick={() => setFilter('10+')}
-					{@attach tooltip({content: m.channels_filter_tooltip_10(), position: 'right'})}
-					>{m.channels_filter_option_10()}</button
-				>
-				<button
-					class:active={filter === '100+'}
-					onclick={() => setFilter('100+')}
-					{@attach tooltip({content: m.channels_filter_tooltip_100(), position: 'right'})}
-					>{m.channels_filter_option_100()}</button
-				>
-				<button
-					class:active={filter === '1000+'}
-					onclick={() => setFilter('1000+')}
-					{@attach tooltip({content: m.channels_filter_tooltip_1000(), position: 'right'})}
-					>{m.channels_filter_option_1000()}</button
-				>
-				<button
-					class:active={filter === 'all'}
-					onclick={() => setFilter('all')}
-					{@attach tooltip({content: m.channels_filter_tooltip_all(), position: 'right'})}
-					>{m.channels_filter_option_all()}</button
-				>
-				<button
-					class:active={filter === 'artwork'}
-					onclick={() => setFilter('artwork')}
-					{@attach tooltip({content: m.channels_filter_tooltip_artwork(), position: 'right'})}
-					>{m.channels_filter_option_artwork()}</button
-				>
-				{#if appState.local_channel_ids?.length}
-					<button
-						class:active={filter === 'imported'}
-						onclick={() => setFilter('imported')}
-						{@attach tooltip({content: m.channels_filter_tooltip_imported(), position: 'right'})}
-						>{m.channels_filter_option_imported()}</button
-					>
-				{/if}
-			</menu>
-		</PopoverMenu>
 
 		{#if filter === 'featured'}
 			<button
@@ -548,7 +495,6 @@
 
 <style>
 	.layout {
-		padding: 0.5rem;
 		position: relative;
 		&.layout--map,
 		&.layout--infinite,
@@ -603,8 +549,4 @@
 		}
 	}
 
-	.layout :global(.page-header .search-input) {
-		flex: 1 1 0;
-		min-width: 6rem;
-	}
 </style>

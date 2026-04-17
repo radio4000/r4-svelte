@@ -7,11 +7,8 @@
 	import {groupByDay} from '$lib/utils'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
 	const {data} = $props()
@@ -98,60 +95,51 @@
 
 <div class="layout">
 	<ExplorePageHeader>
+		{#snippet filterChips()}
+			<a href={resolve('/explore/tracks/recent')} class="btn chip" class:active={filterParam === 'recent'}>{m.explore_tracks_filter_recent()}</a>
+			<a href={resolve('/explore/tracks/featured')} class="btn chip" class:active={filterParam === 'featured'}>{m.explore_tracks_filter_featured()}</a>
+			<a href={resolve('/explore/tracks/network')} class="btn chip">{m.nav_feed()}</a>
+		{/snippet}
 		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
-		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
-			<menu class="nav-vertical">
-				<button
-					class:active={filterParam === 'recent'}
-					onclick={() => goto(resolve('/explore/tracks/recent'))}
-					>{m.explore_tracks_filter_recent()}</button
-				>
-				<button
-					class:active={filterParam === 'featured'}
-					onclick={() => goto(resolve('/explore/tracks/featured'))}
-					>{m.explore_tracks_filter_featured()}</button
-				>
-				<button onclick={() => goto(resolve('/explore/tracks/network'))}>{m.nav_feed()}</button>
-			</menu>
-		</PopoverMenu>
 	</ExplorePageHeader>
 
-	{#if groupedTracks.length}
-		{#each groupedTracks as group (group.label)}
-			<p class="day-header">{group.label}</p>
-			<ul class="list">
-				{#each group.tracks as track (track.id)}
-					<li class="track-with-channel">
-						<TrackCard {track} />
-						<ChannelMicroCard slug={track.slug} />
-					</li>
-				{/each}
-			</ul>
-		{/each}
-		{#if !loadedAll && filterParam === 'recent'}
-			<footer>
-				<p>
-					<button onclick={handleLoadMore} disabled={loadingMore}>
-						{loadingMore ? '…' : m.channels_load_more({count: LIMIT})}
-					</button>
-				</p>
-			</footer>
+	<div class="content">
+		{#if groupedTracks.length}
+			{#each groupedTracks as group (group.label)}
+				<p class="day-header">{group.label}</p>
+				<ul class="list">
+					{#each group.tracks as track (track.id)}
+						<li class="track-with-channel">
+							<TrackCard {track} />
+							<ChannelMicroCard slug={track.slug} />
+						</li>
+					{/each}
+				</ul>
+			{/each}
+			{#if !loadedAll && filterParam === 'recent'}
+				<footer>
+					<p>
+						<button onclick={handleLoadMore} disabled={loadingMore}>
+							{loadingMore ? '…' : m.channels_load_more({count: LIMIT})}
+						</button>
+					</p>
+				</footer>
+			{/if}
+		{:else if loaded}
+			<p class="empty">—</p>
+		{:else}
+			<p class="empty">…</p>
 		{/if}
-	{:else if loaded}
-		<p class="empty">—</p>
-	{:else}
-		<p class="empty">…</p>
-	{/if}
+	</div>
 </div>
 
 <style>
 	.layout {
-		padding: 0.5rem;
+		padding: 0;
 	}
 
-	:global(.page-header) {
-		margin-bottom: 0.25rem;
+	.content {
+		padding: 0.25rem 0.5rem 0.5rem;
 	}
 
 	.track-with-channel {
