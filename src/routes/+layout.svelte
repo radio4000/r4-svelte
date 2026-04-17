@@ -278,58 +278,60 @@
 
 						<DeckStrip />
 					</section>
-					<section class="compact-decks" aria-label={m.decks_compact_label()}>
-						{#each compactLocalDeckIds as deckId (deckId)}
-							<div
-								class="compact-deck-item"
-								style:--deck-accent={deckAccent(allDeckIds, deckId)}
-								transition:compactDeckTransition
-							>
-								<DeckCompactBar {deckId} />
-							</div>
-						{/each}
-						{#if compactListeningDeckIds.length}
-							<div class="compact-listening-group">
-								<button
-									class="compact-group-edge left"
-									aria-label={m.broadcasts_leave()}
-									onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+					{#if compactDeckIds.length}
+						<section class="compact-decks" aria-label={m.decks_compact_label()}>
+							{#each compactLocalDeckIds as deckId (deckId)}
+								<div
+									class="compact-deck-item"
+									style:--deck-accent={deckAccent(allDeckIds, deckId)}
+									transition:compactDeckTransition
 								>
-									<Icon icon="close" size={14} />
-								</button>
-								<div class="compact-listening-list">
-									{#each compactListeningDeckIds as deckId (deckId)}
-										<div
-											class="compact-deck-item"
-											style:--deck-accent={deckAccent(allDeckIds, deckId)}
-											transition:compactDeckTransition
+									<DeckCompactBar {deckId} />
+								</div>
+							{/each}
+							{#if compactListeningDeckIds.length}
+								<div class="compact-listening-group">
+									<button
+										class="compact-group-edge left"
+										aria-label={m.broadcasts_leave()}
+										onclick={() => compactListeningDeckIds.forEach((id) => leaveBroadcast(id))}
+									>
+										<Icon icon="close" size={14} />
+									</button>
+									<div class="compact-listening-list">
+										{#each compactListeningDeckIds as deckId (deckId)}
+											<div
+												class="compact-deck-item"
+												style:--deck-accent={deckAccent(allDeckIds, deckId)}
+												transition:compactDeckTransition
+											>
+												<DeckCompactBar {deckId} showEdgeControls={false} />
+											</div>
+										{/each}
+									</div>
+									<div class="compact-group-actions">
+										<button
+											class={['compact-group-sync', {active: compactListeningDecksSynced}]}
+											aria-label={compactListeningDecksSynced ? 'Live' : 'Sync'}
+											onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
 										>
-											<DeckCompactBar {deckId} showEdgeControls={false} />
-										</div>
-									{/each}
+											{#if compactListenPresenceCount > 0}
+												<PresenceCount count={compactListenPresenceCount} />
+											{/if}
+											<Icon icon="signal" size={12} />
+										</button>
+										<button
+											class="compact-group-toggle"
+											aria-label={m.player_compact_show_panel()}
+											onclick={() => toggleDeckCompact(compactListeningDeckIds[0])}
+										>
+											<Icon icon="deck-panel" expanded />
+										</button>
+									</div>
 								</div>
-								<div class="compact-group-actions">
-									<button
-										class={['compact-group-sync', {active: compactListeningDecksSynced}]}
-										aria-label={compactListeningDecksSynced ? 'Live' : 'Sync'}
-										onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
-									>
-										{#if compactListenPresenceCount > 0}
-											<PresenceCount count={compactListenPresenceCount} />
-										{/if}
-										<Icon icon="signal" size={12} />
-									</button>
-									<button
-										class="compact-group-toggle"
-										aria-label={m.player_compact_show_panel()}
-										onclick={() => toggleDeckCompact(compactListeningDeckIds[0])}
-									>
-										<Icon icon="deck-panel" expanded />
-									</button>
-								</div>
-							</div>
-						{/if}
-					</section>
+							{/if}
+						</section>
+					{/if}
 				</div>
 
 				{#if chatPanelVisible}
@@ -436,7 +438,6 @@
 		/*
 		padding: 0.4rem 0.5rem;
 		 */
-		background: var(--header-bg);
 		position: sticky;
 		bottom: 0;
 		z-index: 30;
@@ -496,10 +497,6 @@
 
 	.compact-group-sync :global(.presence-count) {
 		margin-right: 0.05rem;
-	}
-
-	.compact-decks:empty {
-		display: none;
 	}
 
 	.compact-decks :global(.deck-compact-bar) {
