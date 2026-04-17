@@ -62,7 +62,6 @@
 	.channel-section-menu {
 		display: flex;
 		flex-wrap: nowrap;
-		justify-content: center;
 		gap: 0.5rem;
 		width: 100%;
 		overflow-x: auto;
