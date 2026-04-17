@@ -22,11 +22,11 @@ button,
 	font-weight: 400;
 	line-height: normal;
 
-	background: var(--button-bg, var(--gray-1));
+	background: var(--button-bg, var(--gray-3));
 	color: var(--button-color, var(--gray-12));
-	border: 1px solid var(--gray-7);
+	border: 1px solid transparent;
 	border-radius: var(--border-radius);
-	box-shadow: var(--input-shadow);
+	box-shadow: none;
 
 	--input-shadow: lch(0 0 0 / 0.06) 0px 4px 4px -1px, lch(0 0 0 / 0.12) 0px 1px 1px 0px;
 	/* --input-shadow: */
@@ -45,8 +45,7 @@ button:focus,
 button:hover,
 .btn:focus,
 .btn:hover {
-	border-color: var(--accent-9);
-	box-shadow: var(--input-shadow-hover);
+	background: var(--gray-4);
 }
 
 button:focus,
@@ -71,7 +70,7 @@ button:disabled,
 	}
 
 	&:hover {
-		border-color: initial;
+		border-color: transparent;
 	}
 }
 
@@ -81,7 +80,6 @@ a.active {
 
 button.active,
 .btn.active {
-	border-color: var(--accent-9);
 	background-color: var(--accent-3);
 
 	svg {
@@ -219,8 +217,10 @@ button.chip:hover,
 button.chip.active,
 .btn.chip.active {
 	background: var(--accent-7);
-	border-color: var(--accent-9);
-	/* color: light-dark(var(--gray-1), var(--gray-12)); */
+
+	svg {
+		color: inherit;
+	}
 }
 
 .chip-group > :not(button) {
@@ -297,7 +297,10 @@ button.icon-label-right {
 	background: var(--color-red);
 }
 
-/* Select should use normal text color, not the customizable --button-color */
+/* Select: use normal text color and no border (styled via forms.css) */
 select {
 	color: var(--gray-12);
+	border: 0;
+	box-shadow: none;
+	background: var(--color-interface-elevated);
 }
