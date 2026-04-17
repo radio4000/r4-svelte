@@ -225,7 +225,11 @@
 
 <div class="homepage" class:signed-in={isSignedIn}>
 	<PageHeader>
-		<SearchInput bind:value={homeSearch} debounce={300} placeholder={m.header_search_placeholder()} />
+		<SearchInput
+			bind:value={homeSearch}
+			debounce={300}
+			placeholder={m.header_search_placeholder()}
+		/>
 		{#if isSignedIn && authStatus.channelChecked && !userChannel}
 			<a href={resolve('/create-channel')} class="btn primary create-channel-action">
 				<Icon icon="add" />{m.home_create_channel()}
@@ -503,7 +507,7 @@
 							</h2>
 							<menu>
 								{#if featuredFirst}
-									<button type="button" onclick={toggleFeaturedPlay}>
+									<button type="button" class="play" onclick={toggleFeaturedPlay}>
 										<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 									</button>
 								{/if}
@@ -741,7 +745,6 @@
 		flex-direction: column;
 		gap: 0.2rem;
 		padding: 0.5rem;
-		border: 1px solid var(--gray-5);
 		border-radius: var(--border-radius);
 		background: light-dark(var(--gray-1), var(--gray-2));
 		min-width: 0;
@@ -825,7 +828,6 @@
 		&:hover,
 		&:focus-visible {
 			background: var(--gray-2);
-			border-color: var(--accent-7);
 			outline: none;
 		}
 	}
@@ -854,6 +856,24 @@
 
 		.section-title {
 			margin-bottom: 0;
+		}
+
+		menu {
+			display: flex;
+			gap: 0.1rem;
+
+			button {
+				border: none;
+				box-shadow: none;
+
+				&:hover { background: var(--gray-4); }
+
+				&.play {
+					background: var(--accent-3);
+					color: var(--accent-11);
+					&:hover { background: var(--accent-4); }
+				}
+			}
 		}
 	}
 
@@ -921,7 +941,6 @@
 
 	.footer-stats {
 		padding-top: 1rem;
-		border-top: 1px solid var(--gray-4);
 	}
 
 	.dismissible {
@@ -940,7 +959,6 @@
 		padding: 1.5rem;
 		border-radius: 0.75rem;
 		background: light-dark(var(--gray-2), var(--gray-2));
-		border: 1px solid light-dark(var(--gray-4), var(--gray-4));
 
 		h1 {
 			font-size: var(--font-8);
@@ -966,8 +984,6 @@
 		max-width: none;
 		margin-inline: 0;
 		border-radius: 0;
-		border-left: 0;
-		border-right: 0;
 	}
 
 	.welcome-menu {
@@ -987,7 +1003,6 @@
 		padding: 1.25rem;
 		border-radius: 0.75rem;
 		background: light-dark(var(--gray-2), var(--gray-2));
-		border: 1px solid light-dark(var(--gray-4), var(--gray-4));
 	}
 
 	.onboarding-section {
@@ -1016,5 +1031,4 @@
 			}
 		}
 	}
-
 </style>
