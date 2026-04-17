@@ -148,7 +148,7 @@
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
-		background: var(--color-interface);
+		background: transparent;
 	}
 
 	.empty-state {
