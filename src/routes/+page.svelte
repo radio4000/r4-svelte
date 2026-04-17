@@ -428,7 +428,7 @@
 					<h2 class="section-title">{m.home_featured()}</h2>
 					<menu>
 						{#if featuredFirst}
-							<button type="button" onclick={toggleFeaturedPlay}>
+							<button type="button" class="play" onclick={toggleFeaturedPlay}>
 								<Icon icon={featuredIsPlaying ? 'pause' : 'play-fill'} />
 							</button>
 						{/if}
@@ -862,17 +862,10 @@
 			display: flex;
 			gap: 0.1rem;
 
-			button {
-				border: none;
-				box-shadow: none;
-
-				&:hover { background: var(--gray-4); }
-
-				&.play {
-					background: var(--accent-3);
-					color: var(--accent-11);
-					&:hover { background: var(--accent-4); }
-				}
+			button.play {
+				background: var(--accent-3);
+				color: var(--accent-11);
+				&:hover { background: var(--accent-4); }
 			}
 		}
 	}
