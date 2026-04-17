@@ -558,7 +558,6 @@
 	}
 
 	.track-section {
-		border-top: 1px solid var(--gray-4);
 
 		footer {
 			padding: 0.4rem;
@@ -575,7 +574,6 @@
 		padding: 0.5rem;
 		display: grid;
 		gap: 0.45rem;
-		border-top: 1px solid var(--gray-4);
 	}
 
 	.common-follows.compact {
@@ -586,7 +584,6 @@
 		gap: clamp(0.3rem, 1.4vw, 0.55rem);
 		row-gap: 0.35rem;
 		padding-bottom: 0.3rem;
-		border-bottom: 1px solid var(--gray-3);
 		flex-wrap: wrap;
 		align-items: center;
 		color: var(--gray-10);

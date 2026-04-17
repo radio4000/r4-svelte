@@ -13,6 +13,8 @@ const VALID = new Set([
 ])
 
 export function load({params, url}) {
-	const path = VALID.has(params.filter) ? `/explore/channels/${params.filter}` : '/explore/channels/all'
+	const path = VALID.has(params.filter)
+		? `/explore/channels/${params.filter}`
+		: '/explore/channels/all'
 	redirect(307, `${path}${url.search}`)
 }

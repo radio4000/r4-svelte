@@ -19,9 +19,7 @@
 		void (async () => {
 			try {
 				const pool = await getFeaturedPool(FEATURED_DAYS)
-				featuredChannels = pool
-					.toSorted((a, b) => featuredScore(b) - featuredScore(a))
-					.slice(0, 12)
+				featuredChannels = pool.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
 			} catch (e) {
 				console.warn('[about] failed to load featured channels', e)
 			}

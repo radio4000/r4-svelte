@@ -122,11 +122,7 @@
 						<Icon icon="options-horizontal" />
 					{/snippet}
 					<menu class="nav-vertical">
-						<button
-							type="button"
-							role="menuitem"
-							onclick={triggerPrimaryAction}
-						>
+						<button type="button" role="menuitem" onclick={triggerPrimaryAction}>
 							<Icon icon={isBroadcasting ? 'signal' : isPlaying ? 'pause' : 'play-fill'} />
 							{isBroadcasting
 								? m.channel_card_join_broadcast()
