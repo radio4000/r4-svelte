@@ -57,4 +57,9 @@
 	.map-fill {
 		display: contents;
 	}
+
+	.map-fill :global(.map-root) {
+		border-radius: var(--border-radius);
+		overflow: hidden;
+	}
 </style>
