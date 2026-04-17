@@ -44,8 +44,9 @@
 	import {broadcastsCollection} from '$lib/collections/broadcasts'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {eq} from '@tanstack/svelte-db'
-	import {isDbId, trackImageUrl} from '$lib/utils'
+	import {isDbId, trackImageUrl, extractHashtags} from '$lib/utils'
 	import PlayerProgress from '$lib/components/player-progress.svelte'
+	import Tag from '$lib/components/tag.svelte'
 	import TrackCard from '$lib/components/track-card.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {
@@ -196,6 +197,21 @@
 			(headerChannel.id && displayChannel.id && headerChannel.id === displayChannel.id) ||
 			(headerChannel.slug && displayChannel.slug && headerChannel.slug === displayChannel.slug)
 		return same ? undefined : displayChannel
+	})
+
+	const headerTags = $derived.by(() => {
+		const tags = new Set(
+			extractHashtags(deck?.playlist_title ?? '').map((tag) => tag.replace(/^#/, '').toLowerCase())
+		)
+		for (const source of deck?.view?.sources ?? []) {
+			for (const tag of source?.tags ?? []) tags.add(tag.toLowerCase())
+		}
+		return [...tags].map((value) => ({
+			value: `#${value}`,
+			href: deck?.playlist_slug
+				? `/${deck.playlist_slug}/tracks?tags=${encodeURIComponent(value)}`
+				: undefined
+		}))
 	})
 
 	const autoUri = $derived(
@@ -644,6 +660,13 @@
 				{/if}
 			</menu>
 		</div>
+		{#if headerTags.length > 0}
+			<div class="header-tags">
+				{#each headerTags as tag (tag.value)}
+					<Tag href={tag.href} value={tag.value}>{tag.value}</Tag>
+				{/each}
+			</div>
+		{/if}
 	</header>
 
 	<!-- 2. Media player -->
@@ -871,6 +894,14 @@
 		color: var(--accent-9);
 	}
 
+	.header-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+		padding: 0 0.5rem 0.35rem;
+		font-size: var(--font-2);
+	}
+
 	.active-track-bg {
 		background: var(--accent-2);
 		border-radius: 4px;
@@ -1051,16 +1082,10 @@
 		gap: 0.5rem;
 		flex-shrink: 0;
 		cursor: var(--interactive-cursor, pointer);
-		background: var(--header-bg);
-
 		:global(article) {
 			flex: 1 1 auto;
 			min-width: 0;
 		}
-	}
-
-	.track-panel.active-track {
-		background: var(--header-bg);
 	}
 
 	.listening-track-panel {
@@ -1068,7 +1093,6 @@
 		align-items: center;
 		flex: 1 1 auto;
 		min-width: 0;
-		background: var(--header-bg);
 	}
 
 	.listening-track-panel :global(article) {
