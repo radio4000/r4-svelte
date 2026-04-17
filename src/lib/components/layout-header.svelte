@@ -81,9 +81,7 @@
 	onMount(() => {
 		isMobileViewport = detectMobileViewport()
 		const stored =
-			typeof localStorage !== 'undefined'
-				? localStorage.getItem(STORAGE_KEY_LABELS_VISIBLE)
-				: null
+			typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_LABELS_VISIBLE) : null
 		labelsVisible = stored == null ? true : stored === '1'
 		loadSizeForViewport(isMobileViewport)
 		const onViewportResize = () => {
@@ -121,13 +119,11 @@
 		<a
 			href={resolve('/explore')}
 			class="btn nav-btn"
-			class:active={
-				page.route.id?.startsWith('/explore') ||
+			class:active={page.route.id?.startsWith('/explore') ||
 				page.route.id?.startsWith('/channels') ||
 				page.route.id?.startsWith('/tracks') ||
 				page.route.id?.startsWith('/tags') ||
-				page.route.id?.startsWith('/feed')
-			}
+				page.route.id?.startsWith('/feed')}
 			aria-label={m.nav_explore()}
 			{@attach tooltip({content: m.nav_explore()})}
 		>
@@ -246,12 +242,13 @@
 		--app-nav-pad-block: clamp(0rem, calc(var(--app-nav-btn-size) * 0.06), 0.18rem);
 		display: flex;
 		flex-flow: column nowrap;
-		gap: 1rem;
-		padding: 0.3rem;
+		gap: clamp(0.3rem, calc(var(--app-nav-btn-size) * 0.2), 0.8rem);
+		padding: 0.4rem 0.35rem;
 		inline-size: clamp(min-content, var(--app-header-size), max-content);
 		min-inline-size: min-content;
 		max-inline-size: max-content;
 		background: var(--color-interface);
+		border-right: 1px solid var(--gray-4);
 		border-radius: var(--border-radius);
 		z-index: 50;
 		position: relative;
@@ -418,7 +415,8 @@
 			align-items: center;
 			flex-direction: row;
 			justify-content: space-between;
-			gap: 0.35rem;
+			gap: 0.4rem;
+			padding: 0.3rem 0.5rem 0.55rem;
 			inline-size: 100%;
 			width: 100%;
 			min-inline-size: 100%;
@@ -428,6 +426,9 @@
 			min-block-size: auto;
 			max-block-size: none;
 			box-sizing: border-box;
+			border: none;
+			border-top: 1px solid var(--gray-4);
+			border-radius: 0;
 		}
 
 		nav:first-of-type {
@@ -449,6 +450,8 @@
 
 		.user-nav {
 			margin: 0;
+			flex: 1;
+			justify-content: center;
 		}
 
 		/* Active menu item keeps same style on mobile */
@@ -459,5 +462,4 @@
 			box-shadow: none;
 		}
 	}
-
 </style>
