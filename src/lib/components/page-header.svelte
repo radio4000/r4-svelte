@@ -14,10 +14,9 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin: 0;
-		margin-inline: -0.5rem;
 		padding-inline: 0.5rem;
-		padding-block: 0.25rem;
-		z-index: 1;
+		padding-block: 0.35rem;
+		z-index: 20;
 		background: var(--color-interface);
 	}
 
