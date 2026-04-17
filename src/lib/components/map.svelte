@@ -145,6 +145,10 @@
 		background: transparent;
 	}
 
+	.map :global(.maplibregl-canvas) {
+		height: 100% !important;
+	}
+
 	.map :global(.maplibregl-ctrl button),
 	.map :global(.maplibregl-ctrl-attrib) {
 		background: light-dark(var(--gray-1), var(--gray-3));
