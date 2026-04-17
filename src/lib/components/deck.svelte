@@ -132,7 +132,6 @@
 		min-width: 280px;
 		width: var(--deck-width, 400px);
 		flex-shrink: 0;
-		background: var(--color-interface-elevated);
 		border-radius: var(--border-radius);
 		overflow: hidden;
 		position: relative;

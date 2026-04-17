@@ -126,6 +126,7 @@
 		margin: var(--interface-margin);
 		overflow: clip;
 		border-radius: var(--border-radius);
+		border-left: 1px solid var(--gray-4);
 
 		&:empty {
 			display: none;
@@ -399,6 +400,11 @@
 
 		/* "fill deck": non-compact with at least one visible panel (video or queue) */
 		@media (max-width: 768px) {
+			& {
+				border-left: none;
+				border-top: 1px solid var(--gray-4);
+			}
+
 			.deck-sections {
 				flex-direction: column;
 				height: auto;

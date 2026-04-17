@@ -317,7 +317,6 @@
 		flex-direction: row;
 		flex-wrap: wrap;
 		border-top: 1px solid var(--gray-6);
-		background: var(--color-interface-elevated);
 		min-width: 0;
 		overflow: visible;
 	}
