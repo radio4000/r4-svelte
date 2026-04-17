@@ -9,8 +9,7 @@
 	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
-	import PageHeader from '$lib/components/page-header.svelte'
+	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
@@ -54,7 +53,6 @@
 				)
 		)
 	})
-
 </script>
 
 <svelte:head>
@@ -62,16 +60,13 @@
 </svelte:head>
 
 <div class="feed">
-	<PageHeader>
-		<ExploreSectionMenu />
-
+	<ExplorePageHeader>
+		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}
-				<Icon icon="filter-alt" />
-				{m.nav_feed()}
-			{/snippet}
+			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
 			<menu class="nav-vertical">
-				<button onclick={() => goto(resolve('/explore/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
+				<button onclick={() => goto(resolve('/explore/tracks/recent'))}
+					>{m.explore_tracks_filter_recent()}</button
 				>
 				<button onclick={() => goto(resolve('/explore/tracks/featured'))}
 					>{m.explore_tracks_filter_featured()}</button
@@ -81,10 +76,7 @@
 				>
 			</menu>
 		</PopoverMenu>
-
-		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
-
-	</PageHeader>
+	</ExplorePageHeader>
 
 	{#if feedTracks.length}
 		{#each feedTracks as group (group.label)}

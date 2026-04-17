@@ -30,7 +30,7 @@
 	import SearchInput from './search-input.svelte'
 	import SortControls from './sort-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
-	import PageHeader from './page-header.svelte'
+	import ExplorePageHeader from './explore-page-header.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -39,8 +39,7 @@
 		defaultFilter = 'featured',
 		filter: filterProp = undefined,
 		filterBasePath = undefined,
-		searchHref = undefined,
-		tabs
+		searchHref = undefined
 	} = $props()
 
 	let searchValue = $state('')
@@ -326,10 +325,12 @@
 </script>
 
 <div class={`layout layout--${display}`}>
-	<PageHeader wrap={true}>
-		{#if tabs}{@render tabs()}{/if}
+	<ExplorePageHeader>
+		{#if searchHref}
+			<SearchInput bind:value={searchValue} debounce={300} placeholder={m.search_placeholder()} />
+		{/if}
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}<Icon icon="filter-alt" /> {filterLabelMap[filter]()}{/snippet}
+			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
 			<menu class="nav-vertical">
 				<button
 					class:active={filter === 'featured'}
@@ -430,18 +431,12 @@
 			/>
 		{/if}
 
-		{#if searchHref}
-			<SearchInput bind:value={searchValue} debounce={300} placeholder={m.search_placeholder()} />
-		{/if}
-
 		<PopoverMenu
 			id="channels-display"
 			closeOnClick={false}
-			style="margin-left: auto;"
 			triggerAttachment={tooltip({content: m.channels_view_mode({mode: viewLabelMap[display]()})})}
 		>
-			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />
-				{viewLabelMap[display]()}{/snippet}
+			{#snippet trigger()}<Icon icon={viewIconMap[display]} strokeWidth={1.7} />{/snippet}
 			<menu class="view-modes">
 				<button
 					class:active={display === 'grid'}
@@ -485,7 +480,7 @@
 				/>
 			{/if}
 		</PopoverMenu>
-	</PageHeader>
+	</ExplorePageHeader>
 
 	{#if filter === 'featured' && broadcastsCollection.state.size > 0}
 		<p class="featured-live-link-wrap">

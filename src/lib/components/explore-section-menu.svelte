@@ -1,10 +1,6 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {conceptIcons} from '$lib/config'
 	import * as m from '$lib/paraglide/messages'
 
 	const isChannels = $derived(
@@ -13,7 +9,9 @@
 	const isTracks = $derived(
 		page.route.id?.startsWith('/tracks') || page.route.id?.startsWith('/explore/tracks')
 	)
-	const isTags = $derived(page.route.id?.startsWith('/tags') || page.route.id?.startsWith('/explore/tags'))
+	const isTags = $derived(
+		page.route.id?.startsWith('/tags') || page.route.id?.startsWith('/explore/tags')
+	)
 
 	const activeLabel = $derived(
 		isChannels
@@ -26,23 +24,30 @@
 	)
 </script>
 
-<PopoverMenu triggerAttachment={tooltip({content: activeLabel})}>
-	{#snippet trigger()}
-		<Icon icon="options-vertical" />
-		{activeLabel}
-	{/snippet}
-	<menu class="nav-vertical">
-		<a href={resolve('/explore/channels/featured')} class:active={isChannels}>
-			<Icon icon={conceptIcons.channels} />
-			{m.explore_tab_channels()}
-		</a>
-		<a href={resolve('/explore/tracks/recent')} class:active={isTracks}>
-			<Icon icon={conceptIcons.tracks} />
-			{m.explore_tab_tracks()}
-		</a>
-		<a href={resolve('/explore/tags/featured')} class:active={isTags}>
-			<Icon icon={conceptIcons.tags} />
-			{m.explore_tab_tags()}
-		</a>
-	</menu>
-</PopoverMenu>
+<nav class="explore-section-menu tabs chip-tabs" aria-label={activeLabel}>
+	<a href={resolve('/explore/channels/featured')} class="btn chip" class:active={isChannels}>
+		{m.explore_tab_channels()}
+	</a>
+	<a href={resolve('/explore/tracks/recent')} class="btn chip" class:active={isTracks}>
+		{m.explore_tab_tracks()}
+	</a>
+	<a href={resolve('/explore/tags/featured')} class="btn chip" class:active={isTags}>
+		{m.explore_tab_tags()}
+	</a>
+</nav>
+
+<style>
+	.explore-section-menu {
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 0.5rem;
+		width: 100%;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+	}
+
+	.explore-section-menu :global(.btn.chip) {
+		flex: 0 0 auto;
+	}
+</style>

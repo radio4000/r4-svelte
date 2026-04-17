@@ -5,7 +5,12 @@
 	import * as m from '$lib/paraglide/messages'
 
 	/* A normal input, but with a search icon "inside" (on top) */
-	let {value = $bindable(''), placeholder = 'Search...', debounce = 0, ...restProps} = $props()
+	let {
+		value = $bindable(''),
+		placeholder: placeholderText = 'Search...',
+		debounce = 0,
+		...restProps
+	} = $props()
 
 	let inputValue = $state(value)
 	let lastExternalValue = value
@@ -48,7 +53,7 @@
 
 <div class="search-input">
 	<Icon icon="search" />
-	<input type="search" {placeholder} bind:value={inputValue} {...restProps} />
+	<input type="search" placeholder={placeholderText} bind:value={inputValue} {...restProps} />
 	{#if inputValue}
 		<button class="clear" title={m.common_clear()} onclick={clear} type="button">
 			<Icon icon="close" />

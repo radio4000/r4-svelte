@@ -2,6 +2,7 @@
 	import {
 		IconBook,
 		IconAdd,
+		IconEdit,
 		IconArrowDown,
 		IconArrowLeft,
 		IconArrowUp,
@@ -82,6 +83,7 @@
 	const icons = {
 		book: IconBook,
 		add: IconAdd,
+		edit: IconEdit,
 		'arrow-down': IconArrowDown,
 		'arrow-left': IconArrowLeft,
 		'arrow-up': IconArrowUp,

@@ -8,8 +8,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
-	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
-	import PageHeader from '$lib/components/page-header.svelte'
+	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -59,24 +58,7 @@
 </svelte:head>
 
 <div class="layout">
-	<PageHeader>
-		<ExploreSectionMenu />
-
-		<!-- <PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}
-				<Icon icon="filter-alt" />
-				{filterParam === 'recent' ? m.explore_tracks_filter_recent() : m.explore_tracks_filter_featured()}
-			{/snippet}
-			<menu class="nav-vertical">
-				<button class:active={filterParam === 'featured'} onclick={() => goto(resolve('/tags/featured'))}>
-					{m.explore_tracks_filter_featured()}
-				</button>
-				<button class:active={filterParam === 'recent'} onclick={() => goto(resolve('/tags/recent'))}>
-					{m.explore_tracks_filter_recent()}
-				</button>
-			</menu>
-		</PopoverMenu> -->
-
+	<ExplorePageHeader>
 		<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />
 
 		<PopoverMenu triggerAttachment={tooltip({content: m.tags_display_list()})}>
@@ -102,7 +84,7 @@
 				</button>
 			</menu>
 		</PopoverMenu>
-	</PageHeader>
+	</ExplorePageHeader>
 
 	{#if visibleTags.length}
 		{#if displayParam === 'cloud'}
@@ -151,19 +133,19 @@
 			border-bottom: 0;
 		}
 
-			a.row {
-				width: 100%;
-				text-decoration: none;
-				color: inherit;
+		a.row {
+			width: 100%;
+			text-decoration: none;
+			color: inherit;
 
-				.tag-value {
-					flex: 1 1 auto;
-					min-width: 0;
-					overflow: hidden;
-					text-overflow: ellipsis;
-					white-space: nowrap;
-					color: var(--accent-9);
-				}
+			.tag-value {
+				flex: 1 1 auto;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				color: var(--accent-9);
+			}
 
 			.count {
 				flex: 0 0 auto;
@@ -172,12 +154,12 @@
 				color: light-dark(var(--gray-9), var(--gray-8));
 			}
 
-				.bar {
-					flex: 1 1 6rem;
-					min-width: 3rem;
-					height: 3px;
-					background: linear-gradient(to left, var(--accent-9) var(--pct), var(--gray-6) var(--pct));
-					border-radius: 1px;
+			.bar {
+				flex: 1 1 6rem;
+				min-width: 3rem;
+				height: 3px;
+				background: linear-gradient(to left, var(--accent-9) var(--pct), var(--gray-6) var(--pct));
+				border-radius: 1px;
 				align-self: center;
 				transition: height 100ms ease;
 			}

@@ -9,8 +9,7 @@
 	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import ExploreSectionMenu from '$lib/components/explore-section-menu.svelte'
-	import PageHeader from '$lib/components/page-header.svelte'
+	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
@@ -98,20 +97,15 @@
 </svelte:head>
 
 <div class="layout">
-	<PageHeader>
-		<ExploreSectionMenu />
-
+	<ExplorePageHeader>
+		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
 		<PopoverMenu triggerAttachment={tooltip({content: m.channels_filter_label()})}>
-			{#snippet trigger()}
-				<Icon icon="filter-alt" />
-				{filterParam === 'recent'
-					? m.explore_tracks_filter_recent()
-					: m.explore_tracks_filter_featured()}
-			{/snippet}
+			{#snippet trigger()}<Icon icon="filter-alt" />{/snippet}
 			<menu class="nav-vertical">
 				<button
 					class:active={filterParam === 'recent'}
-					onclick={() => goto(resolve('/explore/tracks/recent'))}>{m.explore_tracks_filter_recent()}</button
+					onclick={() => goto(resolve('/explore/tracks/recent'))}
+					>{m.explore_tracks_filter_recent()}</button
 				>
 				<button
 					class:active={filterParam === 'featured'}
@@ -121,9 +115,7 @@
 				<button onclick={() => goto(resolve('/explore/tracks/network'))}>{m.nav_feed()}</button>
 			</menu>
 		</PopoverMenu>
-
-		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />
-	</PageHeader>
+	</ExplorePageHeader>
 
 	{#if groupedTracks.length}
 		{#each groupedTracks as group (group.label)}

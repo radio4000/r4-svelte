@@ -205,13 +205,15 @@ button:has(svg, i),
 button.chip,
 .btn.chip {
 	border-radius: 1rem;
-	background: var(--accent-4);
-	border-color: var(--accent-6);
+	padding: 0 0.75rem;
+	background: var(--gray-3);
+	border-color: transparent;
 }
 
 button.chip:hover,
 .btn.chip:hover {
-	background: var(--accent-5);
+	background: var(--gray-4);
+	border-color: transparent;
 }
 
 button.chip.active,
