@@ -113,65 +113,64 @@
 		<ul class="list track-current" class:playing={isTrackPlaying}>
 			<li><TrackCard {track} {canEdit} /></li>
 		</ul>
-		<header>
-			<div class="tabs track-tabs">
-				<nav class="track-tabs-back" aria-label="Back">
-					<a href={`/${data.slug}/tracks#track-${data.tid}`} aria-label="Back to tracks">
-						<Icon icon="arrow-left" />
-					</a>
-				</nav>
-				<nav aria-label={m.track_meta_title()}>
-					<a
-						href={resolve(`/${data.slug}/tracks/${data.tid}`)}
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}`}
-					>
-						<Icon icon="circle-info" />
-						{m.track_detail_nav_r5()}
-					</a>
-					<a
-						href={resolve(`/${data.slug}/tracks/${data.tid}/related`)}
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
-					>
-						<Icon icon="sparkles" />
-						{m.track_detail_nav_related()}
-					</a>
-					{#if isYoutubeTrack || hasYoutubeInfo}
-						<a
-							href={resolve(`/${data.slug}/tracks/${data.tid}/youtube`)}
-							class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
-						>
-							<Icon icon="play-fill" />
-							{m.track_detail_nav_youtube()}
-						</a>
-					{/if}
-					<a
-						href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
-					>
-						<Icon icon="book" />
-						{m.track_detail_nav_discogs()}
-					</a>
-					<a
-						href={resolve(`/${data.slug}/tracks/${data.tid}/musicbrainz`)}
-						class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
-					>
-						<Icon icon="code-branch" />
-						{m.track_detail_nav_musicbrainz()}
-					</a>
-				</nav>
-				{#if canEdit}
-					<nav class="track-tabs-secondary" aria-label={m.common_edit()}>
-						<a
-							href={resolve(`/${data.slug}/tracks/${data.tid}/edit`)}
-							class:active={pathname === `/${data.slug}/tracks/${data.tid}/edit`}
-						>
-							<Icon icon="settings" />
-							{m.common_edit()}
-						</a>
-					</nav>
-				{/if}
-			</div>
-		</header>
+		<nav class="track-nav chip-tabs" aria-label={m.track_meta_title()}>
+			<a href={`/${data.slug}/tracks#track-${data.tid}`} class="btn chip" aria-label="Back to tracks">
+				<Icon icon="arrow-left" />
+			</a>
+			<a
+				href={resolve(`/${data.slug}/tracks/${data.tid}`)}
+				class="btn chip"
+				class:active={pathname === `/${data.slug}/tracks/${data.tid}`}
+			>
+				<Icon icon="circle-info" />
+				{m.track_detail_nav_r5()}
+			</a>
+			<a
+				href={resolve(`/${data.slug}/tracks/${data.tid}/related`)}
+				class="btn chip"
+				class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
+			>
+				<Icon icon="sparkles" />
+				{m.track_detail_nav_related()}
+			</a>
+			{#if isYoutubeTrack || hasYoutubeInfo}
+				<a
+					href={resolve(`/${data.slug}/tracks/${data.tid}/youtube`)}
+					class="btn chip"
+					class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
+				>
+					<Icon icon="play-fill" />
+					{m.track_detail_nav_youtube()}
+				</a>
+			{/if}
+			<a
+				href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
+				class="btn chip"
+				class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
+			>
+				<Icon icon="book" />
+				{m.track_detail_nav_discogs()}
+			</a>
+			<a
+				href={resolve(`/${data.slug}/tracks/${data.tid}/musicbrainz`)}
+				class="btn chip"
+				class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
+			>
+				<Icon icon="code-branch" />
+				{m.track_detail_nav_musicbrainz()}
+			</a>
+			{#if canEdit}
+				<a
+					href={resolve(`/${data.slug}/tracks/${data.tid}/edit`)}
+					class="btn chip"
+					class:active={pathname === `/${data.slug}/tracks/${data.tid}/edit`}
+					style="margin-inline-start: auto;"
+				>
+					<Icon icon="edit" />
+					{m.common_edit()}
+				</a>
+			{/if}
+		</nav>
 	</div>
 
 	<main class="meta">
@@ -184,32 +183,16 @@
 		position: sticky;
 		top: var(--channel-sticky-height, 0);
 		z-index: 10;
-		background: var(--gray-1);
+		background: var(--color-interface);
 	}
 
-	.track-tabs {
-		margin: 0;
+	.track-nav {
 		display: flex;
 		flex-wrap: nowrap;
 		overflow-x: auto;
-		align-items: stretch;
-		gap: 0;
-		border-bottom: 1px solid light-dark(var(--gray-5), var(--gray-5));
-		text-transform: capitalize;
-	}
-
-	.track-tabs nav {
-		align-items: stretch;
-		flex-shrink: 0;
-		min-width: max-content;
-	}
-
-	.track-tabs-back {
-		border-right: 1px solid var(--gray-5);
-	}
-
-	.track-tabs-secondary {
-		margin-left: auto;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.5rem;
 	}
 
 	.meta {
