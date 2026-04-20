@@ -642,9 +642,8 @@
 	}
 
 	.channel-nav {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		align-items: start;
+		display: flex;
+		flex-direction: column;
 		gap: 0.25rem;
 		background: var(--gray-1);
 		padding: 0.5rem 0.5rem 0.4rem;
