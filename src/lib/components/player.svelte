@@ -760,18 +760,20 @@
 			{/if}
 		</footer>
 
-		<menu class="controls">
-			{#if !isListeningToBroadcast && !deck?.auto_radio}
-				{@render btnPrev()}
-				{@render btnPlay()}
-				{@render btnNext()}
-				<SpeedControl {deckId} {provider} />
-				<VolumeControl {deckId} />
-			{:else if deck?.auto_radio}
-				{@render btnPlay()}
-				<VolumeControl {deckId} />
-			{/if}
-		</menu>
+		{#if !isListeningToBroadcast || deck?.auto_radio}
+			<menu class="controls">
+				{#if !isListeningToBroadcast && !deck?.auto_radio}
+					{@render btnPrev()}
+					{@render btnPlay()}
+					{@render btnNext()}
+					<SpeedControl {deckId} {provider} />
+					<VolumeControl {deckId} />
+				{:else if deck?.auto_radio}
+					{@render btnPlay()}
+					<VolumeControl {deckId} />
+				{/if}
+			</menu>
+		{/if}
 		{#if deck?.auto_radio}
 			{@const autoNotSynced = !!deck?.auto_radio_drifted}
 			<div class="sync-footer">
