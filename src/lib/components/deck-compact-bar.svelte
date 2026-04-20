@@ -370,6 +370,8 @@
 		flex: 0 0 auto;
 		max-width: max-content;
 		align-self: center;
+		background: none;
+		border: none;
 	}
 
 	.track-panel {
