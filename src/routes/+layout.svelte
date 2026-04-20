@@ -546,7 +546,7 @@
 		}
 
 		/* Normal (non-compact) deck on mobile: hide bottom nav, like expanded on desktop */
-		.layout:has(:global(.deck-strip:not(.all-compact):not(:empty))) > :global(header) {
+		.layout:has(:global(.deck-strip .deck:not(.compact))) > :global(header) {
 			display: none;
 		}
 
