@@ -319,60 +319,61 @@
 							showModeMeta={false}
 						/>
 					</div>
-					<div class="channel-secondary-actions">
-						{#if (appState.channels?.length ?? 0) > 0}
-							<ButtonFollow {channel} />
-						{:else}
-							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
-								<Icon icon="favorite" />
-							</a>
-						{/if}
-						<PopoverMenu triggerAttachment={tooltip({content: m.common_more()})}>
-							{#snippet trigger()}<Icon icon="options-vertical" />{/snippet}
-							<menu class="nav-vertical">
-								{#if canEdit}
-									<a
-										href={resolve('/[slug]/edit', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/edit')}
-									>
-										<Icon icon="edit" />
-										{m.common_edit()}
-									</a>
-									<a
-										href={resolve('/[slug]/batch-edit', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/batch-edit')}
-									>
-										<Icon icon="unordered-list" />
-										{m.batch_edit_nav_label()}
-									</a>
-									<a
-										href={resolve('/[slug]/backup', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/backup')}
-									>
-										<Icon icon="document-download" />
-										Backup
-									</a>
-									<hr />
-								{:else if isLocalChannel(channel?.id)}
-									<a
-										href={resolve('/[slug]/delete', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/delete')}
-									>
-										<Icon icon="delete" />
-										{m.channel_delete_heading()}
-									</a>
-									<hr />
-								{/if}
-								<button
-									type="button"
-									onclick={() => (appState.modal_share = {channel})}
+				</div>
+
+				<div class="channel-secondary-actions">
+					{#if (appState.channels?.length ?? 0) > 0}
+						<ButtonFollow {channel} />
+					{:else}
+						<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
+							<Icon icon="favorite" />
+						</a>
+					{/if}
+					<PopoverMenu triggerAttachment={tooltip({content: m.common_more()})}>
+						{#snippet trigger()}<Icon icon="options-vertical" />{/snippet}
+						<menu class="nav-vertical">
+							{#if canEdit}
+								<a
+									href={resolve('/[slug]/edit', {slug})}
+									class:active={page.route.id?.startsWith('/[slug]/edit')}
 								>
-									<Icon icon="share" />
-									{m.share_native()}
-								</button>
-							</menu>
-						</PopoverMenu>
-					</div>
+									<Icon icon="edit" />
+									{m.common_edit()}
+								</a>
+								<a
+									href={resolve('/[slug]/batch-edit', {slug})}
+									class:active={page.route.id?.startsWith('/[slug]/batch-edit')}
+								>
+									<Icon icon="unordered-list" />
+									{m.batch_edit_nav_label()}
+								</a>
+								<a
+									href={resolve('/[slug]/backup', {slug})}
+									class:active={page.route.id?.startsWith('/[slug]/backup')}
+								>
+									<Icon icon="document-download" />
+									Backup
+								</a>
+								<hr />
+							{:else if isLocalChannel(channel?.id)}
+								<a
+									href={resolve('/[slug]/delete', {slug})}
+									class:active={page.route.id?.startsWith('/[slug]/delete')}
+								>
+									<Icon icon="delete" />
+									{m.channel_delete_heading()}
+								</a>
+								<hr />
+							{/if}
+							<button
+								type="button"
+								onclick={() => (appState.modal_share = {channel})}
+							>
+								<Icon icon="share" />
+								{m.share_native()}
+							</button>
+						</menu>
+					</PopoverMenu>
 				</div>
 
 				<div class="channel-controls">
@@ -492,31 +493,30 @@
 	}
 
 	header {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
+		display: grid;
+		grid-template-areas:
+			'main secondary'
+			'controls controls';
+		grid-template-columns: 1fr auto;
 		gap: 0.4rem;
 		padding: 0.5rem 0.5rem 0.75rem;
 		min-width: 0;
-	}
-
-	.channel-main {
-		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		width: 100%;
-		min-width: 0;
 	}
 
 	@media (min-width: 500px) {
 		header {
-			flex-direction: row;
-			justify-content: space-between;
+			grid-template-areas: 'main controls secondary';
+			grid-template-columns: auto 1fr auto;
 		}
-		.channel-main {
-			width: auto;
-			flex: 1 1 auto;
-		}
+	}
+
+	.channel-main {
+		grid-area: main;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
 	}
 
 	.avatar {
@@ -562,12 +562,11 @@
 	}
 
 	.channel-controls {
+		grid-area: controls;
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		flex: 1 1 auto;
 		min-width: 0;
-		width: 100%;
 	}
 
 	.channel-actions {
@@ -624,11 +623,10 @@
 	}
 
 	.channel-secondary-actions {
+		grid-area: secondary;
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		margin-left: auto;
-		flex: 0 0 auto;
 	}
 
 	main {
