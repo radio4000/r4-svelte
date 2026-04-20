@@ -14,7 +14,6 @@
 	import InternetIndicator from '$lib/components/internet-indicator.svelte'
 	import * as m from '$lib/paraglide/messages'
 	import {appName, conceptIcons} from '$lib/config'
-	import {findAutoDecksForChannel} from '$lib/deck'
 	import {deckAccent} from '$lib/app-state.svelte'
 
 	const {preloading} = $props()
@@ -25,8 +24,6 @@
 		userChannel &&
 			Object.values(appState.decks).some((d) => d.broadcasting_channel_id === userChannel.id)
 	)
-	const autoDecks = $derived(findAutoDecksForChannel(appState.decks, userChannel?.slug))
-	const isAutoRadio = $derived(autoDecks.length > 0)
 	const deckIds = $derived(Object.keys(appState.decks).map(Number))
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 
@@ -170,17 +167,6 @@
 						<span class="btn-label">{m.status_live_short()}</span>
 					</a>
 				{/if}
-				{#if isAutoRadio}
-					<a
-						href={resolve(`/${userChannel.slug}`)}
-						class="btn ghost auto-btn nav-btn"
-						aria-label={m.auto_radio_join()}
-						{@attach tooltip({content: m.auto_radio_join()})}
-					>
-						<Icon icon="infinite" />
-						<span class="btn-label">Auto</span>
-					</a>
-				{/if}
 			{:else if isSignedIn}
 				<a
 					href={resolve('/create-channel')}
@@ -259,8 +245,7 @@
 		color: currentColor;
 	}
 
-	nav :global(.broadcasting-btn svg),
-	nav :global(.auto-btn svg) {
+	nav :global(.broadcasting-btn svg) {
 		color: var(--accent-9);
 	}
 
@@ -442,6 +427,8 @@
 			margin: 0;
 			flex: 1;
 			justify-content: center;
+			overflow-x: auto;
+			scrollbar-width: none;
 		}
 
 		/* Active menu item keeps same style on mobile */
