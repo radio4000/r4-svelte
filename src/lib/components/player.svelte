@@ -870,6 +870,8 @@
 	.header-channel :global(.channel-micro-card) {
 		flex: 0 1 auto;
 		max-width: 100%;
+		background: none;
+		border: none;
 	}
 
 	.header-id {
