@@ -67,6 +67,7 @@
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
 		scrollbar-width: thin;
+		padding-bottom: 0.25rem;
 	}
 
 	.channel-section-menu :global(.btn.chip) {
