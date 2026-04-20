@@ -153,3 +153,26 @@
 		oklch(from var(--gray-dark) 0.95 calc(c * 0.5) h)
 	);
 }
+
+/* === 3-STEP PALETTE — canonical steps: gray 1/6/11 · accent 3/9/11 === */
+:root {
+	--gray-2:  var(--gray-1);
+	--gray-3:  var(--gray-1);
+	--gray-4:  var(--gray-1);
+	--gray-5:  var(--gray-6);
+	--gray-7:  var(--gray-6);
+	--gray-8:  var(--gray-6);
+	--gray-9:  var(--gray-11);
+	--gray-10: var(--gray-11);
+	--gray-12: var(--gray-11);
+
+	--accent-1:  var(--accent-3);
+	--accent-2:  var(--accent-3);
+	--accent-4:  var(--accent-3);
+	--accent-5:  var(--accent-3);
+	--accent-6:  var(--accent-9);
+	--accent-7:  var(--accent-9);
+	--accent-8:  var(--accent-9);
+	--accent-10: var(--accent-9);
+	--accent-12: var(--accent-11);
+}

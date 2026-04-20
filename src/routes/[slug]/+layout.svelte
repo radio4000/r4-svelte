@@ -608,7 +608,7 @@
 	}
 
 	.mode-action.play:hover {
-		background: var(--accent-10);
+		filter: brightness(0.88);
 	}
 
 	.mode-action.active {
