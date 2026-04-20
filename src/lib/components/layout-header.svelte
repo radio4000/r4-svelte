@@ -161,7 +161,7 @@
 				</a>
 				{#if isBroadcasting}
 					<a
-						href={resolve(`/${userChannel.slug}`)}
+						href={resolve('/broadcast')}
 						class="btn ghost broadcasting-btn nav-btn"
 						aria-label={m.status_broadcasting()}
 						{@attach tooltip({content: m.status_broadcasting()})}
