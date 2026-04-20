@@ -569,6 +569,9 @@
 								: resolve('/[slug]', {slug: secondaryHeaderChannel.slug})}
 						/>
 					{/if}
+					{#each headerTags as tag (tag.value)}
+						<Tag href={tag.href} value={tag.value}>{tag.value}</Tag>
+					{/each}
 				</div>
 			{/if}
 			<menu class="layout-controls top-layout-controls">
@@ -660,13 +663,6 @@
 				{/if}
 			</menu>
 		</div>
-		{#if headerTags.length > 0}
-			<div class="header-tags">
-				{#each headerTags as tag (tag.value)}
-					<Tag href={tag.href} value={tag.value}>{tag.value}</Tag>
-				{/each}
-			</div>
-		{/if}
 	</header>
 
 	<!-- 2. Media player -->
@@ -892,14 +888,6 @@
 
 	.header-id.active {
 		color: var(--accent-9);
-	}
-
-	.header-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem;
-		padding: 0 0.5rem 0.35rem;
-		font-size: var(--font-2);
 	}
 
 	.active-track-bg {
