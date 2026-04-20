@@ -9,6 +9,7 @@
 	import PopoverMenu from '$lib/components/popover-menu.svelte'
 	import SearchInput from '$lib/components/search-input.svelte'
 	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
+	import TagRow from '$lib/components/tag-row.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
 
@@ -104,11 +105,7 @@
 				<ol class="list tag-list">
 					{#each visibleTags as { tag, count } (tag)}
 						<li>
-							<a class="row" href={tagSearchHref(tag)}>
-								<span class="tag-value">#{tag}</span>
-								<span class="count">{count}</span>
-								<span class="bar" style="--pct: {((count / maxCount) * 100).toFixed(1)}%"></span>
-							</a>
+							<TagRow {tag} {count} pct={((count / maxCount) * 100)} href={tagSearchHref(tag)} />
 						</li>
 					{/each}
 				</ol>
@@ -140,45 +137,6 @@
 	.tag-list {
 		li {
 			border-bottom: 0;
-		}
-
-		a.row {
-			display: flex;
-			align-items: center;
-			width: 100%;
-			flex-wrap: nowrap;
-			text-decoration: none;
-			color: inherit;
-
-			.tag-value {
-				flex: 1 1 auto;
-				min-width: 0;
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-				color: var(--accent-9);
-			}
-
-			.count {
-				flex: 0 0 auto;
-				font-variant-numeric: tabular-nums;
-				font-size: var(--font-2);
-				color: light-dark(var(--gray-9), var(--gray-8));
-			}
-
-			.bar {
-				flex: 1 1 6rem;
-				min-width: 3rem;
-				height: 3px;
-				background: linear-gradient(to left, var(--accent-9) var(--pct), var(--gray-6) var(--pct));
-				border-radius: 1px;
-				align-self: center;
-				transition: height 100ms ease;
-			}
-
-			&:hover .bar {
-				height: 0.75rem;
-			}
 		}
 	}
 
