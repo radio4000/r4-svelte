@@ -190,12 +190,12 @@
 		}
 
 		&.playing {
-			background: var(--accent-3);
+			background: var(--gray-2);
 			border-color: var(--gray-5);
-			--tag-bg: var(--accent-6);
-			--tag-bg-hover: var(--accent-7);
-			--tag-bg-active: var(--accent-8);
-			--tag-color: var(--accent-12);
+			--tag-bg: var(--accent-4);
+			--tag-bg-hover: var(--accent-5);
+			--tag-bg-active: var(--accent-6);
+			--tag-color: var(--accent-11);
 		}
 
 		:global(.list) & {

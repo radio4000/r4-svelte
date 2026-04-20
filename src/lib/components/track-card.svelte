@@ -410,10 +410,13 @@
 	}
 
 	.active {
-		background: transparent;
+		background: var(--gray-2);
+		border-color: var(--gray-5);
 	}
 
 	.selected {
+		background: var(--gray-2);
+		border-color: var(--gray-5);
 		--tag-bg: var(--accent-4);
 		--tag-bg-hover: var(--accent-5);
 		--tag-bg-active: var(--accent-6);
