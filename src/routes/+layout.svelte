@@ -44,6 +44,15 @@
 	let chatPanelVisible = $state(false)
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
+	let anyDeckActive = $derived(
+		Object.values(appState.decks).some(
+			(d) =>
+				!d.compact &&
+				((d.playlist_tracks?.length ?? 0) > 0 ||
+					Boolean(d.playlist_track) ||
+					Boolean(d.listening_to_channel_id))
+		)
+	)
 	let allDeckIds = $derived(
 		Object.keys(appState.decks)
 			.map(Number)
@@ -259,7 +268,7 @@
 
 			<AppUpdateBanner />
 
-			<div class="layout" class:deckExpanded={anyDeckExpanded} data-locale={uiLocale}>
+			<div class="layout" class:deckExpanded={anyDeckExpanded} class:deckActive={anyDeckActive} data-locale={uiLocale}>
 				{#if !appState.embed_mode}
 					{#key uiLocale}
 						<LayoutHeader preloading={data.preloading} />
@@ -545,8 +554,8 @@
 			max-height: 28dvh;
 		}
 
-		/* Normal (non-compact) deck on mobile: hide bottom nav, like expanded on desktop */
-		.layout:has(:global(.deck-strip .deck:not(.compact))) > :global(header) {
+		/* Non-compact active deck on mobile: hide bottom nav, like expanded on desktop */
+		.deckActive > :global(header) {
 			display: none;
 		}
 
