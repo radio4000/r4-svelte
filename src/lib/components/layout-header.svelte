@@ -210,16 +210,6 @@
 
 	<nav class="nav-settings">
 		<a
-			href={resolve('/history')}
-			class="btn nav-btn"
-			class:active={page.route.id === '/history' || page.route.id === '/history/stats'}
-			aria-label={m.nav_history()}
-			{@attach tooltip({content: m.nav_history()})}
-		>
-			<Icon icon={conceptIcons.history} />
-			<span class="btn-label">{m.nav_history()}</span>
-		</a>
-		<a
 			href={resolve('/menu')}
 			class="btn settings-link nav-btn"
 			class:active={page.route.id?.startsWith('/menu') || page.route.id?.startsWith('/settings')}

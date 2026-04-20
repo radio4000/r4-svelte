@@ -2,7 +2,7 @@
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
 	import {appState} from '$lib/app-state.svelte'
-	import {appName} from '$lib/config'
+	import {appName, conceptIcons} from '$lib/config'
 	import Icon from '$lib/components/icon.svelte'
 	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
 	import AppBuildInfo from '$lib/components/app-build-info.svelte'
@@ -88,6 +88,10 @@
 	</menu>
 
 	<menu class="nav-vertical">
+		<a href={resolve('/history')}>
+			<Icon icon={conceptIcons.history} />
+			{m.nav_history()}
+		</a>
 		<a href={resolve('/settings')}>
 			<Icon icon="settings" />
 			{m.nav_settings()}
