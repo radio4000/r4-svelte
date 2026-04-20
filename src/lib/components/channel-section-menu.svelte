@@ -71,5 +71,6 @@
 
 	.channel-section-menu :global(.btn.chip) {
 		flex: 0 0 auto;
+		padding-block: 0.3rem;
 	}
 </style>
