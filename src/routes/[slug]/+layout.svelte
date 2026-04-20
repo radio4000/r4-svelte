@@ -601,12 +601,13 @@
 	}
 
 	.mode-action.play {
-		background: var(--accent-3);
-		color: var(--accent-11);
+		background: var(--accent-9);
+		color: light-dark(var(--gray-1), var(--gray-12));
+		border-color: var(--accent-10);
 	}
 
 	.mode-action.play:hover {
-		background: var(--accent-4);
+		background: var(--accent-10);
 	}
 
 	.mode-action.active {
@@ -615,7 +616,8 @@
 	}
 
 	.mode-action.play.active {
-		background: var(--accent-4);
+		background: var(--accent-10);
+		color: light-dark(var(--gray-1), var(--gray-12));
 	}
 
 	.mode-action.auto.drifted {
