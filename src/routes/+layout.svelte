@@ -545,6 +545,11 @@
 			max-height: 28dvh;
 		}
 
+		/* Normal (non-compact) deck on mobile: hide bottom nav, like expanded on desktop */
+		.layout:has(:global(.deck-strip:not(.all-compact):not(:empty))) > :global(header) {
+			display: none;
+		}
+
 		.compact-decks {
 			position: relative;
 			bottom: auto;
