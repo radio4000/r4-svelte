@@ -490,6 +490,7 @@
 		top: 0;
 		z-index: 20;
 		background: var(--gray-1);
+		container-type: inline-size;
 	}
 
 	header {
@@ -499,12 +500,12 @@
 			'controls controls';
 		grid-template-columns: 1fr auto;
 		gap: 0.4rem;
-		padding: 0.5rem 0.5rem 0.75rem;
+		padding: 0.5rem 0.5rem 0.4rem;
 		min-width: 0;
 		align-items: center;
 	}
 
-	@media (min-width: 500px) {
+	@container (min-width: 500px) {
 		header {
 			grid-template-areas: 'main controls secondary';
 			grid-template-columns: auto 1fr auto;
@@ -641,17 +642,16 @@
 	}
 
 	.channel-nav {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: start;
 		gap: 0.25rem;
 		background: var(--gray-1);
-		padding: 0.4rem 0.5rem;
+		padding: 0.5rem 0.5rem 0.4rem;
 	}
 
 	.channel-nav-controls {
 		display: flex;
-		flex: 1;
 		min-width: 0;
 		align-items: center;
 		flex-wrap: wrap;
