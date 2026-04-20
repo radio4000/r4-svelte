@@ -590,18 +590,6 @@
 		padding: 0;
 	}
 
-	.homepage > :global(.page-header) {
-		position: sticky;
-		top: 0.5rem;
-		margin: 0 0 0.6rem;
-		z-index: 31;
-	}
-
-	.homepage > :global(.page-header .search-input) {
-		flex: 1 1 12rem;
-		min-width: 8rem;
-	}
-
 	.create-channel-action {
 		margin-left: auto;
 	}
