@@ -744,8 +744,8 @@
 		overflow-x: auto;
 		scrollbar-width: none;
 
-		& > * {
-			min-width: max-content;
+		& > .dashboard-card {
+			flex-shrink: 0;
 		}
 	}
 
@@ -790,11 +790,11 @@
 	}
 
 	.dashboard-card--row > a.dashboard-label--tag {
+		flex: 0 0 auto;
+		max-width: 16ch;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		min-width: 0;
-		flex: 1 1 auto;
 	}
 
 	.dashboard-label--tag {
