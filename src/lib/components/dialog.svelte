@@ -51,9 +51,12 @@
 		--duration: 200ms;
 		border: none;
 		width: 100%;
+		max-width: 100%;
+		max-height: 100dvh;
 		background: none;
-		padding: calc(0.2px + 13vh) 12px 13vh;
-		overflow: hidden;
+		padding: clamp(0.5rem, 5dvh, 3rem) 0.75rem;
+		overflow-y: auto;
+		box-sizing: border-box;
 	}
 	dialog[open] {
 		animation: modal-in var(--duration) ease-out;
@@ -69,7 +72,7 @@
 		}
 	}
 	dialog::backdrop {
-		background: lch(0 0 0 / 0.275);
+		background: oklch(0 0 0 / 0.7);
 		opacity: 1;
 		transition:
 			opacity var(--duration) ease-out,
@@ -85,10 +88,10 @@
 		max-width: 640px;
 		margin: auto;
 		width: min(100%, 640px);
-		max-height: min(74vh, 760px);
+		max-height: min(calc(100dvh - 2 * clamp(0.5rem, 5dvh, 3rem)), 760px);
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr) auto;
-		background: var(--color-interface-elevated);
+		background: var(--gray-1);
 		box-shadow:
 			lch(0 0 0 / 0.15) 0px 4px 40px,
 			lch(0 0 0 / 0.188) 0px 3px 20px,
