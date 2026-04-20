@@ -319,6 +319,60 @@
 							showModeMeta={false}
 						/>
 					</div>
+					<div class="channel-secondary-actions">
+						{#if (appState.channels?.length ?? 0) > 0}
+							<ButtonFollow {channel} />
+						{:else}
+							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
+								<Icon icon="favorite" />
+							</a>
+						{/if}
+						<PopoverMenu triggerAttachment={tooltip({content: m.common_more()})}>
+							{#snippet trigger()}<Icon icon="options-vertical" />{/snippet}
+							<menu class="nav-vertical">
+								{#if canEdit}
+									<a
+										href={resolve('/[slug]/edit', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/edit')}
+									>
+										<Icon icon="edit" />
+										{m.common_edit()}
+									</a>
+									<a
+										href={resolve('/[slug]/batch-edit', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/batch-edit')}
+									>
+										<Icon icon="unordered-list" />
+										{m.batch_edit_nav_label()}
+									</a>
+									<a
+										href={resolve('/[slug]/backup', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/backup')}
+									>
+										<Icon icon="document-download" />
+										Backup
+									</a>
+									<hr />
+								{:else if isLocalChannel(channel?.id)}
+									<a
+										href={resolve('/[slug]/delete', {slug})}
+										class:active={page.route.id?.startsWith('/[slug]/delete')}
+									>
+										<Icon icon="delete" />
+										{m.channel_delete_heading()}
+									</a>
+									<hr />
+								{/if}
+								<button
+									type="button"
+									onclick={() => (appState.modal_share = {channel})}
+								>
+									<Icon icon="share" />
+									{m.share_native()}
+								</button>
+							</menu>
+						</PopoverMenu>
+					</div>
 				</div>
 
 				<div class="channel-controls">
@@ -393,61 +447,6 @@
 							</button>
 						</div>
 					</menu>
-
-					<div class="channel-secondary-actions">
-						{#if (appState.channels?.length ?? 0) > 0}
-							<ButtonFollow {channel} />
-						{:else}
-							<a href={authHref} class="btn" {@attach tooltip({content: m.common_follow()})}>
-								<Icon icon="favorite" />
-							</a>
-						{/if}
-						<PopoverMenu triggerAttachment={tooltip({content: m.common_more()})}>
-							{#snippet trigger()}<Icon icon="options-vertical" />{/snippet}
-							<menu class="nav-vertical">
-								{#if canEdit}
-									<a
-										href={resolve('/[slug]/edit', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/edit')}
-									>
-										<Icon icon="edit" />
-										{m.common_edit()}
-									</a>
-									<a
-										href={resolve('/[slug]/batch-edit', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/batch-edit')}
-									>
-										<Icon icon="unordered-list" />
-										{m.batch_edit_nav_label()}
-									</a>
-									<a
-										href={resolve('/[slug]/backup', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/backup')}
-									>
-										<Icon icon="document-download" />
-										Backup
-									</a>
-									<hr />
-								{:else if isLocalChannel(channel?.id)}
-									<a
-										href={resolve('/[slug]/delete', {slug})}
-										class:active={page.route.id?.startsWith('/[slug]/delete')}
-									>
-										<Icon icon="delete" />
-										{m.channel_delete_heading()}
-									</a>
-									<hr />
-								{/if}
-								<button
-									type="button"
-									onclick={() => (appState.modal_share = {channel})}
-								>
-									<Icon icon="share" />
-									{m.share_native()}
-								</button>
-							</menu>
-						</PopoverMenu>
-					</div>
 				</div>
 			</header>
 		{/if}
