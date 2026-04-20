@@ -16,7 +16,7 @@
 	import Dialog from '$lib/components/dialog.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import {addToPlaylist, joinAutoRadio, playTrack, setPlaylist} from '$lib/api'
+	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack, setPlaylist} from '$lib/api'
 	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
 	import {getChannelTags, seededRandom, shuffleSeed} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
@@ -274,7 +274,7 @@
 	function playFilteredTracks() {
 		if (!hasActionableSelection) return
 		const ids = visibleTracks.map((t) => t.id)
-		setPlaylist(appState.active_deck_id, ids, {title: filteredPlaylistTitle})
+		loadDeckView(appState.active_deck_id, filteredAutoView, ids, {title: filteredPlaylistTitle})
 		playTrack(appState.active_deck_id, ids[0], null, 'play_search')
 	}
 
