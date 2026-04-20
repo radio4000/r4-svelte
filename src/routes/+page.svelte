@@ -640,6 +640,7 @@
 	}
 
 	.homepage.signed-in .section--globe:not(.section--globe--loggedout) {
+		flex: 1;
 		min-height: 40dvh;
 	}
 
