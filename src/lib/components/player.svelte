@@ -1063,6 +1063,10 @@
 		}
 	}
 
+	:global(.deck.listening) .bottom-chrome {
+		margin-top: 0;
+	}
+
 	.track-panel {
 		display: flex;
 		flex-direction: row;
