@@ -301,7 +301,7 @@
 
 			{#if userChannelTopTags.length > 0 || tagsLoading}
 				<div class="dashboard-group">
-					<div class="dashboard-grid">
+					<div class="dashboard-grid dashboard-grid--scroll">
 						{#if tagsLoading}
 							<div
 								class="dashboard-card dashboard-card--row dashboard-card--tag dashboard-card--pill loading-placeholder"
@@ -640,9 +640,7 @@
 	}
 
 	.homepage.signed-in .section--globe:not(.section--globe--loggedout) {
-		flex: 1;
-		position: sticky;
-		bottom: 0;
+		min-height: 40dvh;
 	}
 
 	.homepage:not(.signed-in) .section--globe--loggedout {
@@ -738,6 +736,16 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.3rem;
+	}
+
+	.dashboard-grid--scroll {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+
+		& > * {
+			min-width: max-content;
+		}
 	}
 
 	.dashboard-card {
