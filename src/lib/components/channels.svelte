@@ -81,6 +81,7 @@
 	let showFeaturedInfo = $state(false)
 
 	let paginatedLimit = $state(CHANNELS_PAGE_SIZE)
+	let extraPages = $state(0)
 
 	const currentPage = $derived(Math.max(1, parseInt(page.url.searchParams.get('page') ?? '1') || 1))
 	const pageSize = $derived(Math.max(1, parseInt(page.url.searchParams.get('per') ?? '12') || 12))
@@ -121,7 +122,7 @@
 		filter === 'featured'
 			? 50
 			: isPaged
-				? currentPage * pageSize
+				? (currentPage + extraPages) * pageSize
 				: Math.max(VIEW_MIN_LIMIT[display] ?? 0, paginatedLimit)
 	)
 	const favoriteIds = $derived(follows.followedIds)
@@ -146,12 +147,14 @@
 	/** @type {Record<string, number>} Filter → minimum track count */
 	const filterMinTracks = {artwork: 2, '10+': 10, '100+': 100, '1000+': 1000}
 
-	// Reset pagination when filter/sort changes
+	// Reset pagination when filter/sort/page changes
 	$effect(() => {
 		void filter
 		void order
 		void orderDirection
+		void currentPage
 		paginatedLimit = CHANNELS_PAGE_SIZE
+		extraPages = 0
 	})
 
 	/** @type {Record<string, () => string[]>} Filters whose total count comes from a local ID list */
@@ -199,10 +202,17 @@
 	const channels = $derived.by(() => {
 		if (filter === 'featured')
 			return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
-		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, (currentPage + extraPages) * pageSize)
 		return channelsRaw
 	})
 	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
+	const hasPaginatedMore = $derived(
+		isPaged &&
+			filter !== 'featured' &&
+			(totalCount > 0
+				? totalCount > (currentPage + extraPages) * pageSize
+				: channelsRaw.length >= (currentPage + extraPages) * pageSize)
+	)
 
 	// Server-side total count for pagination (N/M display)
 	let serverCount = $state(0)
@@ -471,6 +481,13 @@
 				</li>
 			{/each}
 		</ol>
+		{#if isPaged && hasPaginatedMore}
+			<div class="load-more-wrap">
+				<button class="btn" onclick={() => extraPages++} disabled={channelsQuery.isLoading}>
+					{channelsQuery.isLoading ? '…' : m.channels_load_more({count: pageSize})}
+				</button>
+			</div>
+		{/if}
 		{#if !isPaged}
 			<footer>
 				{#if orderedChannels.length > 0}
@@ -522,6 +539,12 @@
 			/* Default page controls layer: above content, below app overlays/fullscreen deck. */
 			z-index: 3;
 		}
+	}
+
+	.load-more-wrap {
+		display: flex;
+		justify-content: center;
+		padding: 1rem 0.5rem;
 	}
 
 	footer p {
