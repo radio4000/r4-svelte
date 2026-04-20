@@ -61,7 +61,6 @@
 			flex-basis: 100%;
 			border-left: none;
 			padding-left: 0;
-			border-top: 1px solid var(--gray-5);
 			padding-top: 0.4rem;
 			overflow-x: auto;
 			scrollbar-width: none;
