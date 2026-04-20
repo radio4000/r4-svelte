@@ -11,7 +11,6 @@
 		previous,
 		togglePlayPause,
 		toggleDeckCompact,
-		togglePlayerExpanded,
 		toggleQueuePanel,
 		toggleVideo,
 		getUserInitiatedPlay,
@@ -635,15 +634,7 @@
 									<Icon icon="gradient" size={14} />
 								</button>
 							{/if}
-							<button
-								class="expand-player-toggle"
-								onclick={() => togglePlayerExpanded(deckId)}
-								class:active={deck?.expanded}
-								data-no-close
-							>
-								{@html m.player_tooltip_expand()}
-								<Icon icon="fullscreen" size={14} />
-							</button>
+
 							<button class:active={isFullscreen} onclick={toggleFullscreen} data-no-close>
 								{isFullscreen ? 'Exit full screen' : 'Full screen'}
 								<Icon icon="fullscreen-alt" size={14} />
@@ -1098,8 +1089,5 @@
 			justify-content: flex-start;
 		}
 
-		.expand-player-toggle {
-			display: none;
-		}
 	}
 </style>
