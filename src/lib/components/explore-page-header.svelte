@@ -51,6 +51,23 @@
 		border-left: 1px solid var(--gray-5);
 	}
 
+	@media (max-width: 768px) {
+		.explore-nav-row {
+			flex-wrap: wrap;
+			overflow-x: visible;
+		}
+
+		.explore-filter-chips {
+			flex-basis: 100%;
+			border-left: none;
+			padding-left: 0;
+			border-top: 1px solid var(--gray-5);
+			padding-top: 0.4rem;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+	}
+
 	.explore-filter-chips :global(.btn.chip) {
 		flex: 0 0 auto;
 	}
