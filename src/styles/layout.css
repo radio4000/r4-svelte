@@ -73,7 +73,6 @@
 .list > li,
 .list > div,
 .virtual-item.track-item {
-
 	&:hover {
 		background: light-dark(var(--gray-2), var(--gray-2));
 		--tag-border: var(--gray-7);

@@ -365,10 +365,7 @@
 								</a>
 								<hr />
 							{/if}
-							<button
-								type="button"
-								onclick={() => (appState.modal_share = {channel})}
-							>
+							<button type="button" onclick={() => (appState.modal_share = {channel})}>
 								<Icon icon="share" />
 								{m.share_native()}
 							</button>
@@ -455,11 +452,7 @@
 		{#if !isTrackDetail}
 			<menu class="channel-nav">
 				{#if page.route.id !== '/[slug]/image'}
-					<ChannelSectionMenu
-						{slug}
-						{channel}
-						trackCount={allChannelTracks.length}
-					/>
+					<ChannelSectionMenu {slug} {channel} trackCount={allChannelTracks.length} />
 				{/if}
 				{#if channelNavControls}
 					<menu class="channel-nav-controls">

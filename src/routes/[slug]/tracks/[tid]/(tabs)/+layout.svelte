@@ -114,7 +114,11 @@
 			<li><TrackCard {track} {canEdit} /></li>
 		</ul>
 		<nav class="track-nav chip-tabs" aria-label={m.track_meta_title()}>
-			<a href={`/${data.slug}/tracks#track-${data.tid}`} class="btn chip" aria-label="Back to tracks">
+			<a
+				href={`/${data.slug}/tracks#track-${data.tid}`}
+				class="btn chip"
+				aria-label="Back to tracks"
+			>
 				<Icon icon="arrow-left" />
 			</a>
 			<a

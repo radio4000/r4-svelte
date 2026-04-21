@@ -268,7 +268,12 @@
 
 			<AppUpdateBanner />
 
-			<div class="layout" class:deckExpanded={anyDeckExpanded} class:deckActive={anyDeckActive} data-locale={uiLocale}>
+			<div
+				class="layout"
+				class:deckExpanded={anyDeckExpanded}
+				class:deckActive={anyDeckActive}
+				data-locale={uiLocale}
+			>
 				{#if !appState.embed_mode}
 					{#key uiLocale}
 						<LayoutHeader preloading={data.preloading} />
@@ -322,7 +327,8 @@
 										<button
 											class={['compact-group-sync', {active: compactListeningDecksSynced}]}
 											aria-label={compactListeningDecksSynced ? 'Live' : 'Sync'}
-											onclick={() => compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+											onclick={() =>
+												compactListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
 										>
 											{#if compactListenPresenceCount > 0}
 												<PresenceCount count={compactListenPresenceCount} />

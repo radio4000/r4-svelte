@@ -558,7 +558,6 @@
 	}
 
 	.track-section {
-
 		footer {
 			padding: 0.4rem;
 			margin: 0;

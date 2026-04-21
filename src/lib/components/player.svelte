@@ -1095,6 +1095,5 @@
 			gap: 0.1rem;
 			justify-content: flex-start;
 		}
-
 	}
 </style>

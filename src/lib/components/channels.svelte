@@ -202,7 +202,8 @@
 	const channels = $derived.by(() => {
 		if (filter === 'featured')
 			return channelsRaw.toSorted((a, b) => featuredScore(b) - featuredScore(a)).slice(0, 12)
-		if (isPaged) return channelsRaw.slice((currentPage - 1) * pageSize, (currentPage + extraPages) * pageSize)
+		if (isPaged)
+			return channelsRaw.slice((currentPage - 1) * pageSize, (currentPage + extraPages) * pageSize)
 		return channelsRaw
 	})
 	const hasMore = $derived(filter !== 'featured' && !isPaged && channelsRaw.length >= queryLimit)
@@ -337,20 +338,51 @@
 <div class={`layout layout--${display}`}>
 	<ExplorePageHeader>
 		{#snippet filterChips()}
-			<button class="btn chip" class:active={filter === 'featured'} onclick={() => setFilter('featured')}>{m.channels_filter_option_featured()}</button>
+			<button
+				class="btn chip"
+				class:active={filter === 'featured'}
+				onclick={() => setFilter('featured')}>{m.channels_filter_option_featured()}</button
+			>
 			{#if follows.followedIds.length}
-				<button class="btn chip" class:active={filter === 'favorites'} onclick={() => setFilter('favorites')}>{m.nav_favorites()}</button>
+				<button
+					class="btn chip"
+					class:active={filter === 'favorites'}
+					onclick={() => setFilter('favorites')}>{m.nav_favorites()}</button
+				>
 			{/if}
 			{#if broadcastsCollection.state.size}
-				<button class="btn chip" class:active={filter === 'broadcasting'} onclick={() => setFilter('broadcasting')}>{m.channels_filter_option_broadcasting()}<span class="channel-badge live-pill">{broadcastsCollection.state.size}</span></button>
+				<button
+					class="btn chip"
+					class:active={filter === 'broadcasting'}
+					onclick={() => setFilter('broadcasting')}
+					>{m.channels_filter_option_broadcasting()}<span class="channel-badge live-pill"
+						>{broadcastsCollection.state.size}</span
+					></button
+				>
 			{/if}
-			<button class="btn chip" class:active={filter === '10+'} onclick={() => setFilter('10+')}>{m.channels_filter_option_10()}</button>
-			<button class="btn chip" class:active={filter === '100+'} onclick={() => setFilter('100+')}>{m.channels_filter_option_100()}</button>
-			<button class="btn chip" class:active={filter === '1000+'} onclick={() => setFilter('1000+')}>{m.channels_filter_option_1000()}</button>
-			<button class="btn chip" class:active={filter === 'all'} onclick={() => setFilter('all')}>{m.channels_filter_option_all()}</button>
-			<button class="btn chip" class:active={filter === 'artwork'} onclick={() => setFilter('artwork')}>{m.channels_filter_option_artwork()}</button>
+			<button class="btn chip" class:active={filter === '10+'} onclick={() => setFilter('10+')}
+				>{m.channels_filter_option_10()}</button
+			>
+			<button class="btn chip" class:active={filter === '100+'} onclick={() => setFilter('100+')}
+				>{m.channels_filter_option_100()}</button
+			>
+			<button class="btn chip" class:active={filter === '1000+'} onclick={() => setFilter('1000+')}
+				>{m.channels_filter_option_1000()}</button
+			>
+			<button class="btn chip" class:active={filter === 'all'} onclick={() => setFilter('all')}
+				>{m.channels_filter_option_all()}</button
+			>
+			<button
+				class="btn chip"
+				class:active={filter === 'artwork'}
+				onclick={() => setFilter('artwork')}>{m.channels_filter_option_artwork()}</button
+			>
 			{#if appState.local_channel_ids?.length}
-				<button class="btn chip" class:active={filter === 'imported'} onclick={() => setFilter('imported')}>{m.channels_filter_option_imported()}</button>
+				<button
+					class="btn chip"
+					class:active={filter === 'imported'}
+					onclick={() => setFilter('imported')}>{m.channels_filter_option_imported()}</button
+				>
 			{/if}
 		{/snippet}
 		{#if searchHref}
@@ -571,5 +603,4 @@
 			font-variant-numeric: tabular-nums;
 		}
 	}
-
 </style>

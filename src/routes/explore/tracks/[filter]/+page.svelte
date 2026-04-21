@@ -96,8 +96,16 @@
 <div class="layout">
 	<ExplorePageHeader>
 		{#snippet filterChips()}
-			<a href={resolve('/explore/tracks/recent')} class="btn chip" class:active={filterParam === 'recent'}>{m.explore_tracks_filter_recent()}</a>
-			<a href={resolve('/explore/tracks/featured')} class="btn chip" class:active={filterParam === 'featured'}>{m.explore_tracks_filter_featured()}</a>
+			<a
+				href={resolve('/explore/tracks/recent')}
+				class="btn chip"
+				class:active={filterParam === 'recent'}>{m.explore_tracks_filter_recent()}</a
+			>
+			<a
+				href={resolve('/explore/tracks/featured')}
+				class="btn chip"
+				class:active={filterParam === 'featured'}>{m.explore_tracks_filter_featured()}</a
+			>
 			<a href={resolve('/explore/tracks/network')} class="btn chip">{m.nav_feed()}</a>
 		{/snippet}
 		<SearchInput bind:value={search} debounce={300} placeholder={m.search_placeholder()} />

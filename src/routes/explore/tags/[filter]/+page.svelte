@@ -105,7 +105,7 @@
 				<ol class="list tag-list">
 					{#each visibleTags as { tag, count } (tag)}
 						<li>
-							<TagRow {tag} {count} pct={((count / maxCount) * 100)} href={tagSearchHref(tag)} />
+							<TagRow {tag} {count} pct={(count / maxCount) * 100} href={tagSearchHref(tag)} />
 						</li>
 					{/each}
 				</ol>

@@ -862,7 +862,9 @@
 			button.play {
 				background: var(--accent-3);
 				color: var(--accent-11);
-				&:hover { background: var(--accent-4); }
+				&:hover {
+					background: var(--accent-4);
+				}
 			}
 		}
 	}
