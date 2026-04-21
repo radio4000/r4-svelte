@@ -412,15 +412,18 @@
 	.active {
 		background: var(--gray-2);
 		border-color: var(--gray-5);
+		--tag-bg: var(--accent-2);
+		--tag-bg-hover: var(--accent-3);
+		--tag-bg-active: var(--accent-4);
+		--tag-color: var(--accent-10);
 	}
 
 	.selected {
 		background: var(--gray-2);
 		border-color: var(--gray-5);
-		--tag-bg: var(--accent-4);
-		--tag-bg-hover: var(--accent-5);
-		--tag-bg-active: var(--accent-6);
-		--tag-color: var(--accent-11);
+		--tag-bg: var(--gray-4);
+		--tag-bg-hover: var(--gray-5);
+		--tag-bg-active: var(--gray-6);
 	}
 
 	h3 + p {
