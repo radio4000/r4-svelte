@@ -437,6 +437,10 @@
 		outline-offset: 0;
 	}
 
+	.track-panel :global(article.active) {
+		background: transparent;
+	}
+
 	.track-panel :global(.popover-menu) {
 		flex: 0 0 auto;
 	}
