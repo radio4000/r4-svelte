@@ -183,7 +183,12 @@
 		</div>
 
 		<div class="form-footer">
-			<button class="primary" type="button" onclick={handleSubmit} disabled={!hasChanges || submitting}>
+			<button
+				class="primary"
+				type="button"
+				onclick={handleSubmit}
+				disabled={!hasChanges || submitting}
+			>
 				{submitting ? m.common_save() + '…' : m.common_save()}
 			</button>
 		</div>
@@ -211,6 +216,12 @@
 		border: 1px solid var(--color-interface-border);
 		border-radius: var(--border-radius);
 		padding: 1.25rem;
+	}
+
+	.card input,
+	.card textarea,
+	.card select {
+		background: var(--gray-3);
 	}
 
 	.form {
