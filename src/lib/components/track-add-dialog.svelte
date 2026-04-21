@@ -13,9 +13,12 @@
 
 	let {class: className = '', label = ''} = $props()
 
+	const FORM_ID = 'track-add-form'
+
 	let showModal = $state(false)
 	let recentTracks = $state<Track[]>([])
 	let trackData = $state({url: '', title: '', description: '', discogs_url: ''})
+	let formSubmitting = $state(false)
 
 	const channel = $derived(appState.channel)
 	const isSignedIn = $derived(!!appState.user)
@@ -116,6 +119,9 @@
 			title={trackData.title}
 			description={trackData.description}
 			discogs_url={trackData.discogs_url}
+			formId={FORM_ID}
+			hideSubmit={true}
+			bind:submitting={formSubmitting}
 			onsubmit={handleSubmit}
 		/>
 	{/if}
@@ -128,6 +134,12 @@
 			{/each}
 		</div>
 	{/if}
+
+	{#snippet footer()}
+		<button type="submit" form={FORM_ID} class="primary" disabled={formSubmitting}>
+			{formSubmitting ? m.common_save() + '…' : m.track_add_title()}
+		</button>
+	{/snippet}
 </Dialog>
 
 <style>

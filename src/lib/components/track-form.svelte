@@ -19,6 +19,9 @@
 				title?: string
 				description?: string
 				discogs_url?: string
+				formId?: string
+				hideSubmit?: boolean
+				submitting?: boolean
 				onsubmit?: (event: SubmitEvent_) => void
 		  }
 		| {
@@ -29,6 +32,9 @@
 				title?: string
 				description?: string
 				discogs_url?: string
+				formId?: string
+				hideSubmit?: boolean
+				submitting?: boolean
 				onsubmit?: (event: SubmitEvent_) => void
 		  }
 
@@ -42,11 +48,13 @@
 		title: initialTitle = '',
 		description: initialDescription = '',
 		discogs_url: initialDiscogsUrl = '',
+		formId = undefined,
+		hideSubmit = false,
+		submitting = $bindable(false),
 		onsubmit
 	}: Props = $props()
 
 	let error = $state('')
-	let submitting = $state(false)
 	let fetchingTitle = $state(false)
 	let liveTitle = $state('')
 	let liveDiscogsUrl = $state('')
@@ -173,7 +181,7 @@
 	<p class="error" role="alert">{m.common_error()}: {error}</p>
 {/if}
 
-<form class="form" onsubmit={handleSubmit}>
+<form class="form" id={formId} onsubmit={handleSubmit}>
 	<fieldset>
 		<label for="{uid}-url">{m.track_form_url_label()}</label>
 		<!-- svelte-ignore a11y_autofocus -->
@@ -247,11 +255,13 @@
 		/>
 	{/if}
 
-	<button type="submit" disabled={submitting}>
-		{submitting
-			? m.common_save() + '...'
-			: mode === 'create'
-				? m.track_add_title()
-				: m.common_save()}
-	</button>
+	{#if !hideSubmit}
+		<button type="submit" disabled={submitting}>
+			{submitting
+				? m.common_save() + '...'
+				: mode === 'create'
+					? m.track_add_title()
+					: m.common_save()}
+		</button>
+	{/if}
 </form>
