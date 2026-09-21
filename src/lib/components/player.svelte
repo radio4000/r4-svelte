@@ -249,6 +249,16 @@
 		}
 	}
 
+	/** A flagged track that plays again clears its own flag; owner only, like handleError. */
+	function handlePlaying() {
+		const id = track?.id
+		if (!id || !isDbId(id) || !channel || !canEditChannel(channel.id)) return
+		if (!tracksCollection.state.get(id)?.playback_error) return
+		updateTrack(channel, id, {playback_error: null}).catch((e) =>
+			log.error('playback_error clear failed', e)
+		)
+	}
+
 	function handlePause() {
 		log.log('handlePause')
 		if (deck) deck.is_playing = false
@@ -257,19 +267,21 @@
 
 	/** @param {any} event */
 	function handleError(event) {
-		if (!event.target.error) {
+		const error = event.target.error
+		if (error == null) {
 			log.warn('Error event with no error object')
 			return
 		}
-		const code = event.target.error.code
-		const msg = `youtube_error_${code}`
-		log.warn(msg)
-		// Only write playback_error if user owns this track's channel
-		const canWrite = canEditChannel(channel?.id)
-		log.log('handleError', {trackId: track?.id, canWrite, channelId: channel?.id, msg})
-		if (track?.id && isDbId(track.id) && channel && canWrite) {
-			updateTrack(channel, track.id, {playback_error: msg})
-				.then(() => log.log('playback_error saved', {id: track.id, msg}))
+		const code = typeof error === 'number' ? error : error.code
+		let msg = ''
+		// Persist durable failures only: YouTube bad id, missing/private, or embed blocked.
+		if (provider === 'youtube' && [2, 100, 101, 150].includes(code)) msg = `youtube:${code}`
+		else if (provider === 'soundcloud' && code != null) msg = `soundcloud:${code}`
+		log.warn('Playback error', {provider, code, trackId: track?.id})
+		const id = track?.id
+		if (msg && id && isDbId(id) && channel && canEditChannel(channel.id)) {
+			updateTrack(channel, id, {playback_error: msg})
+				.then(() => log.log('playback_error saved', {id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
 		}
 		next(deckId, 'youtube_error')
@@ -550,6 +562,7 @@
 				{src}
 				autoplay={userHasPlayed || undefined}
 				onplay={handlePlay}
+				onplaying={handlePlaying}
 				onpause={handlePause}
 				onseeked={handleSeeked}
 				onended={handleEndTrack}
@@ -563,6 +576,7 @@
 				{src}
 				autoplay={userHasPlayed || undefined}
 				onplay={handlePlay}
+				onplaying={handlePlaying}
 				onpause={handlePause}
 				onseeked={handleSeeked}
 				onended={handleEndTrack}
@@ -579,6 +593,7 @@
 				autoplay={userHasPlayed || undefined}
 				preload="metadata"
 				onplay={handlePlay}
+				onplaying={handlePlaying}
 				onpause={handlePause}
 				onseeked={handleSeeked}
 				onended={handleEndTrack}
