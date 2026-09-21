@@ -314,6 +314,13 @@
 									<Icon icon="document-download" />
 									{m.channel_backup_title()}
 								</a>
+								<a
+									href={resolve('/[slug]/doctor', {slug})}
+									class:active={page.route.id?.startsWith('/[slug]/doctor')}
+								>
+									<Icon icon="sparkles" />
+									Doctor
+								</a>
 								<hr />
 							{:else if isLocalChannel(channel?.id)}
 								<a

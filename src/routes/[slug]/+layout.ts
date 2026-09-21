@@ -14,6 +14,7 @@ const PRIVATE_ROUTE_IDS = new Set([
 	'/[slug]/batch-edit',
 	'/[slug]/delete',
 	'/[slug]/backup',
+	'/[slug]/doctor',
 	'/[slug]/tracks/[tid]/delete',
 	'/[slug]/tracks/[tid]/(tabs)/edit'
 ])
