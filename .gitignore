@@ -25,6 +25,7 @@ i18n/batches/*.json
 .dev.vars
 tmp/
 CLAUDE.local.md
+AGENTS.local.md
 
 # Standalone seed data (user-provided, not committed)
 /static/r4-seed.json
