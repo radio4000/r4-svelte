@@ -768,6 +768,12 @@ export function next(deckId: number, endReason: PlayEndReason) {
 					? 'user_next'
 					: 'auto_next'
 		playTrack(deckId, nextId, endReason, startReason)
+	} else if (endReason === 'youtube_error') {
+		// Never wrap after a failure: an unplayable queue would retry forever.
+		log.info('Queue ended after playback error: stopping')
+		const player = getMediaPlayer(deckId)
+		if (player) pause(player)
+		deck.is_playing = false
 	} else if (activeQueue.length > 0) {
 		log.info('Queue ended: looping to start')
 		playTrack(deckId, activeQueue[0], endReason, 'auto_next')

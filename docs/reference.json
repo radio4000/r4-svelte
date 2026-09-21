@@ -337,7 +337,10 @@
 		{"name": "pause(player)", "desc": "Pause playback."},
 		{"name": "togglePlay(player)", "desc": "Toggle playback."},
 		{"name": "seekTo(deckId, seconds)", "desc": "Seek to position in current track."},
-		{"name": "next(deckId, endReason)", "desc": "Advance to next track."},
+		{
+			"name": "next(deckId, endReason)",
+			"desc": "Advance to next track; wrap normally, stop at queue end after a playback error."
+		},
 		{"name": "previous(deckId, endReason)", "desc": "Return to previous track."},
 		{"name": "toggleVideo(deckId)", "desc": "Toggle video player visibility."},
 		{"name": "eject(deckId)", "desc": "Clear deck player state."},
