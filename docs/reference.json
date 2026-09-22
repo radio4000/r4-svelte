@@ -727,7 +727,10 @@
 		{"name": "QueuePanel", "desc": "Sidebar with queue/history tabs, search, resize handle."},
 
 		{"name": "Tracklist", "desc": "Track list with optional date grouping, virtual scroll."},
-		{"name": "TrackCard", "desc": "Single track with artwork, play/edit/delete menu."},
+		{
+			"name": "TrackCard",
+			"desc": "Single track with artwork, play/edit/delete menu. linkTitleToTrack links the title to its track page."
+		},
 		{"name": "TrackForm", "desc": "URL/title/description form fields."},
 		{"name": "track-add-dialog.svelte", "desc": "Create track dialog, 'c' keyboard shortcut."},
 		{"name": "track-edit-dialog.svelte", "desc": "Edit existing track."},
@@ -764,6 +767,10 @@
 		},
 		{"name": "Deck", "desc": "Full deck UI: player, queue panel, broadcast/auto-radio controls."},
 		{"name": "SearchInput", "desc": "Debounced search input with a clear button."},
+		{
+			"name": "Pagination",
+			"desc": "Prev/next links, counter and page-size dialog. Pass onPageChange(page) for local navigation with always-visible buttons and no dialog. Doctor uses pageSize={1} to browse unresolved tracks."
+		},
 		{"name": "ViewsBar", "desc": "Saved/pinned views navigation bar."},
 		{"name": "KeyboardShortcuts", "desc": "Initializes global keyboard handling."},
 		{"name": "InternetIndicator", "desc": "Online/offline status indicator."},
