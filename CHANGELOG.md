@@ -1,5 +1,9 @@
 # Changelog
 
+## September 2026
+
+- #Channels there's a new /doctor page to help repair broken tracks in your radio
+
 ## August 2026
 
 - #UI Floating panels off keeps elevated header/deck backgrounds and section seams (header | main | decks), without a second border system

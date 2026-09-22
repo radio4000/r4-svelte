@@ -500,11 +500,12 @@
 	}
 
 	header {
-		min-height: 4rem;
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
 		padding: var(--space-2);
+		/* avoid ui jumps on variying track title lengths */
+		min-height: 5.5rem;
 	}
 	header > img {
 		width: 2.5rem;
@@ -519,6 +520,7 @@
 	}
 	header h3 {
 		font-size: var(--font-4);
+		text-wrap: auto;
 	}
 	header h3 a {
 		color: inherit;
