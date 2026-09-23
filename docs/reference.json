@@ -275,6 +275,17 @@
 		}
 	],
 
+	"src/lib/webmcp.ts": [
+		{
+			"name": "createWebMcpTools(dependencies)",
+			"desc": "Build channel discovery, playback, player-state, and transport tools. Dependency-injected for deterministic tests."
+		},
+		{
+			"name": "registerWebMcpTools(modelContext?)",
+			"desc": "Register R4 tools when document.modelContext is available; returns lifecycle cleanup."
+		}
+	],
+
 	"src/lib/api.ts": [
 		{
 			"name": "sortByDate(field, direction?)",
