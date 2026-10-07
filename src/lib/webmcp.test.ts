@@ -3,6 +3,12 @@ import {describe, expect, test, vi} from 'vitest'
 import {createWebMcpTools, registerWebMcpTools} from '$lib/webmcp'
 import type {WebMcpTool} from '$lib/webmcp'
 
+const search = vi.hoisted(() => ({
+	searchChannelsCombined: vi.fn(),
+	findChannelBySlug: vi.fn()
+}))
+vi.mock('$lib/search', () => search)
+
 const channels = [
 	{
 		id: 'channel-1',
@@ -28,9 +34,7 @@ function setup() {
 
 describe('WebMCP tools', () => {
 	test('registers every tool when Chrome returns undefined', () => {
-		const registerTool = vi.fn(
-			(_tool: WebMcpTool, _options?: {signal?: AbortSignal}) => undefined
-		)
+		const registerTool = vi.fn((_tool: WebMcpTool, _options?: {signal?: AbortSignal}) => undefined)
 		const cleanup = registerWebMcpTools({registerTool})
 
 		expect(registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([
@@ -43,6 +47,17 @@ describe('WebMCP tools', () => {
 		expect(signal?.aborted).toBe(false)
 		cleanup?.()
 		expect(signal?.aborted).toBe(true)
+	})
+
+	test('unwraps combined search results when registered', async () => {
+		search.searchChannelsCombined.mockResolvedValue({channels, count: 1})
+		const registerTool = vi.fn((_tool: WebMcpTool, _options?: {signal?: AbortSignal}) => undefined)
+		registerWebMcpTools({registerTool})
+		const tool = registerTool.mock.calls.find(([t]) => t.name === 'search_channels')?.[0]
+
+		await expect(tool?.execute({query: 'test'})).resolves.toEqual([
+			{name: 'Test Radio', slug: 'test-radio', track_count: 42}
+		])
 	})
 
 	test('exposes a small discovery and playback surface', () => {

@@ -53,7 +53,10 @@ export function createWebMcpTools(dependencies: WebMcpDependencies): WebMcpTool[
 			inputSchema: {
 				type: 'object',
 				properties: {
-					query: {type: 'string', description: 'Words from the channel name, slug, or description.'},
+					query: {
+						type: 'string',
+						description: 'Words from the channel name, slug, or description.'
+					},
 					limit: {type: 'integer', minimum: 1, maximum: 5, default: 5}
 				},
 				required: ['query']
@@ -113,7 +116,8 @@ export function createWebMcpTools(dependencies: WebMcpDependencies): WebMcpTool[
 		{
 			name: 'control_player',
 			title: 'Control the player',
-			description: 'Play or pause the active Radio4000 deck, or move to the next or previous track.',
+			description:
+				'Play or pause the active Radio4000 deck, or move to the next or previous track.',
 			inputSchema: {
 				type: 'object',
 				properties: {
@@ -153,12 +157,16 @@ async function controlPlayer(action: PlayerAction) {
 	if ((action === 'play') !== deck.is_playing) await togglePlayPause(deck.id)
 }
 
-export function registerWebMcpTools(modelContext: ModelContext | undefined = document.modelContext) {
+export function registerWebMcpTools(
+	modelContext: ModelContext | undefined = document.modelContext
+) {
 	if (!modelContext) return
 	const controller = new AbortController()
 	const tools = createWebMcpTools({
 		searchChannels: (query) =>
-			searchChannelsCombined({query, localChannels: appState.local_channels ?? []}),
+			searchChannelsCombined({query, localChannels: appState.local_channels ?? [], limit: 5}).then(
+				(result) => result.channels
+			),
 		findChannel: findChannelBySlug,
 		playChannel: (channel) => playChannel(ensureActiveDeck().id, channel),
 		getPlayerState,
