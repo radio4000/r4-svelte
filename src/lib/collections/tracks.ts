@@ -7,6 +7,14 @@ import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, trackMetaKey} from './track-meta'
+import {pullYouTube} from '$lib/metadata/youtube'
+import {
+	titleResets,
+	mergeTitleUndo,
+	undoableTitles,
+	loadTitleUndo,
+	saveTitleUndo
+} from '$lib/title-reset'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
 
@@ -580,4 +588,67 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 		await batchUpdateTracksIndividual(channel, updates)
 	}
 	return updates.length
+}
+
+/** Write per-track changes 50 at a time, so a big batch shows progress and a failure only rolls back its own chunk. */
+async function updateInChunks(
+	channel: Channel,
+	updates: Array<{id: string; changes: Record<string, unknown>}>,
+	onProgress?: (done: number, total: number) => void
+) {
+	for (let i = 0; i < updates.length; i += 50) {
+		await batchUpdateTracksIndividual(channel, updates.slice(i, i + 50))
+		onProgress?.(Math.min(i + 50, updates.length), updates.length)
+	}
+}
+
+/**
+ * Overwrite track titles with their YouTube video titles, fetching missing metadata first.
+ * The previous titles are saved for `undoTitleReset`. Returns how many titles changed.
+ * If fetching fails, tracks with cached titles are still reset, then the fetch error is thrown.
+ */
+export async function resetTitlesFromVideo(
+	channel: Channel,
+	tracks: Track[],
+	onProgress?: (done: number, total: number) => void
+): Promise<number> {
+	const youtube = tracks.filter((t) => t.provider === 'youtube' && t.media_id)
+	let fetchError: unknown
+	try {
+		await pullYouTube(youtube.map((t) => ({provider: 'youtube', mediaId: t.media_id as string})))
+	} catch (err) {
+		fetchError = err
+	}
+	const changes = titleResets(youtube.map(getTrackWithMeta))
+	if (changes.length) {
+		saveTitleUndo(channel.slug, mergeTitleUndo(loadTitleUndo(channel.slug), changes))
+		await updateInChunks(
+			channel,
+			changes.map(({id, title}) => ({id, changes: {title}})),
+			onProgress
+		)
+	}
+	if (fetchError) throw fetchError
+	return changes.length
+}
+
+/**
+ * Restore the titles replaced by `resetTitlesFromVideo` on this channel.
+ * Tracks edited since the reset are left alone, and their undo is dropped.
+ */
+export async function undoTitleReset(
+	channel: Channel,
+	onProgress?: (done: number, total: number) => void
+): Promise<number> {
+	const changes = undoableTitles(
+		loadTitleUndo(channel.slug),
+		(id) => tracksCollection.get(id)?.title
+	)
+	await updateInChunks(
+		channel,
+		changes.map(({id, previous}) => ({id, changes: {title: previous}})),
+		onProgress
+	)
+	saveTitleUndo(channel.slug, [])
+	return changes.length
 }

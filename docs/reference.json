@@ -224,6 +224,14 @@
 			"name": "insertDurationFromMeta(channel, tracks)",
 			"desc": "Backfill track duration from trackMetaCollection."
 		},
+		{
+			"name": "resetTitlesFromVideo(channel, tracks, onProgress?)",
+			"desc": "Overwrite titles with YouTube video titles (fetches missing meta). Saves old titles for undo."
+		},
+		{
+			"name": "undoTitleReset(channel, onProgress?)",
+			"desc": "Restore titles replaced by resets on this channel, skipping tracks edited since. Undo lives in localStorage (title-reset.ts)."
+		},
 
 		{"name": "createChannel({name, slug, ...})", "desc": "Create a channel."},
 		{"name": "updateChannel(id, changes)", "desc": "Update a channel."},
