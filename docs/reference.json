@@ -700,13 +700,6 @@
 		}
 	],
 
-	"src/lib/track-mention.ts": [
-		{
-			"name": "trackMentionUrl(url, slug, mention, base?)",
-			"desc": "Source-radio tracks URL with an exact mention filter; keeps filters only on the source channel."
-		}
-	],
-
 	"src/lib/track-add.ts": [
 		{
 			"name": "trackAddData(track)",
@@ -761,7 +754,7 @@
 		{"name": "Icon", "desc": "Iconify icon wrapper."},
 		{
 			"name": "LinkEntities",
-			"desc": "Parses #tags and @mentions into links; mentionSlug opts track descriptions into source-radio mention filtering."
+			"desc": "Parses #tags and @mentions into links; filterMentions makes @mentions filter the slug radio instead of visiting them."
 		},
 		{
 			"name": "FilterChips",

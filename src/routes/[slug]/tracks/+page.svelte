@@ -26,7 +26,7 @@
 		shuffleSeed
 	} from '$lib/utils'
 	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
-	import {channelViewFromUrl, type View} from '$lib/views'
+	import {channelViewFromUrl, viewLabel, type View} from '$lib/views'
 	import * as m from '$lib/paraglide/messages'
 
 	const channelCtx = getChannelCtx()
@@ -164,7 +164,7 @@
 	let scrolledTrackElementId = $state<string | null>(null)
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
-		if (mention) return `@${slug} mention: @${mention}`
+		if (mention) return viewLabel(filteredAutoView)
 		if (search) return search
 		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
 		if (matchingSlug) return `@${matchingSlug}`

@@ -22,7 +22,7 @@ A View has two lossless string forms:
 
 The difference is structural: ViewURI is one string (`@ko002 #jazz?order=shuffle`), SearchURL splits across params (`?q=@ko002 #jazz&order=shuffle`). `viewLabel(view)` returns the human query text (sources only, no options) — this is what goes into `?q=`.
 
-Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result. `?mention=foo` matches the exact `@foo` token in track descriptions, case-insensitively, without changing the source channel. In saved/deck views this is `@source mention:@foo`; `@foo` alone still selects foo's tracks.
+Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result. `?mention=foo` matches the exact `@foo` token in track descriptions, case-insensitively, without changing the source channel. In saved/deck views this is `@source mention:@foo`; `@foo` alone still selects foo's tracks. `mention:@` only applies alongside an `@channel` source; on its own it resolves to the `empty` strategy.
 
 ```
 @ko002

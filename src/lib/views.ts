@@ -24,6 +24,7 @@ const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle'] as const
 const validDirections = ['asc', 'desc'] as const
 const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
+const RE_LEADING_AT = /^@/
 
 /** Apply order/direction/limit/offset from URLSearchParams onto a View in place.
  *  Supports both `limit`/`offset` and `page`/`per` (page takes precedence). */
@@ -169,7 +170,7 @@ export function channelViewFromUrl(url: URL, slug?: string): View {
 		source.tags = tags
 		source.tagsMode = 'all'
 	}
-	const mention = url.searchParams.get('mention')?.trim().toLowerCase()
+	const mention = url.searchParams.get('mention')?.trim().replace(RE_LEADING_AT, '').toLowerCase()
 	if (mention) source.mention = mention
 	const search = url.searchParams.get('q')?.trim()
 	if (search) source.search = search

@@ -219,7 +219,7 @@
 				<p class="description">
 					<LinkEntities
 						slug={track.slug}
-						mentionSlug={track.slug}
+						filterMentions
 						text={track.description}
 						{onTagClick}
 						{selectedTags}
@@ -364,7 +364,7 @@
 							<p class="description">
 								<LinkEntities
 									slug={track.slug}
-									mentionSlug={track.slug}
+									filterMentions
 									text={track.description}
 									deckId={matchedDeckId}
 								/>

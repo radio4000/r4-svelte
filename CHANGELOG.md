@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## October 2026
 
 - #Tracks Clicking a description's @mention filters the current radio, with a separate channel card to visit the mentioned radio
 
