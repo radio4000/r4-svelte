@@ -6,7 +6,7 @@ The pipeline: query text → `parseView()` → `View` → `queryView()` → trac
 
 ```ts
 type ViewURI = string & {readonly __brand: 'ViewURI'}
-type ViewSource = {channels?; tags?; tagsMode?; search?}
+type ViewSource = {channels?; tags?; tagsMode?; mention?; search?}
 type View = {sources: ViewSource[]; order?; direction?; limit?; offset?}
 ```
 
@@ -22,7 +22,7 @@ A View has two lossless string forms:
 
 The difference is structural: ViewURI is one string (`@ko002 #jazz?order=shuffle`), SearchURL splits across params (`?q=@ko002 #jazz&order=shuffle`). `viewLabel(view)` returns the human query text (sources only, no options) — this is what goes into `?q=`.
 
-Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result.
+Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result. `?mention=foo` matches the exact `@foo` token in track descriptions, case-insensitively, without changing the source channel. In saved/deck views this is `@source mention:@foo`; `@foo` alone still selects foo's tracks.
 
 ```
 @ko002
@@ -40,13 +40,13 @@ Multi-source (experimental): `;`-separated sources parse and serialize correctly
 
 `resolveViewStrategy(source)` picks a fetch path based on the first ViewSource:
 
-| Strategy           | Condition                     | Fetch                                      | Post-filter        |
-| ------------------ | ----------------------------- | ------------------------------------------ | ------------------ |
-| `channel`          | channels only                 | local query by slug, server-paginated      | sort only          |
-| `channel-filtered` | channels + tags or search     | local query (all tracks), client-paginated | tags, fuzzy, sort  |
-| `tags-only`        | tags, no channels             | remote Supabase overlaps                   | tagsMode=all, sort |
-| `search-only`      | search text, no channels/tags | local FTS live query                       | fuzzy, sort        |
-| `empty`            | nothing specified             | no fetch                                   | —                  |
+| Strategy           | Condition                          | Fetch                                      | Post-filter                      |
+| ------------------ | ---------------------------------- | ------------------------------------------ | -------------------------------- |
+| `channel`          | channels only                      | local query by slug, server-paginated      | sort only                        |
+| `channel-filtered` | channels + tags, mention or search | local query (all tracks), client-paginated | tags, exact mention, fuzzy, sort |
+| `tags-only`        | tags, no channels                  | remote Supabase overlaps                   | tagsMode=all, sort               |
+| `search-only`      | search text, no channels/tags      | local FTS live query                       | fuzzy, sort                      |
+| `empty`            | nothing specified                  | no fetch                                   | —                                |
 
 All strategies that fetch broadly (everything except `channel`) paginate client-side via `processViewTracks` + slice. The `channel` strategy delegates pagination to the query layer.
 

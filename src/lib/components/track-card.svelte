@@ -219,6 +219,7 @@
 				<p class="description">
 					<LinkEntities
 						slug={track.slug}
+						mentionSlug={track.slug}
 						text={track.description}
 						{onTagClick}
 						{selectedTags}
@@ -361,7 +362,12 @@
 						<h3 class="title">{track.title}</h3>
 						{#if track.description}
 							<p class="description">
-								<LinkEntities slug={track.slug} text={track.description} deckId={matchedDeckId} />
+								<LinkEntities
+									slug={track.slug}
+									mentionSlug={track.slug}
+									text={track.description}
+									deckId={matchedDeckId}
+								/>
 							</p>
 						{/if}
 					</div>

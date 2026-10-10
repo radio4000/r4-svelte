@@ -1,4 +1,4 @@
-import {fuzzySearch, shuffleArray} from '$lib/utils'
+import {extractMentions, fuzzySearch, shuffleArray} from '$lib/utils'
 import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
 import {inArray} from '@tanstack/db'
@@ -16,7 +16,7 @@ const EMPTY_STRINGS: string[] = []
 /**
  * Which fetch+filter path queryView should use for a View.
  * - `channel`: paginated local query by slug — fast, server-paginated
- * - `channel-filtered`: fetch all channel tracks, post-filter by tags/search, paginate client-side
+ * - `channel-filtered`: fetch all channel tracks, post-filter by tags/mention/search, paginate client-side
  * - `tags-only`: remote Supabase overlaps query (tags column), post-filter for tagsMode=all
  * - `search-only`: local FTS live query
  * - `empty`: no source specified, returns nothing
@@ -34,7 +34,7 @@ export function resolveViewStrategy(source?: ViewSource): ViewStrategy {
 	const hasChannels = !!source?.channels?.length
 	const hasTags = !!source?.tags?.length
 	const hasSearch = !!source?.search?.trim()
-	if (hasChannels && (hasTags || hasSearch)) return 'channel-filtered'
+	if (hasChannels && (hasTags || hasSearch || source?.mention)) return 'channel-filtered'
 	if (hasChannels) return 'channel'
 	if (hasTags) return 'tags-only'
 	if (hasSearch) return 'search-only'
@@ -48,7 +48,7 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 }
 
 /**
- * Post-process raw tracks: tag post-filtering, fuzzy search, sort/shuffle.
+ * Post-process raw tracks: tags, exact description mention, fuzzy search, sort/shuffle.
  * This is the "refine locally" stage — input comes from a broad fetch (FTS, overlaps, or channel dump).
  */
 export function processViewTracks(
@@ -66,6 +66,10 @@ export function processViewTracks(
 		} else if (q.channels?.length) {
 			data = data.filter((t) => t.tags?.some((tag) => q.tags?.includes(tag)))
 		}
+	}
+	if (q?.mention) {
+		const mention = `@${q.mention.toLowerCase()}`
+		data = data.filter((t) => extractMentions(t.description ?? '').includes(mention))
 	}
 	if (q?.search) {
 		data = fuzzySearch(q.search, data, ['title', 'description'])
@@ -105,6 +109,7 @@ export function queryView(getView: () => View) {
 	const tags = $derived(getView().sources[0]?.tags?.toSorted() ?? EMPTY_STRINGS)
 	const tagsKey = $derived(tags.join(','))
 	const searchTerm = $derived(getView().sources[0]?.search?.trim() || '')
+	const mention = $derived(getView().sources[0]?.mention ?? '')
 	const limit = $derived(getView().limit ?? 50)
 	const offset = $derived(getView().offset ?? 0)
 	const strategy = $derived(resolveViewStrategy(getView().sources[0]))
@@ -135,6 +140,7 @@ export function queryView(getView: () => View) {
 			() => strategy,
 			() => channelSlugsKey,
 			() => searchTerm,
+			() => mention,
 			() => tagsKey,
 			() => limit,
 			() => offset

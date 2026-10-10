@@ -1,8 +1,10 @@
-/** One source of tracks: which channels, tags, and optional search text. */
+/** One source of tracks: channels, tags, exact description mention, and search text. */
 export type ViewSource = {
 	channels?: string[]
 	tags?: string[]
 	tagsMode?: 'any' | 'all'
+	/** Exact @mention in a track description (bare, lowercase slug). */
+	mention?: string
 	search?: string
 }
 
@@ -54,14 +56,17 @@ function parseOptions(p: URLSearchParams, view: View): void {
 	}
 }
 
-/** Parse a human source string into a ViewSource. `@slug` → channels, `#tag` → tags, rest → search. */
+/** Parse a source: `@slug` → channels, `#tag` → tags, `mention:@slug` → description mention, rest → search. */
 export function parseSource(input: string): ViewSource {
 	const source: ViewSource = {}
 	const channels: string[] = []
 	const tags: string[] = []
 	const rest: string[] = []
 	for (const token of input.trim().split(RE_SPLIT_TOKENS).filter(Boolean)) {
-		if (token.startsWith('@')) {
+		if (token.startsWith('mention:@')) {
+			const mention = token.slice('mention:@'.length).toLowerCase()
+			if (mention) source.mention = mention
+		} else if (token.startsWith('@')) {
 			const slug = token.slice(1)
 			if (slug) channels.push(slug)
 		} else if (token.startsWith('#')) {
@@ -88,6 +93,7 @@ export function serializeSource(source: ViewSource): ViewURI {
 	const parts: string[] = []
 	if (source.channels?.length) parts.push(...source.channels.map((s) => `@${s}`))
 	if (source.tags?.length) parts.push(...source.tags.map((t) => `#${t}`))
+	if (source.mention) parts.push(`mention:@${source.mention}`)
 	if (source.search) parts.push(source.search)
 	return parts.join(' ') as ViewURI
 }
@@ -153,7 +159,8 @@ export function parseTagsParam(value: string | null): string[] {
 
 /** Extract a View from a channel-route URL (`/[slug]/tracks?tags=a,b&q=text`).
  *  Unlike search URLs, `q` here is plain search text (no @/# syntax) and tags
- *  live in a `tags` param, matched with tagsMode=all (each tag narrows). */
+ *  live in a `tags` param, matched with tagsMode=all (each tag narrows).
+ *  `mention` is a bare slug matched against exact description tokens. */
 export function channelViewFromUrl(url: URL, slug?: string): View {
 	const source: ViewSource = {}
 	if (slug) source.channels = [slug]
@@ -162,6 +169,8 @@ export function channelViewFromUrl(url: URL, slug?: string): View {
 		source.tags = tags
 		source.tagsMode = 'all'
 	}
+	const mention = url.searchParams.get('mention')?.trim().toLowerCase()
+	if (mention) source.mention = mention
 	const search = url.searchParams.get('q')?.trim()
 	if (search) source.search = search
 	const view: View = {sources: [source]}
@@ -201,6 +210,7 @@ export function normalizeView(view?: View): View | undefined {
 			const normalized: ViewSource = {}
 			if (s.channels?.length) normalized.channels = s.channels
 			if (s.tags?.length) normalized.tags = s.tags
+			if (s.mention?.trim()) normalized.mention = s.mention.trim().toLowerCase()
 			if (s.tagsMode === 'all') normalized.tagsMode = 'all'
 			const search = s.search?.trim()
 			if (search) normalized.search = search

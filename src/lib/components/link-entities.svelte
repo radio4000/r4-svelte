@@ -1,11 +1,12 @@
 <script>
 	import Tag from '$lib/components/tag.svelte'
+	import {trackMentionUrl} from '$lib/track-mention'
 	import {ENTITY_REGEX} from '$lib/utils'
 	import {base} from '$app/paths'
 	import {page} from '$app/state'
 
-	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void, deckId?: number, selectedTags?: string[]}} */
-	const {text, slug, onTagClick, deckId, selectedTags} = $props()
+	/** @type {{text: string | null | undefined, slug?: string | null, mentionSlug?: string | null, onTagClick?: (tag: string) => void, deckId?: number, selectedTags?: string[]}} */
+	const {text, slug, mentionSlug, onTagClick, deckId, selectedTags} = $props()
 
 	// Explicit override for Tag's `filtered` state — Tag's own URL fallback only
 	// understands the channel tracks page's ?tags= param, so any page with its
@@ -42,7 +43,9 @@
 			const isMention = entity.startsWith('@')
 			let href
 			if (isMention) {
-				href = `${base}/${encodeURIComponent(entity.slice(1))}`
+				href = mentionSlug
+					? trackMentionUrl(page.url, mentionSlug, entity.slice(1), base)
+					: `${base}/${encodeURIComponent(entity.slice(1))}`
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
 				const tagName = entity.slice(1).toLowerCase()

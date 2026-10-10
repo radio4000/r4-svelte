@@ -13,6 +13,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import SortControls from '$lib/components/sort-controls.svelte'
 	import FilterChips from '$lib/components/filter-chips.svelte'
+	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import TagsFilterDialog from '$lib/components/tags-filter-dialog.svelte'
 	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
 	import {addToPlaylist, ensureActiveDeck, joinAutoRadio, loadDeckView, playTrack} from '$lib/api'
@@ -36,6 +37,7 @@
 	let urlView = $derived(channelViewFromUrl(page.url, page.params.slug))
 	let selectedTags = $derived(urlView.sources[0]?.tags ?? [])
 	let searchValue = $derived(urlView.sources[0]?.search ?? '')
+	let mention = $derived(urlView.sources[0]?.mention ?? '')
 	let urlOrder = $derived(urlView.order ?? 'created')
 	let urlDirection = $derived(urlView.direction ?? 'desc')
 	let urlSeed = $derived((page.url.searchParams.get('seed') ?? '').trim())
@@ -102,10 +104,14 @@
 	let canEdit = $derived(canEditChannel(channel?.id))
 	let isSorting = $derived(order !== 'created' || direction !== 'desc')
 	let isFiltering = $derived(
-		searchValue !== '' || selectedTags.length > 0 || isSorting || Boolean(matchingSlug)
+		searchValue !== '' || selectedTags.length > 0 || isSorting || Boolean(matchingSlug || mention)
 	)
 	let activeFilterCount = $derived(
-		selectedTags.length + (searchValue ? 1 : 0) + (isSorting ? 1 : 0) + (matchingSlug ? 1 : 0)
+		selectedTags.length +
+			(searchValue ? 1 : 0) +
+			(isSorting ? 1 : 0) +
+			(matchingSlug ? 1 : 0) +
+			(mention ? 1 : 0)
 	)
 	let filteredTracks = $derived.by(() => {
 		// Force recomputation when user explicitly reshuffles.
@@ -158,6 +164,7 @@
 	let scrolledTrackElementId = $state<string | null>(null)
 	let filteredPlaylistTitle = $derived.by(() => {
 		const search = searchValue.trim()
+		if (mention) return `@${slug} mention: @${mention}`
 		if (search) return search
 		if (selectedTags.length) return selectedTags.map((tag) => `#${tag}`).join(' ')
 		if (matchingSlug) return `@${matchingSlug}`
@@ -176,6 +183,12 @@
 			document.getElementById(elementId)?.scrollIntoView({block: 'center'})
 		})
 	})
+
+	function clearMentionFilter() {
+		const url = new URL(page.url)
+		url.searchParams.delete('mention')
+		goto(url, {noScroll: true, keepFocus: true})
+	}
 
 	function clearMatchingFilter() {
 		const url = new URL(page.url)
@@ -209,6 +222,7 @@
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
 		url.searchParams.delete('matching')
+		url.searchParams.delete('mention')
 		url.searchParams.delete('order')
 		url.searchParams.delete('direction')
 		url.searchParams.delete('seed')
@@ -306,6 +320,8 @@
 		{#if activeFilterCount > 0}
 			<FilterChips
 				search={searchValue}
+				{mention}
+				onClearMention={clearMentionFilter}
 				matching={matchingSlug}
 				tags={selectedTags}
 				onRemoveTag={toggleTag}
@@ -326,15 +342,20 @@
 		{/snippet}
 		<section class="tracks-page">
 			<header>
-				{#if hasActionableSelection || (isFiltering && (selectedTags.length > 0 || matchingSlug))}
+				{#if hasActionableSelection || (isFiltering && (selectedTags.length > 0 || matchingSlug || mention))}
 					<div class="row filter-row">
-						{#if isFiltering && (selectedTags.length > 0 || matchingSlug)}
+						{#if isFiltering && (selectedTags.length > 0 || matchingSlug || mention)}
 							<FilterChips
+								{mention}
+								onClearMention={clearMentionFilter}
 								matching={matchingSlug}
 								tags={selectedTags}
 								onRemoveTag={toggleTag}
 								onClearMatching={clearMatchingFilter}
 							/>
+						{/if}
+						{#if mention}
+							<ChannelMicroCard slug={mention} />
 						{/if}
 						{#if hasActionableSelection}
 							<menu class="results-actions">
@@ -443,6 +464,7 @@
 
 	.filter-row {
 		align-items: center;
+		flex-wrap: wrap;
 		margin-bottom: var(--space-2);
 	}
 

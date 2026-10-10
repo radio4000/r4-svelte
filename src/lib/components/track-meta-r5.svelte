@@ -87,7 +87,7 @@
 	{#if data.description}
 		<dt><Icon icon="message-circle" size={14} /> {m.track_meta_description()}</dt>
 		<dd class="description">
-			<LinkEntities slug={data.slug ?? undefined} text={data.description} />
+			<LinkEntities slug={data.slug ?? undefined} mentionSlug={data.slug} text={data.description} />
 		</dd>
 	{/if}
 

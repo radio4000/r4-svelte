@@ -4,24 +4,31 @@
 		tags = [],
 		channels = [],
 		matching = '',
+		mention = '',
 		search = '',
 		onRemoveTag,
 		onRemoveChannel,
-		onClearMatching
+		onClearMatching,
+		onClearMention
 	}: {
 		tags?: string[]
 		channels?: string[]
 		matching?: string
+		mention?: string
 		search?: string
 		onRemoveTag?: (tag: string) => void
 		onRemoveChannel?: (slug: string) => void
 		onClearMatching?: () => void
+		onClearMention?: () => void
 	} = $props()
 </script>
 
 <menu class="row filter-chips">
 	{#if search}
 		<span class="chip">"{search}"</span>
+	{/if}
+	{#if mention}
+		<button type="button" class="chip" onclick={onClearMention}>Mention: @{mention} ×</button>
 	{/if}
 	{#if matching}
 		<button type="button" class="chip" onclick={onClearMatching}>@{matching} ×</button>
