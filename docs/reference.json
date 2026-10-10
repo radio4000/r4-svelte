@@ -465,7 +465,7 @@
 	"src/lib/views.ts": [
 		{
 			"name": "ViewSource",
-			"desc": "Type: {channels?, tags?, tagsMode?, search?}. One source of tracks (one ; segment)."
+			"desc": "Type: {channels?, tags?, tagsMode?, mention?, search?}. One source of tracks (one ; segment); mention is an exact description token."
 		},
 		{
 			"name": "View",
@@ -474,7 +474,7 @@
 		{"name": "ViewURI", "desc": "Branded string type for canonical serialized view keys."},
 		{
 			"name": "parseSource(input)",
-			"desc": "Parse a source string (@slug #tag text) into a ViewSource. Internal to parseView."
+			"desc": "Parse a source string (@slug #tag mention:@other text) into a ViewSource. Internal to parseView."
 		},
 		{
 			"name": "serializeSource(source)",
@@ -488,7 +488,7 @@
 		{"name": "viewFromUrl(url)", "desc": "Extract a View from a URL (?q= param + option params)."},
 		{
 			"name": "channelViewFromUrl(url, slug?)",
-			"desc": "Extract a View from a channel-route URL: ?q= is plain search text, ?tags=a,b are tags with tagsMode=all."
+			"desc": "Extract a channel-route View: ?q= is plain text, ?tags=a,b match all tags, ?mention=slug matches an exact description mention."
 		},
 		{
 			"name": "parseTagsParam(value)",
@@ -524,7 +524,7 @@
 		},
 		{
 			"name": "processViewTracks(tracks, view, options?)",
-			"desc": "Post-process tracks: tag post-filter, fuzzy search, sort/shuffle. options.inputOrder='created-desc' skips the default re-sort when input is already created_at desc."
+			"desc": "Post-process tracks: tags, exact description mention, fuzzy search, sort/shuffle. options.inputOrder='created-desc' skips the default re-sort when input is already created_at desc."
 		},
 		{
 			"name": "queryView(getView)",
@@ -752,10 +752,13 @@
 		{"name": "dialog.svelte", "desc": "Generic dialog wrapper with header/children snippets."},
 		{"name": "date-formal.svelte", "desc": "Localized formal date-time display."},
 		{"name": "Icon", "desc": "Iconify icon wrapper."},
-		{"name": "LinkEntities", "desc": "Parses #tags @mentions into search links."},
+		{
+			"name": "LinkEntities",
+			"desc": "Parses #tags and @mentions into links; filterMentions makes @mentions filter the slug radio instead of visiting them."
+		},
 		{
 			"name": "FilterChips",
-			"desc": "Removable chips for the active ?tags= filter selection (+ optional search/matching chips)."
+			"desc": "Removable chips for active tags, channels, exact mention, search and matching filters."
 		},
 
 		{"name": "ButtonPlay", "desc": "Channel play button."},

@@ -1,5 +1,9 @@
 # Changelog
 
+## October 2026
+
+- #Tracks Clicking a description's @mention filters the current radio, with a separate channel card to visit the mentioned radio
+
 ## September 2026
 
 - #Channels there's a new /doctor page to help repair broken tracks in your radio

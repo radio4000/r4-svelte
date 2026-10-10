@@ -12,7 +12,9 @@ import {
 	channelViewFromUrl,
 	parseTagsParam
 } from './views'
+import {processViewTracks, resolveViewStrategy} from './views.svelte'
 import type {View} from './views'
+import type {Track} from './types'
 
 const channelPrefixRe = /^@ko002\?/
 
@@ -65,6 +67,7 @@ describe('round-trip: parseSource ↔ serializeSource', () => {
 	const cases = [
 		'@alice #jazz',
 		'@ko002 #jazz miles davis',
+		'@ko002 #jazz mention:@foo miles',
 		'@alice @bob',
 		'#jazz #dub',
 		'miles davis',
@@ -198,6 +201,11 @@ describe('viewURI', () => {
 	})
 	test('empty view', () => {
 		expect(viewURI({sources: [{}]})).toBe('')
+	})
+	test('mention view differs from the plain channel view', () => {
+		const plain: View = {sources: [{channels: ['ko002']}]}
+		const mention: View = {sources: [{channels: ['ko002'], mention: 'foo'}]}
+		expect(viewURI(mention)).not.toBe(viewURI(plain))
 	})
 })
 
@@ -700,6 +708,48 @@ describe('channelViewFromUrl', () => {
 	test('no slug gives sourceless view', () => {
 		const url = new URL('http://x.com/tracks?tags=jazz')
 		expect(channelViewFromUrl(url)).toEqual({sources: [{tags: ['jazz'], tagsMode: 'all'}]})
+	})
+	test('?mention= is a lowercased exact-mention filter on the channel', () => {
+		const url = new URL('http://x.com/ko002/tracks?mention=FOO&tags=jazz&q=thanks')
+		expect(channelViewFromUrl(url, 'ko002')).toEqual({
+			sources: [
+				{channels: ['ko002'], tags: ['jazz'], tagsMode: 'all', mention: 'foo', search: 'thanks'}
+			]
+		})
+		expect(resolveViewStrategy({channels: ['ko002'], mention: 'foo'})).toBe('channel-filtered')
+	})
+})
+
+describe('processViewTracks mention filter', () => {
+	test('matches exact description tokens, case-insensitively', () => {
+		const base: Track = {
+			id: '',
+			slug: 'ko002',
+			title: 't',
+			url: 'https://youtu.be/x',
+			description: null,
+			created_at: '2026-01-01',
+			updated_at: '2026-01-01',
+			tags: null,
+			mentions: null,
+			discogs_url: null,
+			duration: null,
+			fts: null,
+			playback_error: null
+		}
+		const descriptions = [
+			'Thanks @foo.',
+			'@FOO',
+			'@foobar',
+			'@foo-bar',
+			'foo@example.com',
+			'foo',
+			null
+		]
+		const tracks = descriptions.map((description, i) => ({...base, id: String(i), description}))
+		tracks.push({...base, id: 'stale', description: 'no mention', mentions: ['@foo']})
+		const view: View = {sources: [{channels: ['ko002'], mention: 'foo'}]}
+		expect(processViewTracks(tracks, view).map((t) => t.id)).toEqual(['0', '1'])
 	})
 })
 
