@@ -45,6 +45,7 @@
 	"app_update_reload": "更新するには再読み込み",
 	"app_version": "バージョン {sha}",
 	"apps_background_brave_ios": "iPhone/iPad版Brave: 設定 → Brave Shields & Privacy → バックグラウンド再生を許可",
+	"apps_background_firefox_addons": "役立つ Firefox アドオン:",
 	"apps_background_firefox_android": "Android版Firefox: 設定 → バックグラウンドで動画を再生",
 	"apps_install_android": "多くのブラウザ: メニュー(⋮) → アプリをインストール",
 	"apps_install_android_device": "Android",

@@ -45,6 +45,7 @@
 	"app_update_reload": "Odśwież, aby zaktualizować",
 	"app_version": "Wersja {sha}",
 	"apps_background_brave_ios": "Brave na iPhonie/iPadzie: Ustawienia → Brave Shields & Privacy → Zezwól na odtwarzanie wideo w tle.",
+	"apps_background_firefox_addons": "Pomocne dodatki do Firefoksa:",
 	"apps_background_firefox_android": "Firefox na Androidzie: Ustawienia → Odtwarzaj filmy w tle.",
 	"apps_install_android": "W większości przeglądarek: otwórz menu (⋮) → Zainstaluj aplikację.",
 	"apps_install_android_device": "Android",

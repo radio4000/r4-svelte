@@ -45,6 +45,7 @@
 	"app_update_reload": "Оновити",
 	"app_version": "Версія {sha}",
 	"apps_background_brave_ios": "Brave на iPhone/iPad: Налаштування → Brave Shields & Privacy → Дозволити відтворення відео у фоні.",
+	"apps_background_firefox_addons": "Корисні доповнення для Firefox:",
 	"apps_background_firefox_android": "Firefox на Android: Налаштування → Відтворювати відео у фоні.",
 	"apps_install_android": "У більшості браузерів: відкрийте меню (⋮) → Встановити застосунок.",
 	"apps_install_android_device": "Android",

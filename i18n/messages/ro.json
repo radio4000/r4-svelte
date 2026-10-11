@@ -45,6 +45,7 @@
 	"app_update_reload": "Reîncarcă pentru actualizare",
 	"app_version": "Versiunea {sha}",
 	"apps_background_brave_ios": "Brave pe iPhone/iPad: Setări → Brave Shields & Privacy → Permite redarea video în fundal.",
+	"apps_background_firefox_addons": "Extensii Firefox utile:",
 	"apps_background_firefox_android": "Firefox pe Android: Setări → Redă videoclipuri în fundal.",
 	"apps_install_android": "În majoritatea browserelor: deschide meniul (⋮) → Instalează aplicația.",
 	"apps_install_android_device": "Android",

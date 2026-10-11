@@ -45,6 +45,7 @@
 	"app_update_reload": "Genindlæs for at opdatere",
 	"app_version": "Version {sha}",
 	"apps_background_brave_ios": "Brave på iPhone/iPad: Indstillinger → Brave Shields & Privacy → Tillad videoafspilning i baggrunden.",
+	"apps_background_firefox_addons": "Firefox-tilføjelser, der hjælper:",
 	"apps_background_firefox_android": "Firefox på Android: Indstillinger → Afspil videoer i baggrunden.",
 	"apps_install_android": "I de fleste browsere: åbn menuen (⋮) → Installér app.",
 	"apps_install_android_device": "Android",
