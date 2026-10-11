@@ -1,5 +1,6 @@
 <script>
 	import {untrack} from 'svelte'
+	import {MediaQuery} from 'svelte/reactivity'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
@@ -35,6 +36,7 @@
 
 	/** @type {{deckId: number, showEdgeControls?: boolean}} */
 	let {deckId, showEdgeControls = true} = $props()
+	const miniPlayer = new MediaQuery('(max-width: 1024px)')
 
 	let deck = $derived(appState.decks[deckId])
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
@@ -97,7 +99,7 @@
 				mediaDuration={deck?.media_duration ?? NaN}
 				trackDuration={displayTrack?.duration}
 				isPlaying={Boolean(deck?.is_playing)}
-				disabled={Boolean(deck?.listening_to_channel_id)}
+				disabled={miniPlayer.current || Boolean(deck?.listening_to_channel_id)}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					const mediaElement = getMediaPlayer(deckId)
@@ -422,6 +424,11 @@
 	   Hidden via CSS only — everything stays in the DOM. Above
 	   1024px: the full desktop bar. */
 	@media (max-width: 1024px) {
+		/* Progress is display-only here; taps reach the bar's expansion handler. */
+		.deck-compact-bar :global(.progress input) {
+			pointer-events: none;
+		}
+
 		.deck-transport > :global(*:not(.play)) {
 			display: none;
 		}
