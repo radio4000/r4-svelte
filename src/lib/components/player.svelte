@@ -748,6 +748,7 @@
 
 <style>
 	.player {
+		container-type: inline-size;
 		display: flex;
 		flex-direction: column;
 		flex: 1;
@@ -834,13 +835,18 @@
 		flex-shrink: 0;
 		padding: 0.5rem;
 
-		/* Volume and speed split whatever space the buttons don't need, pushing
-		   shuffle/auto to the right. A zero basis lets their sliders shrink
-		   instead of wrapping speed onto its own line in narrow decks — DJing
-		   with multiple decks needs per-deck volume and speed on mobile too. */
+		/* Wide decks keep ranges alongside transport buttons. */
 		:global(.speed),
 		:global(.volume) {
 			flex: 1 1 0;
+		}
+	}
+
+	@container (max-width: 520px) {
+		.controls :global(.volume),
+		.controls :global(.speed) {
+			flex-basis: 100%;
+			order: 1;
 		}
 	}
 

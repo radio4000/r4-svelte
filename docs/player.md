@@ -17,6 +17,8 @@ The player supports multiple independent decks. Each deck has its own queue, act
 
 `speed-control.svelte` and `volume-control.svelte` are shared between `player.svelte` and `deck-compact-bar.svelte`.
 
+In decks up to 520px wide, volume and speed each occupy a full line below the transport buttons. Wider decks keep the controls on one row.
+
 ## Key patterns
 
 - Only render one player at a time, branching on `provider` (`{#if provider === 'youtube'}` / soundcloud / audio)
