@@ -1,9 +1,15 @@
 <script>
-	import {pushState} from '$app/navigation'
+	import {afterNavigate, pushState} from '$app/navigation'
+	import {MediaQuery} from 'svelte/reactivity'
 	import {page} from '$app/state'
 	import {base, resolve} from '$app/paths'
 
 	let {data, children} = $props()
+	const narrow = new MediaQuery('(max-width: 640px)')
+	let menuOpen = $derived(!narrow.current)
+	afterNavigate(() => {
+		if (narrow.current) menuOpen = false
+	})
 
 	const currentSlug = $derived(
 		page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index'
@@ -22,28 +28,34 @@
 </script>
 
 <div class="docs">
-	<nav class="nav-vertical">
-		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
-		<a
-			href={resolve('/docs/reference')}
-			aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a
+	<details bind:open={menuOpen}>
+		<summary>Topics · {currentSlug === 'index' ? 'Docs' : currentSlug.replaceAll('-', ' ')}</summary
 		>
-		<hr />
-		{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
-			<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
-				>{doc}</a
+		<nav class="nav-vertical" aria-label="Documentation topics">
+			<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a
 			>
-			{#if data.subroutes?.[doc]}
-				{#each data.subroutes[doc] as sub (sub)}
-					<a
-						class="subroute"
-						href={resolve(`/docs/${doc}/${sub}`)}
-						aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}>{sub}</a
-					>
-				{/each}
-			{/if}
-		{/each}
-	</nav>
+			<a
+				href={resolve('/docs/reference')}
+				aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a
+			>
+			<hr />
+			{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
+				<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
+					>{doc.replaceAll('-', ' ')}</a
+				>
+				{#if data.subroutes?.[doc]}
+					{#each data.subroutes[doc] as sub (sub)}
+						<a
+							class="subroute"
+							href={resolve(`/docs/${doc}/${sub}`)}
+							aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}
+							>{sub.replaceAll('-', ' ')}</a
+						>
+					{/each}
+				{/if}
+			{/each}
+		</nav>
+	</details>
 
 	<main class="article">
 		{#if hasPlayground && hasHtml}
@@ -82,7 +94,15 @@
 		height: 100%;
 	}
 
-	.docs > nav {
+	.docs > details {
+		min-width: 0;
+	}
+
+	summary {
+		display: none;
+	}
+
+	.docs nav {
 		border-top: 0;
 		border-left: 0;
 		border-bottom: 0;
@@ -129,14 +149,21 @@
 			grid-template-rows: auto 1fr;
 		}
 
-		.docs > nav {
-			flex-direction: row;
-			flex-wrap: wrap;
-			overflow-x: auto;
-			overflow-y: hidden;
+		summary {
+			display: list-item;
+			padding: var(--space-2);
+		}
+
+		.docs nav {
+			max-height: 50dvh;
+			overflow-y: auto;
 			position: static;
 			border-right: none;
 			border-bottom: 1px solid var(--color-interface-border);
+		}
+
+		.docs > main {
+			padding-inline: var(--space-2);
 		}
 	}
 
