@@ -50,8 +50,7 @@
 			{@attach tooltip({content: m.player_reset_speed(), position: 'top'})}
 		>
 			<Icon icon="speed" />
-			<!-- Value only when off 1x — keeps the button icon-sized in the transport row -->
-			{#if isCustomSpeed}{Number(deck?.speed).toFixed(2)}x{/if}
+			{Number(deck?.speed ?? 1).toFixed(2)}x
 		</button>
 		<input
 			type="range"
@@ -84,6 +83,8 @@
 		align-items: center;
 		gap: var(--space-1);
 		font-size: var(--font-1);
+		/* Fixed-width digits so the button (and the range beside it) never resizes */
+		font-variant-numeric: tabular-nums;
 		flex-shrink: 0;
 	}
 
