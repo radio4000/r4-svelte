@@ -12,6 +12,7 @@
 	import Icon from '$lib/components/icon.svelte'
 	import Seo from '$lib/components/seo.svelte'
 	import type {Track} from '$lib/types'
+	import {formatDate, formatDateFormal} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug ?? '')
@@ -123,6 +124,24 @@
 			grouped={false}
 			playContext={true}
 			showSlug={true}
-		/>
+		>
+			{#snippet footer({track})}
+				{@const date = track.updated_at || track.created_at}
+				<small>
+					<time datetime={date} title={formatDateFormal(date)}>Updated {formatDate(date)}</time>
+				</small>
+			{/snippet}
+		</Tracklist>
 	</Subpage>
 </section>
+
+<style>
+	section :global(.track-with-channel) {
+		flex-wrap: wrap;
+	}
+
+	section :global(.track-with-channel > small) {
+		flex-basis: 100%;
+		padding-inline: var(--space-1);
+	}
+</style>
