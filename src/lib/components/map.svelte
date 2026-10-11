@@ -16,7 +16,7 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
-	import {buildCartoStyle, isDarkTheme} from './map-tile-styles.js'
+	import {buildOsmStyle, isDarkTheme} from './map-tile-styles.js'
 
 	maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
@@ -50,7 +50,7 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 
 			map = new maplibregl.Map({
 				container: node,
-				style: buildCartoStyle(isDarkTheme()),
+				style: buildOsmStyle(isDarkTheme()),
 				center: [lng, lat],
 				zoom: z,
 				doubleClickZoom: false,
@@ -108,7 +108,7 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 
 			themeObserver = new MutationObserver(() => {
 				if (disposed || !map) return
-				const nextStyle = buildCartoStyle(isDarkTheme())
+				const nextStyle = buildOsmStyle(isDarkTheme())
 				map.setStyle(nextStyle)
 				// setStyle wipes all user-added sources/layers; re-notify once the new style is loaded
 				map.once('styledata', () => {

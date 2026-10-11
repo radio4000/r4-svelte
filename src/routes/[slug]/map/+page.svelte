@@ -16,7 +16,7 @@
 	let globeMode = $state(true)
 	let showGraticules = $state(DEFAULT_MAP_SHOW_GRATICULES)
 	let showDayNight = $state(DEFAULT_MAP_SHOW_DAY_NIGHT)
-	/** @type {'carto' | 'topo' | 'satellite'} */
+	/** @type {'osm' | 'topo' | 'satellite'} */
 	let tileStyle = $state(DEFAULT_MAP_TILE_STYLE)
 	const initialZoom = 3
 </script>
