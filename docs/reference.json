@@ -874,7 +874,7 @@
 		{"name": "canNativeShare()", "desc": "True when Web Share API is available."},
 		{
 			"name": "nativeShare({title, text?, url})",
-			"desc": "Native share sheet; returns success boolean."
+			"desc": "Native share sheet; returns false when unavailable or cancelled, throws other errors so callers can offer a retry."
 		}
 	],
 

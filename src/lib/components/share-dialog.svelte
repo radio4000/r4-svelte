@@ -15,6 +15,8 @@
 
 	let showModal = $state(false)
 	let copiedField = $state<string | null>(null)
+	let sharing = $state(false)
+	let shareError = $state(false)
 	let data = $state<{track?: Track; channel: Channel} | null>(null)
 
 	const isTrack = $derived(!!data?.track)
@@ -32,6 +34,8 @@
 	$effect(() => {
 		if (appState.modal_share) {
 			data = appState.modal_share
+			copiedField = null
+			shareError = false
 			showModal = true
 			appState.modal_share = null
 		}
@@ -45,13 +49,21 @@
 	}
 
 	async function share() {
-		if (!data) return
+		if (!data || sharing) return
 		const {track, channel} = data
-		await nativeShare(
-			track
-				? {title: track.title, text: `@${channel.slug}`, url}
-				: {title: channel.name ?? '', text: channel.description?.slice(0, 100) ?? '', url}
-		)
+		sharing = true
+		shareError = false
+		try {
+			await nativeShare(
+				track
+					? {title: track.title, text: `@${channel.slug}`, url}
+					: {title: channel.name ?? '', text: channel.description?.slice(0, 100) ?? '', url}
+			)
+		} catch {
+			shareError = true
+		} finally {
+			sharing = false
+		}
 	}
 
 	function selectAll(e: FocusEvent) {
@@ -100,10 +112,13 @@
 		{/if}
 
 		{#if canNativeShare()}
-			<button type="button" onclick={share}>
+			<button type="button" onclick={share} disabled={sharing} aria-busy={sharing}>
 				<Icon icon="share" />
 				{m.channel_card_share()}
 			</button>
+			{#if shareError}
+				<p role="alert">Could not open the share sheet. Try again or copy the link.</p>
+			{/if}
 		{/if}
 	</form>
 </Dialog>

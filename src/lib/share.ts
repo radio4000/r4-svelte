@@ -20,10 +20,14 @@ export const copyToClipboard = (text: string) =>
 
 export const canNativeShare = () => typeof navigator !== 'undefined' && !!navigator.share
 
-export const nativeShare = (data: {title: string; text?: string; url: string}) =>
-	canNativeShare()
-		? navigator.share(data).then(
-				() => true,
-				() => false
-			)
-		: Promise.resolve(false)
+/** Cancellation is normal; other failures must reach the UI so sharing doesn't fail silently. */
+export async function nativeShare(data: {title: string; text?: string; url: string}) {
+	if (!canNativeShare()) return false
+	try {
+		await navigator.share(data)
+		return true
+	} catch (error) {
+		if (error instanceof DOMException && error.name === 'AbortError') return false
+		throw error
+	}
+}
