@@ -802,7 +802,7 @@
 			"desc": "Marker color/size for a channel's live state."
 		},
 		{"name": "buildMapStyle(name)", "desc": "MapLibre style object for a base tile name."},
-		{"name": "BASE_TILE_IDS", "desc": "Available base tile style ids: carto, topo, satellite."},
+		{"name": "BASE_TILE_IDS", "desc": "Available base tile style ids: osm, topo, satellite."},
 		{"name": "swapBaseTiles(map, name)", "desc": "Swap the map's base tile layer."},
 		{
 			"name": "setupOverlays(map, {showGraticules, showDayNight})",

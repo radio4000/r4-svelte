@@ -20,7 +20,7 @@
 	import * as m from '$lib/paraglide/messages'
 	const channelActivity = $derived(getChannelActivity())
 
-	/** @type {{channels?: import('$lib/types').Channel[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global', showControls?: boolean, globeMode?: boolean, showGraticules?: boolean, showDayNight?: boolean, tileStyle?: 'carto' | 'topo' | 'satellite'}} */
+	/** @type {{channels?: import('$lib/types').Channel[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global', showControls?: boolean, globeMode?: boolean, showGraticules?: boolean, showDayNight?: boolean, tileStyle?: 'osm' | 'topo' | 'satellite'}} */
 	let {
 		channels = [],
 		loading = false,
@@ -476,7 +476,7 @@
 				</button>
 				<span class="sep"></span>
 				<select bind:value={tileStyle} title={m.map_tiles_label()} aria-label={m.map_tiles_label()}>
-					<option value="carto">{m.map_tiles_map()}</option>
+					<option value="osm">{m.map_tiles_map()}</option>
 					<option value="topo">{m.map_tiles_topo()}</option>
 					<option value="satellite">{m.map_tiles_satellite()}</option>
 				</select>

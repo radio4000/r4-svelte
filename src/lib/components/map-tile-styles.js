@@ -1,8 +1,18 @@
 // Raster tile style builders + base-layer switching, shared by map.svelte and map-channels.svelte.
 /** @import { StyleSpecification, RasterSourceSpecification } from 'maplibre-gl' */
 
-const CARTO_ATTRIBUTION =
-	'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+const OSM_ATTRIBUTION =
+	'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
+// OSM has no dark tiles (CARTO did, but its basemaps now need an API key), so
+// dark mode inverts brightness and rotates hue back — water stays blue, land dark.
+/** @type {import('maplibre-gl').RasterLayerSpecification['paint']} */
+const DARK_PAINT = {
+	'raster-brightness-min': 0.9,
+	'raster-brightness-max': 0.08,
+	'raster-hue-rotate': 180,
+	'raster-saturation': -0.4
+}
 
 /** @type {Record<string, Omit<RasterSourceSpecification, 'type'>>} */
 const RASTER_SOURCES = {
@@ -24,33 +34,35 @@ export function isDarkTheme() {
 	return document.documentElement.classList.contains('dark')
 }
 
-/** @param {string} id @param {Omit<RasterSourceSpecification, 'type'>} source @returns {StyleSpecification} */
-function buildRasterStyle(id, source) {
+/** @param {string} id @param {Omit<RasterSourceSpecification, 'type'>} source @param {import('maplibre-gl').RasterLayerSpecification['paint']} [paint] @returns {StyleSpecification} */
+function buildRasterStyle(id, source, paint) {
 	return {
 		version: 8,
 		sources: {[id]: {type: 'raster', tileSize: 256, ...source}},
-		layers: [{id, type: 'raster', source: id}]
+		layers: [{id, type: 'raster', source: id, ...(paint && {paint})}]
 	}
 }
 
 /** @param {boolean} dark @returns {StyleSpecification} */
-export function buildCartoStyle(dark) {
-	const variant = dark ? 'dark_all' : 'light_all'
-	return buildRasterStyle('carto', {
-		tiles: ['a', 'b', 'c'].map(
-			(s) => `https://${s}.basemaps.cartocdn.com/${variant}/{z}/{x}/{y}{r}.png`
-		),
-		attribution: CARTO_ATTRIBUTION
-	})
+export function buildOsmStyle(dark) {
+	return buildRasterStyle(
+		'osm',
+		{
+			tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+			maxzoom: 19,
+			attribution: OSM_ATTRIBUTION
+		},
+		dark ? DARK_PAINT : undefined
+	)
 }
 
-/** @param {'carto'|'topo'|'satellite'} name @returns {StyleSpecification} */
+/** @param {'osm'|'topo'|'satellite'} name @returns {StyleSpecification} */
 export function buildMapStyle(name) {
 	const source = RASTER_SOURCES[name]
-	return source ? buildRasterStyle(name, source) : buildCartoStyle(isDarkTheme())
+	return source ? buildRasterStyle(name, source) : buildOsmStyle(isDarkTheme())
 }
 
-export const BASE_TILE_IDS = ['carto', 'topo', 'satellite']
+export const BASE_TILE_IDS = ['osm', 'topo', 'satellite']
 
 /**
  * Swap only the base raster layer/source. A full `setStyle()` would tear down
@@ -59,7 +71,7 @@ export const BASE_TILE_IDS = ['carto', 'topo', 'satellite']
  * Here the new base is added beneath the overlays, on top of the old base, and
  * the old base is dropped once the new tiles are in (so there's no blank flash).
  * @param {import('maplibre-gl').Map} map
- * @param {'carto'|'topo'|'satellite'} name
+ * @param {'osm'|'topo'|'satellite'} name
  */
 export function swapBaseTiles(map, name) {
 	if (!map) return
