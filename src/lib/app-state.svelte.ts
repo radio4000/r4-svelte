@@ -4,6 +4,7 @@ import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
 import {isMobileViewport} from '$lib/utils'
 
 function resetTransientDeckState(deck: Deck): Deck {
+	deck.playlist_tracks_filtered = undefined
 	deck.is_playing = false
 	deck.broadcasting_channel_id = undefined
 	deck.listening_to_channel_id = undefined

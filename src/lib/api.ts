@@ -215,6 +215,9 @@ export async function playTrack(
 
 	// Switching from live/auto to a normal play action should reuse this deck and clear mode state.
 	if (isNormalPlayStart(startReason)) {
+		if (deck.playlist_tracks_filtered && !deck.playlist_tracks_filtered.includes(id)) {
+			deck.playlist_tracks_filtered = undefined
+		}
 		if (deck.listening_to_channel_id) leaveBroadcast(deckId)
 		clearAutoRadio(deck)
 		deck.auto_radio_rotation_start = undefined
@@ -421,6 +424,7 @@ export function setPlaylist(
 ) {
 	const deck = getDeck(deckId)
 	if (!deck) return
+	deck.playlist_tracks_filtered = undefined
 	const nextTitle = options.title?.trim() || undefined
 	const nextSlug = options.slug !== undefined ? options.slug || undefined : deck.playlist_slug
 	const tracksChanged = !sameStringArray(deck.playlist_tracks, trackIds)
@@ -460,6 +464,7 @@ export function addToPlaylist(deckId: number, trackIds: string[]) {
 		return
 	}
 	const before = deck.playlist_tracks?.length ?? 0
+	deck.playlist_tracks_filtered = undefined
 	const currentTracks = deck.playlist_tracks || []
 	deck.playlist_tracks = [...currentTracks, ...trackIds]
 
@@ -480,6 +485,7 @@ export function addToPlaylist(deckId: number, trackIds: string[]) {
 export function playNext(deckId: number, trackIds: string | string[]) {
 	const deck = getDeck(deckId)
 	if (!deck) return
+	deck.playlist_tracks_filtered = undefined
 	const ids = Array.isArray(trackIds) ? trackIds : [trackIds]
 	const currentId = deck.playlist_track
 	if (!currentId) {
@@ -627,6 +633,7 @@ export async function togglePlayPause(deckId: number) {
 export function clearQueue(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
+	deck.playlist_tracks_filtered = undefined
 	const current = deck.playlist_track
 	if (current) {
 		deck.playlist_tracks = [current]
@@ -643,6 +650,7 @@ export function clearQueue(deckId: number) {
 export function clearAllQueue(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
+	deck.playlist_tracks_filtered = undefined
 	deck.playlist_tracks = []
 	deck.playlist_tracks_shuffled = []
 	deck.playlist_track = undefined

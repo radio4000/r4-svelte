@@ -60,6 +60,8 @@ export interface Deck {
 	playlist_track?: string
 	playlist_tracks: string[]
 	playlist_tracks_shuffled: string[]
+	/** Session-only playback subset; the full queue remains available to restore. */
+	playlist_tracks_filtered?: string[]
 	is_playing: boolean
 	shuffle: boolean
 	volume: number
