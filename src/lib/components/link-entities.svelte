@@ -4,8 +4,8 @@
 	import {base} from '$app/paths'
 	import {page} from '$app/state'
 
-	/** @type {{text: string | null | undefined, slug?: string | null, onTagClick?: (tag: string) => void, deckId?: number, selectedTags?: string[]}} */
-	const {text, slug, onTagClick, deckId, selectedTags} = $props()
+	/** @type {{text: string | null | undefined, slug?: string | null, filterMentions?: boolean, onTagClick?: (tag: string) => void, deckId?: number, selectedTags?: string[]}} */
+	const {text, slug, filterMentions, onTagClick, deckId, selectedTags} = $props()
 
 	// Explicit override for Tag's `filtered` state — Tag's own URL fallback only
 	// understands the channel tracks page's ?tags= param, so any page with its
@@ -42,7 +42,18 @@
 			const isMention = entity.startsWith('@')
 			let href
 			if (isMention) {
-				href = `${base}/${encodeURIComponent(entity.slice(1))}`
+				const mention = entity.slice(1)
+				if (filterMentions && slug) {
+					// Filter the source radio; keep its filters only if we're already on it
+					const channelPath = `${base}/${encodeURIComponent(slug)}`
+					const onSource = [channelPath, `${channelPath}/tracks`].includes(page.url.pathname)
+					// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built once per href, not state
+					const params = new URLSearchParams(onSource ? page.url.search : '')
+					params.set('mention', mention.toLowerCase())
+					href = `${channelPath}/tracks?${params}`
+				} else {
+					href = `${base}/${encodeURIComponent(mention)}`
+				}
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
 				const tagName = entity.slice(1).toLowerCase()
