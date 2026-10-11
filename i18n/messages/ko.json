@@ -45,6 +45,7 @@
 	"app_update_reload": "새로고침하여 업데이트",
 	"app_version": "버전 {sha}",
 	"apps_background_brave_ios": "iPhone/iPad의 Brave: 설정 → Brave Shields & Privacy → 백그라운드 동영상 재생 허용",
+	"apps_background_firefox_addons": "도움이 되는 Firefox 부가 기능:",
 	"apps_background_firefox_android": "Android의 Firefox: 설정 → 백그라운드에서 동영상 재생",
 	"apps_install_android": "대부분의 브라우저: 메뉴(⋮) 열기 → 앱 설치",
 	"apps_install_android_device": "Android",

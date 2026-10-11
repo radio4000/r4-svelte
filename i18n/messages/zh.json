@@ -45,6 +45,7 @@
 	"app_update_reload": "重新加载以更新",
 	"app_version": "版本 {sha}",
 	"apps_background_brave_ios": "iPhone/iPad 上的 Brave：设置 → Brave Shields & Privacy → 允许后台视频播放。",
+	"apps_background_firefox_addons": "有用的 Firefox 扩展：",
 	"apps_background_firefox_android": "Android 上的 Firefox：设置 → 后台播放视频。",
 	"apps_install_android": "大多数浏览器：打开菜单 (⋮) → 安装应用。",
 	"apps_install_android_device": "Android",

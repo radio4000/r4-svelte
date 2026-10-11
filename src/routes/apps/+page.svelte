@@ -32,6 +32,15 @@
 		<p>{m.apps_playback_intro()}</p>
 		<ul>
 			<li>{m.apps_background_firefox_android()}</li>
+			<li>
+				{m.apps_background_firefox_addons()}
+				<a
+					href="https://addons.mozilla.org/en-US/firefox/addon/video-background-play-fix/"
+					target="_blank"
+					rel="noopener">Video Background Play Fix</a
+				>,
+				<a href="https://github.com/gorhill/uBlock" target="_blank" rel="noopener">uBlock Origin</a>
+			</li>
 			<li>{m.apps_background_brave_ios()}</li>
 		</ul>
 	</section>

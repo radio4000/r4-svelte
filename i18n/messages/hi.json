@@ -45,6 +45,7 @@
 	"app_update_reload": "अपडेट के लिए रीलोड करें",
 	"app_version": "संस्करण {sha}",
 	"apps_background_brave_ios": "iPhone/iPad पर Brave: सेटिंग्स → Brave Shields & Privacy → बैकग्राउंड वीडियो प्लेबैक की अनुमति दें।",
+	"apps_background_firefox_addons": "मददगार Firefox ऐड-ऑन:",
 	"apps_background_firefox_android": "Android पर Firefox: सेटिंग्स → बैकग्राउंड में वीडियो चलाएं।",
 	"apps_install_android": "अधिकतर ब्राउज़र में: मेनू (⋮) खोलें → ऐप इंस्टॉल करें।",
 	"apps_install_android_device": "Android",
