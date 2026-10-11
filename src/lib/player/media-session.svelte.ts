@@ -4,7 +4,7 @@
  * itself whenever its playback starts, silently overwriting our
  * metadata/handlers on Android. Can't be prevented — so metadata + handlers
  * are reasserted on every real "playing" event (the player calls `reassert()`
- * from its play handler) and on a light recurring interval while playing.
+ * from its playing handler) and on a light recurring interval while playing.
  *
  * Rune factory (same pattern as deck-display.svelte.ts): call once during
  * component init; effects bind to the component's lifecycle.
@@ -141,6 +141,20 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 		if (!deck?.is_playing) return
 		const interval = setInterval(reassert, 4000)
 		return () => clearInterval(interval)
+	})
+
+	// A suspended tab may miss the recurring reassertion. Restore controls on
+	// resume even when the provider reported a pause while the screen was locked.
+	$effect(() => {
+		const resume = () => {
+			if (document.visibilityState === 'visible') reassert()
+		}
+		document.addEventListener('visibilitychange', resume)
+		window.addEventListener('pageshow', resume)
+		return () => {
+			document.removeEventListener('visibilitychange', resume)
+			window.removeEventListener('pageshow', resume)
+		}
 	})
 
 	return {reassert}
