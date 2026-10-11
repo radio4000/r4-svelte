@@ -131,7 +131,7 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 	})
 
 	// playbackState flips on every play/pause without needing a full rebuild. Also
-	// keeps a light recurring reassert while playing — the player's play handler
+	// keeps a light recurring reassert while playing — the player's playing handler
 	// covers the moment playback starts; this covers YouTube's iframe reclaiming
 	// the session again later.
 	$effect(() => {
