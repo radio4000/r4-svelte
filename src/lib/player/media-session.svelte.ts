@@ -12,10 +12,9 @@
  * Platform gotchas:
  * - Chrome may bind action-handling authority to the frame owning the playing
  *   media — for YouTube that's their cross-origin iframe, which we can't reach
- *   into. Unconfirmed (needs a real Android device: do prev/next show reliably
- *   for SoundCloud/file tracks but not YouTube?). media-session-anchor.js is
- *   the experiment against it: a silent, genuinely-playing <audio> in our top
- *   frame. Remove it if it turns out not to matter.
+ *   into. Unconfirmed. Don't counter it with a silent top-frame <audio>
+ *   "anchor" (tried, Aug 2026): re-playing it on each track change likely competed
+ *   for audio focus and paused the next track on mobile, in every browser.
  * - Firefox has historically not implemented the Media Session API — nothing
  *   to fix on our end. Re-check on new releases.
  */
@@ -23,7 +22,6 @@
 import {untrack} from 'svelte'
 import {appState} from '$lib/app-state.svelte'
 import {play, pause, next, previous, type MediaPlayer} from '$lib/api'
-import {requestMediaSessionAnchor, releaseMediaSessionAnchor} from '$lib/media-session-anchor'
 import {trackImageUrl} from '$lib/utils'
 import type {Channel, Track} from '$lib/types'
 
@@ -143,14 +141,6 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 		if (!deck?.is_playing) return
 		const interval = setInterval(reassert, 4000)
 		return () => clearInterval(interval)
-	})
-
-	// Media Session anchor — experimental, see media-session-anchor.js for why.
-	// Only the deck actually driving the OS session needs it.
-	$effect(() => {
-		if (!deck?.is_playing || !isActiveMediaSessionDeck()) return
-		requestMediaSessionAnchor(deckId)
-		return () => releaseMediaSessionAnchor(deckId)
 	})
 
 	return {reassert}
