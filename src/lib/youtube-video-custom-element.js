@@ -25,6 +25,11 @@ class YouTube2Element extends HTMLElement {
 	 *  real pause: reporting it flips the deck and the OS media session to paused mid-switch,
 	 *  and Android may then freeze a locked page before the next track gets going. */
 	#switchStartedAt = 0
+	/** On a locked phone the browser can pause the next track a second or two after it starts
+	 *  (with audio). Shortly after a switch, while hidden, resume a pause we didn't ask for. */
+	#landingUntil = 0
+	#landingResumes = 0
+	#pauseRequested = false
 	/** Expires, so a load that never starts can't swallow a later play() or pause. */
 	get #switching() {
 		return Date.now() - this.#switchStartedAt < 5000
@@ -208,6 +213,17 @@ class YouTube2Element extends HTMLElement {
 			this.dispatchEvent(new Event('play'))
 			this.dispatchEvent(new Event('playing'))
 		} else if (state === YT.PlayerState.PAUSED) {
+			if (
+				document.visibilityState === 'hidden' &&
+				!this.#pauseRequested &&
+				Date.now() < this.#landingUntil &&
+				this.#landingResumes < 3
+			) {
+				this.#landingResumes++
+				log.warn('paused right after a switch while hidden, resuming', this.#landingResumes)
+				this.api?.playVideo()
+				return
+			}
 			this.dispatchEvent(new Event('pause'))
 		} else if (state === YT.PlayerState.ENDED) {
 			this.dispatchEvent(new Event('ended'))
@@ -229,6 +245,9 @@ class YouTube2Element extends HTMLElement {
 			// Mark the switch now: a play() racing ahead of #loadVideo must not playVideo() the
 			// old, ended video (that restarts it, then reports a pause mid-switch).
 			if (this.isLoaded && this.hasAttribute('autoplay')) this.#switchStartedAt = Date.now()
+			this.#landingUntil = Date.now() + 10000
+			this.#landingResumes = 0
+			this.#pauseRequested = false
 			if (this.isLoaded) {
 				await this.#loadVideo()
 			} else {
@@ -272,6 +291,7 @@ class YouTube2Element extends HTMLElement {
 
 	async play() {
 		log.debug('play')
+		this.#pauseRequested = false
 		await this.#loadComplete
 		if (!this.api) return
 		// loadVideoById already autoplays. Cueing or a bare playVideo() on top cancels that load
@@ -299,6 +319,7 @@ class YouTube2Element extends HTMLElement {
 
 	async pause() {
 		this.#switchStartedAt = 0
+		this.#pauseRequested = true
 		await this.#loadComplete
 		if (this.api) {
 			this.api.pauseVideo()
