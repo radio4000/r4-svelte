@@ -2,6 +2,8 @@
 	import {pushState} from '$app/navigation'
 	import {page} from '$app/state'
 	import {base, resolve} from '$app/paths'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import Icon from '$lib/components/icon.svelte'
 
 	let {data, children} = $props()
 
@@ -19,16 +21,10 @@
 	function setTab(tab) {
 		pushState(tab === 'docs' ? '' : '#playground', {tab})
 	}
-
-	/** On mobile the menu scrolls sideways; keep the current topic in view. @param {HTMLElement} nav */
-	function revealCurrent(nav) {
-		void currentSlug
-		nav.querySelector('[aria-current="page"]')?.scrollIntoView({block: 'nearest', inline: 'center'})
-	}
 </script>
 
-<div class="docs">
-	<nav class="nav-vertical" {@attach revealCurrent}>
+{#snippet topics()}
+	<nav class="nav-vertical" aria-label="Docs">
 		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
 		<a
 			href={resolve('/docs/reference')}
@@ -50,6 +46,19 @@
 			{/if}
 		{/each}
 	</nav>
+{/snippet}
+
+<div class="docs">
+	{@render topics()}
+
+	<!-- Mobile: the same menu, behind one button showing where you are. -->
+	<PopoverMenu centered>
+		{#snippet trigger()}
+			<Icon icon="menu" />
+			{currentSlug === 'index' ? 'Docs' : currentSlug}
+		{/snippet}
+		{@render topics()}
+	</PopoverMenu>
 
 	<main class="article">
 		{#if hasPlayground && hasHtml}
@@ -88,7 +97,16 @@
 		height: 100%;
 	}
 
-	.docs > nav {
+	.docs > :global(.popover-menu) {
+		display: none;
+	}
+
+	:global([popover]) nav {
+		max-height: 70dvh;
+		overflow-y: auto;
+	}
+
+	nav {
 		border-top: 0;
 		border-left: 0;
 		border-bottom: 0;
@@ -135,31 +153,13 @@
 			grid-template-rows: auto 1fr;
 		}
 
-		/* Same menu, one scrolling row instead of wrapping over the page. */
 		.docs > nav {
-			flex-flow: row nowrap;
-			overflow-x: auto;
-			overflow-y: hidden;
-			scrollbar-width: none;
-			position: static;
-			border-right: none;
-			border-bottom: 1px solid var(--color-interface-border);
+			display: none;
+		}
 
-			a {
-				flex: 0 0 auto;
-				white-space: nowrap;
-
-				&.subroute {
-					padding-inline-start: 1rem;
-				}
-			}
-
-			hr {
-				flex: 0 0 1px;
-				width: 1px;
-				height: auto;
-				margin: var(--space-1) 0;
-			}
+		.docs > :global(.popover-menu) {
+			display: block;
+			padding: var(--space-1) 0 0 1rem;
 		}
 	}
 
