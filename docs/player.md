@@ -17,6 +17,8 @@ The player supports multiple independent decks. Each deck has its own queue, act
 
 `speed-control.svelte` and `volume-control.svelte` are shared between `player.svelte` and `deck-compact-bar.svelte`.
 
+In decks up to 520px wide, volume and speed share one line below the transport buttons. Wider decks keep the controls on one row.
+
 ## Key patterns
 
 - Only render one player at a time, branching on `provider` (`{#if provider === 'youtube'}` / soundcloud / audio)
@@ -52,7 +54,7 @@ See [decks.md](decks.md) for the full component tree, layout flags, and deck ana
 
 Auto-advance and lock-screen controls (`navigator.mediaSession`) must keep working while the tab is backgrounded or the screen is locked. Browsers fight this; the workarounds are quarantined in two modules, wired up by `player.svelte`:
 
-- `src/lib/player/media-session.svelte.ts` — lock-screen controls, kept ours by reasserting against YouTube's iframe (plus the `media-session-anchor.js` experiment)
+- `src/lib/player/media-session.svelte.ts` — lock-screen controls, kept ours by reasserting against YouTube's iframe
 - `src/lib/player/stall-recovery.svelte.ts` — detects and nudges playback that stalled while backgrounded/locked
 
 Platform gotchas (rAF suspension, iOS `.play()` failures, battery policy, Firefox…) are documented in those modules' header comments — read them before touching the playback path. `wake-lock.js` keeps the screen on while playing.

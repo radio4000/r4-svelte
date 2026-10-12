@@ -45,6 +45,7 @@
 	"app_update_reload": "Güncellemek için yeniden yükle",
 	"app_version": "Sürüm {sha}",
 	"apps_background_brave_ios": "iPhone/iPad'de Brave: Ayarlar → Brave Shields & Privacy → Arka planda video oynatmaya izin ver.",
+	"apps_background_firefox_addons": "İşe yarayan Firefox eklentileri:",
 	"apps_background_firefox_android": "Android'de Firefox: Ayarlar → Videoları arka planda oynat.",
 	"apps_install_android": "Çoğu tarayıcıda: menüyü aç (⋮) → Uygulamayı yükle.",
 	"apps_install_android_device": "Android",

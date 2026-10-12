@@ -2,6 +2,8 @@
 	import {pushState} from '$app/navigation'
 	import {page} from '$app/state'
 	import {base, resolve} from '$app/paths'
+	import PopoverMenu from '$lib/components/popover-menu.svelte'
+	import Icon from '$lib/components/icon.svelte'
 
 	let {data, children} = $props()
 
@@ -21,8 +23,8 @@
 	}
 </script>
 
-<div class="docs">
-	<nav class="nav-vertical">
+{#snippet topics()}
+	<nav class="nav-vertical" aria-label="Docs">
 		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
 		<a
 			href={resolve('/docs/reference')}
@@ -44,20 +46,36 @@
 			{/if}
 		{/each}
 	</nav>
+{/snippet}
+
+<div class="docs">
+	{@render topics()}
 
 	<main class="article">
-		{#if hasPlayground && hasHtml}
-			<menu class="tabs nav-grouped doc-tabs">
-				<button
-					aria-current={activeTab === 'docs' ? 'true' : undefined}
-					onclick={() => setTab('docs')}>Docs</button
-				>
-				<button
-					aria-current={activeTab === 'playground' ? 'true' : undefined}
-					onclick={() => setTab('playground')}>Playground</button
-				>
-			</menu>
+		<header>
+			<!-- Mobile: the same menu, behind one button showing where you are. -->
+			<PopoverMenu centered>
+				{#snippet trigger()}
+					<Icon icon="menu" />
+					{currentSlug === 'index' ? 'Docs' : currentSlug}
+				{/snippet}
+				{@render topics()}
+			</PopoverMenu>
+			{#if hasPlayground && hasHtml}
+				<menu class="tabs nav-grouped doc-tabs">
+					<button
+						aria-current={activeTab === 'docs' ? 'true' : undefined}
+						onclick={() => setTab('docs')}>Docs</button
+					>
+					<button
+						aria-current={activeTab === 'playground' ? 'true' : undefined}
+						onclick={() => setTab('playground')}>Playground</button
+					>
+				</menu>
+			{/if}
+		</header>
 
+		{#if hasPlayground && hasHtml}
 			<div class="doc-playground">
 				<article class="doc-prose constrained article" class:hidden-tab={activeTab !== 'docs'}>
 					<!-- eslint-disable svelte/no-at-html-tags -->
@@ -82,7 +100,31 @@
 		height: 100%;
 	}
 
-	.docs > nav {
+	/* Menu button (mobile) and Docs/Playground tabs share one sticky line. */
+	header {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		display: flex;
+		gap: var(--space-1);
+		align-items: center;
+		flex-wrap: wrap;
+
+		> :global(*) {
+			margin-block-end: 1rem;
+		}
+
+		> :global(.popover-menu) {
+			display: none;
+		}
+	}
+
+	:global([popover]) nav {
+		max-height: 70dvh;
+		overflow-y: auto;
+	}
+
+	nav {
 		border-top: 0;
 		border-left: 0;
 		border-bottom: 0;
@@ -108,13 +150,6 @@
 		min-width: 0;
 	}
 
-	.doc-tabs {
-		position: sticky;
-		top: 0;
-		z-index: 1;
-		margin-block-end: 1rem;
-	}
-
 	.doc-playground {
 		min-width: 0;
 	}
@@ -130,13 +165,11 @@
 		}
 
 		.docs > nav {
-			flex-direction: row;
-			flex-wrap: wrap;
-			overflow-x: auto;
-			overflow-y: hidden;
-			position: static;
-			border-right: none;
-			border-bottom: 1px solid var(--color-interface-border);
+			display: none;
+		}
+
+		header > :global(.popover-menu) {
+			display: block;
 		}
 	}
 

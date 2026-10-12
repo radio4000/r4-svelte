@@ -45,6 +45,7 @@
 	"app_update_reload": "اپ ڈیٹ کے لیے دوبارہ لوڈ کریں",
 	"app_version": "ورژن {sha}",
 	"apps_background_brave_ios": "iPhone/iPad پر Brave: سیٹنگز → Brave Shields & Privacy → بیک گراؤنڈ ویڈیو پلے بیک کی اجازت دیں۔",
+	"apps_background_firefox_addons": "مددگار Firefox ایڈ آنز:",
 	"apps_background_firefox_android": "Android پر Firefox: سیٹنگز → بیک گراؤنڈ میں ویڈیوز چلائیں۔",
 	"apps_install_android": "زیادہ تر براؤزرز میں: مینو (⋮) کھولیں → ایپ انسٹال کریں۔",
 	"apps_install_android_device": "Android",

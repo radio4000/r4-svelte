@@ -45,6 +45,7 @@
 	"app_update_reload": "Neu laden zum Aktualisieren",
 	"app_version": "Version {sha}",
 	"apps_background_brave_ios": "Brave auf iPhone/iPad: Einstellungen → Brave Shields & Privacy → Hintergrundwiedergabe von Videos erlauben.",
+	"apps_background_firefox_addons": "Hilfreiche Firefox-Erweiterungen:",
 	"apps_background_firefox_android": "Firefox auf Android: Einstellungen → Videos im Hintergrund abspielen.",
 	"apps_install_android": "In den meisten Browsern: Menü (⋮) öffnen → App installieren.",
 	"apps_install_android_device": "Android",

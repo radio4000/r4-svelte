@@ -30,6 +30,7 @@
 		canEdit?: boolean
 		showMenu?: boolean
 		onTagClick?: (tag: string) => void
+		onMentionClick?: (slug: string) => void
 		/** Tags currently active in the page's own filter — highlights matching
 		 * #tags inside the description instead of leaving that to Tag's URL
 		 * fallback (which only understands the channel tracks page's ?tags=). */
@@ -55,6 +56,7 @@
 		canEdit = false,
 		showMenu = true,
 		onTagClick,
+		onMentionClick,
 		selectedTags,
 		menuAlign,
 		menuValign,
@@ -219,8 +221,10 @@
 				<p class="description">
 					<LinkEntities
 						slug={track.slug}
+						filterMentions
 						text={track.description}
 						{onTagClick}
+						{onMentionClick}
 						{selectedTags}
 						deckId={matchedDeckId}
 					/>
@@ -361,7 +365,12 @@
 						<h3 class="title">{track.title}</h3>
 						{#if track.description}
 							<p class="description">
-								<LinkEntities slug={track.slug} text={track.description} deckId={matchedDeckId} />
+								<LinkEntities
+									slug={track.slug}
+									filterMentions
+									text={track.description}
+									deckId={matchedDeckId}
+								/>
 							</p>
 						{/if}
 					</div>

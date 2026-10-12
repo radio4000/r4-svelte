@@ -72,9 +72,9 @@ export const SECTION_TRACK_LIMIT = 50
 /** The header logo opens the nav popover; set false to make it a plain home link */
 export const navPopoverOnLogo = false
 
-export const MAP_TILE_STYLES = ['carto', 'topo', 'satellite'] as const
+export const MAP_TILE_STYLES = ['osm', 'topo', 'satellite'] as const
 export type MapTileStyle = (typeof MAP_TILE_STYLES)[number]
-export const DEFAULT_MAP_TILE_STYLE: MapTileStyle = 'carto'
+export const DEFAULT_MAP_TILE_STYLE: MapTileStyle = 'osm'
 export const DEFAULT_MAP_SHOW_DAY_NIGHT = true
 export const DEFAULT_MAP_SHOW_GRATICULES = true
 

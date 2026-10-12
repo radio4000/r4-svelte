@@ -23,7 +23,7 @@ broadcaster: appState.decks → broadcast.decks (remote) → realtime → listen
 Broadcast cleanup is handled inside `broadcast.js` liveness monitoring (not UI handlers):
 
 - If no local broadcaster deck is left (all decks closed or only listener decks remain), broadcast stops.
-- If no local broadcaster deck has a currently playing track for `10s`, broadcast stops.
+- Paused decks stay on air for up to `60s`, giving time to choose a track or recover playback. Playback resuming resets this idle timeout.
 - `beforeunload` cleanup still runs from layout to clear local state when tab closes.
 
 ## Drift and resync

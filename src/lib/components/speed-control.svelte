@@ -4,6 +4,7 @@
 	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import * as m from '$lib/paraglide/messages'
+	import Icon from '$lib/components/icon.svelte'
 
 	/** @type {{deckId: number, provider: string | null}} */
 	let {deckId, provider} = $props()
@@ -18,6 +19,7 @@
 	// Custom/continuous speed (available in YouTube's own UI since Dec 2024) is not exposed to embeds.
 	// Native audio (provider === 'file') uses the HTML <audio> element which supports any rate, hence 0.01.
 	let speedStep = $derived(useNativeAudio ? 0.01 : 0.25)
+	let isCustomSpeed = $derived(deck?.speed != null && deck.speed !== 1)
 
 	function handleSpeedChange(speed) {
 		if (!deck) return
@@ -42,10 +44,12 @@
 	<div class="speed">
 		<button
 			class="speed-btn"
-			class:active={deck?.speed != null && deck.speed !== 1}
+			class:active={isCustomSpeed}
 			onclick={() => handleSpeedChange(1)}
+			aria-label={m.player_reset_speed()}
 			{@attach tooltip({content: m.player_reset_speed(), position: 'top'})}
 		>
+			<Icon icon="speed" />
 			{Number(deck?.speed ?? 1).toFixed(2)}x
 		</button>
 		<input
@@ -75,9 +79,12 @@
 	}
 
 	.speed-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
 		font-size: var(--font-1);
-		min-width: 2.5em;
-		text-align: center;
+		/* Fixed-width digits so the button (and the range beside it) never resizes */
+		font-variant-numeric: tabular-nums;
 		flex-shrink: 0;
 	}
 

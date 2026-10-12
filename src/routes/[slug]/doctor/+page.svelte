@@ -408,7 +408,7 @@
 		<div>
 			<h3><a href="/{track.slug}/tracks/{track.id}">{track.title}</a></h3>
 			{#if track.description}
-				<p><LinkEntities slug={track.slug} text={track.description} /></p>
+				<p><LinkEntities slug={track.slug} filterMentions text={track.description} /></p>
 			{/if}
 		</div>
 		<PopoverMenu btnClass="ghost" align="end">

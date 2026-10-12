@@ -1,6 +1,7 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
 import {BasicIndex} from '@tanstack/db'
+import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {appState} from '$lib/app-state.svelte'
 import {fetchChannelBySlug} from '$lib/api/fetch-channels'
@@ -116,7 +117,7 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
  * browse query (with optional track-count/image/coordinate filters) — see `parseChannelParams`.
  */
 export const channelsCollection = createCollection<Channel, string>({
-	...queryCollectionOptions({
+	...queryCollectionOptions<Channel, unknown, QueryKey, string>({
 		autoIndex: 'eager',
 		defaultIndexType: BasicIndex,
 		queryKey: (opts) => {

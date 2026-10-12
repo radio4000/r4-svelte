@@ -1,5 +1,5 @@
 <script>
-	import {fuzzySearch} from '$lib/utils'
+	import {fuzzySearch, extractMentions} from '$lib/utils'
 	import {appState, canEditChannel} from '$lib/app-state.svelte'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {channelsCollection} from '$lib/collections/channels'
@@ -15,13 +15,17 @@
 	import * as m from '$lib/paraglide/messages'
 
 	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
-	let {deckId, scrollToActive = $bindable(undefined)} = $props()
+	// Write-only bindable: the parent calls it, so the destructure itself is never read here.
+	// eslint-disable-next-line no-useless-assignment
+	let {deckId, scrollToActive = $bindable()} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
 	let searchQuery = $state('')
 	/** @type {string[]} */
 	let selectedTags = $state([])
+	/** Bare slug of an @mention clicked in the queue, like ?mention= on /tracks. */
+	let selectedMention = $state('')
 	let selectedTrackId = $state(/** @type {string | null} */ (null))
 	/** @type {any} */
 	let tracklist = $state()
@@ -30,12 +34,8 @@
 		if (!deck?.playlist_track) return
 
 		// If the active track is filtered out, clear the filters so it appears
-		if (
-			(searchQuery || selectedTags.length) &&
-			!filteredQueueTracks.some((t) => t.id === deck?.playlist_track)
-		) {
-			searchQuery = ''
-			selectedTags = []
+		if (isFiltering && !filteredQueueTracks.some((t) => t.id === deck?.playlist_track)) {
+			clearFilters()
 			await tick()
 		}
 
@@ -64,10 +64,21 @@
 		fuzzySearch(searchQuery, queueTracks, ['title', 'tags', 'description'])
 	)
 	let filteredQueueTracks = $derived(
-		selectedTags.length
-			? searchedQueueTracks.filter((t) => selectedTags.every((tag) => t.tags?.includes(tag)))
-			: searchedQueueTracks
+		searchedQueueTracks.filter(
+			(t) =>
+				selectedTags.every((tag) => t.tags?.includes(tag)) &&
+				(!selectedMention || extractMentions(t.description ?? '').includes(`@${selectedMention}`))
+		)
 	)
+	let isFiltering = $derived(
+		searchQuery !== '' || selectedTags.length > 0 || selectedMention !== ''
+	)
+
+	function clearFilters() {
+		searchQuery = ''
+		selectedTags = []
+		selectedMention = ''
+	}
 
 	/** @param {string} tag */
 	function toggleTag(tag) {
@@ -98,14 +109,8 @@
 			placeholder={`${m.search_placeholder()} (${queueTracks.length})`}
 			debounce={150}
 		/>
-		{#if searchQuery !== '' || selectedTags.length > 0}
-			<button
-				onclick={() => {
-					searchQuery = ''
-					selectedTags = []
-				}}
-				{@attach tooltip({content: m.queue_clear_filters()})}
-			>
+		{#if isFiltering}
+			<button onclick={clearFilters} {@attach tooltip({content: m.queue_clear_filters()})}>
 				<Icon icon="close" />
 			</button>
 		{/if}
@@ -120,8 +125,13 @@
 		{/if}
 	</div>
 
-	{#if selectedTags.length > 0}
-		<FilterChips tags={selectedTags} onRemoveTag={toggleTag} />
+	{#if selectedTags.length > 0 || selectedMention}
+		<FilterChips
+			tags={selectedTags}
+			mention={selectedMention}
+			onRemoveTag={toggleTag}
+			onClearMention={() => (selectedMention = '')}
+		/>
 	{/if}
 
 	<main class="scroll">
@@ -135,6 +145,7 @@
 				{canEditTrack}
 				onSelectTrack={(trackId) => (selectedTrackId = trackId)}
 				onTagClick={toggleTag}
+				onMentionClick={(slug) => (selectedMention = selectedMention === slug ? '' : slug)}
 				{selectedTags}
 			/>
 		{:else if queueTracks.length === 0}

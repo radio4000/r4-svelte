@@ -45,6 +45,7 @@
 	"app_update_reload": "Reload to update",
 	"app_version": "Version {sha}",
 	"apps_background_brave_ios": "Brave on iPhone/iPad: Settings → Brave Shields & Privacy → Allow background video playback.",
+	"apps_background_firefox_addons": "Firefox add-ons that help:",
 	"apps_background_firefox_android": "Firefox on Android: Settings → Play videos in background.",
 	"apps_install_android": "In most browsers: open the menu (⋮) → Install app.",
 	"apps_install_android_device": "Android",

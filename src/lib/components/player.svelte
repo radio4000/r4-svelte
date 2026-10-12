@@ -662,15 +662,13 @@
 		</footer>
 
 		{#if !isListeningToBroadcast || deck?.auto_radio}
-			{#if !isListeningToBroadcast && !deck?.auto_radio}
-				<SpeedControl {deckId} {provider} />
-			{/if}
 			<menu class="controls">
 				{#if !isListeningToBroadcast && !deck?.auto_radio}
 					{@render btnPrev()}
 					{@render btnPlay()}
 					{@render btnNext()}
 					<VolumeControl {deckId} />
+					<SpeedControl {deckId} {provider} />
 					{#if activeQueue.length > 2}
 						<button
 							onclick={() => toggleShuffle(deckId)}
@@ -750,6 +748,7 @@
 
 <style>
 	.player {
+		container-type: inline-size;
 		display: flex;
 		flex-direction: column;
 		flex: 1;
@@ -836,20 +835,25 @@
 		flex-shrink: 0;
 		padding: 0.5rem;
 
-		/* Volume's own flex-grow already fills whatever space prev/play/next
-		   don't need — that alone pushes shuffle/auto (following it) to the
-		   right, so it always grows and pushes the other buttons to the sides. */
+		/* Volume and speed split whatever space the buttons don't need. DJing
+		   with multiple decks needs per-deck volume and speed on mobile too. */
+		:global(.speed),
+		:global(.volume) {
+			flex: 1 1 0;
+		}
+	}
 
-		/* Mobile: transport centered; speed/volume shrink to content instead of
-		   growing to fill the row, but keep their sliders — DJing with multiple
-		   decks needs per-deck volume, same as it needs speed. */
-		@media (max-width: 768px) {
-			justify-content: center;
+	/* Narrow decks: transport buttons on one line, both ranges sharing the next. */
+	@container (max-width: 520px) {
+		.controls::before {
+			content: '';
+			flex-basis: 100%;
+			order: 1;
+		}
 
-			:global(.speed),
-			:global(.volume) {
-				flex: 0 0 auto;
-			}
+		.controls :global(.volume),
+		.controls :global(.speed) {
+			order: 2;
 		}
 	}
 
@@ -859,20 +863,6 @@
 		justify-content: center;
 		padding-inline: var(--space-1);
 		min-height: 1.35rem;
-	}
-
-	/* Speed lives above .controls as its own full-width row, snug under the
-	   track. Its own `flex: 1 1 6rem` is meant for sitting in a *row*
-	   (.controls) — as a direct child of .bottom-chrome's column layout, that
-	   basis applies to height instead of width, forcing a tall box. Reset it
-	   to size from content. */
-	.bottom-chrome > :global(.speed) {
-		flex: 0 0 auto;
-		padding: 0.25rem 0.5rem;
-	}
-
-	:global(.bottom-chrome > .speed + .controls) {
-		padding-top: 0;
 	}
 
 	.layout-controls {

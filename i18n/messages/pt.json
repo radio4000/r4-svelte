@@ -45,6 +45,7 @@
 	"app_update_reload": "Recarregar para atualizar",
 	"app_version": "Versão {sha}",
 	"apps_background_brave_ios": "Brave no iPhone/iPad: Configurações → Brave Shields & Privacy → Permitir reprodução de vídeo em segundo plano.",
+	"apps_background_firefox_addons": "Extensões do Firefox que ajudam:",
 	"apps_background_firefox_android": "Firefox no Android: Configurações → Reproduzir vídeos em segundo plano.",
 	"apps_install_android": "Na maioria dos navegadores: abra o menu (⋮) → Instalar app.",
 	"apps_install_android_device": "Android",

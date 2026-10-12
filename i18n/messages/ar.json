@@ -45,6 +45,7 @@
 	"app_update_reload": "أعد التحميل للتحديث",
 	"app_version": "الإصدار {sha}",
 	"apps_background_brave_ios": "Brave على iPhone/iPad: الإعدادات ← Brave Shields & Privacy ← السماح بتشغيل الفيديو في الخلفية.",
+	"apps_background_firefox_addons": "إضافات Firefox مفيدة:",
 	"apps_background_firefox_android": "Firefox على Android: الإعدادات ← تشغيل الفيديوهات في الخلفية.",
 	"apps_install_android": "في معظم المتصفحات: افتح القائمة (⋮) ← تثبيت التطبيق.",
 	"apps_install_android_device": "Android",

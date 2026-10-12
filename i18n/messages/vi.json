@@ -45,6 +45,7 @@
 	"app_update_reload": "Tải lại để cập nhật",
 	"app_version": "Phiên bản {sha}",
 	"apps_background_brave_ios": "Brave trên iPhone/iPad: Cài đặt → Brave Shields & Privacy → Cho phép phát video nền.",
+	"apps_background_firefox_addons": "Tiện ích Firefox hữu ích:",
 	"apps_background_firefox_android": "Firefox trên Android: Cài đặt → Phát video ở chế độ nền.",
 	"apps_install_android": "Ở hầu hết trình duyệt: mở menu (⋮) → Cài đặt ứng dụng.",
 	"apps_install_android_device": "Android",

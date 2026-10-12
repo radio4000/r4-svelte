@@ -45,6 +45,7 @@
 	"app_update_reload": "Recharger pour mettre à jour",
 	"app_version": "Version {sha}",
 	"apps_background_brave_ios": "Brave sur iPhone/iPad : Réglages → Brave Shields & Privacy → Autoriser la lecture vidéo en arrière-plan.",
+	"apps_background_firefox_addons": "Extensions Firefox utiles :",
 	"apps_background_firefox_android": "Firefox sur Android : Réglages → Lire les vidéos en arrière-plan.",
 	"apps_install_android": "Dans la plupart des navigateurs : ouvrez le menu (⋮) → Installer l'application.",
 	"apps_install_android_device": "Android",
