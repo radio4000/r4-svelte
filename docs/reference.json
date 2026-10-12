@@ -870,6 +870,13 @@
 		}
 	],
 
+	"src/lib/player/audio-keepalive.js": [
+		{
+			"name": "requestAudioKeepAlive(deckId) / releaseAudioKeepAlive(deckId)",
+			"desc": "Ref-counted faint looping <audio> while a deck plays (Android only), so a locked page stays audible between tracks."
+		}
+	],
+
 	"src/lib/player/stall-recovery.svelte.ts": [
 		{
 			"name": "createStallRecovery(deckId, deps)",

@@ -17,6 +17,7 @@
 		toggleShuffle
 	} from '$lib/api'
 	import {requestPlaybackWakeLock, releasePlaybackWakeLock} from '$lib/wake-lock'
+	import {requestAudioKeepAlive, releaseAudioKeepAlive} from '$lib/player/audio-keepalive'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '$lib/deck'
 	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '$lib/player/auto-radio'
@@ -402,6 +403,13 @@
 		if (!deck?.is_playing) return
 		requestPlaybackWakeLock(deckId)
 		return () => releasePlaybackWakeLock(deckId)
+	})
+
+	// Keep the page audible across track changes on a locked Android screen (see module).
+	$effect(() => {
+		if (!deck?.is_playing) return
+		requestAudioKeepAlive(deckId)
+		return () => releaseAudioKeepAlive(deckId)
 	})
 
 	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)

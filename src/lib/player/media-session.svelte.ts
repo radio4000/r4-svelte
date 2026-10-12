@@ -12,9 +12,8 @@
  * Platform gotchas:
  * - Chrome may bind action-handling authority to the frame owning the playing
  *   media — for YouTube that's their cross-origin iframe, which we can't reach
- *   into. Unconfirmed. Don't counter it with a silent top-frame <audio>
- *   "anchor" (tried, Aug 2026): re-playing it on each track change likely competed
- *   for audio focus and paused the next track on mobile, in every browser.
+ *   into. Unconfirmed. audio-keepalive.js plays faint audio in our frame on
+ *   Android, which may also route lock-screen controls to us.
  * - Firefox has historically not implemented the Media Session API — nothing
  *   to fix on our end. Re-check on new releases.
  */
