@@ -6,11 +6,12 @@
 	import {tracksCollection} from '$lib/collections/tracks'
 	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
 	import {clearQueue, clearAllQueue, playTrack} from '$lib/api'
+	import {getActiveQueue} from '$lib/player/queue'
 	import SearchInput from './search-input.svelte'
 	import FilterChips from './filter-chips.svelte'
 	import Icon from './icon.svelte'
 	import Tracklist from './tracklist.svelte'
-	import {onDestroy, tick} from 'svelte'
+	import {tick} from 'svelte'
 	import * as m from '$lib/paraglide/messages'
 
 	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
@@ -48,10 +49,9 @@
 		scrollToActive = doScrollToActive
 	})
 
-	// Search the full queue even while playback is limited to a results subset.
-	let trackIds = $derived(
-		(deck?.shuffle ? deck.playlist_tracks_shuffled : deck?.playlist_tracks) ?? []
-	)
+	// Lists what will play: the results subset while one is active.
+	let trackIds = $derived(getActiveQueue(deck))
+	let isFiltering = $derived(searchQuery !== '' || selectedTags.length > 0)
 
 	// Resolve tracks by id in playlist order. An inArray() live query would rebuild a
 	// d2ts pipeline (~1.2s block) over a large playlist; these Map lookups are O(1).
@@ -94,10 +94,6 @@
 		if (deck) deck.playlist_tracks_filtered = undefined
 	}
 
-	onDestroy(() => {
-		if (deck) deck.playlist_tracks_filtered = undefined
-	})
-
 	/** @param {import('$lib/types').Track} track */
 	function canEditTrack(track) {
 		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
@@ -120,7 +116,12 @@
 			placeholder={`${m.search_placeholder()} (${queueTracks.length})`}
 			debounce={150}
 		/>
-		{#if searchQuery !== '' || selectedTags.length > 0}
+		{#if isFiltering && filteredQueueTracks.length > 0}
+			<button onclick={playResults} {@attach tooltip({content: m.search_play_all()})}>
+				<Icon icon="play-fill" />
+			</button>
+		{/if}
+		{#if isFiltering || deck?.playlist_tracks_filtered}
 			<button onclick={clearFilters} {@attach tooltip({content: m.queue_clear_filters()})}>
 				<Icon icon="close" />
 			</button>
@@ -135,20 +136,6 @@
 			</button>
 		{/if}
 	</div>
-
-	{#if searchQuery || selectedTags.length || deck?.playlist_tracks_filtered}
-		<menu aria-label="Queue playback">
-			{#if searchQuery || selectedTags.length}
-				<button type="button" onclick={playResults} disabled={!filteredQueueTracks.length}>
-					Play results ({filteredQueueTracks.length})
-				</button>
-			{/if}
-			{#if deck?.playlist_tracks_filtered}
-				<button type="button" onclick={clearFilters}>Play full queue</button>
-				<small>Playing {deck.playlist_tracks_filtered.length} results</small>
-			{/if}
-		</menu>
-	{/if}
 
 	{#if selectedTags.length > 0}
 		<FilterChips tags={selectedTags} onRemoveTag={toggleTag} />

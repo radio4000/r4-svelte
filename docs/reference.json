@@ -63,7 +63,7 @@
 		{"name": "deck.playlist_tracks_shuffled", "desc": "Queue (shuffled order)."},
 		{
 			"name": "deck.playlist_tracks_filtered",
-			"desc": "Session-only playback subset of the full queue; Play full queue clears it without restarting playback."
+			"desc": "Session-only playback subset of the queue, set from queue search/tag results."
 		},
 		{"name": "deck.is_playing", "desc": "Playback state."},
 		{"name": "deck.shuffle", "desc": "Shuffle enabled."},
