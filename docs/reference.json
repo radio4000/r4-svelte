@@ -870,6 +870,13 @@
 		}
 	],
 
+	"src/lib/player/audio-keepalive.js": [
+		{
+			"name": "requestAudioKeepAlive(deckId) / releaseAudioKeepAlive(deckId)",
+			"desc": "Ref-counted 10s loop of an inaudible -66 dBFS DC offset while a deck plays (Android only), so a locked page stays audible between tracks. See docs/player.md."
+		}
+	],
+
 	"src/lib/player/stall-recovery.svelte.ts": [
 		{
 			"name": "createStallRecovery(deckId, deps)",

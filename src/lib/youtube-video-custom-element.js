@@ -21,6 +21,24 @@ class YouTube2Element extends HTMLElement {
 
 	#pendingVideoLoad = false
 	#autoplayAttempted = false
+	/** Track switches (docs/player.md, "Auto-advance on a locked screen"). From a src change
+	 *  until the new video plays: play() is a no-op (loadVideoById autoplays; a racing
+	 *  playVideo() restarted the old, ended video or re-cued the new one), and the PAUSED that
+	 *  loadVideoById reports is ignored (it flipped the deck and OS media session to paused). */
+	#switchStartedAt = 0
+	/** Defensive: shortly after a switch, while hidden, resume a pause we didn't ask for. */
+	#landingUntil = 0
+	#landingResumes = 0
+	#pauseRequested = false
+	/** Expires, so a load that never starts can't swallow a later play() or pause. */
+	get #switching() {
+		return Date.now() - this.#switchStartedAt < 5000
+	}
+	/** Defensive: the mute state we asked for. A mute YouTube applies on its own is never
+	 *  reported as the listener's volume change, and ours is restored once visible (unmuting
+	 *  while hidden made the browser pause the video). */
+	#mutedIntent = false
+	#onVisibilityChange = () => this.#restoreMute()
 
 	/** @type {YT.PlayerError | null} */
 	#errorCode = null
@@ -36,6 +54,7 @@ class YouTube2Element extends HTMLElement {
 	async connectedCallback() {
 		// Must run before anything else — see custom-element-props.js.
 		upgradeProperties(this, ['src', 'volume', 'muted', 'playbackRate', 'currentTime'])
+		document.addEventListener('visibilitychange', this.#onVisibilityChange)
 
 		// Use light DOM for better fullscreen compatibility in embedded YouTube controls.
 		this.style.display = 'block'
@@ -61,6 +80,7 @@ class YouTube2Element extends HTMLElement {
 	}
 
 	disconnectedCallback() {
+		document.removeEventListener('visibilitychange', this.#onVisibilityChange)
 		// Destroy player to clean up listeners and prevent memory leaks
 		if (this.api) {
 			log.debug('disconnectedCallback: destroying player')
@@ -86,6 +106,7 @@ class YouTube2Element extends HTMLElement {
 			}
 			iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1`
 		}
+		if (this.hasAttribute('muted')) this.#mutedIntent = true
 
 		try {
 			// @ts-expect-error iframe may be null/undefined at type-check time but is guaranteed present here
@@ -125,6 +146,7 @@ class YouTube2Element extends HTMLElement {
 					},
 					onError: (error) => {
 						log.error('YouTube error:', error.data)
+						this.#switchStartedAt = 0
 						this.#errorCode = error.data
 						this.dispatchEvent(new Event('error'))
 					},
@@ -144,6 +166,7 @@ class YouTube2Element extends HTMLElement {
 
 			// @ts-expect-error onVolumeChange is undocumented but works
 			this.api.addEventListener('onVolumeChange', () => {
+				if (this.#restoreMute()) return
 				log.debug('onVolumeChange fired, dispatching volumechange')
 				this.dispatchEvent(new Event('volumechange'))
 			})
@@ -176,11 +199,30 @@ class YouTube2Element extends HTMLElement {
 
 	#dispatchStateEvents(state) {
 		const YT = globalThis.YT
+		if (state === YT.PlayerState.PAUSED && this.#switching) {
+			log.debug('ignoring pause while switching videos')
+			return
+		}
+		if (state !== YT.PlayerState.UNSTARTED && state !== YT.PlayerState.BUFFERING) {
+			this.#switchStartedAt = 0
+		}
 		if (state === YT.PlayerState.PLAYING) {
+			this.#restoreMute()
 			this.#maybeDispatchDurationChange()
 			this.dispatchEvent(new Event('play'))
 			this.dispatchEvent(new Event('playing'))
 		} else if (state === YT.PlayerState.PAUSED) {
+			if (
+				document.visibilityState === 'hidden' &&
+				!this.#pauseRequested &&
+				Date.now() < this.#landingUntil &&
+				this.#landingResumes < 3
+			) {
+				this.#landingResumes++
+				log.warn('paused right after a switch while hidden, resuming', this.#landingResumes)
+				this.api?.playVideo()
+				return
+			}
 			this.dispatchEvent(new Event('pause'))
 		} else if (state === YT.PlayerState.ENDED) {
 			this.dispatchEvent(new Event('ended'))
@@ -199,6 +241,12 @@ class YouTube2Element extends HTMLElement {
 	async attributeChangedCallback(attrName, oldValue, newValue) {
 		if (attrName === 'src' && oldValue !== newValue && newValue) {
 			log.debug('src changed to:', newValue)
+			// Mark the switch now: a play() racing ahead of #loadVideo must not playVideo() the
+			// old, ended video (that restarts it, then reports a pause mid-switch).
+			if (this.isLoaded && this.hasAttribute('autoplay')) this.#switchStartedAt = Date.now()
+			this.#landingUntil = Date.now() + 10000
+			this.#landingResumes = 0
+			this.#pauseRequested = false
 			if (this.isLoaded) {
 				await this.#loadVideo()
 			} else {
@@ -224,6 +272,7 @@ class YouTube2Element extends HTMLElement {
 
 		if (!this.api) return
 		if (this.hasAttribute('autoplay')) {
+			this.#switchStartedAt = Date.now()
 			this.api.loadVideoById(videoId)
 		} else {
 			this.api.cueVideoById(videoId)
@@ -241,8 +290,14 @@ class YouTube2Element extends HTMLElement {
 
 	async play() {
 		log.debug('play')
+		this.#pauseRequested = false
 		await this.#loadComplete
 		if (!this.api) return
+		// loadVideoById already autoplays; cueing or playVideo() on top would fight it.
+		if (this.#switching) {
+			log.debug('play: load in progress, it autoplays')
+			return
+		}
 
 		// If video is in unstarted state (-1), try to cue it first
 		const state = this.api.getPlayerState()
@@ -260,6 +315,8 @@ class YouTube2Element extends HTMLElement {
 	}
 
 	async pause() {
+		this.#switchStartedAt = 0
+		this.#pauseRequested = true
 		await this.#loadComplete
 		if (this.api) {
 			this.api.pauseVideo()
@@ -321,7 +378,18 @@ class YouTube2Element extends HTMLElement {
 		return this.api.isMuted()
 	}
 
+	/** Undo a mute we didn't ask for, once visible. True when the mute isn't ours. */
+	#restoreMute() {
+		if (!this.api?.isMuted || this.api.isMuted() === this.#mutedIntent) return false
+		if (document.visibilityState !== 'visible') return true
+		log.info('provider changed mute on its own, restoring', {muted: this.#mutedIntent})
+		if (this.#mutedIntent) this.api.mute()
+		else this.api.unMute()
+		return true
+	}
+
 	set muted(val) {
+		this.#mutedIntent = Boolean(val)
 		// Don't check equality if API isn't ready
 		if (this.api?.isMuted && this.muted === val) return
 		this.#loadComplete.then(() => {

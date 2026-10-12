@@ -17,6 +17,7 @@
 		toggleShuffle
 	} from '$lib/api'
 	import {requestPlaybackWakeLock, releasePlaybackWakeLock} from '$lib/wake-lock'
+	import {requestAudioKeepAlive, releaseAudioKeepAlive} from '$lib/player/audio-keepalive'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
 	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '$lib/deck'
 	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '$lib/player/auto-radio'
@@ -228,10 +229,6 @@
 			mediaElement.playbackRate = deck.speed ?? 1
 		}
 		if (mediaElement) recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
-		// Re-assert right when real playback starts — this is exactly the moment
-		// YouTube's iframe is most likely to claim the Media Session for itself.
-		mediaSession.reassert()
-
 		// Update track duration if missing (only for owned channels, once per track)
 		if (
 			track &&
@@ -251,6 +248,8 @@
 
 	/** A flagged track that plays again clears its own flag; owner only, like handleError. */
 	function handlePlaying() {
+		// `play` can precede buffering; reclaim controls when playback actually resumes too.
+		mediaSession.reassert()
 		const id = track?.id
 		if (!id || !isDbId(id) || !channel || !canEditChannel(channel.id)) return
 		if (!tracksCollection.state.get(id)?.playback_error) return
@@ -404,6 +403,13 @@
 		if (!deck?.is_playing) return
 		requestPlaybackWakeLock(deckId)
 		return () => releasePlaybackWakeLock(deckId)
+	})
+
+	// Keep the page audible across track changes on a locked Android screen (see module).
+	$effect(() => {
+		if (!deck?.is_playing) return
+		requestAudioKeepAlive(deckId)
+		return () => releaseAudioKeepAlive(deckId)
 	})
 
 	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)

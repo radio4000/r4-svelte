@@ -4,7 +4,7 @@
  * itself whenever its playback starts, silently overwriting our
  * metadata/handlers on Android. Can't be prevented — so metadata + handlers
  * are reasserted on every real "playing" event (the player calls `reassert()`
- * from its play handler) and on a light recurring interval while playing.
+ * from its playing handler) and on a light recurring interval while playing.
  *
  * Rune factory (same pattern as deck-display.svelte.ts): call once during
  * component init; effects bind to the component's lifecycle.
@@ -12,9 +12,8 @@
  * Platform gotchas:
  * - Chrome may bind action-handling authority to the frame owning the playing
  *   media — for YouTube that's their cross-origin iframe, which we can't reach
- *   into. Unconfirmed. Don't counter it with a silent top-frame <audio>
- *   "anchor" (tried, Aug 2026): re-playing it on each track change likely competed
- *   for audio focus and paused the next track on mobile, in every browser.
+ *   into. Unconfirmed. audio-keepalive.js plays faint audio in our frame on
+ *   Android, which may also route lock-screen controls to us.
  * - Firefox has historically not implemented the Media Session API — nothing
  *   to fix on our end. Re-check on new releases.
  */
@@ -131,7 +130,7 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 	})
 
 	// playbackState flips on every play/pause without needing a full rebuild. Also
-	// keeps a light recurring reassert while playing — the player's play handler
+	// keeps a light recurring reassert while playing — the player's playing handler
 	// covers the moment playback starts; this covers YouTube's iframe reclaiming
 	// the session again later.
 	$effect(() => {
@@ -141,6 +140,20 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 		if (!deck?.is_playing) return
 		const interval = setInterval(reassert, 4000)
 		return () => clearInterval(interval)
+	})
+
+	// A suspended tab may miss the recurring reassertion. Restore controls on
+	// resume even when the provider reported a pause while the screen was locked.
+	$effect(() => {
+		const resume = () => {
+			if (document.visibilityState === 'visible') reassert()
+		}
+		document.addEventListener('visibilitychange', resume)
+		window.addEventListener('pageshow', resume)
+		return () => {
+			document.removeEventListener('visibilitychange', resume)
+			window.removeEventListener('pageshow', resume)
+		}
 	})
 
 	return {reassert}
