@@ -12,7 +12,6 @@
 	import Icon from '$lib/components/icon.svelte'
 	import Seo from '$lib/components/seo.svelte'
 	import type {Track} from '$lib/types'
-	import {formatDate, formatDateFormal} from '$lib/dates'
 	import * as m from '$lib/paraglide/messages'
 
 	let slug = $derived(page.params.slug ?? '')
@@ -31,7 +30,6 @@
 					.select('*')
 					.overlaps('mentions', mentionTokens)
 					.neq('slug', slug)
-					.order('updated_at', {ascending: false})
 					.order('created_at', {ascending: false})
 					.limit(4000),
 				sdk.supabase
@@ -39,7 +37,6 @@
 					.select('*')
 					.ilike('description', `%@${slug}%`)
 					.neq('slug', slug)
-					.order('updated_at', {ascending: false})
 					.order('created_at', {ascending: false})
 					.limit(4000)
 			])
@@ -51,11 +48,10 @@
 			for (const track of (mentionsRes.data || []) as Track[]) byId.set(track.id, track)
 			for (const track of (descriptionRes.data || []) as Track[]) byId.set(track.id, track)
 
-			const mergedTracks = [...byId.values()].toSorted((a, b) => {
-				const aDate = a.updated_at || a.created_at || ''
-				const bDate = b.updated_at || b.created_at || ''
-				return aDate < bDate ? 1 : aDate > bDate ? -1 : 0
-			})
+			// Newest first, so Tracklist can group by month like /tracks.
+			const mergedTracks = [...byId.values()].toSorted((a, b) =>
+				b.created_at.localeCompare(a.created_at)
+			)
 
 			tracksCollection.utils.writeBatch(() => {
 				for (const track of mergedTracks) tracksCollection.utils.writeUpsert(track)
@@ -121,27 +117,9 @@
 			tracks={filteredTracks}
 			playlistTracks={tracks}
 			{playlistTitle}
-			grouped={false}
+			grouped={!q}
 			playContext={true}
 			showSlug={true}
-		>
-			{#snippet footer({track})}
-				{@const date = track.updated_at || track.created_at}
-				<small>
-					<time datetime={date} title={formatDateFormal(date)}>Updated {formatDate(date)}</time>
-				</small>
-			{/snippet}
-		</Tracklist>
+		/>
 	</Subpage>
 </section>
-
-<style>
-	section :global(.track-with-channel) {
-		flex-wrap: wrap;
-	}
-
-	section :global(.track-with-channel > small) {
-		flex-basis: 100%;
-		padding-inline: var(--space-1);
-	}
-</style>
