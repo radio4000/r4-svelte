@@ -26,9 +26,11 @@ class YouTube2Element extends HTMLElement {
 	 *  and Android may then freeze a locked page before the next track gets going. */
 	#switching = false
 	/** The mute state we asked for. On mobile, a video started without a tap (next track on a
-	 *  locked screen) can make YouTube fall back to muted autoplay. That isn't the listener's
-	 *  choice: restore ours instead of reporting it as a volume change. */
+	 *  locked screen) makes YouTube fall back to muted autoplay. That isn't the listener's choice,
+	 *  so it's never reported as a volume change. Unmuting while hidden makes the browser pause
+	 *  the video, so ours is restored once the page is visible again. */
 	#mutedIntent = false
+	#onVisibilityChange = () => this.#restoreMute()
 
 	/** @type {YT.PlayerError | null} */
 	#errorCode = null
@@ -44,6 +46,7 @@ class YouTube2Element extends HTMLElement {
 	async connectedCallback() {
 		// Must run before anything else — see custom-element-props.js.
 		upgradeProperties(this, ['src', 'volume', 'muted', 'playbackRate', 'currentTime'])
+		document.addEventListener('visibilitychange', this.#onVisibilityChange)
 
 		// Use light DOM for better fullscreen compatibility in embedded YouTube controls.
 		this.style.display = 'block'
@@ -69,6 +72,7 @@ class YouTube2Element extends HTMLElement {
 	}
 
 	disconnectedCallback() {
+		document.removeEventListener('visibilitychange', this.#onVisibilityChange)
 		// Destroy player to clean up listeners and prevent memory leaks
 		if (this.api) {
 			log.debug('disconnectedCallback: destroying player')
@@ -342,9 +346,10 @@ class YouTube2Element extends HTMLElement {
 		return this.api.isMuted()
 	}
 
-	/** Undo a mute we didn't ask for. True when it did. */
+	/** Undo a mute we didn't ask for, once visible. True when the mute isn't ours. */
 	#restoreMute() {
 		if (!this.api?.isMuted || this.api.isMuted() === this.#mutedIntent) return false
+		if (document.visibilityState !== 'visible') return true
 		log.info('provider changed mute on its own, restoring', {muted: this.#mutedIntent})
 		if (this.#mutedIntent) this.api.mute()
 		else this.api.unMute()
