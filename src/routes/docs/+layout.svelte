@@ -29,8 +29,7 @@
 
 <div class="docs">
 	<details bind:open={menuOpen}>
-		<summary>Topics · {currentSlug === 'index' ? 'Docs' : currentSlug.replaceAll('-', ' ')}</summary
-		>
+		<summary>{currentSlug === 'index' ? 'Docs' : currentSlug}</summary>
 		<nav class="nav-vertical" aria-label="Documentation topics">
 			<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a
 			>
@@ -41,15 +40,14 @@
 			<hr />
 			{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
 				<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
-					>{doc.replaceAll('-', ' ')}</a
+					>{doc}</a
 				>
 				{#if data.subroutes?.[doc]}
 					{#each data.subroutes[doc] as sub (sub)}
 						<a
 							class="subroute"
 							href={resolve(`/docs/${doc}/${sub}`)}
-							aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}
-							>{sub.replaceAll('-', ' ')}</a
+							aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}>{sub}</a
 						>
 					{/each}
 				{/if}
@@ -160,10 +158,6 @@
 			position: static;
 			border-right: none;
 			border-bottom: 1px solid var(--color-interface-border);
-		}
-
-		.docs > main {
-			padding-inline: var(--space-2);
 		}
 	}
 
