@@ -126,7 +126,7 @@
 	<div class="search-container">
 		<SearchInput
 			bind:value={() => filter.search, (search) => setFilter({search})}
-			placeholder={`${m.search_placeholder()} (${queueTracks.length})`}
+			placeholder={`${filteredQueueTracks.length}/${queueTracks.length}`}
 			debounce={150}
 		/>
 		{#if !appState.embed_mode && trackIds.length > 0 && (deck?.is_playing ? trackIds.length > 1 : true)}
@@ -140,21 +140,13 @@
 		{/if}
 	</div>
 
-	{#if isFiltering}
-		<menu class="row">
-			<small>{filteredQueueTracks.length} / {queueTracks.length}</small>
-			{#if filter.tags.length || filter.mention}
-				<FilterChips
-					tags={filter.tags}
-					mention={filter.mention}
-					onRemoveTag={toggleTag}
-					onClearMention={() => setFilter({mention: ''})}
-				/>
-			{/if}
-			<button onclick={clearFilters} {@attach tooltip({content: m.queue_clear_filters()})}>
-				<Icon icon="close" />
-			</button>
-		</menu>
+	{#if filter.tags.length || filter.mention}
+		<FilterChips
+			tags={filter.tags}
+			mention={filter.mention}
+			onRemoveTag={toggleTag}
+			onClearMention={() => setFilter({mention: ''})}
+		/>
 	{/if}
 
 	<main class="scroll">
@@ -246,26 +238,10 @@
 		width: 100%;
 	}
 
-	/* One line of filter state: "12 / 40", chips, ✕. */
-	.queue-panel > menu {
-		flex-wrap: nowrap;
+	.queue-panel > :global(.filter-chips) {
 		align-items: center;
 		padding: var(--space-1) 0.5rem;
 		border-bottom: 1px solid var(--color-interface-border);
-
-		small {
-			white-space: nowrap;
-			font-variant-numeric: tabular-nums;
-		}
-
-		:global(.filter-chips) {
-			flex: 1;
-			min-width: 0;
-		}
-
-		> button {
-			margin-inline-start: auto;
-		}
 	}
 
 	main :global(.index) {
