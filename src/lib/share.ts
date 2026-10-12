@@ -47,7 +47,8 @@ function removeFrames() {
 function shareViaSpare(data: ShareData) {
 	const frame = spareFrame
 	const frameNavigator = frame?.contentWindow?.navigator
-	if (!frame || !frameNavigator?.share) return Promise.reject(new DOMException('', 'InvalidStateError'))
+	if (!frame || !frameNavigator?.share)
+		return Promise.reject(new DOMException('', 'InvalidStateError'))
 	usedFrame?.remove()
 	usedFrame = frame
 	spareFrame = undefined
@@ -55,7 +56,8 @@ function shareViaSpare(data: ShareData) {
 	return frameNavigator.share(data)
 }
 
-const isError = (error: unknown, name: string) => error instanceof DOMException && error.name === name
+const isError = (error: unknown, name: string) =>
+	error instanceof DOMException && error.name === name
 
 /** Opens the native share sheet; false when unavailable, cancelled or refused. */
 export async function nativeShare(data: ShareData) {

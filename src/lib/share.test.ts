@@ -65,7 +65,9 @@ describe('native sharing', () => {
 		expect(frames).toHaveLength(1)
 
 		void nativeShare({...data, title: 'Other track'})
-		await vi.waitFor(() => expect(frames[0].share).toHaveBeenCalledWith({...data, title: 'Other track'}))
+		await vi.waitFor(() =>
+			expect(frames[0].share).toHaveBeenCalledWith({...data, title: 'Other track'})
+		)
 		expect(frames[1].isConnected).toBe(true)
 
 		void nativeShare(data)
