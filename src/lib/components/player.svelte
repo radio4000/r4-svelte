@@ -748,7 +748,6 @@
 
 <style>
 	.player {
-		container-type: inline-size;
 		display: flex;
 		flex-direction: column;
 		flex: 1;
@@ -834,6 +833,9 @@
 		width: 100%;
 		flex-shrink: 0;
 		padding: 0.5rem;
+		/* Only the controls row is a container: on .player it would also flip
+		   track-card's own narrow-container rules. */
+		container-type: inline-size;
 
 		/* Volume and speed split whatever space the buttons don't need. DJing
 		   with multiple decks needs per-deck volume and speed on mobile too. */
