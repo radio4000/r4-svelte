@@ -422,6 +422,11 @@
 	   Hidden via CSS only — everything stays in the DOM. Above
 	   1024px: the full desktop bar. */
 	@media (max-width: 1024px) {
+		/* Progress is display-only here; taps reach the bar's expansion handler. */
+		.deck-compact-bar :global(.progress input) {
+			pointer-events: none;
+		}
+
 		.deck-transport > :global(*:not(.play)) {
 			display: none;
 		}

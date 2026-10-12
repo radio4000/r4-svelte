@@ -30,6 +30,7 @@ On mobile (≤768px) a deck has two states: compact (bottom bar) or expanded (fu
 
 - Leaving compact (bar tap, expand button, `r` shortcut) goes through `expandDeck()` — fullscreen, and any other expanded deck returns to compact.
 - Tapping anywhere on the compact bar expands; interactive controls inside (play, menu, links) still do their own thing.
+- Mini-bar progress (≤1024px) ignores taps, so they expand the deck instead of seeking.
 - The expanded deck shows a mobile-only chevron-down button (top-left) that collapses back to compact.
 - New decks (`addDeck`) start compact on mobile.
 - Persisted strip decks (neither flag, e.g. state saved on desktop) normalize to compact once at load in `+layout.svelte`. Resizing mid-session isn't fought — a desktop-created strip deck stays in the strip until the next interaction or reload.
