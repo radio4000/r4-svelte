@@ -51,28 +51,31 @@
 <div class="docs">
 	{@render topics()}
 
-	<!-- Mobile: the same menu, behind one button showing where you are. -->
-	<PopoverMenu centered>
-		{#snippet trigger()}
-			<Icon icon="menu" />
-			{currentSlug === 'index' ? 'Docs' : currentSlug}
-		{/snippet}
-		{@render topics()}
-	</PopoverMenu>
-
 	<main class="article">
-		{#if hasPlayground && hasHtml}
-			<menu class="tabs nav-grouped doc-tabs">
-				<button
-					aria-current={activeTab === 'docs' ? 'true' : undefined}
-					onclick={() => setTab('docs')}>Docs</button
-				>
-				<button
-					aria-current={activeTab === 'playground' ? 'true' : undefined}
-					onclick={() => setTab('playground')}>Playground</button
-				>
-			</menu>
+		<header>
+			<!-- Mobile: the same menu, behind one button showing where you are. -->
+			<PopoverMenu centered>
+				{#snippet trigger()}
+					<Icon icon="menu" />
+					{currentSlug === 'index' ? 'Docs' : currentSlug}
+				{/snippet}
+				{@render topics()}
+			</PopoverMenu>
+			{#if hasPlayground && hasHtml}
+				<menu class="tabs nav-grouped doc-tabs">
+					<button
+						aria-current={activeTab === 'docs' ? 'true' : undefined}
+						onclick={() => setTab('docs')}>Docs</button
+					>
+					<button
+						aria-current={activeTab === 'playground' ? 'true' : undefined}
+						onclick={() => setTab('playground')}>Playground</button
+					>
+				</menu>
+			{/if}
+		</header>
 
+		{#if hasPlayground && hasHtml}
 			<div class="doc-playground">
 				<article class="doc-prose constrained article" class:hidden-tab={activeTab !== 'docs'}>
 					<!-- eslint-disable svelte/no-at-html-tags -->
@@ -97,8 +100,23 @@
 		height: 100%;
 	}
 
-	.docs > :global(.popover-menu) {
-		display: none;
+	/* Menu button (mobile) and Docs/Playground tabs share one sticky line. */
+	header {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		display: flex;
+		gap: var(--space-1);
+		align-items: center;
+		flex-wrap: wrap;
+
+		> :global(*) {
+			margin-block-end: 1rem;
+		}
+
+		> :global(.popover-menu) {
+			display: none;
+		}
 	}
 
 	:global([popover]) nav {
@@ -132,13 +150,6 @@
 		min-width: 0;
 	}
 
-	.doc-tabs {
-		position: sticky;
-		top: 0;
-		z-index: 1;
-		margin-block-end: 1rem;
-	}
-
 	.doc-playground {
 		min-width: 0;
 	}
@@ -157,9 +168,8 @@
 			display: none;
 		}
 
-		.docs > :global(.popover-menu) {
+		header > :global(.popover-menu) {
 			display: block;
-			padding: var(--space-1) 0 0 1rem;
 		}
 	}
 
