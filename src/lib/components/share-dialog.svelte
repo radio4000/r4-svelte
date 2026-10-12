@@ -32,6 +32,7 @@
 	$effect(() => {
 		if (appState.modal_share) {
 			data = appState.modal_share
+			copiedField = null
 			showModal = true
 			appState.modal_share = null
 		}

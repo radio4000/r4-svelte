@@ -874,7 +874,7 @@
 		{"name": "canNativeShare()", "desc": "True when Web Share API is available."},
 		{
 			"name": "nativeShare({title, text?, url})",
-			"desc": "Native share sheet; returns success boolean."
+			"desc": "Native share sheet; returns success boolean. Reopens on Firefox Android, where a dismissed share never settles, via a spare iframe."
 		}
 	],
 
