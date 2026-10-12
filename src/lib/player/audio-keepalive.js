@@ -15,9 +15,12 @@
  * Browsers only count media that is long enough and audible: Firefox ignores
  * media under 3s (media.mediacontrol.eligible.media.duration.s) and stops media
  * control when a media ends (…stopcontrol.aftermediaends), Chrome treats media
- * under 5s as transient. So: a 10s loop of faint noise (about -60 dBFS), not
- * digital zero. Android only: iOS Safari can pause other media when a page
- * starts a second audio element.
+ * under 5s as transient. So: a 10s loop, never digital zero. Firefox counts a
+ * stream as audible above -72 dBFS (AudibilityMonitor); noise at that level is
+ * plainly heard as hiss, so it's a 15Hz tone at about -54 dBFS instead: below
+ * human hearing and what phone speakers reproduce, well above the threshold.
+ * 150 whole cycles, so the loop point is seamless. Android only: iOS Safari can
+ * pause other media when a page starts a second audio element.
  */
 
 import {logger} from '$lib/logger'
@@ -32,8 +35,8 @@ let audio = null
 /** Deck IDs currently holding the keep-alive open. */
 const activeDeckIds = new Set()
 
-/** Ten seconds of faint 8kHz mono 16-bit noise as a WAV object URL. */
-function noiseUrl() {
+/** Ten seconds of a faint 15Hz tone, 8kHz mono 16-bit, as a WAV object URL. */
+function toneUrl() {
 	const rate = 8000
 	const samples = rate * 10
 	const view = new DataView(new ArrayBuffer(44 + samples * 2))
@@ -53,7 +56,7 @@ function noiseUrl() {
 	text(36, 'data')
 	view.setUint32(40, samples * 2, true)
 	for (let i = 0; i < samples; i++) {
-		view.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 32), true)
+		view.setInt16(44 + i * 2, Math.round(Math.sin((2 * Math.PI * 15 * i) / rate) * 64), true)
 	}
 	return URL.createObjectURL(new Blob([view], {type: 'audio/wav'}))
 }
@@ -64,7 +67,7 @@ export function requestAudioKeepAlive(deckId) {
 	if (!enabled) return
 	activeDeckIds.add(deckId)
 	if (!audio) {
-		audio = new Audio(noiseUrl())
+		audio = new Audio(toneUrl())
 		audio.loop = true
 	}
 	if (audio.paused) {
