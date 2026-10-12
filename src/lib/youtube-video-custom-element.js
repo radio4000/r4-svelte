@@ -25,6 +25,10 @@ class YouTube2Element extends HTMLElement {
 	 *  real pause: reporting it flips the deck and the OS media session to paused mid-switch,
 	 *  and Android may then freeze a locked page before the next track gets going. */
 	#switching = false
+	/** The mute state we asked for. On mobile, a video started without a tap (next track on a
+	 *  locked screen) can make YouTube fall back to muted autoplay. That isn't the listener's
+	 *  choice: restore ours instead of reporting it as a volume change. */
+	#mutedIntent = false
 
 	/** @type {YT.PlayerError | null} */
 	#errorCode = null
@@ -90,6 +94,7 @@ class YouTube2Element extends HTMLElement {
 			}
 			iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1`
 		}
+		if (this.hasAttribute('muted')) this.#mutedIntent = true
 
 		try {
 			// @ts-expect-error iframe may be null/undefined at type-check time but is guaranteed present here
@@ -149,6 +154,7 @@ class YouTube2Element extends HTMLElement {
 
 			// @ts-expect-error onVolumeChange is undocumented but works
 			this.api.addEventListener('onVolumeChange', () => {
+				if (this.#restoreMute()) return
 				log.debug('onVolumeChange fired, dispatching volumechange')
 				this.dispatchEvent(new Event('volumechange'))
 			})
@@ -189,6 +195,7 @@ class YouTube2Element extends HTMLElement {
 			this.#switching = false
 		}
 		if (state === YT.PlayerState.PLAYING) {
+			this.#restoreMute()
 			this.#maybeDispatchDurationChange()
 			this.dispatchEvent(new Event('play'))
 			this.dispatchEvent(new Event('playing'))
@@ -335,7 +342,17 @@ class YouTube2Element extends HTMLElement {
 		return this.api.isMuted()
 	}
 
+	/** Undo a mute we didn't ask for. True when it did. */
+	#restoreMute() {
+		if (!this.api?.isMuted || this.api.isMuted() === this.#mutedIntent) return false
+		log.info('provider changed mute on its own, restoring', {muted: this.#mutedIntent})
+		if (this.#mutedIntent) this.api.mute()
+		else this.api.unMute()
+		return true
+	}
+
 	set muted(val) {
+		this.#mutedIntent = Boolean(val)
 		// Don't check equality if API isn't ready
 		if (this.api?.isMuted && this.muted === val) return
 		this.#loadComplete.then(() => {
