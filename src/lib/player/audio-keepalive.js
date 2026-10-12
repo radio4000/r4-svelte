@@ -42,8 +42,9 @@ function offsetUrl() {
 	const rate = 8000
 	const samples = rate * 10
 	const view = new DataView(new ArrayBuffer(44 + samples * 2))
-	const text = (/** @type {number} */ at, /** @type {string} */ s) =>
-		[...s].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)))
+	const text = (/** @type {number} */ at, /** @type {string} */ s) => {
+		for (let i = 0; i < s.length; i++) view.setUint8(at + i, s.charCodeAt(i))
+	}
 	text(0, 'RIFF')
 	view.setUint32(4, 36 + samples * 2, true)
 	text(8, 'WAVE')

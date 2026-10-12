@@ -21,12 +21,12 @@ class YouTube2Element extends HTMLElement {
 
 	#pendingVideoLoad = false
 	#autoplayAttempted = false
-	/** loadVideoById reports PAUSED on the old video before the new one plays. That's not a
-	 *  real pause: reporting it flips the deck and the OS media session to paused mid-switch,
-	 *  and Android may then freeze a locked page before the next track gets going. */
+	/** Track switches (docs/player.md, "Auto-advance on a locked screen"). From a src change
+	 *  until the new video plays: play() is a no-op (loadVideoById autoplays; a racing
+	 *  playVideo() restarted the old, ended video or re-cued the new one), and the PAUSED that
+	 *  loadVideoById reports is ignored (it flipped the deck and OS media session to paused). */
 	#switchStartedAt = 0
-	/** On a locked phone the browser can pause the next track a second or two after it starts
-	 *  (with audio). Shortly after a switch, while hidden, resume a pause we didn't ask for. */
+	/** Defensive: shortly after a switch, while hidden, resume a pause we didn't ask for. */
 	#landingUntil = 0
 	#landingResumes = 0
 	#pauseRequested = false
@@ -34,10 +34,9 @@ class YouTube2Element extends HTMLElement {
 	get #switching() {
 		return Date.now() - this.#switchStartedAt < 5000
 	}
-	/** The mute state we asked for. On mobile, a video started without a tap (next track on a
-	 *  locked screen) makes YouTube fall back to muted autoplay. That isn't the listener's choice,
-	 *  so it's never reported as a volume change. Unmuting while hidden makes the browser pause
-	 *  the video, so ours is restored once the page is visible again. */
+	/** Defensive: the mute state we asked for. A mute YouTube applies on its own is never
+	 *  reported as the listener's volume change, and ours is restored once visible (unmuting
+	 *  while hidden made the browser pause the video). */
 	#mutedIntent = false
 	#onVisibilityChange = () => this.#restoreMute()
 
@@ -294,9 +293,7 @@ class YouTube2Element extends HTMLElement {
 		this.#pauseRequested = false
 		await this.#loadComplete
 		if (!this.api) return
-		// loadVideoById already autoplays. Cueing or a bare playVideo() on top cancels that load
-		// and asks for a fresh start, which mobile browsers refuse on a locked screen (r4 v1 only
-		// called loadVideoById, and auto-advanced fine while locked).
+		// loadVideoById already autoplays; cueing or playVideo() on top would fight it.
 		if (this.#switching) {
 			log.debug('play: load in progress, it autoplays')
 			return
