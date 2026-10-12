@@ -45,20 +45,14 @@
 		}
 	}
 
-	/** Never disabled: some mobile browsers never settle the share promise after the
-	 *  sheet is dismissed, then refuse the next share. Copy the link instead. */
 	async function share() {
 		if (!data) return
 		const {track, channel} = data
-		try {
-			await nativeShare(
-				track
-					? {title: track.title, text: `@${channel.slug}`, url}
-					: {title: channel.name ?? '', text: channel.description?.slice(0, 100) ?? '', url}
-			)
-		} catch {
-			await copy(url, 'url')
-		}
+		await nativeShare(
+			track
+				? {title: track.title, text: `@${channel.slug}`, url}
+				: {title: channel.name ?? '', text: channel.description?.slice(0, 100) ?? '', url}
+		)
 	}
 
 	function selectAll(e: FocusEvent) {
