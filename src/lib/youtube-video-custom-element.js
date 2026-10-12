@@ -21,6 +21,10 @@ class YouTube2Element extends HTMLElement {
 
 	#pendingVideoLoad = false
 	#autoplayAttempted = false
+	/** loadVideoById reports PAUSED on the old video before the new one plays. That's not a
+	 *  real pause: reporting it flips the deck and the OS media session to paused mid-switch,
+	 *  and Android may then freeze a locked page before the next track gets going. */
+	#switching = false
 
 	/** @type {YT.PlayerError | null} */
 	#errorCode = null
@@ -125,6 +129,7 @@ class YouTube2Element extends HTMLElement {
 					},
 					onError: (error) => {
 						log.error('YouTube error:', error.data)
+						this.#switching = false
 						this.#errorCode = error.data
 						this.dispatchEvent(new Event('error'))
 					},
@@ -176,6 +181,13 @@ class YouTube2Element extends HTMLElement {
 
 	#dispatchStateEvents(state) {
 		const YT = globalThis.YT
+		if (state === YT.PlayerState.PAUSED && this.#switching) {
+			log.debug('ignoring pause while switching videos')
+			return
+		}
+		if (state !== YT.PlayerState.UNSTARTED && state !== YT.PlayerState.BUFFERING) {
+			this.#switching = false
+		}
 		if (state === YT.PlayerState.PLAYING) {
 			this.#maybeDispatchDurationChange()
 			this.dispatchEvent(new Event('play'))
@@ -224,6 +236,7 @@ class YouTube2Element extends HTMLElement {
 
 		if (!this.api) return
 		if (this.hasAttribute('autoplay')) {
+			this.#switching = true
 			this.api.loadVideoById(videoId)
 		} else {
 			this.api.cueVideoById(videoId)
@@ -260,6 +273,7 @@ class YouTube2Element extends HTMLElement {
 	}
 
 	async pause() {
+		this.#switching = false
 		await this.#loadComplete
 		if (this.api) {
 			this.api.pauseVideo()
