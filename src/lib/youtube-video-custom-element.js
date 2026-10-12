@@ -24,7 +24,11 @@ class YouTube2Element extends HTMLElement {
 	/** loadVideoById reports PAUSED on the old video before the new one plays. That's not a
 	 *  real pause: reporting it flips the deck and the OS media session to paused mid-switch,
 	 *  and Android may then freeze a locked page before the next track gets going. */
-	#switching = false
+	#switchStartedAt = 0
+	/** Expires, so a load that never starts can't swallow a later play() or pause. */
+	get #switching() {
+		return Date.now() - this.#switchStartedAt < 5000
+	}
 	/** The mute state we asked for. On mobile, a video started without a tap (next track on a
 	 *  locked screen) makes YouTube fall back to muted autoplay. That isn't the listener's choice,
 	 *  so it's never reported as a volume change. Unmuting while hidden makes the browser pause
@@ -138,7 +142,7 @@ class YouTube2Element extends HTMLElement {
 					},
 					onError: (error) => {
 						log.error('YouTube error:', error.data)
-						this.#switching = false
+						this.#switchStartedAt = 0
 						this.#errorCode = error.data
 						this.dispatchEvent(new Event('error'))
 					},
@@ -196,7 +200,7 @@ class YouTube2Element extends HTMLElement {
 			return
 		}
 		if (state !== YT.PlayerState.UNSTARTED && state !== YT.PlayerState.BUFFERING) {
-			this.#switching = false
+			this.#switchStartedAt = 0
 		}
 		if (state === YT.PlayerState.PLAYING) {
 			this.#restoreMute()
@@ -222,6 +226,9 @@ class YouTube2Element extends HTMLElement {
 	async attributeChangedCallback(attrName, oldValue, newValue) {
 		if (attrName === 'src' && oldValue !== newValue && newValue) {
 			log.debug('src changed to:', newValue)
+			// Mark the switch now: a play() racing ahead of #loadVideo must not playVideo() the
+			// old, ended video (that restarts it, then reports a pause mid-switch).
+			if (this.isLoaded && this.hasAttribute('autoplay')) this.#switchStartedAt = Date.now()
 			if (this.isLoaded) {
 				await this.#loadVideo()
 			} else {
@@ -247,7 +254,7 @@ class YouTube2Element extends HTMLElement {
 
 		if (!this.api) return
 		if (this.hasAttribute('autoplay')) {
-			this.#switching = true
+			this.#switchStartedAt = Date.now()
 			this.api.loadVideoById(videoId)
 		} else {
 			this.api.cueVideoById(videoId)
@@ -291,7 +298,7 @@ class YouTube2Element extends HTMLElement {
 	}
 
 	async pause() {
-		this.#switching = false
+		this.#switchStartedAt = 0
 		await this.#loadComplete
 		if (this.api) {
 			this.api.pauseVideo()
