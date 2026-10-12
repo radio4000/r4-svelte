@@ -877,13 +877,6 @@
 		}
 	],
 
-	"src/lib/player/background-advance.svelte.ts": [
-		{
-			"name": "createBackgroundAdvance(deckId, deps)",
-			"desc": "Rune factory: while hidden, advances ~3s before a track ends so mobile browsers keep playing. Returns {advancedRecently()} to ignore the old track's late ended. Skips broadcast/auto-radio decks."
-		}
-	],
-
 	"src/lib/share.ts": [
 		{"name": "channelUrl(channel)", "desc": "Absolute URL for a channel page."},
 		{"name": "trackUrl(channel, track)", "desc": "Absolute URL for a track page."},

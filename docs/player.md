@@ -52,10 +52,9 @@ See [decks.md](decks.md) for the full component tree, layout flags, and deck ana
 
 ## Background / lock-screen playback
 
-Auto-advance and lock-screen controls (`navigator.mediaSession`) must keep working while the tab is backgrounded or the screen is locked. Browsers fight this; the workarounds are quarantined in these modules, wired up by `player.svelte`:
+Auto-advance and lock-screen controls (`navigator.mediaSession`) must keep working while the tab is backgrounded or the screen is locked. Browsers fight this; the workarounds are quarantined in two modules, wired up by `player.svelte`:
 
 - `src/lib/player/media-session.svelte.ts` — lock-screen controls, reasserted on `playing`, while playing, and when the tab resumes against YouTube's iframe
 - `src/lib/player/stall-recovery.svelte.ts` — detects and nudges playback that stalled while backgrounded/locked
-- `src/lib/player/background-advance.svelte.ts` — while hidden, starts the next track just before the end, so the page never goes silent (mobile browsers won't start new media from a locked screen)
 
 Platform gotchas (rAF suspension, iOS `.play()` failures, battery policy, Firefox…) are documented in those modules' header comments — read them before touching the playback path. `wake-lock.js` keeps the screen on while playing.

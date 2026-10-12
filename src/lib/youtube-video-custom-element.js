@@ -267,6 +267,13 @@ class YouTube2Element extends HTMLElement {
 		log.debug('play')
 		await this.#loadComplete
 		if (!this.api) return
+		// loadVideoById already autoplays. Cueing or a bare playVideo() on top cancels that load
+		// and asks for a fresh start, which mobile browsers refuse on a locked screen (r4 v1 only
+		// called loadVideoById, and auto-advanced fine while locked).
+		if (this.#switching) {
+			log.debug('play: load in progress, it autoplays')
+			return
+		}
 
 		// If video is in unstarted state (-1), try to cue it first
 		const state = this.api.getPlayerState()

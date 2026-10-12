@@ -25,7 +25,6 @@
 	import {createDeckDisplay} from '$lib/player/deck-display.svelte'
 	import {createMediaSession} from '$lib/player/media-session.svelte'
 	import {createStallRecovery} from '$lib/player/stall-recovery.svelte'
-	import {createBackgroundAdvance} from '$lib/player/background-advance.svelte'
 	import {appState, canEditChannel, deckAccent} from '$lib/app-state.svelte'
 	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
 	import Icon from '$lib/components/icon.svelte'
@@ -138,14 +137,6 @@
 				return mediaElement
 			},
 			restoreVolume: applyInitialVolume
-		}
-	)
-	const backgroundAdvance = createBackgroundAdvance(
-		untrack(() => deckId),
-		{
-			get mediaElement() {
-				return mediaElement
-			}
 		}
 	)
 
@@ -296,8 +287,6 @@
 
 	function handleEndTrack() {
 		if (deck?.listening_to_channel_id) return
-		// Already advanced while hidden; this is the previous track's late `ended`.
-		if (backgroundAdvance.advancedRecently()) return
 		next(deckId, 'track_completed')
 	}
 
