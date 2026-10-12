@@ -32,7 +32,8 @@ import {capture} from '$lib/analytics'
 /** @typedef {ReturnType<typeof getMediaPlayer>} MediaPlayer */
 
 const log = logger.ns('broadcast').seal()
-const BROADCAST_IDLE_STOP_MS = 10000
+// Leave time to choose a track or recover buffering without disconnecting listeners.
+const BROADCAST_IDLE_STOP_MS = 60000
 const BROADCAST_LIVENESS_INTERVAL_MS = 1000
 
 /** Get slug for a channel ID, or short ID if not found */
