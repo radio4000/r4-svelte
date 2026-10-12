@@ -29,6 +29,7 @@
 		selectedTrackId?: string | null,
 		onSelectTrack?: (trackId: string | null) => void,
 		onTagClick?: (tag: string) => void,
+		onMentionClick?: (slug: string) => void,
 		selectedTags?: string[]
 		}}
 	*/
@@ -47,6 +48,7 @@
 		selectedTrackId: selectedTrackIdProp = null,
 		onSelectTrack,
 		onTagClick,
+		onMentionClick,
 		selectedTags
 	} = $props()
 	let internalSelectedTrackId = $state(/** @type {string | null} */ (null))
@@ -216,6 +218,7 @@
 		canEdit={canEditItem(track)}
 		showSlug={false}
 		{onTagClick}
+		{onMentionClick}
 		{selectedTags}
 	/>
 	{#if showSlug}<ChannelMicroCard slug={track.slug} />{/if}

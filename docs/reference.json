@@ -63,7 +63,11 @@
 		{"name": "deck.playlist_tracks_shuffled", "desc": "Queue (shuffled order)."},
 		{
 			"name": "deck.playlist_tracks_filtered",
-			"desc": "Session-only playback subset of the queue, set from queue search/tag results."
+			"desc": "Track IDs matching deck.queue_filter; next/prev stay within them."
+		},
+		{
+			"name": "deck.queue_filter",
+			"desc": "Session-only queue filter {search, tags, mention}, set from the queue panel; decides what plays."
 		},
 		{"name": "deck.is_playing", "desc": "Playback state."},
 		{"name": "deck.shuffle", "desc": "Shuffle enabled."},
@@ -396,7 +400,7 @@
 		},
 		{
 			"name": "getActiveQueue(deck)",
-			"desc": "Original or shuffled queue, restricted to playlist_tracks_filtered when present."
+			"desc": "Original or shuffled queue, narrowed to playlist_tracks_filtered (plus the current track) when filtering."
 		},
 		{"name": "canPlay(queue, trackId)", "desc": "True when trackId is in queue."},
 		{"name": "canPrev(queue, trackId)", "desc": "True when a previous track exists."},

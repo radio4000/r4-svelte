@@ -30,6 +30,7 @@
 		canEdit?: boolean
 		showMenu?: boolean
 		onTagClick?: (tag: string) => void
+		onMentionClick?: (slug: string) => void
 		/** Tags currently active in the page's own filter — highlights matching
 		 * #tags inside the description instead of leaving that to Tag's URL
 		 * fallback (which only understands the channel tracks page's ?tags=). */
@@ -55,6 +56,7 @@
 		canEdit = false,
 		showMenu = true,
 		onTagClick,
+		onMentionClick,
 		selectedTags,
 		menuAlign,
 		menuValign,
@@ -222,6 +224,7 @@
 						filterMentions
 						text={track.description}
 						{onTagClick}
+						{onMentionClick}
 						{selectedTags}
 						deckId={matchedDeckId}
 					/>

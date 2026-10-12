@@ -25,6 +25,12 @@ describe('filtered queue playback', () => {
 		).toEqual(['e', 'a'])
 	})
 
+	it('keeps the current track so next moves on to the nearest match', () => {
+		const active = getActiveQueue({...deck, playlist_track: 'b'})
+		expect(active).toEqual(['a', 'b', 'c', 'e'])
+		expect(queueNext(active, 'b')).toBe('c')
+	})
+
 	it('restores the full queue when the restriction is cleared', () => {
 		expect(getActiveQueue({...deck, playlist_tracks_filtered: undefined})).toBe(queue)
 		expect(getActiveQueue({...deck, playlist_tracks_filtered: []})).toEqual([])
