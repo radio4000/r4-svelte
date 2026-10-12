@@ -28,7 +28,7 @@
 		<span class="chip">"{search}"</span>
 	{/if}
 	{#if mention}
-		<button type="button" class="chip" onclick={onClearMention}>Mention: @{mention} ×</button>
+		<button type="button" class="chip" onclick={onClearMention}>@{mention} ×</button>
 	{/if}
 	{#if matching}
 		<button type="button" class="chip" onclick={onClearMatching}>@{matching} ×</button>
