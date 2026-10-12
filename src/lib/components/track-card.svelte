@@ -101,8 +101,8 @@
 		if (disableDoubleClickPlay) return
 		event.preventDefault()
 		const target = event.target as HTMLElement
-		// Let time element and hashtag/mention links navigate normally
-		if (target.closest('time')) return
+		// Let the meta links (discogs) and hashtag/mention links navigate normally
+		if (target.closest('.meta')) return
 		if (
 			target.closest('button') ||
 			(target instanceof HTMLAnchorElement && target !== event.currentTarget) ||
@@ -231,21 +231,14 @@
 				</p>
 			{/if}
 		</div>
-		<time>
-			{#if isRealTrack}
-				<span class="mobile">&rarr;</span>
-			{:else if track.url && !appState.embed_mode}
-				<a class="mobile" href={track.url} target="_blank" rel="noopener noreferrer nofollow ugc"
-					>&rarr;</a
-				>
-			{/if}
+		<div class="meta">
 			{#if track.slug && track.discogs_url && !appState.embed_mode}
 				<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}
 					><Icon icon="radio-on" size={14} /></a
 				>
 			{/if}
 			{#if showSlug}<small>@{track.slug}</small>{/if}
-		</time>
+		</div>
 	</div>
 	{#if showMenu}
 		<PopoverMenu
@@ -514,7 +507,7 @@
 		}
 	}
 
-	time {
+	.meta {
 		margin-left: auto;
 		display: flex;
 		flex-flow: column;
@@ -522,20 +515,11 @@
 		place-content: center;
 		padding-top: 0.1rem;
 		gap: var(--space-1);
-		/* because this is the actual link with some trickery */
-		cursor: var(--interactive-cursor, pointer);
-
-		.mobile {
-			display: none;
-		}
 	}
 
 	@container (width < 80ch) {
-		time small {
+		.meta small {
 			display: none;
-		}
-		time .mobile {
-			display: block;
 		}
 	}
 
