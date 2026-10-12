@@ -835,18 +835,25 @@
 		flex-shrink: 0;
 		padding: 0.5rem;
 
-		/* Wide decks keep ranges alongside transport buttons. */
+		/* Volume and speed split whatever space the buttons don't need. DJing
+		   with multiple decks needs per-deck volume and speed on mobile too. */
 		:global(.speed),
 		:global(.volume) {
 			flex: 1 1 0;
 		}
 	}
 
+	/* Narrow decks: transport buttons on one line, both ranges sharing the next. */
 	@container (max-width: 520px) {
-		.controls :global(.volume),
-		.controls :global(.speed) {
+		.controls::before {
+			content: '';
 			flex-basis: 100%;
 			order: 1;
+		}
+
+		.controls :global(.volume),
+		.controls :global(.speed) {
+			order: 2;
 		}
 	}
 
