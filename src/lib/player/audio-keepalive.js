@@ -12,9 +12,12 @@
  * deck.is_playing while YouTube's mid-switch pause still flipped it, so it went
  * quiet at every switch, the moment it was meant for.
  *
- * Faint noise (about -66 dBFS), not digital zero: browsers may treat an
- * all-zero stream as not audible. Android only: iOS Safari can pause other
- * media when a page starts a second audio element.
+ * Browsers only count media that is long enough and audible: Firefox ignores
+ * media under 3s (media.mediacontrol.eligible.media.duration.s) and stops media
+ * control when a media ends (…stopcontrol.aftermediaends), Chrome treats media
+ * under 5s as transient. So: a 10s loop of faint noise (about -60 dBFS), not
+ * digital zero. Android only: iOS Safari can pause other media when a page
+ * starts a second audio element.
  */
 
 import {logger} from '$lib/logger'
@@ -29,10 +32,10 @@ let audio = null
 /** Deck IDs currently holding the keep-alive open. */
 const activeDeckIds = new Set()
 
-/** One second of faint 8kHz mono 16-bit noise as a WAV object URL. */
+/** Ten seconds of faint 8kHz mono 16-bit noise as a WAV object URL. */
 function noiseUrl() {
 	const rate = 8000
-	const samples = rate
+	const samples = rate * 10
 	const view = new DataView(new ArrayBuffer(44 + samples * 2))
 	const text = (/** @type {number} */ at, /** @type {string} */ s) =>
 		[...s].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)))
@@ -50,7 +53,7 @@ function noiseUrl() {
 	text(36, 'data')
 	view.setUint32(40, samples * 2, true)
 	for (let i = 0; i < samples; i++) {
-		view.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 16), true)
+		view.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 32), true)
 	}
 	return URL.createObjectURL(new Blob([view], {type: 'audio/wav'}))
 }
