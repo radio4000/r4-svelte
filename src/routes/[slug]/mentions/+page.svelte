@@ -30,7 +30,6 @@
 					.select('*')
 					.overlaps('mentions', mentionTokens)
 					.neq('slug', slug)
-					.order('updated_at', {ascending: false})
 					.order('created_at', {ascending: false})
 					.limit(4000),
 				sdk.supabase
@@ -38,7 +37,6 @@
 					.select('*')
 					.ilike('description', `%@${slug}%`)
 					.neq('slug', slug)
-					.order('updated_at', {ascending: false})
 					.order('created_at', {ascending: false})
 					.limit(4000)
 			])
@@ -50,11 +48,10 @@
 			for (const track of (mentionsRes.data || []) as Track[]) byId.set(track.id, track)
 			for (const track of (descriptionRes.data || []) as Track[]) byId.set(track.id, track)
 
-			const mergedTracks = [...byId.values()].toSorted((a, b) => {
-				const aDate = a.updated_at || a.created_at || ''
-				const bDate = b.updated_at || b.created_at || ''
-				return aDate < bDate ? 1 : aDate > bDate ? -1 : 0
-			})
+			// Newest first, so Tracklist can group by month like /tracks.
+			const mergedTracks = [...byId.values()].toSorted((a, b) =>
+				b.created_at.localeCompare(a.created_at)
+			)
 
 			tracksCollection.utils.writeBatch(() => {
 				for (const track of mergedTracks) tracksCollection.utils.writeUpsert(track)
@@ -120,7 +117,7 @@
 			tracks={filteredTracks}
 			playlistTracks={tracks}
 			{playlistTitle}
-			grouped={false}
+			grouped={!q}
 			playContext={true}
 			showSlug={true}
 		/>
