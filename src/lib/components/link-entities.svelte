@@ -4,8 +4,8 @@
 	import {base} from '$app/paths'
 	import {page} from '$app/state'
 
-	/** @type {{text: string | null | undefined, slug?: string | null, filterMentions?: boolean, onTagClick?: (tag: string) => void, deckId?: number, selectedTags?: string[]}} */
-	const {text, slug, filterMentions, onTagClick, deckId, selectedTags} = $props()
+	/** @type {{text: string | null | undefined, slug?: string | null, filterMentions?: boolean, onTagClick?: (tag: string) => void, onMentionClick?: (slug: string) => void, deckId?: number, selectedTags?: string[]}} */
+	const {text, slug, filterMentions, onTagClick, onMentionClick, deckId, selectedTags} = $props()
 
 	// Explicit override for Tag's `filtered` state — Tag's own URL fallback only
 	// understands the channel tracks page's ?tags= param, so any page with its
@@ -99,6 +99,10 @@
 				value={part.content}
 				filtered={part.filtered}
 				{deckId}>{part.content}</Tag
+			>
+		{:else if !part.isTag && onMentionClick}
+			<Tag onclick={() => onMentionClick(part.content.slice(1).toLowerCase())} {deckId}
+				>{part.content}</Tag
 			>
 		{:else}
 			<Tag
