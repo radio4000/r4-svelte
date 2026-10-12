@@ -10,4 +10,6 @@ Pure functions in `$lib/player/queue.ts` operate on `string[]` of track IDs: `qu
 
 The panel (`queue-panel.svelte`) resolves queued IDs against `tracksCollection` with Map lookups in playlist order — an `inArray` live query over a long queue blocks the main thread for seconds (see [tanstack](tanstack.md)). Searchable via fuzzysort. Left edge draggable to resize (200–800px, disabled on mobile).
 
+Search, #tag and @mention filters live on the deck (`deck.queue_filter`, session-only) and decide what plays: next/prev stay within the matches (`deck.playlist_tracks_filtered`), starting from the current track. The search placeholder shows the count (`12/40`), as on /tracks; #tag and @mention chips sit below it. New queues, queue edits, playing a track outside the matches, and reload clear the filter.
+
 Play history lives at `/history`, powered by [capture events](play-history.md).

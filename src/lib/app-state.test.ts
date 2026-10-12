@@ -20,6 +20,7 @@ describe('app state persistence', () => {
 			...createDefaultDeck(1),
 			playlist_slug: 'radio',
 			playlist_track: 'track-1',
+			playlist_tracks_filtered: ['track-1'],
 			auto_radio: true,
 			auto_radio_rotation_start: 123,
 			view: {sources: [{channels: ['radio']}]},
@@ -51,6 +52,7 @@ describe('app state persistence', () => {
 		expect(persistedDeck.auto_radio_rotation_start).toBe(123)
 		expect(persistedDeck.view).toEqual({sources: [{channels: ['radio']}]})
 		expect(persistedDeck).not.toHaveProperty('is_playing')
+		expect(persistedDeck).not.toHaveProperty('playlist_tracks_filtered')
 		expect(persistedDeck).not.toHaveProperty('broadcasting_channel_id')
 		expect(persistedDeck).not.toHaveProperty('listening_to_channel_id')
 		expect(persistedDeck).not.toHaveProperty('auto_radio_drifted')
@@ -85,6 +87,7 @@ describe('app state persistence', () => {
 	test('normalizing a loaded deck clears transient playback and sync fields', async () => {
 		const {normalizeLoadedDeck} = await import('./app-state.svelte')
 		const deck = normalizeLoadedDeck(2, {
+			playlist_tracks_filtered: ['track-1'],
 			playlist_slug: 'radio',
 			playlist_track: 'track-1',
 			is_playing: true,
@@ -105,6 +108,7 @@ describe('app state persistence', () => {
 		expect(deck.playlist_slug).toBe('radio')
 		expect(deck.playlist_track).toBe('track-1')
 		expect(deck.is_playing).toBe(false)
+		expect(deck.playlist_tracks_filtered).toBeUndefined()
 		expect(deck.broadcasting_channel_id).toBeUndefined()
 		expect(deck.listening_to_channel_id).toBeUndefined()
 		expect(deck.auto_radio_drifted).toBeUndefined()

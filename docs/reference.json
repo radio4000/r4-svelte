@@ -61,6 +61,14 @@
 		{"name": "deck.playlist_track", "desc": "Current playing track ID."},
 		{"name": "deck.playlist_tracks", "desc": "Queue (original order)."},
 		{"name": "deck.playlist_tracks_shuffled", "desc": "Queue (shuffled order)."},
+		{
+			"name": "deck.playlist_tracks_filtered",
+			"desc": "Track IDs matching deck.queue_filter; next/prev stay within them."
+		},
+		{
+			"name": "deck.queue_filter",
+			"desc": "Session-only queue filter {search, tags, mention}, set from the queue panel; decides what plays."
+		},
 		{"name": "deck.is_playing", "desc": "Playback state."},
 		{"name": "deck.shuffle", "desc": "Shuffle enabled."},
 		{"name": "deck.volume", "desc": "Volume 0-1."},
@@ -390,7 +398,10 @@
 			"name": "queueInsertManyAfter(queue, currentId, insertIds)",
 			"desc": "Insert many after current ID."
 		},
-		{"name": "getActiveQueue(deck)", "desc": "Original or shuffled queue based on deck.shuffle."},
+		{
+			"name": "getActiveQueue(deck)",
+			"desc": "Original or shuffled queue, narrowed to playlist_tracks_filtered (plus the current track) when filtering."
+		},
 		{"name": "canPlay(queue, trackId)", "desc": "True when trackId is in queue."},
 		{"name": "canPrev(queue, trackId)", "desc": "True when a previous track exists."},
 		{"name": "canNext(queue, trackId)", "desc": "True when a next track exists."}

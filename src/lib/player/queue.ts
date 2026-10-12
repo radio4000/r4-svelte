@@ -29,12 +29,25 @@ export function queueInsertManyAfter(
 	return [...queue.slice(0, idx + 1), ...insertIds, ...queue.slice(idx + 1)]
 }
 
-/** Get the active queue array for a deck (respects shuffle) */
+/** Get the active playback queue, respecting shuffle and the queue filter's matches.
+ *  The current track stays in, so next/prev move from it to the nearest match. */
 export function getActiveQueue(
-	deck: Pick<Deck, 'shuffle' | 'playlist_tracks' | 'playlist_tracks_shuffled'> | undefined
+	deck:
+		| Pick<
+				Deck,
+				| 'shuffle'
+				| 'playlist_track'
+				| 'playlist_tracks'
+				| 'playlist_tracks_shuffled'
+				| 'playlist_tracks_filtered'
+		  >
+		| undefined
 ): string[] {
 	if (!deck) return []
-	return deck.shuffle ? deck.playlist_tracks_shuffled || [] : deck.playlist_tracks || []
+	const queue = deck.shuffle ? deck.playlist_tracks_shuffled || [] : deck.playlist_tracks || []
+	if (!deck.playlist_tracks_filtered) return queue
+	const matching = new Set(deck.playlist_tracks_filtered)
+	return queue.filter((id) => matching.has(id) || id === deck.playlist_track)
 }
 
 /** Can the deck play from its queue? */

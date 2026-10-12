@@ -60,6 +60,10 @@ export interface Deck {
 	playlist_track?: string
 	playlist_tracks: string[]
 	playlist_tracks_shuffled: string[]
+	/** Session-only queue filter (search, #tags, @mention), set from the queue panel. */
+	queue_filter?: {search: string; tags: string[]; mention: string}
+	/** Track IDs matching queue_filter; next/prev stay within them (plus the current track). */
+	playlist_tracks_filtered?: string[]
 	is_playing: boolean
 	shuffle: boolean
 	volume: number
