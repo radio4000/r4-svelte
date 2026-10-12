@@ -3,10 +3,10 @@
 		batchUpdateTracksUniform,
 		insertDurationFromMeta,
 		resetTitlesFromVideo,
-		undoTitleReset
+		undoTitleReset,
+		getTitleUndo
 	} from '$lib/collections/tracks'
 	import {deleteTrackMeta} from '$lib/collections/track-meta'
-	import {loadTitleUndo} from '$lib/title-reset'
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
 	import {getChannelTags} from '$lib/utils'
@@ -23,12 +23,11 @@
 	let fetchingMeta = $state(false)
 	let fetchProgress = $state({current: 0, total: 0})
 	let resettingTitles = $state(false)
-	let titleProgress = $state({current: 0, total: 0})
-	let titleError = $state('')
+	let titleNote = $state('')
 	let undoCount = $state(0)
 
 	$effect(() => {
-		if (channel) undoCount = loadTitleUndo(channel.slug).length
+		if (channel) undoCount = Object.keys(getTitleUndo(channel.slug)).length
 	})
 
 	/** @type {import('$lib/types').TrackWithMeta[]} */
@@ -117,33 +116,31 @@
 		deleteTrackMeta(refs)
 	}
 
-	/** @param {() => Promise<number>} run */
-	async function runTitleJob(run) {
+	async function resetTitles() {
 		if (resettingTitles || !channel) return
+		if (!confirm(m.batch_edit_reset_title_confirm({count: selectedYouTube.length}))) return
 		resettingTitles = true
-		titleError = ''
-		titleProgress = {current: 0, total: 0}
+		titleNote = ''
 		try {
-			await run()
+			if (!(await resetTitlesFromVideo(channel, selectedYouTube)))
+				titleNote = m.batch_edit_reset_title_none()
 		} catch (err) {
-			titleError = /** @type {Error} */ (err).message
+			titleNote = `${m.common_error()}: ${/** @type {Error} */ (err).message}`
 		} finally {
-			undoCount = loadTitleUndo(channel.slug).length
+			undoCount = Object.keys(getTitleUndo(channel.slug)).length
 			resettingTitles = false
 		}
 	}
 
-	const onTitleProgress = (current, total) => (titleProgress = {current, total})
-
-	function resetTitles() {
-		if (!channel || selectedYouTube.length === 0) return
-		if (!confirm(m.batch_edit_reset_title_confirm({count: selectedYouTube.length}))) return
-		runTitleJob(() => resetTitlesFromVideo(channel, selectedYouTube, onTitleProgress))
-	}
-
-	function undoTitles() {
-		if (!channel) return
-		runTitleJob(() => undoTitleReset(channel, onTitleProgress))
+	async function undoTitles() {
+		if (resettingTitles || !channel) return
+		resettingTitles = true
+		try {
+			await undoTitleReset(channel)
+			undoCount = 0
+		} finally {
+			resettingTitles = false
+		}
 	}
 
 	async function fetchMeta() {
@@ -206,14 +203,10 @@
 		{/if}
 
 		{#if selectedYouTube.length > 0}
-			<button
-				onclick={resetTitles}
-				disabled={resettingTitles}
-				{@attach tooltip({content: m.batch_edit_action_reset_title()})}
-			>
-				{resettingTitles
-					? `${m.batch_edit_reset_title_button({count: selectedYouTube.length})} (${titleProgress.current}/${titleProgress.total})`
-					: m.batch_edit_reset_title_button({count: selectedYouTube.length})}
+			<button onclick={resetTitles} disabled={resettingTitles}>
+				{m.batch_edit_reset_title_button({count: selectedYouTube.length})}{resettingTitles
+					? '…'
+					: ''}
 			</button>
 		{/if}
 
@@ -237,16 +230,13 @@
 	{/if}
 
 	{#if undoCount > 0}
-		<button
-			onclick={undoTitles}
-			disabled={resettingTitles}
-			{@attach tooltip({content: m.batch_edit_action_undo_title_reset()})}
+		<button onclick={undoTitles} disabled={resettingTitles}
 			>{m.batch_edit_undo_title_reset_button({count: undoCount})}</button
 		>
 	{/if}
 
-	{#if titleError}
-		<span role="alert">{m.common_error()}: {titleError}</span>
+	{#if titleNote}
+		<span role="alert">{titleNote}</span>
 	{/if}
 </aside>
 
