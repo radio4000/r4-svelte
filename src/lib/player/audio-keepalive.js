@@ -16,11 +16,13 @@
  * media under 3s (media.mediacontrol.eligible.media.duration.s) and stops media
  * control when a media ends (…stopcontrol.aftermediaends), Chrome treats media
  * under 5s as transient. So: a 10s loop, never digital zero. Firefox counts a
- * stream as audible above -72 dBFS (AudibilityMonitor); noise at that level is
- * plainly heard as hiss, so it's a 15Hz tone at about -54 dBFS instead: below
- * human hearing and what phone speakers reproduce, well above the threshold.
- * 150 whole cycles, so the loop point is seamless. Android only: iOS Safari can
- * pause other media when a page starts a second audio element.
+ * stream as audible when a sample exceeds -72 dBFS (AudibilityMonitor), Chrome
+ * when its power does. The signal is a constant DC offset at -66 dBFS: it passes
+ * both checks but has no frequency content, so no speaker or sound system can
+ * reproduce it (amplifiers block DC). Noise (-60 dBFS) was heard as hiss, and
+ * any tone, even infrasonic, can reach a big subwoofer. Constant, so the loop
+ * point is seamless. Android only: iOS Safari can pause other media when a page
+ * starts a second audio element.
  */
 
 import {logger} from '$lib/logger'
@@ -35,8 +37,8 @@ let audio = null
 /** Deck IDs currently holding the keep-alive open. */
 const activeDeckIds = new Set()
 
-/** Ten seconds of a faint 15Hz tone, 8kHz mono 16-bit, as a WAV object URL. */
-function toneUrl() {
+/** Ten seconds of a -66 dBFS DC offset, 8kHz mono 16-bit, as a WAV object URL. */
+function offsetUrl() {
 	const rate = 8000
 	const samples = rate * 10
 	const view = new DataView(new ArrayBuffer(44 + samples * 2))
@@ -56,7 +58,7 @@ function toneUrl() {
 	text(36, 'data')
 	view.setUint32(40, samples * 2, true)
 	for (let i = 0; i < samples; i++) {
-		view.setInt16(44 + i * 2, Math.round(Math.sin((2 * Math.PI * 15 * i) / rate) * 64), true)
+		view.setInt16(44 + i * 2, 16, true)
 	}
 	return URL.createObjectURL(new Blob([view], {type: 'audio/wav'}))
 }
@@ -67,7 +69,7 @@ export function requestAudioKeepAlive(deckId) {
 	if (!enabled) return
 	activeDeckIds.add(deckId)
 	if (!audio) {
-		audio = new Audio(toneUrl())
+		audio = new Audio(offsetUrl())
 		audio.loop = true
 	}
 	if (audio.paused) {
