@@ -15,8 +15,6 @@
 
 	let showModal = $state(false)
 	let copiedField = $state<string | null>(null)
-	let sharing = $state(false)
-	let shareError = $state(false)
 	let data = $state<{track?: Track; channel: Channel} | null>(null)
 
 	const isTrack = $derived(!!data?.track)
@@ -35,7 +33,6 @@
 		if (appState.modal_share) {
 			data = appState.modal_share
 			copiedField = null
-			shareError = false
 			showModal = true
 			appState.modal_share = null
 		}
@@ -48,11 +45,11 @@
 		}
 	}
 
+	/** Never disabled: some mobile browsers never settle the share promise after the
+	 *  sheet is dismissed, then refuse the next share. Copy the link instead. */
 	async function share() {
-		if (!data || sharing) return
+		if (!data) return
 		const {track, channel} = data
-		sharing = true
-		shareError = false
 		try {
 			await nativeShare(
 				track
@@ -60,9 +57,7 @@
 					: {title: channel.name ?? '', text: channel.description?.slice(0, 100) ?? '', url}
 			)
 		} catch {
-			shareError = true
-		} finally {
-			sharing = false
+			await copy(url, 'url')
 		}
 	}
 
@@ -112,13 +107,10 @@
 		{/if}
 
 		{#if canNativeShare()}
-			<button type="button" onclick={share} disabled={sharing} aria-busy={sharing}>
+			<button type="button" onclick={share}>
 				<Icon icon="share" />
 				{m.channel_card_share()}
 			</button>
-			{#if shareError}
-				<p role="alert">Could not open the share sheet. Try again or copy the link.</p>
-			{/if}
 		{/if}
 	</form>
 </Dialog>
