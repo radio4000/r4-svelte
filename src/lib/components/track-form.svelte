@@ -87,6 +87,23 @@
 		}
 	}
 
+	// Fills the field only; the old title stays until the form is saved.
+	async function useVideoTitle() {
+		const url = urlInput?.value
+		if (!url || fetchingTitle) return
+		fetchingTitle = true
+		error = ''
+		try {
+			const media = await getMedia(url)
+			if (media?.title) liveTitle = media.title
+			else error = m.track_form_video_title_failed()
+		} catch {
+			error = m.track_form_video_title_failed()
+		} finally {
+			fetchingTitle = false
+		}
+	}
+
 	function handleDiscogsSuggestion(event: {detail: string[]}) {
 		const selected = event.detail
 		if (!descriptionInput) return
@@ -199,7 +216,15 @@
 	</fieldset>
 
 	<fieldset>
-		<label for="{uid}-title">{m.track_form_title_label()} {fetchingTitle ? '...' : ''}</label>
+		<label for="{uid}-title">
+			{m.track_form_title_label()}
+			{fetchingTitle ? '...' : ''}
+			{#if mode === 'edit'}
+				(<button type="button" class="link" onclick={useVideoTitle} disabled={fetchingTitle}
+					>{m.track_form_use_video_title()}</button
+				>)
+			{/if}
+		</label>
 		<input
 			bind:this={titleInput}
 			bind:value={liveTitle}

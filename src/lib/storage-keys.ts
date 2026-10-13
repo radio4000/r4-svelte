@@ -5,7 +5,8 @@ export const LOCAL_STORAGE_KEYS = {
 	trackMeta: 'r5-track-meta',
 	captureEvents: 'r5-capture-events',
 	spamDecisions: 'r5-spam-decisions',
-	views: 'r5-views'
+	views: 'r5-views',
+	titleResetUndo: 'r5-title-reset-undo'
 } as const
 
 /** All IndexedDB database names used by Radio4000. */

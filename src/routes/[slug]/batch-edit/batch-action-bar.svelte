@@ -1,5 +1,11 @@
 <script>
-	import {batchUpdateTracksUniform, insertDurationFromMeta} from '$lib/collections/tracks'
+	import {
+		batchUpdateTracksUniform,
+		insertDurationFromMeta,
+		resetTitlesFromVideo,
+		undoTitleReset,
+		getTitleUndo
+	} from '$lib/collections/tracks'
 	import {deleteTrackMeta} from '$lib/collections/track-meta'
 	import {pullYouTube} from '$lib/metadata/youtube'
 	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
@@ -16,6 +22,13 @@
 	let appendText = $state('')
 	let fetchingMeta = $state(false)
 	let fetchProgress = $state({current: 0, total: 0})
+	let resettingTitles = $state(false)
+	let titleNote = $state('')
+	let undoCount = $state(0)
+
+	$effect(() => {
+		if (channel) undoCount = Object.keys(getTitleUndo(channel.slug)).length
+	})
 
 	/** @type {import('$lib/types').TrackWithMeta[]} */
 	let selectedTracks = $derived(
@@ -41,6 +54,10 @@
 	// Tracks that have any metadata
 	let tracksWithMeta = $derived(
 		selectedTracks.filter((t) => t.youtube_data || t.musicbrainz_data || t.discogs_data)
+	)
+
+	let selectedYouTube = $derived(
+		selectedTracks.filter((t) => getTrackProvider(t) === 'youtube' && t.media_id)
 	)
 
 	// Tags present in selected tracks
@@ -97,6 +114,33 @@
 			.map((track) => ({provider: getTrackProvider(track), media_id: track.media_id}))
 		if (refs.length === 0) return
 		deleteTrackMeta(refs)
+	}
+
+	async function resetTitles() {
+		if (resettingTitles || !channel) return
+		if (!confirm(m.batch_edit_reset_title_confirm({count: selectedYouTube.length}))) return
+		resettingTitles = true
+		titleNote = ''
+		try {
+			if (!(await resetTitlesFromVideo(channel, selectedYouTube)))
+				titleNote = m.batch_edit_reset_title_none()
+		} catch (err) {
+			titleNote = `${m.common_error()}: ${/** @type {Error} */ (err).message}`
+		} finally {
+			undoCount = Object.keys(getTitleUndo(channel.slug)).length
+			resettingTitles = false
+		}
+	}
+
+	async function undoTitles() {
+		if (resettingTitles || !channel) return
+		resettingTitles = true
+		try {
+			await undoTitleReset(channel)
+			undoCount = 0
+		} finally {
+			resettingTitles = false
+		}
 	}
 
 	async function fetchMeta() {
@@ -158,6 +202,14 @@
 			>
 		{/if}
 
+		{#if selectedYouTube.length > 0}
+			<button onclick={resetTitles} disabled={resettingTitles}>
+				{m.batch_edit_reset_title_button({count: selectedYouTube.length})}{resettingTitles
+					? '…'
+					: ''}
+			</button>
+		{/if}
+
 		<hr />
 
 		<button
@@ -175,6 +227,16 @@
 		>
 	{:else}
 		&nbsp;
+	{/if}
+
+	{#if undoCount > 0}
+		<button onclick={undoTitles} disabled={resettingTitles}
+			>{m.batch_edit_undo_title_reset_button({count: undoCount})}</button
+		>
+	{/if}
+
+	{#if titleNote}
+		<span role="alert">{titleNote}</span>
 	{/if}
 </aside>
 

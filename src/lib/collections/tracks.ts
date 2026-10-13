@@ -7,6 +7,8 @@ import {uuid} from '$lib/utils'
 import {queryClient} from './query-client'
 import {channelsCollection, type Channel} from './channels'
 import {trackMetaCollection, trackMetaKey} from './track-meta'
+import {pullYouTube} from '$lib/metadata/youtube'
+import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
 import {logger} from '$lib/logger'
 import {getErrorMessage} from './utils'
 
@@ -579,5 +581,46 @@ export async function insertDurationFromMeta(channel: Channel, tracks: Track[]):
 	if (updates.length) {
 		await batchUpdateTracksIndividual(channel, updates)
 	}
+	return updates.length
+}
+
+const videoTitle = (track: Track) => {
+	const title = getTrackWithMeta(track).youtube_data?.title
+	return typeof title === 'string' ? title.trim() : ''
+}
+
+const undoKey = (slug: string) => `${LOCAL_STORAGE_KEYS.titleResetUndo}:${slug}`
+
+/** Titles from before the title resets on this channel, by track id. Kept until undone, so it survives reloads. */
+export function getTitleUndo(slug: string): Record<string, string> {
+	return JSON.parse(localStorage.getItem(undoKey(slug)) || '{}')
+}
+
+/** Overwrite titles with their YouTube video titles. The old titles are saved first, for `undoTitleReset`. */
+export async function resetTitlesFromVideo(channel: Channel, tracks: Track[]): Promise<number> {
+	const youtube = tracks.filter((t) => t.provider === 'youtube' && t.media_id)
+	await pullYouTube(youtube.map((t) => ({provider: 'youtube', mediaId: t.media_id as string})))
+	const changed = youtube.filter((t) => videoTitle(t) && videoTitle(t) !== t.title)
+	if (!changed.length) return 0
+	const undo = getTitleUndo(channel.slug)
+	for (const t of changed) undo[t.id] ??= t.title
+	localStorage.setItem(undoKey(channel.slug), JSON.stringify(undo))
+	await batchUpdateTracksIndividual(
+		channel,
+		changed.map((t) => ({id: t.id, changes: {title: videoTitle(t)}}))
+	)
+	return changed.length
+}
+
+/** Put back the titles from before the resets, skipping tracks whose title was edited since. */
+export async function undoTitleReset(channel: Channel): Promise<number> {
+	const updates = Object.entries(getTitleUndo(channel.slug))
+		.filter(([id]) => {
+			const track = tracksCollection.get(id)
+			return track && track.title === videoTitle(track)
+		})
+		.map(([id, title]) => ({id, changes: {title}}))
+	await batchUpdateTracksIndividual(channel, updates)
+	localStorage.removeItem(undoKey(channel.slug))
 	return updates.length
 }
