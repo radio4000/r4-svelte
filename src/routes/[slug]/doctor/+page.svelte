@@ -636,6 +636,8 @@
 		display: block;
 		width: 100%;
 		height: 100%;
+		/* player.css disables pointer events on youtube-video outside a media-controller slot. */
+		pointer-events: auto;
 	}
 	.original .thumb img {
 		filter: grayscale(1);
