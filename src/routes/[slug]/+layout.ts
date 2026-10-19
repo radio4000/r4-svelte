@@ -1,6 +1,7 @@
 import {viewFromUrl} from '#lib/views.js'
 import {browser} from '$app/env'
 import {error, redirect} from '@sveltejs/kit'
+import {resolve} from '$app/paths'
 import {sdk} from '@radio4000/sdk'
 import {isMissingRow} from './not-found'
 import {normalizeTrackMedia} from '#lib/collections/tracks.js'
@@ -27,11 +28,11 @@ export async function load({url, route, params}) {
 		} = await sdk.supabase.auth.getUser()
 		if (!user) {
 			const redirectTo = `${url.pathname}${url.search}`
-			throw redirect(307, `/auth?redirect=${encodeURIComponent(redirectTo)}`)
+			throw redirect(307, `${resolve('auth')}?redirect=${encodeURIComponent(redirectTo)}`)
 		}
 		const canEdit = await sdk.channels.canEditChannel(params.slug)
 		if (!canEdit) {
-			throw redirect(307, `/${params.slug}`)
+			throw redirect(307, resolve('/[slug]', {slug: params.slug}))
 		}
 	}
 

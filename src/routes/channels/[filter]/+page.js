@@ -1,4 +1,5 @@
 import {redirect} from '@sveltejs/kit'
+import {resolve} from '$app/paths'
 
 const VALID = new Set([
 	'featured',
@@ -16,5 +17,5 @@ export function load({params, url}) {
 	const path = VALID.has(params.filter)
 		? `/explore/channels/${params.filter}`
 		: '/explore/channels/all'
-	redirect(307, `${path}${url.search}`)
+	redirect(307, `${resolve(/** @type {any} */ (path.slice(1)))}${url.search}`)
 }

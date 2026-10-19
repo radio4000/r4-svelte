@@ -1,4 +1,5 @@
 import {redirect} from '@sveltejs/kit'
+import {resolve} from '$app/paths'
 import {browser} from '$app/env'
 import {sdk} from '@radio4000/sdk'
 import {fetchChannelCount} from '#lib/collections/channels.js'
@@ -53,7 +54,7 @@ const serverFilters = {
 /** @type {import('./$types').PageLoad} */
 export async function load({params, url}) {
 	const filter = slugToFilter[params.filter]
-	if (!filter) redirect(307, `/explore/channels/all${url.search}`)
+	if (!filter) redirect(307, `${resolve('explore/channels/all')}${url.search}`)
 
 	const {page, per} = paginationFromUrl(url, DEFAULT_PER)
 	// The hydrating client run must return the same listing or the server-rendered
