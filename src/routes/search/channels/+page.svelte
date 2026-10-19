@@ -66,8 +66,9 @@
 	// rather than tags aggregated from the current result set.
 	const selectedTags = $derived(q.tags ?? [])
 	let showFiltersModal = $state(false)
+	let filtersOpened = $state(false)
 	const activeFilterCount = $derived(selectedTags.length + (q.search ? 1 : 0))
-	const tagsQuery = useLiveQuery(tagsCollection)
+	const tagsQuery = useLiveQuery((q) => (filtersOpened ? q.from({tag: tagsCollection}) : null))
 	const availableTags = $derived(
 		(tagsQuery.data ?? []).map((t) => ({value: t.tag, count: t.count}))
 	)
@@ -149,7 +150,10 @@
 				type="button"
 				class="filter-toggle"
 				title={m.views_filters_label()}
-				onclick={() => (showFiltersModal = true)}
+				onclick={() => {
+					filtersOpened = true
+					showFiltersModal = true
+				}}
 			>
 				<Icon icon="hashtag" />
 				{activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
@@ -221,10 +225,8 @@
 	{/if}
 
 	{#if hasFilter}
-		{#if channelsLoading}
-			<p>{m.search_loading_channels()}</p>
-		{:else if channels.length}
-			<section class="channel-results">
+		{#if channels.length}
+			<section class="channel-results" aria-busy={channelsLoading}>
 				<header>
 					<h2>
 						{resultCount === 1
@@ -238,6 +240,8 @@
 					{/each}
 				</ul>
 			</section>
+		{:else if channelsLoading}
+			<p>{m.search_loading_channels()}</p>
 		{:else}
 			<p>{m.search_no_results()} "{search.value}"</p>
 		{/if}
