@@ -27,7 +27,9 @@ class R5Formatter extends Formatter {
 /** Access logs via store.logs */
 export const store = setup({
 	cache: true,
-	activeLevel: 7, // 7 is debug
+	// Debug in dev; warnings and errors in production. Printing every debug line cost
+	// 25-40ms per play or navigation, and the console keeps each logged object alive.
+	activeLevel: import.meta.env.DEV ? 7 : 2, // 7 is debug, 2 is warn
 	format: 'r5',
 	formatters: {
 		r5: R5Formatter
