@@ -42,7 +42,7 @@
 	}
 
 	onMount(focusInput)
-	afterNavigate(focusInput)
+	afterNavigate((nav) => !nav.shallow && focusInput())
 
 	function clear() {
 		inputValue = ''

@@ -18,7 +18,7 @@
 	$effect(() => {
 		const q = search.trim()
 		if (!q) return
-		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replace: true})
+		goto(`${resolve('search/tracks')}?q=${encodeURIComponent(q)}`, {replace: true})
 	})
 
 	const LIMIT = 50

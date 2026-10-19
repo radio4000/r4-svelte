@@ -1,5 +1,6 @@
 import {createKeybindingsHandler} from 'tinykeys'
 import {goto} from '$app/navigation'
+import {resolve} from '$app/paths'
 import {page} from '$app/state'
 import {
 	openSearch,
@@ -95,17 +96,17 @@ export const SHORTCUT_ACTIONS = {
 	gotoHome: {
 		default: 'g h',
 		label: () => m.shortcuts_action_gotoHome(),
-		run: () => gotoIfAllowed('/')
+		run: () => gotoIfAllowed(resolve('/'))
 	},
 	gotoSettings: {
 		default: 'g s',
 		label: () => m.shortcuts_action_gotoSettings(),
-		run: () => gotoIfAllowed('/settings')
+		run: () => gotoIfAllowed(resolve('settings'))
 	},
 	gotoDocs: {
 		default: 'g d',
 		label: () => m.shortcuts_action_gotoDocs(),
-		run: () => gotoIfAllowed('/docs')
+		run: () => gotoIfAllowed(resolve('docs'))
 	},
 	openNavPalette: {
 		default: '$mod+k',

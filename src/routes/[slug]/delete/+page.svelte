@@ -51,7 +51,7 @@
 				)
 
 				// Navigate away first to avoid layout flashing "Channel not found"
-				await goto('/')
+				await goto(resolve('/'))
 
 				// Revoke any blob URLs created for local audio files
 				for (const t of channelTracks) {
@@ -67,7 +67,7 @@
 				queryClient.removeQueries({queryKey: ['channels', channelSlug]})
 			} else {
 				await deleteChannel(channel.id)
-				goto('/')
+				goto(resolve('/'))
 			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_delete_failed()

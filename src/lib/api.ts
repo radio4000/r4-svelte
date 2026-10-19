@@ -1,5 +1,6 @@
 import {tick} from 'svelte'
 import {goto} from '$app/navigation'
+import {resolve} from '$app/paths'
 import {appState, authStatus, addDeck} from '#lib/app-state.svelte.js'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '#lib/storage-keys.js'
 import {
@@ -605,7 +606,7 @@ export function openSearch(event?: KeyboardEvent) {
 			return
 		}
 	}
-	goto('/search')
+	goto(resolve('search'))
 }
 
 export async function togglePlayPause(deckId: number) {

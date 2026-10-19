@@ -24,7 +24,7 @@
 		if (!('serviceWorker' in navigator)) return
 		/** @type {ReturnType<typeof setInterval> | undefined} */
 		let interval
-		// SvelteKit registers src/service-worker.js on its own; we only watch it.
+		// SvelteKit registers src/service-worker/index.js on its own; we only watch it.
 		navigator.serviceWorker.ready.then((registration) => {
 			// Browsers only look for a new service worker on full page loads,
 			// so a long-lived tab has to ask on its own schedule.

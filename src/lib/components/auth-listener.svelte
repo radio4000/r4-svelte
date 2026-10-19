@@ -1,6 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {goto} from '$app/navigation'
+	import {resolve} from '$app/paths'
 	import {capabilities} from '#lib/modes.js'
 	import {checkUser} from '#lib/api.js'
 	import {appState} from '#lib/app-state.svelte.js'
@@ -24,7 +25,7 @@
 				...(message && {message}),
 				...(error && {error})
 			}).toString()
-			goto(`/account/email?${query}`)
+			goto(`${resolve('account/email')}?${query}`)
 		}
 	})
 
@@ -42,7 +43,7 @@
 		appState.user = user
 
 		if (event === 'PASSWORD_RECOVERY') {
-			goto('/auth/reset-password/confirm')
+			goto(resolve('auth/reset-password/confirm'))
 			return
 		}
 

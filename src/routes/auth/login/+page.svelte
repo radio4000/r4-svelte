@@ -13,7 +13,8 @@
 	const isCheckEmail = $derived(step === 'linkSent')
 
 	function handleSuccess() {
-		goto(redirect)
+		// Kit 3's goto rejects URLs outside the app; land on settings instead of staying put.
+		goto(redirect).catch(() => goto(resolve('settings')))
 	}
 </script>
 

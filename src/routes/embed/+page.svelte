@@ -119,7 +119,7 @@
 		const params = new SvelteURLSearchParams()
 		if (inputQ.trim()) params.set('q', inputQ.trim())
 		if (inputLimit) params.set('limit', String(inputLimit))
-		goto(`/embed?${params}`)
+		goto(`${resolve('embed')}?${params}`)
 	}
 </script>
 

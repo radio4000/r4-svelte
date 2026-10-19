@@ -52,7 +52,7 @@
 
 	function browseImported() {
 		appState.channels_filter = 'imported'
-		goto('/')
+		goto(resolve('/'))
 	}
 </script>
 

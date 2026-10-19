@@ -5,7 +5,7 @@
 	import {getMatchingTracksQuery} from '../matching-tracks-query.svelte.ts'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
-	import {page} from '$app/state'
+	import {page, navigating} from '$app/state'
 	import {getChannelCtx} from '#lib/contexts.js'
 	import {getChannelTags} from '#lib/utils.js'
 	import InputRange from '#lib/components/input-range.svelte'
@@ -242,7 +242,8 @@
 		const basePath = resolve('/[slug]/tags', {slug})
 		const nextPath = `${basePath}${queryString}`
 		const currentPath = `${page.url.pathname}${page.url.search}`
-		if (currentPath !== nextPath)
+		// A shallow goto would abort a navigation that's still loading.
+		if (currentPath !== nextPath && !navigating.to)
 			goto(resolve('/[slug]/tags', {slug}) + queryString, {shallow: true, replace: true})
 	})
 </script>

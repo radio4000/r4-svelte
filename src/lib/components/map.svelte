@@ -14,7 +14,7 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {page} from '$app/state'
+	import {page, navigating} from '$app/state'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {buildOsmStyle, isDarkTheme} from './map-tile-styles.js'
 
@@ -88,7 +88,8 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 				map.on('moveend', () => {
 					clearTimeout(debounce)
 					debounce = setTimeout(() => {
-						if (disposed || !map) return
+						// A shallow goto would abort a navigation that's still loading.
+						if (disposed || !map || navigating.to) return
 						const {lat, lng} = map.getCenter()
 						const z = map.getZoom()
 						const searchParams = new SvelteURLSearchParams(page.url.search)

@@ -112,7 +112,7 @@
 		if (kind === 'mention' && token && playByMentionToken(token)) return
 		if (kind === 'channel' && token === 'updated' && item?.slug) {
 			const query = new URLSearchParams({display: 'infinite', slug: item.slug})
-			await goto(`/?${query.toString()}`)
+			await goto(`${resolve('/')}?${query.toString()}`)
 			return
 		}
 		if (!href) return

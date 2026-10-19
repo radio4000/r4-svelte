@@ -43,7 +43,7 @@
 	$effect(() => {
 		const q = homeSearch.trim()
 		if (!q) return
-		goto(`/search?q=${encodeURIComponent(q)}`, {state: {focus: true}})
+		goto(`${resolve('search')}?q=${encodeURIComponent(q)}`, {state: {focus: true}})
 	})
 
 	const follows = getFollowedChannels()

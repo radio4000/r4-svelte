@@ -108,9 +108,9 @@ Run `bun update -i` to interactively decide which dependencies to update, if any
 
 ## PWA / Offline support
 
-The app is a Progressive Web App with a hand-written service worker, `src/service-worker.js`, which SvelteKit builds and registers.
+The app is a Progressive Web App with a hand-written service worker, `src/service-worker/index.js`, which SvelteKit builds and registers.
 
-On install it caches the built JS/CSS, fonts and images. Pages are network-first, falling back to the last good copy after 5s or when offline. Channel/track data is not persisted while IDB cache persistence is disabled (see [state.md](state.md)), so remote data still needs network.
+On install it caches the built JS/CSS, fonts, images and the app shell. Pages are network-first, falling back after 5s or when offline to the last good copy from the same build, or the app shell. Channel/track data is not persisted while IDB cache persistence is disabled (see [state.md](state.md)), so remote data still needs network.
 
 The web app manifest is `static/webmanifest.json` (linked in `src/app.html`).
 

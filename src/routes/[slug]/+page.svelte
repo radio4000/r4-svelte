@@ -78,7 +78,7 @@
 	$effect(() => {
 		const q = searchInput.trim()
 		if (!q) return
-		goto(`/${slug}/tracks?q=${encodeURIComponent(q)}`, {state: {focus: true}})
+		goto(`${resolve('/[slug]/tracks', {slug})}?q=${encodeURIComponent(q)}`, {state: {focus: true}})
 	})
 
 	// Live/broadcast — same decision tree the header used to drive.
