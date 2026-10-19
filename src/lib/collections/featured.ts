@@ -36,7 +36,9 @@ export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 	const since = daysAgoIso(days)
 	try {
 		const data = await queryClient.fetchQuery({
-			queryKey: ['channels', 'featured-pool'],
+			// Not under ['channels']: channelsCollection tracks every query there, and the
+			// upsert below would cancel this one mid-fetch (CancelledError, empty home)
+			queryKey: ['featured-pool'],
 			staleTime: 60 * 60 * 1000,
 			queryFn: async () => {
 				const {data, error} = await sdk.supabase
@@ -47,13 +49,16 @@ export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 					.order('latest_track_at', {ascending: false})
 					.limit(200)
 				if (error) throw error
-				return (data ?? []) as Channel[]
+				const channels = (data ?? []) as Channel[]
+				// Upsert per fetch, not per call: home asks for the pool up to three
+				// times on load, and each upsert of 200 rows wakes every live query.
+				if (channels.length) {
+					await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+					channelsCollection.utils.writeUpsert(channels)
+				}
+				return channels
 			}
 		})
-		if (data.length) {
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
-			channelsCollection.utils.writeUpsert(data)
-		}
 		return data.filter((ch) => ch.latest_track_at && ch.latest_track_at >= since)
 	} catch (e) {
 		console.warn('[featured] failed to load channel pool', e)
