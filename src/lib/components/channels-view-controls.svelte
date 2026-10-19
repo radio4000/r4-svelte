@@ -3,8 +3,8 @@
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
 	import Icon from './icon.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{display?: 'grid' | 'list' | 'map' | 'tuner' | 'infinite', order?: string, direction?: 'asc' | 'desc', setDisplay?: (value: 'grid' | 'list' | 'map' | 'tuner' | 'infinite') => void, showSort?: boolean, onreshuffle?: () => void}} */
 	let {

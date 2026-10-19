@@ -1,8 +1,8 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {conceptIcons} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
+	import {conceptIcons} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
 	import PageHeader from './page-header.svelte'
 	import SectionMenu from './section-menu.svelte'
 
@@ -28,19 +28,19 @@
 	)
 	const exploreItems = $derived([
 		{
-			href: resolve('/explore/channels/featured'),
+			href: resolve('explore/channels/featured'),
 			icon: conceptIcons.channels,
 			label: m.explore_tab_channels(),
 			active: isChannels
 		},
 		{
-			href: resolve('/explore/tracks/recent'),
+			href: resolve('explore/tracks/recent'),
 			icon: conceptIcons.tracks,
 			label: m.explore_tab_tracks(),
 			active: isTracks
 		},
 		{
-			href: resolve('/explore/tags/featured'),
+			href: resolve('explore/tags/featured'),
 			icon: conceptIcons.tags,
 			label: m.explore_tab_tags(),
 			active: isTags

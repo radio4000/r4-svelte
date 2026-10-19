@@ -1,4 +1,4 @@
-import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
+import {LOCAL_STORAGE_KEYS} from '#lib/storage-keys.js'
 import {createLocalCollection} from './utils'
 
 // Spam decisions collection - local-only admin state for spam-warrior tool

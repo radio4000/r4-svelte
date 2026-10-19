@@ -6,20 +6,20 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {loadDeckView, playTrack, shufflePlayChannel} from '$lib/api'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {loadDeckView, playTrack, shufflePlayChannel} from '#lib/api.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
-	import {getChannelActivity} from '$lib/channel-activity.svelte'
-	import {channelAvatarUrl} from '$lib/utils'
-	import {isBroadcasting} from '$lib/deck'
-	import {toChannelCardMedia} from '$lib/components/channel-ui-state.ts'
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {getChannelActivity} from '#lib/channel-activity.svelte.js'
+	import {channelAvatarUrl} from '#lib/utils.js'
+	import {isBroadcasting} from '#lib/deck.js'
+	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import ChannelScene from '#lib/components/channel-scene-ogl.svelte'
+	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelActivity = $derived(getChannelActivity())
 	const channelCtx = getChannelCtx()
@@ -112,7 +112,7 @@
 		if (kind === 'mention' && token && playByMentionToken(token)) return
 		if (kind === 'channel' && token === 'updated' && item?.slug) {
 			const query = new URLSearchParams({display: 'infinite', slug: item.slug})
-			await goto(`/?${query.toString()}`)
+			await goto(`${resolve('/')}?${query.toString()}`)
 			return
 		}
 		if (!href) return

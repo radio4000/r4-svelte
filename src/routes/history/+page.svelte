@@ -1,27 +1,27 @@
 <script lang="ts">
 	import {resolve} from '$app/paths'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {
 		captureEventsCollection,
 		clearCaptureEvents,
 		buildEndDataMap,
 		type CaptureEvent
-	} from '$lib/collections/capture-events'
-	import {playTrack} from '$lib/api'
-	import {ensureTracksLoaded} from '$lib/collections/tracks'
-	import {appState} from '$lib/app-state.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {getLocale} from '$lib/paraglide/runtime'
-	import {dayLabel, formatDurationCompact} from '$lib/dates.js'
-	import {getPlayCountThreshold} from '$lib/utils'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import DateTime from '$lib/components/date-time.svelte'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import type {Track, PlayStartReason} from '$lib/types'
+	} from '#lib/collections/capture-events.js'
+	import {playTrack} from '#lib/api.js'
+	import {ensureTracksLoaded} from '#lib/collections/tracks.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {getLocale} from '#lib/paraglide/runtime.js'
+	import {dayLabel, formatDurationCompact} from '#lib/dates.js'
+	import {getPlayCountThreshold} from '#lib/utils.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import DateTime from '#lib/components/date-time.svelte'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import type {Track, PlayStartReason} from '#lib/types.js'
 	import {parseUrl} from 'media-now'
 
 	const eventsQuery = useLiveQuery((q) =>

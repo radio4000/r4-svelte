@@ -6,13 +6,13 @@
 		reorderPinnedViews,
 		deleteView,
 		type SavedView
-	} from '$lib/collections/views'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	} from '#lib/collections/views.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {resolve} from '$app/paths'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const viewsQuery = useLiveQuery(viewsCollection)
 

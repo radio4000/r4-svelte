@@ -1,7 +1,7 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import {formatTime, toIsoDateTime, isValidDateInput} from '$lib/dates.js'
-	import {getLocale} from '$lib/paraglide/runtime'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {formatTime, toIsoDateTime, isValidDateInput} from '#lib/dates.js'
+	import {getLocale} from '#lib/paraglide/runtime.js'
 
 	/** @type {{date: Date | string | number | null | undefined, locale?: string | string[]}} */
 	let {date, locale} = $props()

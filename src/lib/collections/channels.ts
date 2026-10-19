@@ -3,16 +3,16 @@ import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db
 import {BasicIndex} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
-import {appState} from '$lib/app-state.svelte'
-import {fetchChannelBySlug} from '$lib/api/fetch-channels'
-import {uuid} from '$lib/utils'
+import {appState} from '#lib/app-state.svelte.js'
+import {fetchChannelBySlug} from '#lib/api/fetch-channels.js'
+import {uuid} from '#lib/utils.js'
 import {queryClient} from './query-client'
-import {logger} from '$lib/logger'
+import {logger} from '#lib/logger.js'
 import {getErrorMessage} from './utils'
-import {capabilities} from '$lib/modes'
+import {capabilities} from '#lib/modes.js'
 
 const log = logger.ns('channels').seal()
-import type {Channel} from '$lib/types'
+import type {Channel} from '#lib/types.js'
 
 export type {Channel}
 

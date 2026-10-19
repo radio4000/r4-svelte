@@ -8,13 +8,13 @@
  * https://tympanus.net/codrops/2026/01/07/infinite-canvas-building-a-seamless-pan-anywhere-image-space/
  */
 import {Renderer, Camera, Transform, Mesh, Plane, Program, Texture, Vec3, Sphere} from 'ogl'
-import {gsap} from '$lib/animations'
+import {gsap} from '#lib/animations.js'
 import {
 	resolveChannelCardStates,
 	buildChannelInfoCanvas,
 	resolveChannelInfoClickTarget,
 	CHANNEL_INFO_CANVAS
-} from '$lib/3d/channel-card-3d.js'
+} from '#lib/3d/channel-card-3d.js'
 
 const CHUNK_SIZE = 110
 const RENDER_DISTANCE = 2

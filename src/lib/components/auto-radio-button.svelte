@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Icon from '$lib/components/icon.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import PresenceCount from '#lib/components/presence-count.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {
 		live = false,

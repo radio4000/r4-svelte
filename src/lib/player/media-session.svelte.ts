@@ -19,10 +19,10 @@
  */
 
 import {untrack} from 'svelte'
-import {appState} from '$lib/app-state.svelte'
-import {play, pause, next, previous, type MediaPlayer} from '$lib/api'
-import {trackImageUrl} from '$lib/utils'
-import type {Channel, Track} from '$lib/types'
+import {appState} from '#lib/app-state.svelte.js'
+import {play, pause, next, previous, type MediaPlayer} from '#lib/api.js'
+import {trackImageUrl} from '#lib/utils.js'
+import type {Channel, Track} from '#lib/types.js'
 
 // The Media Session API is global to the page. Track which deck last installed
 // handlers so an inactive deck cannot clear the active deck's controls.

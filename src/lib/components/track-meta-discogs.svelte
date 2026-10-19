@@ -1,14 +1,14 @@
 <script>
-	import {updateTrack} from '$lib/collections/tracks'
+	import {updateTrack} from '#lib/collections/tracks.js'
 	import R4DiscogsResource from './r4-discogs-resource.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{
-	 *   track?: import('$lib/types').Track,
-	 *   tracks?: import('$lib/types').Track[],
-	 *   channel?: import('$lib/types').ChannelRef,
+	 *   track?: import('#lib/types.js').Track,
+	 *   tracks?: import('#lib/types.js').Track[],
+	 *   channel?: import('#lib/types.js').ChannelRef,
 	 *   canEdit?: boolean,
-	 *   discogsData?: import('$lib/types').DiscogsResource | null,
+	 *   discogsData?: import('#lib/types.js').DiscogsResource | null,
 	 *   autoload?: boolean
 	 * }} */
 	let {track, tracks = [], channel, canEdit = false, discogsData = null, autoload = true} = $props()

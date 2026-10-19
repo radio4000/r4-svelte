@@ -1,10 +1,10 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {appState} from '$lib/app-state.svelte'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {SvelteMap} from 'svelte/reactivity'
-	import {uuid, slugify} from '$lib/utils'
+	import {uuid, slugify} from '#lib/utils.js'
 	import {
 		parseTxtFile,
 		parseM3u,
@@ -13,12 +13,12 @@
 		importBackupFile,
 		writeImport,
 		validateBackup
-	} from '$lib/import'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Dropzone from '$lib/components/dropzone.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import type {Channel, Track, ImportOrigin} from '$lib/types'
+	} from '#lib/import.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Dropzone from '#lib/components/dropzone.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import type {Channel, Track, ImportOrigin} from '#lib/types.js'
 
 	// File System Access API not in TypeScript's default lib
 	type DirHandle = FileSystemDirectoryHandle & {
@@ -313,7 +313,7 @@
 
 	function browseImported() {
 		appState.channels_filter = 'imported'
-		goto('/')
+		goto(resolve('/'))
 	}
 </script>
 

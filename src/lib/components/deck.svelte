@@ -2,10 +2,10 @@
 	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {cubicOut} from 'svelte/easing'
-	import {appState} from '$lib/app-state.svelte'
-	import {showPlayerParam, sortedListeningDeckIds} from '$lib/deck'
-	import Player from '$lib/components/player.svelte'
-	import QueuePanel from '$lib/components/queue-panel.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {showPlayerParam, sortedListeningDeckIds} from '#lib/deck.js'
+	import Player from '#lib/components/player.svelte'
+	import QueuePanel from '#lib/components/queue-panel.svelte'
 
 	/** @type {{deckId: number, hasHistory?: boolean}} */
 	let {deckId, hasHistory = false} = $props()

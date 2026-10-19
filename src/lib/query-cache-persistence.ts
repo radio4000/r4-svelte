@@ -1,10 +1,10 @@
 /** TanStack Query cache persistence to IndexedDB. */
 import type {PersistedClient} from '@tanstack/query-persist-client-core'
 import {get, set, del, createStore} from 'idb-keyval'
-import {browser} from '$app/environment'
+import {browser} from '$app/env'
 import {queryClient} from './collections/query-client'
-import {IDB_DATABASES, IDB_KEYS} from '$lib/storage-keys'
-import {logger} from '$lib/logger'
+import {IDB_DATABASES, IDB_KEYS} from '#lib/storage-keys.js'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('cache').seal()
 

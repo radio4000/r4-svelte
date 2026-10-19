@@ -1,7 +1,7 @@
-import {uuid} from '$lib/utils'
-import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-import {serializeView, type View, type ViewURI} from '$lib/views'
-import {logger} from '$lib/logger'
+import {uuid} from '#lib/utils.js'
+import {LOCAL_STORAGE_KEYS} from '#lib/storage-keys.js'
+import {serializeView, type View, type ViewURI} from '#lib/views.js'
+import {logger} from '#lib/logger.js'
 import {createLocalCollection} from './utils'
 
 const log = logger.ns('views').seal()

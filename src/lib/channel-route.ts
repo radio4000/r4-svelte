@@ -1,4 +1,4 @@
-import type {Channel} from '$lib/types'
+import type {Channel} from '#lib/types.js'
 
 export function updateStableChannelId(
 	slug: string,

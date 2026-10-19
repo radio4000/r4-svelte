@@ -2,15 +2,15 @@
 	/* this route is not yet linked anywhere, it's a draft, it doesnt need clean up */
 
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import {appState} from '$lib/app-state.svelte'
+	import {appName} from '#lib/config.js'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {sdk} from '@radio4000/sdk'
-	import {fetchChannelCount} from '$lib/collections/channels'
-	import {searchChannelsCombined} from '$lib/search.js'
-	import BackLink from '$lib/components/back-link.svelte'
-	import InputRange from '$lib/components/input-range.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import {fetchChannelCount} from '#lib/collections/channels.js'
+	import {searchChannelsCombined} from '#lib/search.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import InputRange from '#lib/components/input-range.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Seo from '#lib/components/seo.svelte'
 	import {
 		computeEconomy,
 		computeChannelEconomy,
@@ -25,7 +25,7 @@
 		type Algorithm,
 		type EconomyParams
 	} from './economy'
-	import type {Channel} from '$lib/types'
+	import type {Channel} from '#lib/types.js'
 
 	// --- Tab state ---
 	let tab = $state<'ecosystem' | 'channel'>('ecosystem')

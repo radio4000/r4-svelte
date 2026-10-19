@@ -2,24 +2,24 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {capabilities} from '$lib/modes'
-	import {appState} from '$lib/app-state.svelte'
-	import {getFollowedChannels} from '$lib/followed-channels.svelte'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {queryClient} from '$lib/collections/query-client'
-	import {cacheReady} from '$lib/query-cache-persistence'
-	import {fetchChannelCount, CHANNELS_PAGE_SIZE} from '$lib/collections/channels'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {getChannelActivity} from '$lib/channel-activity.svelte'
-	import {toChannelCardMedia} from '$lib/components/channel-ui-state.ts'
+	import {capabilities} from '#lib/modes.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {getFollowedChannels} from '#lib/followed-channels.svelte.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {cacheReady} from '#lib/query-cache-persistence.js'
+	import {fetchChannelCount, CHANNELS_PAGE_SIZE} from '#lib/collections/channels.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {getChannelActivity} from '#lib/channel-activity.svelte.js'
+	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
 	import {
 		handleCanvasClick as onCanvasClick,
 		handleCanvasDoubleClick
-	} from '$lib/components/channels-view-shared.js'
+	} from '#lib/components/channels-view-shared.js'
 	import {gte, inArray, not, isNull} from '@tanstack/db'
-	import {paginationFromUrl, shuffleSeed} from '$lib/utils'
-	import {pickFeatured, dailySeed} from '$lib/collections/featured'
+	import {paginationFromUrl, shuffleSeed} from '#lib/utils.js'
+	import {pickFeatured, dailySeed} from '#lib/collections/featured.js'
 	import ChannelCard from './channel-card.svelte'
 	import ChannelsViewControls from './channels-view-controls.svelte'
 	import Dialog from './dialog.svelte'
@@ -28,8 +28,8 @@
 	import SearchInput from './search-input.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 	import ExplorePageHeader from './explore-page-header.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelActivity = $derived(getChannelActivity())
 
@@ -50,7 +50,7 @@
 	$effect(() => {
 		const q = searchValue.trim()
 		if (!q || !searchHref) return
-		goto(`${searchHref}?q=${encodeURIComponent(q)}`, {replaceState: true})
+		goto(`${searchHref}?q=${encodeURIComponent(q)}`, {replace: true})
 	})
 
 	const filterSlugMap = {
@@ -119,9 +119,9 @@
 	// Keep display in URL in sync
 	$effect(() => {
 		if (!page.url.searchParams.has('display')) {
-			const query = new URL(page.url).searchParams
+			const query = new URL(page.url.href).searchParams
 			query.set('display', display)
-			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+			goto(`?${query.toString()}`, {replace: true, reset: false})
 		}
 	})
 
@@ -268,7 +268,7 @@
 			const unmigratedIds = ids.filter((id) => !knownIds.has(id))
 			if (unmigratedIds.length) {
 				await cacheReady
-				/** @type {import('$lib/types').Channel[]} */
+				/** @type {import('#lib/types.js').Channel[]} */
 				const migrated = []
 				for (const query of queryClient.getQueryCache().getAll()) {
 					if (query.queryKey[0] !== 'channels' || query.state.status !== 'success') continue
@@ -330,7 +330,7 @@
 	/** @param {'grid' | 'list' | 'map' | 'tuner' | 'infinite'} value */
 	function setDisplay(value = 'grid') {
 		appState.channels_display = value
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		query.set('display', value)
 		query.delete('page')
 		// Preserve map params if switching to map view
@@ -339,7 +339,7 @@
 			query.delete('longitude')
 			query.delete('zoom')
 		}
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		goto(`?${query.toString()}`, {replace: true, reset: false})
 	}
 
 	function setFilter(value) {
@@ -348,10 +348,10 @@
 			goto(resolve(/** @type {any} */ (filterBasePath + '/' + slugFor(value))))
 			return
 		}
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		query.set('filter', value)
 		query.delete('page')
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		goto(`?${query.toString()}`, {replace: true, reset: false})
 	}
 </script>
 

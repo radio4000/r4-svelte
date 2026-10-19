@@ -1,5 +1,5 @@
-import {canonicalTrackKey} from '$lib/utils'
-import type {Track} from '$lib/types'
+import {canonicalTrackKey} from '#lib/utils.js'
+import type {Track} from '#lib/types.js'
 
 export const CHANNEL_MATCH_WEIGHTS = {
 	url: 50,

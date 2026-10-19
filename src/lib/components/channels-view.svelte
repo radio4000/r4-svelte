@@ -1,20 +1,20 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {getChannelActivity} from '$lib/channel-activity.svelte'
-	import {toChannelCardMedia} from '$lib/components/channel-ui-state.ts'
-	import {shuffleArray} from '$lib/utils'
+	import {getChannelActivity} from '#lib/channel-activity.svelte.js'
+	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
+	import {shuffleArray} from '#lib/utils.js'
 	import {
 		handleCanvasClick as onCanvasClick,
 		handleCanvasDoubleClick
-	} from '$lib/components/channels-view-shared.js'
+	} from '#lib/components/channels-view-shared.js'
 	import ChannelCard from './channel-card.svelte'
 	import ChannelsViewControls from './channels-view-controls.svelte'
 	import SpectrumScanner from './spectrum-scanner.svelte'
 
 	const channelActivity = $derived(getChannelActivity())
 
-	/** @type {{channels?: import('$lib/types').Channel[], order?: string, direction?: 'asc' | 'desc', display?: 'grid' | 'list' | 'map' | 'tuner' | 'infinite', header?: import('svelte').Snippet, showToolbar?: boolean, syncToUrl?: boolean}} */
+	/** @type {{channels?: import('#lib/types.js').Channel[], order?: string, direction?: 'asc' | 'desc', display?: 'grid' | 'list' | 'map' | 'tuner' | 'infinite', header?: import('svelte').Snippet, showToolbar?: boolean, syncToUrl?: boolean}} */
 	let {
 		channels = [],
 		order = $bindable('updated'),
@@ -66,14 +66,14 @@
 	function setDisplay(value) {
 		display = value
 		if (syncToUrl) {
-			const query = new URL(page.url).searchParams
+			const query = new URL(page.url.href).searchParams
 			query.set('display', display)
 			if (value !== 'map') {
 				query.delete('latitude')
 				query.delete('longitude')
 				query.delete('zoom')
 			}
-			goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+			goto(`?${query.toString()}`, {replace: true, reset: false})
 		}
 	}
 </script>

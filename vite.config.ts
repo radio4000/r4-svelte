@@ -1,10 +1,12 @@
 import devtoolsJson from 'vite-plugin-devtools-json'
 import {sveltekit} from '@sveltejs/kit/vite'
+import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
+import adapterCloudflare from '@sveltejs/adapter-cloudflare'
+import adapterStatic from '@sveltejs/adapter-static'
 import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {visualizer} from 'rollup-plugin-visualizer'
-import {SvelteKitPWA} from '@vite-pwa/sveltekit'
 import pkg from './package.json' with {type: 'json'}
 
 // Get git info at build time
@@ -21,36 +23,41 @@ function getGitInfo() {
 	}
 }
 
+const standalone = process.env.PUBLIC_APP_MODE === 'standalone'
+
 export default defineConfig({
 	plugins: [
-		sveltekit(),
+		sveltekit({
+			// https://svelte.dev/docs/kit/integrations
+			preprocess: vitePreprocess(),
+			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
+			adapter: standalone ? adapterStatic({fallback: '404.html'}) : adapterCloudflare(),
+			paths: standalone ? {base: (process.env.BASE_PATH ?? '') as '' | `/${string}`} : {},
+			version: {
+				name: execSync('git rev-parse HEAD').toString().trim(),
+				// Poll `_app/version.json` so long-lived tabs notice new deploys.
+				// Drives `updated.current`, which the app update banner listens to.
+				pollInterval: 5 * 60 * 1000
+			},
+			compilerOptions: {
+				experimental: {
+					// https://svelte.dev/docs/svelte/await-expressions
+					async: true
+				},
+				warningFilter: (warning) => {
+					const ignore = [
+						'a11y_click_events_have_key_events',
+						'a11y_no_static_element_interactions',
+						'a11y_no_noninteractive_element_interactions',
+						'a11y_autofocus'
+					]
+					return !ignore.includes(warning.code)
+				}
+			}
+		}),
 		paraglideVitePlugin({
 			project: './i18n/project.inlang',
 			outdir: './src/lib/paraglide'
-		}),
-		SvelteKitPWA({
-			manifest: false,
-			registerType: 'prompt',
-			injectRegister: null,
-			workbox: {
-				clientsClaim: true,
-				navigateFallback: null,
-				globPatterns: ['client/**/*.{js,css,ico,png,svg,woff2,webp,webmanifest}'],
-				globIgnores: ['**/*.html'],
-				// Pages are fetched from the network first (always fresh when online).
-				// The cache is only used as an offline fallback or when the network is slow (>5s).
-				runtimeCaching: [
-					{
-						urlPattern: ({request}) => request.mode === 'navigate',
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'pages',
-							networkTimeoutSeconds: 5,
-							expiration: {maxEntries: 50, maxAgeSeconds: 60 * 60 * 24}
-						}
-					}
-				]
-			}
 		}),
 		devtoolsJson(),
 		...(process.env.ANALYZE

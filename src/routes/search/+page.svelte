@@ -1,25 +1,25 @@
 <script>
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {SearchUrl} from '$lib/search-url.svelte.js'
-	import {queryView} from '$lib/views.svelte'
-	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
-	import {playTrack, setPlaylist, loadDeckView} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import SearchShell from '$lib/components/search-shell.svelte'
-	import SearchTrackMenu from '$lib/components/search-track-menu.svelte'
-	import FilterChips from '$lib/components/filter-chips.svelte'
-	import TagsFilterDialog from '$lib/components/tags-filter-dialog.svelte'
-	import ChannelsFilterDialog from '$lib/components/channels-filter-dialog.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {searchChannelsCombined} from '$lib/search'
-	import Pagination from '$lib/components/pagination.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {getFeaturedSuggestions} from '$lib/featured-suggestions.svelte'
+	import {SearchUrl} from '#lib/search-url.svelte.js'
+	import {queryView} from '#lib/views.svelte.js'
+	import {serializeView, viewFromUrl, viewLabel, viewToUrl} from '#lib/views.js'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import ChannelCard from '#lib/components/channel-card.svelte'
+	import {playTrack, setPlaylist, loadDeckView} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import SearchShell from '#lib/components/search-shell.svelte'
+	import SearchTrackMenu from '#lib/components/search-track-menu.svelte'
+	import FilterChips from '#lib/components/filter-chips.svelte'
+	import TagsFilterDialog from '#lib/components/tags-filter-dialog.svelte'
+	import ChannelsFilterDialog from '#lib/components/channels-filter-dialog.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import {searchChannelsCombined} from '#lib/search.js'
+	import Pagination from '#lib/components/pagination.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
 	import {
 		featuredScore,
 		getChannelTags,
@@ -27,11 +27,11 @@
 		seededRandom,
 		shuffleArray,
 		shuffleSeed
-	} from '$lib/utils'
+	} from '#lib/utils.js'
 	import {resolve} from '$app/paths'
-	import {trap} from '$lib/focus'
+	import {trap} from '#lib/focus.js'
 	import {fromAction} from 'svelte/attachments'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = $props.id()
 	const search = new SearchUrl('/search')
@@ -42,7 +42,7 @@
 
 	function onViewsBarChange(v) {
 		search.seedInput(viewLabel(v))
-		goto(viewToUrl('/search', v), {replaceState: true})
+		goto(viewToUrl('/search', v), {replace: true})
 	}
 
 	// Same tag-filter dialog as the channel tracks page — tags are aggregated
@@ -135,7 +135,7 @@
 	// instead of dropping it (a pure #tag search should still find channels).
 	const searchTermKey = $derived([...(q.tags ?? []), q.search].filter(Boolean).join(' '))
 
-	/** @type {import('$lib/types.ts').Channel[]} */
+	/** @type {import('#lib/types.ts').Channel[]} */
 	let channels = $state([])
 	let channelsLoading = $state(false)
 
@@ -334,8 +334,8 @@
 				</p>
 			{/if}
 			<p class="browse-links">
-				<a href={resolve('/channels/all')}>All {m.explore_tab_channels()}</a>
-				<a href={resolve('/tracks/recent')}>All {m.explore_tab_tracks()}</a>
+				<a href={resolve('channels/all')}>All {m.explore_tab_channels()}</a>
+				<a href={resolve('tracks/recent')}>All {m.explore_tab_tracks()}</a>
 			</p>
 		</div>
 	{/if}

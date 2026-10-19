@@ -1,12 +1,19 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {queryView} from '$lib/views.svelte'
-	import {parseView, serializeView, viewFromUrl, viewLabel, viewToUrl, type View} from '$lib/views'
-	import {SearchUrl} from '$lib/search-url.svelte.js'
-	import Tracklist from '$lib/components/tracklist.svelte'
-	import ViewsBar from '$lib/components/views-bar.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
+	import {queryView} from '#lib/views.svelte.js'
+	import {
+		parseView,
+		serializeView,
+		viewFromUrl,
+		viewLabel,
+		viewToUrl,
+		type View
+	} from '#lib/views.js'
+	import {SearchUrl} from '#lib/search-url.svelte.js'
+	import Tracklist from '#lib/components/tracklist.svelte'
+	import ViewsBar from '#lib/components/views-bar.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
 
 	const uid = $props.id()
 	const basePath = '/docs/views'
@@ -22,7 +29,7 @@
 
 	function onViewsBarChange(v: View) {
 		search.seedInput(viewLabel(v))
-		goto(viewToUrl(basePath, v), {replaceState: true})
+		goto(viewToUrl(basePath, v), {replace: true})
 	}
 
 	// --- Pagination ---
@@ -36,7 +43,7 @@
 	)
 
 	function navigate(newOffset: number) {
-		goto(viewToUrl(basePath, {...view, offset: newOffset, limit}), {replaceState: true})
+		goto(viewToUrl(basePath, {...view, offset: newOffset, limit}), {replace: true})
 	}
 
 	// --- Examples ---
@@ -51,7 +58,7 @@
 	function loadExample(viewStr: string) {
 		const v = parseView(viewStr)
 		search.seedInput(viewLabel(v))
-		goto(viewToUrl(basePath, v), {replaceState: true})
+		goto(viewToUrl(basePath, v), {replace: true})
 	}
 </script>
 

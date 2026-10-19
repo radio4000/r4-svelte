@@ -1,5 +1,5 @@
 <script>
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/**
 	 * Listener-count badge. Dark number pill.

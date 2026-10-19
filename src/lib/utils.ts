@@ -1,7 +1,8 @@
+import type {ReadonlyURL} from '$app/state'
 import fuzzysort from 'fuzzysort'
 import {parseUrl} from 'media-now'
-import {appCloudinaryUrl, MOBILE_BREAKPOINT} from '$lib/config'
-import * as m from '$lib/paraglide/messages'
+import {appCloudinaryUrl, MOBILE_BREAKPOINT} from '#lib/config.js'
+import * as m from '#lib/paraglide/messages.js'
 
 export function uuid() {
 	return crypto.randomUUID()
@@ -198,7 +199,7 @@ export function trackImageUrl(
 }
 
 /** Parse 1-based `page`/`per` pagination search params, clamping to positive ints. */
-export function paginationFromUrl(url: URL, defaultPer = 50): {page: number; per: number} {
+export function paginationFromUrl(url: ReadonlyURL, defaultPer = 50): {page: number; per: number} {
 	const positive = (value: string | null, fallback: number) =>
 		Math.max(1, parseInt(value ?? '', 10) || fallback)
 	return {

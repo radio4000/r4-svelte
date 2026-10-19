@@ -1,5 +1,5 @@
 <script>
-	import {listboxNav} from '$lib/components/listbox-nav.svelte.js'
+	import {listboxNav} from '#lib/components/listbox-nav.svelte.js'
 
 	const fruits = ['Apple', 'Banana', 'Blueberry', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']
 

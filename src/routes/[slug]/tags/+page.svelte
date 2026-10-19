@@ -1,27 +1,27 @@
 <script>
-	import {replaceState} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {getTracksQueryCtx} from '$lib/contexts'
+	import {getTracksQueryCtx} from '#lib/contexts.js'
 	import {getMatchingTracksQuery} from '../matching-tracks-query.svelte.ts'
 	import {Tween} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
-	import {page} from '$app/state'
-	import {getChannelCtx} from '$lib/contexts'
-	import {getChannelTags} from '$lib/utils'
-	import InputRange from '$lib/components/input-range.svelte'
-	import TagChain from '$lib/components/tag-chain.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Subpage from '$lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {page, navigating} from '$app/state'
+	import {getChannelCtx} from '#lib/contexts.js'
+	import {getChannelTags} from '#lib/utils.js'
+	import InputRange from '#lib/components/input-range.svelte'
+	import TagChain from '#lib/components/tag-chain.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Subpage from '#lib/components/subpage.svelte'
+	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 	import {
 		getDateRange,
 		generateYearPeriods,
 		generateQuarterPeriods,
 		generateMonthPeriods
-	} from '$lib/dates.js'
+	} from '#lib/dates.js'
 
 	let slug = $derived(page.params.slug ?? '')
 
@@ -197,10 +197,10 @@
 	}
 
 	function clearMatchingFilter() {
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		url.searchParams.delete('matching')
 		const queryString = url.searchParams.size ? `?${url.searchParams.toString()}` : ''
-		replaceState(resolve('/[slug]/tags', {slug}) + queryString, {})
+		goto(resolve('/[slug]/tags', {slug}) + queryString, {shallow: true, replace: true})
 	}
 
 	// Animated tag count
@@ -242,7 +242,9 @@
 		const basePath = resolve('/[slug]/tags', {slug})
 		const nextPath = `${basePath}${queryString}`
 		const currentPath = `${page.url.pathname}${page.url.search}`
-		if (currentPath !== nextPath) replaceState(resolve('/[slug]/tags', {slug}) + queryString, {})
+		// A shallow goto would abort a navigation that's still loading.
+		if (currentPath !== nextPath && !navigating.to)
+			goto(resolve('/[slug]/tags', {slug}) + queryString, {shallow: true, replace: true})
 	})
 </script>
 

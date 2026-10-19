@@ -1,8 +1,8 @@
 <script>
-	import BroadcastControls from '$lib/components/broadcast-controls.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import BroadcastControls from '#lib/components/broadcast-controls.svelte'
+	import PresenceCount from '#lib/components/presence-count.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{
 	 *  channelId: string,

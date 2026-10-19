@@ -1,12 +1,12 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
-	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
+	import {InfiniteCanvasOGL} from '#lib/infinite-canvas-ogl.js'
+	import {getChannelSceneThemeConfig} from '#lib/3d/channel-scene-theme.js'
 	import {untrack} from 'svelte'
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Dialog from '$lib/components/dialog.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import Dialog from '#lib/components/dialog.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{media?: any[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, cardSize?: number, cardDepthScale?: number, cardSizeScale?: number, allowNavigation?: boolean, enableCardTilt?: boolean, singleSceneConstrainMovement?: boolean, singleSceneMaxXY?: number, singleSceneCardDragRotate?: boolean, singleSceneMouseDrift?: boolean, minCameraZ?: number, maxCameraZ?: number, backgroundColor?: string|null, showInfoButton?: boolean, showControlsModal?: boolean, onclick?: (item: any) => void, ondoubleclick?: (item: any) => void, onnavigate?: (href: string, item: any, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
 	let {

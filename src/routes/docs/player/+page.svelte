@@ -1,7 +1,7 @@
 <script>
 	import 'media-chrome'
-	import '$lib/youtube-video-custom-element.js'
-	import '$lib/soundcloud-player-custom-element.js'
+	import '#lib/youtube-video-custom-element.js'
+	import '#lib/soundcloud-player-custom-element.js'
 	import {parseUrl} from 'media-now'
 
 	const testUrls = [

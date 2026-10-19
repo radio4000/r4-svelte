@@ -1,5 +1,5 @@
-import {gsap, Draggable, InertiaPlugin} from '$lib/animations.js'
-import {logger} from '$lib/logger'
+import {gsap, Draggable, InertiaPlugin} from '#lib/animations.js'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('loop').seal()
 

@@ -1,13 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {getChannelCtx} from '$lib/contexts'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {updateChannel} from '$lib/collections/channels'
-	import MapPicker from '$lib/components/map-picker.svelte'
-	import R4AvatarUpload from '$lib/components/r4-avatar-upload.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {getChannelCtx} from '#lib/contexts.js'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {updateChannel} from '#lib/collections/channels.js'
+	import MapPicker from '#lib/components/map-picker.svelte'
+	import R4AvatarUpload from '#lib/components/r4-avatar-upload.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelCtx = getChannelCtx()
 
@@ -83,7 +83,7 @@
 			success = true
 			initialized = false // re-sync after save so hasChanges resets
 			if (fieldSlug !== oldSlug) {
-				await goto(resolve('/[slug]/edit', {slug: fieldSlug}), {replaceState: true})
+				await goto(resolve('/[slug]/edit', {slug: fieldSlug}), {replace: true})
 			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_edit_failed()

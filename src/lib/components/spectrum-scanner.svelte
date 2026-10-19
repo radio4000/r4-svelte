@@ -1,16 +1,16 @@
 <script>
 	import gsap from 'gsap'
-	import {playChannel, toggleChannelPlay} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {isChannelPlaying} from '$lib/deck'
-	import {joinBroadcast} from '$lib/broadcast.js'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {channelImageUrl} from '$lib/utils'
+	import {playChannel, toggleChannelPlay} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {isChannelPlaying} from '#lib/deck.js'
+	import {joinBroadcast} from '#lib/broadcast.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {channelImageUrl} from '#lib/utils.js'
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import InputRange from './input-range.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const {channels = []} = $props()
 

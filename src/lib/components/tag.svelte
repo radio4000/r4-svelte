@@ -1,5 +1,5 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {page} from '$app/state'
 
 	/** @type {{href?: string, onclick?: () => void, value?: string, playing?: boolean, filtered?: boolean, deckId?: number, children: import('svelte').Snippet}} */

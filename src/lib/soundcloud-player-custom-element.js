@@ -1,6 +1,6 @@
 // SC Widget API: https://developers.soundcloud.com/docs/api/html5-widget
-import {logger} from '$lib/logger'
-import {upgradeProperties} from '$lib/custom-element-props'
+import {logger} from '#lib/logger.js'
+import {upgradeProperties} from '#lib/custom-element-props.js'
 
 const log = logger.ns('soundcloud-player').seal()
 let soundcloudApiReadyPromise

@@ -1,15 +1,15 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import TrackList from '$lib/components/tracklist.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import TrackList from '#lib/components/tracklist.svelte'
+	import ChannelCard from '#lib/components/channel-card.svelte'
 	import {onMount} from 'svelte'
 
 	const slug = 'ko002'
 
-	/** @type {import('$lib/types').Channel[]} */
+	/** @type {import('#lib/types.js').Channel[]} */
 	let channels = $state([])
-	/** @type {import('$lib/types').Track[]} */
+	/** @type {import('#lib/types.js').Track[]} */
 	let tracks = $state([])
 	let loading = $state(true)
 

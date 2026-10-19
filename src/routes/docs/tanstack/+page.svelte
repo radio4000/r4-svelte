@@ -1,13 +1,13 @@
 <script lang="ts">
 	import Menu from './menu.svelte'
-	import {resetLocalData} from '$lib/api'
-	import {queryClient} from '$lib/collections/query-client'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {followsCollection} from '$lib/collections/follows'
-	import {trackMetaCollection} from '$lib/collections/track-meta'
-	import {captureEventsCollection} from '$lib/collections/capture-events'
-	import {cacheReady} from '$lib/query-cache-persistence'
+	import {resetLocalData} from '#lib/api.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {followsCollection} from '#lib/collections/follows.js'
+	import {trackMetaCollection} from '#lib/collections/track-meta.js'
+	import {captureEventsCollection} from '#lib/collections/capture-events.js'
+	import {cacheReady} from '#lib/query-cache-persistence.js'
 
 	let tick = $state(0)
 	const refresh = () => tick++

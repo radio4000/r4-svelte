@@ -4,12 +4,12 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {viewFromUrl, viewLabel, type View} from '$lib/views'
-	import {queryView} from '$lib/views.svelte'
-	import {appState, createDefaultDeck} from '$lib/app-state.svelte'
-	import {loadDeckView} from '$lib/api'
-	import {ensureTracksLoaded} from '$lib/collections/tracks'
-	import * as m from '$lib/paraglide/messages'
+	import {viewFromUrl, viewLabel, type View} from '#lib/views.js'
+	import {queryView} from '#lib/views.svelte.js'
+	import {appState, createDefaultDeck} from '#lib/app-state.svelte.js'
+	import {loadDeckView} from '#lib/api.js'
+	import {ensureTracksLoaded} from '#lib/collections/tracks.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/*
 		This page basically takes a View from the ?q url param,
@@ -119,7 +119,7 @@
 		const params = new SvelteURLSearchParams()
 		if (inputQ.trim()) params.set('q', inputQ.trim())
 		if (inputLimit) params.set('limit', String(inputLimit))
-		goto(`/embed?${params}`)
+		goto(`${resolve('embed')}?${params}`)
 	}
 </script>
 

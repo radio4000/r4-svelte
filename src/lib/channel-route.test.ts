@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import type {Channel} from '$lib/types'
+import type {Channel} from '#lib/types.js'
 import {pickRouteChannel, updateStableChannelId} from './channel-route'
 
 function makeChannel(id: string, slug: string, name: string): Channel {

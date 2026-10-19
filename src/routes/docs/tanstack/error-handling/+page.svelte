@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {tick} from 'svelte'
-	import {browser} from '$app/environment'
+	import {browser} from '$app/env'
 	import {createCollection} from '@tanstack/svelte-db'
 	import {localOnlyCollectionOptions} from '@tanstack/db'
 	import {queryCollectionOptions} from '@tanstack/query-db-collection'
 	import {createQuery, queryOptions} from '@tanstack/svelte-query'
 	import Menu from '../menu.svelte'
-	import {queryClient} from '$lib/collections/query-client'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 
 	type AssertionResult = {
 		pass: boolean

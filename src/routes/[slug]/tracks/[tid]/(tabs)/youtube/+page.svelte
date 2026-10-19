@@ -1,9 +1,9 @@
 <script>
-	import {getTrackDetailCtx} from '$lib/contexts'
-	import TrackMetaYoutube from '$lib/components/track-meta-youtube.svelte'
-	import {pullYouTubeSingle} from '$lib/metadata/youtube'
-	import {updateTrack} from '$lib/collections/tracks'
-	import * as m from '$lib/paraglide/messages'
+	import {getTrackDetailCtx} from '#lib/contexts.js'
+	import TrackMetaYoutube from '#lib/components/track-meta-youtube.svelte'
+	import {pullYouTubeSingle} from '#lib/metadata/youtube.js'
+	import {updateTrack} from '#lib/collections/tracks.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)

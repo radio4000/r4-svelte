@@ -1,10 +1,10 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {resolve} from '$app/paths'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const importedCount = $derived(appState.local_channels?.length ?? 0)
 </script>

@@ -1,5 +1,5 @@
-import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-import type {TrackMetadataFields} from '$lib/types'
+import {LOCAL_STORAGE_KEYS} from '#lib/storage-keys.js'
+import type {TrackMetadataFields} from '#lib/types.js'
 import {createLocalCollection} from './utils'
 
 // Track metadata collection - local-only cache for YouTube/MusicBrainz/Discogs enrichment

@@ -1,4 +1,4 @@
-import {appMode} from '$lib/config'
+import {appMode} from '#lib/config.js'
 
 export type AppMode = 'default' | 'standalone' | 'embed'
 const mode = (appMode as AppMode) ?? 'default'

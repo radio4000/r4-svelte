@@ -1,13 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {tracksCollection, deleteTrack} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {tracksCollection, deleteTrack} from '#lib/collections/tracks.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {data} = $props()
 
@@ -67,7 +67,8 @@
 			<h1>{m.track_delete_heading()}</h1>
 			<p>
 				<a href={resolve('/[slug]', {slug: channel.slug})}>@{channel.slug}</a> /
-				<a href={resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid})}>{track.title}</a
+				<a href={resolve('/[slug]/tracks/[tid]/(tabs)', {slug: data.slug, tid: data.tid})}
+					>{track.title}</a
 				>
 			</p>
 		</header>

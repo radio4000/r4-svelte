@@ -1,48 +1,48 @@
 <script>
 	import '../styles/style.css'
-	import {appState, deckAccent} from '$lib/app-state.svelte'
-	import {sortedDeckIds} from '$lib/deck'
-	import AuthListener from '$lib/components/auth-listener.svelte'
-	import DraggablePanel from '$lib/components/draggable-panel.svelte'
-	import KeyboardShortcuts from '$lib/components/keyboard-shortcuts.svelte'
-	import DeckStrip from '$lib/components/deck-strip.svelte'
-	import DeckCompactBar from '$lib/components/deck-compact-bar.svelte'
-	import LayoutHeader from '$lib/components/layout-header.svelte'
-	import LiveChat from '$lib/components/live-chat.svelte'
-	import R4Loading from '$lib/components/r4-loading.svelte'
-	import ToolTip from '$lib/components/tool-tip.svelte'
-	import EditTrackDialog from '$lib/components/track-edit-dialog.svelte'
-	import ShareDialog from '$lib/components/share-dialog.svelte'
-	import ShortcutsDialog from '$lib/components/shortcuts-dialog.svelte'
-	import AppBuildInfo from '$lib/components/app-build-info.svelte'
-	import AppUpdateBanner from '$lib/components/app-update-banner.svelte'
-	import {toggleDeckCompact} from '$lib/api'
-	import {isMobileViewport} from '$lib/utils'
+	import {appState, deckAccent} from '#lib/app-state.svelte.js'
+	import {sortedDeckIds} from '#lib/deck.js'
+	import AuthListener from '#lib/components/auth-listener.svelte'
+	import DraggablePanel from '#lib/components/draggable-panel.svelte'
+	import KeyboardShortcuts from '#lib/components/keyboard-shortcuts.svelte'
+	import DeckStrip from '#lib/components/deck-strip.svelte'
+	import DeckCompactBar from '#lib/components/deck-compact-bar.svelte'
+	import LayoutHeader from '#lib/components/layout-header.svelte'
+	import LiveChat from '#lib/components/live-chat.svelte'
+	import R4Loading from '#lib/components/r4-loading.svelte'
+	import ToolTip from '#lib/components/tool-tip.svelte'
+	import EditTrackDialog from '#lib/components/track-edit-dialog.svelte'
+	import ShareDialog from '#lib/components/share-dialog.svelte'
+	import ShortcutsDialog from '#lib/components/shortcuts-dialog.svelte'
+	import AppBuildInfo from '#lib/components/app-build-info.svelte'
+	import AppUpdateBanner from '#lib/components/app-update-banner.svelte'
+	import {toggleDeckCompact} from '#lib/api.js'
+	import {isMobileViewport} from '#lib/utils.js'
 	import {onMount} from 'svelte'
 	import {fly} from 'svelte/transition'
 	import {cubicOut} from 'svelte/easing'
 	import {SvelteMap, MediaQuery} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '$lib/modes'
-	import {syncAnalyticsConsent, capture} from '$lib/analytics'
-	// import {setChannelsCtx} from '$lib/contexts'
-	import {applyCustomCssVariables} from '$lib/apply-css-variables'
-	import {logger} from '$lib/logger'
-	import * as m from '$lib/paraglide/messages'
-	import {getLocale, setLocale, locales, isLocale} from '$lib/paraglide/runtime'
+	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '#lib/modes.js'
+	import {syncAnalyticsConsent, capture} from '#lib/analytics.js'
+	// import {setChannelsCtx} from '#lib/contexts.js'
+	import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
+	import {logger} from '#lib/logger.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {getLocale, setLocale, locales, isLocale} from '#lib/paraglide/runtime.js'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
 	// import {SvelteQueryDevtools} from '@tanstack/svelte-query-devtools'
-	import {queryClient} from '$lib/collections/query-client'
-	import {trackAppPresence, untrackAppPresence} from '$lib/presence.svelte'
-	import {leaveBroadcast, resyncBroadcastDeck} from '$lib/broadcast.js'
-	import {channelsCollection} from '$lib/collections/channels'
-	import TracksKeepalive from '$lib/components/tracks-keepalive.svelte'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {queuePinTargets} from '$lib/collections/keepalive'
-	import {channelPresence} from '$lib/presence.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {trackAppPresence, untrackAppPresence} from '#lib/presence.svelte.js'
+	import {leaveBroadcast, resyncBroadcastDeck} from '#lib/broadcast.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import TracksKeepalive from '#lib/components/tracks-keepalive.svelte'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {queuePinTargets} from '#lib/collections/keepalive.js'
+	import {channelPresence} from '#lib/presence.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import PresenceCount from '#lib/components/presence-count.svelte'
 
 	const log = logger.ns('layout').seal()
 
@@ -118,7 +118,7 @@
 
 	onMount(async () => {
 		if (DISABLED_ROUTES.some((p) => page.route.id?.startsWith(p))) {
-			goto(DISABLED_ROUTE_FALLBACK, {replaceState: true})
+			goto(DISABLED_ROUTE_FALLBACK, {replace: true})
 		}
 		// Mobile decks are either compact or expanded. Persisted desktop strip
 		// decks (neither flag) normalize to compact once, at load.
@@ -150,7 +150,8 @@
 
 	const scrollPositions = new SvelteMap()
 
-	beforeNavigate(({from, to, cancel}) => {
+	beforeNavigate(({from, to, cancel, shallow}) => {
+		if (shallow) return
 		if (from?.url) {
 			const key = from.url.pathname + from.url.search
 			scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
@@ -161,7 +162,8 @@
 		}
 	})
 
-	afterNavigate(({type, to}) => {
+	afterNavigate(({type, to, shallow}) => {
+		if (shallow) return
 		const scrollArea = document.querySelector('.scroll-area')
 		if (!scrollArea) return
 		if (type === 'popstate' && to?.url) {

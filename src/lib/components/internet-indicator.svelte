@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Icon from '$lib/components/icon.svelte'
-	import {useOnline} from '$lib/online.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import {useOnline} from '#lib/online.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const {href}: {href?: string} = $props()
 	const {online} = useOnline()

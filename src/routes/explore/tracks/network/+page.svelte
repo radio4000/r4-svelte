@@ -1,24 +1,24 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import {fetchRecentTracksForSlugs} from '$lib/collections/tracks'
-	import {groupByDay} from '$lib/utils'
-	import {daysAgoIso} from '$lib/dates'
-	import {getFollowedChannels} from '$lib/followed-channels.svelte'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appName} from '#lib/config.js'
+	import {fetchRecentTracksForSlugs} from '#lib/collections/tracks.js'
+	import {groupByDay} from '#lib/utils.js'
+	import {daysAgoIso} from '#lib/dates.js'
+	import {getFollowedChannels} from '#lib/followed-channels.svelte.js'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import ExplorePageHeader from '#lib/components/explore-page-header.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let search = $state('')
 
 	$effect(() => {
 		const q = search.trim()
 		if (!q) return
-		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replaceState: true})
+		goto(`${resolve('search/tracks')}?q=${encodeURIComponent(q)}`, {replace: true})
 	})
 
 	const days = 30
@@ -27,7 +27,7 @@
 
 	// Fetch tracks: only when requesting a wider window than already loaded
 	let maxLoadedDays = $state(0)
-	/** @type {import('$lib/types').Track[]} */
+	/** @type {import('#lib/types.js').Track[]} */
 	let recentTracks = $state([])
 	$effect(() => {
 		if (!follows.followedChannels.length || days <= maxLoadedDays) return
@@ -50,10 +50,10 @@
 <div class="feed">
 	<ExplorePageHeader>
 		{#snippet filterChips()}
-			<a href={resolve('/explore/tracks/recent')} class="btn chip"
+			<a href={resolve('explore/tracks/recent')} class="btn chip"
 				>{m.explore_tracks_filter_recent()}</a
 			>
-			<a href={resolve('/explore/tracks/featured')} class="btn chip"
+			<a href={resolve('explore/tracks/featured')} class="btn chip"
 				>{m.explore_tracks_filter_featured()}</a
 			>
 			<a href={resolve('/explore/tracks/network')} class="btn chip active">{m.nav_feed()}</a>

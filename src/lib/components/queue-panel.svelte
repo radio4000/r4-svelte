@@ -1,26 +1,27 @@
 <script>
-	import {fuzzySearch, extractMentions} from '$lib/utils'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {clearQueue, clearAllQueue} from '$lib/api'
+	import {fuzzySearch, extractMentions} from '#lib/utils.js'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {clearQueue, clearAllQueue} from '#lib/api.js'
 	import SearchInput from './search-input.svelte'
 	import FilterChips from './filter-chips.svelte'
 	import Icon from './icon.svelte'
 	import Tracklist from './tracklist.svelte'
 	import {tick, untrack} from 'svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
 	// Write-only bindable: the parent calls it, so the destructure itself is never read here.
+	// eslint-disable-next-line no-useless-assignment
 	let {deckId, scrollToActive = $bindable()} = $props()
 
 	let deck = $derived(appState.decks[deckId])
 
 	// The filter lives on the deck: it survives closing the panel and decides what plays.
-	/** @type {NonNullable<import('$lib/types').Deck['queue_filter']>} */
+	/** @type {NonNullable<import('#lib/types.js').Deck['queue_filter']>} */
 	const noFilter = {search: '', tags: [], mention: ''}
 	let filter = $derived(deck?.queue_filter ?? noFilter)
 	let isFiltering = $derived(Boolean(deck?.queue_filter))
@@ -106,7 +107,7 @@
 		deck.playlist_tracks_filtered = ids
 	})
 
-	/** @param {import('$lib/types').Track} track */
+	/** @param {import('#lib/types.js').Track} track */
 	function canEditTrack(track) {
 		const channel = [...channelsCollection.state.values()].find((ch) => ch.slug === track.slug)
 		return canEditChannel(channel?.id)

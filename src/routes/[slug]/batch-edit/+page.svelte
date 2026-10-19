@@ -1,21 +1,21 @@
 <script>
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import {page} from '$app/state'
-	import {fuzzySearch} from '$lib/utils'
-	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
-	import {updateTrack, insertDurationFromMeta} from '$lib/collections/tracks'
-	import {pullYouTube} from '$lib/metadata/youtube'
-	import {canEditChannel} from '$lib/app-state.svelte'
-	import {countStrings} from '$lib/utils'
+	import {fuzzySearch} from '#lib/utils.js'
+	import {trackMetaCollection, trackMetaKey} from '#lib/collections/track-meta.js'
+	import {updateTrack, insertDurationFromMeta} from '#lib/collections/tracks.js'
+	import {pullYouTube} from '#lib/metadata/youtube.js'
+	import {canEditChannel} from '#lib/app-state.svelte.js'
+	import {countStrings} from '#lib/utils.js'
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let slug = $derived(page.params.slug)
 
@@ -37,7 +37,7 @@
 	let metaMap = $derived(
 		new Map(metaQuery.data?.map((m) => [trackMetaKey(m.provider, m.media_id), m]) || [])
 	)
-	/** @type {import('$lib/types').TrackWithMeta[]} */
+	/** @type {import('#lib/types.js').TrackWithMeta[]} */
 	let tracks = $derived(
 		rawTracks.map((track) => {
 			if (!track.media_id) return track

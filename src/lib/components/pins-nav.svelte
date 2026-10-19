@@ -1,12 +1,12 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
-	import {useLiveQuery as useLiveQueryCustom} from '$lib/useLiveQuery.svelte'
-	import {viewsCollection} from '$lib/collections/views'
-	import {parseView} from '$lib/views'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {useLiveQuery as useLiveQueryCustom} from '#lib/useLiveQuery.svelte.js'
+	import {viewsCollection} from '#lib/collections/views.js'
+	import {parseView} from '#lib/views.js'
 
 	const viewsQuery = useLiveQueryCustom(viewsCollection)
 	const pinnedViews = $derived(
@@ -18,7 +18,9 @@
 				const q = view.sources[0] ?? {}
 				const channels = q.channels || []
 				const isSingleChannel = channels.length === 1 && !q.tags?.length && !q.search && !q.mention
-				const href = isSingleChannel ? resolve(`/${channels[0]}`) : resolve(`/search?${sv.uri}`)
+				const href = isSingleChannel
+					? resolve('/[slug]', {slug: channels[0]})
+					: resolve('search') + `?${sv.uri}`
 				return {sv, href}
 			})
 	)

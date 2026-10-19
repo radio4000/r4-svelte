@@ -1,11 +1,11 @@
 <script lang="ts">
 	import {resolve} from '$app/paths'
-	import {importBackupFile, importFromUrl} from '$lib/import'
-	import type {ImportResult} from '$lib/import'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Dropzone from '$lib/components/dropzone.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {importBackupFile, importFromUrl} from '#lib/import.js'
+	import type {ImportResult} from '#lib/import.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Dropzone from '#lib/components/dropzone.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let error = $state('')
 	let importing = $state(false)

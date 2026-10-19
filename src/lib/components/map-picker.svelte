@@ -1,8 +1,8 @@
 <script>
 	import {untrack} from 'svelte'
 	import * as maplibregl from 'maplibre-gl'
-	import * as m from '$lib/paraglide/messages'
-	import MapComponent from '$lib/components/map.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import MapComponent from '#lib/components/map.svelte'
 
 	const {latitude = null, longitude = null, onselect = () => {}} = $props()
 

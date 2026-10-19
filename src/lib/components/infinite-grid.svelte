@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {gsap, Draggable, InertiaPlugin} from '$lib/animations.js'
-	import ButtonPlay from '$lib/components/button-play.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import {InfiniteGrid, throttle} from '$lib/infinite-grid.js'
+	import {gsap, Draggable, InertiaPlugin} from '#lib/animations.js'
+	import ButtonPlay from '#lib/components/button-play.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import {InfiniteGrid, throttle} from '#lib/infinite-grid.js'
 
 	gsap.registerPlugin(Draggable, InertiaPlugin)
 

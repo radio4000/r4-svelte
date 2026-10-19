@@ -1,33 +1,39 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
 	import {getMatchingTracksQuery} from '../matching-tracks-query.svelte.ts'
 	import {getTagFilter} from '../tag-filter.svelte'
-	import Tracklist from '$lib/components/tracklist.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Subpage from '$lib/components/subpage.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import SortControls from '$lib/components/sort-controls.svelte'
-	import FilterChips from '$lib/components/filter-chips.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import TagsFilterDialog from '$lib/components/tags-filter-dialog.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import {addToPlaylist, ensureActiveDeck, joinAutoRadio, loadDeckView, playTrack} from '$lib/api'
-	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
+	import Tracklist from '#lib/components/tracklist.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Subpage from '#lib/components/subpage.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import SortControls from '#lib/components/sort-controls.svelte'
+	import FilterChips from '#lib/components/filter-chips.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import TagsFilterDialog from '#lib/components/tags-filter-dialog.svelte'
+	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import {
+		addToPlaylist,
+		ensureActiveDeck,
+		joinAutoRadio,
+		loadDeckView,
+		playTrack
+	} from '#lib/api.js'
+	import {toAutoTracks, hasAutoRadioCoverage} from '#lib/player/auto-radio.js'
 	import {
 		canonicalTrackKey,
 		getChannelTags,
 		HASH_PREFIX_REGEX,
 		seededRandom,
 		shuffleSeed
-	} from '$lib/utils'
-	import {processViewTracks, getAutoDecksForView} from '$lib/views.svelte'
-	import {channelViewFromUrl, viewLabel, type View} from '$lib/views'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/utils.js'
+	import {processViewTracks, getAutoDecksForView} from '#lib/views.svelte.js'
+	import {channelViewFromUrl, viewLabel, type View} from '#lib/views.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -48,15 +54,15 @@
 	let showFiltersModal = $state(false)
 
 	// SearchInput binds straight to the URL — no local mirror state to fall out of sync.
-	// keepFocus is required: goto() resets focus to <body> on every navigation by default,
+	// reset: false is required: goto() resets focus to <body> on every navigation by default,
 	// which was unfocusing the search box on every debounced keystroke.
 	function setSearchValue(next: string) {
 		const trimmed = next.trim()
 		if (trimmed === searchValue) return
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		if (trimmed) url.searchParams.set('q', trimmed)
 		else url.searchParams.delete('q')
-		goto(url, {replaceState: true, keepFocus: true})
+		goto(url, {replace: true, reset: false})
 	}
 
 	$effect(() => {
@@ -82,14 +88,14 @@
 			currentSeed === nextSeed
 		)
 			return
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		if (nextOrder) url.searchParams.set('order', nextOrder)
 		else url.searchParams.delete('order')
 		if (nextDirection) url.searchParams.set('direction', nextDirection)
 		else url.searchParams.delete('direction')
 		if (nextSeed) url.searchParams.set('seed', nextSeed)
 		else url.searchParams.delete('seed')
-		goto(url, {replaceState: true, noScroll: true})
+		goto(url, {replace: true, reset: false})
 	})
 
 	let slug = $derived(page.params.slug)
@@ -185,15 +191,15 @@
 	})
 
 	function clearMentionFilter() {
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		url.searchParams.delete('mention')
-		goto(url, {noScroll: true, keepFocus: true})
+		goto(url, {reset: false})
 	}
 
 	function clearMatchingFilter() {
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		url.searchParams.delete('matching')
-		goto(url, {replaceState: true})
+		goto(url, {replace: true})
 	}
 
 	function playFilteredTracks() {
@@ -218,7 +224,7 @@
 		order = 'created'
 		direction = 'desc'
 		randomSeed = ''
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		url.searchParams.delete('tags')
 		url.searchParams.delete('q')
 		url.searchParams.delete('matching')
@@ -226,7 +232,7 @@
 		url.searchParams.delete('order')
 		url.searchParams.delete('direction')
 		url.searchParams.delete('seed')
-		goto(url, {replaceState: true})
+		goto(url, {replace: true})
 	}
 
 	function handleReshuffle() {

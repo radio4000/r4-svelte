@@ -1,9 +1,9 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {logger} from '$lib/logger'
+	import {logger} from '#lib/logger.js'
 	import AuthProviders from './auth-providers.svelte'
 	// import ButtonFeedback from './button-feedback.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const log = logger.ns('auth').seal()
 

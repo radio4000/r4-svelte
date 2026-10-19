@@ -78,7 +78,7 @@ export interface Deck {
 	listening_to_channel_id?: string
 	auto_radio?: boolean
 	auto_radio_drifted?: boolean
-	view?: import('$lib/views').View
+	view?: import('#lib/views.js').View
 	auto_radio_rotation_start?: number
 	/** Epoch ms of the last join/resync — drift detection stays quiet for a grace
 	 *  window after it while the seek lands. */

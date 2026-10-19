@@ -1,15 +1,15 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
-	import {appName} from '$lib/config'
-	import {deleteChannel} from '$lib/collections/channels'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {queryClient} from '$lib/collections/query-client'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import {appState, canEditChannel, isLocalChannel} from '#lib/app-state.svelte.js'
+	import {appName} from '#lib/config.js'
+	import {deleteChannel} from '#lib/collections/channels.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -51,7 +51,7 @@
 				)
 
 				// Navigate away first to avoid layout flashing "Channel not found"
-				await goto('/')
+				await goto(resolve('/'))
 
 				// Revoke any blob URLs created for local audio files
 				for (const t of channelTracks) {
@@ -67,7 +67,7 @@
 				queryClient.removeQueries({queryKey: ['channels', channelSlug]})
 			} else {
 				await deleteChannel(channel.id)
-				goto('/')
+				goto(resolve('/'))
 			}
 		} catch (err) {
 			error = /** @type {Error} */ (err).message || m.channel_delete_failed()

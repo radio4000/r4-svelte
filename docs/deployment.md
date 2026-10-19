@@ -108,11 +108,11 @@ Run `bun update -i` to interactively decide which dependencies to update, if any
 
 ## PWA / Offline support
 
-The app is a Progressive Web App via `@vite-pwa/sveltekit` (Workbox `generateSW` strategy).
+The app is a Progressive Web App with a hand-written service worker, `src/service-worker/index.js`, which SvelteKit builds and registers.
 
-At build time, Workbox precaches the full app shell (JS, CSS, HTML, fonts, images). After the first visit, the app loads offline. Channel/track data is not persisted while IDB cache persistence is disabled (see [state.md](state.md)), so remote data still needs network.
+On install it caches the built JS/CSS, fonts, images and the app shell. Pages are network-first, falling back after 5s or when offline to the last good copy from the same build, or the app shell. Channel/track data is not persisted while IDB cache persistence is disabled (see [state.md](state.md)), so remote data still needs network.
 
-Config lives in `vite.config.ts` → `SvelteKitPWA(...)`. The web app manifest is `static/webmanifest.json` (linked in `src/app.html`); `manifest: false` tells the plugin not to generate its own.
+The web app manifest is `static/webmanifest.json` (linked in `src/app.html`).
 
 What works offline:
 
@@ -127,4 +127,4 @@ What requires network:
 
 ## App updates
 
-Pages are network-first and never precached, so a full page load always runs the latest deploy — the service worker only matters for offline. The update banner (`src/lib/components/app-update-banner.svelte`) therefore keys off the app version, not the service worker: SvelteKit polls `_app/version.json` every 5 minutes (`kit.version` in `svelte.config.js`, version name = git sha) and `updated.current` flips when the running page is older than the deploy. Long-lived tabs get the banner; fresh page loads never do. When a new service worker installs while the page is already current, it stays `waiting` and activates on its own once the last tab closes — no prompt. The banner's reload button activates a waiting worker if there is one and falls back to a plain reload after 1.5s.
+Pages are network-first and never precached, so a full page load always runs the latest deploy — the service worker only matters for offline. The update banner (`src/lib/components/app-update-banner.svelte`) therefore keys off the app version, not the service worker: SvelteKit polls `_app/version.json` every 5 minutes (`version` in the `sveltekit()` plugin in `vite.config.ts`, version name = git sha) and `updated.current` flips when the running page is older than the deploy. Long-lived tabs get the banner; fresh page loads never do. When a new service worker installs while the page is already current, it stays `waiting` and activates on its own once the last tab closes — no prompt. The banner's reload button activates a waiting worker (by posting `SKIP_WAITING`) if there is one and falls back to a plain reload after 1.5s.

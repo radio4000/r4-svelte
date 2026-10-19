@@ -1,4 +1,4 @@
-import type {Track} from '$lib/types'
+import type {Track} from '#lib/types.js'
 
 export type TrackAddData = {
 	url: string

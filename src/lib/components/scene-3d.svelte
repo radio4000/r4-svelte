@@ -1,6 +1,6 @@
 <script>
 	import {untrack} from 'svelte'
-	import {sceneState} from '$lib/scene-state.svelte'
+	import {sceneState} from '#lib/scene-state.svelte.js'
 	import {gsap} from 'gsap'
 	import {Renderer, Camera, Transform, Mesh, Program, Box, Sphere, Torus, Cylinder} from 'ogl'
 
@@ -217,7 +217,7 @@
 	}
 
 	// React to scene config changes
-	/** @type {import('$lib/scene-state.svelte').SceneConfig | null} */
+	/** @type {import('#lib/scene-state.svelte.js').SceneConfig | null} */
 	let prevConfig = null
 	$effect(() => {
 		const cfg = sceneState.current

@@ -1,7 +1,7 @@
 import type {AppState, Deck} from './types.ts'
-import {logger} from '$lib/logger'
-import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-import {isMobileViewport} from '$lib/utils'
+import {logger} from '#lib/logger.js'
+import {LOCAL_STORAGE_KEYS} from '#lib/storage-keys.js'
+import {isMobileViewport} from '#lib/utils.js'
 
 function resetTransientDeckState(deck: Deck): Deck {
 	deck.queue_filter = undefined

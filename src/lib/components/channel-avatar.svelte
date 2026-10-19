@@ -1,6 +1,6 @@
 <script lang="ts">
-	import {channelAvatarUrl} from '$lib/utils'
-	import Icon from '$lib/components/icon.svelte'
+	import {channelAvatarUrl} from '#lib/utils.js'
+	import Icon from '#lib/components/icon.svelte'
 	/* keep 250 please, since it is what cloudinary has already generated */
 	let {
 		id,

@@ -1,15 +1,15 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {relativeDate, formatDuration} from '$lib/dates.js'
-	import LinkEntities from '$lib/components/link-entities.svelte'
-	import Tag from '$lib/components/tag.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import TrackMetaShell from '$lib/components/track-meta-shell.svelte'
-	import {playTrack} from '$lib/api'
+	import {relativeDate, formatDuration} from '#lib/dates.js'
+	import LinkEntities from '#lib/components/link-entities.svelte'
+	import Tag from '#lib/components/tag.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import TrackMetaShell from '#lib/components/track-meta-shell.svelte'
+	import {playTrack} from '#lib/api.js'
 	import {parseUrl} from 'media-now/parse-url'
 	import {parseTitle} from 'media-now/parse-title'
-	import {appState} from '$lib/app-state.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {data, channel = undefined} = $props()
 	const sourceProvider = $derived(

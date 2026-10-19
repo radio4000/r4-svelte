@@ -1,5 +1,5 @@
 <script>
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{ title: string, loading?: boolean, empty?: boolean, error?: boolean, emptyText?: string, errorText?: string, emptyChildren?: import('svelte').Snippet, children?: import('svelte').Snippet }} */
 	let {

@@ -8,8 +8,8 @@
  * order is identical for every client within the same week.
  */
 
-import {shuffleArray} from '$lib/utils'
-import type {Track} from '$lib/types'
+import {shuffleArray} from '#lib/utils.js'
+import type {Track} from '#lib/types.js'
 
 /** A Track with a guaranteed duration — the subset auto-radio can work with. */
 export type AutoTrack = Track & {duration: number}

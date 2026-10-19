@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {fuzzySearch, getPlayCountThreshold} from '$lib/utils'
+import {fuzzySearch, getPlayCountThreshold} from '#lib/utils.js'
 
 const channels = [
 	{name: 'Radio Alhara', slug: 'radio-alhara', description: 'Sounds from Palestine'},

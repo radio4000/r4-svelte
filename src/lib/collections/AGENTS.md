@@ -6,5 +6,5 @@ Three kinds live here: server-backed via `queryCollectionOptions` (channels, tra
 
 Gotchas:
 
-- Every queryFn and handler branches on `capabilities.globalBrowse` / `capabilities.mutations` (`$lib/modes`) — embed/standalone mode vs the full app. Easy to break.
+- Every queryFn and handler branches on `capabilities.globalBrowse` / `capabilities.mutations` (`#lib/modes.js`) — embed/standalone mode vs the full app. Easy to break.
 - `writeUpsert` accepts a single item or an array. `writeBatch` is only needed to mix operation types (insert + delete) in one atomic batch.

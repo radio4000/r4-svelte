@@ -1,8 +1,8 @@
 <script>
-	import Icon from '$lib/components/icon.svelte'
-	import ButtonFeedback from '$lib/components/button-feedback.svelte'
-	import Tag from '$lib/components/tag.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import ButtonFeedback from '#lib/components/button-feedback.svelte'
+	import Tag from '#lib/components/tag.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
 </script>
 
 <svelte:head>

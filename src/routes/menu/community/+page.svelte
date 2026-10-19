@@ -1,10 +1,10 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appName, communityLinks, appContactEmail} from '$lib/config'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appName, communityLinks, appContactEmail} from '#lib/config.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 </script>
 
 <Seo title={m.community_page_title({appName})} plain />

@@ -1,13 +1,13 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {repoCodeSearchUrl, repoUrl, supportsCodeSearch} from '$lib/repo'
+	import {appName} from '#lib/config.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {repoCodeSearchUrl, repoUrl, supportsCodeSearch} from '#lib/repo.js'
 
-	const analyticsImportSearchUrl = repoCodeSearchUrl('"$lib/analytics" path:src')
+	const analyticsImportSearchUrl = repoCodeSearchUrl('"#lib/analytics.js" path:src')
 	const analyticsCaptureSearchUrl = repoCodeSearchUrl('"capture(" path:src')
 </script>
 

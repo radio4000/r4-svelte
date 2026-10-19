@@ -1,5 +1,5 @@
-import type {Handle} from '@sveltejs/kit'
-import {appMode, appName, appDescription, EMBED_HOSTS} from '$lib/config'
+import type {Handle} from '@sveltejs/kit/hooks'
+import {appMode, appName, appDescription, EMBED_HOSTS} from '#lib/config.js'
 
 /** For the two config strings injected below — env vars, not user text. */
 const escapeMarkup = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)

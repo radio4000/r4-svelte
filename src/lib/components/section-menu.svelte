@@ -1,6 +1,6 @@
 <script module>
 	import {resolve} from '$app/paths'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/**
 	 * Items for the channel page nav (home/tracks/tags/mentions/following/followers).
@@ -50,7 +50,7 @@
 </script>
 
 <script>
-	import Icon from '$lib/components/icon.svelte'
+	import Icon from '#lib/components/icon.svelte'
 
 	/** @type {{items: {href: string, icon?: string, label: string, count?: number, active?: boolean}[], label?: string, scroll?: boolean}} */
 	let {items, label = '', scroll = false} = $props()

@@ -1,8 +1,8 @@
-import {browser} from '$app/environment'
+import {browser} from '$app/env'
 import {error} from '@sveltejs/kit'
 import {sdk} from '@radio4000/sdk'
-import {normalizeTrackMedia} from '$lib/collections/tracks'
-import type {Track} from '$lib/types'
+import {normalizeTrackMedia} from '#lib/collections/tracks.js'
+import type {Track} from '#lib/types.js'
 import {isMissingRow} from '../../not-found'
 
 export async function load({params}) {

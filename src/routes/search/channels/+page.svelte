@@ -2,34 +2,34 @@
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {SearchUrl} from '$lib/search-url.svelte.js'
-	import {searchChannelsCombined} from '$lib/search'
-	import {viewFromUrl, viewLabel, viewToUrl} from '$lib/views'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tagsCollection} from '$lib/collections/tags'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {getFeaturedSuggestions} from '$lib/featured-suggestions.svelte'
+	import {SearchUrl} from '#lib/search-url.svelte.js'
+	import {searchChannelsCombined} from '#lib/search.js'
+	import {viewFromUrl, viewLabel, viewToUrl} from '#lib/views.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {tagsCollection} from '#lib/collections/tags.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
 	import {
 		getTopChannelSlugs,
 		paginationFromUrl,
 		seededRandom,
 		shuffleArray,
 		shuffleSeed
-	} from '$lib/utils'
-	import ChannelCard from '$lib/components/channel-card.svelte'
-	import SearchShell from '$lib/components/search-shell.svelte'
-	import Pagination from '$lib/components/pagination.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import SortControls from '$lib/components/sort-controls.svelte'
-	import TagsFilterDialog from '$lib/components/tags-filter-dialog.svelte'
-	import FilterChips from '$lib/components/filter-chips.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {viewIconMap, viewLabelMap} from '$lib/components/channels-view-shared.js'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import Seo from '$lib/components/seo.svelte'
-	import {trap} from '$lib/focus'
+	} from '#lib/utils.js'
+	import ChannelCard from '#lib/components/channel-card.svelte'
+	import SearchShell from '#lib/components/search-shell.svelte'
+	import Pagination from '#lib/components/pagination.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import SortControls from '#lib/components/sort-controls.svelte'
+	import TagsFilterDialog from '#lib/components/tags-filter-dialog.svelte'
+	import FilterChips from '#lib/components/filter-chips.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import {viewIconMap, viewLabelMap} from '#lib/components/channels-view-shared.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import Seo from '#lib/components/seo.svelte'
+	import {trap} from '#lib/focus.js'
 	import {fromAction} from 'svelte/attachments'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = $props.id()
 	const search = new SearchUrl('/search/channels')
@@ -74,7 +74,7 @@
 
 	function onViewsBarChange(v) {
 		search.seedInput(viewLabel(v))
-		goto(viewToUrl('/search/channels', v), {replaceState: true})
+		goto(viewToUrl('/search/channels', v), {replace: true})
 	}
 
 	function toggleTag(tag) {
@@ -103,7 +103,7 @@
 	const currentPage = $derived(paginationState.page)
 	const pageSize = $derived(paginationState.per)
 
-	/** @type {import('$lib/types.ts').Channel[]} */
+	/** @type {import('#lib/types.ts').Channel[]} */
 	let channels = $state([])
 	let totalCount = $state(0)
 	let channelsLoading = $state(false)
@@ -255,7 +255,7 @@
 				</p>
 			{/if}
 			<p class="browse-links">
-				<a href={resolve('/channels/all')}>All {m.explore_tab_channels()}</a>
+				<a href={resolve('channels/all')}>All {m.explore_tab_channels()}</a>
 			</p>
 		</div>
 	{/if}

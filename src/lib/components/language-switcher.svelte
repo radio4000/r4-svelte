@@ -1,6 +1,6 @@
 <script>
-	import {getLocale, setLocale, locales} from '$lib/paraglide/runtime'
-	import {appState} from '$lib/app-state.svelte'
+	import {getLocale, setLocale, locales} from '#lib/paraglide/runtime.js'
+	import {appState} from '#lib/app-state.svelte.js'
 
 	let selectedLocale = $state(appState.language ?? getLocale())
 	const languageNames =

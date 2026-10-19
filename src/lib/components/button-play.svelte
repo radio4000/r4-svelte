@@ -1,9 +1,9 @@
 <script>
-	import {playChannel, togglePlayPause} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
+	import {playChannel, togglePlayPause} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel, class?: string, label?: string, trackId?: string}} */
+	/** @type {{channel: import('#lib/types.js').Channel, class?: string, label?: string, trackId?: string}} */
 	let {channel, label = '', trackId, ...rest} = $props()
 
 	let loading = $state(false)

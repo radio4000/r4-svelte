@@ -2,7 +2,7 @@
 	import {untrack} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
 	import {
 		togglePlayPause,
 		next,
@@ -14,24 +14,24 @@
 		toggleDeckCompact,
 		expandDeck,
 		toggleShuffle
-	} from '$lib/api'
-	import {isDbId, isMobileViewport} from '$lib/utils'
-	import {isGroupControlDeck, sortedListeningDeckIds} from '$lib/deck'
-	import {createDeckDisplay} from '$lib/player/deck-display.svelte'
-	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
+	} from '#lib/api.js'
+	import {isDbId, isMobileViewport} from '#lib/utils.js'
+	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
+	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
+	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {parseUrl} from 'media-now/parse-url'
-	import * as m from '$lib/paraglide/messages'
-	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import DeckMenu from '$lib/components/deck-menu.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import SpeedControl from '$lib/components/speed-control.svelte'
-	import VolumeControl from '$lib/components/volume-control.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import PlayerProgress from '$lib/components/player-progress.svelte'
-	import {shortcutHint} from '$lib/keyboard'
+	import * as m from '#lib/paraglide/messages.js'
+	import Icon from '#lib/components/icon.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import DeckMenu from '#lib/components/deck-menu.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import SpeedControl from '#lib/components/speed-control.svelte'
+	import VolumeControl from '#lib/components/volume-control.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import PlayerProgress from '#lib/components/player-progress.svelte'
+	import {shortcutHint} from '#lib/keyboard.js'
 
 	/** @type {{deckId: number, showEdgeControls?: boolean}} */
 	let {deckId, showEdgeControls = true} = $props()
@@ -54,7 +54,10 @@
 	)
 	let trackHref = $derived(
 		!appState.embed_mode && displayTrack?.slug && displayTrack?.id && isDbId(displayTrack.id)
-			? resolve('/[slug]/tracks/[tid]', {slug: displayTrack.slug, tid: String(displayTrack.id)})
+			? resolve('/[slug]/tracks/[tid]/(tabs)', {
+					slug: displayTrack.slug,
+					tid: String(displayTrack.id)
+				})
 			: undefined
 	)
 	let provider = $derived(

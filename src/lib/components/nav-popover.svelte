@@ -5,19 +5,19 @@
 	 * navigable via listbox-nav). Also opens via cmd/ctrl+K → appState.modal_nav.
 	 */
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import Tag from '$lib/components/tag.svelte'
-	import {listboxNav} from '$lib/components/listbox-nav.svelte.js'
-	import {getFollowedChannels} from '$lib/followed-channels.svelte'
-	import {getFeaturedSuggestions} from '$lib/featured-suggestions.svelte'
-	import {searchChannelsCombined} from '$lib/search'
-	import {appName, conceptIcons} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import Tag from '#lib/components/tag.svelte'
+	import {listboxNav} from '#lib/components/listbox-nav.svelte.js'
+	import {getFollowedChannels} from '#lib/followed-channels.svelte.js'
+	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
+	import {searchChannelsCombined} from '#lib/search.js'
+	import {appName, conceptIcons} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = $props.id()
 
@@ -29,7 +29,7 @@
 	const followingHref = $derived(
 		userChannel
 			? resolve('/[slug]/following', {slug: userChannel.slug})
-			: resolve('/channels/favorites')
+			: resolve('channels/favorites')
 	)
 
 	const suggestions = getFeaturedSuggestions()
@@ -40,7 +40,7 @@
 	const tags = $derived(suggestions.tags.slice(0, 8))
 
 	let query = $state('')
-	let results = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
+	let results = $state(/** @type {import('#lib/types.js').Channel[]} */ ([]))
 	let searching = $state(false)
 
 	let noQueryListboxEl = $state()
@@ -123,7 +123,7 @@
 					<Icon icon={conceptIcons.channels} />
 					<span>{m.nav_explore()}</span>
 				</a>
-				<a class="tile" href={resolve('/channels/all') + '?display=map'}>
+				<a class="tile" href={resolve('channels/all') + '?display=map'}>
 					<Icon icon={conceptIcons.map} />
 					<span>{m.nav_map()}</span>
 				</a>

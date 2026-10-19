@@ -1,8 +1,8 @@
 <script>
-	import {appName} from '$lib/config'
-	import Channels from '$lib/components/channels.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appName} from '#lib/config.js'
+	import Channels from '#lib/components/channels.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const {data} = $props()
 </script>

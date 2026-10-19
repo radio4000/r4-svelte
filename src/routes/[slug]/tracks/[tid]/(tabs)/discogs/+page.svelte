@@ -1,8 +1,8 @@
 <script>
-	import {getTrackDetailCtx} from '$lib/contexts'
-	import TrackMetaDiscogs from '$lib/components/track-meta-discogs.svelte'
-	import {pullDiscogs} from '$lib/metadata/discogs'
-	import * as m from '$lib/paraglide/messages'
+	import {getTrackDetailCtx} from '#lib/contexts.js'
+	import TrackMetaDiscogs from '#lib/components/track-meta-discogs.svelte'
+	import {pullDiscogs} from '#lib/metadata/discogs.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)

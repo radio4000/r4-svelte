@@ -1,5 +1,5 @@
 import {getMedia} from 'media-now'
-import {logger} from '$lib/logger'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('metadata/discogs').seal()
 
@@ -12,7 +12,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 /**
  * Fetch Discogs data without saving
  * @param {string} discogsUrl Discogs URL
- * @returns {Promise<import('$lib/types').DiscogsResource|null>} Discogs data
+ * @returns {Promise<import('#lib/types.js').DiscogsResource|null>} Discogs data
  */
 export async function fetchDiscogs(discogsUrl) {
 	const key = discogsUrl?.trim()

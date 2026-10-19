@@ -1,5 +1,5 @@
-import {extractHashtags, extractMentions, channelAvatarUrl} from '$lib/utils.ts'
-import type {Channel, Deck} from '$lib/types'
+import {extractHashtags, extractMentions, channelAvatarUrl} from '#lib/utils.ts'
+import type {Channel, Deck} from '#lib/types.js'
 
 /** Prefix a bare tag with `#` (view tags come without it). */
 function prefixTag(value: unknown): string {

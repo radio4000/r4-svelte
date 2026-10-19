@@ -1,6 +1,6 @@
 import {page} from '$app/state'
 import {goto} from '$app/navigation'
-import {parseTagsParam} from '$lib/views'
+import {parseTagsParam} from '#lib/views.js'
 
 /**
  * URL-backed tag selection (?tags=a,b), shared by the channel page and its tracks
@@ -17,20 +17,20 @@ export function getTagFilter() {
 			? selectedTags.filter((t) => t.toLowerCase() !== normalized)
 			: [...selectedTags, normalized]
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local URL parsing for navigation, not reactive state
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		if (next.length) {
 			url.searchParams.set('tags', next.join(','))
 		} else {
 			url.searchParams.delete('tags')
 		}
-		goto(url, {replaceState: true, noScroll: true, keepFocus: true})
+		goto(url, {replace: true, reset: false})
 	}
 
 	function clearTags() {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local URL parsing for navigation, not reactive state
-		const url = new URL(page.url)
+		const url = new URL(page.url.href)
 		url.searchParams.delete('tags')
-		goto(url, {replaceState: true, noScroll: true, keepFocus: true})
+		goto(url, {replace: true, reset: false})
 	}
 
 	return {

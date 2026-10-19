@@ -16,9 +16,9 @@ Track detail metadata is fetched on demand per tab (`youtube`, `musicbrainz`, `d
 
 ## Providers
 
-- **YouTube**: `$lib/metadata/youtube.js` - duration, title, description
-- **MusicBrainz**: `$lib/metadata/musicbrainz.js` - artist, release info
-- **Discogs**: `$lib/metadata/discogs.js` - detailed release metadata
+- **YouTube**: `#lib/metadata/youtube.js` - duration, title, description
+- **MusicBrainz**: `#lib/metadata/musicbrainz.js` - artist, release info
+- **Discogs**: `#lib/metadata/discogs.js` - detailed release metadata
 
 ## Methods
 

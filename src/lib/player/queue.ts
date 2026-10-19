@@ -2,7 +2,7 @@
  * Pure queue operations. No state mutation.
  * All functions return new arrays/values without side effects.
  */
-import type {Deck} from '$lib/types'
+import type {Deck} from '#lib/types.js'
 
 /** Returns the next track ID in queue, or null if at end */
 export function queueNext(queue: string[], currentId: string): string | null {

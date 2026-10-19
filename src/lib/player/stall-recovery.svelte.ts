@@ -34,9 +34,9 @@
  */
 
 import {onDestroy} from 'svelte'
-import {appState} from '$lib/app-state.svelte'
-import {play, type MediaPlayer} from '$lib/api'
-import {logger} from '$lib/logger'
+import {appState} from '#lib/app-state.svelte.js'
+import {play, type MediaPlayer} from '#lib/api.js'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('stall-recovery').seal()
 

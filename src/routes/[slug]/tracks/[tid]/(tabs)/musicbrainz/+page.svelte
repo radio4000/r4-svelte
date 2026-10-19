@@ -1,8 +1,8 @@
 <script>
-	import {getTrackDetailCtx} from '$lib/contexts'
-	import TrackMetaMusicbrainz from '$lib/components/track-meta-musicbrainz.svelte'
-	import {pullMusicBrainz} from '$lib/metadata/musicbrainz'
-	import * as m from '$lib/paraglide/messages'
+	import {getTrackDetailCtx} from '#lib/contexts.js'
+	import TrackMetaMusicbrainz from '#lib/components/track-meta-musicbrainz.svelte'
+	import {pullMusicBrainz} from '#lib/metadata/musicbrainz.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)

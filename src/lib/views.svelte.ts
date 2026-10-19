@@ -1,13 +1,13 @@
-import {extractMentions, fuzzySearch, shuffleArray} from '$lib/utils'
-import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+import {extractMentions, fuzzySearch, shuffleArray} from '#lib/utils.js'
+import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
 import {inArray} from '@tanstack/db'
-import {tracksCollection, normalizeTrackMedia} from '$lib/collections/tracks'
-import {channelsCollection} from '$lib/collections/channels'
+import {tracksCollection, normalizeTrackMedia} from '#lib/collections/tracks.js'
+import {channelsCollection} from '#lib/collections/channels.js'
 import {sdk} from '@radio4000/sdk'
-import {searchTracks} from '$lib/search-fts'
-import type {Channel, Deck, Track} from '$lib/types'
-import {viewURI, type View, type ViewSource} from '$lib/views'
+import {searchTracks} from '#lib/search-fts.js'
+import type {Channel, Deck, Track} from '#lib/types.js'
+import {viewURI, type View, type ViewSource} from '#lib/views.js'
 
 /** Max tracks fetched for client-side filtering (search, tags, channel+filter combos). */
 const MAX_CLIENT_TRACKS = 4000

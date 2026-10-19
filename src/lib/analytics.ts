@@ -1,8 +1,8 @@
 import posthog from 'posthog-js'
-import {appState} from '$lib/app-state.svelte'
-import {posthogKey, posthogHost} from '$lib/config'
-import {addCaptureEvent} from '$lib/collections/capture-events'
-import {logger} from '$lib/logger'
+import {appState} from '#lib/app-state.svelte.js'
+import {posthogKey, posthogHost} from '#lib/config.js'
+import {addCaptureEvent} from '#lib/collections/capture-events.js'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('analytics').seal()
 

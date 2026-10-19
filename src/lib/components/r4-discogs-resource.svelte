@@ -1,31 +1,31 @@
 <script>
 	import TrackCard from './track-card.svelte'
 	import Icon from './icon.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {fetchDiscogs, extractSuggestions} from '$lib/metadata/discogs'
-	import {setPlaylist, playTrack, playNext} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {isDbId} from '$lib/utils'
+	import * as m from '#lib/paraglide/messages.js'
+	import {fetchDiscogs, extractSuggestions} from '#lib/metadata/discogs.js'
+	import {setPlaylist, playTrack, playNext} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {isDbId} from '#lib/utils.js'
 
 	const RE_YT_PARAM = /[?&]v=([^&]+)/
 	const RE_YT_SHORT = /youtu\.be\/([^?]+)/
 
 	/**
-	 * @typedef {import('$lib/types').DiscogsResource} DiscogsResource
-	 * @typedef {import('$lib/types').DiscogsTracklistItem} DiscogsTracklistItem
-	 * @typedef {import('$lib/types').DiscogsVideo} DiscogsVideo
+	 * @typedef {import('#lib/types.js').DiscogsResource} DiscogsResource
+	 * @typedef {import('#lib/types.js').DiscogsTracklistItem} DiscogsTracklistItem
+	 * @typedef {import('#lib/types.js').DiscogsVideo} DiscogsVideo
 	 */
 
 	/** @type {{
 	 *   url: string,
 	 *   full?: boolean,
 	 *   slug?: string,
-	 *   resourceData?: import('$lib/types').DiscogsResource | null,
+	 *   resourceData?: import('#lib/types.js').DiscogsResource | null,
 	 *   autoload?: boolean,
 	 *   suggestions?: boolean,
 	 *   preselected?: string[],
-	 *   tracks?: import('$lib/types').Track[],
+	 *   tracks?: import('#lib/types.js').Track[],
 	 *   onload?: (suggestions: string[]) => void,
 	 *   onsuggestion?: (e: {detail: string[]}) => void,
 	 *   onSelectMedia?: (uri: string, title: string) => void,
@@ -139,8 +139,8 @@
 	/**
 	 * Find a real track in the channel collection matching a video URI
 	 * @param {string | undefined} videoUri
-	 * @param {import('$lib/types').Track[]} channelTracks
-	 * @returns {import('$lib/types').Track | null}
+	 * @param {import('#lib/types.js').Track[]} channelTracks
+	 * @returns {import('#lib/types.js').Track | null}
 	 */
 	function findRealTrack(videoUri, channelTracks) {
 		if (!videoUri || !channelTracks?.length) return null
@@ -156,14 +156,14 @@
 	 * @param {DiscogsVideo | null} video
 	 * @param {string} title
 	 * @param {string} position
-	 * @returns {import('$lib/types').Track}
+	 * @returns {import('#lib/types.js').Track}
 	 */
 	function makeEphemeralTrack(video, title, position) {
 		const uri = video?.uri ?? ''
 		const ytId = uri.match(RE_YT_PARAM)?.[1] ?? uri.match(RE_YT_SHORT)?.[1]
 		const now = new Date().toISOString()
 		const id = uri ? `discogs:${uri}` : `discogs-no-video:${artistsDisplay}:${position}:${title}`
-		return /** @type {import('$lib/types').Track} */ ({
+		return /** @type {import('#lib/types.js').Track} */ ({
 			id,
 			title: artistsDisplay ? `${artistsDisplay} — ${title}` : title,
 			url: uri,

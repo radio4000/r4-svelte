@@ -1,7 +1,7 @@
 <script>
 	import {onMount, untrack} from 'svelte'
 	import {resolve} from '$app/paths'
-	import IconR4 from '$lib/components/icon-r4.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
 	import {
 		next,
 		play,
@@ -15,44 +15,44 @@
 		rejoinAutoRadio,
 		recordSeekPosition,
 		toggleShuffle
-	} from '$lib/api'
-	import {requestPlaybackWakeLock, releasePlaybackWakeLock} from '$lib/wake-lock'
-	import {requestAudioKeepAlive, releaseAudioKeepAlive} from '$lib/player/audio-keepalive'
-	import {getActiveQueue, canPlay, canPrev, canNext} from '$lib/player/queue'
-	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '$lib/deck'
-	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '$lib/player/auto-radio'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast.js'
-	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '$lib/broadcast-utils'
-	import {createDeckDisplay} from '$lib/player/deck-display.svelte'
-	import {createMediaSession} from '$lib/player/media-session.svelte'
-	import {createStallRecovery} from '$lib/player/stall-recovery.svelte'
-	import {appState, canEditChannel, deckAccent} from '$lib/app-state.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import DeckMenu from '$lib/components/deck-menu.svelte'
-	import SpeedControl from '$lib/components/speed-control.svelte'
-	import VolumeControl from '$lib/components/volume-control.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {shortcutHint} from '$lib/keyboard'
-	import {logger} from '$lib/logger'
+	} from '#lib/api.js'
+	import {requestPlaybackWakeLock, releasePlaybackWakeLock} from '#lib/wake-lock.js'
+	import {requestAudioKeepAlive, releaseAudioKeepAlive} from '#lib/player/audio-keepalive.js'
+	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
+	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '#lib/deck.js'
+	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '#lib/player/auto-radio.js'
+	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
+	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '#lib/broadcast-utils.js'
+	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
+	import {createMediaSession} from '#lib/player/media-session.svelte.js'
+	import {createStallRecovery} from '#lib/player/stall-recovery.svelte.js'
+	import {appState, canEditChannel, deckAccent} from '#lib/app-state.svelte.js'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import DeckMenu from '#lib/components/deck-menu.svelte'
+	import SpeedControl from '#lib/components/speed-control.svelte'
+	import VolumeControl from '#lib/components/volume-control.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import {shortcutHint} from '#lib/keyboard.js'
+	import {logger} from '#lib/logger.js'
 	import {parseUrl} from 'media-now/parse-url'
-	import {tracksCollection, updateTrack} from '$lib/collections/tracks'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {isDbId, extractHashtags, HASH_PREFIX_REGEX, isMobileViewport} from '$lib/utils'
-	import PlayerProgress from '$lib/components/player-progress.svelte'
-	import Tag from '$lib/components/tag.svelte'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {tracksCollection, updateTrack} from '#lib/collections/tracks.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {isDbId, extractHashtags, HASH_PREFIX_REGEX, isMobileViewport} from '#lib/utils.js'
+	import PlayerProgress from '#lib/components/player-progress.svelte'
+	import Tag from '#lib/components/tag.svelte'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 	import {
 		trackAutoRadioPresence,
 		untrackAutoRadioPresence,
 		trackBroadcastPresence,
 		untrackBroadcastPresence
-	} from '$lib/presence.svelte'
-	/** @typedef {import('$lib/types').Track} Track */
-	/** @typedef {import('$lib/types').Channel} Channel */
+	} from '#lib/presence.svelte.js'
+	/** @typedef {import('#lib/types.js').Track} Track */
+	/** @typedef {import('#lib/types.js').Channel} Channel */
 
 	const log = logger.ns('player').seal()
 
@@ -60,8 +60,8 @@
 	onMount(async () => {
 		await Promise.all([
 			import('media-chrome'),
-			import('$lib/youtube-video-custom-element.js'),
-			import('$lib/soundcloud-player-custom-element.js')
+			import('#lib/youtube-video-custom-element.js'),
+			import('#lib/soundcloud-player-custom-element.js')
 		])
 	})
 
@@ -150,7 +150,7 @@
 		void tracksLive.data.length
 		const state = tracksCollection.state
 		return toAutoTracks(
-			/** @type {import('$lib/types').Track[]} */
+			/** @type {import('#lib/types.js').Track[]} */
 			((deck?.playlist_tracks ?? []).map((id) => state.get(id)).filter(Boolean))
 		)
 	})

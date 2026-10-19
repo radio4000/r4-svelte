@@ -1,7 +1,7 @@
-import {getFeaturedPool} from '$lib/collections/featured'
-import {tagsCollection} from '$lib/collections/tags'
-import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-import type {Channel} from '$lib/types'
+import {getFeaturedPool} from '#lib/collections/featured.js'
+import {tagsCollection} from '#lib/collections/tags.js'
+import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+import type {Channel} from '#lib/types.js'
 
 /**
  * Reactive featured suggestions for search/explore empty states.

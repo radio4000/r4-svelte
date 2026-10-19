@@ -1,8 +1,8 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
-	import {resetLocalData} from '$lib/api'
+	import {appName} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {resetLocalData} from '#lib/api.js'
 
 	let status = $state('idle')
 

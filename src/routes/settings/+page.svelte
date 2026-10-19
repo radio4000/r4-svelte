@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
-	import * as m from '$lib/paraglide/messages'
-	import Icon from '$lib/components/icon.svelte'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import Icon from '#lib/components/icon.svelte'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
 </script>
 
 <Seo title={m.settings_title()} plain />

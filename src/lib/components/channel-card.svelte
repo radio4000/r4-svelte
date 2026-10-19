@@ -1,20 +1,20 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import {relativeDateDetailed} from '$lib/dates'
-	import * as m from '$lib/paraglide/messages'
-	import {trimWithEllipsis} from '$lib/utils'
-	import {toggleChannelPlay, playChannelInNewDeck} from '$lib/api'
-	import {findChannelDeck} from '$lib/deck'
-	import {joinBroadcast} from '$lib/broadcast.js'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {relativeDateDetailed} from '#lib/dates.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {trimWithEllipsis} from '#lib/utils.js'
+	import {toggleChannelPlay, playChannelInNewDeck} from '#lib/api.js'
+	import {findChannelDeck} from '#lib/deck.js'
+	import {joinBroadcast} from '#lib/broadcast.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import ChannelAvatar from './channel-avatar.svelte'
 	import LinkEntities from './link-entities.svelte'
 	import ButtonFollow from './button-follow.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import Icon from './icon.svelte'
 
-	/** @type {{channel: import('$lib/types').Channel, href?: string, updatedAtHref?: string, children?: import('svelte').Snippet}}*/
+	/** @type {{channel: import('#lib/types.js').Channel, href?: string, updatedAtHref?: string, children?: import('svelte').Snippet}}*/
 	let {channel, href, updatedAtHref, children} = $props()
 
 	const cardHref = $derived(href ?? `/${channel.slug}`)

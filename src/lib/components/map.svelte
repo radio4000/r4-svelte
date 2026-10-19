@@ -12,9 +12,9 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 	// doesn't exist, the worker 404s and every GeoJSON source hangs forever (no markers, no
 	// overlays) without throwing. `?worker&url` makes Vite emit the worker as its own bundle.
 	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-	import {replaceState} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {page} from '$app/state'
+	import {page, navigating} from '$app/state'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
 	import {buildOsmStyle, isDarkTheme} from './map-tile-styles.js'
 
@@ -88,7 +88,8 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 				map.on('moveend', () => {
 					clearTimeout(debounce)
 					debounce = setTimeout(() => {
-						if (disposed || !map) return
+						// A shallow goto would abort a navigation that's still loading.
+						if (disposed || !map || navigating.to) return
 						const {lat, lng} = map.getCenter()
 						const z = map.getZoom()
 						const searchParams = new SvelteURLSearchParams(page.url.search)
@@ -96,11 +97,11 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 						searchParams.set('longitude', lng.toFixed(4))
 						searchParams.set('zoom', String(z))
 						const queryString = searchParams.size ? `?${searchParams}` : ''
-						replaceState(
+						goto(
 							page.route.id
 								? resolve(/** @type {any} */ (page.route.id), page.params) + queryString
 								: page.url.pathname + queryString,
-							{}
+							{shallow: true, replace: true}
 						)
 					}, 300)
 				})

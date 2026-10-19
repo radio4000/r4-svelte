@@ -1,9 +1,9 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {conceptIcons} from '$lib/config'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {conceptIcons} from '#lib/config.js'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const q = $derived(page.url.searchParams.get('q') ?? '')
 	function href(path) {

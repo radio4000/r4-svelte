@@ -1,7 +1,7 @@
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('$app/paths', () => ({resolve: (path: string) => path}))
-vi.mock('$lib/config', () => ({
+vi.mock('#lib/config.js', () => ({
 	appUrl: 'https://radio4000.com',
 	appPlayerUrl: 'https://player.radio4000.com'
 }))

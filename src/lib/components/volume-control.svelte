@@ -1,9 +1,9 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import {getMediaPlayer} from '$lib/api'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '$lib/broadcast'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {getMediaPlayer} from '#lib/api.js'
+	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 	import 'media-chrome'
 
 	/** @type {{deckId: number}} */

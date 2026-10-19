@@ -1,10 +1,10 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {createChannel} from '$lib/collections/channels'
-	import {slugify} from '$lib/utils'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {createChannel} from '#lib/collections/channels.js'
+	import {slugify} from '#lib/utils.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	$effect(() => {
 		if (!appState.user) {

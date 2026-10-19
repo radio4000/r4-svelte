@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {channelAvatarUrl} from '$lib/utils'
+	import {channelAvatarUrl} from '#lib/utils.js'
 
 	// Subtle canvas backdrop that echoes a channel avatar's colors. Samples the
 	// (already cached) 250px avatar down to a tiny grid, quantizes into a few

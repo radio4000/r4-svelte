@@ -1,11 +1,11 @@
 <script>
 	import {page} from '$app/state'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelQuery = useLiveQuery((q) =>
 		q

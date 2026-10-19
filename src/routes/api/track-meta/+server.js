@@ -1,6 +1,6 @@
-import {error, json} from '@sveltejs/kit'
+import {error} from '@sveltejs/kit'
 import {Duration} from 'luxon'
-import {env} from '$env/dynamic/private'
+import * as env from '$app/env/private'
 
 // This is our only API endpoint in the app. Only piece of server code. Consider migrating to api.radio4000.com
 //
@@ -22,7 +22,10 @@ export async function POST({request}) {
 		const response = await fetch(url)
 		const data = await response.json()
 		if (!response.ok)
-			return json({error: data.error?.message || 'YouTube API error'}, {status: response.status})
+			return Response.json(
+				{error: data.error?.message || 'YouTube API error'},
+				{status: response.status}
+			)
 
 		const videos = data.items.map((item) => ({
 			id: item.id,
@@ -36,7 +39,7 @@ export async function POST({request}) {
 			tags: item.snippet.tags || []
 		}))
 
-		return json(videos)
+		return Response.json(videos)
 	} catch (err) {
 		error(500, `Failed to fetch track metadata: ${err.message}`)
 	}

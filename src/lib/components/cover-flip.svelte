@@ -1,7 +1,7 @@
 <script>
-	import {createLoop} from '$lib/loop.ts'
+	import {createLoop} from '#lib/loop.ts'
 	import {untrack} from 'svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{
 	 *  items: any[],

@@ -4,11 +4,11 @@
  */
 
 import {parseUrl} from 'media-now/parse-url'
-import {isDbId} from '$lib/utils'
+import {isDbId} from '#lib/utils.js'
 
-/** @typedef {import('$lib/types').BroadcastPlaybackFields} BroadcastPlaybackFields */
-/** @typedef {import('$lib/types').Track} Track */
-/** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
+/** @typedef {import('#lib/types.js').BroadcastPlaybackFields} BroadcastPlaybackFields */
+/** @typedef {import('#lib/types.js').Track} Track */
+/** @typedef {import('#lib/types.js').BroadcastDeckState} BroadcastDeckState */
 /** @typedef {{track_url: string | null, track_title: string | null, track_media_id: string | null}} EphemeralPayload */
 
 /** Shared drift tolerance used by both broadcast and auto-radio drift effects. */

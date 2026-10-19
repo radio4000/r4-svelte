@@ -1,8 +1,8 @@
 <script>
-	import {appState, addDeck, removeDeck, deckAccent} from '$lib/app-state.svelte'
-	import {toggleDeckCompact, togglePlayerExpanded, toggleVideo, toggleQueuePanel} from '$lib/api'
-	import {sortedDeckIds} from '$lib/deck'
-	import InputRange from '$lib/components/input-range.svelte'
+	import {appState, addDeck, removeDeck, deckAccent} from '#lib/app-state.svelte.js'
+	import {toggleDeckCompact, togglePlayerExpanded, toggleVideo, toggleQueuePanel} from '#lib/api.js'
+	import {sortedDeckIds} from '#lib/deck.js'
+	import InputRange from '#lib/components/input-range.svelte'
 
 	let deckIds = $derived(sortedDeckIds(appState.decks))
 
