@@ -44,11 +44,32 @@ export async function load() {
 		(browser && EMBED_HOSTS.includes(window.location.hostname))
 	)
 
+	const preloading = preload()
 	return {
 		embedMode,
-		preloading: preload(),
+		preloading,
+		// Not part of preloading: a big last-played channel shouldn't hold up the first render
+		deckTracksRestored: preloading.then(restoreDeckTracks),
 		preload
 	}
+}
+
+/** Restore tracks for saved deck queues so players can display on refresh. */
+async function restoreDeckTracks() {
+	if (!browser) return
+	const deckSlugs = new Set(
+		Object.values(appState.decks)
+			.map((d) => d.playlist_slug)
+			.filter(Boolean)
+	)
+	if (deckSlugs.size) {
+		log.debug('ensuring_tracks_for_decks', {slugs: [...deckSlugs]})
+	}
+	await Promise.all(
+		Array.from(/** @type {Set<string>} */ (deckSlugs), (slug) =>
+			ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
+		)
+	)
 }
 
 async function preload() {
@@ -66,21 +87,6 @@ async function preload() {
 		}
 
 		validateListeningState().catch((err) => log.error('validate_listening_state_error', err))
-
-		// Restore tracks for saved deck queues so players can display on refresh
-		const deckSlugs = new Set(
-			Object.values(appState.decks)
-				.map((d) => d.playlist_slug)
-				.filter(Boolean)
-		)
-		if (deckSlugs.size) {
-			log.debug('ensuring_tracks_for_decks', {slugs: [...deckSlugs]})
-		}
-		await Promise.all(
-			Array.from(/** @type {Set<string>} */ (deckSlugs), (slug) =>
-				ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
-			)
-		)
 
 		// For debugging and console experimentation
 		// @ts-expect-error debugging

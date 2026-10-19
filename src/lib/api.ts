@@ -237,7 +237,12 @@ export async function playTrack(
 		deck.auto_radio_rotation_start = undefined
 	}
 
-	const track = tracksCollection.get(id)
+	let track = tracksCollection.get(id)
+	// After a reload the deck's channel loads behind the first render; next/prev can beat it
+	if (!track && deck.playlist_slug) {
+		await ensureTracksLoaded(deck.playlist_slug).catch(() => {})
+		track = tracksCollection.get(id)
+	}
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined

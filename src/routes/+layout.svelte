@@ -334,11 +334,15 @@
 			{#each allDeckIds as deckId (deckId)}
 				<!-- Two pins per deck — whole queue and current track — that never re-hash
 				     together, so one always keeps the playing row resident while the other
-				     swaps. The snapshot read (.get) is deliberate — see queuePinTargets(). -->
-				{@const queuePin = queuePinTargets(appState.decks[deckId], (id) =>
-					tracksCollection.get(id)
-				)}
-				<TracksKeepalive slugs={queuePin.slugs} ids={queuePin.ids} />
+				     swaps. The snapshot read (.get) is deliberate — see queuePinTargets().
+				     The queue pin waits for the restored rows: read before they land, it would
+				     pin every queued id instead of the channel. -->
+				{#await data.deckTracksRestored then}
+					{@const queuePin = queuePinTargets(appState.decks[deckId], (id) =>
+						tracksCollection.get(id)
+					)}
+					<TracksKeepalive slugs={queuePin.slugs} ids={queuePin.ids} />
+				{/await}
 				<TracksKeepalive
 					ids={appState.decks[deckId]?.playlist_track
 						? [appState.decks[deckId].playlist_track]
