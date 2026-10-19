@@ -189,19 +189,6 @@
 	}
 </script>
 
-{#snippet menuIcon()}
-	<!-- Icon's options-horizontal as plain markup: one per row, and the
-	     component costs ~5x more to mount on a long list -->
-	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="obra-icon"
-		><path
-			d="M18.006 11.994L18.006 12.006M12.006 11.994L12.006 12.006M6.006 11.994L6.006 12.006"
-			stroke="currentColor"
-			stroke-width="4"
-			stroke-linecap="round"
-		/></svg
-	>
-{/snippet}
-
 <article class={{'track-card': true, active, selected: selected && !active}} bind:this={articleEl}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
@@ -262,31 +249,33 @@
 				</p>
 			{/if}
 		</div>
-		<div class="meta">
-			{#if track.slug && track.discogs_url && !appState.embed_mode}
-				<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}
-					><Icon icon="radio-on" size={14} /></a
-				>
-			{/if}
-			{#if showSlug}<small>@{track.slug}</small>{/if}
-		</div>
+		{#if (track.slug && track.discogs_url && !appState.embed_mode) || showSlug}
+			<div class="meta">
+				{#if track.slug && track.discogs_url && !appState.embed_mode}
+					<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}
+						><Icon icon="radio-on" size={14} /></a
+					>
+				{/if}
+				{#if showSlug}<small>@{track.slug}</small>{/if}
+			</div>
+		{/if}
 	</div>
 	{#if showMenu && !menuMounted}
-		<div class="popover-menu">
-			<button type="button" class="ghost trackcard-contextBtn" onclick={mountMenu}
-				>{@render menuIcon()}</button
-			>
-		</div>
+		<!-- Stands in for the menu until first tap; same dots and label, with a margin for .popover-menu's padding -->
+		<button
+			type="button"
+			class="ghost trackcard-contextBtn menu-dots menu-placeholder"
+			aria-label={m.common_more()}
+			onclick={mountMenu}
+		></button>
 	{:else if showMenu}
 		<PopoverMenu
 			bind:this={menu}
-			btnClass="ghost trackcard-contextBtn"
+			btnClass="ghost trackcard-contextBtn menu-dots"
+			label={m.common_more()}
 			align={menuAlign}
 			valign={menuValign ?? 'top'}
 		>
-			{#snippet trigger()}
-				{@render menuIcon()}
-			{/snippet}
 			<menu class="nav-vertical">
 				<button
 					type="button"
@@ -581,6 +570,21 @@
 		:global(.popover-menu) {
 			position: relative;
 			padding: 0.2em;
+		}
+	}
+
+	.menu-placeholder {
+		margin: 0.2em;
+	}
+
+	/* The ⋯ icon in CSS: one element per row, and the real trigger lives in PopoverMenu */
+	article :global(.menu-dots) {
+		&::before {
+			content: '';
+			width: 18px;
+			height: 18px;
+			background: currentColor;
+			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18.006 11.994L18.006 12.006M12.006 11.994L12.006 12.006M6.006 11.994L6.006 12.006' stroke='black' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
 		}
 	}
 

@@ -1,11 +1,12 @@
 <script>
 	import {tick} from 'svelte'
 
-	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: import('svelte/attachments').Attachment<HTMLButtonElement>, align?: 'left' | 'right' | 'end', valign?: 'top' | 'bottom', centered?: boolean, [key: string]: any}} */
+	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, label?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: import('svelte/attachments').Attachment<HTMLButtonElement>, align?: 'left' | 'right' | 'end', valign?: 'top' | 'bottom', centered?: boolean, [key: string]: any}} */
 	let {
 		children,
 		trigger,
 		btnClass,
+		label,
 		closeOnClick = true,
 		onclose,
 		triggerAttachment,
@@ -88,6 +89,7 @@
 		popovertarget={hasBeenOpened ? id : undefined}
 		bind:this={buttonEl}
 		class={btnClass}
+		aria-label={label}
 		onclick={() => !hasBeenOpened && open()}
 		{@attach triggerAttachment}
 	>
