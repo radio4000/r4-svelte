@@ -151,11 +151,10 @@
 	let userChannelSlug = $derived(appState.channel?.slug ?? '')
 	let playLabel = $derived(isChannelPlaying ? m.player_tooltip_pause() : m.player_tooltip_play())
 	let shuffleLabel = $derived(m.player_tooltip_shuffle())
-	const listeningTrackQuery = useLiveQuery((q) =>
-		q
-			.from({t: tracksCollection})
-			.where(({t}) => eq(t.id, channelListeningDeck?.playlist_track ?? ''))
-	)
+	const listeningTrackQuery = useLiveQuery((q) => {
+		const id = channelListeningDeck?.playlist_track
+		return id ? q.from({t: tracksCollection}).where(({t}) => eq(t.id, id)) : null
+	})
 	let listeningTrack = $derived(listeningTrackQuery.data?.[0])
 
 	// --- Effects ---

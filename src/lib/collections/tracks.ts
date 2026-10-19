@@ -20,6 +20,8 @@ import type {ChannelRef, Track, TrackWithMeta} from '#lib/types.js'
 export function normalizeTrackMedia<
 	T extends {url?: string | null; provider?: string | null; media_id?: string | null}
 >(track: T): T {
+	// Rows almost always arrive with both set; parsing 2.6k URLs anyway cost ~35ms per channel.
+	if (track.provider && track.media_id) return track
 	const parsed = track.url ? parseUrl(track.url) : null
 	return {
 		...track,
