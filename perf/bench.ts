@@ -9,6 +9,7 @@
 //   bun run bench --runs 3                    # medians, for before/after comparisons
 //   bun run bench --save-baseline             # remember this run as the baseline
 //   bun run bench --ab main --only load:home  # build main next to your code, alternate runs, diff
+//   bun run bench --rev @-                    # build and bench a revision, not the working copy
 //   bun run bench --trace channel→tracks      # run up to that step, trace it, list its top functions
 //   bun run bench --url https://radio4000.com --runs 5 --cpu 1
 //
@@ -39,6 +40,7 @@ const {values: args} = parseArgs({
 		slug: {type: 'string', default: 'oskar'},
 		runs: {type: 'string'},
 		ab: {type: 'string'},
+		rev: {type: 'string'},
 		top: {type: 'string', default: '12'},
 		cpu: {type: 'string', default: '4'},
 		only: {type: 'string'},
@@ -55,7 +57,7 @@ if (args.help) {
 	console.log(
 		readFileSync(import.meta.path, 'utf8')
 			.split('\n')
-			.slice(1, 14)
+			.slice(1, 15)
 			.join('\n')
 	)
 	process.exit(0)
@@ -150,24 +152,39 @@ async function openPage() {
 const PROBE = `(() => {
 	if (window.__bench) return
 	try { localStorage.setItem('r5-perf', '1') } catch {}
-	const s = (window.__bench = {inflight: 0, lastBusy: 0, worstFrame: 0, frames: []})
-	const busy = () => (s.lastBusy = performance.now())
+	const s = (window.__bench = {inflight: 0, lastBusy: 0, lastBusyBy: '', worstFrame: 0, frames: []})
+	const busy = (by) => ((s.lastBusy = performance.now()), (s.lastBusyBy = by))
+	// Names a mutated node by its nearest element, e.g. "span.time"
+	const describe = (node) => {
+		const el = node.nodeType === 1 ? node : node.parentElement
+		return el ? el.localName + (el.classList[0] ? '.' + el.classList[0] : '') : '#document'
+	}
 	try {
 		new PerformanceObserver((l) => s.frames.push(...l.getEntries()))
 			.observe({type: 'long-animation-frame', buffered: true})
 	} catch {}
 	performance.setResourceTimingBufferSize(10000)
 	const fetch = window.fetch
-	window.fetch = (...a) => (s.inflight++, busy(), fetch(...a).finally(() => (s.inflight--, busy())))
+	window.fetch = (...a) => {
+		const by = 'fetch ' + new URL(a[0]?.url ?? a[0], location.href).pathname.slice(0, 60)
+		s.inflight++
+		busy(by)
+		return fetch(...a).finally(() => (s.inflight--, busy(by)))
+	}
 	let last = performance.now()
 	requestAnimationFrame(function loop() {
 		const n = performance.now()
-		if (n - last > 50) s.lastBusy = n
+		if (n - last > 50) busy('long frame')
 		s.worstFrame = Math.max(s.worstFrame, n - last)
 		last = n
 		requestAnimationFrame(loop)
 	})
-	new MutationObserver(busy).observe(document, {childList: true, subtree: true, characterData: true})
+	// A playing deck's clocks tick every second; they'd make every step end on a tick
+	const ticking = (node) => (node.nodeType === 1 ? node : node.parentElement)?.closest('time')
+	new MutationObserver((records) => {
+		const work = records.filter((r) => !ticking(r.target))
+		if (work.length) busy(describe(work.at(-1).target))
+	}).observe(document, {childList: true, subtree: true, characterData: true})
 })()`
 
 // settle(t0) resolves once the page has been quiet for QUIET_MS and returns the
@@ -184,12 +201,20 @@ const PRELUDE = `
 		const {spans = {}, fcp = 0, lcp = 0} = window.r5?.perf?.(t0) ?? {}
 		const frames = s.frames.filter((f) => f.startTime >= t0)
 		const res = performance.getEntriesByType('resource').filter((e) => e.startTime >= t0)
-		const end = performance.getEntriesByType('measure')
+		const last = performance
+			.getEntriesByType('measure')
 			.filter((e) => e.name.startsWith('r5:') && e.startTime >= t0)
-			.reduce((max, e) => Math.max(max, e.startTime + e.duration), Math.max(s.lastBusy, t0))
+			.reduce((a, e) => (e.startTime + e.duration > a.startTime + a.duration ? e : a), {
+				name: s.lastBusyBy,
+				startTime: Math.max(s.lastBusy, t0),
+				duration: 0
+			})
+		const end = last.startTime + last.duration
 		return {
 			ms: Math.round(end - t0),
 			settled: !busy(),
+			// What kept the step from settling sooner; an r5 span if one ended last
+			lastBusyBy: last.name,
 			worstFrame: Math.round(s.worstFrame),
 			requests: {
 				data: res.filter((e) => e.name.includes('/rest/v1/')).length,
@@ -784,7 +809,8 @@ async function main() {
 				{name: 'after', url: await buildAndServe('.', 4179)}
 			]
 		: [{name: '', url: BASE}]
-	if (!args.ab) {
+	if (args.rev) sides[0].url = BASE = await serveRev(args.rev, 4181)
+	else if (!args.ab) {
 		const up = await isUp(BASE)
 		if (args.build || (!up && !process.argv.some((a) => a.startsWith('--url')))) {
 			if (!args.build) log(`nothing at ${BASE}, so building and serving it`)
@@ -863,7 +889,9 @@ async function main() {
 						continue
 					}
 					journey[step.name] = r
-					log(`${label} ${String(r.ms).padStart(6)}ms${r.settled ? '' : ' (did not settle)'}`)
+					log(
+						`${label} ${String(r.ms).padStart(6)}ms${r.settled ? '' : ' (did not settle)'}  ← ${r.lastBusyBy}`
+					)
 					if (traceFile) traceOut = traceFile
 				}
 			}

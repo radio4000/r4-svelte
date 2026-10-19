@@ -11,6 +11,7 @@ bun run bench                        # full journey once (~45s); builds and serv
 bun run bench --ab main --only load:home,home→channel,channel→tracks   # prove a change: ~2 min
 bun run bench --trace channel→tracks # run up to that step, trace it, explain where the time went
 bun run bench --url https://radio4000.com   # against prod
+bun run bench --rev @-               # bench a revision, e.g. while the checkout is mid-edit
 ```
 
 `perf/bench.ts` replays daily use as a fresh visitor at 4x CPU: home, a channel, all its tracks, scroll, a #tag and @mention, search, play from a track card, next/prev/shuffle, explore in each view, play from a channel card, filter, search channels, back to tracks, full channel load. With `R4_ROBOT_EMAIL`/`R4_ROBOT_PASSWORD` in `.env.local` (from AGENTS.local.md) it then signs in as the robot and adds, edits and deletes a track on `/robot-afterhours`.
@@ -31,7 +32,7 @@ Agents: start the bench in the background and wait for its last line, `saved …
 
 Each run saves JSON and a markdown table to `perf/results/` (gitignored; compare on the same machine).
 
-Columns: `ms` runs from action until the page goes quiet (no fetch, mutation or long frame for 500ms). `blocking` is long-animation-frame blocking time, `worst frame` the longest frame. Then data requests, images, DOM nodes, heap and the top spans.
+Columns: `ms` runs from action until the page goes quiet (no fetch, mutation or long frame for 500ms). A playing deck's clocks (`<time>`) don't count. Each run line ends with what kept the step busy last: a fetch, the mutated element, a long frame or an `r5:` span. `blocking` is long-animation-frame blocking time, `worst frame` the longest frame. Then data requests, images, DOM nodes, heap and the top spans.
 
 ## In use
 
@@ -43,4 +44,8 @@ Agents: `agent-browser open <url>?perf`, use the app with real clicks, then `eva
 
 ## Known
 
-`/[slug]/tracks` still renders every track at once (35k DOM nodes on /oskar) and blocks for about 2s at 4x CPU. Playing from the full list blocks for about 0.6s at 4x CPU, most of it mounting the new deck (player, compact bar, the media element) and its live queries. Explore's map view takes about 3s, and the heap grows to about 250MB over one journey. Older findings: `perf/perf-report.html`.
+Numbers at 4x CPU, October 2026. `/[slug]/tracks` still renders every track at once (~24k DOM nodes on /oskar) and blocks for about 2.3s. Explore's map takes about 3.4s, mostly MapLibre's own long frames; the tuner about 0.8s, mostly its 400-channel fetch. The heap ends one journey at about 100MB. Open leads are in `plan.md`. Older findings: `perf/perf-report.html`.
+
+## Reading a regression
+
+Only an `--ab` proves one. Comparing saved results from different times or servers mixes in network and machine drift: on 2026-10-19 four steps looked 23–187% slower that way, and an A/B cleared three. When a step's runs split into two clusters, read the `← cause` on each run line before guessing. That's how the deck's ticking clock turned out to add up to a second to every step taken while playing, until the bench learned to ignore `<time>`.
