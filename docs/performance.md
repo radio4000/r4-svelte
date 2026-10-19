@@ -23,6 +23,8 @@ Read `blocking` and `worst frame` first: they're main-thread cost. `ms` includes
 
 `--trace` saves a DevTools trace (path printed at the end) and explains the step, mapped to source file and line: hottest functions by self time, app code (`src/`) by inclusive time overall and per long task, library and native time (DOM inserts, svelte) charged to the app frame that caused it, and main-thread phases (style, layout, paint, intersection observers) the JS profile can't see. `--top 30` shows more lines. Source names need the bench's own build, which has sourcemaps. agent-browser's `profiler` and `trace` don't help here: one records whatever iframe is playing, the other has no CPU samples.
 
+Bench on `localhost`, never an IP like `127.0.0.1`: YouTube refuses to embed there (error 150), the deck skips through the queue, and every step that plays measures the skipping. The bench refuses IP URLs.
+
 Before benching, close dev servers and other browsers; they inflate traces by 20% or more, and the bench warns when the machine is busy. Only one bench runs at a time across the machine.
 
 Agents: start the bench in the background and wait for its last line, `saved …`. Never use `pgrep -f bench` or `pkill -f "vite preview"`: both match your own shell, so one never ends and the other kills it.

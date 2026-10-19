@@ -66,6 +66,10 @@ const OWN_URL = 'http://localhost:4179'
 let BUILD = 'external'
 const STARTED = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
 let BASE = args.build ? OWN_URL : args.url!.replace(/\/$/, '')
+// YouTube refuses embeds on an IP origin (error 150), so the deck skips track after
+// track and every step that plays measures the skipping instead
+if (/^\d+(\.\d+){3}$|^\[/.test(new URL(BASE).hostname))
+	throw new Error(`YouTube won't embed on ${new URL(BASE).hostname}; use localhost instead`)
 const SLUG = args.slug!
 const RUNS = Number(args.runs ?? (args.ab ? 3 : 1))
 const CPU = Number(args.cpu)
@@ -668,8 +672,9 @@ async function buildAndServe(dir: string, port: number) {
 	throw new Error(`preview never came up on ${url}`)
 }
 
+// Bun's fetch to a closed localhost port can hang instead of failing (seen on WSL)
 const isUp = (url: string) =>
-	fetch(url).then(
+	fetch(url, {signal: AbortSignal.timeout(1000)}).then(
 		(r) => r.ok,
 		() => false
 	)
