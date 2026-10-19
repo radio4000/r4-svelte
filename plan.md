@@ -26,7 +26,7 @@ See CHANGELOG.md for user-facing history.
 
 Measure first: `bun run bench --ab <base>`, see docs/performance.md.
 
-- `[slug]/+layout.svelte` loads the signed-in user's whole channel on every `[slug]/*` page; only the overview's match score uses it, and that page has its own query. Big-channel owners pay for it everywhere.
+- IndexedDB persistence (`collection-persistence.ts`, `query-cache-persistence.ts`) has been off for months after data-flow bugs. TanStack DB has moved on since; re-check its current persistence patterns before re-enabling. Every session starts cold until then.
 - Channel search starts fetching only after the page mounts. A `+page.js` load returning the promise would overlap navigation and start on hover preload.
 
 ## One day
