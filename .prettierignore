@@ -8,3 +8,6 @@ src/lib/paraglide/
 # Biome owns source JavaScript and TypeScript.
 src/**/*.js
 src/**/*.ts
+
+# Agent worktrees
+.claude/

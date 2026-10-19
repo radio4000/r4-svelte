@@ -4,7 +4,13 @@ import {validateListeningState} from '#lib/broadcast.js'
 import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
 import {queryClient} from '#lib/collections/query-client.js'
-import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {
+	tracksCollection,
+	ensureTracksLoaded,
+	addTrack,
+	updateTrack,
+	deleteTrack
+} from '#lib/collections/tracks.js'
 import {trackMetaCollection} from '#lib/collections/track-meta.js'
 import {channelsCollection} from '#lib/collections/channels.js'
 import {spamDecisionsCollection} from '#lib/collections/spam-decisions.js'
@@ -16,6 +22,7 @@ import {collectionsHydrated} from '#lib/collection-persistence.js'
 import {appState} from '#lib/app-state.svelte.js'
 import * as api from '#lib/api.js'
 import * as queue from '#lib/player/queue.js'
+import {perfReport, perfReset} from '#lib/perf.js'
 
 // Disable SSR — most pages are client-heavy. Individual pages/layouts
 // that need SSR (e.g. [slug] channel pages) override this to true.
@@ -82,6 +89,8 @@ async function preload() {
 			appState,
 			queryClient,
 			tracksCollection,
+			// The track forms' calls, for the bench's owner steps
+			tracks: {addTrack, updateTrack, deleteTrack},
 			trackMetaCollection,
 			channelsCollection,
 			broadcastsCollection,
@@ -90,6 +99,8 @@ async function preload() {
 			captureEventsCollection,
 			queue,
 			api,
+			perf: perfReport,
+			perfReset,
 			// Deterministic deck probe for testing: which deck is active and what each holds.
 			// Prefer this over reading `is_playing` audio in headless — see browser-testing.md.
 			decks: () =>

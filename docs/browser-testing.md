@@ -25,16 +25,16 @@ Useful commands:
 - `scrollintoview @ref` — scroll before clicking off-screen elements (clicks can silently fail otherwise)
 - `diff snapshot` — compare before/after snapshots to verify an interaction changed something
 
-Always re-snapshot after interactions. Always wait after `open` (first snapshot can return empty refs). Run `agent-browser --help` for all commands.
+Always re-snapshot after interactions. Always wait after `open` (first snapshot can return empty refs). Go one step at a time; when something hangs, probe the page (`eval "location.href"`) before rerunning anything bigger. Run `agent-browser --help` for all commands.
 
 ## Part 2: testing Radio4000
 
-The app runs on http://localhost:5173 (dev) or https://radio4000.com (prod). Start the dev server (`bun dev`) before testing.
+Pick a URL from [testing](testing.md). Use `--session r4` for the logged-in profile (login in AGENTS.local.md). `r4-bench` belongs to the benchmark; don't drive it by hand while one runs.
 
 Verify setup:
 
 ```
-agent-browser open http://localhost:5173
+agent-browser open https://r4.localhost
 agent-browser wait 1000
 agent-browser snapshot
 ```
