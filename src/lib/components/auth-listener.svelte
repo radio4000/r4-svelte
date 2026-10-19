@@ -55,14 +55,13 @@
 			return
 		}
 
-		const isNewSession = event === 'INITIAL_SESSION' && user.id !== previousUserId
 		const isNewSignIn = event === 'SIGNED_IN' && user.id !== previousUserId
 
-		if (isNewSession || isNewSignIn) {
-			await checkUser()
-			loadUserFollows()
-		} else if (event === 'INITIAL_SESSION' && user) {
-			await checkUser()
+		if (event === 'INITIAL_SESSION' || isNewSignIn) {
+			// Same user as persisted: their channel ids are already in appState, so follows can load now.
+			// The call after checkUser() is a cache hit unless the channel changed.
+			if (user.id === previousUserId) loadUserFollows()
+			await checkUser(user)
 			loadUserFollows()
 		}
 	}
