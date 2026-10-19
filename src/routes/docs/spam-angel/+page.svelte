@@ -1,12 +1,12 @@
 <script>
 	import {onMount, untrack} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
 	import {analyzeChannel} from './spam-detector.js'
 	import {sdk} from '@radio4000/sdk'
-	import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
+	import {spamDecisionsCollection} from '#lib/collections/spam-decisions.js'
 	import {createQuery} from '@tanstack/svelte-query'
-	import {normalizeTrackMedia} from '$lib/collections/tracks'
+	import {normalizeTrackMedia} from '#lib/collections/tracks.js'
 
 	const MAX_TRACK_COUNT = 10
 	const MIN_CONFIDENCE = 0.5
@@ -21,14 +21,14 @@
 	}
 
 	async function fetchTracksForSlugs(slugs) {
-		const tracks = /** @type {Array<import('$lib/types').Track>} */ ([])
+		const tracks = /** @type {Array<import('#lib/types.js').Track>} */ ([])
 		for (const slugBatch of chunk(slugs, TRACK_SLUG_BATCH_SIZE)) {
 			const {data, error} = await sdk.supabase
 				.from('channel_tracks')
 				.select('*')
 				.in('slug', slugBatch)
 			if (error) throw error
-			const trackRows = /** @type {Array<import('$lib/types').Track>} */ (data ?? [])
+			const trackRows = /** @type {Array<import('#lib/types.js').Track>} */ (data ?? [])
 			tracks.push(...trackRows)
 		}
 		return tracks.map(normalizeTrackMedia)
@@ -68,7 +68,7 @@
 	}))
 
 	const tracksBySlug = $derived.by(() => {
-		/** @type {Record<string, Array<import('$lib/types').Track>>} */
+		/** @type {Record<string, Array<import('#lib/types.js').Track>>} */
 		const map = {}
 		for (const track of tracksQuery.data ?? []) {
 			if (!track.slug) continue

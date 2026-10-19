@@ -1,14 +1,14 @@
 <script>
 	import {goto} from '$app/navigation'
-	import {InfiniteCanvasOGL} from '$lib/infinite-canvas-ogl.js'
+	import {InfiniteCanvasOGL} from '#lib/infinite-canvas-ogl.js'
 	import {untrack} from 'svelte'
-	import {appState} from '$lib/app-state.svelte'
-	import {getChannelSceneThemeConfig} from '$lib/3d/channel-scene-theme.js'
-	import Icon from '$lib/components/icon.svelte'
-	import Dialog from '$lib/components/dialog.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {getChannelSceneThemeConfig} from '#lib/3d/channel-scene-theme.js'
+	import Icon from '#lib/components/icon.svelte'
+	import Dialog from '#lib/components/dialog.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @typedef {import('$lib/components/channel-ui-state.ts').MediaItem} MediaItem */
+	/** @typedef {import('#lib/components/channel-ui-state.ts').MediaItem} MediaItem */
 
 	/** @type {{media?: MediaItem[], activeId?: string, activeIds?: string[], selectedId?: string | null, hoveredId?: string | null, focusSlug?: string | null, focusKey?: string | null, cardDepthScale?: number, cardSizeScale?: number, backgroundColor?: string|null, onclick?: (item: MediaItem) => void, ondoubleclick?: (item: MediaItem) => void, onnavigate?: (href: string, item: MediaItem, kind: 'channel'|'tag'|'mention'|'tracks'|'rotate'|'favorite', token?: string | null) => void | Promise<void>}} */
 	let {

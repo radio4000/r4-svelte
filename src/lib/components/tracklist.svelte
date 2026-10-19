@@ -1,15 +1,15 @@
 <script>
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import {listboxNav} from '$lib/components/listbox-nav.svelte'
-	import {playTrack, setPlaylist} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import {listboxNav} from '#lib/components/listbox-nav.svelte.js'
+	import {playTrack, setPlaylist} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {SvelteMap} from 'svelte/reactivity'
-	import {getLocale} from '$lib/paraglide/runtime'
-	import * as m from '$lib/paraglide/messages'
+	import {getLocale} from '#lib/paraglide/runtime.js'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @typedef {import('$lib/types').Track} Track */
+	/** @typedef {import('#lib/types.js').Track} Track */
 	/** @typedef {{track: Track, index: number}} IndexedTrack */
 
 	/** @typedef {{type: 'year' | 'month' | 'track', value?: string, track?: Track, index?: number, id: string}} FlatItem */

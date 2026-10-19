@@ -1,4 +1,4 @@
-import {uuid} from '$lib/utils'
+import {uuid} from '#lib/utils.js'
 
 /**
  * @typedef {'top' | 'bottom' | 'left' | 'right'} TooltipPosition

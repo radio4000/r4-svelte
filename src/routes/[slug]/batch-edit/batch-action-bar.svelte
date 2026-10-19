@@ -1,14 +1,14 @@
 <script>
-	import {batchUpdateTracksUniform, insertDurationFromMeta} from '$lib/collections/tracks'
-	import {deleteTrackMeta} from '$lib/collections/track-meta'
-	import {pullYouTube} from '$lib/metadata/youtube'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {getChannelTags} from '$lib/utils'
-	import * as m from '$lib/paraglide/messages'
+	import {batchUpdateTracksUniform, insertDurationFromMeta} from '#lib/collections/tracks.js'
+	import {deleteTrackMeta} from '#lib/collections/track-meta.js'
+	import {pullYouTube} from '#lib/metadata/youtube.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import {getChannelTags} from '#lib/utils.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = $props.id()
 
-	/** @type {{selectedIds?: string[], channel: import('$lib/types').Channel | null, allTags?: ReturnType<typeof getChannelTags>, tracks?: import('$lib/types').TrackWithMeta[] }} */
+	/** @type {{selectedIds?: string[], channel: import('#lib/types.js').Channel | null, allTags?: ReturnType<typeof getChannelTags>, tracks?: import('#lib/types.js').TrackWithMeta[] }} */
 	let {selectedIds = [], channel, allTags = [], tracks = []} = $props()
 
 	let showAppend = $state(false)
@@ -17,7 +17,7 @@
 	let fetchingMeta = $state(false)
 	let fetchProgress = $state({current: 0, total: 0})
 
-	/** @type {import('$lib/types').TrackWithMeta[]} */
+	/** @type {import('#lib/types.js').TrackWithMeta[]} */
 	let selectedTracks = $derived(
 		selectedIds.map((id) => tracks.find((t) => t.id === id)).filter((t) => t !== undefined)
 	)

@@ -1,11 +1,11 @@
-import {uuid} from '$lib/utils'
-import {LOCAL_STORAGE_KEYS} from '$lib/storage-keys'
-import {logger} from '$lib/logger'
+import {uuid} from '#lib/utils.js'
+import {LOCAL_STORAGE_KEYS} from '#lib/storage-keys.js'
+import {logger} from '#lib/logger.js'
 import {createLocalCollection} from './utils'
 
 const log = logger.ns('capture-events').seal()
 
-import type {CaptureEvent} from '$lib/types'
+import type {CaptureEvent} from '#lib/types.js'
 export type {CaptureEvent}
 
 /** Local-only log of player/UI events (plays, skips, dialogs) for stats and debugging. */

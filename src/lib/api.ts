@@ -1,21 +1,21 @@
 import {tick} from 'svelte'
 import {goto} from '$app/navigation'
-import {appState, authStatus, addDeck} from '$lib/app-state.svelte'
-import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '$lib/storage-keys'
+import {appState, authStatus, addDeck} from '#lib/app-state.svelte.js'
+import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '#lib/storage-keys.js'
 import {
 	leaveBroadcast,
 	notifyBroadcastState,
 	upsertRemoteBroadcast,
 	getBroadcastingChannelId
-} from '$lib/broadcast'
-import {logger} from '$lib/logger'
-import {capture} from '$lib/analytics'
+} from '#lib/broadcast.js'
+import {logger} from '#lib/logger.js'
+import {capture} from '#lib/analytics.js'
 import {sdk} from '@radio4000/sdk'
-import {shuffleArray, isDbId, isMobileViewport, uuid} from '$lib/utils'
-import {getActiveQueue, queueInsertManyAfter, queueNext, queuePrev} from '$lib/player/queue'
-import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+import {shuffleArray, isDbId, isMobileViewport, uuid} from '#lib/utils.js'
+import {getActiveQueue, queueInsertManyAfter, queueNext, queuePrev} from '#lib/player/queue.js'
+import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
 
-import type {Channel, ChannelRef, Deck, Track, PlayEndReason, PlayStartReason} from '$lib/types'
+import type {Channel, ChannelRef, Deck, Track, PlayEndReason, PlayStartReason} from '#lib/types.js'
 import {
 	weeklyShuffle,
 	playbackState,
@@ -23,15 +23,15 @@ import {
 	hasAutoRadioCoverage,
 	epochFromTracks,
 	type AutoTrack
-} from '$lib/player/auto-radio'
+} from '#lib/player/auto-radio.js'
 import {
 	findAutoDecksForChannel,
 	findChannelDeck,
 	pickAutoResyncDeck,
 	sortedListeningDeckIds
-} from '$lib/deck'
-import {processViewTracks} from '$lib/views.svelte'
-import {serializeView, viewLabel, normalizeView, type View} from '$lib/views'
+} from '#lib/deck.js'
+import {processViewTracks} from '#lib/views.svelte.js'
+import {serializeView, viewLabel, normalizeView, type View} from '#lib/views.js'
 
 const log = logger.ns('api').seal()
 

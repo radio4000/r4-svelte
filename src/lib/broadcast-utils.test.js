@@ -3,9 +3,9 @@ import {
 	calculateSeekTime,
 	pickBroadcastFields,
 	composeBroadcastDeckState
-} from '$lib/broadcast-utils'
+} from '#lib/broadcast-utils.js'
 
-/** @typedef {import('$lib/types').Track} Track */
+/** @typedef {import('#lib/types.js').Track} Track */
 
 /** @param {Partial<Track>} overrides */
 function makeTrack(overrides = {}) {

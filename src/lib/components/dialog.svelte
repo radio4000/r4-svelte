@@ -1,6 +1,6 @@
 <script>
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {showModal = $bindable(), header = undefined, footer = undefined, children} = $props()
 

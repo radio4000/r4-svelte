@@ -1,6 +1,6 @@
 <script>
-	import CoverFlip from '$lib/components/cover-flip.svelte'
-	import {DECK_ACCENTS} from '$lib/app-state.svelte'
+	import CoverFlip from '#lib/components/cover-flip.svelte'
+	import {DECK_ACCENTS} from '#lib/app-state.svelte.js'
 	import {onMount} from 'svelte'
 
 	function makeItems(count) {

@@ -1,9 +1,9 @@
 <script>
-	import ChannelScene from '$lib/components/channel-scene-ogl.svelte'
+	import ChannelScene from '#lib/components/channel-scene-ogl.svelte'
 	import {onMount} from 'svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {channelAvatarUrl, extractHashtags, extractMentions} from '$lib/utils.ts'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {channelAvatarUrl, extractHashtags, extractMentions} from '#lib/utils.ts'
 
 	const fallbackDataUrl = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 250"><rect width="250" height="250" rx="26" fill="#101318"/><circle cx="125" cy="110" r="54" fill="#4e6df5"/><rect x="56" y="180" width="138" height="20" rx="10" fill="#e2e8f0"/></svg>')}`
 	const channelsQuery = useLiveQuery((q) =>

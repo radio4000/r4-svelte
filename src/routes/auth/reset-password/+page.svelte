@@ -1,11 +1,11 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {logger} from '$lib/logger'
+	import {logger} from '#lib/logger.js'
 	import {resolve} from '$app/paths'
-	import {appChatUrl} from '$lib/config'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appChatUrl} from '#lib/config.js'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const log = logger.ns('auth').seal()
 

@@ -1,18 +1,18 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
-	import {appState} from '$lib/app-state.svelte'
-	import {fetchAppStats} from '$lib/collections/channels'
-	import {appName, conceptIcons} from '$lib/config'
-	import Icon from '$lib/components/icon.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import AppBuildInfo from '$lib/components/app-build-info.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {repoBlobUrl, repoUrl, repoCommitUrl} from '$lib/repo'
-	import BackLink from '$lib/components/back-link.svelte'
-	import LanguageSwitcher from '$lib/components/language-switcher.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import {appPresence} from '$lib/presence.svelte.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {fetchAppStats} from '#lib/collections/channels.js'
+	import {appName, conceptIcons} from '#lib/config.js'
+	import Icon from '#lib/components/icon.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import AppBuildInfo from '#lib/components/app-build-info.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {repoBlobUrl, repoUrl, repoCommitUrl} from '#lib/repo.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import LanguageSwitcher from '#lib/components/language-switcher.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import {appPresence} from '#lib/presence.svelte.js'
 
 	const sha = __GIT_INFO__.sha
 	const changelogHref = repoBlobUrl('CHANGELOG.md')
@@ -41,7 +41,7 @@
 
 	<menu class="nav-vertical">
 		{#if userChannel}
-			<a href={resolve(`/${userChannel.slug}`)}>
+			<a href={resolve('/[slug]', {slug: userChannel.slug})}>
 				<span class="channel-avatar"
 					><ChannelAvatar id={userChannel.image} alt={userChannel.name} /></span
 				>
@@ -100,7 +100,7 @@
 	</menu>
 
 	<menu class="nav-vertical">
-		<a href={resolve('/docs')}>
+		<a href={resolve('docs')}>
 			<Icon icon="document" />
 			{m.nav_docs()}
 		</a>
@@ -122,10 +122,10 @@
 		<p class="version"><AppBuildInfo /></p>
 		{#if channelCount || trackCount || appPresence.count}
 			<p class="stats">
-				{#if channelCount}<a href={resolve('/channels/all')}
+				{#if channelCount}<a href={resolve('channels/all')}
 						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
 					>{/if}
-				{#if trackCount}<a href={resolve('/tracks/recent')}
+				{#if trackCount}<a href={resolve('tracks/recent')}
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
 				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span

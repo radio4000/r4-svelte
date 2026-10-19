@@ -1,17 +1,17 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '$lib/contexts'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {getChannelCtx, getTracksQueryCtx, setTrackDetailCtx} from '#lib/contexts.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq, and} from '@tanstack/db'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {trackMetaCollection} from '$lib/collections/track-meta'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {channelAvatarUrl, trackImageUrl} from '$lib/utils'
-	import {appUrl} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
-	import Seo from '$lib/components/seo.svelte'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {trackMetaCollection} from '#lib/collections/track-meta.js'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import {channelAvatarUrl, trackImageUrl} from '#lib/utils.js'
+	import {appUrl} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import Seo from '#lib/components/seo.svelte'
 
 	let {data, children} = $props()
 	const pathname = $derived(page.url.pathname)
@@ -68,7 +68,7 @@
 	)
 
 	const detail = $state(
-		/** @type {import('$lib/contexts').TrackDetailCtx} */ ({
+		/** @type {import('#lib/contexts.js').TrackDetailCtx} */ ({
 			track: undefined,
 			trackProvider: null,
 			trackMediaId: null,
@@ -127,7 +127,7 @@
 				<Icon icon="arrow-left" />
 			</a>
 			<a
-				href={resolve(`/${data.slug}/tracks/${data.tid}`)}
+				href={resolve('/[slug]/tracks/[tid]/(tabs)', {slug: data.slug, tid: data.tid})}
 				class="btn chip"
 				class:active={pathname === `/${data.slug}/tracks/${data.tid}`}
 			>
@@ -135,7 +135,7 @@
 				{m.track_detail_nav_r5()}
 			</a>
 			<a
-				href={resolve(`/${data.slug}/tracks/${data.tid}/related`)}
+				href={resolve('/[slug]/tracks/[tid]/(tabs)/related', {slug: data.slug, tid: data.tid})}
 				class="btn chip"
 				class:active={pathname === `/${data.slug}/tracks/${data.tid}/related`}
 			>
@@ -144,7 +144,7 @@
 			</a>
 			{#if isYoutubeTrack || hasYoutubeInfo}
 				<a
-					href={resolve(`/${data.slug}/tracks/${data.tid}/youtube`)}
+					href={resolve('/[slug]/tracks/[tid]/(tabs)/youtube', {slug: data.slug, tid: data.tid})}
 					class="btn chip"
 					class:active={pathname === `/${data.slug}/tracks/${data.tid}/youtube`}
 				>
@@ -153,7 +153,7 @@
 				</a>
 			{/if}
 			<a
-				href={resolve(`/${data.slug}/tracks/${data.tid}/discogs`)}
+				href={resolve('/[slug]/tracks/[tid]/(tabs)/discogs', {slug: data.slug, tid: data.tid})}
 				class="btn chip"
 				class:active={pathname === `/${data.slug}/tracks/${data.tid}/discogs`}
 			>
@@ -161,7 +161,7 @@
 				{m.track_detail_nav_discogs()}
 			</a>
 			<a
-				href={resolve(`/${data.slug}/tracks/${data.tid}/musicbrainz`)}
+				href={resolve('/[slug]/tracks/[tid]/(tabs)/musicbrainz', {slug: data.slug, tid: data.tid})}
 				class="btn chip"
 				class:active={pathname === `/${data.slug}/tracks/${data.tid}/musicbrainz`}
 			>
@@ -170,7 +170,7 @@
 			</a>
 			{#if canEdit}
 				<a
-					href={resolve(`/${data.slug}/tracks/${data.tid}/edit`)}
+					href={resolve('/[slug]/tracks/[tid]/(tabs)/edit', {slug: data.slug, tid: data.tid})}
 					class="btn chip"
 					class:active={pathname === `/${data.slug}/tracks/${data.tid}/edit`}
 					style="margin-inline-start: auto;"

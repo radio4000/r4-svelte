@@ -1,16 +1,16 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {
 		startChannelBroadcast,
 		stopBroadcast,
 		getBroadcastingChannelId,
 		isUserBroadcasting
-	} from '$lib/broadcast'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {channelPresence} from '$lib/presence.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
+	} from '#lib/broadcast.js'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {channelPresence} from '#lib/presence.svelte.js'
+	import PresenceCount from '#lib/components/presence-count.svelte'
 
 	/** @type {{deckId?: number, channelId?: string, channelSlug?: string, isLiveOverride?: boolean, compact?: boolean, showPresence?: boolean}} */
 	let {

@@ -1,6 +1,6 @@
 export const BORDER_LAYER_ORDER = ['favorite', 'active', 'hover', 'selected']
 export const CHANNEL_INFO_CANVAS = {width: 1024, height: 440}
-import {formatDate} from '$lib/dates.js'
+import {formatDate} from '#lib/dates.js'
 
 const RE_FULLWIDTH_HASH = /^[﹟＃]/
 const RE_TRAILING_PUNCT = /[.,;:!?]+$/g

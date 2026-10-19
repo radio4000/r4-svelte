@@ -6,16 +6,16 @@
  */
 
 import {eq} from '@tanstack/svelte-db'
-import {appState} from '$lib/app-state.svelte'
-import {tracksCollection} from '$lib/collections/tracks'
-import {channelsCollection} from '$lib/collections/channels'
-import {broadcastsCollection} from '$lib/collections/broadcasts'
-import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-import {unpackEphemeralTrack} from '$lib/broadcast-utils'
-import {hasAutoRadioCoverage} from '$lib/player/auto-radio'
-import {channelPresence} from '$lib/presence.svelte'
-import {viewLabel} from '$lib/views'
-import type {Channel, Track, BroadcastDeckState} from '$lib/types'
+import {appState} from '#lib/app-state.svelte.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+import {unpackEphemeralTrack} from '#lib/broadcast-utils.js'
+import {hasAutoRadioCoverage} from '#lib/player/auto-radio.js'
+import {channelPresence} from '#lib/presence.svelte.js'
+import {viewLabel} from '#lib/views.js'
+import type {Channel, Track, BroadcastDeckState} from '#lib/types.js'
 
 export interface DeckDisplay {
 	readonly track: Track | undefined

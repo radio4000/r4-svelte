@@ -1,14 +1,14 @@
 <script>
 	import {untrack} from 'svelte'
 	import {Debounced} from 'runed'
-	import {appState} from '$lib/app-state.svelte'
-	import {setTheme} from '$lib/api'
-	import {applyCustomCssVariables} from '$lib/apply-css-variables'
-	import {fontFamilies, colorVars} from '$lib/components/theme-editor.data'
-	import InputColor from '$lib/components/input-color.svelte'
-	import InputRange from '$lib/components/input-range.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {setTheme} from '#lib/api.js'
+	import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
+	import {fontFamilies, colorVars} from '#lib/components/theme-editor.data.js'
+	import InputColor from '#lib/components/input-color.svelte'
+	import InputRange from '#lib/components/input-range.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = 'theme-editor'
 

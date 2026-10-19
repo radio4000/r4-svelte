@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Dialog from '$lib/components/dialog.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Dialog from '#lib/components/dialog.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 	import type {Snippet} from 'svelte'
 
 	const AT_PREFIX = /^@/

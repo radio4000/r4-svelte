@@ -1,11 +1,11 @@
-import {viewFromUrl} from '$lib/views'
-import {browser} from '$app/environment'
+import {viewFromUrl} from '#lib/views.js'
+import {browser} from '$app/env'
 import {error, redirect} from '@sveltejs/kit'
 import {sdk} from '@radio4000/sdk'
 import {isMissingRow} from './not-found'
-import {normalizeTrackMedia} from '$lib/collections/tracks'
-import {SECTION_TRACK_LIMIT} from '$lib/config'
-import type {Channel, Track} from '$lib/types'
+import {normalizeTrackMedia} from '#lib/collections/tracks.js'
+import {SECTION_TRACK_LIMIT} from '#lib/config.js'
+import type {Channel, Track} from '#lib/types.js'
 
 export const ssr = true
 

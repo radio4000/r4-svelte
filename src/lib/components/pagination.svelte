@@ -2,7 +2,7 @@
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import Dialog from './dialog.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** Local navigation uses onPageChange instead of URLs and omits the page-size dialog.
 	 * @type {{currentPage: number, pageSize: number, totalCount?: number, resultCount?: number, defaultPageSize?: number, onPageChange?: (page: number) => void}}
@@ -27,7 +27,7 @@
 
 	/** Real href for page `n`, so prev/next are crawlable links you can open in a new tab. */
 	function pageHref(n) {
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		if (n <= 1) query.delete('page')
 		else query.set('page', String(n))
 		const q = query.toString()
@@ -35,16 +35,16 @@
 	}
 
 	function setPage(n) {
-		goto(pageHref(n), {keepFocus: true, noScroll: true})
+		goto(pageHref(n), {reset: false})
 	}
 
 	function setPageSize(n) {
 		const size = Math.max(1, Math.min(200, n || defaultPageSize))
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		if (size === defaultPageSize) query.delete('per')
 		else query.set('per', String(size))
 		query.delete('page')
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		goto(`?${query.toString()}`, {replace: true, reset: false})
 	}
 </script>
 
@@ -62,8 +62,7 @@
 				class="btn"
 				rel="prev"
 				href={pageHref(currentPage - 1)}
-				data-sveltekit-noscroll
-				data-sveltekit-keepfocus
+				data-sveltekit-reset="false"
 				aria-label={m.pagination_previous_page()}>←</a
 			>
 		{:else}
@@ -94,8 +93,7 @@
 				class="btn"
 				rel="next"
 				href={pageHref(currentPage + 1)}
-				data-sveltekit-noscroll
-				data-sveltekit-keepfocus
+				data-sveltekit-reset="false"
 				aria-label={m.pagination_next_page()}>→</a
 			>
 		{:else}

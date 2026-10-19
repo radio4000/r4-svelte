@@ -1,19 +1,19 @@
 <script lang="ts">
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
-	import {getLocale} from '$lib/paraglide/runtime'
-	import {captureEventsCollection, buildEndDataMap} from '$lib/collections/capture-events'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {getPlayCountThreshold} from '$lib/utils'
+	import {appName} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import {getLocale} from '#lib/paraglide/runtime.js'
+	import {captureEventsCollection, buildEndDataMap} from '#lib/collections/capture-events.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {trackMetaCollection, trackMetaKey} from '#lib/collections/track-meta.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {getPlayCountThreshold} from '#lib/utils.js'
 	import {parseUrl} from 'media-now'
-	import {followsCollection} from '$lib/collections/follows'
-	import {queryClient} from '$lib/collections/query-client'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import {followsCollection} from '#lib/collections/follows.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
 
 	// Reactive reads — updates live as you play tracks, follow channels, etc.
 	const eventsQuery = useLiveQuery((q) => q.from({ev: captureEventsCollection}))
@@ -326,7 +326,9 @@
 					<li>
 						<a href={resolve('/[slug]', {slug: track.slug})}>@{track.slug}</a>
 						&rarr;
-						<a href={resolve('/[slug]/tracks/[tid]', {slug: track.slug, tid: track.track_id})}>
+						<a
+							href={resolve('/[slug]/tracks/[tid]/(tabs)', {slug: track.slug, tid: track.track_id})}
+						>
 							<em>{track.title}</em>
 						</a>
 						• {m.stats_play_count({count: track.play_count})}
@@ -346,7 +348,7 @@
 					<li>
 						<a href={resolve('/[slug]', {slug: track.slug})}>@{track.slug}</a>
 						&rarr;
-						<a href={resolve('/[slug]/tracks/[tid]', {slug: track.slug, tid: track.id})}>
+						<a href={resolve('/[slug]/tracks/[tid]/(tabs)', {slug: track.slug, tid: track.id})}>
 							<em>{track.title}</em>
 						</a>
 					</li>

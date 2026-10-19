@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import Dialog from '$lib/components/dialog.svelte'
-	import {DEFAULT_KEY_BINDINGS, getActionLabel} from '$lib/keyboard'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Dialog from '#lib/components/dialog.svelte'
+	import {DEFAULT_KEY_BINDINGS, getActionLabel} from '#lib/keyboard.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let showModal = $state(false)
 

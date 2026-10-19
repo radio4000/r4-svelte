@@ -2,17 +2,17 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {appName} from '$lib/config'
-	import {tagsCollection} from '$lib/collections/tags'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
-	import TagRow from '$lib/components/tag-row.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {appName} from '#lib/config.js'
+	import {tagsCollection} from '#lib/collections/tags.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import ExplorePageHeader from '#lib/components/explore-page-header.svelte'
+	import TagRow from '#lib/components/tag-row.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let search = $state('')
 
@@ -36,17 +36,17 @@
 	const maxCount = $derived(visibleTags.reduce((max, t) => Math.max(max, t.count), 1))
 
 	function setDisplay(value) {
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		if (value === 'list') query.delete('display')
 		else query.set('display', value)
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		goto(`?${query.toString()}`, {replace: true, reset: false})
 	}
 
 	function setSort(value) {
-		const query = new URL(page.url).searchParams
+		const query = new URL(page.url.href).searchParams
 		if (value === 'count') query.delete('sort')
 		else query.set('sort', value)
-		goto(`?${query.toString()}`, {replaceState: true, keepFocus: true})
+		goto(`?${query.toString()}`, {replace: true, reset: false})
 	}
 
 	/** @param {string} tag */

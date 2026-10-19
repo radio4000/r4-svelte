@@ -1,9 +1,9 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {resolve} from '$app/paths'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 </script>
 
 <Seo title={`${m.settings_player()} — ${m.settings_title()}`} plain />

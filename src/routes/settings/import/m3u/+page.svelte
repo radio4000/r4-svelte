@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {importM3uFile, importFromUrl} from '$lib/import'
-	import type {ImportResult} from '$lib/import'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Dropzone from '$lib/components/dropzone.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {importM3uFile, importFromUrl} from '#lib/import.js'
+	import type {ImportResult} from '#lib/import.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Dropzone from '#lib/components/dropzone.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let error = $state('')
 	let importing = $state(false)

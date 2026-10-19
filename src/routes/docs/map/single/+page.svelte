@@ -1,8 +1,8 @@
 <script>
 	import {page} from '$app/state'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import MapChannels from '$lib/components/map-channels.svelte'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import MapChannels from '#lib/components/map-channels.svelte'
 
 	const channelsQuery = useLiveQuery((q) => q.from({ch: channelsCollection}))
 

@@ -1,36 +1,36 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {appName} from '$lib/config'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {channelsCollection, fetchAppStats} from '$lib/collections/channels'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {getFollowedChannels, getChannelConnections} from '$lib/followed-channels.svelte'
-	import {getFeaturedPool, pickFeatured, dailySeed} from '$lib/collections/featured'
-	import {getFeaturedSuggestions} from '$lib/featured-suggestions.svelte'
-	import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {appName} from '#lib/config.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {channelsCollection, fetchAppStats} from '#lib/collections/channels.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {getFollowedChannels, getChannelConnections} from '#lib/followed-channels.svelte.js'
+	import {getFeaturedPool, pickFeatured, dailySeed} from '#lib/collections/featured.js'
+	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
+	import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
 	import {
 		getChannelTags,
 		extractHashtags,
 		seededRandom,
 		shuffleArray,
 		shuffleSeed
-	} from '$lib/utils'
-	import {loadDeckView, playTrack, sortByNewest, toggleChannelPlay} from '$lib/api'
-	import {isBroadcasting} from '$lib/deck'
-	import {authStatus} from '$lib/app-state.svelte'
-	import {appPresence} from '$lib/presence.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
-	import ChannelsView from '$lib/components/channels-view.svelte'
-	import ChannelsViewControls from '$lib/components/channels-view-controls.svelte'
-	import Dialog from '$lib/components/dialog.svelte'
+	} from '#lib/utils.js'
+	import {loadDeckView, playTrack, sortByNewest, toggleChannelPlay} from '#lib/api.js'
+	import {isBroadcasting} from '#lib/deck.js'
+	import {authStatus} from '#lib/app-state.svelte.js'
+	import {appPresence} from '#lib/presence.svelte.js'
+	import ChannelCard from '#lib/components/channel-card.svelte'
+	import ChannelsView from '#lib/components/channels-view.svelte'
+	import ChannelsViewControls from '#lib/components/channels-view-controls.svelte'
+	import Dialog from '#lib/components/dialog.svelte'
 	import {not, isNull, eq} from '@tanstack/db'
-	import Icon from '$lib/components/icon.svelte'
-	import PageHeader from '$lib/components/page-header.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import PageHeader from '#lib/components/page-header.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const FEATURED_COUNT = 3
 	const FEATURED_COUNT_LOGGEDOUT = 20
@@ -60,7 +60,7 @@
 	)
 
 	// Featured channels (not logged in, or no channel)
-	let featuredPool = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
+	let featuredPool = $state(/** @type {import('#lib/types.js').Channel[]} */ ([]))
 	let featuredLoaded = $state(false)
 
 	const featuredPickCount = $derived(!isSignedIn ? FEATURED_COUNT_LOGGEDOUT : FEATURED_COUNT)
@@ -122,7 +122,7 @@
 
 	const userChannelTopTags = $derived.by(() => {
 		if (!userChannel?.slug) return []
-		const channelTracks = /** @type {import('$lib/types').Track[]} */ (
+		const channelTracks = /** @type {import('#lib/types.js').Track[]} */ (
 			channelTracksQuery.data ?? []
 		)
 		const featuredTags = extractHashtags(userChannel.description ?? '').map((t) => t.slice(1))
@@ -148,7 +148,7 @@
 		if (!userChannel) return
 		const slug = userChannel.slug
 		await ensureTracksLoaded(slug)
-		const tracks = /** @type {import('$lib/types').Track[]} */ (
+		const tracks = /** @type {import('#lib/types.js').Track[]} */ (
 			[...tracksCollection.state.values()]
 				.filter(
 					(t) =>
@@ -288,7 +288,7 @@
 		{:else if !isSignedIn && (discoveryTags.length || showBroadcastCountWidget)}
 			<nav class="home-tags-row tabs">
 				{#if showBroadcastCountWidget}
-					<a class="btn chip active top-row-live" href={resolve('/channels/broadcasting')}>
+					<a class="btn chip active top-row-live" href={resolve('channels/broadcasting')}>
 						<Icon icon="signal" size={16} />
 						<span class="chip-label">
 							{m.home_broadcasting()}
@@ -353,7 +353,7 @@
 						{#if showFavoriteBroadcastWidget}
 							<a
 								class="dashboard-card dashboard-card--link dashboard-card--row dashboard-card--pill"
-								href={resolve('/channels/broadcasting')}
+								href={resolve('channels/broadcasting')}
 							>
 								<Icon icon="signal" size={16} />
 								<span class="chip-label">
@@ -385,7 +385,7 @@
 							</li>
 							<li>
 								<input type="checkbox" disabled checked={follows.followedIds.length > 0} />
-								<a href={resolve('/channels/featured')}>{m.home_onboarding_follow_radio()}</a>
+								<a href={resolve('channels/featured')}>{m.home_onboarding_follow_radio()}</a>
 							</li>
 							<li>
 								<input type="checkbox" disabled checked={!!userChannel.image} />
@@ -434,7 +434,7 @@
 		{#if activeBroadcasts.length}
 			<section class="section">
 				<h2 class="section-title">
-					<a class="btn chip" href={resolve('/channels/broadcasting')}>{m.home_broadcasting()}</a>
+					<a class="btn chip" href={resolve('channels/broadcasting')}>{m.home_broadcasting()}</a>
 				</h2>
 				<ol class="list">
 					{#each activeBroadcasts as broadcast (broadcast.channel_id)}
@@ -490,10 +490,10 @@
 
 		{#if featuredLoaded && (channelCount || trackCount || appPresence.count)}
 			<footer class="stats footer-stats">
-				{#if channelCount}<a href={resolve('/channels/all')}
+				{#if channelCount}<a href={resolve('channels/all')}
 						>{m.home_stats_channels({count: channelCount.toLocaleString()})}</a
 					>{/if}
-				{#if trackCount}<a href={resolve('/tracks/recent')}
+				{#if trackCount}<a href={resolve('tracks/recent')}
 						>{m.home_stats_tracks({count: trackCount.toLocaleString()})}</a
 					>{/if}
 				{#if appPresence.count}<span>{m.home_stats_listeners({count: appPresence.count})}</span

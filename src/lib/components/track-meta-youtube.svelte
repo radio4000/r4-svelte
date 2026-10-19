@@ -1,8 +1,8 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {relativeDateDetailed, formatDuration} from '$lib/dates.js'
-	import TrackMetaShell from '$lib/components/track-meta-shell.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {relativeDateDetailed, formatDuration} from '#lib/dates.js'
+	import TrackMetaShell from '#lib/components/track-meta-shell.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {data} = $props()
 </script>

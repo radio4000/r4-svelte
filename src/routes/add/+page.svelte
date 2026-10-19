@@ -2,10 +2,10 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {appState} from '$lib/app-state.svelte'
-	import TrackForm from '$lib/components/track-form.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import TrackForm from '#lib/components/track-form.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const rawUrl = $derived(page?.url?.searchParams?.get('url') || '')
 	const explicitDiscogsUrl = $derived(page?.url?.searchParams?.get('discogs_url') || '')

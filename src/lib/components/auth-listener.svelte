@@ -1,10 +1,10 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {goto} from '$app/navigation'
-	import {capabilities} from '$lib/modes'
-	import {checkUser} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {loadUserFollows} from '$lib/collections/follows'
+	import {capabilities} from '#lib/modes.js'
+	import {checkUser} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {loadUserFollows} from '#lib/collections/follows.js'
 
 	/** @type {(() => void) | null} */
 	let unsubscribe = null

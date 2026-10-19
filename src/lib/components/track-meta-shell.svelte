@@ -1,7 +1,7 @@
 <script>
-	import Icon from '$lib/components/icon.svelte'
-	import MetaDefinitionList from '$lib/components/meta-definition-list.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import MetaDefinitionList from '#lib/components/meta-definition-list.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{
 	 *   data: unknown,

@@ -1,5 +1,8 @@
 import devtoolsJson from 'vite-plugin-devtools-json'
 import {sveltekit} from '@sveltejs/kit/vite'
+import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
+import adapterCloudflare from '@sveltejs/adapter-cloudflare'
+import adapterStatic from '@sveltejs/adapter-static'
 import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
@@ -21,9 +24,38 @@ function getGitInfo() {
 	}
 }
 
+const standalone = process.env.PUBLIC_APP_MODE === 'standalone'
+
 export default defineConfig({
 	plugins: [
-		sveltekit(),
+		sveltekit({
+			// https://svelte.dev/docs/kit/integrations
+			preprocess: vitePreprocess(),
+			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
+			adapter: standalone ? adapterStatic({fallback: '404.html'}) : adapterCloudflare(),
+			paths: standalone ? {base: (process.env.BASE_PATH ?? '') as '' | `/${string}`} : {},
+			version: {
+				name: execSync('git rev-parse HEAD').toString().trim(),
+				// Poll `_app/version.json` so long-lived tabs notice new deploys.
+				// Drives `updated.current`, which the app update banner listens to.
+				pollInterval: 5 * 60 * 1000
+			},
+			compilerOptions: {
+				experimental: {
+					// https://svelte.dev/docs/svelte/await-expressions
+					async: true
+				},
+				warningFilter: (warning) => {
+					const ignore = [
+						'a11y_click_events_have_key_events',
+						'a11y_no_static_element_interactions',
+						'a11y_no_noninteractive_element_interactions',
+						'a11y_autofocus'
+					]
+					return !ignore.includes(warning.code)
+				}
+			}
+		}),
 		paraglideVitePlugin({
 			project: './i18n/project.inlang',
 			outdir: './src/lib/paraglide'

@@ -1,21 +1,21 @@
-import {browser} from '$app/environment'
-import {appMode, seedUrls, EMBED_HOSTS} from '$lib/config'
-import {validateListeningState} from '$lib/broadcast.js'
-import {logger} from '$lib/logger'
+import {browser} from '$app/env'
+import {appMode, seedUrls, EMBED_HOSTS} from '#lib/config.js'
+import {validateListeningState} from '#lib/broadcast.js'
+import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
-import {queryClient} from '$lib/collections/query-client'
-import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-import {trackMetaCollection} from '$lib/collections/track-meta'
-import {channelsCollection} from '$lib/collections/channels'
-import {spamDecisionsCollection} from '$lib/collections/spam-decisions'
-import {broadcastsCollection} from '$lib/collections/broadcasts'
-import {followsCollection} from '$lib/collections/follows'
-import {captureEventsCollection} from '$lib/collections/capture-events'
-import {cacheReady} from '$lib/query-cache-persistence'
-import {collectionsHydrated} from '$lib/collection-persistence'
-import {appState} from '$lib/app-state.svelte'
-import * as api from '$lib/api'
-import * as queue from '$lib/player/queue'
+import {queryClient} from '#lib/collections/query-client.js'
+import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {trackMetaCollection} from '#lib/collections/track-meta.js'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {spamDecisionsCollection} from '#lib/collections/spam-decisions.js'
+import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+import {followsCollection} from '#lib/collections/follows.js'
+import {captureEventsCollection} from '#lib/collections/capture-events.js'
+import {cacheReady} from '#lib/query-cache-persistence.js'
+import {collectionsHydrated} from '#lib/collection-persistence.js'
+import {appState} from '#lib/app-state.svelte.js'
+import * as api from '#lib/api.js'
+import * as queue from '#lib/player/queue.js'
 
 // Disable SSR — most pages are client-heavy. Individual pages/layouts
 // that need SSR (e.g. [slug] channel pages) override this to true.
@@ -54,7 +54,7 @@ async function preload() {
 		await cacheReady
 
 		if (seedUrls) {
-			const {loadSeeds} = await import('$lib/import.js')
+			const {loadSeeds} = await import('#lib/import.js')
 			await loadSeeds(seedUrls).catch((err) => log.warn('seed_load_failed', err))
 		}
 

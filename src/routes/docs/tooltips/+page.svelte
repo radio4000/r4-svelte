@@ -1,5 +1,5 @@
 <script>
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
 </script>
 
 <svelte:head>

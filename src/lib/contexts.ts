@@ -1,6 +1,6 @@
 import {createContext} from 'svelte'
 import type {Snippet} from 'svelte'
-import type {Channel, Track, TrackMetadataFields} from '$lib/types'
+import type {Channel, Track, TrackMetadataFields} from '#lib/types.js'
 
 /* I never liked context, but sometimes it's useful to avoid re-computing shared values that aren't stored on appState. */
 

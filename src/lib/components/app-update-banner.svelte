@@ -1,9 +1,9 @@
 <script>
 	import {onMount} from 'svelte'
 	import {updated} from '$app/state'
-	import {base} from '$app/paths'
-	import {repoCompareUrl} from '$lib/repo'
-	import * as m from '$lib/paraglide/messages'
+	import {resolve} from '$app/paths'
+	import {repoCompareUrl} from '#lib/repo.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {((reloadPage?: boolean) => Promise<void>) | undefined} */
 	let updateSW
@@ -49,7 +49,7 @@
 
 	$effect(() => {
 		if (!visible || deployedSha) return
-		fetch(`${base}/_app/version.json`, {cache: 'no-store'})
+		fetch(resolve(/** @type {any} */ ('_app/version.json')), {cache: 'no-store'})
 			.then((r) => r.json())
 			.then((v) => (deployedSha = v.version))
 			.catch(() => {})

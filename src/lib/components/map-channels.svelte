@@ -7,7 +7,7 @@
 	import ChannelCard from './channel-card.svelte'
 	import Icon from './icon.svelte'
 	import {BroadcastLayer} from './map-broadcast-layer.js'
-	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	import {getChannelActivity} from '#lib/channel-activity.svelte.js'
 	import {resolveCssColor} from './map-color.js'
 	import {buildChannelsGeoJSON, getLatestChannel} from './map-markers.js'
 	import {swapBaseTiles} from './map-tile-styles.js'
@@ -16,11 +16,11 @@
 		DEFAULT_MAP_SHOW_DAY_NIGHT,
 		DEFAULT_MAP_SHOW_GRATICULES,
 		DEFAULT_MAP_TILE_STYLE
-	} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
 	const channelActivity = $derived(getChannelActivity())
 
-	/** @type {{channels?: import('$lib/types').Channel[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global', showControls?: boolean, globeMode?: boolean, showGraticules?: boolean, showDayNight?: boolean, tileStyle?: 'osm' | 'topo' | 'satellite'}} */
+	/** @type {{channels?: import('#lib/types.js').Channel[], loading?: boolean, latitude?: number|null, longitude?: number|null, zoom?: number|null, syncUrl?: boolean, openSlug?: string|null, openRequestKey?: string|null, linkToMap?: boolean | 'global', showControls?: boolean, globeMode?: boolean, showGraticules?: boolean, showDayNight?: boolean, tileStyle?: 'osm' | 'topo' | 'satellite'}} */
 	let {
 		channels = [],
 		loading = false,
@@ -246,7 +246,7 @@
 					setTimeout(() => {
 						popupNavigationInFlight = false
 					}, 450)
-					void goto(href, {keepFocus: true})
+					void goto(href)
 				}, 280)
 				return
 			}

@@ -1,8 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {updateChannel} from '$lib/collections/channels'
-	import {channelAvatarUrl} from '$lib/utils'
-	import * as m from '$lib/paraglide/messages'
+	import {updateChannel} from '#lib/collections/channels.js'
+	import {channelAvatarUrl} from '#lib/utils.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{slug: string, channelId: string, image?: string | null, onupload?: (data: unknown) => void}} */
 	let {slug, channelId, image = null, onupload} = $props()

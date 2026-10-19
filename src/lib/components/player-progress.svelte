@@ -1,5 +1,5 @@
 <script>
-	import {formatDuration} from '$lib/dates'
+	import {formatDuration} from '#lib/dates.js'
 
 	/** @type {{currentTime: number, mediaDuration: number, trackDuration?: number | null, onseek?: (time: number) => void, disabled?: boolean, isPlaying?: boolean}} */
 	let {

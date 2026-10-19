@@ -1,5 +1,5 @@
 import {sdk} from '@radio4000/sdk'
-import type {Channel} from '$lib/types'
+import type {Channel} from '#lib/types.js'
 
 export async function fetchChannelBySlug(slug: string): Promise<Channel | null> {
 	const {data} = await sdk.channels.readChannel(slug)

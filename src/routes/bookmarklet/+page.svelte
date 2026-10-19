@@ -1,7 +1,7 @@
 <script>
-	import {appName} from '$lib/config'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appName} from '#lib/config.js'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const {data} = $props()
 	const bookmarkletHref = $derived(

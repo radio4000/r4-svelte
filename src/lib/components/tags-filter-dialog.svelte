@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Dialog from '$lib/components/dialog.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Dialog from '#lib/components/dialog.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 	import type {Snippet} from 'svelte'
 
 	/**

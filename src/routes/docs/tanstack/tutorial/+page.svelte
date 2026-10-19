@@ -1,12 +1,12 @@
 <script>
 	import {createQuery, queryOptions} from '@tanstack/svelte-query'
-	import {queryClient} from '$lib/collections/query-client'
-	import {browser} from '$app/environment'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {browser} from '$app/env'
 	import {demoCollection, demoState, fakeAPI, SHARED_IDS} from './demo-state.svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/svelte-db'
 	import Menu from '../menu.svelte'
-	import {logger} from '$lib/logger'
+	import {logger} from '#lib/logger.js'
 
 	const log = logger.ns('demo').seal()
 

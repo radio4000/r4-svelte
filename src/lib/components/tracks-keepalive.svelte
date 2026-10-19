@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {createLiveQueryCollection, eq, inArray} from '@tanstack/db'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {logger} from '$lib/logger'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {logger} from '#lib/logger.js'
 
 	const log = logger.ns('keepalive').seal()
 

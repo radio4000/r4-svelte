@@ -1,7 +1,7 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {logger} from '$lib/logger'
-	import * as m from '$lib/paraglide/messages'
+	import {logger} from '#lib/logger.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const log = logger.ns('auth').seal()
 

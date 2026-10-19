@@ -4,7 +4,7 @@ import {analyzeChannel} from './spam-detector.js'
 describe('analyzeChannel structural track signals', () => {
 	test('flags the weeklyreport.io fingerprint: url === discogs_url, non-music domain, long track description', () => {
 		const channel = {name: 'Chill Vibes', description: '', created_at: '2024-01-01'}
-		const tracks = /** @type {Array<import('$lib/types').Track>} */ ([
+		const tracks = /** @type {Array<import('#lib/types.js').Track>} */ ([
 			{
 				id: 't1',
 				title: 'Track one',
@@ -31,7 +31,7 @@ describe('analyzeChannel structural track signals', () => {
 
 	test('does not flag a channel whose tracks link to real music providers', () => {
 		const channel = {name: 'Late Night Radio', description: '', created_at: '2024-01-01'}
-		const tracks = /** @type {Array<import('$lib/types').Track>} */ ([
+		const tracks = /** @type {Array<import('#lib/types.js').Track>} */ ([
 			{id: 't1', title: 'Song A', url: 'https://youtube.com/watch?v=abc', discogs_url: null},
 			{id: 't2', title: 'Song B', url: 'https://soundcloud.com/artist/track', discogs_url: null}
 		])

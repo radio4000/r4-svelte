@@ -1,10 +1,10 @@
 import {redirect} from '@sveltejs/kit'
-import {browser} from '$app/environment'
+import {browser} from '$app/env'
 import {sdk} from '@radio4000/sdk'
-import {fetchChannelCount} from '$lib/collections/channels'
-import {appUrl} from '$lib/config'
-import {capabilities} from '$lib/modes'
-import {paginationFromUrl} from '$lib/utils'
+import {fetchChannelCount} from '#lib/collections/channels.js'
+import {appUrl} from '#lib/config.js'
+import {capabilities} from '#lib/modes.js'
+import {paginationFromUrl} from '#lib/utils.js'
 
 // Opts back in from the root layout's `ssr = false`: this directory is how crawlers
 // reach every channel. The collections are browser-only, so `load` feeds `Channels`.

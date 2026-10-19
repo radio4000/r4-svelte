@@ -1,7 +1,7 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 </script>
 
 <article>

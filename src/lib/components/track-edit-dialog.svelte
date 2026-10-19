@@ -1,13 +1,13 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
-	import Dialog from '$lib/components/dialog.svelte'
-	import TrackForm from '$lib/components/track-form.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import Dialog from '#lib/components/dialog.svelte'
+	import TrackForm from '#lib/components/track-form.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let showModal = $state(false)
 
-	/** @type {import('$lib/types').Track | null} */
+	/** @type {import('#lib/types.js').Track | null} */
 	let track = $state(null)
 
 	// Look up channel by slug since channel_tracks view doesn't include channel_id
@@ -16,7 +16,7 @@
 		return [...channelsCollection.state.values()].find((ch) => ch.slug === track?.slug)
 	})
 
-	/** @param {{track: import('$lib/types').Track}} data */
+	/** @param {{track: import('#lib/types.js').Track}} data */
 	function open(data) {
 		track = data.track
 		showModal = true

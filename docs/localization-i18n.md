@@ -7,7 +7,7 @@
 ## Adding strings
 
 1. Add new keys to `i18n/messages/en.json` (sorted alphabetically)
-2. Use them in components: `import * as m from '$lib/paraglide/messages'` then `m.your_key()`
+2. Use them in components: `import * as m from '#lib/paraglide/messages'` then `m.your_key()`
 3. Run `bun run i18n` — removes orphaned keys from all languages and recompiles Paraglide
 
 Do **not** add the new keys manually to other language files — they stay absent until translated, and Paraglide falls back to English in the meantime.

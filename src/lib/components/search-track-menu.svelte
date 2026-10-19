@@ -1,14 +1,14 @@
 <script>
-	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack, setPlaylist} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import {toAutoTracks, hasAutoRadioCoverage} from '$lib/player/auto-radio'
-	import ButtonFeedback from '$lib/components/button-feedback.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import {getAutoDecksForView} from '$lib/views.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {addToPlaylist, joinAutoRadio, loadDeckView, playTrack, setPlaylist} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {toAutoTracks, hasAutoRadioCoverage} from '#lib/player/auto-radio.js'
+	import ButtonFeedback from '#lib/components/button-feedback.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import {getAutoDecksForView} from '#lib/views.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @type {{tracks: import('$lib/types').Track[], title?: string, view?: import('$lib/views').View}} */
+	/** @type {{tracks: import('#lib/types.js').Track[], title?: string, view?: import('#lib/views.js').View}} */
 	let {tracks, title = '', view = undefined} = $props()
 
 	const autoRadioTracks = $derived(toAutoTracks(tracks))

@@ -26,7 +26,7 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 TanStack Query caches responses. TanStack DB stores rows. In app code the boundary is `src/lib/collections/` plus `src/lib/useLiveQuery.svelte.ts`.
 
-Always import `useLiveQuery` from `$lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), cleans up replaced live query collections, and is the verified path for app behavior. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
+Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), cleans up replaced live query collections, and is the verified path for app behavior. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ## contracts we rely on
 

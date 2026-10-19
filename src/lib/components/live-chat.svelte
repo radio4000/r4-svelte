@@ -1,8 +1,8 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
 	import {onMount} from 'svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {logger} from '$lib/logger'
+	import * as m from '#lib/paraglide/messages.js'
+	import {logger} from '#lib/logger.js'
 
 	const log = logger.ns('chat').seal()
 	const uid = $props.id()

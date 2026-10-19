@@ -1,5 +1,5 @@
 // Channel marker styling + GeoJSON building for map-channels.svelte.
-import {channelsCollection} from '$lib/collections/channels'
+import {channelsCollection} from '#lib/collections/channels.js'
 
 /**
  * @typedef {{

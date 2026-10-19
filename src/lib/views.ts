@@ -1,3 +1,4 @@
+import type {ReadonlyURL, ReadonlyURLSearchParams} from '$app/state'
 /** One source of tracks: channels, tags, exact description mention, and search text. */
 export type ViewSource = {
 	channels?: string[]
@@ -28,7 +29,7 @@ const RE_LEADING_AT = /^@/
 
 /** Apply order/direction/limit/offset from URLSearchParams onto a View in place.
  *  Supports both `limit`/`offset` and `page`/`per` (page takes precedence). */
-function parseOptions(p: URLSearchParams, view: View): void {
+function parseOptions(p: ReadonlyURLSearchParams, view: View): void {
 	const order = p.get('order')
 	if (order && (validOrders as readonly string[]).includes(order))
 		view.order = order as View['order']
@@ -137,7 +138,7 @@ export function serializeView(view: View): ViewURI {
 }
 
 /** Extract a View from a URL. Reads `q` param as the human query, plus separate `order`/`direction`/`limit`/`offset` params. */
-export function viewFromUrl(url: URL): View {
+export function viewFromUrl(url: ReadonlyURL): View {
 	const q = url.searchParams.get('q') ?? ''
 	const view = parseView(decodeURIComponent(q))
 	parseOptions(url.searchParams, view)
@@ -162,7 +163,7 @@ export function parseTagsParam(value: string | null): string[] {
  *  Unlike search URLs, `q` here is plain search text (no @/# syntax) and tags
  *  live in a `tags` param, matched with tagsMode=all (each tag narrows).
  *  `mention` is a bare slug matched against exact description tokens. */
-export function channelViewFromUrl(url: URL, slug?: string): View {
+export function channelViewFromUrl(url: ReadonlyURL, slug?: string): View {
 	const source: ViewSource = {}
 	if (slug) source.channels = [slug]
 	const tags = parseTagsParam(url.searchParams.get('tags'))

@@ -1,12 +1,12 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appChatUrl, appDiscordUrl, appName, appSocialUrl} from '$lib/config'
-	import {repoUrl} from '$lib/repo'
+	import {appChatUrl, appDiscordUrl, appName, appSocialUrl} from '#lib/config.js'
+	import {repoUrl} from '#lib/repo.js'
 </script>
 
 <nav>
 	<a href={repoUrl} target="_blank" rel="noreferrer">Source <small>how it's built</small></a> &rarr;
-	<a href={resolve('/docs')}>Docs <small>how things work</small></a>
+	<a href={resolve('docs')}>Docs <small>how things work</small></a>
 </nav>
 
 <nav>

@@ -1,16 +1,16 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appName} from '$lib/config'
-	import {fetchRecentTracks} from '$lib/collections/tracks'
-	import {loadFeaturedChannelTracks} from '$lib/collections/featured'
-	import {groupByDay} from '$lib/utils'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import ExplorePageHeader from '$lib/components/explore-page-header.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appName} from '#lib/config.js'
+	import {fetchRecentTracks} from '#lib/collections/tracks.js'
+	import {loadFeaturedChannelTracks} from '#lib/collections/featured.js'
+	import {groupByDay} from '#lib/utils.js'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import ExplorePageHeader from '#lib/components/explore-page-header.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const {data} = $props()
 
@@ -18,13 +18,13 @@
 	$effect(() => {
 		const q = search.trim()
 		if (!q) return
-		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replaceState: true})
+		goto(`/search/tracks?q=${encodeURIComponent(q)}`, {replace: true})
 	})
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
 
-	let tracks = $state(/** @type {import('$lib/types').Track[]} */ ([]))
+	let tracks = $state(/** @type {import('#lib/types.js').Track[]} */ ([]))
 	let loadedAll = $state(false)
 	let loadingMore = $state(false)
 	let loaded = $state(false)
@@ -86,12 +86,12 @@
 	<ExplorePageHeader>
 		{#snippet filterChips()}
 			<a
-				href={resolve('/explore/tracks/recent')}
+				href={resolve('explore/tracks/recent')}
 				class="btn chip"
 				class:active={filterParam === 'recent'}>{m.explore_tracks_filter_recent()}</a
 			>
 			<a
-				href={resolve('/explore/tracks/featured')}
+				href={resolve('explore/tracks/featured')}
 				class="btn chip"
 				class:active={filterParam === 'featured'}>{m.explore_tracks_filter_featured()}</a
 			>

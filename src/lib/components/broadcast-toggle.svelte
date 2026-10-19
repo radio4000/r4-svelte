@@ -1,14 +1,14 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import {startChannelBroadcast, stopBroadcast} from '$lib/broadcast'
-	import {findLoadedDeck, isBroadcasting as isBroadcastingDeck} from '$lib/deck'
-	import {channelPresence, watchPresence, unwatchPresence} from '$lib/presence.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {startChannelBroadcast, stopBroadcast} from '#lib/broadcast.js'
+	import {findLoadedDeck, isBroadcasting as isBroadcastingDeck} from '#lib/deck.js'
+	import {channelPresence, watchPresence, unwatchPresence} from '#lib/presence.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import PresenceCount from '#lib/components/presence-count.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @type {{channel: import('$lib/types').Channel, class?: string}} */
+	/** @type {{channel: import('#lib/types.js').Channel, class?: string}} */
 	let {channel, class: className = ''} = $props()
 
 	const isBroadcasting = $derived(isBroadcastingDeck(appState.decks, channel.id))

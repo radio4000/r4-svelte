@@ -1,9 +1,9 @@
-import {channelsCollection} from '$lib/collections/channels'
-import {tracksCollection} from '$lib/collections/tracks'
-import {queryClient} from '$lib/collections/query-client'
-import {appState} from '$lib/app-state.svelte'
-import {uuid, slugify} from '$lib/utils'
-import type {Channel, Track, ImportOrigin} from '$lib/types'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
+import {queryClient} from '#lib/collections/query-client.js'
+import {appState} from '#lib/app-state.svelte.js'
+import {uuid, slugify} from '#lib/utils.js'
+import type {Channel, Track, ImportOrigin} from '#lib/types.js'
 
 const M3U_EXT_RE = /\.m3u8?$/i
 const TXT_INFO_LINE_RE = /^\s+(\w+):\s+(.+)$/

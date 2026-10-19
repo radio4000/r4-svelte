@@ -1,7 +1,7 @@
 <script>
-	import {toggleTheme as toggleThemeApi} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
+	import {toggleTheme as toggleThemeApi} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
 
 	const {showLabel = true, ...rest} = $props()
 

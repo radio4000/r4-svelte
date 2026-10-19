@@ -1,11 +1,11 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
-	import {appState} from '$lib/app-state.svelte'
-	import {appName} from '$lib/config'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {appName} from '#lib/config.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let providerLoading = $state(/** @type {string | null} */ (null))
 	let providerError = $state(/** @type {string | null} */ (null))

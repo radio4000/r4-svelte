@@ -1,5 +1,6 @@
-import type {Deck} from '$lib/types'
-import {viewLabel} from '$lib/views'
+import type {ReadonlyURL} from '$app/state'
+import type {Deck} from '#lib/types.js'
+import {viewLabel} from '#lib/views.js'
 
 /** Deck title: use the given title, or derive one from the view/slug. */
 export function deckTitle(deck: Deck | undefined, title?: string): string {
@@ -126,6 +127,6 @@ export function isGroupControlDeck(
 }
 
 /** Whether the player UI should render, based on the `?player=false` URL param. */
-export function showPlayerParam(url: URL): boolean {
+export function showPlayerParam(url: ReadonlyURL): boolean {
 	return url.searchParams.get('player') !== 'false'
 }

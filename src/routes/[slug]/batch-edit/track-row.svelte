@@ -1,12 +1,12 @@
 <script>
 	import InlineEditCell from './inline-edit-cell.svelte'
 	import {resolve} from '$app/paths'
-	import {formatDuration} from '$lib/dates.js'
-	import * as m from '$lib/paraglide/messages'
+	import {formatDuration} from '#lib/dates.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const EDITABLE_FIELDS = ['url', 'title', 'description', 'discogs_url']
 
-	/** @type {{track: import('$lib/types').TrackWithMeta, slug: any, isSelected: boolean, onSelect: (e: MouseEvent) => void, onEdit: (id: string, field: string, value: string) => void | Promise<void>, canEdit: boolean, focusedField?: string | null, onFocusChange: (trackId: string | null, field: string) => void, hiddenColumns?: string[], gridTemplate: string}} */
+	/** @type {{track: import('#lib/types.js').TrackWithMeta, slug: any, isSelected: boolean, onSelect: (e: MouseEvent) => void, onEdit: (id: string, field: string, value: string) => void | Promise<void>, canEdit: boolean, focusedField?: string | null, onFocusChange: (trackId: string | null, field: string) => void, hiddenColumns?: string[], gridTemplate: string}} */
 	let {
 		track,
 		slug,
@@ -50,7 +50,7 @@
 
 	<div class="col-link">
 		<a
-			href={resolve('/[slug]/tracks/[tid]', {slug, tid: track.id})}
+			href={resolve('/[slug]/tracks/[tid]/(tabs)', {slug, tid: track.id})}
 			target="_blank"
 			rel="noopener noreferrer"
 			title={m.batch_edit_track_link_title()}

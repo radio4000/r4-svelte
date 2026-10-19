@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {untrack} from 'svelte'
 	import Menu from '../menu.svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {inArray, not, isNull, gte} from '@tanstack/db'
 	import {
 		channelsCollection,
@@ -9,8 +9,8 @@
 		updateChannel,
 		deleteChannel,
 		fetchChannelCount
-	} from '$lib/collections/channels'
-	import {appState} from '$lib/app-state.svelte'
+	} from '#lib/collections/channels.js'
+	import {appState} from '#lib/app-state.svelte.js'
 
 	let error = $state('')
 	let latestLimit = $state(5)

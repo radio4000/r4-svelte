@@ -8,15 +8,15 @@ import {
 	getMediaPlayer,
 	playChannel,
 	applyRemoteState
-} from '$lib/api'
-import {appState, addDeck, removeDeck} from '$lib/app-state.svelte'
-import {logger} from '$lib/logger'
+} from '#lib/api.js'
+import {appState, addDeck, removeDeck} from '#lib/app-state.svelte.js'
+import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
-import {broadcastsCollection} from '$lib/collections/broadcasts'
-import {channelsCollection} from '$lib/collections/channels'
-import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-import {isDbId} from '$lib/utils'
-import {sortedDeckIds, sortedListeningDeckIds, isBroadcasting} from '$lib/deck'
+import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {isDbId} from '#lib/utils.js'
+import {sortedDeckIds, sortedListeningDeckIds, isBroadcasting} from '#lib/deck.js'
 import {
 	calculateSeekTime,
 	DRIFT_TOLERANCE_SECONDS,
@@ -24,11 +24,11 @@ import {
 	composeBroadcastDeckState,
 	packEphemeralTrack,
 	unpackEphemeralTrack
-} from '$lib/broadcast-utils'
-import {capture} from '$lib/analytics'
+} from '#lib/broadcast-utils.js'
+import {capture} from '#lib/analytics.js'
 
-/** @typedef {import('$lib/types').Broadcast} Broadcast */
-/** @typedef {import('$lib/types').BroadcastDeckState} BroadcastDeckState */
+/** @typedef {import('#lib/types.js').Broadcast} Broadcast */
+/** @typedef {import('#lib/types.js').BroadcastDeckState} BroadcastDeckState */
 /** @typedef {ReturnType<typeof getMediaPlayer>} MediaPlayer */
 
 const log = logger.ns('broadcast').seal()
@@ -321,7 +321,7 @@ export async function stopBroadcast(channelId) {
  * channel (from `tid` when given) if nothing is playing — then mark the source deck
  * as broadcasting. The single "go live" path shared by every broadcast button.
  * Stopping is just `stopBroadcast(channel.id)` (it already clears deck flags).
- * @param {import('$lib/types').ChannelRef} channel
+ * @param {import('#lib/types.js').ChannelRef} channel
  * @param {{deckId?: number, tid?: string}} [opts]
  * @returns {Promise<{ok: boolean, reason?: 'no-channel' | 'no-track'}>}
  */
@@ -429,7 +429,7 @@ async function playBroadcastTrack(deckId, broadcast) {
 	if (!track_id) return false
 
 	// Check if track is already loaded; if not, reconstruct from broadcast-included data
-	/** @type {import('$lib/types').Track | undefined} */
+	/** @type {import('#lib/types.js').Track | undefined} */
 	let track = tracksCollection.get(track_id)
 	if (!track) {
 		const ephemeral = unpackEphemeralTrack(track_id, broadcast)
@@ -443,8 +443,8 @@ async function playBroadcastTrack(deckId, broadcast) {
 				const {data, error} = await sdk.tracks.readTrack(track_id)
 				if (error || !data) throw new Error(`Track ${track_id} not found`)
 				// await tracksCollection.preload()
-				tracksCollection.utils.writeUpsert(/** @type {import('$lib/types').Track} */ (data))
-				track = /** @type {import('$lib/types').Track} */ (data)
+				tracksCollection.utils.writeUpsert(/** @type {import('#lib/types.js').Track} */ (data))
+				track = /** @type {import('#lib/types.js').Track} */ (data)
 			} catch (error) {
 				log.error(`play failed:`, /** @type {Error} */ (error).message)
 				return false

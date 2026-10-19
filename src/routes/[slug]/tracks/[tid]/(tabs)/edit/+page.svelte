@@ -1,10 +1,10 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {getTrackDetailCtx} from '$lib/contexts'
-	import TrackForm from '$lib/components/track-form.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {getTrackDetailCtx} from '#lib/contexts.js'
+	import TrackForm from '#lib/components/track-form.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {data} = $props()
 	const detail = getTrackDetailCtx()
@@ -15,7 +15,7 @@
 
 	function handleSubmit(event) {
 		if (event.error) return
-		goto(resolve('/[slug]/tracks/[tid]', {slug: data.slug, tid: data.tid}))
+		goto(resolve('/[slug]/tracks/[tid]/(tabs)', {slug: data.slug, tid: data.tid}))
 	}
 </script>
 

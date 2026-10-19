@@ -1,11 +1,11 @@
 <script lang="ts">
-	import {addTrack, updateTrack} from '$lib/collections/tracks'
+	import {addTrack, updateTrack} from '#lib/collections/tracks.js'
 	import {getMedia, parseUrl} from 'media-now'
-	import {searchUrl} from '$lib/metadata/discogs'
-	import R4DiscogsResource from '$lib/components/r4-discogs-resource.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {extractHashtags} from '$lib/utils'
-	import type {Channel} from '$lib/collections/channels'
+	import {searchUrl} from '#lib/metadata/discogs.js'
+	import R4DiscogsResource from '#lib/components/r4-discogs-resource.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {extractHashtags} from '#lib/utils.js'
+	import type {Channel} from '#lib/collections/channels.js'
 
 	type SubmitData = {id?: string; url: string; title: string}
 	type SubmitEvent_ = {data: SubmitData | null; error: Error | null}
@@ -26,7 +26,7 @@
 		  }
 		| {
 				mode: 'edit'
-				channel: import('$lib/types').ChannelRef
+				channel: import('#lib/types.js').ChannelRef
 				trackId: string
 				url?: string
 				title?: string

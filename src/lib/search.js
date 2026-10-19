@@ -1,12 +1,12 @@
 import {sdk} from '@radio4000/sdk'
-import {searchChannels} from '$lib/search-fts'
-import {channelsCollection} from '$lib/collections/channels'
-import {dedupeById, fuzzySearch} from '$lib/utils'
+import {searchChannels} from '#lib/search-fts.js'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {dedupeById, fuzzySearch} from '#lib/utils.js'
 
 /**
  * Find channel by slug - tries local collection first, falls back to remote
  * @param {string} slug
- * @returns {Promise<import('$lib/types').Channel | undefined>}
+ * @returns {Promise<import('#lib/types.js').Channel | undefined>}
  */
 export async function findChannelBySlug(slug) {
 	const normalizedSlug = String(slug || '')
@@ -30,8 +30,8 @@ export async function findChannelBySlug(slug) {
  * Combined channel search: slug lookups + FTS + local fuzzy, deduplicated.
  * `count` reflects the remote FTS total only (slug lookups and local fuzzy
  * matches are small, unpaginated bonuses layered on top).
- * @param {{slugs?: string[], query?: string, localChannels?: import('$lib/types').Channel[], limit?: number, offset?: number}} params
- * @returns {Promise<{channels: import('$lib/types').Channel[], count: number}>}
+ * @param {{slugs?: string[], query?: string, localChannels?: import('#lib/types.js').Channel[], limit?: number, offset?: number}} params
+ * @returns {Promise<{channels: import('#lib/types.js').Channel[], count: number}>}
  */
 export async function searchChannelsCombined({
 	slugs = [],
@@ -40,7 +40,7 @@ export async function searchChannelsCombined({
 	limit = 100,
 	offset = 0
 } = {}) {
-	/** @type {Promise<import('$lib/types').Channel[]>[]} */
+	/** @type {Promise<import('#lib/types.js').Channel[]>[]} */
 	const promises = []
 	let count = 0
 	if (slugs.length) {

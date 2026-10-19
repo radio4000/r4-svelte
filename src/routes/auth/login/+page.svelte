@@ -2,11 +2,11 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
-	import {appName} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
-	import AuthLogin from '$lib/components/auth-login.svelte'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import {appName} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import AuthLogin from '#lib/components/auth-login.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import Seo from '#lib/components/seo.svelte'
 
 	const redirect = $derived(page.url.searchParams.get('redirect') || '/settings')
 	let step = $state('providers')

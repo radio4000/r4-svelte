@@ -1,9 +1,9 @@
 <script lang="ts">
 	import {resolve} from '$app/paths'
-	import {loadDeckView, playTrack} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import type {Track} from '$lib/types'
-	import * as m from '$lib/paraglide/messages'
+	import {loadDeckView, playTrack} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import type {Track} from '#lib/types.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	interface Props {
 		channelSlug?: string

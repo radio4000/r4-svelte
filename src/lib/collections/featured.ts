@@ -1,10 +1,10 @@
-import {channelsCollection} from '$lib/collections/channels'
-import {queryClient} from '$lib/collections/query-client'
-import {fetchRecentTracksForSlugs} from '$lib/collections/tracks'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {queryClient} from '#lib/collections/query-client.js'
+import {fetchRecentTracksForSlugs} from '#lib/collections/tracks.js'
 import {sdk} from '@radio4000/sdk'
-import {featuredScore, seededRandom, shuffleArray} from '$lib/utils'
-import {daysAgoIso} from '$lib/dates'
-import type {Channel, Track} from '$lib/types'
+import {featuredScore, seededRandom, shuffleArray} from '#lib/utils.js'
+import {daysAgoIso} from '#lib/dates.js'
+import type {Channel, Track} from '#lib/types.js'
 
 /** Today as a stable seed (YYYY-MM-DD) for daily-rotating picks. */
 export function dailySeed(): string {

@@ -76,7 +76,7 @@ const musicTerms = [
 /**
  * Analyze a channel for spam indicators
  * @param {{name?: string | null, slug?: string | null, description?: string | null, created_at?: string | null}} channel
- * @param {Array<import('$lib/types').Track>} [tracks] - Optional track data for enhanced analysis
+ * @param {Array<import('#lib/types.js').Track>} [tracks] - Optional track data for enhanced analysis
  * @returns {{isSpam: boolean, confidence: number, reasons: string[], evidence: {keywords: string[], phrases: string[], locations: string[], patterns: string[], musicTerms: string[], trackSignals: string[]}}}
  */
 export function analyzeChannel(channel, tracks = []) {
@@ -416,8 +416,8 @@ export function analyzeChannel(channel, tracks = []) {
 
 /**
  * Add spam analysis to channels and sort by confidence
- * @param {Array<import('$lib/types').Channel>} channels
- * @returns {Array<import('$lib/types').Channel & {spamAnalysis: {confidence: number, reasons: string[], isSpam: boolean}}>}
+ * @param {Array<import('#lib/types.js').Channel>} channels
+ * @returns {Array<import('#lib/types.js').Channel & {spamAnalysis: {confidence: number, reasons: string[], isSpam: boolean}}>}
  */
 export function analyzeChannels(channels) {
 	return channels

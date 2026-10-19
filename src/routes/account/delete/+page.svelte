@@ -2,10 +2,10 @@
 	import {sdk} from '@radio4000/sdk'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let confirmDelete = $state(false)
 	let deleting = $state(false)

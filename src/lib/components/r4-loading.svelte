@@ -1,5 +1,5 @@
 <script>
-	import IconR4 from '$lib/components/icon-r4.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
 
 	/** @type {{text?: string, value?: number, max?: number}} */
 	let {text, value, max} = $props()

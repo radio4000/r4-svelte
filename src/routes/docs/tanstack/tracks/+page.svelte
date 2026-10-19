@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {SvelteSet} from 'svelte/reactivity'
 	import Menu from '../menu.svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
 	import {
 		tracksCollection,
@@ -9,9 +9,9 @@
 		updateTrack,
 		deleteTrack,
 		ensureTracksLoaded
-	} from '$lib/collections/tracks'
-	import {queryClient} from '$lib/collections/query-client'
-	import {appState} from '$lib/app-state.svelte'
+	} from '#lib/collections/tracks.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {appState} from '#lib/app-state.svelte.js'
 
 	let error = $state('')
 	const userChannel = $derived(appState.channel)

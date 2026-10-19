@@ -12,7 +12,7 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 	// doesn't exist, the worker 404s and every GeoJSON source hangs forever (no markers, no
 	// overlays) without throwing. `?worker&url` makes Vite emit the worker as its own bundle.
 	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-	import {replaceState} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 	import {SvelteURLSearchParams} from 'svelte/reactivity'
@@ -96,11 +96,11 @@ map-broadcast-layer.js is an independent WebGL layer, coupled only via map-color
 						searchParams.set('longitude', lng.toFixed(4))
 						searchParams.set('zoom', String(z))
 						const queryString = searchParams.size ? `?${searchParams}` : ''
-						replaceState(
+						goto(
 							page.route.id
 								? resolve(/** @type {any} */ (page.route.id), page.params) + queryString
 								: page.url.pathname + queryString,
-							{}
+							{shallow: true, replace: true}
 						)
 					}, 300)
 				})

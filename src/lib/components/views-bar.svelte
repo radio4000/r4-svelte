@@ -1,17 +1,17 @@
 <script lang="ts">
-	import {serializeView, parseView, viewLabel, type View, type ViewSource} from '$lib/views'
+	import {serializeView, parseView, viewLabel, type View, type ViewSource} from '#lib/views.js'
 	import {
 		viewsCollection,
 		createView,
 		updateView,
 		deleteView,
 		type SavedView
-	} from '$lib/collections/views'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	} from '#lib/collections/views.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {view, onchange}: {view: View; onchange: (view: View) => void} = $props()
 

@@ -1,7 +1,7 @@
 import {sdk} from '@radio4000/sdk'
 import {untrack} from 'svelte'
-import {logger} from '$lib/logger'
-import {viewLabel} from '$lib/views'
+import {logger} from '#lib/logger.js'
+import {viewLabel} from '#lib/views.js'
 
 const log = logger.ns('presence').seal()
 
@@ -158,7 +158,7 @@ export function trackBroadcastPresence(slug) {
 
 /**
  * @param {string} slug
- * @param {import('$lib/views').View} [view]
+ * @param {import('#lib/views.js').View} [view]
  */
 export function trackAutoRadioPresence(slug, view) {
 	const uri = viewLabel(view ?? {sources: [{channels: [slug]}]}) || `@${slug}`

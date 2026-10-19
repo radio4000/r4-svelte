@@ -1,11 +1,11 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appState} from '$lib/app-state.svelte'
-	import {isBroadcasting as isBroadcastingDeck} from '$lib/deck'
-	import Icon from '$lib/components/icon.svelte'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {isBroadcasting as isBroadcastingDeck} from '#lib/deck.js'
+	import Icon from '#lib/components/icon.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const userChannel = $derived(appState.channel)
 	const isBroadcasting = $derived(isBroadcastingDeck(appState.decks, userChannel?.id))
@@ -19,7 +19,7 @@
 			<IconR4 />
 		</a>
 		{#if userChannel}
-			<a href={resolve(`/${userChannel.slug}`)} class="channel-link">
+			<a href={resolve('/[slug]', {slug: userChannel.slug})} class="channel-link">
 				@{userChannel.slug}
 			</a>
 		{/if}

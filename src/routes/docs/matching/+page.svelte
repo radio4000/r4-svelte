@@ -1,7 +1,7 @@
 <script lang="ts">
-	import {appState} from '$lib/app-state.svelte'
-	import {ensureTracksLoaded, tracksCollection} from '$lib/collections/tracks'
-	import {computeChannelMatchScore} from '$lib/channel-match-score'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {ensureTracksLoaded, tracksCollection} from '#lib/collections/tracks.js'
+	import {computeChannelMatchScore} from '#lib/channel-match-score.js'
 
 	let sourceSlug = $state(appState.channel?.slug ?? '')
 	let targetSlug = $state('')

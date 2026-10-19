@@ -1,7 +1,7 @@
 <script>
-	import {resetLocalData} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
-	import InputRange from '$lib/components/input-range.svelte'
+	import {resetLocalData} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import InputRange from '#lib/components/input-range.svelte'
 
 	function clearAll() {
 		if (!confirm('Clear ALL data (localStorage + IndexedDB)? Page will reload.')) return

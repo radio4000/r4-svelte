@@ -1,5 +1,5 @@
-import {logger} from '$lib/logger'
-import {upgradeProperties} from '$lib/custom-element-props'
+import {logger} from '#lib/logger.js'
+import {upgradeProperties} from '#lib/custom-element-props.js'
 
 const log = logger.ns('youtube-video').seal()
 const YOUTUBE_IFRAME_ALLOW =

@@ -19,7 +19,7 @@ import type {
 	SingleResult
 } from '@tanstack/db'
 import type {UseLiveQueryReturn, UseLiveQueryReturnWithCollection} from '@tanstack/svelte-db'
-import {logger} from '$lib/logger'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('livequery').seal()
 

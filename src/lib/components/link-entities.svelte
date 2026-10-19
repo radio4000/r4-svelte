@@ -1,7 +1,7 @@
 <script>
-	import Tag from '$lib/components/tag.svelte'
-	import {ENTITY_REGEX} from '$lib/utils'
-	import {base} from '$app/paths'
+	import Tag from '#lib/components/tag.svelte'
+	import {ENTITY_REGEX} from '#lib/utils.js'
+	import {resolve} from '$app/paths'
 	import {page} from '$app/state'
 
 	/** @type {{text: string | null | undefined, slug?: string | null, filterMentions?: boolean, onTagClick?: (tag: string) => void, onMentionClick?: (slug: string) => void, deckId?: number, selectedTags?: string[]}} */
@@ -45,14 +45,14 @@
 				const mention = entity.slice(1)
 				if (filterMentions && slug) {
 					// Filter the source radio; keep its filters only if we're already on it
-					const channelPath = `${base}/${encodeURIComponent(slug)}`
+					const channelPath = resolve('/[slug]', {slug: encodeURIComponent(slug)})
 					const onSource = [channelPath, `${channelPath}/tracks`].includes(page.url.pathname)
 					// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built once per href, not state
 					const params = new URLSearchParams(onSource ? page.url.search : '')
 					params.set('mention', mention.toLowerCase())
 					href = `${channelPath}/tracks?${params}`
 				} else {
-					href = `${base}/${encodeURIComponent(mention)}`
+					href = resolve('/[slug]', {slug: encodeURIComponent(mention)})
 				}
 			} else if (slug) {
 				// Toggle: remove tag if already filtered, add if not
@@ -61,10 +61,10 @@
 					? urlTags.filter((t) => t !== tagName)
 					: [...urlTags, tagName]
 				href = next.length
-					? `${base}/${encodeURIComponent(slug)}/tracks?tags=${encodeURIComponent(next.join(','))}`
-					: `${base}/${encodeURIComponent(slug)}/tracks`
+					? `${resolve('/[slug]/tracks', {slug: encodeURIComponent(slug)})}?tags=${encodeURIComponent(next.join(','))}`
+					: resolve('/[slug]/tracks', {slug: encodeURIComponent(slug)})
 			} else {
-				href = `${base}/search?q=${encodeURIComponent(entity)}`
+				href = `${resolve('search')}?q=${encodeURIComponent(entity)}`
 			}
 
 			parts.push({

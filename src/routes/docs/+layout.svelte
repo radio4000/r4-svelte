@@ -1,14 +1,14 @@
 <script>
-	import {pushState} from '$app/navigation'
+	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
-	import {base, resolve} from '$app/paths'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import Icon from '$lib/components/icon.svelte'
+	import {resolve} from '$app/paths'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import Icon from '#lib/components/icon.svelte'
 
 	let {data, children} = $props()
 
 	const currentSlug = $derived(
-		page.url.pathname.replace(base + '/docs/', '').replace(base + '/docs', '') || 'index'
+		page.url.pathname.replace(resolve('docs/'), '').replace(resolve('docs'), '') || 'index'
 	)
 
 	const hasPlayground = $derived(/** @type {any} */ (page.data).playground === true)
@@ -19,27 +19,28 @@
 	)
 
 	function setTab(tab) {
-		pushState(tab === 'docs' ? '' : '#playground', {tab})
+		goto(tab === 'docs' ? '' : '#playground', {shallow: true, state: {tab}})
 	}
 </script>
 
 {#snippet topics()}
 	<nav class="nav-vertical" aria-label="Docs">
-		<a href={resolve('/docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
+		<a href={resolve('docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
 		<a
 			href={resolve('/docs/reference')}
 			aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a
 		>
 		<hr />
 		{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
-			<a href={resolve(`/docs/${doc}`)} aria-current={currentSlug === doc ? 'page' : undefined}
-				>{doc}</a
+			<a
+				href={resolve('/docs/[...slug]', {slug: doc})}
+				aria-current={currentSlug === doc ? 'page' : undefined}>{doc}</a
 			>
 			{#if data.subroutes?.[doc]}
 				{#each data.subroutes[doc] as sub (sub)}
 					<a
 						class="subroute"
-						href={resolve(`/docs/${doc}/${sub}`)}
+						href={resolve('/docs/[...slug]', {slug: `${doc}/${sub}`})}
 						aria-current={currentSlug === `${doc}/${sub}` ? 'page' : undefined}>{sub}</a
 					>
 				{/each}

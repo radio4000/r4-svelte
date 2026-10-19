@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let password = $state('')
 	let confirmPassword = $state('')

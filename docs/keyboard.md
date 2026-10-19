@@ -2,11 +2,11 @@
 
 Press `?` to open the shortcuts help dialog showing all available shortcuts.
 
-Actions, default keys, labels, and handlers all live in one registry: `SHORTCUT_ACTIONS` in `$lib/keyboard.js`. Visit `/settings/keyboard` to customize. User overrides are stored in `appState.shortcuts`.
+Actions, default keys, labels, and handlers all live in one registry: `SHORTCUT_ACTIONS` in `#lib/keyboard.js`. Visit `/settings/keyboard` to customize. User overrides are stored in `appState.shortcuts`.
 
 Default bindings: `/` search, `k` play/pause, `Shift+N` next track, `Shift+P` previous track, `s` shuffle, `r` compact deck, `g h` home, `g s` settings, `g d` docs, `?` shortcuts help.
 
-The keyboard events are attached through `<KeyboardShortcuts>` in layout.svelte. The help dialog is `<ShortcutsDialog>` in layout-header.svelte. Both the dialog and editor read labels via `getActionLabel()` from `$lib/keyboard`.
+The keyboard events are attached through `<KeyboardShortcuts>` in layout.svelte. The help dialog is `<ShortcutsDialog>` in layout-header.svelte. Both the dialog and editor read labels via `getActionLabel()` from `#lib/keyboard.js`.
 
 ## Adding a shortcut
 

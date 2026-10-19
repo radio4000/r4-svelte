@@ -1,8 +1,8 @@
 import {page} from '$app/state'
-import {tracksCollection, ensureTracksLoaded} from '$lib/collections/tracks'
-import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {eq} from '@tanstack/db'
-import type {Track} from '$lib/types'
+import type {Track} from '#lib/types.js'
 
 /**
  * Tracks of the channel named by the `?matching=` URL param — the "compare against

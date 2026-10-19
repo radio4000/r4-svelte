@@ -43,7 +43,7 @@ export const buildFtsFilter = (query) => {
  * Search channels remotely
  * @param {string} query
  * @param {{limit?: number, offset?: number}} options
- * @returns {Promise<{channels: import('$lib/types').Channel[], count: number}>}
+ * @returns {Promise<{channels: import('#lib/types.js').Channel[], count: number}>}
  */
 export async function searchChannels(query, {limit = 100, offset = 0} = {}) {
 	if (!query?.trim()) return {channels: [], count: 0}
@@ -55,14 +55,17 @@ export async function searchChannels(query, {limit = 100, offset = 0} = {}) {
 		.or(filter)
 		.range(offset, offset + limit - 1)
 	if (error) throw new Error(error.message)
-	return {channels: /** @type {import('$lib/types').Channel[]} */ (data ?? []), count: count ?? 0}
+	return {
+		channels: /** @type {import('#lib/types.js').Channel[]} */ (data ?? []),
+		count: count ?? 0
+	}
 }
 
 /**
  * Search tracks remotely, optionally scoped to a channel
  * @param {string} query
  * @param {{limit?: number, offset?: number, channelSlug?: string}} options
- * @returns {Promise<{tracks: import('$lib/types').Track[], count: number}>}
+ * @returns {Promise<{tracks: import('#lib/types.js').Track[], count: number}>}
  */
 export async function searchTracks(query, {limit = 100, offset = 0, channelSlug} = {}) {
 	if (!query?.trim()) return {tracks: [], count: 0}
@@ -77,5 +80,5 @@ export async function searchTracks(query, {limit = 100, offset = 0, channelSlug}
 	if (channelSlug) q = q.eq('slug', channelSlug)
 	const {data, error, count} = await q
 	if (error) throw new Error(error.message)
-	return {tracks: /** @type {import('$lib/types').Track[]} */ (data ?? []), count: count ?? 0}
+	return {tracks: /** @type {import('#lib/types.js').Track[]} */ (data ?? []), count: count ?? 0}
 }

@@ -1,6 +1,6 @@
 <script>
 	import {sdk} from '@radio4000/sdk'
-	import {logger} from '$lib/logger'
+	import {logger} from '#lib/logger.js'
 
 	const log = logger.ns('auth').seal()
 

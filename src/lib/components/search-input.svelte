@@ -1,9 +1,9 @@
 <script>
 	import {Debounced} from 'runed'
-	import Icon from '$lib/components/icon.svelte'
+	import Icon from '#lib/components/icon.svelte'
 	import {afterNavigate} from '$app/navigation'
 	import {onMount} from 'svelte'
-	import * as m from '$lib/paraglide/messages'
+	import * as m from '#lib/paraglide/messages.js'
 
 	/* A normal input, but with a search icon "inside" (on top) */
 	let {

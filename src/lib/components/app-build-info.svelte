@@ -1,7 +1,7 @@
 <script>
-	import DateFormal from '$lib/components/date-formal.svelte'
-	import {repoCommitUrl} from '$lib/repo'
-	import * as m from '$lib/paraglide/messages'
+	import DateFormal from '#lib/components/date-formal.svelte'
+	import {repoCommitUrl} from '#lib/repo.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const sha = $derived(__GIT_INFO__.sha)
 	const commitDate = $derived(__GIT_INFO__.date)

@@ -1,14 +1,14 @@
 <script>
-	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
+	import InfiniteCanvas from '#lib/components/infinite-canvas-ogl.svelte'
 	import {onMount} from 'svelte'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {appState} from '$lib/app-state.svelte'
-	import {shufflePlayChannel} from '$lib/api'
-	import {getChannelActivity} from '$lib/channel-activity.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {shufflePlayChannel} from '#lib/api.js'
+	import {getChannelActivity} from '#lib/channel-activity.svelte.js'
 	const channelActivity = $derived(getChannelActivity())
-	import {toChannelCardMedia} from '$lib/components/channel-ui-state.ts'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {channelAvatarUrl} from '$lib/utils.ts'
+	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {channelAvatarUrl} from '#lib/utils.ts'
 
 	const channelsQuery = useLiveQuery((q) =>
 		q

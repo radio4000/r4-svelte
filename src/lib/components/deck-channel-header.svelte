@@ -1,15 +1,15 @@
 <script>
 	import {resolve} from '$app/paths'
-	import Icon from '$lib/components/icon.svelte'
-	import AutoRadioButton from '$lib/components/auto-radio-button.svelte'
-	import Tag from '$lib/components/tag.svelte'
-	import {deckTitle} from '$lib/deck'
-	import {extractHashtags, HASH_PREFIX_REGEX} from '$lib/utils'
-	import * as m from '$lib/paraglide/messages'
+	import Icon from '#lib/components/icon.svelte'
+	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
+	import Tag from '#lib/components/tag.svelte'
+	import {deckTitle} from '#lib/deck.js'
+	import {extractHashtags, HASH_PREFIX_REGEX} from '#lib/utils.js'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @typedef {import('$lib/types').Deck} Deck */
-	/** @typedef {import('$lib/types').Channel} Channel */
-	/** @typedef {import('$lib/types').Track} Track */
+	/** @typedef {import('#lib/types.js').Deck} Deck */
+	/** @typedef {import('#lib/types.js').Channel} Channel */
+	/** @typedef {import('#lib/types.js').Track} Track */
 
 	/**
 	 * @type {{

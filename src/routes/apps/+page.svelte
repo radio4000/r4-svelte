@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appName, appUrl} from '$lib/config'
-	import * as m from '$lib/paraglide/messages'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import {appName, appUrl} from '#lib/config.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
 
 	/** Domain without scheme — "radio4000.com" reads better than the full URL */
 	const appHost = new URL(appUrl).host

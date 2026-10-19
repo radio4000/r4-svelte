@@ -1,6 +1,6 @@
-import {mapChunked} from '$lib/async'
-import {logger} from '$lib/logger'
-import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
+import {mapChunked} from '#lib/async.js'
+import {logger} from '#lib/logger.js'
+import {trackMetaCollection, trackMetaKey} from '#lib/collections/track-meta.js'
 
 const log = logger.ns('metadata/youtube').seal()
 

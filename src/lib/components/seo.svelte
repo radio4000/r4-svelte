@@ -1,5 +1,5 @@
 <script>
-	import {appName} from '$lib/config'
+	import {appName} from '#lib/config.js'
 	let {
 		title,
 		description = undefined,

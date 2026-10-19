@@ -1,4 +1,4 @@
-import {appState} from '$lib/app-state.svelte'
+import {appState} from '#lib/app-state.svelte.js'
 
 type Display = 'grid' | 'list' | 'map' | 'infinite'
 type Order = 'updated' | 'created' | 'name' | 'tracks'

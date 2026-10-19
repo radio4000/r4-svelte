@@ -1,13 +1,13 @@
 <script>
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
 	import {
 		DEFAULT_KEY_BINDINGS,
 		SHORTCUT_ACTIONS,
 		getActionLabel,
 		initializeKeyboardShortcuts
-	} from '$lib/keyboard'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/keyboard.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const uid = $props.id()
 

@@ -1,17 +1,17 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {appName, appShortName} from '$lib/config'
-	import {getFeaturedPool} from '$lib/collections/featured'
-	import {featuredScore, trimWithEllipsis} from '$lib/utils'
-	import CoverFlip from '$lib/components/cover-flip.svelte'
-	import ChannelCard from '$lib/components/channel-card.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
+	import {appName, appShortName} from '#lib/config.js'
+	import {getFeaturedPool} from '#lib/collections/featured.js'
+	import {featuredScore, trimWithEllipsis} from '#lib/utils.js'
+	import CoverFlip from '#lib/components/cover-flip.svelte'
+	import ChannelCard from '#lib/components/channel-card.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
 
 	const FEATURED_DAYS = 30
 
-	let featuredChannels = $state(/** @type {import('$lib/types').Channel[]} */ ([]))
+	let featuredChannels = $state(/** @type {import('#lib/types.js').Channel[]} */ ([]))
 	let featuredLoaded = $state(false)
 
 	$effect(() => {
@@ -94,7 +94,7 @@
 			{/snippet}
 			{#snippet active({item: channel})}
 				<p class="flip-label">
-					<a href={resolve(`/${channel.slug}`)}>{channel.name}</a>
+					<a href={resolve('/[slug]', {slug: channel.slug})}>{channel.name}</a>
 					{#if channel.description}
 						<span class="flip-desc">— {trimWithEllipsis(channel.description, 140)}</span>
 					{/if}

@@ -1,7 +1,7 @@
 import {discoverDiscogsUrl} from 'media-now'
-import {logger} from '$lib/logger'
-import {trackMetaCollection, trackMetaKey} from '$lib/collections/track-meta'
-import {tracksCollection, updateTrack} from '$lib/collections/tracks'
+import {logger} from '#lib/logger.js'
+import {trackMetaCollection, trackMetaKey} from '#lib/collections/track-meta.js'
+import {tracksCollection, updateTrack} from '#lib/collections/tracks.js'
 import {fetchDiscogs, searchUrl, extractSuggestions} from './discogs-core.js'
 
 // Re-export pure functions

@@ -11,11 +11,11 @@ import {
 	toggleTheme,
 	next,
 	previous
-} from '$lib/api'
-import {appState} from '$lib/app-state.svelte'
-import {channelsCollection} from '$lib/collections/channels'
-import {isMobileViewport} from '$lib/utils'
-import * as m from '$lib/paraglide/messages'
+} from '#lib/api.js'
+import {appState} from '#lib/app-state.svelte.js'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {isMobileViewport} from '#lib/utils.js'
+import * as m from '#lib/paraglide/messages.js'
 
 /**
  * `k`: plain play/pause, except on a channel page with nothing loaded on the

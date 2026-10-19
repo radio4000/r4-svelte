@@ -1,7 +1,7 @@
 import {page} from '$app/state'
 import {afterNavigate, goto} from '$app/navigation'
 import {Debounced} from 'runed'
-import {parseView, viewToUrl} from '$lib/views'
+import {parseView, viewToUrl} from '#lib/views.js'
 
 /**
  * Debounced input ↔ URL sync for search routes.
@@ -38,7 +38,7 @@ export class SearchUrl {
 				this.#inputSeeded = false
 				return
 			}
-			goto(buildUrl(q), {replaceState: true})
+			goto(buildUrl(q), {replace: true})
 		})
 	}
 
@@ -46,7 +46,7 @@ export class SearchUrl {
 		e.preventDefault()
 		const q = this.value.trim()
 		if (!q) {
-			goto(this.#basePath, {replaceState: true})
+			goto(this.#basePath, {replace: true})
 			return
 		}
 		this.debouncedInput.setImmediately(this.value)

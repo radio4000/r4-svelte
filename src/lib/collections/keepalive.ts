@@ -3,7 +3,7 @@
  * Workaround for TanStack DB evaluating `inArray` as a full list scan per row —
  * see tracks-keepalive.svelte and docs/tanstack.md.
  */
-import type {Deck} from '$lib/types'
+import type {Deck} from '#lib/types.js'
 
 /** Above this many channels a queue is a view (search, tags) rather than a channel,
  *  and pinning whole channels would load far more than the queue needs. */

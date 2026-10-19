@@ -1,7 +1,7 @@
 <script>
-	import {mapChunked} from '$lib/async'
-	import BatchProgress from '$lib/components/batch-progress.svelte'
-	import {delayRandom, delayWithJitter} from '$lib/utils'
+	import {mapChunked} from '#lib/async.js'
+	import BatchProgress from '#lib/components/batch-progress.svelte'
+	import {delayRandom, delayWithJitter} from '#lib/utils.js'
 
 	/**
 	 * @typedef {'queued' | 'fetching' | 'saving' | 'done' | 'error'} BatchStatus

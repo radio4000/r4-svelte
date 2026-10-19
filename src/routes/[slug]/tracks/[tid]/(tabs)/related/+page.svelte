@@ -1,14 +1,14 @@
 <script>
-	import {getTrackDetailCtx} from '$lib/contexts'
-	import {appShortName} from '$lib/config'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {queryClient} from '$lib/collections/query-client'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {getTrackDetailCtx} from '#lib/contexts.js'
+	import {appShortName} from '#lib/config.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
 	import {sdk} from '@radio4000/sdk'
-	import TrackCard from '$lib/components/track-card.svelte'
-	import ChannelMicroCard from '$lib/components/channel-micro-card.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import TrackCard from '#lib/components/track-card.svelte'
+	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const detail = getTrackDetailCtx()
 	const track = $derived(detail.track)

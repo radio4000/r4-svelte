@@ -1,13 +1,13 @@
 <script>
-	import {getChannelCtx} from '$lib/contexts'
-	import MapChannels from '$lib/components/map-channels.svelte'
+	import {getChannelCtx} from '#lib/contexts.js'
+	import MapChannels from '#lib/components/map-channels.svelte'
 	import {
 		DEFAULT_MAP_SHOW_DAY_NIGHT,
 		DEFAULT_MAP_SHOW_GRATICULES,
 		DEFAULT_MAP_TILE_STYLE
-	} from '$lib/config'
-	import Subpage from '$lib/components/subpage.svelte'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/config.js'
+	import Subpage from '#lib/components/subpage.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	const channelCtx = getChannelCtx()
 	const channel = $derived(channelCtx.data)

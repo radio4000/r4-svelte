@@ -1,21 +1,21 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {appState, removeDeck} from '$lib/app-state.svelte'
+	import {appState, removeDeck} from '#lib/app-state.svelte.js'
 	import {
 		toggleVideo,
 		toggleQueuePanel,
 		clearUserInitiatedPlay,
 		leaveAutoRadio,
 		rejoinAutoRadio
-	} from '$lib/api'
-	import {getBroadcastingChannelId, notifyBroadcastState, leaveBroadcast} from '$lib/broadcast.js'
-	import {isGroupControlDeck, sortedListeningDeckIds} from '$lib/deck'
-	import {trackAddSearchParams} from '$lib/track-add'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/api.js'
+	import {getBroadcastingChannelId, notifyBroadcastState, leaveBroadcast} from '#lib/broadcast.js'
+	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
+	import {trackAddSearchParams} from '#lib/track-add.js'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @type {{deckId: number, compact?: boolean, closeMenu?: () => void, deckEl?: HTMLElement | undefined, track?: import('$lib/types').Track, channel?: import('$lib/types').Channel, trackHref?: string, canEditTrack?: boolean, autoRadioAvailable?: boolean}} */
+	/** @type {{deckId: number, compact?: boolean, closeMenu?: () => void, deckEl?: HTMLElement | undefined, track?: import('#lib/types.js').Track, channel?: import('#lib/types.js').Channel, trackHref?: string, canEditTrack?: boolean, autoRadioAvailable?: boolean}} */
 	let {
 		deckId,
 		compact = false,

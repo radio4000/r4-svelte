@@ -3,29 +3,33 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
-	import {setChannelCtx, setTracksQueryCtx, setChannelNavCtx} from '$lib/contexts'
+	import {setChannelCtx, setTracksQueryCtx, setChannelNavCtx} from '#lib/contexts.js'
 	import type {Snippet} from 'svelte'
 	import {eq, inArray} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {joinBroadcast} from '$lib/broadcast'
-	import {appState, canEditChannel, isLocalChannel} from '$lib/app-state.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {tracksCollection, checkTracksFreshness, ensureTracksLoaded} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {shufflePlayChannel, playChannelInNewDeck, toggleChannelPlay} from '$lib/api'
-	import {findAutoDecksForChannel, findChannelDeck, findListeningDeck} from '$lib/deck'
-	import ButtonFollow from '$lib/components/button-follow.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import ChannelCanvasBg from '$lib/components/channel-canvas-bg.svelte'
-	import DeckChannelHeader from '$lib/components/deck-channel-header.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import SectionMenu, {channelSectionMenuItems} from '$lib/components/section-menu.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {watchPresence, unwatchPresence} from '$lib/presence.svelte'
-	import {pickRouteChannel, updateStableChannelId} from '$lib/channel-route'
-	import type {Channel} from '$lib/types'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {joinBroadcast} from '#lib/broadcast.js'
+	import {appState, canEditChannel, isLocalChannel} from '#lib/app-state.svelte.js'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import {
+		tracksCollection,
+		checkTracksFreshness,
+		ensureTracksLoaded
+	} from '#lib/collections/tracks.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {shufflePlayChannel, playChannelInNewDeck, toggleChannelPlay} from '#lib/api.js'
+	import {findAutoDecksForChannel, findChannelDeck, findListeningDeck} from '#lib/deck.js'
+	import ButtonFollow from '#lib/components/button-follow.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import ChannelCanvasBg from '#lib/components/channel-canvas-bg.svelte'
+	import DeckChannelHeader from '#lib/components/deck-channel-header.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import SectionMenu, {channelSectionMenuItems} from '#lib/components/section-menu.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {watchPresence, unwatchPresence} from '#lib/presence.svelte.js'
+	import {pickRouteChannel, updateStableChannelId} from '#lib/channel-route.js'
+	import type {Channel} from '#lib/types.js'
 
 	// --- Props & route params ---
 
@@ -160,9 +164,9 @@
 	$effect(() => {
 		if (channel?.slug && channel.slug !== slug) {
 			// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local URL parsing for navigation, not reactive state
-			const url = new URL(page.url)
+			const url = new URL(page.url.href)
 			url.pathname = page.url.pathname.replace(`/${slug}`, resolve('/[slug]', {slug: channel.slug}))
-			goto(`${url.pathname}${url.search}${url.hash}`, {replaceState: true})
+			goto(`${url.pathname}${url.search}${url.hash}`, {replace: true})
 		}
 	})
 

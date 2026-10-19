@@ -1,10 +1,10 @@
 <script>
-	import InfiniteCanvas from '$lib/components/infinite-canvas-ogl.svelte'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {tracksCollection} from '$lib/collections/tracks'
-	import {channelAvatarUrl} from '$lib/utils'
-	import {shufflePlayChannel, playTrack} from '$lib/api'
-	import {appState} from '$lib/app-state.svelte'
+	import InfiniteCanvas from '#lib/components/infinite-canvas-ogl.svelte'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {channelAvatarUrl} from '#lib/utils.js'
+	import {shufflePlayChannel, playTrack} from '#lib/api.js'
+	import {appState} from '#lib/app-state.svelte.js'
 
 	let media = $derived(
 		[...channelsCollection.state.values()]

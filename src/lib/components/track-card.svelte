@@ -2,19 +2,25 @@
 	import type {Snippet} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {playTrack, playNext, addToPlaylist, playTrackInNewDeck, togglePlayPause} from '$lib/api'
-	import {deleteTrack} from '$lib/collections/tracks'
-	import {channelsCollection} from '$lib/collections/channels'
-	import {appState} from '$lib/app-state.svelte'
-	import {trackAddSearchParams} from '$lib/track-add'
-	import type {Track, Channel} from '$lib/types'
+	import {
+		playTrack,
+		playNext,
+		addToPlaylist,
+		playTrackInNewDeck,
+		togglePlayPause
+	} from '#lib/api.js'
+	import {deleteTrack} from '#lib/collections/tracks.js'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {trackAddSearchParams} from '#lib/track-add.js'
+	import type {Track, Channel} from '#lib/types.js'
 	import Icon from './icon.svelte'
 	import PopoverMenu from './popover-menu.svelte'
 	import Dialog from './dialog.svelte'
 	import LinkEntities from './link-entities.svelte'
 	import {tooltip} from './tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
-	import {isDbId, trackImageUrl} from '$lib/utils'
+	import * as m from '#lib/paraglide/messages.js'
+	import {isDbId, trackImageUrl} from '#lib/utils.js'
 
 	interface Props {
 		track: Track

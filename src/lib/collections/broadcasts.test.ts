@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {sdk} from '@radio4000/sdk'
-import type {BroadcastWithChannel} from '$lib/types'
+import type {BroadcastWithChannel} from '#lib/types.js'
 
 const BROADCAST_SELECT = `
 	channel_id,

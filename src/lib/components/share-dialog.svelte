@@ -1,7 +1,7 @@
 <script lang="ts">
-	import {appState} from '$lib/app-state.svelte'
-	import Dialog from '$lib/components/dialog.svelte'
-	import Icon from '$lib/components/icon.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Dialog from '#lib/components/dialog.svelte'
+	import Icon from '#lib/components/icon.svelte'
 	import {
 		channelUrl,
 		trackUrl,
@@ -9,9 +9,9 @@
 		copyToClipboard,
 		canNativeShare,
 		nativeShare
-	} from '$lib/share'
-	import type {Track, Channel} from '$lib/types'
-	import * as m from '$lib/paraglide/messages'
+	} from '#lib/share.js'
+	import type {Track, Channel} from '#lib/types.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let showModal = $state(false)
 	let copiedField = $state<string | null>(null)

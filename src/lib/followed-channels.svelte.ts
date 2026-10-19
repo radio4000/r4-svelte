@@ -1,11 +1,11 @@
 import {sdk} from '@radio4000/sdk'
-import {channelsCollection} from '$lib/collections/channels'
-import {followsCollection} from '$lib/collections/follows'
-import {queryClient} from '$lib/collections/query-client'
-import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-import {dedupeById} from '$lib/utils'
+import {channelsCollection} from '#lib/collections/channels.js'
+import {followsCollection} from '#lib/collections/follows.js'
+import {queryClient} from '#lib/collections/query-client.js'
+import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+import {dedupeById} from '#lib/utils.js'
 import {inArray} from '@tanstack/db'
-import type {Channel} from '$lib/types'
+import type {Channel} from '#lib/types.js'
 
 const CONNECTION_STALE_TIME = 5 * 60 * 1000
 

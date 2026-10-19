@@ -1,7 +1,7 @@
 <script>
 	import Icon from './icon.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import * as m from '$lib/paraglide/messages'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {order = $bindable(), direction = $bindable(), onreshuffle = undefined} = $props()
 

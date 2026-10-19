@@ -8,7 +8,7 @@ import {
 	epochFromTracks,
 	type AutoTrack
 } from './auto-radio'
-import type {Track} from '$lib/types'
+import type {Track} from '#lib/types.js'
 
 // ---------------------------------------------------------------------------
 // Fixtures

@@ -3,19 +3,19 @@
 	import {resolve} from '$app/paths'
 	import {onMount} from 'svelte'
 	import {MediaQuery} from 'svelte/reactivity'
-	import {appState} from '$lib/app-state.svelte'
-	import {isBroadcasting as isBroadcastingDeck, sortedDeckIds} from '$lib/deck'
-	import AddTrackDialog from '$lib/components/track-add-dialog.svelte'
-	import BroadcastToggle from '$lib/components/broadcast-toggle.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import NavPopover from '$lib/components/nav-popover.svelte'
-	import IconR4 from '$lib/components/icon-r4.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import InternetIndicator from '$lib/components/internet-indicator.svelte'
-	import * as m from '$lib/paraglide/messages'
-	import {appName, conceptIcons, MOBILE_BREAKPOINT, navPopoverOnLogo} from '$lib/config'
-	import {deckAccent} from '$lib/app-state.svelte'
+	import {appState} from '#lib/app-state.svelte.js'
+	import {isBroadcasting as isBroadcastingDeck, sortedDeckIds} from '#lib/deck.js'
+	import AddTrackDialog from '#lib/components/track-add-dialog.svelte'
+	import BroadcastToggle from '#lib/components/broadcast-toggle.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import NavPopover from '#lib/components/nav-popover.svelte'
+	import IconR4 from '#lib/components/icon-r4.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import InternetIndicator from '#lib/components/internet-indicator.svelte'
+	import * as m from '#lib/paraglide/messages.js'
+	import {appName, conceptIcons, MOBILE_BREAKPOINT, navPopoverOnLogo} from '#lib/config.js'
+	import {deckAccent} from '#lib/app-state.svelte.js'
 
 	const {preloading} = $props()
 
@@ -132,7 +132,7 @@
 		{#await preloading then}
 			{#if userChannel}
 				<a
-					href={resolve(`/${userChannel.slug}`)}
+					href={resolve('/[slug]', {slug: userChannel.slug})}
 					class={[
 						'btn',
 						'nav-btn',
@@ -188,7 +188,7 @@
 			<Icon icon="menu" />
 			<span class="btn-label">{m.nav_menu()}</span>
 		</a>
-		<InternetIndicator href={resolve('/import')} />
+		<InternetIndicator href={resolve('import')} />
 	</nav>
 </header>
 

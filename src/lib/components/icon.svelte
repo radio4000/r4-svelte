@@ -78,7 +78,7 @@
 		IconWifiOff,
 		IconWifi
 	} from 'obra-icons-svelte'
-	import IconDeckPanel from '$lib/components/icon-deck-panel.svelte'
+	import IconDeckPanel from '#lib/components/icon-deck-panel.svelte'
 
 	/** @type {{icon: string, title?: string, class?: string, size?: string | number, children?: any, [key: string]: any}} */
 	const {children, icon = '', title, class: className = '', size = 18, ...rest} = $props()

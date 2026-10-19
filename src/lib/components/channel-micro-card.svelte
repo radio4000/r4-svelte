@@ -1,9 +1,9 @@
 <script>
 	import {resolve} from '$app/paths'
-	import {channelsCollection} from '$lib/collections/channels'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
+	import {channelsCollection} from '#lib/collections/channels.js'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
 
-	/** @type {{channel?: import('$lib/types').Channel, slug?: string | null, href?: string | undefined, class?: string}} */
+	/** @type {{channel?: import('#lib/types.js').Channel, slug?: string | null, href?: string | undefined, class?: string}} */
 	let {channel, slug: slugProp, href, class: className = ''} = $props()
 
 	let effectiveSlug = $derived(channel?.slug ?? slugProp)

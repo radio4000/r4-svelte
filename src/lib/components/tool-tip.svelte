@@ -2,7 +2,7 @@
 	/* eslint svelte/no-at-html-tags: "off" */
 	import {onMount} from 'svelte'
 	import {tooltipState} from './tooltip-attachment.svelte.js'
-	import {uuid} from '$lib/utils'
+	import {uuid} from '#lib/utils.js'
 
 	const id = `tooltip-singleton-${uuid()}`
 	// After mount, not at init: no `document` on the server, and both sides must start false.

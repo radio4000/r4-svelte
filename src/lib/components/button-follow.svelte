@@ -1,12 +1,12 @@
 <script>
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/svelte-db'
-	import {followsCollection, followChannel, unfollowChannel} from '$lib/collections/follows'
-	import {appState} from '$lib/app-state.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {followsCollection, followChannel, unfollowChannel} from '#lib/collections/follows.js'
+	import {appState} from '#lib/app-state.svelte.js'
+	import Icon from '#lib/components/icon.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
-	/** @type {{channel: import('$lib/types').Channel, label?: string, class?: string}} */
+	/** @type {{channel: import('#lib/types.js').Channel, label?: string, class?: string}} */
 	let {channel, label, ...rest} = $props()
 
 	let userChannelId = $derived(appState.channels?.[0])

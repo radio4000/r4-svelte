@@ -25,7 +25,7 @@
  * starts a second audio element.
  */
 
-import {logger} from '$lib/logger'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('audio-keepalive').seal()
 

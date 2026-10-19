@@ -1,6 +1,6 @@
-import {shufflePlayChannel} from '$lib/api'
-import {appState} from '$lib/app-state.svelte'
-import * as m from '$lib/paraglide/messages'
+import {shufflePlayChannel} from '#lib/api.js'
+import {appState} from '#lib/app-state.svelte.js'
+import * as m from '#lib/paraglide/messages.js'
 
 /** Shared icon map for channel display mode switcher. */
 export const viewIconMap = {

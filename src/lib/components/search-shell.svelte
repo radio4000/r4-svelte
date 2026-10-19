@@ -1,10 +1,10 @@
 <script>
 	import {page} from '$app/state'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import SearchTabs from '$lib/components/search-tabs.svelte'
-	import ViewsBar from '$lib/components/views-bar.svelte'
-	import PageHeader from '$lib/components/page-header.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import SearchTabs from '#lib/components/search-tabs.svelte'
+	import ViewsBar from '#lib/components/views-bar.svelte'
+	import PageHeader from '#lib/components/page-header.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let {
 		uid,

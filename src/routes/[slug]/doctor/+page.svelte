@@ -3,16 +3,16 @@
 	import {onMount, untrack} from 'svelte'
 	import {SvelteMap} from 'svelte/reactivity'
 	import {cleanTitle} from 'media-now'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {updateTrack, deleteTrack} from '$lib/collections/tracks'
-	import {queryClient} from '$lib/collections/query-client'
-	import {trackImageUrl} from '$lib/utils'
-	import Seo from '$lib/components/seo.svelte'
-	import PopoverMenu from '$lib/components/popover-menu.svelte'
-	import LinkEntities from '$lib/components/link-entities.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import Pagination from '$lib/components/pagination.svelte'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import {updateTrack, deleteTrack} from '#lib/collections/tracks.js'
+	import {queryClient} from '#lib/collections/query-client.js'
+	import {trackImageUrl} from '#lib/utils.js'
+	import Seo from '#lib/components/seo.svelte'
+	import PopoverMenu from '#lib/components/popover-menu.svelte'
+	import LinkEntities from '#lib/components/link-entities.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import Pagination from '#lib/components/pagination.svelte'
 
 	const channelCtx = getChannelCtx()
 	const tracksQuery = getTracksQueryCtx()
@@ -21,7 +21,7 @@
 	const canEdit = $derived(canEditChannel(channel?.id))
 
 	onMount(() => {
-		import('$lib/youtube-video-custom-element.js')
+		import('#lib/youtube-video-custom-element.js')
 	})
 
 	// YouTube only for now: verification and replacements are both YouTube-specific.
@@ -125,7 +125,7 @@
 	})
 
 	/**
-	 * @param {import('$lib/types').Track} t
+	 * @param {import('#lib/types.js').Track} t
 	 * @param {string} query
 	 */
 	async function findReplacements(t, query = t.title) {

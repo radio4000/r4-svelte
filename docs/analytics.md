@@ -22,10 +22,10 @@ The `identify()` and `reset()` functions are commented out in `src/lib/analytics
 
 ## Capturing custom events
 
-Import and call `capture()` from `$lib/analytics`:
+Import and call `capture()` from `#lib/analytics.js`:
 
 ```ts
-import {capture} from '$lib/analytics'
+import {capture} from '#lib/analytics.js'
 
 capture('track_played', {channel_slug: 'my-channel'})
 ```
@@ -45,7 +45,7 @@ Unhandled client errors are sent to PostHog as `$exception` events via the `hand
 `captureError(error)` in `analytics.ts` is the underlying helper — it respects the same opt-in guard as `capture()`. You can call it directly in explicit `catch` blocks when you want to report a caught error:
 
 ```ts
-import {captureError} from '$lib/analytics'
+import {captureError} from '#lib/analytics.js'
 
 try {
 	await riskyOperation()

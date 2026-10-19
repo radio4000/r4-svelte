@@ -1,9 +1,9 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions} from '@tanstack/query-db-collection'
 import {sdk} from '@radio4000/sdk'
-import {appState} from '$lib/app-state.svelte'
+import {appState} from '#lib/app-state.svelte.js'
 import {queryClient} from './query-client'
-import {logger} from '$lib/logger'
+import {logger} from '#lib/logger.js'
 
 const log = logger.ns('follows').seal()
 

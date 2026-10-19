@@ -2,10 +2,10 @@
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
 	import {sdk} from '@radio4000/sdk'
-	import {appState} from '$lib/app-state.svelte'
-	import BackLink from '$lib/components/back-link.svelte'
-	import Seo from '$lib/components/seo.svelte'
-	import * as m from '$lib/paraglide/messages'
+	import {appState} from '#lib/app-state.svelte.js'
+	import BackLink from '#lib/components/back-link.svelte'
+	import Seo from '#lib/components/seo.svelte'
+	import * as m from '#lib/paraglide/messages.js'
 
 	let newEmail = $state('')
 	let error = $state(/** @type {string | null} */ (null))

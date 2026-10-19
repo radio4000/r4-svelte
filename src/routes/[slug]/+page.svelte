@@ -1,33 +1,38 @@
 <script lang="ts">
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
-	import {appUrl} from '$lib/config'
+	import {appUrl} from '#lib/config.js'
 	import {resolve} from '$app/paths'
-	import {getChannelCtx, getTracksQueryCtx} from '$lib/contexts'
-	import {appState, canEditChannel} from '$lib/app-state.svelte'
-	import {tracksCollection} from '$lib/collections/tracks'
+	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
+	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
 	import {eq} from '@tanstack/db'
-	import {useLiveQuery} from '$lib/useLiveQuery.svelte'
-	import {getChannelConnections, getFollowedChannels} from '$lib/followed-channels.svelte'
-	import {computeChannelMatchScore} from '$lib/channel-match-score'
-	import {findChannelDeck, isListeningToChannel as isListeningToChannelDeck} from '$lib/deck'
-	import {toggleChannelPlay} from '$lib/api'
-	import {joinBroadcast, leaveBroadcast, startChannelBroadcast, stopBroadcast} from '$lib/broadcast'
-	import {broadcastsCollection} from '$lib/collections/broadcasts'
-	import {channelPresence} from '$lib/presence.svelte'
-	import {shortcutHint} from '$lib/keyboard'
-	import Tracklist from '$lib/components/tracklist.svelte'
-	import LinkEntities from '$lib/components/link-entities.svelte'
-	import Icon from '$lib/components/icon.svelte'
-	import ChannelAvatar from '$lib/components/channel-avatar.svelte'
-	import PresenceCount from '$lib/components/presence-count.svelte'
-	import SearchInput from '$lib/components/search-input.svelte'
-	import ChannelNavControlsPortal from '$lib/components/channel-nav-controls-portal.svelte'
-	import {tooltip} from '$lib/components/tooltip-attachment.svelte.js'
-	import {relativeDate} from '$lib/dates'
-	import {channelAvatarUrl} from '$lib/utils'
-	import * as m from '$lib/paraglide/messages'
-	import Seo from '$lib/components/seo.svelte'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {getChannelConnections, getFollowedChannels} from '#lib/followed-channels.svelte.js'
+	import {computeChannelMatchScore} from '#lib/channel-match-score.js'
+	import {findChannelDeck, isListeningToChannel as isListeningToChannelDeck} from '#lib/deck.js'
+	import {toggleChannelPlay} from '#lib/api.js'
+	import {
+		joinBroadcast,
+		leaveBroadcast,
+		startChannelBroadcast,
+		stopBroadcast
+	} from '#lib/broadcast.js'
+	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
+	import {channelPresence} from '#lib/presence.svelte.js'
+	import {shortcutHint} from '#lib/keyboard.js'
+	import Tracklist from '#lib/components/tracklist.svelte'
+	import LinkEntities from '#lib/components/link-entities.svelte'
+	import Icon from '#lib/components/icon.svelte'
+	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
+	import PresenceCount from '#lib/components/presence-count.svelte'
+	import SearchInput from '#lib/components/search-input.svelte'
+	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
+	import {relativeDate} from '#lib/dates.js'
+	import {channelAvatarUrl} from '#lib/utils.js'
+	import * as m from '#lib/paraglide/messages.js'
+	import Seo from '#lib/components/seo.svelte'
 
 	const HOME_TRACK_PREVIEW_LIMIT = 5
 
@@ -130,7 +135,7 @@
 		hydrate: false
 	})
 
-	function compactOverlapText(items: import('$lib/types').Channel[]) {
+	function compactOverlapText(items: import('#lib/types.js').Channel[]) {
 		if (items.length === 0) return ''
 		const names = items.slice(0, 2).map((c) => `@${c.slug}`)
 		const rest = Math.max(0, items.length - names.length)

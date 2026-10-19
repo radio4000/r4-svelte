@@ -1,5 +1,5 @@
 <script>
-	/** @type {{track: import('$lib/types').TrackWithMeta, field: string, onEdit: (id: string, field: string, value: string) => void | Promise<void>, onTab?: (direction: number) => void, canEdit?: boolean, isFocused?: boolean}} */
+	/** @type {{track: import('#lib/types.js').TrackWithMeta, field: string, onEdit: (id: string, field: string, value: string) => void | Promise<void>, onTab?: (direction: number) => void, canEdit?: boolean, isFocused?: boolean}} */
 	let {track, field, onEdit, onTab, canEdit = true, isFocused = false} = $props()
 
 	let isEditing = $state(false)
