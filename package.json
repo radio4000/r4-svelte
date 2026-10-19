@@ -60,7 +60,7 @@
 		"@inlang/paraglide-js": "^2.25.4",
 		"@inlang/plugin-m-function-matcher": "^2.2.16",
 		"@inlang/plugin-message-format": "^4.4.4",
-		"@radio4000/sdk": "^0.8.2",
+		"@radio4000/sdk": "^0.8.3",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@tanstack/query-core": "^5.103.2",
 		"@tanstack/query-db-collection": "^1.2.15",
