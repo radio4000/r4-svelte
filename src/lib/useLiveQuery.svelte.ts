@@ -152,7 +152,9 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	})
 
-	let internalData: any[] = $state([])
+	// Raw, not deep: deep $state re-proxies every row on each sync, so one delete in a
+	// 2.6k-track channel hands every TrackCard a "new" track and re-renders them all.
+	let internalData: any[] = $state.raw([])
 	let status = $state('disabled')
 
 	const syncDataFromCollection = (currentCollection) => {

@@ -281,7 +281,10 @@
 		>
 			{#each groupedTracks as [year, months] (year)}
 				{#each months as [month, monthTracks] (month)}
-					<section class="month">
+					<section
+						class="month"
+						style:contain-intrinsic-size="auto {monthTracks.length * 58 + 40}px"
+					>
 						<h3 class="caps">{month} {year}</h3>
 						<ul class="list tracks">
 							{#each monthTracks as item (item.track.id)}
@@ -343,6 +346,14 @@
 	.cv-row {
 		content-visibility: auto;
 		contain-intrinsic-size: auto 58px;
+	}
+
+	/* Same trick one level up. Rows alone still leave ~2.6k row boxes to restyle
+	   whenever the whole page does (opening any modal dialog makes the page inert),
+	   ~40ms on a 2.6k-track channel. Skipping whole months takes that to ~3ms.
+	   The fallback height is the month's row count times a row plus its heading. */
+	.month {
+		content-visibility: auto;
 	}
 
 	h3 {
