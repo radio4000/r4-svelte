@@ -9,7 +9,8 @@
 		// to relax it a bit
 		"noImplicitAny": false,
 		"useUnknownInCatchVariables": false,
-		"types": ["$app/types", "vite-plugin-pwa/client", "youtube"]
+		"types": ["$app/types", "youtube"]
 	},
-	"include": ["src", "vite.config.ts", "tests"]
+	"include": ["src", "vite.config.ts", "tests"],
+	"exclude": ["src/service-worker"]
 }

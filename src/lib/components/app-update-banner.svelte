@@ -5,8 +5,6 @@
 	import {repoCompareUrl} from '#lib/repo.js'
 	import * as m from '#lib/paraglide/messages.js'
 
-	/** @type {((reloadPage?: boolean) => Promise<void>) | undefined} */
-	let updateSW
 	let dismissed = $state(false)
 	let reloading = $state(false)
 	let deployedSha = $state('')
@@ -23,25 +21,18 @@
 	const compareUrl = $derived(deployedSha ? repoCompareUrl(sha, deployedSha) : '')
 
 	onMount(() => {
+		if (!('serviceWorker' in navigator)) return
 		/** @type {ReturnType<typeof setInterval> | undefined} */
 		let interval
-		import('virtual:pwa-register').then(({registerSW}) => {
-			updateSW = registerSW({
-				immediate: true,
-				onRegisteredSW(_url, registration) {
-					if (!registration) return
-					// Browsers only look for a new service worker on full page loads,
-					// so a long-lived tab has to ask on its own schedule.
-					interval = setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000)
-				},
-				onNeedRefresh() {
-					// A new service worker is waiting — a deploy happened. Whether this
-					// page is stale too is decided by the version check above.
-					updated.check()
-				},
-				onRegisterError(error) {
-					console.warn('Service worker registration failed', error)
-				}
+		// SvelteKit registers src/service-worker.js on its own; we only watch it.
+		navigator.serviceWorker.ready.then((registration) => {
+			// Browsers only look for a new service worker on full page loads,
+			// so a long-lived tab has to ask on its own schedule.
+			interval = setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000)
+			registration.addEventListener('updatefound', () => {
+				// A new service worker is installing — a deploy happened. Whether this
+				// page is stale too is decided by the version check above.
+				updated.check()
 			})
 		})
 		return () => clearInterval(interval)
@@ -57,10 +48,13 @@
 
 	function reload() {
 		reloading = true
-		// Activate the waiting service worker; it reloads the page when it takes
-		// control. If there is no waiting worker (or the message goes nowhere),
-		// the timeout reloads anyway — the click always does something.
-		updateSW?.(true)
+		// Activate the waiting service worker and reload once it takes control.
+		// If there is no waiting worker (or the message goes nowhere), the
+		// timeout reloads anyway — the click always does something.
+		navigator.serviceWorker?.addEventListener('controllerchange', () => window.location.reload())
+		navigator.serviceWorker
+			?.getRegistration()
+			.then((registration) => registration?.waiting?.postMessage({type: 'SKIP_WAITING'}))
 		setTimeout(() => window.location.reload(), 1500)
 	}
 </script>
