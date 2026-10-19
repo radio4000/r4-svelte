@@ -179,6 +179,11 @@
 	// No deps array needed — Svelte auto-tracks reactive reads in the callback.
 	const channelsQuery = useLiveQuery((q) => {
 		let base = q.from({ch: channelsCollection})
+		if (display === 'map') {
+			base = base
+				.where(({ch}) => not(isNull(ch.latitude)))
+				.where(({ch}) => not(isNull(ch.longitude)))
+		}
 		if (!capabilities.globalBrowse) {
 			return base.orderBy(({ch}) => ch.created_at, 'desc').limit(queryLimit)
 		}

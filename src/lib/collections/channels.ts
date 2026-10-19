@@ -92,9 +92,11 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		(f) => f.field[0] === 'track_count' && f.operator === 'gte'
 	)?.value as number | undefined
 	const imageNotNull = options.filters.some(
-		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
+		(f) => f.field[0] === 'image' && f.operator === 'not_isNull'
 	)
-	const coordinatesNotNull = options.filters.some((f) => f.field[0] === 'latitude')
+	const coordinatesNotNull = ['latitude', 'longitude'].every((field) =>
+		options.filters.some((f) => f.field[0] === field && f.operator === 'not_isNull')
+	)
 	const sort = options.sorts[0]
 	const shuffle = sort?.field[0] === 'shuffle'
 	const offset = (opts as Record<string, unknown> | undefined)?.offset as number | undefined
@@ -202,6 +204,7 @@ export const channelsCollection = createCollection<Channel, string>({
 			if (p.coordinatesNotNull) baseKey.push('geo')
 			if (p.imageNotNull && p.trackCountGte) baseKey.push('artwork')
 			else if (p.trackCountGte) baseKey.push('minTracks', p.trackCountGte)
+			baseKey.push(p.sortKey)
 			let cached: Channel[] = []
 			const queries = queryClient.getQueriesData<Channel[]>({queryKey: baseKey})
 			for (const [, data] of queries) {
