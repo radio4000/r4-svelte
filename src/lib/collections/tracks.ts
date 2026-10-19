@@ -1,4 +1,6 @@
 import {createCollection} from '@tanstack/svelte-db'
+import {untrack} from 'svelte'
+import {createSubscriber} from 'svelte/reactivity'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
@@ -309,6 +311,18 @@ async function handleTrackDelete(id: string): Promise<void> {
 	log.info('delete_done', {id, error: response.error})
 	if (response.error) throw new Error(getErrorMessage(response.error))
 }
+
+/**
+ * Read inside a $derived or $effect to re-run it on any track change, then read rows
+ * via `tracksCollection.get(id)` or one hoisted `.state`. One subscription shared by
+ * every reader, held while any is mounted. useLiveQuery(tracksCollection) does the same
+ * but copies every row into each reader's state on each change.
+ */
+export const watchTracks = createSubscriber((update) => {
+	// untrack: changes can land while a $derived evaluates (state_unsafe_mutation)
+	const subscription = tracksCollection.subscribeChanges(() => untrack(update))
+	return () => subscription.unsubscribe()
+})
 
 /** Merge cached enrichment (duration, artwork, etc.) from trackMetaCollection onto a track. */
 export function getTrackWithMeta(track: Track): TrackWithMeta {

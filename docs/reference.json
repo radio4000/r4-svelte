@@ -284,11 +284,7 @@
 	],
 
 	"src/lib/api.ts": [
-		{
-			"name": "sortByDate(field, direction?)",
-			"desc": "Sort comparator for created_at-style fields."
-		},
-		{"name": "sortByNewest", "desc": "sortByDate('created_at', 'desc') preset."},
+		{"name": "newestFirst(tracks)", "desc": "Tracks sorted by created_at, newest first."},
 		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
 		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
 		{

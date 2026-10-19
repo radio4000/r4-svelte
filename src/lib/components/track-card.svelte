@@ -28,7 +28,7 @@
 		deckId?: number
 		/** Prebuilt trackId → deck info, hoisted out of the card to avoid iterating
 		 * appState.decks per row. Optional: cards without it fall back to per-card lookup. */
-		deckLookup?: Map<string, {deckId: number; isPlaying: boolean}>
+		deckLookup?: {get(trackId: string): {deckId: number; isPlaying: boolean} | undefined}
 		selected?: boolean
 		onPlay?: (trackId: string) => void
 		showImage?: boolean
