@@ -283,7 +283,7 @@
 				{#each months as [month, monthTracks] (month)}
 					<section
 						class="month"
-						style:contain-intrinsic-size="auto {monthTracks.length * 58 + 40}px"
+						style:contain-intrinsic-size="auto {monthTracks.length * 66 + 40}px"
 					>
 						<h3 class="caps">{month} {year}</h3>
 						<ul class="list tracks">
@@ -342,18 +342,19 @@
 <style>
 	/* Skip render/layout work for off-screen rows in the non-virtual lists (~1500 rows).
 	   `auto <height>` uses the remembered size once measured, so the scrollbar stays stable;
-	   the fallback matches a real row height. scrollIntoView/keyboard nav still reveal rows. */
+	   the fallback matches a real row height. scrollIntoView/keyboard nav still reveal rows.
+	   Months skip too (fallback height set inline): Chrome tracks every content-visibility
+	   box like an IntersectionObserver target, and while rows are first revealed it rechecks
+	   all of them each frame. Skipped months hide their rows from that, so the first scroll
+	   down a 2.6k-track list stops dropping frames. It also spares the ~2.6k row boxes a
+	   restyle whenever the whole page goes inert for a modal (~40ms → ~3ms). */
+	.month {
+		content-visibility: auto;
+	}
+
 	.cv-row {
 		content-visibility: auto;
 		contain-intrinsic-size: auto 58px;
-	}
-
-	/* Same trick one level up. Rows alone still leave ~2.6k row boxes to restyle
-	   whenever the whole page does (opening any modal dialog makes the page inert),
-	   ~40ms on a 2.6k-track channel. Skipping whole months takes that to ~3ms.
-	   The fallback height is the month's row count times a row plus its heading. */
-	.month {
-		content-visibility: auto;
 	}
 
 	h3 {

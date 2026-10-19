@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {Snippet} from 'svelte'
+	import {tick, type Snippet} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {
@@ -147,7 +147,19 @@
 	}
 
 	let showDeleteDialog = $state(false)
-	let menu = $state<{close: () => void}>()
+	let menu = $state<{close: () => void; open: () => Promise<void>}>()
+	// A list renders thousands of cards and few menus get opened, so each card starts
+	// with a lookalike trigger and mounts the real menu on first press.
+	let menuMounted = $state(false)
+	let articleEl = $state<HTMLElement>()
+
+	async function mountMenu() {
+		menuMounted = true
+		await tick()
+		await menu?.open()
+		// The pressed placeholder is gone; keep focus on the trigger that replaced it
+		articleEl?.querySelector<HTMLElement>('.trackcard-contextBtn')?.focus({preventScroll: true})
+	}
 
 	function handleArtworkClick(event: MouseEvent) {
 		event.preventDefault()
@@ -177,7 +189,20 @@
 	}
 </script>
 
-<article class={{'track-card': true, active, selected: selected && !active}}>
+{#snippet menuIcon()}
+	<!-- Icon's options-horizontal as plain markup: one per row, and the
+	     component costs ~5x more to mount on a long list -->
+	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="obra-icon"
+		><path
+			d="M18.006 11.994L18.006 12.006M12.006 11.994L12.006 12.006M6.006 11.994L6.006 12.006"
+			stroke="currentColor"
+			stroke-width="4"
+			stroke-linecap="round"
+		/></svg
+	>
+{/snippet}
+
+<article class={{'track-card': true, active, selected: selected && !active}} bind:this={articleEl}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="card"
@@ -246,7 +271,13 @@
 			{#if showSlug}<small>@{track.slug}</small>{/if}
 		</div>
 	</div>
-	{#if showMenu}
+	{#if showMenu && !menuMounted}
+		<div class="popover-menu">
+			<button type="button" class="ghost trackcard-contextBtn" onclick={mountMenu}
+				>{@render menuIcon()}</button
+			>
+		</div>
+	{:else if showMenu}
 		<PopoverMenu
 			bind:this={menu}
 			btnClass="ghost trackcard-contextBtn"
@@ -254,7 +285,7 @@
 			valign={menuValign ?? 'top'}
 		>
 			{#snippet trigger()}
-				<Icon icon="options-horizontal" />
+				{@render menuIcon()}
 			{/snippet}
 			<menu class="nav-vertical">
 				<button
@@ -548,6 +579,7 @@
 		}
 
 		:global(.popover-menu) {
+			position: relative;
 			padding: 0.2em;
 		}
 	}

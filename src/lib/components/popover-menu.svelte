@@ -1,8 +1,7 @@
 <script>
-	import {untrack, tick} from 'svelte'
-	import {createAttachmentKey} from 'svelte/attachments'
+	import {tick} from 'svelte'
 
-	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: Function, align?: 'left' | 'right' | 'end', valign?: 'top' | 'bottom', centered?: boolean, [key: string]: any}} */
+	/** @type {{children?: import('svelte').Snippet, trigger?: import('svelte').Snippet, btnClass?: string, closeOnClick?: boolean, onclose?: () => void, triggerAttachment?: import('svelte/attachments').Attachment<HTMLButtonElement>, align?: 'left' | 'right' | 'end', valign?: 'top' | 'bottom', centered?: boolean, [key: string]: any}} */
 	let {
 		children,
 		trigger,
@@ -18,21 +17,22 @@
 
 	const id = $props.id()
 
-	const triggerProps = $derived({
-		...(triggerAttachment ? {[createAttachmentKey()]: triggerAttachment} : {}),
-		...(btnClass ? {class: btnClass} : {})
-	})
-
 	let buttonEl = $state()
 	let popoverEl = $state()
+	// The popover (and what's in it) is only created on first open: a long track
+	// list has thousands of these menus and most are never opened.
 	let hasBeenOpened = $state(false)
 
 	export function close() {
 		popoverEl?.hidePopover()
 	}
 
-	export function open() {
-		popoverEl?.showPopover()
+	export async function open() {
+		if (!hasBeenOpened) {
+			hasBeenOpened = true
+			await tick()
+		}
+		popoverEl?.showPopover({source: buttonEl})
 	}
 
 	function positionPopover(el) {
@@ -67,59 +67,44 @@
 		el.style.transformOrigin = `${opensUp ? 'bottom' : 'top'} ${resolvedAlign === 'right' ? 'right' : 'left'}`
 	}
 
-	// Position popover below button and optionally close on action click
-	$effect(() => {
-		if (!popoverEl) return
-		const el = untrack(() => popoverEl)
+	function handleToggle(e) {
+		if (e.newState === 'closed') onclose?.()
+		else positionPopover(e.currentTarget)
+	}
 
-		const handleToggle = async (e) => {
-			if (e.newState === 'closed') {
-				onclose?.()
-				return
-			}
-			if (!hasBeenOpened) {
-				hasBeenOpened = true
-				await tick()
-			}
-			positionPopover(el)
-		}
-
-		const handleClick = (e) => {
-			if (!closeOnClick) return
-
-			const target = e.target
-			// Don't close if this is the trigger button
-			if (target.hasAttribute('popovertarget')) return
-
-			// Find the clicked interactive element
-			const clickedElement = target.closest('button, a')
-			if (!clickedElement) return
-
-			// Don't close if the element has data-no-close attribute
-			if (clickedElement.hasAttribute('data-no-close')) return
-
-			// Close the popover when clicking buttons/links inside
-			el.hidePopover()
-		}
-
-		el.addEventListener('toggle', handleToggle)
-		el.addEventListener('click', handleClick)
-		return () => {
-			el.removeEventListener('toggle', handleToggle)
-			el.removeEventListener('click', handleClick)
-		}
-	})
+	// Close the popover when clicking buttons/links inside
+	function handleClick(e) {
+		// A nested menu's trigger opens that menu, it doesn't close this one
+		if (!closeOnClick || e.target.hasAttribute('popovertarget')) return
+		const clickedElement = e.target.closest('button, a')
+		if (!clickedElement || clickedElement.hasAttribute('data-no-close')) return
+		popoverEl.hidePopover()
+	}
 </script>
 
 <div class="popover-menu" {...rest}>
-	<button type="button" popovertarget={id} bind:this={buttonEl} {...triggerProps}>
+	<button
+		type="button"
+		popovertarget={hasBeenOpened ? id : undefined}
+		bind:this={buttonEl}
+		class={btnClass}
+		onclick={() => !hasBeenOpened && open()}
+		{@attach triggerAttachment}
+	>
 		{@render trigger?.()}
 	</button>
-	<div popover="auto" {id} class:centered bind:this={popoverEl}>
-		{#if hasBeenOpened}
+	{#if hasBeenOpened}
+		<div
+			popover="auto"
+			{id}
+			class:centered
+			bind:this={popoverEl}
+			ontoggle={handleToggle}
+			onclick={handleClick}
+		>
 			{@render children?.()}
-		{/if}
-	</div>
+		</div>
+	{/if}
 </div>
 
 <style>

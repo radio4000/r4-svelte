@@ -41,4 +41,4 @@ Agents: `agent-browser open <url>?perf`, use the app with real clicks, then `eva
 
 ## Known
 
-`/[slug]/tracks` renders every track at once (48k DOM nodes) and freezes for about 4s each time, which also slows playing from it. Explore's map view takes about 3s, and the heap grows to about 250MB over one journey. Older findings: `perf/perf-report.html`.
+`/[slug]/tracks` still renders every track at once (35k DOM nodes on /oskar) and blocks for about 2s at 4x CPU. Playing from the full list costs about 1s in deck and player work that grows with the playlist (queue panel, auto-radio coverage). Explore's map view takes about 3s, and the heap grows to about 250MB over one journey. Older findings: `perf/perf-report.html`.
