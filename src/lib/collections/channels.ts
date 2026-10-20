@@ -56,7 +56,7 @@ export function fetchAppStats(): Promise<{channels: number; tracks: number}> {
 		queryFn: async () => {
 			const [channels, tracks] = await Promise.all([
 				sdk.supabase.from('channels_with_tracks').select('*', {count: 'exact', head: true}),
-				sdk.supabase.from('channel_tracks').select('*', {count: 'exact', head: true})
+				sdk.supabase.from('channel_track').select('*', {count: 'exact', head: true})
 			])
 			return {channels: channels.count ?? 0, tracks: tracks.count ?? 0}
 		}
