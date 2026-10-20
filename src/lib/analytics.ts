@@ -16,7 +16,9 @@ function init() {
 	posthog.init(posthogKey, {
 		api_host: posthogHost,
 		defaults: '2026-01-30',
-		capture_pageview: false
+		capture_pageview: false,
+		// Unhandled window errors/rejections. SvelteKit-caught crashes go through captureError instead.
+		capture_exceptions: true
 	})
 }
 
@@ -60,12 +62,9 @@ export function syncAnalyticsConsent(optIn: boolean) {
 /** Capture an error/exception. No-op if the user has not opted in. */
 export function captureError(error: unknown) {
 	if (!appState.analytics_opt_in || !initialized) return
-	const err = error instanceof Error ? error : new Error(String(error))
-	posthog.capture('$exception', {
-		$exception_message: err.message,
-		$exception_stack_trace_raw: err.stack
-	})
-	log.debug('error captured', err.message)
+	// captureException builds $exception_list (required by Error Tracking). Never hand-build $exception.
+	posthog.captureException(error)
+	log.debug('error captured', error instanceof Error ? error.message : error)
 }
 
 /** Capture a custom event. No-op if the user has not opted in. */

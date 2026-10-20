@@ -40,7 +40,7 @@ The helper is a no-op when the user has not opted in, so call sites don't need t
 
 ## Error tracking
 
-Unhandled client errors are sent to PostHog as `$exception` events via the `handleError` hook in `src/hooks.client.ts`. This uses PostHog's built-in error tracking, so errors appear in the Error Tracking view in the PostHog dashboard.
+Unhandled client errors go to PostHog Error Tracking. `captureError()` calls `posthog.captureException()`, which sends `$exception` events with `$exception_list` (a parsed stack). The `handleError` hook in `src/hooks.client.ts` reports only `kind === 'unknown'` crashes — 404s and `error()` calls are skipped. PostHog also autocaptures unhandled `window` errors and promise rejections that never reach that hook.
 
 `captureError(error)` in `analytics.ts` is the underlying helper — it respects the same opt-in guard as `capture()`. You can call it directly in explicit `catch` blocks when you want to report a caught error:
 
@@ -58,10 +58,10 @@ try {
 
 - Pageviews (every `afterNavigate`)
 - Player events: track play/end, channel play, auto-radio, broadcast join/start/end
-- Unhandled client errors (via `handleError` hook)
+- Unhandled client errors (`handleError` for SvelteKit crashes, plus PostHog exception autocapture)
 - All `capture()` calls are logged to console via `log.debug` even when opted out
 
-Events use `player:*` and `broadcast:*` prefixes. Play start/end reasons are defined as `PlayStartReason` and `PlayEndReason` in `types.ts`. Search [`capture(`](https://github.com/radio4000/r4-sync-tests/search?q=%22capture%28%22+path%3Asrc&type=code) for all call sites.
+Events use `player:*` and `broadcast:*` prefixes. Play start/end reasons are defined as `PlayStartReason` and `PlayEndReason` in `types.ts`. Search [`capture(`](https://github.com/radio4000/r4-svelte/search?q=%22capture%28%22+path%3Asrc&type=code) for all call sites.
 
 ## What is never tracked
 
@@ -70,5 +70,5 @@ Events use `player:*` and `broadcast:*` prefixes. Play start/end reasons are def
 
 ## Code references
 
-- [Analytics module usage](https://github.com/radio4000/r4-sync-tests/search?q=%22%24lib%2Fanalytics%22+path%3Asrc&type=code)
-- [Tracked analytics events (`capture()` call sites)](https://github.com/radio4000/r4-sync-tests/search?q=%22capture%28%22+path%3Asrc&type=code)
+- [Analytics module usage](https://github.com/radio4000/r4-svelte/search?q=%22%24lib%2Fanalytics%22+path%3Asrc&type=code)
+- [Tracked analytics events (`capture()` call sites)](https://github.com/radio4000/r4-svelte/search?q=%22capture%28%22+path%3Asrc&type=code)
