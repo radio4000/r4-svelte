@@ -26,7 +26,7 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 TanStack Query caches responses. TanStack DB stores rows. In app code the boundary is `src/lib/collections/` plus `src/lib/useLiveQuery.svelte.ts`.
 
-Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper fixes Svelte 5 reactivity bugs (`state_unsafe_mutation`), cleans up replaced live query collections, and is the verified path for app behavior. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
+Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper is a near-upstream copy of the svelte-db hook that keeps rows in one `$state.raw` snapshot (so a single change doesn't re-render every row), untracks writes to avoid `state_unsafe_mutation`, and is the verified path for app behavior; its header lists the diffs. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ## contracts we rely on
 
@@ -140,7 +140,7 @@ Caveats learned the hard way:
 
 - `.offset()` is applied locally by d2ts, not forwarded to Supabase (the sync layer always fetches from row 0 with `limit = offset + pageSize`). Don't use it for server-side pagination.
 - For paged views, accumulate `limit = currentPage * pageSize` and `.slice()` locally. The `queryFn` should delta-fetch: look up cached results for the same query shape with a smaller limit and fetch only the new rows. See `channels.ts` `queryFn`.
-- Each dep change in `useLiveQuery` creates a new `createLiveQueryCollection`; our wrapper `cleanup()`s the old one to stop its d2ts pipeline and pending callbacks. Without this, stale collections cause delayed re-renders.
+- Each dep change in `useLiveQuery` builds a new live query collection; the wrapper disposes the old observer and the old collection is garbage-collected after 1ms (`gcTime`), stopping its d2ts pipeline and pending callbacks. Stale collections left running cause delayed re-renders.
 
 ### keepalive pin
 

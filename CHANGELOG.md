@@ -2,6 +2,18 @@
 
 ## October 2026
 
+- #Perf Faster home, channel search, big tracklists, playback from big channels, track deletion, and sign-in for returning users
+- #Queue Search, #tags and @mentions filter the queue, and next/previous stay within the matches
+- #Player Next track plays on a locked screen
+- #Broadcast Broadcasts stay live through short playback pauses
+- #Deck Tapping the mini deck's progress bar opens the full deck; speed has its own icon and always shows its value
+- #Channels Channel mentions show update dates and are grouped by month
+- #Search Links to `?q=` no longer flash the previous search
+- #Map Default map tiles are OpenStreetMap again
+- #UI Native share sheet reopens on Firefox Android
+- #UI /apps recommends Firefox add-ons for background playback
+- #UI Docs use one topic menu on all screens, behind a single button on mobile
+- #Dev Upgraded to SvelteKit 3, TypeScript 7 and Vitest 5
 - #Tracks Clicking a description's @mention filters the current radio, with a separate channel card to visit the mentioned radio
 
 ## September 2026
