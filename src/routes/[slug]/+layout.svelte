@@ -74,7 +74,10 @@
 					.findOne()
 			: null
 	)
-	let channelFromId = $derived(channelByIdQuery.data)
+	// A disabled single-result query yields [] rather than undefined
+	let channelFromId = $derived(
+		Array.isArray(channelByIdQuery.data) ? undefined : channelByIdQuery.data
+	)
 	// `data.channel` comes from the server load. It carries the first render (SSR and
 	// client nav) until the local collection has synced this channel in.
 	let channel = $derived(
