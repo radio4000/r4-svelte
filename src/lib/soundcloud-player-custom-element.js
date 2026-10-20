@@ -44,6 +44,9 @@ class SoundCloudPlayerElement extends HTMLElement {
 	#cachedCurrentTime = 0
 	#lastDuration = NaN
 	#metadataFired = false
+	#hasPlayed = false
+	/** @type {number | null} */
+	#pendingSeek = null
 	/** @type {ReturnType<typeof setInterval> | null} */
 	#progressTimer = null
 
@@ -182,6 +185,9 @@ class SoundCloudPlayerElement extends HTMLElement {
 			this.api.bind(globalThis.SC.Widget.Events.PLAY, () => {
 				log.debug('PLAY event')
 				this.#cachedPaused = false
+				this.#hasPlayed = true
+				if (this.#pendingSeek != null) this.api.seekTo(this.#pendingSeek * 1000)
+				this.#pendingSeek = null
 				this.#startProgressTimer()
 				this.dispatchEvent(new Event('play'))
 				this.dispatchEvent(new Event('playing'))
@@ -270,6 +276,8 @@ class SoundCloudPlayerElement extends HTMLElement {
 		this.#lastDuration = NaN
 		this.#cachedCurrentTime = 0
 		this.#metadataFired = false
+		this.#hasPlayed = false
+		this.#pendingSeek = null
 		this.#stopProgressTimer()
 
 		// Fire durationchange to signal new media
@@ -319,6 +327,11 @@ class SoundCloudPlayerElement extends HTMLElement {
 		if (this.currentTime === val) return
 		// Update cache immediately so media-chrome reads the new value right away.
 		this.#cachedCurrentTime = val
+		// The widget drops seeks before the sound plays; apply on PLAY instead.
+		if (!this.#hasPlayed) {
+			this.#pendingSeek = val
+			return
+		}
 		this.#loadComplete.then(() => {
 			this.api?.seekTo(val * 1000)
 		})

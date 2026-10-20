@@ -2,6 +2,7 @@
 export const LOCAL_STORAGE_KEYS = {
 	appState: 'r5-app-state',
 	appStateQueue: 'r5-app-state-queue',
+	resumePositions: 'r5-resume-positions',
 	trackMeta: 'r5-track-meta',
 	captureEvents: 'r5-capture-events',
 	spamDecisions: 'r5-spam-decisions',
