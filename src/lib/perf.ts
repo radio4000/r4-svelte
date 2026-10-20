@@ -85,7 +85,9 @@ let lcp = 0
 const round = (n: number) => Math.round(n * 10) / 10
 const sum = (xs: Frame[], f: (x: Frame) => number) => xs.reduce((n, x) => n + f(x), 0)
 const measures = () =>
-	(performance.getEntriesByType('measure') as PerformanceMeasure[]).filter((m) => m.name.startsWith(PREFIX))
+	(performance.getEntriesByType('measure') as PerformanceMeasure[]).filter((m) =>
+		m.name.startsWith(PREFIX)
+	)
 
 function describe(el: Element | null | undefined) {
 	const hit = el?.closest('button, a, input, select, textarea, [role], label') ?? el
@@ -102,7 +104,11 @@ function describe(el: Element | null | undefined) {
 function observe(type: string, onEntry: (e: PerformanceEntry) => void, opts = {}) {
 	if (!perfEnabled || typeof PerformanceObserver === 'undefined') return
 	try {
-		new PerformanceObserver((list) => list.getEntries().forEach(onEntry)).observe({type, buffered: true, ...opts})
+		new PerformanceObserver((list) => list.getEntries().forEach(onEntry)).observe({
+			type,
+			buffered: true,
+			...opts
+		})
 	} catch {
 		// unsupported entry type
 	}
@@ -124,7 +130,11 @@ if (perfEnabled) {
 		addEventListener(
 			type,
 			(e) => {
-				inputs.push({at: e.timeStamp, route: location.pathname, target: describe(e.target as Element)})
+				inputs.push({
+					at: e.timeStamp,
+					route: location.pathname,
+					target: describe(e.target as Element)
+				})
 				if (inputs.length > 20) inputs.shift()
 			},
 			{capture: true, passive: true}

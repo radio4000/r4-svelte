@@ -119,7 +119,12 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
  * cached result under this prefix as the head of a bigger page, so two queries that share
  * it must return the same rows in the same order.
  */
-function browseKey(p: Pick<ReturnType<typeof parseChannelParams>, 'trackCountGte' | 'imageNotNull' | 'coordinatesNotNull' | 'sortKey'>) {
+function browseKey(
+	p: Pick<
+		ReturnType<typeof parseChannelParams>,
+		'trackCountGte' | 'imageNotNull' | 'coordinatesNotNull' | 'sortKey'
+	>
+) {
 	const key: (string | number)[] = ['channels']
 	if (p.coordinatesNotNull) key.push('geo')
 	if (p.imageNotNull) key.push('artwork')

@@ -285,7 +285,10 @@
 
 	"src/lib/api.ts": [
 		{"name": "newestFirst(tracks)", "desc": "Tracks sorted by created_at, newest first."},
-		{"name": "checkUser(sessionUser?)", "desc": "Verify auth state, update appState.channels/channel. Pass the session user to skip getUser()."},
+		{
+			"name": "checkUser(sessionUser?)",
+			"desc": "Verify auth state, update appState.channels/channel. Pass the session user to skip getUser()."
+		},
 		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
 		{
 			"name": "setUserInitiatedPlay(deckId, value)",
