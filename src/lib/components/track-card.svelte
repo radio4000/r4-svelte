@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type {Snippet} from 'svelte'
+	import {tick, type Snippet} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {
@@ -28,7 +28,7 @@
 		deckId?: number
 		/** Prebuilt trackId → deck info, hoisted out of the card to avoid iterating
 		 * appState.decks per row. Optional: cards without it fall back to per-card lookup. */
-		deckLookup?: Map<string, {deckId: number; isPlaying: boolean}>
+		deckLookup?: {get(trackId: string): {deckId: number; isPlaying: boolean} | undefined}
 		selected?: boolean
 		onPlay?: (trackId: string) => void
 		showImage?: boolean
@@ -147,7 +147,19 @@
 	}
 
 	let showDeleteDialog = $state(false)
-	let menu = $state<{close: () => void}>()
+	let menu = $state<{close: () => void; open: () => Promise<void>}>()
+	// A list renders thousands of cards and few menus get opened, so each card starts
+	// with a lookalike trigger and mounts the real menu on first press.
+	let menuMounted = $state(false)
+	let articleEl = $state<HTMLElement>()
+
+	async function mountMenu() {
+		menuMounted = true
+		await tick()
+		await menu?.open()
+		// The pressed placeholder is gone; keep focus on the trigger that replaced it
+		articleEl?.querySelector<HTMLElement>('.trackcard-contextBtn')?.focus({preventScroll: true})
+	}
 
 	function handleArtworkClick(event: MouseEvent) {
 		event.preventDefault()
@@ -177,7 +189,7 @@
 	}
 </script>
 
-<article class={{'track-card': true, active, selected: selected && !active}}>
+<article class={{'track-card': true, active, selected: selected && !active}} bind:this={articleEl}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="card"
@@ -237,25 +249,33 @@
 				</p>
 			{/if}
 		</div>
-		<div class="meta">
-			{#if track.slug && track.discogs_url && !appState.embed_mode}
-				<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}
-					><Icon icon="radio-on" size={14} /></a
-				>
-			{/if}
-			{#if showSlug}<small>@{track.slug}</small>{/if}
-		</div>
+		{#if (track.slug && track.discogs_url && !appState.embed_mode) || showSlug}
+			<div class="meta">
+				{#if track.slug && track.discogs_url && !appState.embed_mode}
+					<a href="{permalink}/discogs" class="btn ghost discogs" title={m.track_meta_discogs()}
+						><Icon icon="radio-on" size={14} /></a
+					>
+				{/if}
+				{#if showSlug}<small>@{track.slug}</small>{/if}
+			</div>
+		{/if}
 	</div>
-	{#if showMenu}
+	{#if showMenu && !menuMounted}
+		<!-- Stands in for the menu until first tap; same dots and label, with a margin for .popover-menu's padding -->
+		<button
+			type="button"
+			class="ghost trackcard-contextBtn menu-dots menu-placeholder"
+			aria-label={m.common_more()}
+			onclick={mountMenu}
+		></button>
+	{:else if showMenu}
 		<PopoverMenu
 			bind:this={menu}
-			btnClass="ghost trackcard-contextBtn"
+			btnClass="ghost trackcard-contextBtn menu-dots"
+			label={m.common_more()}
 			align={menuAlign}
 			valign={menuValign ?? 'top'}
 		>
-			{#snippet trigger()}
-				<Icon icon="options-horizontal" />
-			{/snippet}
 			<menu class="nav-vertical">
 				<button
 					type="button"
@@ -548,7 +568,23 @@
 		}
 
 		:global(.popover-menu) {
+			position: relative;
 			padding: 0.2em;
+		}
+	}
+
+	.menu-placeholder {
+		margin: 0.2em;
+	}
+
+	/* The ⋯ icon in CSS: one element per row, and the real trigger lives in PopoverMenu */
+	article :global(.menu-dots) {
+		&::before {
+			content: '';
+			width: 18px;
+			height: 18px;
+			background: currentColor;
+			mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18.006 11.994L18.006 12.006M12.006 11.994L12.006 12.006M6.006 11.994L6.006 12.006' stroke='black' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
 		}
 	}
 

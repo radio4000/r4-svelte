@@ -55,6 +55,7 @@ export default ts.config(
 	{
 		ignores: [
 			'build/',
+			'.claude/',
 			'.svelte-kit/',
 			'.wrangler/',
 			'dist/',

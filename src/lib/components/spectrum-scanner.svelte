@@ -45,7 +45,9 @@
 	// GSAP timeline below can animate the old one out before swapping the art
 	// and card underneath it and animating the new one in, instead of the DOM
 	// just snapping to the new channel the instant `index` changes.
-	let displayed = $state(/** @type {typeof channel} */ (null))
+	// Raw: a deep $state would proxy the channel, so `next === displayed` below never
+	// holds and every rerun replays the slide on the same channel.
+	let displayed = $state.raw(/** @type {typeof channel} */ (null))
 	let heroArt = $state(/** @type {HTMLElement | undefined} */ (undefined))
 	let heroCard = $state(/** @type {HTMLElement | undefined} */ (undefined))
 	/** @type {gsap.core.Timeline | null} */

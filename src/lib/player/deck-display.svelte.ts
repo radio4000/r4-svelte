@@ -7,7 +7,7 @@
 
 import {eq} from '@tanstack/svelte-db'
 import {appState} from '#lib/app-state.svelte.js'
-import {tracksCollection} from '#lib/collections/tracks.js'
+import {tracksCollection, watchTracks} from '#lib/collections/tracks.js'
 import {channelsCollection} from '#lib/collections/channels.js'
 import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
@@ -37,16 +37,19 @@ export interface DeckDisplay {
 export function createDeckDisplay(deckId: number): DeckDisplay {
 	const deck = $derived(appState.decks[deckId])
 
-	const trackQuery = useLiveQuery((q) =>
-		q.from({t: tracksCollection}).where(({t}) => eq(t.id, deck?.playlist_track ?? ''))
-	)
+	// Each query below is skipped (null) until its deck field is set: two displays per
+	// deck (player + compact bar) built twelve pipelines on every first play, most of
+	// them filtering on '' for broadcast modes the deck wasn't in.
+	const trackQuery = useLiveQuery((q) => {
+		const id = deck?.playlist_track
+		return id ? q.from({t: tracksCollection}).where(({t}) => eq(t.id, id)) : null
+	})
 	const track = $derived(trackQuery.data?.[0] as Track | undefined)
 
-	const broadcastRowQuery = useLiveQuery((q) =>
-		q
-			.from({b: broadcastsCollection})
-			.where(({b}) => eq(b.channel_id, deck?.listening_to_channel_id ?? ''))
-	)
+	const broadcastRowQuery = useLiveQuery((q) => {
+		const id = deck?.listening_to_channel_id
+		return id ? q.from({b: broadcastsCollection}).where(({b}) => eq(b.channel_id, id)) : null
+	})
 	const listeningBroadcastDeck = $derived.by<BroadcastDeckState | undefined>(() => {
 		if (!deck?.listening_to_channel_id) return undefined
 		const trackId = deck?.playlist_track
@@ -55,9 +58,10 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 		return (trackId && states.find((s) => s?.track_id === trackId)) || states[0]
 	})
 
-	const broadcastTrackQuery = useLiveQuery((q) =>
-		q.from({t: tracksCollection}).where(({t}) => eq(t.id, listeningBroadcastDeck?.track_id ?? ''))
-	)
+	const broadcastTrackQuery = useLiveQuery((q) => {
+		const id = listeningBroadcastDeck?.track_id
+		return id ? q.from({t: tracksCollection}).where(({t}) => eq(t.id, id)) : null
+	})
 	const broadcastTrack = $derived.by(() => {
 		const state = listeningBroadcastDeck
 		if (!state?.track_id) return undefined
@@ -66,14 +70,16 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 		return unpackEphemeralTrack(state.track_id, state)
 	})
 
-	const channelQuery = useLiveQuery((q) =>
-		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.slug, deck?.playlist_slug ?? ''))
-	)
+	const channelQuery = useLiveQuery((q) => {
+		const slug = deck?.playlist_slug
+		return slug ? q.from({ch: channelsCollection}).where(({ch}) => eq(ch.slug, slug)) : null
+	})
 	const channel = $derived(channelQuery.data?.[0] as Channel | undefined)
 
-	const broadcasterChannelQuery = useLiveQuery((q) =>
-		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.id, deck?.listening_to_channel_id ?? ''))
-	)
+	const broadcasterChannelQuery = useLiveQuery((q) => {
+		const id = deck?.listening_to_channel_id
+		return id ? q.from({ch: channelsCollection}).where(({ch}) => eq(ch.id, id)) : null
+	})
 	const broadcasterChannel = $derived(broadcasterChannelQuery.data?.[0] as Channel | undefined)
 
 	// Slug of the channel this deck is listening to; prefer the loaded channel
@@ -85,9 +91,10 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 	)
 
 	// Slug of the channel this deck is broadcasting.
-	const broadcastChannelQuery = useLiveQuery((q) =>
-		q.from({ch: channelsCollection}).where(({ch}) => eq(ch.id, deck?.broadcasting_channel_id ?? ''))
-	)
+	const broadcastChannelQuery = useLiveQuery((q) => {
+		const id = deck?.broadcasting_channel_id
+		return id ? q.from({ch: channelsCollection}).where(({ch}) => eq(ch.id, id)) : null
+	})
 	const broadcastSlug = $derived(
 		deck?.broadcasting_channel_id
 			? (broadcastChannelQuery.data?.[0]?.slug as string | undefined)
@@ -114,12 +121,16 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 
 	// Whether the deck's current channel has enough duration data for auto-radio.
 	// Gates the join button in the deck transports (compact bar + player).
-	const channelTracksQuery = useLiveQuery((q) =>
-		q.from({t: tracksCollection}).where(({t}) => eq(t.slug, deck?.playlist_slug ?? ''))
-	)
-	const autoRadioAvailable = $derived(
-		Boolean(deck?.playlist_slug) && hasAutoRadioCoverage((channelTracksQuery.data ?? []) as Track[])
-	)
+	// A scan of loaded rows, not a slug live query: that built a pipeline and copied the
+	// whole channel per deck view on every play. The keep-alive pin loads the channel.
+	const autoRadioAvailable = $derived.by(() => {
+		const slug = deck?.playlist_slug
+		if (!slug) return false
+		watchTracks()
+		const channelTracks: Track[] = []
+		for (const t of tracksCollection.state.values()) if (t.slug === slug) channelTracks.push(t)
+		return hasAutoRadioCoverage(channelTracks)
+	})
 
 	let lastTrack = $state<Track | undefined>(undefined)
 	let lastChannel = $state<Channel | undefined>(undefined)

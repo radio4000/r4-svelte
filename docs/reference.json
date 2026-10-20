@@ -284,12 +284,8 @@
 	],
 
 	"src/lib/api.ts": [
-		{
-			"name": "sortByDate(field, direction?)",
-			"desc": "Sort comparator for created_at-style fields."
-		},
-		{"name": "sortByNewest", "desc": "sortByDate('created_at', 'desc') preset."},
-		{"name": "checkUser()", "desc": "Verify auth state, update appState.channels."},
+		{"name": "newestFirst(tracks)", "desc": "Tracks sorted by created_at, newest first."},
+		{"name": "checkUser(sessionUser?)", "desc": "Verify auth state, update appState.channels/channel. Pass the session user to skip getUser()."},
 		{"name": "getUserInitiatedPlay(deckId)", "desc": "Get user-initiated play flag for a deck."},
 		{
 			"name": "setUserInitiatedPlay(deckId, value)",
@@ -732,6 +728,20 @@
 			"desc": "Adze log store (cache: true, level: debug). Access logs via store.logs."
 		}
 	],
+	"src/lib/perf.ts": [
+		{
+			"name": "span",
+			"desc": "span('area:what', detail?) starts a User Timing span; returns end(extra?) → ms."
+		},
+		{
+			"name": "perfReport",
+			"desc": "Spans by name, slow interactions, long frames, paints, heap. Exposed as r5.perf."
+		},
+		{
+			"name": "perfReset",
+			"desc": "Clear spans, frames and slow interactions."
+		}
+	],
 
 	"src/lib/components": [
 		{"name": "Player", "desc": "YouTube/SoundCloud player with controls, volume, autoplay."},
@@ -1030,6 +1040,14 @@
 		{"name": "r5.queue", "desc": "Queue helpers."},
 		{"name": "r5.api", "desc": "API functions."},
 
+		{
+			"name": "r5.perf(since?)",
+			"desc": "Slow interactions (.slow), spans, long frames, FCP/LCP, heap. See docs/performance.md."
+		},
+		{
+			"name": "r5.perfReset()",
+			"desc": "Clear perf spans and long frames."
+		},
 		{
 			"name": "example: [...r5.tracksCollection.state.values()].filter(t => t.slug === 'x')",
 			"desc": "Example collection query."

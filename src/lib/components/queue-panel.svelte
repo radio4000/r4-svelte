@@ -3,8 +3,7 @@
 	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
 	import {channelsCollection} from '#lib/collections/channels.js'
-	import {tracksCollection} from '#lib/collections/tracks.js'
-	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {tracksCollection, watchTracks} from '#lib/collections/tracks.js'
 	import {clearQueue, clearAllQueue} from '#lib/api.js'
 	import SearchInput from './search-input.svelte'
 	import FilterChips from './filter-chips.svelte'
@@ -77,11 +76,10 @@
 
 	// Resolve tracks by id in playlist order. An inArray() live query would rebuild a
 	// d2ts pipeline (~1.2s block) over a large playlist; these Map lookups are O(1).
-	// Reading tracksLive.data re-runs this on any track change, so edits and
-	// late-loading rows appear. See docs/tanstack.md.
-	const tracksLive = useLiveQuery(tracksCollection)
+	// watchTracks() re-runs this on any track change, so edits and late-loading rows
+	// appear. See docs/tanstack.md.
 	let queueTracks = $derived.by(() => {
-		void tracksLive.data.length
+		watchTracks()
 		const state = tracksCollection.state
 		return trackIds.map((id) => state.get(id)).filter((t) => !!t)
 	})
@@ -150,30 +148,33 @@
 	{/if}
 
 	<main class="scroll">
-		{#if filteredQueueTracks.length > 0}
-			<Tracklist
-				bind:this={tracklist}
-				tracks={filteredQueueTracks}
-				{deckId}
-				virtual={true}
-				{selectedTrackId}
-				{canEditTrack}
-				onSelectTrack={(trackId) => (selectedTrackId = trackId)}
-				onTagClick={toggleTag}
-				onMentionClick={toggleMention}
-				selectedTags={filter.tags}
-			/>
-		{:else if queueTracks.length === 0}
-			<div class="empty-state">
-				<p><small>{m.queue_no_tracks()}</small></p>
-			</div>
-		{:else}
-			<div class="empty-state">
-				<p>{m.queue_empty()}</p>
-				{#if filter.search}
-					<p><small>{m.search_no_results()} "{filter.search}"</small></p>
-				{/if}
-			</div>
+		<!-- A compact deck is zero-width: its rows mount when it opens, not on every first play. -->
+		{#if !deck?.compact}
+			{#if filteredQueueTracks.length > 0}
+				<Tracklist
+					bind:this={tracklist}
+					tracks={filteredQueueTracks}
+					{deckId}
+					virtual={true}
+					{selectedTrackId}
+					{canEditTrack}
+					onSelectTrack={(trackId) => (selectedTrackId = trackId)}
+					onTagClick={toggleTag}
+					onMentionClick={toggleMention}
+					selectedTags={filter.tags}
+				/>
+			{:else if queueTracks.length === 0}
+				<div class="empty-state">
+					<p><small>{m.queue_no_tracks()}</small></p>
+				</div>
+			{:else}
+				<div class="empty-state">
+					<p>{m.queue_empty()}</p>
+					{#if filter.search}
+						<p><small>{m.search_no_results()} "{filter.search}"</small></p>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 	</main>
 </div>

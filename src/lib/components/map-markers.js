@@ -20,7 +20,7 @@ import {channelsCollection} from '#lib/collections/channels.js'
  */
 
 export function getLatestChannel(channel) {
-	return channelsCollection.state.get(channel.id) || channel
+	return channelsCollection.get(channel.id) || channel
 }
 
 /** @param {any} channel @param {ChannelActivity} activity */

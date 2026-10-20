@@ -29,6 +29,7 @@
 	// import {setChannelsCtx} from '#lib/contexts.js'
 	import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
 	import {logger} from '#lib/logger.js'
+	import {span} from '#lib/perf.js'
 	import * as m from '#lib/paraglide/messages.js'
 	import {getLocale, setLocale, locales, isLocale} from '#lib/paraglide/runtime.js'
 	import {QueryClientProvider} from '@tanstack/svelte-query'
@@ -150,8 +151,12 @@
 
 	const scrollPositions = new SvelteMap()
 
+	/** @type {((extra?: Record<string, unknown>) => number) | null} */
+	let endNavSpan = null
+
 	beforeNavigate(({from, to, cancel, shallow}) => {
 		if (shallow) return
+		endNavSpan = span('nav', {from: from?.route?.id, to: to?.route?.id})
 		if (from?.url) {
 			const key = from.url.pathname + from.url.search
 			scrollPositions.set(key, document.querySelector('.scroll-area')?.scrollTop ?? 0)
@@ -164,6 +169,8 @@
 
 	afterNavigate(({type, to, shallow}) => {
 		if (shallow) return
+		endNavSpan?.({type})
+		endNavSpan = null
 		const scrollArea = document.querySelector('.scroll-area')
 		if (!scrollArea) return
 		if (type === 'popstate' && to?.url) {
@@ -327,11 +334,15 @@
 			{#each allDeckIds as deckId (deckId)}
 				<!-- Two pins per deck — whole queue and current track — that never re-hash
 				     together, so one always keeps the playing row resident while the other
-				     swaps. The snapshot read (.get) is deliberate — see queuePinTargets(). -->
-				{@const queuePin = queuePinTargets(appState.decks[deckId], (id) =>
-					tracksCollection.get(id)
-				)}
-				<TracksKeepalive slugs={queuePin.slugs} ids={queuePin.ids} />
+				     swaps. The snapshot read (.get) is deliberate — see queuePinTargets().
+				     The queue pin waits for the restored rows: read before they land, it would
+				     pin every queued id instead of the channel. -->
+				{#await data.deckTracksRestored then}
+					{@const queuePin = queuePinTargets(appState.decks[deckId], (id) =>
+						tracksCollection.get(id)
+					)}
+					<TracksKeepalive slugs={queuePin.slugs} ids={queuePin.ids} />
+				{/await}
 				<TracksKeepalive
 					ids={appState.decks[deckId]?.playlist_track
 						? [appState.decks[deckId].playlist_track]

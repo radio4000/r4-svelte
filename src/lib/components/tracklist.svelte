@@ -6,6 +6,7 @@
 	import {playTrack, setPlaylist} from '#lib/api.js'
 	import {appState} from '#lib/app-state.svelte.js'
 	import {SvelteMap} from 'svelte/reactivity'
+	import {untrack} from 'svelte'
 	import {getLocale} from '#lib/paraglide/runtime.js'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -72,9 +73,9 @@
 	// inside every TrackCard. Rebuilds only when deck state changes (play/pause, track
 	// advance), not per row. Mirrors the per-card semantics in track-card.svelte:
 	// with deckId set, only that deck counts; otherwise the first deck holding a track wins.
-	/** @type {Map<string, {deckId: number, isPlaying: boolean}>} */
-	const deckLookup = $derived.by(() => {
-		/** @type {Map<string, {deckId: number, isPlaying: boolean}>} */
+	/** @typedef {{deckId: number, isPlaying: boolean}} DeckInfo */
+	const deckMap = $derived.by(() => {
+		/** @type {Map<string, DeckInfo>} */
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const map = new Map()
 		if (deckId != null) {
@@ -88,6 +89,32 @@
 			if (pt && !map.has(pt)) map.set(pt, {deckId: Number(id), isPlaying: Boolean(deck.is_playing)})
 		}
 		return map
+	})
+
+	// Cards read deckInfos.get(track.id), which tracks only that key, so a play or pause
+	// re-runs the cards whose entry changed instead of every row (~2.6k on a big channel).
+	// Every row gets a key up front: get() on a missing key, and any set(), bump one
+	// map-wide version signal that would otherwise re-run every keyless row.
+	// Pre-effect, so keys exist before the cards render.
+	/** @type {SvelteMap<string, DeckInfo | undefined>} */
+	const deckInfos = new SvelteMap()
+	/** @type {Map<string, DeckInfo>} */
+	let shownDeckMap = new Map()
+	$effect.pre(() => {
+		const next = deckMap
+		const rows = tracks
+		untrack(() => {
+			for (const track of rows)
+				if (!deckInfos.has(track.id)) deckInfos.set(track.id, next.get(track.id))
+			for (const id of shownDeckMap.keys()) if (!next.has(id)) deckInfos.set(id, undefined)
+			// deckMap rebuilds its entries, so compare fields: set() notifies on any new object.
+			for (const [id, info] of next) {
+				const prev = deckInfos.get(id)
+				if (prev?.deckId !== info.deckId || prev?.isPlaying !== info.isPlaying)
+					deckInfos.set(id, info)
+			}
+		})
+		shownDeckMap = next
 	})
 
 	const playFromList = (trackId) => {
@@ -212,7 +239,7 @@
 		{track}
 		{index}
 		{deckId}
-		{deckLookup}
+		deckLookup={deckInfos}
 		selected={selectedTrackId === track.id}
 		onPlay={playContext ? playFromList : undefined}
 		canEdit={canEditItem(track)}
@@ -281,7 +308,10 @@
 		>
 			{#each groupedTracks as [year, months] (year)}
 				{#each months as [month, monthTracks] (month)}
-					<section class="month">
+					<section
+						class="month"
+						style:contain-intrinsic-size="auto {monthTracks.length * 66 + 40}px"
+					>
 						<h3 class="caps">{month} {year}</h3>
 						<ul class="list tracks">
 							{#each monthTracks as item (item.track.id)}
@@ -339,7 +369,16 @@
 <style>
 	/* Skip render/layout work for off-screen rows in the non-virtual lists (~1500 rows).
 	   `auto <height>` uses the remembered size once measured, so the scrollbar stays stable;
-	   the fallback matches a real row height. scrollIntoView/keyboard nav still reveal rows. */
+	   the fallback matches a real row height. scrollIntoView/keyboard nav still reveal rows.
+	   Months skip too (fallback height set inline): Chrome tracks every content-visibility
+	   box like an IntersectionObserver target, and while rows are first revealed it rechecks
+	   all of them each frame. Skipped months hide their rows from that, so the first scroll
+	   down a 2.6k-track list stops dropping frames. It also spares the ~2.6k row boxes a
+	   restyle whenever the whole page goes inert for a modal (~40ms → ~3ms). */
+	.month {
+		content-visibility: auto;
+	}
+
 	.cv-row {
 		content-visibility: auto;
 		contain-intrinsic-size: auto 58px;

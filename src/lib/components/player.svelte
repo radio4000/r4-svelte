@@ -38,8 +38,7 @@
 	import {shortcutHint} from '#lib/keyboard.js'
 	import {logger} from '#lib/logger.js'
 	import {parseUrl} from 'media-now/parse-url'
-	import {tracksCollection, updateTrack} from '#lib/collections/tracks.js'
-	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
+	import {tracksCollection, updateTrack, watchTracks} from '#lib/collections/tracks.js'
 	import {isDbId, extractHashtags, HASH_PREFIX_REGEX, isMobileViewport} from '#lib/utils.js'
 	import PlayerProgress from '#lib/components/player-progress.svelte'
 	import Tag from '#lib/components/tag.svelte'
@@ -142,12 +141,10 @@
 	)
 
 	// Track list for drift detection. Resolve each id via O(1) Map lookups on the
-	// collection; a direct-collection live query is the reactive bridge (reading
-	// its `data` re-runs this on any track change) without building a d2ts inArray
-	// pipeline over the whole playlist. See docs/tanstack.md.
-	const tracksLive = useLiveQuery(tracksCollection)
+	// collection; watchTracks() re-runs this on any track change without building a
+	// d2ts inArray pipeline over the whole playlist. See docs/tanstack.md.
 	const syncAutoTracks = $derived.by(() => {
-		void tracksLive.data.length
+		watchTracks()
 		const state = tracksCollection.state
 		return toAutoTracks(
 			/** @type {import('#lib/types.js').Track[]} */

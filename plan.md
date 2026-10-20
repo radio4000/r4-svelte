@@ -22,6 +22,13 @@ See CHANGELOG.md for user-facing history.
 
 - `userHasPlayed` not reset between playlists (`player.svelte`) — flag carries over when switching channels, may cause unexpected autoplay. Needs verification and user testing.
 
+## Performance leads
+
+Measure first: `bun run bench --ab <base>`, see docs/performance.md.
+
+- IndexedDB persistence (`collection-persistence.ts`, `query-cache-persistence.ts`) has been off for months after data-flow bugs. TanStack DB has moved on since; re-check its current persistence patterns before re-enabling. Every session starts cold until then.
+- Channel search starts fetching only after the page mounts. A `+page.js` load returning the promise would overlap navigation and start on hover preload.
+
 ## One day
 
 - Test RTL support

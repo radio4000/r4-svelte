@@ -79,7 +79,9 @@ export default defineConfig({
 	},
 	build: {
 		target: 'esnext',
-		reportCompressedSize: false
+		reportCompressedSize: false,
+		// bun run bench --build sets this so traces map back to source
+		sourcemap: Boolean(process.env.R4_SOURCEMAP)
 	},
 	define: {
 		__GIT_INFO__: JSON.stringify(getGitInfo()),

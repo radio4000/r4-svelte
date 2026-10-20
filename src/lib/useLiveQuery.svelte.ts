@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Instrumented copy of @tanstack/svelte-db useLiveQuery
 //
-// it adds measurement with performance.now()
+// it adds `livequery:*` perf spans (#lib/perf.js)
 // it fixes some bugs around svelte mutated $state during render
 // it improves perf by avoiding some extra loops
 import {untrack} from 'svelte'
@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/db'
 import type {UseLiveQueryReturn, UseLiveQueryReturnWithCollection} from '@tanstack/svelte-db'
 import {logger} from '#lib/logger.js'
+import {span} from '#lib/perf.js'
 
 const log = logger.ns('livequery').seal()
 
@@ -151,13 +152,15 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	})
 
-	let internalData: any[] = $state([])
+	// Raw, not deep: deep $state re-proxies every row on each sync, so one delete in a
+	// 2.6k-track channel hands every TrackCard a "new" track and re-renders them all.
+	let internalData: any[] = $state.raw([])
 	let status = $state('disabled')
 
 	const syncDataFromCollection = (currentCollection) => {
-		untrack(() => {
-			internalData = [...currentCollection.values()]
-		})
+		const end = span('livequery:copy')
+		const rows = untrack(() => (internalData = [...currentCollection.values()]))
+		end({id: currentCollection.id, rows: rows.length})
 	}
 
 	let currentUnsubscribe: (() => void) | null = null
@@ -186,8 +189,10 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		// Initial sync
 		syncDataFromCollection(currentCollection)
 
+		const endReady = span('livequery:ready', {id: currentCollection.id})
 		currentCollection.onFirstReady(() => {
 			syncDataFromCollection(currentCollection)
+			endReady({rows: currentCollection.size})
 			status = currentCollection.status
 		})
 

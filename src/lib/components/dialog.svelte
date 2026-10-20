@@ -1,4 +1,5 @@
 <script>
+	import {tick, untrack} from 'svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -6,6 +7,8 @@
 
 	let dialog = $state()
 	let mousedownTarget = $state()
+	// Closed dialogs render nothing until first opened, which keeps them off page load
+	let hasBeenOpened = $state(false)
 
 	$effect(() => {
 		if (showModal) {
@@ -14,7 +17,10 @@
 			if (document.fullscreenElement && !document.fullscreenElement.contains(dialog)) {
 				document.exitFullscreen()
 			}
-			dialog.showModal()
+			if (untrack(() => hasBeenOpened)) return dialog.showModal()
+			hasBeenOpened = true
+			// Render the content first so showModal() can focus [autofocus] inside it
+			tick().then(() => showModal && dialog.showModal())
 		} else {
 			dialog.close()
 		}
@@ -29,26 +35,28 @@
 		if (e.target === dialog && mousedownTarget === dialog) dialog.close()
 	}}
 >
-	<div class="dialog-panel">
-		<header class="dialog-header">
-			{@render header?.()}
-			<button
-				onclick={() => dialog.close()}
-				title={m.modal_close_label()}
-				aria-label={m.modal_close_label()}
-			>
-				<Icon icon="close" />
-			</button>
-		</header>
-		<section class="dialog-body">
-			{@render children?.()}
-		</section>
-		{#if footer}
-			<footer class="dialog-footer">
-				{@render footer()}
-			</footer>
-		{/if}
-	</div>
+	{#if hasBeenOpened}
+		<div class="dialog-panel">
+			<header class="dialog-header">
+				{@render header?.()}
+				<button
+					onclick={() => dialog.close()}
+					title={m.modal_close_label()}
+					aria-label={m.modal_close_label()}
+				>
+					<Icon icon="close" />
+				</button>
+			</header>
+			<section class="dialog-body">
+				{@render children?.()}
+			</section>
+			{#if footer}
+				<footer class="dialog-footer">
+					{@render footer()}
+				</footer>
+			{/if}
+		</div>
+	{/if}
 </dialog>
 
 <style>

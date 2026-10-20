@@ -10,11 +10,7 @@
 	import {joinBroadcast} from '#lib/broadcast.js'
 	import {appState, canEditChannel, isLocalChannel} from '#lib/app-state.svelte.js'
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
-	import {
-		tracksCollection,
-		checkTracksFreshness,
-		ensureTracksLoaded
-	} from '#lib/collections/tracks.js'
+	import {tracksCollection, checkTracksFreshness} from '#lib/collections/tracks.js'
 	import {channelsCollection} from '#lib/collections/channels.js'
 	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 	import {shufflePlayChannel, playChannelInNewDeck, toggleChannelPlay} from '#lib/api.js'
@@ -148,14 +144,12 @@
 	)
 	let isChannelPlaying = $derived(Boolean(channelDeck?.is_playing))
 	let playLoading = $state(false)
-	let userChannelSlug = $derived(appState.channel?.slug ?? '')
 	let playLabel = $derived(isChannelPlaying ? m.player_tooltip_pause() : m.player_tooltip_play())
 	let shuffleLabel = $derived(m.player_tooltip_shuffle())
-	const listeningTrackQuery = useLiveQuery((q) =>
-		q
-			.from({t: tracksCollection})
-			.where(({t}) => eq(t.id, channelListeningDeck?.playlist_track ?? ''))
-	)
+	const listeningTrackQuery = useLiveQuery((q) => {
+		const id = channelListeningDeck?.playlist_track
+		return id ? q.from({t: tracksCollection}).where(({t}) => eq(t.id, id)) : null
+	})
 	let listeningTrack = $derived(listeningTrackQuery.data?.[0])
 
 	// --- Effects ---
@@ -182,12 +176,6 @@
 	$effect(() => {
 		if (slug) {
 			checkTracksFreshness(slug)
-		}
-	})
-
-	$effect(() => {
-		if (userChannelSlug) {
-			void ensureTracksLoaded(userChannelSlug)
 		}
 	})
 

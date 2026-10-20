@@ -17,7 +17,7 @@
 		shuffleArray,
 		shuffleSeed
 	} from '#lib/utils.js'
-	import {loadDeckView, playTrack, sortByNewest, toggleChannelPlay} from '#lib/api.js'
+	import {loadDeckView, newestFirst, playTrack, toggleChannelPlay} from '#lib/api.js'
 	import {isBroadcasting} from '#lib/deck.js'
 	import {authStatus} from '#lib/app-state.svelte.js'
 	import {appPresence} from '#lib/presence.svelte.js'
@@ -149,12 +149,12 @@
 		const slug = userChannel.slug
 		await ensureTracksLoaded(slug)
 		const tracks = /** @type {import('#lib/types.js').Track[]} */ (
-			[...tracksCollection.state.values()]
-				.filter(
+			newestFirst(
+				[...tracksCollection.state.values()].filter(
 					(t) =>
 						/** @type {any} */ (t).slug === slug && /** @type {any} */ (t.tags ?? []).includes(tag)
 				)
-				.sort(sortByNewest)
+			)
 		)
 		if (!tracks.length) return
 		loadDeckView(

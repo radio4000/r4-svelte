@@ -28,7 +28,7 @@ Users add/remove OAuth providers from `/account`. Requires "Enable Manual Linkin
 
 ## Components
 
-- `auth-listener.svelte` — in layout.svelte (always active), subscribes to Supabase auth changes and updates appState
+- `auth-listener.svelte` — in layout.svelte (always active), subscribes to Supabase auth changes and updates appState. On `INITIAL_SESSION` and a new `SIGNED_IN` it calls `checkUser(session.user)`: one `channels_with_tracks` query joined on `user_channel`, no `getUser()` round trip. Boot trusts the local session; RLS guards writes.
 - `auth-login.svelte` — login form (magic link → OTP, password, OAuth via auth-providers)
 - `auth-signup.svelte` — signup form (magic link → OTP, OAuth via auth-providers)
 - `auth-providers.svelte` — OAuth buttons (Google, Facebook) + email entry point

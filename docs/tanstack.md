@@ -69,18 +69,17 @@ Resolving specific ids (`ids.map((id) => collection.state.get(id))`) is O(1) per
 
 Why: `in` scans the whole value list per row, so `inArray` filters are O(ids × rows) — seconds of main-thread blocking at a few thousand of each. Prefer a filter over a field with few distinct values (`eq(t.slug, slug)`) — one comparison per row. Related: `collection.state` is a getter that rebuilds a snapshot Map on every access — in loops, hoist it or use `collection.get(id)`, the direct O(1) lookup.
 
-Keep the Map lookups, but make them reactive by reading a **direct-collection** query as a trigger:
+Keep the Map lookups, but make them reactive with a trigger. For tracks, call `watchTracks()` (`collections/tracks.ts`):
 
 ```js
-const tracksLive = useLiveQuery(tracksCollection) // a collection, not a (q) => ... callback → no d2ts pipeline
 let queueTracks = $derived.by(() => {
-	void tracksLive.data.length // re-runs on any insert/update/delete
+	watchTracks() // re-runs on any insert/update/delete
 	const state = tracksCollection.state
 	return ids.map((id) => state.get(id)).filter(Boolean)
 })
 ```
 
-`useLiveQuery(collection)` returns the collection bridged to Svelte via `subscribeChanges` — cheap, no pipeline. Its `data` is reassigned on every change, so reading it (even just `.length`) re-runs the derived, including on in-place edits. Used in `queue-panel.svelte`, `player.svelte` (`syncAutoTracks`), and `channel-activity.svelte.ts`.
+`watchTracks` is one `subscribeChanges` shared by every reader (Svelte's `createSubscriber`), held while any is mounted. Used in `queue-panel.svelte`, `player.svelte` (`syncAutoTracks`) and `deck-display.svelte.ts` (auto-radio coverage). A direct-collection query, `useLiveQuery(collection)`, works the same way without a pipeline, but copies every row into each reader's state on every change; `channel-activity.svelte.ts` still uses it.
 
 For an app-lifetime singleton outside a component (e.g. `channel-activity.svelte.ts`), create the direct-collection queries inside `$effect.root` so their internal effects have an owner — same pattern as the persistence effects in `app-state.svelte.ts`.
 

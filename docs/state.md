@@ -25,9 +25,10 @@ IndexedDB persistence is currently **disabled**: `collection-persistence.ts` (`c
 On app boot (`+layout.js`):
 
 1. `collectionsHydrated` / `cacheReady` — currently no-ops (see above)
-2. `preload()` — seed channels (embed/local modes), validate broadcast listening state, restore tracks for saved deck queues via `ensureTracksLoaded()`, expose `window.r5` debug handles
-3. `useLiveQuery` in routes/components fetches on demand, populating collections
-4. `checkTracksFreshness()` validates per-channel tracks against remote (see `tracks.ts`); refetches in the background if outdated
+2. `preload()` — seed channels (embed/local modes), validate broadcast listening state, expose `window.r5` debug handles. The app renders once this resolves.
+3. `deckTracksRestored` — after first render, `ensureTracksLoaded()` for each saved deck's channel. Nothing waits on it except the deck's queue keepalive; the current track's keepalive fetches that one row by id, so the deck shows it first. `playTrack()` waits for the channel if asked to play an id that isn't loaded yet.
+4. `useLiveQuery` in routes/components fetches on demand, populating collections
+5. `checkTracksFreshness()` validates per-channel tracks against remote (see `tracks.ts`); refetches in the background if outdated
 
 For collections, queries, mutations, and live queries, see [tanstack.md](tanstack.md).
 

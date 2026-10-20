@@ -1,5 +1,4 @@
 <script>
-	import DateFormal from '#lib/components/date-formal.svelte'
 	import {repoCommitUrl} from '#lib/repo.js'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -8,6 +7,15 @@
 
 	/** @type {{link?: boolean}} */
 	let {link = true} = $props()
+
+	// Plain Date getters, not Intl: this shows on the loading screen, and the
+	// first Intl formatter costs ~50ms of a cold load at 4x CPU.
+	const pad = (/** @type {number} */ n) => String(n).padStart(2, '0')
+	const commitLabel = $derived.by(() => {
+		const d = new Date(commitDate)
+		if (Number.isNaN(d.getTime())) return ''
+		return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+	})
 
 	const commitHref = $derived(repoCommitUrl(sha))
 </script>
@@ -19,8 +27,8 @@
 		{:else}
 			<span>{m.app_version({sha})}</span>
 		{/if}
-		{#if commitDate}
-			<DateFormal date={commitDate} />
+		{#if commitLabel}
+			<time datetime={commitDate}>{commitLabel}</time>
 		{/if}
 	</span>
 {/if}

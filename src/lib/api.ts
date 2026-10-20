@@ -96,17 +96,14 @@ function applyToListeningGroup(deck: Deck, fn: (d: Deck) => void) {
 	}
 }
 
-/** Sort by a date field. Returns a comparator function. */
-export function sortByDate(field: string, direction: 'asc' | 'desc' = 'desc') {
-	return <T extends object>(a: T, b: T) => {
-		const ta = new Date((a as Record<string, unknown>)[field] as string | number).getTime()
-		const tb = new Date((b as Record<string, unknown>)[field] as string | number).getTime()
-		return direction === 'desc' ? tb - ta : ta - tb
-	}
+/** Tracks by created_at, newest first. Parses each date once rather than per
+ *  comparison, which cost ~50ms per play on a 2.6k-track channel at 4x CPU. */
+export function newestFirst<T extends {created_at: string}>(tracks: T[]): T[] {
+	return tracks
+		.map((track) => ({track, ms: new Date(track.created_at).getTime()}))
+		.sort((a, b) => b.ms - a.ms)
+		.map(({track}) => track)
 }
-
-/** Sort tracks by created_at descending (newest first) */
-export const sortByNewest = sortByDate('created_at', 'desc')
 
 const userInitiatedPlayMap = new Map<number, boolean>()
 
@@ -137,11 +134,18 @@ export type MediaPlayer = HTMLElement & {
 
 /** Find the media player element for a given deck. */
 export function getMediaPlayer(deckId: number): MediaPlayer | null {
-	return (document.querySelector(`[data-deck="${deckId}"] youtube-video`) ||
-		document.querySelector(`[data-deck="${deckId}"] soundcloud-player`) ||
-		document.querySelector(
-			`[data-deck="${deckId}"] audio.native-audio-player`
-		)) as MediaPlayer | null
+	// Tag and class lookups are live collections the browser keeps; a [data-deck]
+	// selector walks every node instead (~35k on a big tracklist page), on every poll.
+	const id = String(deckId)
+	const inDeck = (els: HTMLCollectionOf<Element>) => {
+		for (const el of els) {
+			if ((el.closest('[data-deck]') as HTMLElement | null)?.dataset.deck === id) return el
+		}
+		return null
+	}
+	return (inDeck(document.getElementsByTagName('youtube-video')) ||
+		inDeck(document.getElementsByTagName('soundcloud-player')) ||
+		inDeck(document.getElementsByClassName('native-audio-player'))) as MediaPlayer | null
 }
 
 /** Wait until a media element exists for a deck. Polls with setTimeout, not
@@ -160,12 +164,16 @@ async function waitForMediaPlayer(deckId: number, timeoutMs = 3000): Promise<Med
 // --- Auth ---
 
 /** Verify auth state and refresh appState.channels/channel from the logged-in user's channels.
- *  Call on boot and after sign-in/out. */
-export async function checkUser() {
+ *  Call on boot and after sign-in/out. Pass the session's user to skip the getUser() round trip. */
+export async function checkUser(sessionUser?: {id: string}) {
 	try {
 		log.debug('checkUser')
-		const {data: userData, error: userError} = await sdk.supabase.auth.getUser()
-		if (userError || !userData?.user) {
+		let user = sessionUser
+		if (!user) {
+			const {data: userData, error: userError} = await sdk.supabase.auth.getUser()
+			user = userError ? undefined : (userData?.user ?? undefined)
+		}
+		if (!user) {
 			appState.channels = []
 			appState.channel = undefined
 			for (const deck of Object.values(appState.decks)) {
@@ -173,21 +181,20 @@ export async function checkUser() {
 			}
 			return null
 		}
-		const user = userData.user
 
-		const {data: channels, error: channelsError} = await sdk.channels.readUserChannels()
+		// Same query as sdk.channels.readUserChannels(), but on channels_with_tracks so the
+		// first channel comes with track_count and needs no follow-up readChannel().
+		const {data, error: channelsError} = await sdk.supabase
+			.from('channels_with_tracks')
+			.select('*, user_channel!inner(user_id)')
+			.eq('user_channel.user_id', user.id)
+			.order('updated_at', {ascending: true})
 		if (channelsError) throw channelsError
+		const channels = (data ?? []).map(({user_channel: _, ...c}) => c) as Channel[]
 
 		// Store IDs - collection handles fetching when needed
 		appState.channels = channels.map((c) => c.id)
-		// readUserChannels() queries the base `channels` table which lacks track_count.
-		// Fetch from channels_with_tracks view to get the full object.
-		if (channels[0]) {
-			const {data: fullChannel} = await sdk.channels.readChannel(channels[0].slug)
-			appState.channel = (fullChannel ?? channels[0]) as Channel | undefined
-		} else {
-			appState.channel = undefined
-		}
+		appState.channel = channels[0]
 
 		return user
 	} catch (err) {
@@ -230,7 +237,12 @@ export async function playTrack(
 		deck.auto_radio_rotation_start = undefined
 	}
 
-	const track = tracksCollection.get(id)
+	let track = tracksCollection.get(id)
+	// After a reload the deck's channel loads behind the first render; next/prev can beat it
+	if (!track && deck.playlist_slug) {
+		await ensureTracksLoaded(deck.playlist_slug).catch(() => {})
+		track = tracksCollection.get(id)
+	}
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
 		deck.playlist_track = undefined
@@ -307,9 +319,9 @@ export async function playTrack(
 	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id))) {
 		// Build playlist from tracks already loaded in collection (same channel/slug) only when needed.
 		// Channel-page playback usually set this context already; rebuilding it on every click is slow.
-		const channelTracks = [...tracksCollection.state.values()]
-			.filter((t) => t?.slug === track.slug)
-			.sort(sortByNewest)
+		const channelTracks = newestFirst(
+			[...tracksCollection.state.values()].filter((t) => t?.slug === track.slug)
+		)
 		setPlaylist(
 			deckId,
 			channelTracks.map((t) => t.id)
@@ -361,9 +373,7 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 	const d = getDeck(deckId)
 	if (d) clearAutoRadio(d)
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()]
-		.filter((t) => t?.slug === slug)
-		.sort(sortByNewest)
+	const tracks = newestFirst([...tracksCollection.state.values()].filter((t) => t?.slug === slug))
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return

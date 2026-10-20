@@ -2,7 +2,7 @@
 	import {Debounced} from 'runed'
 	import Icon from '#lib/components/icon.svelte'
 	import {afterNavigate} from '$app/navigation'
-	import {onMount} from 'svelte'
+	import {onMount, untrack} from 'svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
 	/* A normal input, but with a search icon "inside" (on top) */
@@ -28,13 +28,16 @@
 	// svelte-ignore state_referenced_locally
 	const debounced = new Debounced(() => inputValue, debounce)
 
-	// Emit debounced value to parent
+	// Emit debounced value to parent. Only when it changes: re-running on an external
+	// change would send back the stale debounced value (a ?q= link briefly dropped ?q=).
 	$effect(() => {
 		const v = debounced.current
-		if (v !== value) {
-			value = v
-			lastExternalValue = v
-		}
+		untrack(() => {
+			if (v !== value) {
+				value = v
+				lastExternalValue = v
+			}
+		})
 	})
 
 	function focusInput() {

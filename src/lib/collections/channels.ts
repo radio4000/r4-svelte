@@ -56,7 +56,7 @@ export function fetchAppStats(): Promise<{channels: number; tracks: number}> {
 		queryFn: async () => {
 			const [channels, tracks] = await Promise.all([
 				sdk.supabase.from('channels_with_tracks').select('*', {count: 'exact', head: true}),
-				sdk.supabase.from('channel_tracks').select('*', {count: 'exact', head: true})
+				sdk.supabase.from('channel_track').select('*', {count: 'exact', head: true})
 			])
 			return {channels: channels.count ?? 0, tracks: tracks.count ?? 0}
 		}
@@ -92,9 +92,11 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		(f) => f.field[0] === 'track_count' && f.operator === 'gte'
 	)?.value as number | undefined
 	const imageNotNull = options.filters.some(
-		(f) => f.operator === 'not' || (f.field[0] === 'image' && f.operator === 'isNull')
+		(f) => f.field[0] === 'image' && f.operator === 'not_isNull'
 	)
-	const coordinatesNotNull = options.filters.some((f) => f.field[0] === 'latitude')
+	const coordinatesNotNull = ['latitude', 'longitude'].every((field) =>
+		options.filters.some((f) => f.field[0] === field && f.operator === 'not_isNull')
+	)
 	const sort = options.sorts[0]
 	const shuffle = sort?.field[0] === 'shuffle'
 	const offset = (opts as Record<string, unknown> | undefined)?.offset as number | undefined
@@ -110,6 +112,20 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		ascending: sort ? sort.direction === 'asc' : true,
 		sortKey: shuffle ? 'shuffle' : sort ? `${sort.field[0]}_${sort.direction}` : 'default'
 	}
+}
+
+/**
+ * Key prefix for a browse query shape: every filter and the sort. The queryFn reuses any
+ * cached result under this prefix as the head of a bigger page, so two queries that share
+ * it must return the same rows in the same order.
+ */
+function browseKey(p: Pick<ReturnType<typeof parseChannelParams>, 'trackCountGte' | 'imageNotNull' | 'coordinatesNotNull' | 'sortKey'>) {
+	const key: (string | number)[] = ['channels']
+	if (p.coordinatesNotNull) key.push('geo')
+	if (p.imageNotNull) key.push('artwork')
+	if (p.trackCountGte) key.push('minTracks', p.trackCountGte)
+	key.push(p.sortKey)
+	return key
 }
 
 /**
@@ -133,11 +149,7 @@ export const channelsCollection = createCollection<Channel, string>({
 			// loadSubsetOptions like it does for static keys.
 			const limit = opts?.limit ?? 0
 			const off = offset ?? 0
-			const segments: (string | number)[] = ['channels']
-			if (coordinatesNotNull) segments.push('geo')
-			if (imageNotNull && trackCountGte) return [...segments, 'artwork', sortKey, limit, off]
-			if (trackCountGte) return [...segments, 'minTracks', trackCountGte, sortKey, limit, off]
-			return [...segments, sortKey, limit, off]
+			return [...browseKey({trackCountGte, imageNotNull, coordinatesNotNull, sortKey}), limit, off]
 		},
 		syncMode: 'on-demand',
 		queryClient,
@@ -198,10 +210,7 @@ export const channelsCollection = createCollection<Channel, string>({
 
 			// Find the largest cached result for this query shape (same filters/sort, smaller limit).
 			// This avoids re-fetching rows we already have when the limit grows (pagination).
-			const baseKey: (string | number)[] = ['channels']
-			if (p.coordinatesNotNull) baseKey.push('geo')
-			if (p.imageNotNull && p.trackCountGte) baseKey.push('artwork')
-			else if (p.trackCountGte) baseKey.push('minTracks', p.trackCountGte)
+			const baseKey = browseKey(p)
 			let cached: Channel[] = []
 			const queries = queryClient.getQueriesData<Channel[]>({queryKey: baseKey})
 			for (const [, data] of queries) {
