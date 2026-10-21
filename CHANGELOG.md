@@ -2,6 +2,7 @@
 
 ## October 2026
 
+- #Dev Production source maps let error tracking and browser tools show original source locations
 - #Dev Opted-in client errors now appear in PostHog Error Tracking
 - #Perf Faster home, channel search, big tracklists, playback from big channels, track deletion, and sign-in for returning users
 - #Queue Search, #tags and @mentions filter the queue, and next/previous stay within the matches
