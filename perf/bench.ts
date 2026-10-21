@@ -676,8 +676,7 @@ const markdown = (rows: Record<string, unknown>[]) =>
 async function buildAndServe(dir: string, port: number) {
 	log(`building ${dir === '.' ? 'working copy' : dir}…`)
 	BUILD = 'bench'
-	const env = {...process.env, R4_SOURCEMAP: '1'}
-	const build = Bun.spawnSync(['bun', 'run', 'build'], {cwd: dir, env})
+	const build = Bun.spawnSync(['bun', 'run', 'build'], {cwd: dir})
 	if (build.exitCode !== 0) throw new Error(`build failed:\n${build.stderr}`)
 	const vite = join(import.meta.dir, '..', 'node_modules/.bin/vite')
 	const server = Bun.spawn(
