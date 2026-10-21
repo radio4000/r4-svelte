@@ -280,6 +280,8 @@
 				.then(() => log.log('playback_error saved', {id, msg}))
 				.catch((e) => log.error('playback_error save failed', e))
 		}
+		// Listeners follow the broadcaster; skipping locally fights the next state sync.
+		if (deck?.listening_to_channel_id) return
 		next(deckId, 'youtube_error')
 	}
 
