@@ -597,7 +597,8 @@ function broadcastStateUpdate(channelId) {
 	const state = getBroadcastDeckState()
 	const entry = broadcastStateChannels.get(channelId)
 	if (!entry) return
-	const seq = (broadcastStateSeqByChannel.get(channelId) ?? 0) + 1
+	// Clock-based so seq keeps rising across broadcaster reloads; listeners drop seq <= last seen.
+	const seq = Math.max(Date.now(), (broadcastStateSeqByChannel.get(channelId) ?? 0) + 1)
 	broadcastStateSeqByChannel.set(channelId, seq)
 	logDedup(`send:${channelId}`, `state_send @${label(channelId)} ${deckSummary(state)}`)
 	entry.channel.send({

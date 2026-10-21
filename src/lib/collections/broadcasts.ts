@@ -72,43 +72,48 @@ function syncBroadcastingState(broadcasts: BroadcastWithChannel[]): void {
 	}
 }
 
-sdk.supabase
-	.channel('broadcasts-realtime')
-	.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
-		log.info('broadcasts realtime', {event: payload.eventType})
+// Browser only: the SSR server has no use for a realtime socket. Remove the channel on
+// hot reload, since supabase.channel() reuses a subscribed channel and .on() would throw.
+if (typeof window !== 'undefined') {
+	const channel = sdk.supabase
+		.channel('broadcasts-realtime')
+		.on('postgres_changes', {event: '*', schema: 'public', table: 'broadcast'}, async (payload) => {
+			log.info('broadcasts realtime', {event: payload.eventType})
 
-		if (broadcastsCollection.status !== 'ready') {
-			log.debug('collection not ready, skipping realtime event')
-			return
-		}
-
-		if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-			const newData = payload.new as {channel_id: string}
-			const broadcast = await readBroadcast(newData.channel_id)
-			if (broadcast) {
-				broadcastsCollection.utils.writeUpsert(broadcast)
-				syncBroadcastingState([...broadcastsCollection.state.values()])
+			if (broadcastsCollection.status !== 'ready') {
+				log.debug('collection not ready, skipping realtime event')
+				return
 			}
-		}
 
-		if (payload.eventType === 'DELETE') {
-			const oldData = payload.old as {channel_id: string}
-			if (broadcastsCollection.state.has(oldData.channel_id)) {
-				broadcastsCollection.utils.writeDelete(oldData.channel_id)
-			}
-			if (oldData.channel_id === appState.channels?.[0]) {
-				for (const deck of Object.values(appState.decks)) {
-					if (deck.broadcasting_channel_id === oldData.channel_id) {
-						deck.broadcasting_channel_id = undefined
-					}
+			if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+				const newData = payload.new as {channel_id: string}
+				const broadcast = await readBroadcast(newData.channel_id)
+				if (broadcast) {
+					broadcastsCollection.utils.writeUpsert(broadcast)
+					syncBroadcastingState([...broadcastsCollection.state.values()])
 				}
 			}
-			syncBroadcastingState([...broadcastsCollection.state.values()])
-		}
-	})
-	.subscribe((status) => {
-		log.debug('broadcasts subscription status', {status})
-	})
+
+			if (payload.eventType === 'DELETE') {
+				const oldData = payload.old as {channel_id: string}
+				if (broadcastsCollection.state.has(oldData.channel_id)) {
+					broadcastsCollection.utils.writeDelete(oldData.channel_id)
+				}
+				if (oldData.channel_id === appState.channels?.[0]) {
+					for (const deck of Object.values(appState.decks)) {
+						if (deck.broadcasting_channel_id === oldData.channel_id) {
+							deck.broadcasting_channel_id = undefined
+						}
+					}
+				}
+				syncBroadcastingState([...broadcastsCollection.state.values()])
+			}
+		})
+		.subscribe((status) => {
+			log.debug('broadcasts subscription status', {status})
+		})
+	import.meta.hot?.dispose(() => sdk.supabase.removeChannel(channel))
+}
 
 // Refresh broadcasts on tab focus (realtime handles the rest).
 if (typeof window !== 'undefined') {
