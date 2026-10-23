@@ -44,12 +44,13 @@ export async function load() {
 		(browser && EMBED_HOSTS.includes(window.location.hostname))
 	)
 
-	const preloading = preload()
+	// Resolved, so {#await} hydrates the server HTML instead of the loader. Seeds can be slow.
+	const preloading = seedUrls ? preload() : await preload()
 	return {
 		embedMode,
 		preloading,
 		// Not part of preloading: a big last-played channel shouldn't hold up the first render
-		deckTracksRestored: preloading.then(restoreDeckTracks),
+		deckTracksRestored: Promise.resolve(preloading).then(restoreDeckTracks),
 		preload
 	}
 }

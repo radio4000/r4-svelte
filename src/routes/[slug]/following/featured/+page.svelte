@@ -12,7 +12,7 @@
 	import ChannelsViewControls from '#lib/components/channels-view-controls.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
 	import Subpage from '#lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -102,8 +102,6 @@
 	})
 </script>
 
-<ChannelNavControlsPortal controls={navControls} />
-
 {#snippet navControls()}
 	<select
 		value="featured"
@@ -135,6 +133,7 @@
 />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls controls={navControls} />
 	<Subpage
 		title={m.channel_section_featured_channels()}
 		loading={loading || featuredLoading}

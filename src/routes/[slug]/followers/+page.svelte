@@ -10,7 +10,7 @@
 	import ChannelsViewControls from '#lib/components/channels-view-controls.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
 	import Subpage from '#lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -31,8 +31,6 @@
 		goto(resolve('/[slug]/followers/in-common', {slug: page.params.slug ?? ''}))
 	}
 </script>
-
-<ChannelNavControlsPortal controls={showInCommon || followers.length ? navControls : undefined} />
 
 {#snippet navControls()}
 	{#if showInCommon}
@@ -61,6 +59,7 @@
 <Seo title={`${m.nav_followers()} - ${channel?.name || m.channel_page_fallback()}`} plain />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls controls={showInCommon || followers.length ? navControls : undefined} />
 	<Subpage
 		title={m.nav_followers()}
 		{loading}

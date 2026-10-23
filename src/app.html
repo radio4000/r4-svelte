@@ -19,6 +19,15 @@
 
 		<meta name="theme-color" content="lch(97.5% 0 282)" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="lch(7% 1.867 272)" media="(prefers-color-scheme: dark)" />
+		<!-- Saved theme and sidebar labels, before first paint -->
+		<script>
+			try {
+				const t = JSON.parse(localStorage.getItem('r5-app-state'))?.theme
+				if (t === 'light' || t === 'dark') document.documentElement.classList.add(t)
+				if (localStorage.getItem('r5:layout-header-labels-visible') === '0')
+					document.documentElement.classList.add('nav-labels-hidden')
+			} catch {}
+		</script>
 		<!-- <script src="'https://www.youtube.com/iframe_api'"></script> -->
 
 		<!-- Title and description come from the Seo component. Hardcoding them here

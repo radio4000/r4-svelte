@@ -36,9 +36,8 @@ export async function load({url, route, params}) {
 		}
 	}
 
-	// The load fetches only on the server; the browser reads through the
-	// collections (live queries in the layout), so client navs hit the cache.
-	// Hydration reuses the serialized server data — this branch runs on navs only.
+	// Fetch only on the server; the browser reads the collections, and on hydration
+	// +layout.svelte reuses the server's data via hydratable().
 	if (browser) {
 		return {view: viewFromUrl(url), channel: null, tracks: []}
 	}

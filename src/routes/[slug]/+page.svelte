@@ -27,7 +27,7 @@
 	import ChannelAvatar from '#lib/components/channel-avatar.svelte'
 	import PresenceCount from '#lib/components/presence-count.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
 	import {relativeDate} from '#lib/dates.js'
 	import {channelAvatarUrl} from '#lib/utils.js'
@@ -211,20 +211,17 @@
 	type="music.radio_station"
 />
 
-<ChannelNavControlsPortal controls={navControls} />
-
 {#snippet navControls()}
-	{#if allTracks.length > 0}
-		<SearchInput
-			bind:value={searchInput}
-			placeholder={m.channel_tracks_search_placeholder()}
-			debounce={300}
-		/>
-	{/if}
+	<SearchInput
+		bind:value={searchInput}
+		placeholder={m.channel_tracks_search_placeholder()}
+		debounce={300}
+	/>
 {/snippet}
 
 {#if channel}
 	<article>
+		<ChannelNavControls controls={navControls} />
 		<div class="channel-meta">
 			{#if channel.url}
 				<small class="url"
@@ -355,7 +352,7 @@
 		{/if}
 
 		<section class="track-section">
-			{#if tracksQuery.isReady && previewTracks.length > 0}
+			{#if previewTracks.length > 0}
 				<Tracklist
 					tracks={previewTracks}
 					playlistTracks={allTracks}
@@ -366,7 +363,11 @@
 				/>
 				<footer>
 					<a href={resolve('/[slug]/tracks', {slug})} class="btn chip"
-						>{m.channel_see_all_tracks({count: allTracks.length})}
+						>{m.channel_see_all_tracks({
+							count: tracksQuery.isReady
+								? allTracks.length
+								: (channel.track_count ?? allTracks.length)
+						})}
 						<Icon icon="arrow-right" size={12} /></a
 					>
 				</footer>

@@ -14,7 +14,7 @@
 	import Icon from '#lib/components/icon.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
 	import Subpage from '#lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 	import {
 		getDateRange,
@@ -248,7 +248,7 @@
 	})
 </script>
 
-<ChannelNavControlsPortal controls={allTags.length ? navControls : undefined} />
+<ChannelNavControls controls={allTags.length ? navControls : undefined} />
 
 {#snippet navControls()}
 	<SearchInput bind:value={search} placeholder={m.tags_search_placeholder()} />

@@ -2,9 +2,8 @@
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {untrack} from 'svelte'
-	import {setChannelCtx, setTracksQueryCtx, setChannelNavCtx} from '#lib/contexts.js'
-	import type {Snippet} from 'svelte'
+	import {hydratable, untrack} from 'svelte'
+	import {setChannelCtx, setTracksQueryCtx} from '#lib/contexts.js'
 	import {eq, inArray} from '@tanstack/db'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {joinBroadcast} from '#lib/broadcast.js'
@@ -30,13 +29,7 @@
 	// --- Props & route params ---
 
 	let {children, data} = $props()
-	let channelNavControls = $state<Snippet | undefined>(undefined)
 	let channelStickyHeight = $state(0)
-	setChannelNavCtx({
-		setControls: (s) => {
-			channelNavControls = s
-		}
-	})
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
@@ -78,10 +71,20 @@
 	let channelFromId = $derived(
 		Array.isArray(channelByIdQuery.data) ? undefined : channelByIdQuery.data
 	)
-	// `data.channel` comes from the server load. It carries the first render (SSR and
-	// client nav) until the local collection has synced this channel in.
+	// The load reruns empty in the browser on hydration; reuse the server's copy
+	const serverData = hydratable(`channel-route:${page.params.slug}`, () => ({
+		slug: page.params.slug,
+		channel: data.channel,
+		tracks: data.tracks
+	}))
+	let loadedChannel = $derived(
+		data.channel ?? (serverData.slug === slug ? serverData.channel : null)
+	)
+	let loadedTracks = $derived(
+		data.tracks?.length ? data.tracks : serverData.slug === slug ? serverData.tracks : []
+	)
 	let channel = $derived(
-		pickRouteChannel(slug, channelFromSlug, channelFromId) ?? data.channel ?? undefined
+		pickRouteChannel(slug, channelFromSlug, channelFromId) ?? loadedChannel ?? undefined
 	)
 	let channelIsLoading = $derived(
 		!channel && (channelBySlugQuery.isLoading || (Boolean(channelId) && channelByIdQuery.isLoading))
@@ -99,7 +102,9 @@
 			.where(({tracks}) => eq(tracks.slug, slug))
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 	)
-	let allChannelTracks = $derived(tracksQuery.data?.length ? tracksQuery.data : (data.tracks ?? []))
+	let allChannelTracks = $derived(
+		tracksQuery.data?.length ? tracksQuery.data : (loadedTracks ?? [])
+	)
 	// Keep the last resolved channel during the brief gap while switching channels,
 	// so the header doesn't flash "@unknown" / collapse. displayChannel === channel
 	// in steady state; only during the ~60ms resolution gap does it fall back to the
@@ -115,9 +120,12 @@
 	// Once resolved-as-missing (channelIsReady && !channel) we drop it so the
 	// "not found" state shows instead of a stale header.
 	let displayChannel = $derived(channel ?? (channelIsReady ? undefined : lastChannel))
-	// Tab count: prefer loaded tracks, fall back to the channel's known count while
-	// they load — avoids a "Tracks (0)" flash on every channel switch.
-	let channelTrackCount = $derived(allChannelTracks.length || displayChannel?.track_count || 0)
+	// The load only sends the first page of tracks, so trust track_count until ready
+	let channelTrackCount = $derived(
+		(tracksQuery.isReady && allChannelTracks.length) ||
+			displayChannel?.track_count ||
+			allChannelTracks.length
+	)
 
 	// Channel-specific broadcast live query so "Live" state updates on this page
 	const channelBroadcastQuery = useLiveQuery((q) =>
@@ -365,14 +373,6 @@
 				{/if}
 			</header>
 		{/if}
-
-		{#if !isTrackDetail && channelNavControls}
-			<menu class="channel-nav">
-				<menu class="channel-nav-controls">
-					{@render channelNavControls()}
-				</menu>
-			</menu>
-		{/if}
 	</div>
 
 	<main>
@@ -415,13 +415,8 @@
 		overflow: hidden;
 	}
 
-	.channel-nav {
-		border-inline: 1px solid var(--color-interface-border);
-	}
-
-	/* When a page-owned search/filter bar follows, it takes over the bottom edge
-	   (rounding + border) so the two read as one header card, not two stacked blocks. */
-	header:has(+ .channel-nav) {
+	/* A page's search/filter bar takes over the bottom edge, so the two read as one card */
+	.channel-layout:has(> main :global(.channel-nav)) header {
 		border-bottom: none;
 		border-radius: var(--border-radius) var(--border-radius) 0 0;
 	}
@@ -520,23 +515,5 @@
 		flex: 1;
 		min-height: 0;
 		height: 100%;
-	}
-
-	.channel-nav {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-1);
-		background: var(--gray-2);
-		border-bottom: 1px solid var(--color-interface-border);
-		border-radius: 0 0 var(--border-radius) var(--border-radius);
-		padding: var(--space-1);
-	}
-
-	.channel-nav-controls {
-		display: flex;
-		min-width: 0;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: var(--space-1);
 	}
 </style>

@@ -12,7 +12,7 @@
 	import ChannelsViewControls from '#lib/components/channels-view-controls.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
 	import Subpage from '#lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -92,10 +92,6 @@
 	})
 </script>
 
-<ChannelNavControlsPortal
-	controls={!loading && (following.length || hasFeatured) ? navControls : undefined}
-/>
-
 {#snippet navControls()}
 	<select
 		value="all"
@@ -124,6 +120,9 @@
 <Seo title={`${m.nav_following()} - ${channel?.name || m.channel_page_fallback()}`} plain />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls
+		controls={!loading && (following.length || hasFeatured) ? navControls : undefined}
+	/>
 	<Subpage
 		title={m.nav_following()}
 		{loading}

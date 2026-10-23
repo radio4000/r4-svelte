@@ -17,7 +17,7 @@
 	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
 	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
 	import ChannelScene from '#lib/components/channel-scene-ogl.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -120,8 +120,6 @@
 	}
 </script>
 
-<ChannelNavControlsPortal controls={navControls} />
-
 {#snippet navControls()}
 	{#if channel?.slug}
 		<a class="btn" href={resolve('/[slug]', {slug: channel.slug})}>
@@ -140,31 +138,40 @@
 
 {#if mediaItem}
 	<div class="image-page">
-		<ChannelScene
-			media={[mediaItem]}
-			selectedId={selectedChannelId}
-			onclick={handleSceneClick}
-			ondoubleclick={handleSceneDoubleClick}
-			allowNavigation={true}
-			enableCardTilt={false}
-			singleSceneConstrainMovement={false}
-			singleSceneMaxXY={18}
-			singleSceneCardDragRotate={true}
-			singleSceneMouseDrift={false}
-			minCameraZ={26}
-			maxCameraZ={70}
-			onnavigate={handleNavigate}
-			showInfoButton={false}
-			bind:showControlsModal
-		/>
+		<ChannelNavControls controls={navControls} />
+		<div class="scene">
+			<ChannelScene
+				media={[mediaItem]}
+				selectedId={selectedChannelId}
+				onclick={handleSceneClick}
+				ondoubleclick={handleSceneDoubleClick}
+				allowNavigation={true}
+				enableCardTilt={false}
+				singleSceneConstrainMovement={false}
+				singleSceneMaxXY={18}
+				singleSceneCardDragRotate={true}
+				singleSceneMouseDrift={false}
+				minCameraZ={26}
+				maxCameraZ={70}
+				onnavigate={handleNavigate}
+				showInfoButton={false}
+				bind:showControlsModal
+			/>
+		</div>
 	</div>
 {/if}
 
 <style>
 	.image-page {
 		display: flex;
+		flex-direction: column;
 		flex: 1;
 		min-height: 0;
 		height: 100%;
+	}
+
+	.scene {
+		flex: 1;
+		min-height: 0;
 	}
 </style>
