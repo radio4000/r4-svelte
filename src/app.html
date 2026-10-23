@@ -19,6 +19,14 @@
 
 		<meta name="theme-color" content="lch(97.5% 0 282)" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="lch(7% 1.867 272)" media="(prefers-color-scheme: dark)" />
+		<!-- Apply the saved theme before first paint; server-rendered pages would otherwise
+		     show the OS theme until the layout's effect runs. Key: LOCAL_STORAGE_KEYS.appState -->
+		<script>
+			try {
+				const t = JSON.parse(localStorage.getItem('r5-app-state'))?.theme
+				if (t === 'light' || t === 'dark') document.documentElement.classList.add(t)
+			} catch {}
+		</script>
 		<!-- <script src="'https://www.youtube.com/iframe_api'"></script> -->
 
 		<!-- Title and description come from the Seo component. Hardcoding them here
