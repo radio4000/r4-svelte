@@ -400,15 +400,41 @@
 </article>
 
 {#snippet originalTrack()}
-	<!-- Repair UI stays local: previews below must not control the listening decks. -->
-	<header class="box">
-		{#if track.media_id && appState.show_track_artwork}
-			<img src={trackImageUrl(track.media_id)} alt="" />
-		{/if}
-		<div>
+	<!-- Repair UI stays local: the preview must not control the listening decks. -->
+	<article class="box card">
+		<div class="media">
+			{#if status === 'alive'}
+				{#key `${track.id}:${track.media_id}`}
+					<youtube-video
+						src="https://www.youtube.com/watch?v={track.media_id}"
+						aria-label={track.title}
+						data-track-id={track.id}
+						controls
+						playsinline
+						onerror={handlePreviewError}
+					></youtube-video>
+				{/key}
+			{:else if track.media_id}
+				<img src={trackImageUrl(track.media_id)} alt="" />
+			{/if}
+		</div>
+		<div class="body">
 			<h3><a href="/{track.slug}/tracks/{track.id}">{track.title}</a></h3>
 			{#if track.description}
-				<p><LinkEntities slug={track.slug} filterMentions text={track.description} /></p>
+				<p class="description">
+					<LinkEntities slug={track.slug} filterMentions text={track.description} />
+				</p>
+			{/if}
+			<p class="verdict">
+				{#if status === 'checking'}Asking YouTube…{:else if status === 'alive'}Still on YouTube.
+					Press play. If it works, mark it.{:else if status === 'dead'}Gone from YouTube. Pick a
+					replacement below.{:else if status === 'restricted'}Blocked: private, region-locked or not
+					embeddable. Pick a replacement below.{:else}Couldn't reach YouTube. Come back later, or
+					find another video.{/if}
+				<code>{track.playback_error}</code>
+			</p>
+			{#if status === 'alive'}
+				<button type="button" class="primary" onclick={clear}>It works</button>
 			{/if}
 		</div>
 		<PopoverMenu btnClass="ghost" align="end">
@@ -427,41 +453,7 @@
 				</button>
 			</menu>
 		</PopoverMenu>
-	</header>
-	<ol class="list candidates">
-		<li class="original">
-			<span class="thumb">
-				{#if status === 'alive'}
-					{#key `${track.id}:${track.media_id}`}
-						<youtube-video
-							src="https://www.youtube.com/watch?v={track.media_id}"
-							aria-label={track.title}
-							data-track-id={track.id}
-							controls
-							playsinline
-							onerror={handlePreviewError}
-						></youtube-video>
-					{/key}
-				{:else if track.media_id}
-					<img src={trackImageUrl(track.media_id)} alt="" />
-				{/if}
-			</span>
-			<div>
-				<p>
-					<code>{track.playback_error}</code>
-					{#if status === 'checking'}· asking YouTube…{:else if status === 'alive'}· still on
-						YouTube. Does it play?{:else if status === 'dead'}· gone from YouTube.{:else if status === 'unknown'}·
-						couldn't reach YouTube. Try the player, or come back later.{:else}· private,
-						region-locked or not embeddable.{/if}
-				</p>
-			</div>
-			{#if status === 'alive'}
-				<button type="button" class="primary" onclick={clear}>It works</button>
-			{:else}
-				<span></span>
-			{/if}
-		</li>
-	</ol>
+	</article>
 {/snippet}
 
 {#snippet replacementCandidate(candidate)}
@@ -499,39 +491,75 @@
 		margin: 0;
 	}
 
-	header {
-		display: flex;
-		align-items: center;
+	/* One card: picture, words, menu. The picture is the player when YouTube still has the video. */
+	.card {
+		display: grid;
+		grid-template-columns: 12rem minmax(0, 1fr) auto;
 		gap: var(--space-2);
+		align-items: start;
 		padding: var(--space-2);
-		/* avoid ui jumps on variying track title lengths */
-		min-height: 5.5rem;
 	}
-	header > img {
-		width: 2.5rem;
-		flex-shrink: 0;
-		aspect-ratio: 1;
+	.card .media {
+		grid-row: 1;
+		background: var(--gray-3);
+		aspect-ratio: 16 / 9;
+		border-radius: var(--border-radius);
+		overflow: hidden;
+	}
+	.card .media img {
+		width: 100%;
+		height: 100%;
 		object-fit: cover;
-		border-radius: var(--media-radius);
+		filter: grayscale(1);
+		opacity: 0.6;
 	}
-	header > div {
-		flex: 1;
+	.card youtube-video {
+		display: block;
+		width: 100%;
+		height: 100%;
+		/* player.css disables pointer events on youtube-video outside a media-controller slot. */
+		pointer-events: auto;
+	}
+	/* A fixed height so paging never moves the results below: room for a two-line title,
+	   two lines of description, the verdict and the button. */
+	.card .body {
+		display: grid;
+		gap: var(--space-1);
+		justify-items: start;
+		align-content: start;
 		min-width: 0;
+		min-height: 11.5rem;
 	}
-	header h3 {
+	.card h3 {
 		font-size: var(--font-4);
 		text-wrap: auto;
+		overflow-wrap: anywhere;
 	}
-	header h3 a {
+	.card h3 a {
 		color: inherit;
 		text-decoration: none;
 	}
-	header p {
+	.card .description {
 		color: var(--gray-11);
-	}
-	header h3,
-	header p {
 		overflow-wrap: anywhere;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+	}
+	.card code {
+		color: var(--color-error);
+		font-size: var(--font-2);
+	}
+	@media (max-width: 640px) {
+		.card {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+		.card .media {
+			grid-column: 1 / -1;
+			grid-row: auto;
+			width: min(100%, 16rem);
+		}
 	}
 
 	/* Both labels occupy the same cell so switching searches cannot resize or wrap the toolbar. */
@@ -617,32 +645,6 @@
 		border: 0;
 		border-radius: var(--border-radius);
 	}
-	/* Row one is always player-sized so the results below never move between cards.
-	   One wrapper holds either the player or a grey slot, so the row's box is identical. */
-	.original code {
-		color: var(--color-error);
-	}
-	.original:hover {
-		background: none;
-	}
-	.original .thumb {
-		background: var(--gray-3);
-		aspect-ratio: 16 / 9;
-		border-radius: var(--border-radius);
-		overflow: hidden;
-		cursor: default;
-	}
-	.original youtube-video {
-		display: block;
-		width: 100%;
-		height: 100%;
-		/* player.css disables pointer events on youtube-video outside a media-controller slot. */
-		pointer-events: auto;
-	}
-	.original .thumb img {
-		filter: grayscale(1);
-		opacity: 0.6;
-	}
 	/* Row padding is for hover; pull it back at the edges so lists sit on the same gap as everything else. */
 	.doctor .candidates {
 		margin-block: calc(-1 * var(--space-1));
@@ -700,9 +702,5 @@
 			grid-column: 2;
 			justify-self: start;
 		}
-	}
-	/* Half again the candidate thumbnail: enough to press play, not a wall. Last so it beats the mobile rule. */
-	.candidates > li.original {
-		grid-template-columns: 9rem 1fr auto;
 	}
 </style>
