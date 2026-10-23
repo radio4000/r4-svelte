@@ -4,7 +4,7 @@
 	import {canEditChannel, isLocalChannel} from '#lib/app-state.svelte.js'
 	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
 	import Icon from '#lib/components/icon.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -53,7 +53,7 @@
 
 <Seo title={m.channel_backup_page_title({handle: `@${slug}`})} plain />
 
-<ChannelNavControlsPortal controls={navControls} />
+<ChannelNavControls controls={navControls} />
 
 {#snippet navControls()}
 	{#if canEdit}

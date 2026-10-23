@@ -8,7 +8,7 @@
 	import Tracklist from '#lib/components/tracklist.svelte'
 	import SearchInput from '#lib/components/search-input.svelte'
 	import Subpage from '#lib/components/subpage.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import type {Track} from '#lib/types.js'
@@ -89,7 +89,7 @@
 
 <Seo title={m.mentions_title({handle: `@${slug}`})} plain />
 
-<ChannelNavControlsPortal controls={tracks.length ? navControls : undefined} />
+<ChannelNavControls controls={tracks.length ? navControls : undefined} />
 
 {#snippet navControls()}
 	<SearchInput

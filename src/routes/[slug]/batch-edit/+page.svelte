@@ -12,7 +12,7 @@
 	import TrackRow from './track-row.svelte'
 	import BatchActionBar from './batch-action-bar.svelte'
 	import PopoverMenu from '#lib/components/popover-menu.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import Seo from '#lib/components/seo.svelte'
 	import * as m from '#lib/paraglide/messages.js'
@@ -313,7 +313,7 @@
 
 <Seo title={m.batch_edit_page_title({name: channel?.name || m.channel_page_fallback()})} plain />
 
-<ChannelNavControlsPortal controls={navControls} />
+<ChannelNavControls controls={navControls} />
 
 {#snippet navControls()}
 	<PopoverMenu>

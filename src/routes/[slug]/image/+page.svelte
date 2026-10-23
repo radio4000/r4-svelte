@@ -17,7 +17,7 @@
 	import {toChannelCardMedia} from '#lib/components/channel-ui-state.ts'
 	import {getChannelCtx, getTracksQueryCtx} from '#lib/contexts.js'
 	import ChannelScene from '#lib/components/channel-scene-ogl.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
@@ -120,7 +120,7 @@
 	}
 </script>
 
-<ChannelNavControlsPortal controls={navControls} />
+<ChannelNavControls controls={navControls} />
 
 {#snippet navControls()}
 	{#if channel?.slug}

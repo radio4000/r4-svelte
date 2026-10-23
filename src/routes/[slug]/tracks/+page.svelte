@@ -15,7 +15,7 @@
 	import FilterChips from '#lib/components/filter-chips.svelte'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
 	import TagsFilterDialog from '#lib/components/tags-filter-dialog.svelte'
-	import ChannelNavControlsPortal from '#lib/components/channel-nav-controls-portal.svelte'
+	import ChannelNavControls from '#lib/components/channel-nav-controls.svelte'
 	import {
 		addToPlaylist,
 		ensureActiveDeck,
@@ -262,7 +262,7 @@
 	</menu>
 {/snippet}
 
-<ChannelNavControlsPortal controls={navControls} />
+<ChannelNavControls controls={navControls} />
 
 {#snippet navControls()}
 	{#if allTracks.length}

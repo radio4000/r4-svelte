@@ -3,8 +3,7 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {untrack} from 'svelte'
-	import {setChannelCtx, setTracksQueryCtx, setChannelNavCtx} from '#lib/contexts.js'
-	import type {Snippet} from 'svelte'
+	import {setChannelCtx, setTracksQueryCtx} from '#lib/contexts.js'
 	import {eq, inArray} from '@tanstack/db'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {joinBroadcast} from '#lib/broadcast.js'
@@ -30,13 +29,7 @@
 	// --- Props & route params ---
 
 	let {children, data} = $props()
-	let channelNavControls = $state<Snippet | undefined>(undefined)
 	let channelStickyHeight = $state(0)
-	setChannelNavCtx({
-		setControls: (s) => {
-			channelNavControls = s
-		}
-	})
 	let slug = $derived(page.params.slug as string)
 	let rssHref = $derived(resolve('/[slug].rss', {slug}))
 	let tid = $derived(page.params.tid)
@@ -365,14 +358,6 @@
 				{/if}
 			</header>
 		{/if}
-
-		{#if !isTrackDetail && channelNavControls}
-			<menu class="channel-nav">
-				<menu class="channel-nav-controls">
-					{@render channelNavControls()}
-				</menu>
-			</menu>
-		{/if}
 	</div>
 
 	<main>
@@ -415,13 +400,9 @@
 		overflow: hidden;
 	}
 
-	.channel-nav {
-		border-inline: 1px solid var(--color-interface-border);
-	}
-
-	/* When a page-owned search/filter bar follows, it takes over the bottom edge
-	   (rounding + border) so the two read as one header card, not two stacked blocks. */
-	header:has(+ .channel-nav) {
+	/* When the page renders a search/filter bar (ChannelNavControls), it takes over the bottom
+	   edge (rounding + border) so the two read as one header card, not two stacked blocks. */
+	.channel-layout:has(> main > :global(.channel-nav)) header {
 		border-bottom: none;
 		border-radius: var(--border-radius) var(--border-radius) 0 0;
 	}
@@ -520,23 +501,5 @@
 		flex: 1;
 		min-height: 0;
 		height: 100%;
-	}
-
-	.channel-nav {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-1);
-		background: var(--gray-2);
-		border-bottom: 1px solid var(--color-interface-border);
-		border-radius: 0 0 var(--border-radius) var(--border-radius);
-		padding: var(--space-1);
-	}
-
-	.channel-nav-controls {
-		display: flex;
-		min-width: 0;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: var(--space-1);
 	}
 </style>
