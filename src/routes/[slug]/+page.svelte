@@ -212,13 +212,11 @@
 />
 
 {#snippet navControls()}
-	{#if allTracks.length > 0}
-		<SearchInput
-			bind:value={searchInput}
-			placeholder={m.channel_tracks_search_placeholder()}
-			debounce={300}
-		/>
-	{/if}
+	<SearchInput
+		bind:value={searchInput}
+		placeholder={m.channel_tracks_search_placeholder()}
+		debounce={300}
+	/>
 {/snippet}
 
 {#if channel}
