@@ -44,10 +44,7 @@ export async function load() {
 		(browser && EMBED_HOSTS.includes(window.location.hostname))
 	)
 
-	// Without seeds, preload takes milliseconds: finish it here so `{#await data.preloading}`
-	// hydrates straight into the server-rendered page. A pending promise would hydrate the
-	// loader branch instead, and Svelte would discard the server HTML and render it all again.
-	// Seed imports can be slow, so standalone keeps the promise and shows the loader.
+	// Resolved, so {#await} hydrates the server HTML instead of the loader. Seeds can be slow.
 	const preloading = seedUrls ? preload() : await preload()
 	return {
 		embedMode,

@@ -25,9 +25,7 @@
 
 	const STORAGE_KEY_LABELS_VISIBLE = 'r5:layout-header-labels-visible'
 
-	// Label layout is all CSS so the server renders it right: labels sit beside the icons on
-	// desktop, below them on mobile. Hiding them is a class on <html>, which app.html applies
-	// from this storage key before first paint.
+	// Label layout is CSS; app.html restores the hidden class before first paint
 	function toggleLabels(event) {
 		// Only on the header background — not links/buttons (fast double-taps)
 		if (event.target.closest('a, button, input, [popover]')) return

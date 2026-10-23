@@ -1,9 +1,7 @@
 <script lang="ts">
 	import type {Snippet} from 'svelte'
 
-	// A channel page's search/filter bar. Pages render it themselves, first in their markup,
-	// so it's in the server-rendered HTML and doesn't pop in after hydration. It sticks under
-	// the channel header; the layout drops the header's bottom edge so the two read as one card.
+	// Channel page search/filter bar, sticky under the channel header
 	let {controls}: {controls?: Snippet} = $props()
 </script>
 

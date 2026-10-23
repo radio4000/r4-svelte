@@ -19,13 +19,11 @@
 
 		<meta name="theme-color" content="lch(97.5% 0 282)" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="lch(7% 1.867 272)" media="(prefers-color-scheme: dark)" />
-		<!-- Apply saved display prefs before first paint; server-rendered pages would otherwise
-		     show the defaults until the app starts. Theme key: LOCAL_STORAGE_KEYS.appState -->
+		<!-- Saved theme and sidebar labels, before first paint -->
 		<script>
 			try {
 				const t = JSON.parse(localStorage.getItem('r5-app-state'))?.theme
 				if (t === 'light' || t === 'dark') document.documentElement.classList.add(t)
-				// Sidebar labels hidden (layout-header.svelte)
 				if (localStorage.getItem('r5:layout-header-labels-visible') === '0')
 					document.documentElement.classList.add('nav-labels-hidden')
 			} catch {}

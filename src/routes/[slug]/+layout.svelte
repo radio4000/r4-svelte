@@ -71,10 +71,7 @@
 	let channelFromId = $derived(
 		Array.isArray(channelByIdQuery.data) ? undefined : channelByIdQuery.data
 	)
-	// The load's channel and tracks carry the first render until the collections sync.
-	// The load only fetches on the server and reruns empty in the browser on hydration, so
-	// hydratable() hands the server's copy to the first client render. Without it, hydration
-	// renders an empty channel and Svelte replaces the server HTML with it.
+	// The load reruns empty in the browser on hydration; reuse the server's copy
 	const serverData = hydratable(`channel-route:${page.params.slug}`, () => ({
 		slug: page.params.slug,
 		channel: data.channel,
@@ -123,8 +120,7 @@
 	// Once resolved-as-missing (channelIsReady && !channel) we drop it so the
 	// "not found" state shows instead of a stale header.
 	let displayChannel = $derived(channel ?? (channelIsReady ? undefined : lastChannel))
-	// Tab count: loaded tracks once the query is ready; until then the channel's known count,
-	// since the load only sends the first page — avoids "Tracks (0)" or "(50)" flashes.
+	// The load only sends the first page of tracks, so trust track_count until ready
 	let channelTrackCount = $derived(
 		(tracksQuery.isReady && allChannelTracks.length) ||
 			displayChannel?.track_count ||
@@ -419,8 +415,7 @@
 		overflow: hidden;
 	}
 
-	/* When the page renders a search/filter bar (ChannelNavControls), it takes over the bottom
-	   edge (rounding + border) so the two read as one header card, not two stacked blocks. */
+	/* A page's search/filter bar takes over the bottom edge, so the two read as one card */
 	.channel-layout:has(> main :global(.channel-nav)) header {
 		border-bottom: none;
 		border-radius: var(--border-radius) var(--border-radius) 0 0;

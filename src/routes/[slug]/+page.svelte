@@ -221,7 +221,6 @@
 
 {#if channel}
 	<article>
-		<!-- Inside the article: it fills the page height, so a bar above it would overflow -->
 		<ChannelNavControls controls={navControls} />
 		<div class="channel-meta">
 			{#if channel.url}
@@ -353,7 +352,6 @@
 		{/if}
 
 		<section class="track-section">
-			<!-- No isReady gate: the server-rendered tracks show until the collection syncs -->
 			{#if previewTracks.length > 0}
 				<Tracklist
 					tracks={previewTracks}
