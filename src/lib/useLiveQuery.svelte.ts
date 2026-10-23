@@ -204,6 +204,13 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	// Watch for collection changes and subscribe to updates
 	$effect(() => {
 		const nextResolved = resolved
+		// Only `resolved` may rerun this effect. Resuming deferred collections can start a sync
+		// that reads app state; tracking it reran the effect with the same query, the cleanup had
+		// disposed the observer, and subscribing to it threw (TanStack DB error 12).
+		return untrack(() => subscribeTo(nextResolved))
+	})
+
+	function subscribeTo(nextResolved: typeof resolved) {
 		if (nextResolved !== currentResolved) {
 			currentObserver.dispose()
 			currentResolved = nextResolved
@@ -230,7 +237,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			unsubscribe()
 			if (observer === currentObserver) observer.dispose()
 		}
-	})
+	}
 
 	return {
 		get state() {
