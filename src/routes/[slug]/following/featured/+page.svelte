@@ -102,8 +102,6 @@
 	})
 </script>
 
-<ChannelNavControls controls={navControls} />
-
 {#snippet navControls()}
 	<select
 		value="featured"
@@ -135,6 +133,7 @@
 />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls controls={navControls} />
 	<Subpage
 		title={m.channel_section_featured_channels()}
 		loading={loading || featuredLoading}

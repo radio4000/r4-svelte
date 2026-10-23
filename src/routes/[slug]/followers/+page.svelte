@@ -32,8 +32,6 @@
 	}
 </script>
 
-<ChannelNavControls controls={showInCommon || followers.length ? navControls : undefined} />
-
 {#snippet navControls()}
 	{#if showInCommon}
 		<select
@@ -61,6 +59,7 @@
 <Seo title={`${m.nav_followers()} - ${channel?.name || m.channel_page_fallback()}`} plain />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls controls={showInCommon || followers.length ? navControls : undefined} />
 	<Subpage
 		title={m.nav_followers()}
 		{loading}

@@ -2,7 +2,7 @@
 	import {page} from '$app/state'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
-	import {untrack} from 'svelte'
+	import {hydratable, untrack} from 'svelte'
 	import {setChannelCtx, setTracksQueryCtx} from '#lib/contexts.js'
 	import {eq, inArray} from '@tanstack/db'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
@@ -71,10 +71,23 @@
 	let channelFromId = $derived(
 		Array.isArray(channelByIdQuery.data) ? undefined : channelByIdQuery.data
 	)
-	// `data.channel` comes from the server load. It carries the first render (SSR and
-	// client nav) until the local collection has synced this channel in.
+	// The load's channel and tracks carry the first render until the collections sync.
+	// The load only fetches on the server and reruns empty in the browser on hydration, so
+	// hydratable() hands the server's copy to the first client render. Without it, hydration
+	// renders an empty channel and Svelte replaces the server HTML with it.
+	const serverData = hydratable(`channel-route:${page.params.slug}`, () => ({
+		slug: page.params.slug,
+		channel: data.channel,
+		tracks: data.tracks
+	}))
+	let loadedChannel = $derived(
+		data.channel ?? (serverData.slug === slug ? serverData.channel : null)
+	)
+	let loadedTracks = $derived(
+		data.tracks?.length ? data.tracks : serverData.slug === slug ? serverData.tracks : []
+	)
 	let channel = $derived(
-		pickRouteChannel(slug, channelFromSlug, channelFromId) ?? data.channel ?? undefined
+		pickRouteChannel(slug, channelFromSlug, channelFromId) ?? loadedChannel ?? undefined
 	)
 	let channelIsLoading = $derived(
 		!channel && (channelBySlugQuery.isLoading || (Boolean(channelId) && channelByIdQuery.isLoading))
@@ -92,7 +105,9 @@
 			.where(({tracks}) => eq(tracks.slug, slug))
 			.orderBy(({tracks}) => tracks.created_at, 'desc')
 	)
-	let allChannelTracks = $derived(tracksQuery.data?.length ? tracksQuery.data : (data.tracks ?? []))
+	let allChannelTracks = $derived(
+		tracksQuery.data?.length ? tracksQuery.data : (loadedTracks ?? [])
+	)
 	// Keep the last resolved channel during the brief gap while switching channels,
 	// so the header doesn't flash "@unknown" / collapse. displayChannel === channel
 	// in steady state; only during the ~60ms resolution gap does it fall back to the
@@ -108,9 +123,13 @@
 	// Once resolved-as-missing (channelIsReady && !channel) we drop it so the
 	// "not found" state shows instead of a stale header.
 	let displayChannel = $derived(channel ?? (channelIsReady ? undefined : lastChannel))
-	// Tab count: prefer loaded tracks, fall back to the channel's known count while
-	// they load — avoids a "Tracks (0)" flash on every channel switch.
-	let channelTrackCount = $derived(allChannelTracks.length || displayChannel?.track_count || 0)
+	// Tab count: loaded tracks once the query is ready; until then the channel's known count,
+	// since the load only sends the first page — avoids "Tracks (0)" or "(50)" flashes.
+	let channelTrackCount = $derived(
+		(tracksQuery.isReady && allChannelTracks.length) ||
+			displayChannel?.track_count ||
+			allChannelTracks.length
+	)
 
 	// Channel-specific broadcast live query so "Live" state updates on this page
 	const channelBroadcastQuery = useLiveQuery((q) =>
@@ -402,7 +421,7 @@
 
 	/* When the page renders a search/filter bar (ChannelNavControls), it takes over the bottom
 	   edge (rounding + border) so the two read as one header card, not two stacked blocks. */
-	.channel-layout:has(> main > :global(.channel-nav)) header {
+	.channel-layout:has(> main :global(.channel-nav)) header {
 		border-bottom: none;
 		border-radius: var(--border-radius) var(--border-radius) 0 0;
 	}

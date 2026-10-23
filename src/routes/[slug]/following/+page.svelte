@@ -92,10 +92,6 @@
 	})
 </script>
 
-<ChannelNavControls
-	controls={!loading && (following.length || hasFeatured) ? navControls : undefined}
-/>
-
 {#snippet navControls()}
 	<select
 		value="all"
@@ -124,6 +120,9 @@
 <Seo title={`${m.nav_following()} - ${channel?.name || m.channel_page_fallback()}`} plain />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls
+		controls={!loading && (following.length || hasFeatured) ? navControls : undefined}
+	/>
 	<Subpage
 		title={m.nav_following()}
 		{loading}

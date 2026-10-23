@@ -211,8 +211,6 @@
 	type="music.radio_station"
 />
 
-<ChannelNavControls controls={navControls} />
-
 {#snippet navControls()}
 	{#if allTracks.length > 0}
 		<SearchInput
@@ -225,6 +223,8 @@
 
 {#if channel}
 	<article>
+		<!-- Inside the article: it fills the page height, so a bar above it would overflow -->
+		<ChannelNavControls controls={navControls} />
 		<div class="channel-meta">
 			{#if channel.url}
 				<small class="url"
@@ -355,7 +355,8 @@
 		{/if}
 
 		<section class="track-section">
-			{#if tracksQuery.isReady && previewTracks.length > 0}
+			<!-- No isReady gate: the server-rendered tracks show until the collection syncs -->
+			{#if previewTracks.length > 0}
 				<Tracklist
 					tracks={previewTracks}
 					playlistTracks={allTracks}
@@ -366,7 +367,11 @@
 				/>
 				<footer>
 					<a href={resolve('/[slug]/tracks', {slug})} class="btn chip"
-						>{m.channel_see_all_tracks({count: allTracks.length})}
+						>{m.channel_see_all_tracks({
+							count: tracksQuery.isReady
+								? allTracks.length
+								: (channel.track_count ?? allTracks.length)
+						})}
 						<Icon icon="arrow-right" size={12} /></a
 					>
 				</footer>

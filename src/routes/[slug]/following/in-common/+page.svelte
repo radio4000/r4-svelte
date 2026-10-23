@@ -98,8 +98,6 @@
 	})
 </script>
 
-<ChannelNavControls controls={navControls} />
-
 {#snippet navControls()}
 	<select
 		value="in-common"
@@ -128,6 +126,7 @@
 <Seo title={`${m.nav_in_common()} - ${channel?.name || m.channel_page_fallback()}`} plain />
 
 <article class="channels-page fill-height">
+	<ChannelNavControls controls={navControls} />
 	<Subpage
 		title={m.nav_in_common()}
 		{loading}

@@ -1,8 +1,6 @@
 <script>
 	import {page} from '$app/state'
 	import {resolve} from '$app/paths'
-	import {onMount} from 'svelte'
-	import {MediaQuery} from 'svelte/reactivity'
 	import {appState} from '#lib/app-state.svelte.js'
 	import {isBroadcasting as isBroadcastingDeck, sortedDeckIds} from '#lib/deck.js'
 	import AddTrackDialog from '#lib/components/track-add-dialog.svelte'
@@ -14,7 +12,7 @@
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
 	import InternetIndicator from '#lib/components/internet-indicator.svelte'
 	import * as m from '#lib/paraglide/messages.js'
-	import {appName, conceptIcons, MOBILE_BREAKPOINT, navPopoverOnLogo} from '#lib/config.js'
+	import {appName, conceptIcons, navPopoverOnLogo} from '#lib/config.js'
 	import {deckAccent} from '#lib/app-state.svelte.js'
 
 	const {preloading} = $props()
@@ -25,73 +23,20 @@
 	const deckIds = $derived(sortedDeckIds(appState.decks))
 	const activeDeckColor = $derived(deckAccent(deckIds, appState.active_deck_id))
 
-	const DESKTOP_MIN = 1
-	const DESKTOP_MAX = 10000
-	const DESKTOP_DEFAULT = 188
-	const MOBILE_MIN = 52
-	const MOBILE_MAX = 120
-	const MOBILE_DEFAULT = 100
 	const STORAGE_KEY_LABELS_VISIBLE = 'r5:layout-header-labels-visible'
 
-	const mobileViewport = new MediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`)
-
-	let headerSize = $state(DESKTOP_DEFAULT)
-	let labelsVisible = $state(true)
-	let labelLayout = $state(/** @type {'none' | 'right' | 'below'} */ ('none'))
-
-	function clamp(value, min, max) {
-		return Math.min(max, Math.max(min, value))
-	}
-
-	function sizeBounds(mobile) {
-		return mobile ? [MOBILE_MIN, MOBILE_MAX] : [DESKTOP_MIN, DESKTOP_MAX]
-	}
-
-	function applyModeFromSize() {
-		if (!labelsVisible) labelLayout = 'none'
-		else labelLayout = mobileViewport.current ? 'below' : 'right'
-	}
-
-	function loadSizeForViewport(mobile) {
-		const [min, max] = sizeBounds(mobile)
-		const fallback = mobile ? MOBILE_DEFAULT : DESKTOP_DEFAULT
-		headerSize = clamp(fallback, min, max)
-		applyModeFromSize()
-	}
-
-	function persistLabelsVisible() {
-		if (typeof localStorage === 'undefined') return
-		localStorage.setItem(STORAGE_KEY_LABELS_VISIBLE, labelsVisible ? '1' : '0')
-	}
-
+	// Label layout is all CSS so the server renders it right: labels sit beside the icons on
+	// desktop, below them on mobile. Hiding them is a class on <html>, which app.html applies
+	// from this storage key before first paint.
 	function toggleLabels(event) {
 		// Only on the header background — not links/buttons (fast double-taps)
 		if (event.target.closest('a, button, input, [popover]')) return
-		labelsVisible = !labelsVisible
-		applyModeFromSize()
-		persistLabelsVisible()
+		const hidden = document.documentElement.classList.toggle('nav-labels-hidden')
+		localStorage.setItem(STORAGE_KEY_LABELS_VISIBLE, hidden ? '0' : '1')
 	}
-
-	onMount(() => {
-		const stored =
-			typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_LABELS_VISIBLE) : null
-		labelsVisible = stored == null ? true : stored === '1'
-		applyModeFromSize()
-	})
-
-	$effect(() => {
-		loadSizeForViewport(mobileViewport.current)
-	})
 </script>
 
-<header
-	class:labels-none={labelLayout === 'none'}
-	class:labels-right={labelLayout === 'right'}
-	class:labels-below={labelLayout === 'below'}
-	class:mobile={mobileViewport.current}
-	style={`--app-header-size:${headerSize}px;`}
-	ondblclick={toggleLabels}
->
+<header ondblclick={toggleLabels}>
 	<nav class="nav-secondary">
 		<div
 			class="home-link"
@@ -194,6 +139,7 @@
 
 <style>
 	header {
+		--app-header-size: 188px;
 		--app-nav-btn-size: clamp(2rem, calc(var(--app-header-size) * 0.3), 3.5rem);
 		--app-nav-glyph-size: clamp(1.3rem, calc(var(--app-nav-btn-size) * 0.5), 1.5rem);
 		--app-nav-gap: 0.4rem;
@@ -335,31 +281,37 @@
 		white-space: nowrap;
 	}
 
-	header.labels-none :global(.btn.nav-btn .btn-label) {
+	:global(html.nav-labels-hidden) header :global(.btn.nav-btn .btn-label) {
 		display: none;
 	}
 
 	/* Compact/icon-only sidebar: same height and padding as the labeled sidebar —
 	   just square instead of a wide pill, matching the fluffychat-style icon rail. */
-	header.labels-none nav :global(.btn.nav-btn) {
+	:global(html.nav-labels-hidden) header nav :global(.btn.nav-btn) {
 		width: var(--app-nav-btn-size);
 	}
 
-	header.labels-below :global(.btn.nav-btn) {
-		flex-direction: column;
-		height: auto;
-		min-height: var(--app-nav-btn-size);
+	/* Labels below the icons on mobile */
+	@media (max-width: 768px) {
+		:global(html:not(.nav-labels-hidden)) header :global(.btn.nav-btn) {
+			flex-direction: column;
+			height: auto;
+			min-height: var(--app-nav-btn-size);
+		}
 	}
 
-	header.labels-right :global(.btn.nav-btn) {
-		flex-direction: row;
-		justify-content: flex-start;
-		min-width: min(100%, calc(var(--app-header-size) - 0.5rem));
-	}
+	/* Labels beside the icons on desktop */
+	@media (min-width: 769px) {
+		:global(html:not(.nav-labels-hidden)) header :global(.btn.nav-btn) {
+			flex-direction: row;
+			justify-content: flex-start;
+			min-width: min(100%, calc(var(--app-header-size) - 0.5rem));
+		}
 
-	header.labels-right nav :global(.btn.nav-btn .btn-label) {
-		text-align: left;
-		max-width: none;
+		:global(html:not(.nav-labels-hidden)) header nav :global(.btn.nav-btn .btn-label) {
+			text-align: left;
+			max-width: none;
+		}
 	}
 
 	/* Active menu item: no accent color, only interface background */
@@ -385,6 +337,7 @@
 		}
 
 		header {
+			--app-header-size: 100px;
 			--app-nav-btn-size: calc(var(--app-header-size) * 0.4);
 			--app-nav-gap: var(--space-1);
 			--app-nav-pad-inline: var(--space-1);
