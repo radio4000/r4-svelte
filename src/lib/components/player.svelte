@@ -14,6 +14,7 @@
 		leaveAutoRadio,
 		rejoinAutoRadio,
 		recordSeekPosition,
+		seekTo,
 		toggleShuffle
 	} from '#lib/api.js'
 	import {requestPlaybackWakeLock, releasePlaybackWakeLock} from '#lib/wake-lock.js'
@@ -27,6 +28,7 @@
 	import {createMediaSession} from '#lib/player/media-session.svelte.js'
 	import {createStallRecovery} from '#lib/player/stall-recovery.svelte.js'
 	import {appState, canEditChannel, deckAccent} from '#lib/app-state.svelte.js'
+	import {takeResumePosition} from '#lib/player/resume-position.js'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'
@@ -226,6 +228,9 @@
 			mediaElement.playbackRate = deck.speed ?? 1
 		}
 		if (mediaElement) recordSeekPosition(deckId, mediaElement.currentTime ?? 0)
+		const resume = takeResumePosition(deckId)
+		if (resume && resume.track_id === deck?.playlist_track && !deck.auto_radio)
+			seekTo(deckId, resume.seconds)
 		// Update track duration if missing (only for owned channels, once per track)
 		if (
 			track &&

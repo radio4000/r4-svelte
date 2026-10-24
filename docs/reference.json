@@ -897,6 +897,13 @@
 		}
 	],
 
+	"src/lib/player/resume-position.ts": [
+		{
+			"name": "takeResumePosition(deckId)",
+			"desc": "The deck's playhead saved when the page last hid, returned once. player.svelte seeks to it on first play after a reload."
+		}
+	],
+
 	"src/lib/share.ts": [
 		{"name": "channelUrl(channel)", "desc": "Absolute URL for a channel page."},
 		{"name": "trackUrl(channel, track)", "desc": "Absolute URL for a track page."},
