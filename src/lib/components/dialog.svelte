@@ -75,6 +75,7 @@
 		transition:
 			opacity var(--duration) var(--ease-out),
 			scale var(--duration) var(--ease-out),
+			translate var(--duration) var(--ease-out),
 			display var(--duration) allow-discrete,
 			overlay var(--duration) allow-discrete;
 	}
@@ -153,5 +154,36 @@
 		background: inherit;
 		padding-top: 0.75rem;
 		border-top: 1px solid var(--color-interface-border);
+	}
+
+	/* Phones: a bottom sheet that slides up, clear of the home bar */
+	@media (max-width: 520px) {
+		dialog {
+			--duration: 250ms;
+			margin-block: auto 0;
+			padding: calc(2rem + env(safe-area-inset-top, 0px)) 0 0;
+		}
+		dialog:not([open]) {
+			--duration: 200ms;
+			opacity: 1;
+			scale: 1;
+			translate: 0 100%;
+		}
+		@starting-style {
+			dialog[open] {
+				opacity: 1;
+				scale: 1;
+				translate: 0 100%;
+			}
+		}
+		.dialog-panel {
+			width: 100%;
+			max-height: calc(100dvh - 2rem - env(safe-area-inset-top, 0px));
+			margin-block-end: 0;
+			border-block-end: none;
+			border-end-start-radius: 0;
+			border-end-end-radius: 0;
+			padding-block-end: calc(1em + env(safe-area-inset-bottom, 0px));
+		}
 	}
 </style>
