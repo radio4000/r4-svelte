@@ -22,7 +22,8 @@ input[type='password'],
 input[type='number'],
 input[type='text'],
 input[type='url'] {
-	font-size: var(--font-4);
+	/* iOS zooms into any field under 16px on focus */
+	font-size: max(16px, var(--font-4));
 }
 
 select,

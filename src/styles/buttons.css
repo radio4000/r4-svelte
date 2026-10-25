@@ -283,6 +283,7 @@ button.chip.active,
 
 /* Select: use normal text color, border comes from forms.css */
 select {
+	font-size: max(16px, var(--font-4)); /* see forms.css: iOS zoom */
 	color: var(--gray-12);
 	box-shadow: none;
 	background: var(--color-interface-elevated);
