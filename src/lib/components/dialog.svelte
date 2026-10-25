@@ -143,6 +143,7 @@
 	}
 	.dialog-body {
 		overflow: auto;
+		overscroll-behavior: contain;
 		padding-block: 0.75rem;
 	}
 	.dialog-footer {

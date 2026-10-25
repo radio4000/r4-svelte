@@ -144,6 +144,8 @@ html.no-floating-ui {
 	justify-content: start;
 	overflow-x: auto;
 	overflow-y: hidden;
+	/* end of the row mustn't swipe the browser back a page */
+	overscroll-behavior-x: contain;
 	padding-bottom: 0.5rem;
 	scroll-snap-type: x proximity;
 }
@@ -342,6 +344,7 @@ menu {
 	display: flex;
 	gap: var(--space-1);
 	overflow-x: auto;
+	overscroll-behavior-x: contain;
 	scrollbar-width: thin;
 	scrollbar-color: transparent transparent;
 	transition: scrollbar-color var(--duration-2);

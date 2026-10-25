@@ -82,6 +82,7 @@
 		gap: var(--space-2);
 		justify-content: space-between;
 		overflow-x: auto;
+		overscroll-behavior-x: contain;
 		-webkit-overflow-scrolling: touch;
 		scrollbar-width: thin;
 		scroll-snap-type: x proximity;
