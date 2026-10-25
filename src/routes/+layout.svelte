@@ -28,6 +28,7 @@
 	import {syncAnalyticsConsent, capture} from '#lib/analytics.js'
 	// import {setChannelsCtx} from '#lib/contexts.js'
 	import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
+	import {syncThemeColor} from '#lib/theme-color.js'
 	import {logger} from '#lib/logger.js'
 	import {span} from '#lib/perf.js'
 	import * as m from '#lib/paraglide/messages.js'
@@ -230,6 +231,7 @@
 		const isDark = theme === 'dark'
 		document.documentElement.classList.toggle('dark', isDark)
 		document.documentElement.classList.toggle('light', !isDark)
+		syncThemeColor()
 	})
 
 	$effect(() => {
@@ -240,6 +242,7 @@
 
 	$effect(() => {
 		applyCustomCssVariables(appState.custom_css_variables)
+		syncThemeColor()
 	})
 
 	// Apply font family
@@ -455,7 +458,12 @@
 		height: 100vh;
 		height: 100dvh;
 		overflow: hidden;
-		padding: var(--floating-padding);
+		/* viewport-fit=cover (app.html) draws under the notch and home bar, so
+		   keep the shell clear of them */
+		padding-top: max(var(--floating-padding), env(safe-area-inset-top));
+		padding-right: max(var(--floating-padding), env(safe-area-inset-right));
+		padding-bottom: max(var(--floating-padding), env(safe-area-inset-bottom));
+		padding-left: max(var(--floating-padding), env(safe-area-inset-left));
 		gap: var(--floating-gap);
 	}
 

@@ -186,10 +186,15 @@
 		transition: border-color 120ms ease;
 	}
 
-	.resize-handle:hover,
 	.resize-handle:focus-visible,
 	.deck.resizing .resize-handle {
 		border-right-color: var(--deck-accent, var(--gray-5));
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.resize-handle:hover {
+			border-right-color: var(--deck-accent, var(--gray-5));
+		}
 	}
 
 	@media (max-width: 768px) {

@@ -23,10 +23,23 @@ html {
 	color-scheme: light dark;
 	interpolate-size: allow-keywords;
 
+	/* No grey flash on tap; pressable things carry their own :active instead */
+	-webkit-tap-highlight-color: transparent;
+
 	/* ios text */
 	-moz-text-size-adjust: 100%;
 	-webkit-text-size-adjust: 100%;
 	text-size-adjust: 100%;
+}
+
+/* No double-tap zoom on controls, so quick repeat taps (next, next) stay taps */
+a,
+button,
+.btn,
+summary,
+label,
+input[type='range'] {
+	touch-action: manipulation;
 }
 
 body {
@@ -85,8 +98,14 @@ ul {
 a {
 	text-decoration-skip-ink: auto;
 	hyphens: auto;
-	transition: text-decoration-color 150ms;
+	transition:
+		text-decoration-color 150ms,
+		opacity var(--duration-1);
 	cursor: var(--interactive-cursor, pointer);
+}
+
+a:not(.btn):active {
+	opacity: 0.7;
 }
 
 a,
@@ -155,8 +174,10 @@ a.slug-link,
 	gap: var(--space-1);
 }
 
-button.channel-badge:hover {
-	background: var(--accent-10);
+@media (hover: hover) and (pointer: fine) {
+	button.channel-badge:hover {
+		background: var(--accent-10);
+	}
 }
 
 button.channel-badge:active {
@@ -173,8 +194,10 @@ button.channel-badge:focus-visible {
 	color: var(--accent-9);
 }
 
-button.channel-badge.drifted:hover {
-	background: var(--accent-3);
+@media (hover: hover) and (pointer: fine) {
+	button.channel-badge.drifted:hover {
+		background: var(--accent-3);
+	}
 }
 
 .channel-badge.drifted::after {

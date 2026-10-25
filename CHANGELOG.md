@@ -2,6 +2,8 @@
 
 ## October 2026
 
+- #UI On phones R4 feels more like an app: fields don't zoom in, taps don't leave buttons lit, the status bar follows the app theme, dialogs slide up from the bottom and small buttons are easier to hit
+- #UI The installed app opens without a URL bar, can rotate, and keeps clear of the notch and home bar
 - #Dev Production source maps let error tracking and browser tools show original source locations
 - #Dev Opted-in client errors now appear in PostHog Error Tracking
 - #Perf Faster home, channel search, big tracklists, playback from big channels, track deletion, and sign-in for returning users

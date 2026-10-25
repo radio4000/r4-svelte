@@ -60,10 +60,16 @@
 	/* Own hover/focus affordance — it sits inside a track row that has its own
 	   hover/selected treatment, so without this it just looks like part of the
 	   row instead of its own clickable channel link. */
-	a.channel-micro-card:hover,
 	a.channel-micro-card:focus-visible {
 		background: var(--gray-4);
 		border-color: var(--color-control-border-hover);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		a.channel-micro-card:hover {
+			background: var(--gray-4);
+			border-color: var(--color-control-border-hover);
+		}
 	}
 
 	a.channel-micro-card:focus-visible {

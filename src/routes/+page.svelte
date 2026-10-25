@@ -599,6 +599,8 @@
 	.dashboard-grid--scroll {
 		flex-wrap: nowrap;
 		overflow-x: auto;
+		overflow-y: hidden;
+		overscroll-behavior-x: contain;
 		scrollbar-width: none;
 		scroll-snap-type: x proximity;
 
@@ -634,9 +636,11 @@
 		background: var(--button-bg);
 		border: 1px solid var(--color-control-border);
 
-		&:hover {
-			background: var(--gray-4);
-			border-color: var(--color-control-border-hover);
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				background: var(--gray-4);
+				border-color: var(--color-control-border-hover);
+			}
 		}
 	}
 
@@ -644,10 +648,16 @@
 		text-decoration: none;
 		transition: background var(--duration-1);
 
-		&:hover,
 		&:focus-visible {
 			background: var(--gray-4);
 			outline: none;
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				background: var(--gray-4);
+				outline: none;
+			}
 		}
 	}
 
@@ -666,13 +676,17 @@
 		gap: var(--space-1);
 		min-width: 0;
 		flex-shrink: 1;
-		&:hover {
-			text-decoration: underline;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 
-	.dashboard-card:has(.dashboard-label--tag:hover) {
-		background: var(--gray-3);
+	@media (hover: hover) and (pointer: fine) {
+		.dashboard-card:has(.dashboard-label--tag:hover) {
+			background: var(--gray-3);
+		}
 	}
 
 	.tag-pill-action {
@@ -702,8 +716,10 @@
 		a {
 			color: inherit;
 			text-decoration: none;
-			&:hover {
-				text-decoration: underline;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}

@@ -89,6 +89,7 @@
 				onkeydown={handleKeydown}
 				placeholder={m.chat_input_placeholder()}
 				maxlength="280"
+				enterkeyhint="send"
 			/>
 		</fieldset>
 		<button type="submit" disabled={!message.trim()}>{m.chat_send_button()}</button>
@@ -111,6 +112,7 @@
 	.messages {
 		flex: 1;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;

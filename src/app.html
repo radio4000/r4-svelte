@@ -6,7 +6,7 @@
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta
 			name="viewport"
-			content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+			content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
 		/>
 		<link rel="manifest" href="%sveltekit.assets%/webmanifest.json" />
 
@@ -17,8 +17,9 @@
 			rel="stylesheet"
 		/>
 
-		<meta name="theme-color" content="lch(97.5% 0 282)" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="lch(7% 1.867 272)" media="(prefers-color-scheme: dark)" />
+		<!-- --gray-1 per scheme; +layout.svelte rewrites both once the app theme is known -->
+		<meta name="theme-color" content="#fefbf7" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#15110b" media="(prefers-color-scheme: dark)" />
 		<!-- Saved theme and sidebar labels, before first paint -->
 		<script>
 			try {

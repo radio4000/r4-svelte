@@ -482,8 +482,10 @@
 				height 200ms,
 				opacity 0.2s;
 
-			&:hover {
-				height: 0 !important;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					height: 0 !important;
+				}
 			}
 		}
 	}

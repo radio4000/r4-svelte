@@ -59,6 +59,7 @@
 	<input
 		bind:this={input}
 		type="search"
+		enterkeyhint="search"
 		placeholder={placeholderText}
 		bind:value={inputValue}
 		{...restProps}
@@ -110,8 +111,10 @@
 		opacity: 0.5;
 		color: inherit;
 
-		&:hover {
-			opacity: 1;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				opacity: 1;
+			}
 		}
 	}
 </style>

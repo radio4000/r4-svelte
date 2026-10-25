@@ -1316,8 +1316,10 @@
 		color: var(--accent-11);
 	}
 
-	tbody tr:hover td {
-		background: var(--gray-2);
+	@media (hover: hover) and (pointer: fine) {
+		tbody tr:hover td {
+			background: var(--gray-2);
+		}
 	}
 
 	.disclaimer {
@@ -1365,9 +1367,11 @@
 		text-align: left;
 	}
 
-	.channel-pick-btn:hover {
-		background: var(--gray-2);
-		border-color: var(--color-control-border-hover);
+	@media (hover: hover) and (pointer: fine) {
+		.channel-pick-btn:hover {
+			background: var(--gray-2);
+			border-color: var(--color-control-border-hover);
+		}
 	}
 
 	.channel-pick-btn.selected {

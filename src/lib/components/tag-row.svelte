@@ -45,7 +45,9 @@
 		transition: height 100ms ease;
 	}
 
-	.tag-row:hover .bar {
-		height: 0.75rem;
+	@media (hover: hover) and (pointer: fine) {
+		.tag-row:hover .bar {
+			height: 0.75rem;
+		}
 	}
 </style>

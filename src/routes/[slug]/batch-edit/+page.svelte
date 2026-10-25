@@ -672,8 +672,10 @@
 		padding: var(--space-1);
 	}
 
-	.column-options label:hover {
-		background: var(--gray-3);
+	@media (hover: hover) and (pointer: fine) {
+		.column-options label:hover {
+			background: var(--gray-3);
+		}
 	}
 
 	p.warn {

@@ -166,6 +166,7 @@
 									<input
 										id="{uid}-search-{i}"
 										type="text"
+										enterkeyhint="search"
 										value={s.search || ''}
 										onchange={(e) =>
 											updateSource(i, {...s, search: e.currentTarget.value.trim() || undefined})}
@@ -263,8 +264,10 @@
 		padding: var(--space-1);
 		border-radius: 0.25rem;
 	}
-	.query-group:has([data-delete]:hover) {
-		box-shadow: inset 0 0 0 1px currentColor;
+	@media (hover: hover) and (pointer: fine) {
+		.query-group:has([data-delete]:hover) {
+			box-shadow: inset 0 0 0 1px currentColor;
+		}
 	}
 	.query-header {
 		display: flex;

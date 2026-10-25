@@ -607,6 +607,13 @@
 		}
 	],
 
+	"src/lib/theme-color.ts": [
+		{
+			"name": "syncThemeColor()",
+			"desc": "Set <meta name=theme-color> (status bar) to the current page background."
+		}
+	],
+
 	"src/lib/custom-element-props.js": [
 		{
 			"name": "upgradeProperties(el, props)",

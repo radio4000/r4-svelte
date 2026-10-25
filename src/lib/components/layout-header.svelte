@@ -200,9 +200,11 @@
 			border-color 120ms ease;
 	}
 
-	nav :global(.btn.nav-btn:hover) {
-		background: var(--gray-4);
-		border-color: var(--color-control-border-hover);
+	@media (hover: hover) and (pointer: fine) {
+		nav :global(.btn.nav-btn:hover) {
+			background: var(--gray-4);
+			border-color: var(--color-control-border-hover);
+		}
 	}
 
 	nav :global(.btn.nav-btn .btn-label) {
