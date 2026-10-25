@@ -110,8 +110,11 @@ input[type='range'] {
 	}
 }
 
+/* Grows with its text (rows= no longer sets the height), scrolls past max-height */
 textarea {
+	field-sizing: content;
 	min-height: 4rem;
+	max-height: 12lh;
 	line-height: inherit;
 }
 
