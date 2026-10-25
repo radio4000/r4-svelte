@@ -59,6 +59,7 @@
 	<input
 		bind:this={input}
 		type="search"
+		enterkeyhint="search"
 		placeholder={placeholderText}
 		bind:value={inputValue}
 		{...restProps}

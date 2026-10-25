@@ -95,6 +95,9 @@
 						id="slug"
 						name="slug"
 						type="text"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 						pattern="[a-z0-9\-]+"
 						minlength="3"

@@ -119,7 +119,16 @@
 
 				<fieldset>
 					<label for="slug">{m.channel_edit_slug_label()}</label>
-					<input id="slug" name="slug" type="text" bind:value={fieldSlug} required />
+					<input
+						id="slug"
+						name="slug"
+						type="text"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
+						bind:value={fieldSlug}
+						required
+					/>
 				</fieldset>
 
 				<fieldset>

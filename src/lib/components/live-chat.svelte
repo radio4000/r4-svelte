@@ -89,6 +89,7 @@
 				onkeydown={handleKeydown}
 				placeholder={m.chat_input_placeholder()}
 				maxlength="280"
+				enterkeyhint="send"
 			/>
 		</fieldset>
 		<button type="submit" disabled={!message.trim()}>{m.chat_send_button()}</button>
