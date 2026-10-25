@@ -230,6 +230,10 @@
 		const isDark = theme === 'dark'
 		document.documentElement.classList.toggle('dark', isDark)
 		document.documentElement.classList.toggle('light', !isDark)
+		// Status bar follows the app theme, not the OS (--gray-1, as in app.html)
+		for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+			meta.setAttribute('content', isDark ? '#15110b' : '#fefbf7')
+		}
 	})
 
 	$effect(() => {
