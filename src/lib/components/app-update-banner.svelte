@@ -77,8 +77,8 @@
 	[data-sw-update] {
 		max-width: 50ch;
 		position: fixed;
-		top: var(--space-1);
-		right: var(--space-1);
+		top: max(var(--space-1), env(safe-area-inset-top));
+		right: max(var(--space-1), env(safe-area-inset-right));
 		z-index: 9999;
 		display: flex;
 		flex-flow: column;

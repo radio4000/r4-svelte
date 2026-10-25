@@ -293,7 +293,8 @@
 			root.style.removeProperty('--floating-padding')
 			root.style.removeProperty('--floating-gap')
 		} else {
-			root.style.setProperty('--floating-padding', '0')
+			// 0px, not 0: a bare number makes the shell's max(…, env()) padding invalid
+			root.style.setProperty('--floating-padding', '0px')
 			root.style.setProperty('--floating-gap', '0')
 		}
 		// Never override bg/border tokens — flush mode reuses them for seams.
@@ -459,7 +460,12 @@
 		height: 100vh;
 		height: 100dvh;
 		overflow: hidden;
-		padding: var(--floating-padding);
+		/* viewport-fit=cover (app.html) draws under the notch and home bar, so
+		   keep the shell clear of them */
+		padding-top: max(var(--floating-padding), env(safe-area-inset-top));
+		padding-right: max(var(--floating-padding), env(safe-area-inset-right));
+		padding-bottom: max(var(--floating-padding), env(safe-area-inset-bottom));
+		padding-left: max(var(--floating-padding), env(safe-area-inset-left));
 		gap: var(--floating-gap);
 	}
 
