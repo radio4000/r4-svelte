@@ -458,7 +458,12 @@
 		height: 100vh;
 		height: 100dvh;
 		overflow: hidden;
-		padding: var(--floating-padding);
+		/* viewport-fit=cover (app.html) draws under the notch and home bar, so
+		   keep the shell clear of them */
+		padding-top: max(var(--floating-padding), env(safe-area-inset-top));
+		padding-right: max(var(--floating-padding), env(safe-area-inset-right));
+		padding-bottom: max(var(--floating-padding), env(safe-area-inset-bottom));
+		padding-left: max(var(--floating-padding), env(safe-area-inset-left));
 		gap: var(--floating-gap);
 	}
 

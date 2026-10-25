@@ -147,7 +147,7 @@
 
 	/* Centered sheet (opt-in via the `centered` prop). */
 	[popover].centered {
-		top: 3.25rem;
+		top: calc(3.25rem + env(safe-area-inset-top, 0px));
 		left: 50%;
 		transform: translateX(-50%);
 		width: calc(100vw - 2rem);
