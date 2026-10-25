@@ -411,6 +411,8 @@
 <style>
 	.card {
 		flex: 1;
+		/* double-tap plays the track, so it mustn't also zoom the page */
+		touch-action: manipulation;
 		display: flex;
 		flex-flow: row nowrap;
 		gap: 0 0.5rem;

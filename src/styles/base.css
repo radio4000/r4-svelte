@@ -29,6 +29,16 @@ html {
 	text-size-adjust: 100%;
 }
 
+/* No double-tap zoom on controls, so quick repeat taps (next, next) stay taps */
+a,
+button,
+.btn,
+summary,
+label,
+input[type='range'] {
+	touch-action: manipulation;
+}
+
 body {
 	margin: 0;
 	overflow: hidden;
