@@ -35,6 +35,17 @@ button,
 	transition-timing-function: var(--ease-out);
 }
 
+/* Touch: grow the hit area of buttons under 44px past their visual edge.
+   Horizontal scroll rows set overflow-y: hidden so this can't make them
+   scroll vertically. */
+@media (pointer: coarse) {
+	:is(button, .btn):not(.link, .channel-badge)::after {
+		content: '';
+		position: absolute;
+		inset: min(0px, (100% - 44px) / 2);
+	}
+}
+
 /* press feedback */
 button:not(.link):active,
 .btn:not(.link):active {

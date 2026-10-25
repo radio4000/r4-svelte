@@ -599,6 +599,7 @@
 	.dashboard-grid--scroll {
 		flex-wrap: nowrap;
 		overflow-x: auto;
+		overflow-y: hidden;
 		overscroll-behavior-x: contain;
 		scrollbar-width: none;
 		scroll-snap-type: x proximity;

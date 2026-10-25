@@ -199,6 +199,7 @@
 		display: flex;
 		flex-wrap: nowrap;
 		overflow-x: auto;
+		overflow-y: hidden;
 		align-items: center;
 		gap: 0.5rem;
 		padding: var(--space-1) 0.5rem;

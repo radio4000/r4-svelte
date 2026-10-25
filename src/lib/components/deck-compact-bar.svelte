@@ -324,6 +324,7 @@
 		min-width: 0;
 		max-width: 45%;
 		overflow-x: auto;
+		overflow-y: hidden;
 		overscroll-behavior-x: contain;
 		scrollbar-width: none;
 		align-self: center;
@@ -362,6 +363,7 @@
 	.deck-transport {
 		justify-content: center;
 		overflow-x: auto;
+		overflow-y: hidden;
 		overscroll-behavior-x: contain;
 		scrollbar-width: none;
 	}
