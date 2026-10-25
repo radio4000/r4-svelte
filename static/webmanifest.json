@@ -23,7 +23,6 @@
   "name": "Radio4000",
   "short_name": "R4",
   "display": "standalone",
-  "display_override": ["minimal-ui"],
   "orientation": "portrait",
   "start_url": "/",
   "app": {
