@@ -111,6 +111,7 @@
 	.messages {
 		flex: 1;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: 1rem;
 		display: flex;
 		flex-direction: column;
