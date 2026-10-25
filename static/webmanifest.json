@@ -1,6 +1,6 @@
 {
-  "theme_color": "lch(97.5% 0 282)",
-  "background_color": "lch(97.5% 0 282)",
+  "theme_color": "#fefbf7",
+  "background_color": "#fefbf7",
   "icons": [
     {
       "src": "/favicon.png",
