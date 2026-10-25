@@ -166,6 +166,7 @@
 									<input
 										id="{uid}-search-{i}"
 										type="text"
+										enterkeyhint="search"
 										value={s.search || ''}
 										onchange={(e) =>
 											updateSource(i, {...s, search: e.currentTarget.value.trim() || undefined})}

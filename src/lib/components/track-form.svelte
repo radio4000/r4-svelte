@@ -190,6 +190,9 @@
 			id="{uid}-url"
 			name="url"
 			type="url"
+			autocapitalize="none"
+			autocorrect="off"
+			spellcheck="false"
 			value={initialUrl}
 			oninput={handleUrlInput}
 			required
@@ -239,6 +242,9 @@
 			id="{uid}-discogs_url"
 			name="discogs_url"
 			type="url"
+			autocapitalize="none"
+			autocorrect="off"
+			spellcheck="false"
 			placeholder={m.track_form_discogs_placeholder()}
 		/>
 	</fieldset>
