@@ -110,8 +110,10 @@
 		opacity: 0.5;
 		color: inherit;
 
-		&:hover {
-			opacity: 1;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				opacity: 1;
+			}
 		}
 	}
 </style>

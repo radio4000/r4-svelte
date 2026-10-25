@@ -181,13 +181,15 @@
 			background 0.1s,
 			border-color 0.1s;
 
-		&:hover {
-			background: var(--gray-3);
-			border-color: var(--color-control-border-hover);
-			--tag-bg: var(--accent-4);
-			--tag-bg-hover: var(--accent-5);
-			--tag-bg-active: var(--accent-6);
-			--tag-color: var(--accent-11);
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				background: var(--gray-3);
+				border-color: var(--color-control-border-hover);
+				--tag-bg: var(--accent-4);
+				--tag-bg-hover: var(--accent-5);
+				--tag-bg-active: var(--accent-6);
+				--tag-color: var(--accent-11);
+			}
 		}
 
 		&:focus,
@@ -214,11 +216,17 @@
 			color: var(--accent-9);
 		}
 
-		&.playing:hover,
 		&.playing:focus,
 		&.playing:focus-within {
 			background: var(--gray-3);
 			border-color: var(--color-control-border-hover);
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			&.playing:hover {
+				background: var(--gray-3);
+				border-color: var(--color-control-border-hover);
+			}
 		}
 
 		:global(.list) & {
@@ -266,10 +274,17 @@
 			transition: transform var(--duration-2) var(--ease-out);
 		}
 
-		article:hover &,
 		article:focus-within & {
 			:global(button) {
 				opacity: 1;
+			}
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			article:hover & {
+				:global(button) {
+					opacity: 1;
+				}
 			}
 		}
 
@@ -358,15 +373,24 @@
 		a {
 			text-decoration: none;
 			color: inherit;
-			&:hover {
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
+			}
+		}
+
+		article:focus-within & {
+			a {
 				text-decoration: underline;
 			}
 		}
 
-		article:hover &,
-		article:focus-within & {
-			a {
-				text-decoration: underline;
+		@media (hover: hover) and (pointer: fine) {
+			article:hover & {
+				a {
+					text-decoration: underline;
+				}
 			}
 		}
 	}
@@ -386,15 +410,19 @@
 		min-width: 0;
 		text-decoration: none;
 		transition: color var(--duration-1) var(--ease-out);
-		&:hover {
-			text-decoration: underline;
-			color: var(--accent-9);
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				text-decoration: underline;
+				color: var(--accent-9);
+			}
 		}
 	}
 
 	.slug-link {
-		&:hover {
-			text-decoration: underline;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 

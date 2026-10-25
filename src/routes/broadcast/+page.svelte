@@ -102,8 +102,10 @@
 		color: var(--accent-9);
 		text-decoration: none;
 		font-weight: 500;
-		&:hover {
-			text-decoration: underline;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 

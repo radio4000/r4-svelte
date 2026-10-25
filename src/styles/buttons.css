@@ -41,10 +41,18 @@ button:not(.link):active,
 	scale: 0.97;
 }
 
-button:focus,
-button:hover,
-.btn:focus,
-.btn:hover {
+/* Hover only where a pointer can hover: on touch a tap leaves :hover (and
+   :focus) stuck on until you tap elsewhere. Same for every :hover rule. */
+@media (hover: hover) and (pointer: fine) {
+	button:hover,
+	.btn:hover {
+		background: var(--gray-4);
+		border-color: var(--color-control-border-hover);
+	}
+}
+
+button:focus-visible,
+.btn:focus-visible {
 	background: var(--gray-4);
 	border-color: var(--color-control-border-hover);
 }
@@ -57,8 +65,10 @@ button:disabled,
 		opacity: 0.2;
 	}
 
-	&:hover {
-		border-color: transparent;
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: transparent;
+		}
 	}
 }
 
@@ -85,10 +95,16 @@ button.link {
 	text-decoration: underline;
 	text-underline-offset: 0.15em;
 
-	&:hover,
-	&:focus {
+	&:focus-visible {
 		border: none;
 		color: var(--accent-11);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border: none;
+			color: var(--accent-11);
+		}
 	}
 }
 
@@ -99,11 +115,16 @@ button.ghost,
 	border-color: transparent;
 	box-shadow: none;
 
-	&:hover,
-	&:focus,
+	&:focus-visible,
 	&:active,
 	&[aria-expanded='true'] {
 		border-color: var(--color-control-border);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: var(--color-control-border);
+		}
 	}
 
 	/* Not necessarily hovered/focused (e.g. an open dropdown trigger) — needs its
@@ -142,12 +163,18 @@ button.danger,
 	border-color: var(--color-red);
 }
 
-button.danger:hover,
-button.danger:focus,
-.btn.danger:hover,
-.btn.danger:focus {
+button.danger:focus-visible,
+.btn.danger:focus-visible {
 	background: color-mix(in lab, var(--color-red), black 10%);
 	border-color: color-mix(in lab, var(--color-red), black 10%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	button.danger:hover,
+	.btn.danger:hover {
+		background: color-mix(in lab, var(--color-red), black 10%);
+		border-color: color-mix(in lab, var(--color-red), black 10%);
+	}
 }
 
 button[role='primary'],
@@ -161,12 +188,14 @@ button.primary,
 		transparent
 	);
 
-	&:hover {
-		border-color: color-mix(
-			in oklch,
-			light-dark(var(--accent-12), var(--accent-9)) calc(var(--border-opacity) * 100%),
-			transparent
-		);
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: color-mix(
+				in oklch,
+				light-dark(var(--accent-12), var(--accent-9)) calc(var(--border-opacity) * 100%),
+				transparent
+			);
+		}
 	}
 }
 
@@ -272,9 +301,11 @@ button.chip.active,
 	);
 }
 
-.chip-delete:hover,
-.chip.active + .chip-delete:hover {
-	background: var(--color-red);
+@media (hover: hover) and (pointer: fine) {
+	.chip-delete:hover,
+	.chip.active + .chip-delete:hover {
+		background: var(--color-red);
+	}
 }
 
 .mode-action.drifted {

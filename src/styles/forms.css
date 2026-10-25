@@ -42,8 +42,10 @@ input[type='url'] {
 	border: 1px solid var(--color-control-border);
 	line-height: 1;
 
-	&:hover {
-		border-color: var(--color-control-border-hover);
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: var(--color-control-border-hover);
+		}
 	}
 
 	&:active,

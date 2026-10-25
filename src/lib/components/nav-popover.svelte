@@ -282,10 +282,12 @@
 		text-decoration: none;
 	}
 
-	.tile:hover {
-		background: var(--gray-5);
-		border-color: var(--accent-6);
-		text-decoration: none;
+	@media (hover: hover) and (pointer: fine) {
+		.tile:hover {
+			background: var(--gray-5);
+			border-color: var(--accent-6);
+			text-decoration: none;
+		}
 	}
 
 	.tile :global(svg) {
@@ -338,11 +340,17 @@
 		text-decoration: none;
 	}
 
-	.channel-row:hover,
-	.channel-row:global([aria-selected='true']),
-	.list-link:hover {
+	.channel-row:global([aria-selected='true']) {
 		background: var(--gray-5);
 		text-decoration: none;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.channel-row:hover,
+		.list-link:hover {
+			background: var(--gray-5);
+			text-decoration: none;
+		}
 	}
 
 	.list-link {

@@ -165,8 +165,10 @@ a.slug-link,
 	gap: var(--space-1);
 }
 
-button.channel-badge:hover {
-	background: var(--accent-10);
+@media (hover: hover) and (pointer: fine) {
+	button.channel-badge:hover {
+		background: var(--accent-10);
+	}
 }
 
 button.channel-badge:active {
@@ -183,8 +185,10 @@ button.channel-badge:focus-visible {
 	color: var(--accent-9);
 }
 
-button.channel-badge.drifted:hover {
-	background: var(--accent-3);
+@media (hover: hover) and (pointer: fine) {
+	button.channel-badge.drifted:hover {
+		background: var(--accent-3);
+	}
 }
 
 .channel-badge.drifted::after {

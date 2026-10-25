@@ -154,8 +154,10 @@
 			white-space: nowrap;
 			text-decoration: none;
 			color: var(--accent-9);
-			&:hover {
-				text-decoration: underline;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}
