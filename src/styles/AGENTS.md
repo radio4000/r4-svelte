@@ -1,5 +1,7 @@
 # Global styles
 
+Name CSS classes by primitive/identity (`tabs`, `btn`, `chip`, `link`, etc.), not by location (`explore-section-menu`) — reusable vocabulary styled once here.
+
 The `@import` order in style.css is the cascade order — later files win.
 
 variables.css holds the base tokens. color-scales.css derives the -1..12 scales from `--gray-light`/`--gray-dark` and `--accent-light`/`--accent-dark` — edit those base pairs, not the generated scales. theme-0.css is intentionally unused, kept for inspiration.

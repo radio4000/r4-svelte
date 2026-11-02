@@ -34,6 +34,7 @@ export interface DeckDisplay {
 	readonly presenceCount: number
 }
 
+/** Build a DeckDisplay: track/channel info with broadcast and header fallbacks, plus auto-radio availability and listener count. */
 export function createDeckDisplay(deckId: number): DeckDisplay {
 	const deck = $derived(appState.decks[deckId])
 

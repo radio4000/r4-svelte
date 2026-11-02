@@ -1,4 +1,5 @@
 <script>
+	/** The /channels directory: filter, search and pagination synced to the URL, with its own display toggle. */
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'

@@ -34,6 +34,7 @@ export async function readBroadcast(channelId: string): Promise<BroadcastWithCha
 	return data as unknown as BroadcastWithChannel
 }
 
+/** Active broadcasts keyed by channel id; always refetched (staleTime 0). */
 export const broadcastsCollection = createCollection(
 	queryCollectionOptions({
 		queryKey: () => ['broadcasts'],

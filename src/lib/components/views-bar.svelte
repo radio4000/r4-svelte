@@ -1,4 +1,5 @@
 <script lang="ts">
+	/** Navigation bar of the user's saved and pinned views, with create, edit and delete. */
 	import {serializeView, parseView, viewLabel, type View, type ViewSource} from '#lib/views.js'
 	import {
 		viewsCollection,

@@ -50,6 +50,7 @@
 </script>
 
 <script>
+	/** Generic per-page tab strip: a nav of href/label items, one marked active. */
 	import Icon from '#lib/components/icon.svelte'
 
 	/** @type {{items: {href: string, icon?: string, label: string, count?: number, active?: boolean}[], label?: string, scroll?: boolean}} */

@@ -1,4 +1,5 @@
 <script lang="ts">
+	/** Fields for a track's URL, title and description, in create or edit mode; saves through the tracks collection. */
 	import {addTrack, updateTrack} from '#lib/collections/tracks.js'
 	import {getMedia, parseUrl} from 'media-now'
 	import {searchUrl} from '#lib/metadata/discogs.js'

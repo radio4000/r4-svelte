@@ -1,4 +1,5 @@
 <script>
+	/** Grid, list, map, tuner or infinite display of a given array of channels. No filter or pagination; used by the homepage and profile pages (following/followers). */
 	import {goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {getChannelActivity} from '#lib/channel-activity.svelte.js'

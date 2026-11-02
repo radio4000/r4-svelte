@@ -16,6 +16,7 @@ import type {Channel} from '#lib/types.js'
 
 export type {Channel}
 
+/** Default page size for channel lists. */
 export const CHANNELS_PAGE_SIZE = 20
 
 export type ChannelQueryParams = {

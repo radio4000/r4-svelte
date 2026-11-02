@@ -1,4 +1,5 @@
 <script>
+	/** Page title, meta/OG tags and rel=canonical (when url is set). plain skips the app-name suffix. */
 	import {appName} from '#lib/config.js'
 	let {
 		title,

@@ -108,6 +108,7 @@ export function notifyBroadcastState(channelId) {
 	broadcastStateUpdate(channelId)
 }
 
+/** The channel ID being broadcast from any deck, if one is. */
 export function getBroadcastingChannelId() {
 	return Object.values(appState.decks).find((deck) => deck.broadcasting_channel_id)
 		?.broadcasting_channel_id

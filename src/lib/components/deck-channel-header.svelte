@@ -1,4 +1,5 @@
 <script>
+	/** Title, slug and tags header shared by the deck and channel layouts, with auto-radio and broadcast sync controls. */
 	import {resolve} from '$app/paths'
 	import Icon from '#lib/components/icon.svelte'
 	import AutoRadioButton from '#lib/components/auto-radio-button.svelte'

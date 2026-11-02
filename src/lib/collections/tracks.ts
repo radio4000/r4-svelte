@@ -386,6 +386,7 @@ export function updateTrack(channel: ChannelRef, id: string, changes: Record<str
 		.then(() => {})
 }
 
+/** Delete a track from a channel. */
 export function deleteTrack(channel: ChannelRef, id: string) {
 	return tracksCollection
 		.delete(id, {metadata: {slug: channel.slug}})
@@ -440,6 +441,7 @@ export function batchUpdateTracksIndividual(
 		.then(() => {})
 }
 
+/** Delete several tracks of a channel in one transaction. */
 export function batchDeleteTracks(channel: Channel, ids: string[]) {
 	return tracksCollection
 		.delete(ids, {metadata: {slug: channel.slug}})

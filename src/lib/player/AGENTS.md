@@ -2,9 +2,6 @@
 
 player.svelte (in ../components) is the per-deck playback UI — one instance per deck, keyed by deckId which never changes across its lifetime (hence the `untrack()` around `createDeckDisplay`). Architecture in docs/player.md and docs/decks.md; auto-radio in docs/auto-radio.md; queue math in docs/queue.md.
 
-- deck-display.svelte.ts — single source of truth for what the UI should display right now: the `track ?? broadcastTrack ?? lastTrack` fallback chains. Don't re-derive these ad hoc.
-- media-session.svelte.ts — `createMediaSession(deckId, deps)`: lock-screen controls, kept alive by reasserting against YouTube's iframe stealing the session. Owner-gated across decks.
-- stall-recovery.svelte.ts — `createStallRecovery(deckId, deps)`: nudges playback that stalled while backgrounded/locked. Skips broadcast/auto-radio decks.
-- audio-keepalive.js — `requestAudioKeepAlive(deckId)` / `releaseAudioKeepAlive(deckId)`: an inaudible looping signal while playing (Android) so a locked page stays audible between tracks. Rationale and test trace in docs/player.md.
+deck-display.svelte.ts is the single source for what a deck shows right now. Don't re-derive its fallback chains ad hoc.
 
-The last three are stability workarounds, not player logic — platform gotchas in docs/player.md.
+media-session, stall-recovery and audio-keepalive are platform workarounds, not player logic. Each file's header explains the bug it works around; read it before touching them.

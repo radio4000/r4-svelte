@@ -165,6 +165,7 @@ function onKeyDown(event) {
 	if (currentHandler) currentHandler(event)
 }
 
+/** Attach the global keydown listener from default bindings plus appState.shortcuts overrides. */
 export function initializeKeyboardShortcuts() {
 	const keyBindings = {...DEFAULT_KEY_BINDINGS, ...appState.shortcuts}
 	/** @type {import('tinykeys').KeybindingsMap} */

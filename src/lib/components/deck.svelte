@@ -1,4 +1,5 @@
 <script>
+	/** One deck: the player and queue panel, with broadcast and auto-radio state. */
 	import {page} from '$app/state'
 	import {scale} from 'svelte/transition'
 	import {cubicOut} from 'svelte/easing'

@@ -1,4 +1,5 @@
 <script>
+	/** Icon and text toggle for the display mode and sort of a ChannelsView. */
 	import {viewIconMap, viewLabelMap} from './channels-view-shared.js'
 	import PopoverMenu from './popover-menu.svelte'
 	import SortControls from './sort-controls.svelte'

@@ -13,6 +13,7 @@ export const trackUrl = (channel: Channel, track: Track) =>
 export const channelEmbed = (channel: Channel) =>
 	`<iframe src="${appPlayerUrl}/v2/?slug=${channel.slug}" width="320" height="500"></iframe>`
 
+/** Copy text; resolves to whether it succeeded. */
 export const copyToClipboard = (text: string) =>
 	navigator.clipboard.writeText(text).then(
 		() => true,

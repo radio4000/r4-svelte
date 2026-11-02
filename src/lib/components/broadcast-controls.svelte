@@ -1,4 +1,5 @@
 <script>
+	/** Start or stop a live broadcast of a channel from a deck. */
 	import {resolve} from '$app/paths'
 	import {appState} from '#lib/app-state.svelte.js'
 	import {

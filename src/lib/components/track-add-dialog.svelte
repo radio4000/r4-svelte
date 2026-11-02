@@ -1,4 +1,5 @@
 <script lang="ts">
+	/** Dialog for adding a track to the user's channel. Opens with the 'c' shortcut. */
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {page} from '$app/state'

@@ -58,50 +58,75 @@ export interface Deck {
 	playlist_title?: string
 	playlist_slug?: string
 	playlist_track?: string
+	/** queue of track IDs, original order */
 	playlist_tracks: string[]
+	/** same queue in shuffled order, used when shuffle is on */
 	playlist_tracks_shuffled: string[]
 	/** Session-only queue filter (search, #tags, @mention), set from the queue panel. */
 	queue_filter?: {search: string; tags: string[]; mention: string}
 	/** Track IDs matching queue_filter; next/prev stay within them (plus the current track). */
 	playlist_tracks_filtered?: string[]
+	/** session-only, reset on load */
 	is_playing: boolean
 	shuffle: boolean
+	/** 0–1 */
 	volume: number
 	muted?: boolean
 	hide_video_player: boolean
+	/** broadcast layering of multiple decks' video */
 	video_mix?: boolean
 	compact: boolean
+	/** fullscreen player */
 	expanded: boolean
 	hide_queue_panel: boolean
+	/** px */
 	queue_panel_width?: number
+	/** session-only, reset on load */
 	broadcasting_channel_id?: string
+	/** session-only; a listening deck is not persisted */
 	listening_to_channel_id?: string
 	auto_radio?: boolean
+	/** computed, 2s tolerance; session-only */
 	auto_radio_drifted?: boolean
+	/** stored View identity/filters, for matching and auto-radio resync */
 	view?: import('#lib/views.js').View
+	/** epoch of the oldest track, unix seconds */
 	auto_radio_rotation_start?: number
 	/** Epoch ms of the last join/resync — drift detection stays quiet for a grace
 	 *  window after it while the seek lands. */
 	auto_radio_synced_at?: number
+	/** computed drift from the broadcast position, 2s tolerance; session-only */
 	listening_drifted?: boolean
+	/** UUID of the current play session, used for capture events; session-only */
 	play_id?: string
+	/** ISO timestamp of when the track started */
 	track_played_at?: string | null
+	/** ISO timestamp of the last seek */
 	seeked_at?: string | null
+	/** seconds */
 	seek_position?: number | null
+	/** playback rate, 1 = normal */
 	speed?: number
+	/** last known media time, seconds */
 	media_current_time?: number
+	/** last known media duration, seconds */
 	media_duration?: number
 	ms_listened?: number
 }
 
 export interface AppState {
 	id: number
+	/** per-deck player state, keyed by deck id */
 	decks: Record<number, Deck>
+	/** id given to the next deck added */
 	next_deck_id: number
+	/** the focused deck */
 	active_deck_id: number
 	theme?: string
+	/** theme overrides */
 	custom_css_variables: Record<string, string>
 	channels_display: 'grid' | 'list' | 'map' | 'infinite' | 'tuner'
+	/** track count filter, e.g. 'featured' */
 	channels_filter: string
 	channels_order: 'updated' | 'created' | 'name' | 'tracks' | 'shuffle'
 	channels_order_direction: 'asc' | 'desc'
@@ -115,6 +140,7 @@ export interface AppState {
 	channels?: string[]
 	/** the user's primary channel (full object) */
 	channel?: Channel
+	/** custom keybindings, action to key */
 	shortcuts?: Record<string, string>
 	show_track_artwork: boolean
 	/** Default volume for new decks: 0 (silent) or 1 (full) */
@@ -134,8 +160,10 @@ export interface AppState {
 	font_family?: string
 	user?: User
 	language?: string
+	/** open state of the add track modal; null = closed */
 	modal_track_add?: {track?: Track; url?: string} | null
 	modal_track_edit?: {track: Track} | null
+	/** open state of the share modal; null = closed */
 	modal_share?: {track?: Track; channel: Channel} | null
 	modal_shortcuts?: boolean
 	/** One-shot signal: set true to open the nav palette (nav-popover), reset on open */
