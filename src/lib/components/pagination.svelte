@@ -147,9 +147,11 @@
 			color: var(--gray-8);
 			cursor: default;
 
-			&:hover {
-				background: var(--button-bg);
-				border-color: transparent;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					background: var(--button-bg);
+					border-color: transparent;
+				}
 			}
 		}
 

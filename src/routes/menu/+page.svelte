@@ -172,8 +172,10 @@
 		a {
 			color: inherit;
 			text-decoration: none;
-			&:hover {
-				text-decoration: underline;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}

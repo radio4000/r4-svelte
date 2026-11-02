@@ -84,9 +84,14 @@
 			border-color 0.15s,
 			opacity 0.15s;
 
-		&:hover,
 		&:focus-within {
 			border-color: var(--accent-9);
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				border-color: var(--accent-9);
+			}
 		}
 
 		&.loading {

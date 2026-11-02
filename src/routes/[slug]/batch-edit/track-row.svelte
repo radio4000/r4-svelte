@@ -142,8 +142,10 @@
 		font-size: var(--font-4);
 	}
 
-	.track-row:hover {
-		background: light-dark(var(--gray-2), var(--gray-2));
+	@media (hover: hover) and (pointer: fine) {
+		.track-row:hover {
+			background: light-dark(var(--gray-2), var(--gray-2));
+		}
 	}
 
 	.col-checkbox,

@@ -585,9 +585,11 @@
 		border-radius: 3px;
 		border: 1px solid var(--color-interface-border);
 
-		&:hover {
-			color: var(--gray-12);
-			border-color: var(--color-control-border-hover);
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				color: var(--gray-12);
+				border-color: var(--color-control-border-hover);
+			}
 		}
 	}
 
@@ -599,8 +601,10 @@
 		background: var(--gray-2);
 	}
 
-	.release-tracklist-details summary:hover {
-		color: var(--gray-12);
+	@media (hover: hover) and (pointer: fine) {
+		.release-tracklist-details summary:hover {
+			color: var(--gray-12);
+		}
 	}
 
 	.release-community {

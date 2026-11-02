@@ -512,8 +512,10 @@
 			transition: height 120ms cubic-bezier(0.19, 1, 0.22, 1);
 		}
 
-		li:hover .bar {
-			height: 1rem;
+		@media (hover: hover) and (pointer: fine) {
+			li:hover .bar {
+				height: 1rem;
+			}
 		}
 	}
 
@@ -534,8 +536,10 @@
 			color: var(--accent-9);
 		}
 
-		a:hover {
-			text-decoration: underline;
+		@media (hover: hover) and (pointer: fine) {
+			a:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 </style>

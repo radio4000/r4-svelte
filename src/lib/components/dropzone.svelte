@@ -40,10 +40,16 @@
 			border-color 0.15s,
 			background 0.15s;
 		cursor: var(--interactive-cursor, pointer);
-		&:hover,
 		&.drag-over {
 			border-color: var(--accent-9);
 			background: var(--accent-2);
+		}
+
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				border-color: var(--accent-9);
+				background: var(--accent-2);
+			}
 		}
 	}
 

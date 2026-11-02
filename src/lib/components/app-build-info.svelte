@@ -46,7 +46,9 @@
 		color: inherit;
 	}
 
-	.app-build-info a:hover {
-		text-decoration: underline;
+	@media (hover: hover) and (pointer: fine) {
+		.app-build-info a:hover {
+			text-decoration: underline;
+		}
 	}
 </style>

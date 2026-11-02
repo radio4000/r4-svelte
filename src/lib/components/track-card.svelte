@@ -412,6 +412,8 @@
 <style>
 	.card {
 		flex: 1;
+		/* double-tap plays the track, so it mustn't also zoom the page */
+		touch-action: manipulation;
 		display: flex;
 		flex-flow: row nowrap;
 		gap: 0 0.5rem;
@@ -448,7 +450,6 @@
 		flex-shrink: 0;
 	}
 
-	.artwork-trigger:hover,
 	.artwork-trigger:focus,
 	.artwork-trigger:focus-visible,
 	.artwork-trigger:active {
@@ -456,6 +457,15 @@
 		box-shadow: none;
 		border-color: transparent;
 		outline: none;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.artwork-trigger:hover {
+			background: transparent;
+			box-shadow: none;
+			border-color: transparent;
+			outline: none;
+		}
 	}
 
 	.text {
@@ -525,8 +535,10 @@
 		scrollbar-color: transparent transparent;
 		transition: scrollbar-color 150ms;
 
-		&:hover {
-			scrollbar-color: var(--gray-1) transparent;
+		@media (hover: hover) and (pointer: fine) {
+			&:hover {
+				scrollbar-color: var(--gray-1) transparent;
+			}
 		}
 
 		&:not(:hover)::-webkit-scrollbar-thumb {
@@ -562,10 +574,12 @@
 
 		/* The row now paints its own opaque background, so the list's own
 		   :hover background (layout.css) no longer shows through it. */
-		:global(.list > li:hover) &,
-		:global(.list > div:hover) & {
-			background: var(--gray-3);
-			border-color: var(--color-control-border-hover);
+		@media (hover: hover) and (pointer: fine) {
+			:global(.list > li:hover) &,
+			:global(.list > div:hover) & {
+				background: var(--gray-3);
+				border-color: var(--color-control-border-hover);
+			}
 		}
 
 		:global(.popover-menu) {

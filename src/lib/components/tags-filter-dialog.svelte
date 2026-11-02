@@ -159,6 +159,7 @@
 		gap: var(--space-1);
 		max-height: min(32vh, 22rem);
 		overflow: auto;
+		overscroll-behavior: contain;
 		button.active {
 			background: var(--accent-5);
 			color: var(--accent-11);

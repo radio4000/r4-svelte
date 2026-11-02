@@ -432,8 +432,10 @@
 		a {
 			color: var(--accent-9);
 			text-decoration: none;
-			&:hover {
-				text-decoration: underline;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}
@@ -447,8 +449,10 @@
 		a {
 			color: var(--accent-9);
 			text-decoration: none;
-			&:hover {
-				text-decoration: underline;
+			@media (hover: hover) and (pointer: fine) {
+				&:hover {
+					text-decoration: underline;
+				}
 			}
 		}
 	}

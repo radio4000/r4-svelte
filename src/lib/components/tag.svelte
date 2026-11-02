@@ -80,10 +80,12 @@
 		color: var(--accent-11);
 	}
 
-	a:hover,
-	button:hover {
-		background: var(--tag-bg-hover, var(--gray-3));
-		text-decoration: none;
+	@media (hover: hover) and (pointer: fine) {
+		a:hover,
+		button:hover {
+			background: var(--tag-bg-hover, var(--gray-3));
+			text-decoration: none;
+		}
 	}
 
 	a:active,
@@ -92,13 +94,17 @@
 		text-decoration: underline;
 	}
 
-	a.playing:hover,
-	button.playing:hover {
-		background: var(--tag-bg-hover, var(--gray-3));
+	@media (hover: hover) and (pointer: fine) {
+		a.playing:hover,
+		button.playing:hover {
+			background: var(--tag-bg-hover, var(--gray-3));
+		}
 	}
 
-	a.filtered:hover,
-	button.filtered:hover {
-		background: var(--accent-4);
+	@media (hover: hover) and (pointer: fine) {
+		a.filtered:hover,
+		button.filtered:hover {
+			background: var(--accent-4);
+		}
 	}
 </style>

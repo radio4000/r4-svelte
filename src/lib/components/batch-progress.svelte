@@ -172,10 +172,12 @@
 		border-radius: var(--border-radius);
 	}
 
-	.abort:hover {
-		background: #c00;
-		color: var(--gray-1);
-		border-color: #c00;
+	@media (hover: hover) and (pointer: fine) {
+		.abort:hover {
+			background: #c00;
+			color: var(--gray-1);
+			border-color: #c00;
+		}
 	}
 
 	.controls {

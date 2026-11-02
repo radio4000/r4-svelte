@@ -368,8 +368,10 @@
 		border-bottom: 1px solid var(--gray-3);
 	}
 
-	tr:hover td {
-		background: var(--gray-2);
+	@media (hover: hover) and (pointer: fine) {
+		tr:hover td {
+			background: var(--gray-2);
+		}
 	}
 
 	.cell-time {
