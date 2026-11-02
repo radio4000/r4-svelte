@@ -4,6 +4,6 @@ Development docs for Radio4000 — a SvelteKit + Svelte 5 frontend using [@radio
 
 Start with [universe](universe.md). It maps the domain model (channels, tracks, views, decks, broadcast, auto-radio) and how data flows.
 
-[state](state.md) · [code-style](code-style.md) · [reference](reference.json) · [browser-testing](browser-testing.md)
+[state](state.md) · [code-style](code-style.md) · [browser-testing](browser-testing.md)
 
 [homepage](homepage.md) · [player](player.md) · [queue](queue.md) · [search](search.md) · [broadcast](broadcast.md) · [follows](follows.md) · [matching](matching.md) · [capture-events](play-history.md) · [track-meta](track-meta.md) · [keyboard](keyboard.md) · [dialogs](dialogs.md) · [localization](localization-i18n.md) · [styles](styles.md)

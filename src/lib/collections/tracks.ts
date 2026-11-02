@@ -367,7 +367,8 @@ export function addTrack(
 			},
 			{metadata: {channelId: channel.id, slug: channel.slug}}
 		)
-		.isPersisted.promise.then(() => id)
+		.when('settled')
+		.then(() => id)
 }
 
 /** Update a track's fields, re-deriving provider/media_id if the url changed. */
@@ -381,13 +382,16 @@ export function updateTrack(channel: ChannelRef, id: string, changes: Record<str
 				draft.media_id = parsed?.id ?? null
 			}
 		})
-		.isPersisted.promise.then(() => {})
+		.when('settled')
+		.then(() => {})
 }
 
+/** Delete a track from a channel. */
 export function deleteTrack(channel: ChannelRef, id: string) {
 	return tracksCollection
 		.delete(id, {metadata: {slug: channel.slug}})
-		.isPersisted.promise.then(() => {})
+		.when('settled')
+		.then(() => {})
 }
 
 /** Apply the same field changes to multiple tracks (e.g. bulk-tagging in batch-edit). */
@@ -407,7 +411,8 @@ export function batchUpdateTracksUniform(
 				}
 			}
 		})
-		.isPersisted.promise.then(() => {})
+		.when('settled')
+		.then(() => {})
 }
 
 /** Apply per-track field changes in one transaction (each id gets its own `changes`). */
@@ -432,13 +437,16 @@ export function batchUpdateTracksIndividual(
 				}
 			}
 		)
-		.isPersisted.promise.then(() => {})
+		.when('settled')
+		.then(() => {})
 }
 
+/** Delete several tracks of a channel in one transaction. */
 export function batchDeleteTracks(channel: Channel, ids: string[]) {
 	return tracksCollection
 		.delete(ids, {metadata: {slug: channel.slug}})
-		.isPersisted.promise.then(() => {})
+		.when('settled')
+		.then(() => {})
 }
 
 /** Compare cached tracks for `slug` against remote (count + latest updated_at); invalidates and returns whether stale. */

@@ -1,4 +1,5 @@
 <script>
+	/** Renders text with #tags and @mentions turned into links. filterMentions makes @mentions filter the slug radio instead of visiting them. */
 	import Tag from '#lib/components/tag.svelte'
 	import {ENTITY_REGEX} from '#lib/utils.js'
 	import {resolve} from '$app/paths'

@@ -107,7 +107,10 @@ export function setupOverlays(map, {showGraticules, showDayNight}) {
 	}
 }
 
-/** @param {import('maplibre-gl').Map} map */
+/**
+ * Recompute the night polygon for the current time.
+ * @param {import('maplibre-gl').Map} map
+ */
 export function updateNightLayer(map) {
 	const nightSource = /** @type {import('maplibre-gl').GeoJSONSource | undefined} */ (
 		map.getSource('night-source')

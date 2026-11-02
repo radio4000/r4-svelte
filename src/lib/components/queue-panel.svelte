@@ -1,4 +1,5 @@
 <script>
+	/** A deck's queue and history in tabs, with search and tag/mention filters. The filter lives on the deck and decides what plays. */
 	import {fuzzySearch, extractMentions} from '#lib/utils.js'
 	import {appState, canEditChannel} from '#lib/app-state.svelte.js'
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'

@@ -1,4 +1,5 @@
 <script>
+	/** Channel preview with avatar, description, a live dot while broadcasting, and a play button. */
 	import {appState} from '#lib/app-state.svelte.js'
 	import {relativeDateDetailed} from '#lib/dates.js'
 	import * as m from '#lib/paraglide/messages.js'

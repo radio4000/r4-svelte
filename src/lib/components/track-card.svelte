@@ -1,4 +1,5 @@
 <script lang="ts">
+	/** One track with artwork, title and a play/edit/delete menu. linkTitleToTrack links the title to its track page. */
 	import {tick, type Snippet} from 'svelte'
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'

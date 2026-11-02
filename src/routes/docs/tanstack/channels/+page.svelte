@@ -176,7 +176,7 @@
 	<summary>Your channels ({myChannels.length})</summary>
 	{#if myChannelQuery.isLoading}
 		<p>Loading…</p>
-	{:else if myChannelQuery.isError}
+	{:else if myChannelQuery.isLoadingError}
 		<p class="error" role="alert">
 			{channelsCollection.utils.lastError instanceof Error
 				? channelsCollection.utils.lastError.message
@@ -352,7 +352,7 @@
 	>
 	{#if latestQuery.isLoading}
 		<p>Loading…</p>
-	{:else if latestQuery.isError}
+	{:else if latestQuery.isLoadingError}
 		<p class="error" role="alert">
 			{channelsCollection.utils.lastError instanceof Error
 				? channelsCollection.utils.lastError.message

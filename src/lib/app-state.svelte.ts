@@ -21,10 +21,12 @@ function resetTransientDeckState(deck: Deck): Deck {
 	return deck
 }
 
+/** Merge a stored deck over defaults and reset its session-only fields. */
 export function normalizeLoadedDeck(id: number, deck?: Partial<Deck>): Deck {
 	return resetTransientDeckState({...createDefaultDeck(id), ...(deck as Deck | undefined)})
 }
 
+/** Persisted shape of appState: decks are cut down to a whitelist of fields, listening decks are dropped. */
 export function serializeAppStateForStorage(state: AppState): Record<string, unknown> {
 	const persistedState = {...state} as Record<string, unknown>
 	const decks: Record<number, Partial<Deck>> = {}
@@ -56,6 +58,7 @@ export function serializeAppStateForStorage(state: AppState): Record<string, unk
 	return persistedState
 }
 
+/** Queue arrays per deck, stored under their own key; listening decks are dropped. */
 export function serializeQueuesForStorage(decks: AppState['decks']) {
 	const queues: Record<number, {playlist_tracks: string[]; playlist_tracks_shuffled: string[]}> = {}
 	for (const [id, deck] of Object.entries(decks)) {
@@ -204,6 +207,7 @@ function loadState(): AppState {
 	return state
 }
 
+/** Reactive UI state, persisted to localStorage. */
 export const appState: AppState = $state(loadState())
 
 /** Non-persisted runtime auth status. channelChecked becomes true after the first checkUser() resolves. */
@@ -219,6 +223,7 @@ export function isLocalChannel(channelId: string | undefined): boolean {
 	return !!channelId && !!appState.local_channel_ids?.includes(channelId)
 }
 
+/** CSS accent colors cycled by deck id. */
 export const DECK_ACCENTS = [
 	'hsl(17 70% 55%)',
 	'hsl(221 35% 54%)',

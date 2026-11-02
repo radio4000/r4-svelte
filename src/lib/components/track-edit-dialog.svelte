@@ -1,4 +1,5 @@
 <script>
+	/** Dialog for editing an existing track; opens when appState.modal_track_edit is set. */
 	import {appState} from '#lib/app-state.svelte.js'
 	import {channelsCollection} from '#lib/collections/channels.js'
 	import Dialog from '#lib/components/dialog.svelte'

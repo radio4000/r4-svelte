@@ -163,7 +163,7 @@ Still only checked by hand in the browser — keep these alive with `agent-brows
 
 - `setQueryData` updates `createQuery` subscribers immediately
 - invalidation changes stale state the way we expect
-- `query.isError` / collection error state stay observable through our wrapper
+- `query.isLoadingError` / `isSyncError` / collection error state stay observable through our wrapper
 
 ## references
 

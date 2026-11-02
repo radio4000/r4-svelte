@@ -28,6 +28,7 @@ export function isDbId(id: string | null | undefined): boolean {
 	return Boolean(id && RE_UUID.test(id))
 }
 
+/** Stable dedupe key: `provider:mediaId` when known, else the normalized URL; null if neither. */
 export function canonicalTrackKey(track: {
 	provider?: string | null
 	media_id?: string | null

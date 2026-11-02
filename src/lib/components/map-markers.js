@@ -56,7 +56,10 @@ export function getMarkerStyle(state, palette) {
 	return {radius: 5, fillColor: palette.normalFill, strokeWidth: 1.5}
 }
 
-/** @param {any[]} channels @param {ChannelActivity} activity @param {MarkerPalette} palette @returns {GeoJSON.FeatureCollection} */
+/**
+ * Channels as a GeoJSON point collection, with each marker's style resolved from its live state.
+ * @param {any[]} channels @param {ChannelActivity} activity @param {MarkerPalette} palette @returns {GeoJSON.FeatureCollection}
+ */
 export function buildChannelsGeoJSON(channels, activity, palette) {
 	return {
 		type: 'FeatureCollection',

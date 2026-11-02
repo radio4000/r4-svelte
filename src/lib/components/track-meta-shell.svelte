@@ -1,4 +1,5 @@
 <script>
+	/** Shell for track meta panels: a toggle between the formatted view and raw JSON, over a MetaDefinitionList. */
 	import Icon from '#lib/components/icon.svelte'
 	import MetaDefinitionList from '#lib/components/meta-definition-list.svelte'
 	import * as m from '#lib/paraglide/messages.js'

@@ -1,4 +1,5 @@
 <script>
+	/** List of tracks, optionally grouped by year/month and virtually scrolled for long lists. Clicking a track plays it in the given playlist context. */
 	import SvelteVirtualList from '@humanspeak/svelte-virtual-list'
 	import TrackCard from '#lib/components/track-card.svelte'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'

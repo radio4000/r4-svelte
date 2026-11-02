@@ -2,6 +2,8 @@
 
 Make it measurable first, then faster. The test channel is `/oskar` (~2.6k tracks).
 
+An edit-and-check loop should take seconds, a proof about a minute. If you've waited longer, something is wrong: stop and look.
+
 ## Bench
 
 Two speeds. Explore on dev (`portless r4 bun run dev`, then `https://r4.localhost/oskar/tracks?perf`): edit, let HMR reload, read `window.r5.perf()`. Seconds, no build. `bun perf/throttle.ts` throttles the CPU of every page in an agent-browser session for as long as it runs. Dev numbers are inflated, but which component is hot holds. Then prove the change on a build with `--ab`.

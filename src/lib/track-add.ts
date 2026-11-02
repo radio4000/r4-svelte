@@ -7,6 +7,7 @@ export type TrackAddData = {
 	discogs_url: string
 }
 
+/** Prefill for adding an existing track to the user's radio; credits the source channel as `via @slug`. */
 export function trackAddData(track: Track): TrackAddData {
 	return {
 		url: track.url,
@@ -22,6 +23,7 @@ export function trackAddData(track: Track): TrackAddData {
 	}
 }
 
+/** Prefill as URLSearchParams for /add links, skipping empty fields. */
 export function trackAddSearchParams(track: Track): URLSearchParams {
 	const params = new URLSearchParams()
 	for (const [key, value] of Object.entries(trackAddData(track))) {

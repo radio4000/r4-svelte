@@ -90,7 +90,7 @@ Update `docs/` files to match current code. These docs are for anyone working on
 
 Follow `docs/code-style.md` for formatting. No corporate headings ("Integration Points", "Key Takeaways", "Summary"). No preamble paragraphs. Prefer flowing prose over bullet lists — bullets are for file/function references, not for restating things that read fine as sentences.
 
-Describe what the code does now, not how we got there. Skip exhaustive API docs (that's `reference.json`), unbuilt features, and info already in code comments. Cross-reference related docs with relative links: `[views.md](views.md)`.
+Describe what the code does now, not how we got there. Skip exhaustive API docs (those belong in JSDoc next to the code), unbuilt features, and info already in code comments. Cross-reference related docs with relative links: `[views.md](views.md)`.
 
 ### Process
 

@@ -1,5 +1,6 @@
 import type {Channel} from '#lib/types.js'
 
+/** Keep the channel ID stable while the slug changes: only switch once the new slug's channel is found. */
 export function updateStableChannelId(
 	slug: string,
 	currentId: string,
@@ -13,6 +14,7 @@ export function updateStableChannelId(
 	return {channelId: found.id, channelIdSourceSlug: slug}
 }
 
+/** Resolve the route's channel, treating empty live-query objects as not found. */
 export function pickRouteChannel(
 	slug: string,
 	channelFromSlug: Channel | undefined,

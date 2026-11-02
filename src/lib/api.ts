@@ -533,6 +533,7 @@ export function setTheme(value: string | undefined) {
 	appState.theme = value
 }
 
+/** Cycle theme: system default, light, dark. */
 export function toggleTheme() {
 	const cycle: Array<string | undefined> = [undefined, 'light', 'dark']
 	setTheme(cycle[(cycle.indexOf(appState.theme) + 1) % cycle.length])
@@ -573,6 +574,7 @@ export function expandDeck(deckId: number) {
 	}
 }
 
+/** Compact/expand a deck. On mobile, leaving compact goes fullscreen via expandDeck. */
 export function toggleDeckCompact(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
@@ -588,6 +590,7 @@ export function toggleDeckCompact(deckId: number) {
 	})
 }
 
+/** Fullscreen a deck (on desktop applies to the whole listening group). */
 export function togglePlayerExpanded(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
@@ -619,6 +622,7 @@ export function openSearch(event?: KeyboardEvent) {
 	goto(resolve('search'))
 }
 
+/** Toggle play/pause; if the media element isn't mounted yet, marks playing and starts once it appears. */
 export async function togglePlayPause(deckId: number) {
 	const deck = getDeck(deckId)
 	let player = getMediaPlayer(deckId)
@@ -773,6 +777,7 @@ export function seekTo(deckId: number, seconds: number) {
 	recordSeekPosition(deckId, seconds)
 }
 
+/** Advance to the next track and wrap at the end; after a playback error, stop at the queue end instead. */
 export function next(deckId: number, endReason: PlayEndReason) {
 	const deck = getDeck(deckId)
 	if (!deck?.playlist_track) {
@@ -826,6 +831,7 @@ export function previous(deckId: number, endReason: PlayEndReason) {
 	}
 }
 
+/** Clear the queue and reset the deck to stopped, unshuffled, video hidden. */
 export function eject(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return

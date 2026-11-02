@@ -1,4 +1,5 @@
 <script>
+	/** Plays the deck's current track (YouTube or SoundCloud) with transport, volume and speed controls, and keeps playback in sync with auto-radio and broadcasts. */
 	import {onMount, untrack} from 'svelte'
 	import {resolve} from '$app/paths'
 	import IconR4 from '#lib/components/icon-r4.svelte'

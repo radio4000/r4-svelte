@@ -56,12 +56,16 @@ export function buildOsmStyle(dark) {
 	)
 }
 
-/** @param {'osm'|'topo'|'satellite'} name @returns {StyleSpecification} */
+/**
+ * MapLibre style for a base tile name; unknown names fall back to OSM (dark-aware).
+ * @param {'osm'|'topo'|'satellite'} name @returns {StyleSpecification}
+ */
 export function buildMapStyle(name) {
 	const source = RASTER_SOURCES[name]
 	return source ? buildRasterStyle(name, source) : buildOsmStyle(isDarkTheme())
 }
 
+/** Base tile layer ids; also the source and layer ids used in the style. */
 export const BASE_TILE_IDS = ['osm', 'topo', 'satellite']
 
 /**

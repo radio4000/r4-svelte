@@ -1,6 +1,7 @@
 import {canonicalTrackKey} from '#lib/utils.js'
 import type {Track} from '#lib/types.js'
 
+/** Points per match kind; they sum to 100. */
 export const CHANNEL_MATCH_WEIGHTS = {
 	url: 50,
 	tag: 30,
@@ -96,6 +97,7 @@ function buildPart(weight: number, left: Set<string>, right: Set<string>): Match
 	}
 }
 
+/** Similarity of two track sets, 0-100: shared tracks (by canonical key), shared tags, shared artist/title. */
 export function computeChannelMatchScore(
 	myTracks: Track[],
 	targetTracks: Track[]

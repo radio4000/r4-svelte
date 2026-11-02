@@ -1,4 +1,5 @@
 <script>
+	/** Generic modal dialog wrapper. Renders nothing until first opened; takes header, footer and children snippets. */
 	import {tick, untrack} from 'svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'

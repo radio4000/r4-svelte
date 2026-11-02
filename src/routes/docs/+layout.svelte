@@ -26,12 +26,8 @@
 {#snippet topics()}
 	<nav class="nav-vertical" aria-label="Docs">
 		<a href={resolve('docs')} aria-current={currentSlug === 'index' ? 'page' : undefined}>Docs</a>
-		<a
-			href={resolve('/docs/reference')}
-			aria-current={currentSlug === 'reference' ? 'page' : undefined}>Reference</a
-		>
 		<hr />
-		{#each data.docs.filter((d) => d !== 'index' && d !== 'reference') as doc (doc)}
+		{#each data.docs.filter((d) => d !== 'index') as doc (doc)}
 			<a
 				href={resolve('/docs/[...slug]', {slug: doc})}
 				aria-current={currentSlug === doc ? 'page' : undefined}>{doc}</a

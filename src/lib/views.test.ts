@@ -487,19 +487,15 @@ describe('serializeView → parseView: tagsMode round-trip', () => {
 		expect(reparsed.sources[0].tagsMode).toBe('all')
 	})
 
-	// Known limitation: tagsMode is a global param (?tagsMode=all), so mixed per-query
-	// values (one query 'all', another default 'any') collapse — all tagged queries get 'all'.
-	test.fails('mixed per-query tagsMode survives round-trip', () => {
+	// tagsMode is a global URL param (?tagsMode=all), so mixed per-query values collapse:
+	// every tagged query comes back as 'all'.
+	test('mixed per-query tagsMode collapses to all', () => {
 		const original: View = {
-			sources: [
-				{tags: ['jazz'], tagsMode: 'all'},
-				{tags: ['ambient']} // should stay 'any' (default)
-			]
+			sources: [{tags: ['jazz'], tagsMode: 'all'}, {tags: ['ambient']}]
 		}
-		const serialized = serializeView(original)
-		const reparsed = parseView(serialized)
+		const reparsed = parseView(serializeView(original))
 		expect(reparsed.sources[0].tagsMode).toBe('all')
-		expect(reparsed.sources[1].tagsMode).toBeUndefined()
+		expect(reparsed.sources[1].tagsMode).toBe('all')
 	})
 
 	test('tagsMode=all on multi-query survives serialization', () => {

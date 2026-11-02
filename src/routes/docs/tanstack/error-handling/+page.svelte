@@ -261,17 +261,17 @@
 
 		errorMode = 'error'
 		await errorCollection.utils.refetch().catch(() => {})
-		await waitFor(() => errorQuery.isError && collectionIsError && errorMessage.length > 0)
+		await waitFor(() => errorQuery.isLoadingError && collectionIsError && errorMessage.length > 0)
 
 		const pass =
-			errorQuery.isError &&
+			errorQuery.isLoadingError &&
 			collectionIsError &&
 			errorMessage.includes('assertion error from queryFn')
 
 		errorResult = {
 			pass,
 			details: [
-				`query.isError=${errorQuery.isError}`,
+				`query.isLoadingError=${errorQuery.isLoadingError}`,
 				`collection.utils.isError=${collectionIsError}`,
 				`lastError=${errorMessage || 'none'}`,
 				'known rough edge upstream; this page asserts the observable app path'
@@ -302,7 +302,7 @@
 			getSnapshotDoneCount: () => snapshotDoneCount,
 			getCacheState: () => readCacheState(),
 			getErrorState: () => ({
-				queryIsError: errorQuery.isError,
+				queryIsLoadingError: errorQuery.isLoadingError,
 				collectionIsError,
 				errorMessage
 			})
@@ -379,7 +379,7 @@
 		in the app.
 	</p>
 	<p>Status: <strong>{errorResult ? (errorResult.pass ? 'pass' : 'fail') : 'not run'}</strong></p>
-	<p><code>query.isError</code>: {String(errorQuery.isError)}</p>
+	<p><code>query.isLoadingError</code>: {String(errorQuery.isLoadingError)}</p>
 	<p><code>collection.utils.isError</code>: {String(collectionIsError)}</p>
 	<p><code>collection.utils.lastError</code>: {errorMessage || 'none'}</p>
 

@@ -1,21 +1,24 @@
-import {beforeAll, describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {AppState} from './types'
 
-const localStorageMock = {
-	getItem: () => null,
-	setItem: () => undefined,
-	removeItem: () => undefined
-}
-
-beforeAll(() => {
-	Object.defineProperty(globalThis, 'localStorage', {value: localStorageMock, configurable: true})
+// app-state reads localStorage at import, so the stub must exist before the static import below.
+vi.hoisted(() => {
+	Object.defineProperty(globalThis, 'localStorage', {
+		value: {getItem: () => null, setItem: () => undefined, removeItem: () => undefined},
+		configurable: true
+	})
 })
 
+import {
+	createDefaultDeck,
+	defaultAppState,
+	normalizeLoadedDeck,
+	serializeAppStateForStorage,
+	serializeQueuesForStorage
+} from './app-state.svelte'
+
 describe('app state persistence', () => {
-	test('omits transient deck runtime fields from persisted state', async () => {
-		const {createDefaultDeck, defaultAppState, serializeAppStateForStorage} = await import(
-			'./app-state.svelte'
-		)
+	test('omits transient deck runtime fields from persisted state', () => {
 		const deck = {
 			...createDefaultDeck(1),
 			playlist_slug: 'radio',
@@ -66,8 +69,7 @@ describe('app state persistence', () => {
 		expect(persistedDeck).not.toHaveProperty('ms_listened')
 	})
 
-	test('persists queue arrays separately', async () => {
-		const {createDefaultDeck, serializeQueuesForStorage} = await import('./app-state.svelte')
+	test('persists queue arrays separately', () => {
 		expect(
 			serializeQueuesForStorage({
 				1: {
@@ -84,8 +86,7 @@ describe('app state persistence', () => {
 		})
 	})
 
-	test('normalizing a loaded deck clears transient playback and sync fields', async () => {
-		const {normalizeLoadedDeck} = await import('./app-state.svelte')
+	test('normalizing a loaded deck clears transient playback and sync fields', () => {
 		const deck = normalizeLoadedDeck(2, {
 			playlist_tracks_filtered: ['track-1'],
 			playlist_slug: 'radio',
