@@ -1,6 +1,6 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: matches @tanstack/svelte-db signature which uses `any`
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Copy of @tanstack/svelte-db useLiveQuery (0.5.11), kept close to upstream so it diffs cleanly.
+// Copy of @tanstack/svelte-db useLiveQuery (1.0.0-rc.1.1), kept close to upstream so it diffs cleanly.
 // Our changes:
 //
 // - rows live in one $state.raw snapshot instead of deep $state + a SvelteMap patched per change.
@@ -9,17 +9,24 @@
 // - every write in the observer callback is untracked. The callback can fire during $derived
 //   evaluation (invalidateQueries → collection update → graph flush → emit), where a bare $state
 //   write throws state_unsafe_mutation. Upstream only untracks the row writes, not `status`.
+// - the subscribing $effect tracks only `resolved` (see the comment there).
+// - the initial snapshot ignores DbProvider `hydrating`: upstream reads it via `useDbContext`,
+//   which svelte-db doesn't export. We use no DbProvider, so the server snapshot is SSR-only.
 // - `livequery:*` perf spans (#lib/perf.js)
 import {untrack} from 'svelte'
 import {
 	UnhashableQueryIRError,
 	createLiveQueryObserver,
+	createLiveQuerySourceIdClaims,
 	getLiveQueryHash,
 	getPublicCollection,
 	getStableValueHash,
+	identifyLiveQuery,
 	isCollection,
 	isSingleResultCollection,
 	prepareLiveQueryValue,
+	rejectLiveQueryInput,
+	releaseDeferredOnReclaim,
 	resolveLiveQueryValue,
 	resumeDeferredLiveQueryCollections
 } from '@tanstack/db'
@@ -88,6 +95,8 @@ export function useLiveQuery<
 ): UseLiveQueryReturnWithCollection<TResult, TKey, TUtils, TResult | undefined>
 export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => unknown> = []) {
 	const contextDbClient = useOptionalDbClient()
+	// Source Collection IDs this hook's client-backed queries read, kept until it unmounts.
+	const sourceIdClaims = createLiveQuerySourceIdClaims()
 
 	const resolved = $derived.by(() => {
 		// First check if the original parameter might be a getter
@@ -131,41 +140,64 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		const dependencyValues = deps.map((dep) => toValue(dep))
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, not reactive
 		const deferredCollections = new Set<any>()
-		const preparedValue = prepareLiveQueryValue(unwrappedParam, dbClient, deferredCollections)
-		const configuredQueryKey = unwrappedParam?.queryKey
-		const queryKey = configuredQueryKey ? toValue(configuredQueryKey) : undefined
-		let queryHash: string | undefined
+		// A query rejected anywhere after preparation releases the sync starts it deferred.
 		try {
-			queryHash =
-				deps.length > 0 && !queryKey
-					? getStableValueHash(
-							[`deps`, dependencyValues, getLiveQueryHash(preparedValue)],
-							`queryKey`
+			const preparedValue = prepareLiveQueryValue(unwrappedParam, dbClient, deferredCollections)
+			const configuredQueryKey = unwrappedParam?.queryKey
+			const queryKey = configuredQueryKey ? toValue(configuredQueryKey) : undefined
+			// A client-backed query without queryKey needs a stable IR identity.
+			const derivedHash =
+				dbClient && !queryKey?.length
+					? identifyLiveQuery(
+							preparedValue,
+							{claims: sourceIdClaims, client: dbClient, bindingName: `useLiveQuery`},
+							getLiveQueryHash
 						)
-					: getLiveQueryHash(preparedValue, queryKey as any)
+					: undefined
+			let queryHash: string | undefined
+			try {
+				queryHash =
+					deps.length > 0 && !queryKey?.length
+						? getStableValueHash(
+								[`deps`, dependencyValues, derivedHash ?? getLiveQueryHash(preparedValue)],
+								`queryKey`
+							)
+						: (derivedHash ?? getLiveQueryHash(preparedValue, queryKey))
+			} catch (error) {
+				if (!(error instanceof UnhashableQueryIRError)) throw error
+				if (queryKey?.length) throw error
+			}
+
+			let collection: any
+			if (preparedValue === undefined || preparedValue === null) {
+				collection = null
+			} else if (isCollection(preparedValue)) {
+				collection = preparedValue
+			} else {
+				// Hydration keys the live-query Collection by identity, so it never pools.
+				collection = resolveLiveQueryValue(preparedValue, {
+					gcTime: DEFAULT_GC_TIME_MS,
+					pool: dbClient ? false : undefined
+				})
+			}
+
+			// A setup that never subscribes releases its deferred sync starts when GC reclaims it.
+			const cancelReclaimRelease =
+				collection && !isCollection(preparedValue)
+					? releaseDeferredOnReclaim(collection, deferredCollections)
+					: undefined
+
+			return {
+				collection,
+				client: dbClient,
+				queryHash,
+				resumeDeferredCollections: () => {
+					cancelReclaimRelease?.()
+					resumeDeferredLiveQueryCollections(deferredCollections)
+				}
+			}
 		} catch (error) {
-			if (!(error instanceof UnhashableQueryIRError)) throw error
-			if (queryKey !== undefined) throw error
-		}
-
-		let collection: any
-		if (preparedValue === undefined || preparedValue === null) {
-			collection = null
-		} else if (isCollection(preparedValue)) {
-			collection = preparedValue
-		} else {
-			// Hydration keys the live-query Collection by identity.
-			collection = resolveLiveQueryValue(preparedValue as any, {
-				gcTime: DEFAULT_GC_TIME_MS,
-				pool: !dbClient
-			})
-		}
-
-		return {
-			collection,
-			client: dbClient,
-			queryHash,
-			resumeDeferredCollections: () => resumeDeferredLiveQueryCollections(deferredCollections)
+			return rejectLiveQueryInput(deferredCollections, error)
 		}
 	})
 
@@ -184,8 +216,12 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	let currentResolved = untrack(() => resolved)
 	let currentObserver = observe(currentResolved)
 
-	// One immutable snapshot per change: data, state, status and persisted status together.
-	let snapshot = $state.raw(currentObserver.getServerSnapshot())
+	// One immutable snapshot per change: data, state, status, flags and health together.
+	let snapshot = $state.raw(
+		typeof window === `undefined`
+			? currentObserver.getServerSnapshot()
+			: currentObserver.getSnapshot()
+	)
 
 	const syncFromObserver = (observer: typeof currentObserver) => {
 		const end = span('livequery:copy')
@@ -239,9 +275,16 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	}
 
+	// Every read goes through the compiled query, so a query the hook rejected
+	// throws on each read instead of serving the previous query's state.
+	const read = () => {
+		void resolved
+		return snapshot
+	}
+
 	return {
 		get state() {
-			return snapshot.state ?? EMPTY_STATE
+			return read().state ?? EMPTY_STATE
 		},
 		get data() {
 			const currentCollection = resolved.collection
@@ -254,31 +297,31 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			return getPublicCollection(resolved.collection)
 		},
 		get status() {
-			return snapshot.status
+			return read().status
 		},
 		get isLoading() {
-			return snapshot.status === `loading`
+			return read().isLoading
 		},
 		get isReady() {
-			return snapshot.status === `ready` || snapshot.status === `disabled`
-		},
-		get persistedStatus() {
-			return snapshot.persistedStatus
-		},
-		get isPersistedReady() {
-			return snapshot.persistedStatus === `ready`
-		},
-		get persistedError() {
-			return snapshot.persistedError
+			return read().isReady
 		},
 		get isIdle() {
-			return snapshot.status === `idle`
+			return read().isIdle
 		},
-		get isError() {
-			return snapshot.status === `error`
+		get isLoadingError() {
+			return read().isLoadingError
+		},
+		get isCrashed() {
+			return read().isCrashed
 		},
 		get isCleanedUp() {
-			return snapshot.status === `cleaned-up`
+			return read().isCleanedUp
+		},
+		get isSyncError() {
+			return read().isSyncError
+		},
+		get health() {
+			return read().health
 		}
 	}
 }

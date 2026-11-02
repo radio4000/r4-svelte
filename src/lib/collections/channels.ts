@@ -353,7 +353,8 @@ export function createChannel(input: {
 	}
 	return channelsCollection
 		.insert(channel, {metadata: {userId}})
-		.isPersisted.promise.then(() => channel)
+		.when('settled')
+		.then(() => channel)
 }
 
 /** Update a channel's fields, keeping appState.channel in sync if it's the active one. */
@@ -362,7 +363,8 @@ export function updateChannel(id: string, changes: Record<string, unknown>) {
 		.update(id, (draft) => {
 			Object.assign(draft, changes)
 		})
-		.isPersisted.promise.then(() => {
+		.when('settled')
+		.then(() => {
 			// Keep appState.channel in sync so the header link etc. reflect the change
 			if (appState.channel?.id === id) {
 				appState.channel = {...appState.channel, ...changes} as typeof appState.channel
@@ -378,5 +380,8 @@ export function deleteChannel(id: string) {
 	for (const deck of Object.values(appState.decks)) {
 		if (deck.broadcasting_channel_id === id) deck.broadcasting_channel_id = undefined
 	}
-	return channelsCollection.delete(id).isPersisted.promise.then(() => {})
+	return channelsCollection
+		.delete(id)
+		.when('settled')
+		.then(() => {})
 }

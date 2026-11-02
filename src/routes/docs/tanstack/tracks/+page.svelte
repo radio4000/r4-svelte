@@ -130,7 +130,7 @@
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	{#if tracksQuery.isLoading}
 		<p>Loading…</p>
-	{:else if tracksQuery.isError}
+	{:else if tracksQuery.isLoadingError}
 		<p class="error" role="alert">
 			{tracksCollection.utils.lastError instanceof Error
 				? tracksCollection.utils.lastError.message

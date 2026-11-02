@@ -52,7 +52,7 @@
 
 		{#if userChannelsQuery.isLoading}
 			<p>{m.auth_loading_channels()}</p>
-		{:else if userChannelsQuery.isError}
+		{:else if userChannelsQuery.isLoadingError}
 			<p>
 				{m.auth_error_loading_channels({
 					message:
