@@ -12,5 +12,3 @@ Preview serves the last build: stop it, rebuild, restart (rebuilding under a run
 
 - In a browser: [browser-testing](browser-testing.md)
 - Speed: [performance](performance.md)
-
-`bun run test` is timing-sensitive: under CPU load (a bench, a build) a few tests can fail. Rerun on a quiet machine before chasing them.

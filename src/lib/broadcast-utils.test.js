@@ -1,4 +1,4 @@
-import {describe, expect, test} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {
 	calculateSeekTime,
 	pickBroadcastFields,
@@ -13,6 +13,10 @@ function makeTrack(overrides = {}) {
 }
 
 describe('calculateSeekTime', () => {
+	// Freeze the clock so elapsed time is exact, not 10s plus however slow the machine is.
+	beforeEach(() => vi.useFakeTimers({now: new Date('2026-05-26T12:00:00Z'), toFake: ['Date']}))
+	afterEach(() => vi.useRealTimers())
+
 	test('returns undefined when no timing info', () => {
 		const broadcast = {}
 		expect(calculateSeekTime(broadcast, makeTrack())).toBeUndefined()
@@ -43,7 +47,7 @@ describe('calculateSeekTime', () => {
 		}
 		const result = calculateSeekTime(broadcast, makeTrack())
 		// 20 + 10s elapsed = 30 (rounded)
-		expect(result).toBeCloseTo(30, 0)
+		expect(result).toBe(30)
 	})
 
 	test('accounts for playback speed when advancing', () => {
@@ -56,7 +60,7 @@ describe('calculateSeekTime', () => {
 		}
 		// 20 + 10s * 2x = 40
 		const result = calculateSeekTime(broadcast, makeTrack())
-		expect(result).toBeCloseTo(40, 0)
+		expect(result).toBe(40)
 	})
 
 	test('returns undefined if advanced position exceeds track duration', () => {
@@ -75,7 +79,7 @@ describe('calculateSeekTime', () => {
 		const twentySecondsAgo = new Date(Date.now() - 20_000).toISOString()
 		const broadcast = {track_played_at: twentySecondsAgo}
 		const result = calculateSeekTime(broadcast, makeTrack())
-		expect(result).toBeCloseTo(20, 0)
+		expect(result).toBe(20)
 	})
 
 	test('accounts for speed with track_played_at', () => {
@@ -83,7 +87,7 @@ describe('calculateSeekTime', () => {
 		const broadcast = {track_played_at: tenSecondsAgo, speed: 1.5}
 		// 10s * 1.5x = 15s
 		const result = calculateSeekTime(broadcast, makeTrack())
-		expect(result).toBeCloseTo(15, 0)
+		expect(result).toBe(15)
 	})
 
 	test('returns undefined if track_played_at is in future', () => {
@@ -103,7 +107,7 @@ describe('calculateSeekTime', () => {
 		const broadcast = {track_played_at: longAgo}
 		// No duration — should return the elapsed value rather than undefined
 		const result = calculateSeekTime(broadcast, makeTrack({duration: undefined}))
-		expect(typeof result).toBe('number')
+		expect(result).toBe(400)
 	})
 
 	test('returns undefined if seeked_at is in future', () => {

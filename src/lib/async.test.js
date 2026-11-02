@@ -81,9 +81,9 @@ test('abort signal stops processing', async () => {
 	for await (const result of mapChunked(
 		items,
 		async (chunk) => {
-			processedChunks++
-			await new Promise((r) => setTimeout(r, 10))
-			if (processedChunks === 3) controller.abort()
+			// Abort on the third call, not after a timer: timers that fire in one tick would skip it.
+			if (++processedChunks === 3) controller.abort()
+			await Promise.resolve()
 			return chunk
 		},
 		{chunk: 1, concurrency: 2, signal: controller.signal}
@@ -112,28 +112,21 @@ test('youtube metadata batch scenario - 3k tracks', async () => {
 	let currentConcurrent = 0
 
 	const fetchYouTubeMeta = async (batch) => {
-		apiCalls++
+		const call = apiCalls++
 		currentConcurrent++
 		maxConcurrent = Math.max(maxConcurrent, currentConcurrent)
 
-		await new Promise((r) => setTimeout(r, Math.random() * 5 + 1))
+		// Settle out of order so batches overlap and race.
+		for (let i = 0; i <= call % 4; i++) await Promise.resolve()
 		currentConcurrent--
 
-		if (Math.random() < 0.03) throw new Error('rate limit')
+		// Two batches hit the rate limit, every 50th video is gone.
+		if (call === 7 || call === 41) throw new Error('rate limit')
 
 		return batch
-			.map((id) => {
-				if (Math.random() < 0.02) return null
-				return {
-					id,
-					title: `Video ${id}`,
-					duration: Math.floor(Math.random() * 600) + 30
-				}
-			})
-			.filter(Boolean)
+			.filter((_, i) => i !== 0)
+			.map((id) => ({id, title: `Video ${id}`, duration: 30 + (id.length % 600)}))
 	}
-
-	const start = performance.now()
 
 	for await (const result of mapChunked(ytids, fetchYouTubeMeta, {
 		chunk: API_BATCH_SIZE,
@@ -146,13 +139,7 @@ test('youtube metadata batch scenario - 3k tracks', async () => {
 		}
 	}
 
-	const elapsed = performance.now() - start
-
-	console.log(`\n--- mapChunked YouTube Test ---`)
-	console.log(`Tracks: ${TRACK_COUNT}, API calls: ${apiCalls}, max concurrent: ${maxConcurrent}`)
-	console.log(`Fetched: ${metaStore.size} videos, Time: ${elapsed.toFixed(0)}ms`)
-
 	expect(apiCalls).toBe(60) // 3000 / 50
-	expect(maxConcurrent).toBeLessThanOrEqual(CONCURRENCY)
-	expect(metaStore.size).toBeGreaterThan(TRACK_COUNT * 0.9)
+	expect(maxConcurrent).toBe(CONCURRENCY)
+	expect(metaStore.size).toBe(58 * 49)
 })
