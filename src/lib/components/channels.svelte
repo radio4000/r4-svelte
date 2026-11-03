@@ -201,6 +201,8 @@
 			const minTracks = filterMinTracks[filter]
 			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
 			if (filter === 'artwork') base = base.where(({ch}) => not(isNull(ch.image)))
+			// Only rows ranked by the server's shuffle; follows loaded earlier have no rank.
+			if (order === 'shuffle') base = base.where(({ch}) => gte(ch.shuffle, 0))
 		}
 		if (filter !== 'featured') {
 			const col = sortColumns[order]

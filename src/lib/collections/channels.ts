@@ -49,6 +49,16 @@ export async function fetchChannelCount(params: ChannelQueryParams = {}): Promis
 	return count ?? 0
 }
 
+/**
+ * Stamp rows with their position in the server's random order. The live query sorts by
+ * this `shuffle` rank and keeps only ranked rows: without it the sort ties and the
+ * collection's insertion order wins, so rows loaded earlier for other reasons (the
+ * user's follows) crowd out the listing. Not a database column.
+ */
+export function rankShuffled(rows: Channel[], offset = 0): Channel[] {
+	return rows.map((c, i) => ({...c, shuffle: offset + i}) as Channel)
+}
+
 /** Cached global channel/track counts for stats displays (home, menu). */
 export function fetchAppStats(): Promise<{channels: number; tracks: number}> {
 	return queryClient.fetchQuery({
@@ -241,7 +251,8 @@ export const channelsCollection = createCollection<Channel, string>({
 			query = query.range(fetchFrom, limit - 1)
 			const {data, error} = await query
 			if (error) throw error
-			return [...cached, ...(data ?? [])] as Channel[]
+			const fresh = (data ?? []) as Channel[]
+			return [...cached, ...(p.shuffle ? rankShuffled(fresh, fetchFrom) : fresh)]
 		}
 	}),
 	onInsert: async ({transaction}) => {

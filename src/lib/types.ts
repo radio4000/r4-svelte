@@ -3,6 +3,8 @@ import type {Channel as SDKChannel, Track as SDKTrack, Database} from '@radio400
 // Extends Channel with specific fields we use in this app (not persisted)
 export interface Channel extends SDKChannel {
 	spam?: boolean
+	/** Position in the server's random order, see `rankShuffled`. */
+	shuffle?: number
 }
 
 /** Minimal channel handle for play/track APIs — enough to identify (id) and route (slug). */
