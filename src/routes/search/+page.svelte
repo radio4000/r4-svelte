@@ -18,7 +18,6 @@
 	import {searchChannelsCombined} from '#lib/search.js'
 	import Pagination from '#lib/components/pagination.svelte'
 	import Seo from '#lib/components/seo.svelte'
-	import {channelsCollection} from '#lib/collections/channels.js'
 	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
 	import {
 		featuredScore,
@@ -151,7 +150,7 @@
 		searchChannelsCombined({
 			slugs,
 			query,
-			localChannels: [...channelsCollection.state.values()]
+			localChannels: appState.local_channels ?? []
 		})
 			.then((result) => {
 				if (!stale) {

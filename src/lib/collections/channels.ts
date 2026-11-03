@@ -1,6 +1,6 @@
 import {createCollection} from '@tanstack/svelte-db'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
-import {BasicIndex} from '@tanstack/db'
+import {BasicIndex, type LoadSubsetOptions} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {appState} from '#lib/app-state.svelte.js'
@@ -74,25 +74,9 @@ export function fetchAppStats(): Promise<{channels: number; tracks: number}> {
 	})
 }
 
-/** Parse d2ts loadSubsetOptions into domain params. Shared by queryKey and queryFn. */
-function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) {
-	let options: ReturnType<typeof parseLoadSubsetOptions>
-	try {
-		options = parseLoadSubsetOptions(opts)
-	} catch {
-		return {
-			slug: undefined as string | undefined,
-			idIn: undefined as string[] | undefined,
-			trackCountGte: undefined as number | undefined,
-			imageNotNull: false,
-			coordinatesNotNull: false,
-			shuffle: false,
-			offset: undefined as number | undefined,
-			orderColumn: 'created_at' as string | undefined,
-			ascending: true,
-			sortKey: 'default'
-		}
-	}
+/** Translate pushed-down filters and ordering, including page-boundary tie requests. */
+function parseChannelParams(opts: LoadSubsetOptions | undefined) {
+	const options = parseLoadSubsetOptions(opts)
 	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as
 		| string
 		| undefined
@@ -109,8 +93,12 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		options.filters.some((f) => f.field[0] === field && f.operator === 'not_isNull')
 	)
 	const sort = options.sorts[0]
-	const shuffle = sort?.field[0] === 'shuffle'
-	const offset = (opts as Record<string, unknown> | undefined)?.offset as number | undefined
+	const shuffle =
+		sort?.field[0] === 'shuffle' || options.filters.some((f) => f.field[0] === 'shuffle')
+	const shuffleRank = options.filters.find((f) => f.field[0] === 'shuffle' && f.operator === 'eq')
+		?.value as number | undefined
+	const equalities = options.filters.filter((f) => f.operator === 'eq' && f.field[0] !== 'shuffle')
+	const offset = opts?.offset
 	return {
 		slug,
 		idIn,
@@ -118,30 +106,13 @@ function parseChannelParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]) 
 		imageNotNull,
 		coordinatesNotNull,
 		shuffle,
+		shuffleRank,
+		equalities,
 		offset,
 		orderColumn: shuffle ? undefined : ((sort?.field[0] as string) ?? 'created_at'),
 		ascending: sort ? sort.direction === 'asc' : true,
-		sortKey: shuffle ? 'shuffle' : sort ? `${sort.field[0]}_${sort.direction}` : 'default'
+		nullsFirst: sort ? sort.nulls === 'first' : false
 	}
-}
-
-/**
- * Key prefix for a browse query shape: every filter and the sort. The queryFn reuses any
- * cached result under this prefix as the head of a bigger page, so two queries that share
- * it must return the same rows in the same order.
- */
-function browseKey(
-	p: Pick<
-		ReturnType<typeof parseChannelParams>,
-		'trackCountGte' | 'imageNotNull' | 'coordinatesNotNull' | 'sortKey'
-	>
-) {
-	const key: (string | number)[] = ['channels']
-	if (p.coordinatesNotNull) key.push('geo')
-	if (p.imageNotNull) key.push('artwork')
-	if (p.trackCountGte) key.push('minTracks', p.trackCountGte)
-	key.push(p.sortKey)
-	return key
 }
 
 /**
@@ -152,21 +123,7 @@ export const channelsCollection = createCollection<Channel, string>({
 	...queryCollectionOptions<Channel, unknown, QueryKey, string>({
 		autoIndex: 'eager',
 		defaultIndexType: BasicIndex,
-		queryKey: (opts) => {
-			// Base key probe: TanStack calls queryKey({}) once to derive the prefix
-			// that all other keys must extend.
-			if (!opts || Object.keys(opts).length === 0) return ['channels']
-			const {slug, idIn, trackCountGte, imageNotNull, coordinatesNotNull, sortKey, offset} =
-				parseChannelParams(opts)
-			if (slug) return ['channels', 'slug', slug]
-			if (idIn) return ['channels', 'ids', ...idIn.toSorted()]
-			// Include limit+offset so different pages get separate cache entries.
-			// With a function queryKey, on-demand mode does NOT auto-append
-			// loadSubsetOptions like it does for static keys.
-			const limit = opts?.limit ?? 0
-			const off = offset ?? 0
-			return [...browseKey({trackCountGte, imageNotNull, coordinatesNotNull, sortKey}), limit, off]
-		},
+		queryKey: ['channels'],
 		syncMode: 'on-demand',
 		queryClient,
 		getKey: (item) => item.id,
@@ -221,38 +178,68 @@ export const channelsCollection = createCollection<Channel, string>({
 				if (error) throw error
 				return [...localMatches, ...cachedMatches, ...(data || [])] as Channel[]
 			}
+			// A missing limit means the whole matching set, not a default page. DB uses
+			// that response as authoritative: truncating it can evict other pages.
+			// Offset is the supported alternative to consuming the cursor hints.
 			const limit =
-				ctx.meta?.loadSubsetOptions?.limit ?? (p.coordinatesNotNull ? 5000 : CHANNELS_PAGE_SIZE)
-
-			// Find the largest cached result for this query shape (same filters/sort, smaller limit).
-			// This avoids re-fetching rows we already have when the limit grows (pagination).
-			const baseKey = browseKey(p)
-			let cached: Channel[] = []
-			const queries = queryClient.getQueriesData<Channel[]>({queryKey: baseKey})
-			for (const [, data] of queries) {
-				if (data && data.length > cached.length && data.length <= limit) {
-					cached = data
+				p.shuffleRank === undefined ? (ctx.meta?.loadSubsetOptions?.limit ?? Infinity) : 1
+			const offset = p.shuffleRank ?? p.offset ?? 0
+			// Keep the existing random browse order when a page grows. In particular,
+			// a boundary equality asks for an already-ranked row, not another random draw.
+			const shuffled = new Map<number, Channel>()
+			if (p.shuffle) {
+				for (const query of queryClient.getQueryCache().findAll({queryKey: ['channels']})) {
+					const cached = parseChannelParams(query.meta?.loadSubsetOptions)
+					if (
+						!cached.shuffle ||
+						cached.idIn ||
+						cached.trackCountGte !== p.trackCountGte ||
+						cached.imageNotNull !== p.imageNotNull ||
+						cached.coordinatesNotNull !== p.coordinatesNotNull
+					)
+						continue
+					for (const row of (query.state.data ?? []) as Channel[]) {
+						if (typeof row.shuffle === 'number') shuffled.set(row.shuffle, row)
+					}
 				}
 			}
-			if (cached.length >= limit) {
-				log.info('channels queryFn (cached)', {limit, cached: cached.length})
-				return cached.slice(0, limit)
+			if (p.shuffleRank !== undefined) {
+				const row = shuffled.get(p.shuffleRank)
+				return row ? [row] : []
 			}
-
-			const fetchFrom = cached.length
-			log.info('channels queryFn', {limit, fetchFrom, cached: cached.length})
+			const result: Channel[] = []
+			while (result.length < limit) {
+				const row = shuffled.get(offset + result.length)
+				if (!row) break
+				result.push(row)
+			}
 			const view = p.shuffle ? 'random_channels_with_tracks' : 'channels_with_tracks'
-			let query = sdk.supabase.from(view).select('*')
-			if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
-			if (p.imageNotNull) query = query.not('image', 'is', null)
-			if (p.coordinatesNotNull)
-				query = query.not('latitude', 'is', null).not('longitude', 'is', null)
-			if (!p.shuffle) query = query.order(p.orderColumn ?? 'created_at', {ascending: p.ascending})
-			query = query.range(fetchFrom, limit - 1)
-			const {data, error} = await query
-			if (error) throw error
-			const fresh = (data ?? []) as Channel[]
-			return [...cached, ...(p.shuffle ? rankShuffled(fresh, fetchFrom) : fresh)]
+			while (result.length < limit) {
+				// Supabase caps responses at 1000, including unlimited and large windows.
+				const size = Math.min(1000, limit - result.length)
+				const from = offset + result.length
+				let query = sdk.supabase.from(view).select('*')
+				// DB closes page-boundary ties with an equality request, without a limit.
+				for (const filter of p.equalities) query = query.eq(filter.field.join('.'), filter.value)
+				if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
+				if (p.imageNotNull) query = query.not('image', 'is', null)
+				if (p.coordinatesNotNull)
+					query = query.not('latitude', 'is', null).not('longitude', 'is', null)
+				if (!p.shuffle) {
+					query = query
+						.order(p.orderColumn ?? 'created_at', {
+							ascending: p.ascending,
+							nullsFirst: p.nullsFirst
+						})
+						.order('id', {ascending: true})
+				}
+				const {data, error} = await query.range(from, from + size - 1).abortSignal(ctx.signal)
+				if (error) throw error
+				const fresh = (data ?? []) as Channel[]
+				result.push(...(p.shuffle ? rankShuffled(fresh, from) : fresh))
+				if (fresh.length < size) break
+			}
+			return result
 		}
 	}),
 	onInsert: async ({transaction}) => {

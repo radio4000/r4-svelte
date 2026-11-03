@@ -1,5 +1,9 @@
 # Changelog
 
+## November 2026
+
+- #Explore Paging, filtering and search keep showing the matching channels without loading the whole directory upfront
+
 ## October 2026
 
 - #UI On phones R4 feels more like an app: fields don't zoom in, taps don't leave buttons lit, the status bar follows the app theme and dialogs slide up from the bottom

@@ -26,7 +26,7 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 TanStack Query caches responses. TanStack DB stores rows. In app code the boundary is `src/lib/collections/` plus `src/lib/useLiveQuery.svelte.ts`.
 
-Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper is a near-upstream copy of the svelte-db hook that keeps rows in one `$state.raw` snapshot (so a single change doesn't re-render every row), untracks writes to avoid `state_unsafe_mutation`, and is the verified path for app behavior; its header lists the diffs. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
+Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper is a near-upstream copy of the svelte-db hook that keeps rows in one `$state.raw` snapshot (so a single change doesn't re-render every row), untracks writes to avoid `state_unsafe_mutation`, uses the observer’s `wholesale` mode to watch cached rows without an unfiltered fetch, and is the verified path for app behavior; its header lists the diffs. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ## contracts we rely on
 
@@ -117,7 +117,7 @@ For loaders, freshness checks, and other non-reactive reads.
 
 ### reactive limit (pagination)
 
-A reactive `.limit()` drives pagination. The `queryFn` receives it via `ctx.meta?.loadSubsetOptions?.limit` and fetches that many rows; increasing it triggers a new fetch and the collection caches all rows seen. Proven in `channels.svelte` and `/docs/tanstack/channels`.
+A reactive `.limit()` drives pagination. The `queryFn` receives windows via `ctx.meta?.loadSubsetOptions`; it must honor `offset` and `limit`. An absent limit means all matching rows, draining backend pages until exhausted. Proven in `channels.svelte` and `/docs/tanstack/channels`.
 
 ```js
 let paginatedLimit = $state(PAGE_SIZE)
@@ -138,9 +138,9 @@ let hasMore = $derived(query.data?.length >= paginatedLimit)
 
 Caveats learned the hard way:
 
-- `.offset()` is applied locally by d2ts, not forwarded to Supabase (the sync layer always fetches from row 0 with `limit = offset + pageSize`). Don't use it for server-side pagination.
-- For paged views, accumulate `limit = currentPage * pageSize` and `.slice()` locally. The `queryFn` should delta-fetch: look up cached results for the same query shape with a smaller limit and fetch only the new rows. See `channels.ts` `queryFn`.
-- Each dep change in `useLiveQuery` builds a new live query collection; the wrapper disposes the old observer and the old collection is garbage-collected after 1ms (`gcTime`), stopping its d2ts pipeline and pending callbacks. Stale collections left running cause delayed re-renders.
+- Paged channel views accumulate `limit = currentPage * pageSize` and `.slice()` locally. DB can also request continuation windows with a nonzero offset; `channels.ts` returns exactly that window. TanStack Query caches each filter/sort/window separately.
+- An unbounded request is authoritative for its whole filter. Returning a default page (formerly 20 channels) can evict rows belonging to other paged queries. Explore uses lexical ordering matching the server and a unique ID tie-breaker; the default locale string ordering can trigger unbounded requests.
+- Each dep change in `useLiveQuery` builds a new live query collection. The old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
 
 ### keepalive pin
 

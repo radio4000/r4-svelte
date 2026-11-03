@@ -53,6 +53,8 @@ export async function searchChannels(query, {limit = 100, offset = 0} = {}) {
 		.from('channels_with_tracks')
 		.select('*', {count: 'exact'})
 		.or(filter)
+		.order('updated_at', {ascending: false})
+		.order('id', {ascending: true})
 		.range(offset, offset + limit - 1)
 	if (error) throw new Error(error.message)
 	return {

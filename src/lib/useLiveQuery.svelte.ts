@@ -6,6 +6,10 @@
 // - rows live in one $state.raw snapshot instead of deep $state + a SvelteMap patched per change.
 //   Deep state re-proxies every row on each sync, so one delete in a 2.6k-track channel hands
 //   every TrackCard a "new" track and re-renders them all. `state` is read lazily off the snapshot.
+// - observer mode is wholesale, matching our snapshot reads. Granular mode requests
+//   an unfiltered initial snapshot from direct on-demand collections.
+// - previous observers stay subscribed until their replacement is ready, so releasing
+//   old page rows cannot force an in-flight ordered query to reload its whole source.
 // - every write in the observer callback is untracked. The callback can fire during $derived
 //   evaluation (invalidateQueries → collection update → graph flush → emit), where a bare $state
 //   write throws state_unsafe_mutation. Upstream only untracks the row writes, not `status`.
@@ -207,6 +211,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		const id = next.collection?.id
 		endReady = id ? span('livequery:ready', {id}) : null
 		return createLiveQueryObserver(next.collection, {
+			mode: 'wholesale',
 			client: next.client,
 			queryHash: next.queryHash,
 			onPreload: next.resumeDeferredCollections
@@ -215,6 +220,20 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 
 	let currentResolved = untrack(() => resolved)
 	let currentObserver = observe(currentResolved)
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- subscription ownership, not UI state
+	const subscriptions = new Map<ReturnType<typeof observe>, () => void>()
+
+	function disposeObserver(observer: ReturnType<typeof observe>) {
+		const unsubscribe = subscriptions.get(observer)
+		subscriptions.delete(observer)
+		unsubscribe?.()
+		observer.dispose()
+	}
+
+	$effect(() => () => {
+		for (const observer of [...subscriptions.keys()].toReversed()) disposeObserver(observer)
+		currentObserver.dispose()
+	})
 
 	// One immutable snapshot per change: data, state, status, flags and health together.
 	let snapshot = $state.raw(
@@ -224,6 +243,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	)
 
 	const syncFromObserver = (observer: typeof currentObserver) => {
+		if (observer !== currentObserver) return
 		const end = span('livequery:copy')
 		const next = observer.getSnapshot()
 		untrack(() => {
@@ -231,6 +251,11 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		})
 		const rows = Array.isArray(next.data) ? next.data.length : next.data === undefined ? 0 : 1
 		end({id: next.collection?.id, rows})
+		if (next.isReady || next.isLoadingError || next.isCrashed || !next.collection) {
+			for (const previous of [...subscriptions.keys()].toReversed()) {
+				if (previous !== observer) disposeObserver(previous)
+			}
+		}
 		if (endReady && next.status === `ready`) {
 			endReady({rows})
 			endReady = null
@@ -240,38 +265,31 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	// Watch for collection changes and subscribe to updates
 	$effect(() => {
 		const nextResolved = resolved
-		// Only `resolved` may rerun this effect. Resuming deferred collections can start a sync
-		// that reads app state; tracking it reran the effect with the same query, the cleanup had
-		// disposed the observer, and subscribing to it threw (TanStack DB error 12).
+		// Resuming a collection can read app state; only `resolved` may rerun this effect.
 		return untrack(() => subscribeTo(nextResolved))
 	})
 
 	function subscribeTo(nextResolved: typeof resolved) {
 		if (nextResolved !== currentResolved) {
-			currentObserver.dispose()
+			if (!subscriptions.has(currentObserver)) currentObserver.dispose()
 			currentResolved = nextResolved
 			currentObserver = observe(nextResolved)
 			syncFromObserver(currentObserver)
 		}
 
 		const observer = currentObserver
+		if (subscriptions.has(observer)) return
 		const unsubscribe = observer.subscribe(() => {
 			syncFromObserver(observer)
 		})
+		subscriptions.set(observer, unsubscribe)
 
 		try {
 			currentResolved.resumeDeferredCollections()
 			syncFromObserver(observer)
 		} catch (error) {
-			unsubscribe()
-			observer.dispose()
+			disposeObserver(observer)
 			throw error
-		}
-
-		// Cleanup when effect is invalidated
-		return () => {
-			unsubscribe()
-			if (observer === currentObserver) observer.dispose()
 		}
 	}
 

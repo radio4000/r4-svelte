@@ -196,7 +196,11 @@
 			base = base
 				.where(({ch}) => gte(ch.track_count, 10))
 				.where(({ch}) => not(isNull(ch.image)))
-				.orderBy(({ch}) => ch.latest_track_at, 'desc')
+				.orderBy(({ch}) => ch.latest_track_at, {
+					direction: 'desc',
+					nulls: 'last',
+					stringSort: 'lexical'
+				})
 		} else {
 			const minTracks = filterMinTracks[filter]
 			if (minTracks) base = base.where(({ch}) => gte(ch.track_count, minTracks))
@@ -207,13 +211,18 @@
 		if (filter !== 'featured') {
 			const col = sortColumns[order]
 			if (col) {
-				base = base.orderBy(
-					({ch}) => ch[col],
-					order === 'shuffle' ? 'asc' : orderDirection || 'desc'
-				)
+				base = base.orderBy(({ch}) => ch[col], {
+					direction: order === 'shuffle' ? 'asc' : orderDirection || 'desc',
+					nulls: 'last',
+					stringSort: 'lexical'
+				})
 			}
 		}
-		base = base.limit(queryLimit)
+		// Match the server's ordering so DB can request bounded pages instead of
+		// loading the whole set to apply its default locale string comparison.
+		base = base
+			.orderBy(({ch}) => ch.id, {direction: 'asc', stringSort: 'lexical'})
+			.limit(queryLimit)
 		return base
 	})
 	const channelsRaw = $derived(channelsQuery.data ?? [])
@@ -250,6 +259,7 @@
 			return
 		}
 		serverCount = 0
+		let stale = false
 		void fetchChannelCount({
 			trackCountGte: filterMinTracks[filter],
 			imageNotNull: filter === 'artwork',
@@ -257,9 +267,12 @@
 			shuffle: order === 'shuffle'
 		})
 			.then((n) => {
-				serverCount = n
+				if (!stale) serverCount = n
 			})
 			.catch(() => {})
+		return () => {
+			stale = true
+		}
 	})
 
 	// Restore imported channels into the collection on filter activation.
@@ -313,12 +326,14 @@
 	let stableChannels = $state(/** @type {typeof channels} */ ([]))
 	$effect(() => {
 		// Keep showing the previous page while the next one loads
-		if (!channelsQuery.isLoading && channels.length > 0) stableChannels = channels
+		if (!channelsQuery.isLoading) stableChannels = channels
 	})
 	const live = $derived(isPaged ? stableChannels : channels)
 	// `live` is empty on the server and on the first client render, before effects run,
 	// so the server's page fills in and the rendered list survives hydration.
-	const orderedChannels = $derived(live.length ? live : (initialChannels ?? []))
+	const orderedChannels = $derived(
+		channelsQuery.isLoading && !live.length ? (initialChannels ?? []) : live
+	)
 
 	const canvasMedia = $derived(orderedChannels.map((c) => toChannelCardMedia(c, channelActivity)))
 

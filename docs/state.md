@@ -34,4 +34,4 @@ For collections, queries, mutations, and live queries, see [tanstack.md](tanstac
 
 ## Channels
 
-Channels are not preloaded. `channelsCollection` is on-demand: each page's live query fetches the subset it needs, and the `queryFn` serves repeats from cache, delta-fetching only missing rows for pagination and id lookups.
+Channels are not preloaded. `channelsCollection` is on-demand: each page's live query fetches the subset it needs, and TanStack Query caches each requested window. The adapter honors offsets and drains unbounded requests; id lookups fetch only missing rows.

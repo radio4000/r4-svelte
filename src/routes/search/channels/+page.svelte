@@ -5,7 +5,7 @@
 	import {SearchUrl} from '#lib/search-url.svelte.js'
 	import {searchChannelsCombined} from '#lib/search.js'
 	import {viewFromUrl, viewLabel, viewToUrl} from '#lib/views.js'
-	import {channelsCollection} from '#lib/collections/channels.js'
+	import {appState} from '#lib/app-state.svelte.js'
 	import {tagsCollection} from '#lib/collections/tags.js'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
@@ -121,7 +121,7 @@
 		searchChannelsCombined({
 			slugs: q.channels,
 			query: channelQuery,
-			localChannels: [...channelsCollection.state.values()],
+			localChannels: appState.local_channels ?? [],
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize
 		})
