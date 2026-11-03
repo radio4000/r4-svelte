@@ -28,3 +28,4 @@ Playground routes live under `/src/routes/docs` alongside their markdown docs.
 The `r4 --help` CLI can help inspect data from remote PostgreSQL.
 Before testing anything, read [testing](docs/testing.md).
 Verify with `bun run test`, `bun run types`, `bun run check`.
+Prod not updating after a push to main? `docs/deployment.md` says how to read the Cloudflare build log with `cf` and retry it.
