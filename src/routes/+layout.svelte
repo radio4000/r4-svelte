@@ -44,6 +44,8 @@
 	import {channelPresence} from '#lib/presence.svelte.js'
 	import Icon from '#lib/components/icon.svelte'
 	import PresenceCount from '#lib/components/presence-count.svelte'
+	import SolidarityBlock from '#lib/components/solidarity-block.svelte'
+	import {isSolidarityDay} from '#lib/solidarity.js'
 
 	const log = logger.ns('layout').seal()
 
@@ -53,6 +55,12 @@
 	// Channels are now fetched on-demand by each page's useLiveQuery (no more fetch-all)
 
 	let chatPanelVisible = $state(false)
+	// Re-checked every minute so an open tab starts and ends the block at local midnight.
+	let solidarityDay = $state(isSolidarityDay())
+	onMount(() => {
+		const interval = setInterval(() => (solidarityDay = isSolidarityDay()), 60_000)
+		return () => clearInterval(interval)
+	})
 	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
 	let anyDeckActive = $derived(
@@ -322,6 +330,11 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
+	{#if solidarityDay}
+		{#key uiLocale}
+			<SolidarityBlock />
+		{/key}
+	{/if}
 	<svelte:boundary>
 		{#await data.preloading}
 			<div class="loader">
@@ -330,7 +343,9 @@
 			</div>
 		{:then}
 			<AuthListener />
-			<KeyboardShortcuts />
+			{#if !solidarityDay}
+				<KeyboardShortcuts />
+			{/if}
 			<ToolTip />
 			<EditTrackDialog />
 			<ShareDialog />
