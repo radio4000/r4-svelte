@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"repository": "https://github.com/radio4000/r4-svelte",
 	"type": "module",
+	"packageManager": "bun@1.4.4",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
