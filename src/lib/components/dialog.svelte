@@ -1,10 +1,19 @@
 <script>
-	/** Generic modal dialog wrapper. Renders nothing until first opened; takes header, footer and children snippets. */
+	/**
+	 * Generic modal dialog wrapper. Renders nothing until first opened; takes header, footer and children snippets.
+	 * `closable={false}` drops the close button and ignores Esc and backdrop clicks.
+	 */
 	import {tick, untrack} from 'svelte'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
 
-	let {showModal = $bindable(), header = undefined, footer = undefined, children} = $props()
+	let {
+		showModal = $bindable(),
+		closable = true,
+		header = undefined,
+		footer = undefined,
+		children
+	} = $props()
 
 	let dialog = $state()
 	let mousedownTarget = $state()
@@ -30,23 +39,30 @@
 
 <dialog
 	bind:this={dialog}
-	onclose={() => (showModal = false)}
+	onclose={() => {
+		// Browsers force-close on a repeated Esc even when cancel is prevented — reopen.
+		if (!closable && showModal) return dialog.showModal()
+		showModal = false
+	}}
+	oncancel={(e) => !closable && e.preventDefault()}
 	onmousedown={(e) => (mousedownTarget = e.target)}
 	onclick={(e) => {
-		if (e.target === dialog && mousedownTarget === dialog) dialog.close()
+		if (closable && e.target === dialog && mousedownTarget === dialog) dialog.close()
 	}}
 >
 	{#if hasBeenOpened}
 		<div class="dialog-panel">
 			<header class="dialog-header">
 				{@render header?.()}
-				<button
-					onclick={() => dialog.close()}
-					title={m.modal_close_label()}
-					aria-label={m.modal_close_label()}
-				>
-					<Icon icon="close" />
-				</button>
+				{#if closable}
+					<button
+						onclick={() => dialog.close()}
+						title={m.modal_close_label()}
+						aria-label={m.modal_close_label()}
+					>
+						<Icon icon="close" />
+					</button>
+				{/if}
 			</header>
 			<section class="dialog-body">
 				{@render children?.()}
