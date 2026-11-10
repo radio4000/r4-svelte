@@ -1,5 +1,4 @@
 import {sdk} from '@radio4000/sdk'
-import {searchChannels} from '#lib/search-fts.js'
 import {channelsCollection} from '#lib/collections/channels.js'
 import {dedupeById, fuzzySearch} from '#lib/utils.js'
 
@@ -47,9 +46,10 @@ export async function searchChannelsCombined({
 		promises.push(...slugs.map((slug) => findChannelBySlug(slug).then((c) => (c ? [c] : []))))
 	}
 	if (query) {
-		const fts = await searchChannels(query, {limit, offset})
-		count = fts.count
-		promises.push(Promise.resolve(fts.channels))
+		const {data, error} = await sdk.search.searchChannels(query, {limit, offset})
+		if (error) throw new Error(error.message)
+		count = data.count
+		promises.push(Promise.resolve(/** @type {import('#lib/types.js').Channel[]} */ (data.channels)))
 		// Local fuzzy is a client-side bonus on top of the paginated FTS results —
 		// only surface it on the first page, or it'd reappear on every page.
 		if (offset === 0) {

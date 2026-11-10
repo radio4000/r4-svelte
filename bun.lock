@@ -9,7 +9,7 @@
         "@inlang/paraglide-js": "^2.29.3",
         "@inlang/plugin-m-function-matcher": "^2.4.3",
         "@inlang/plugin-message-format": "^4.6.0",
-        "@radio4000/sdk": "^0.8.3",
+        "@radio4000/sdk": "^0.9.0",
         "@sveltejs/adapter-static": "^4.0.1",
         "@tanstack/query-core": "^5.107.1",
         "@tanstack/query-db-collection": "^1.5.1",
@@ -482,7 +482,7 @@
 
     "@posthog/types": ["@posthog/types@1.423.0", "", {}, "sha512-4gzXyyXKN6mktVoQQkeIlgAva054P99sUSvVGHd0/mDBYuk3gz2ZDHhPOP5C1j2cl+7Dtu2BeBJr4LfILptm/w=="],
 
-    "@radio4000/sdk": ["@radio4000/sdk@0.8.3", "", { "dependencies": { "@supabase/supabase-js": "^2.118.0" } }, "sha512-PPzeuuyCoqu54S6OxfgtaOklB+2ED3By2Or7VuVFnUbvYc1hv9QWtjxHcLuHaSgC9qGFSuCqEvdeAfVvDWFK0w=="],
+    "@radio4000/sdk": ["@radio4000/sdk@0.9.0", "", { "dependencies": { "@supabase/supabase-js": "^2.118.0" } }, "sha512-82bezCFKVwBYF9qtbfAca1rG3BSNNsd7ionj/dFH8KbueBYrPGYLcoOx38HEgbcUTRqi20ZbyU6bp1hEQBqWCQ=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.18", "", { "os": "android", "cpu": "arm" }, "sha512-ubTG+4KlidvioxjOFdsdEa2F6JVGZb8m2ByJUqQ7fYzUeT1cEn194POcsQ10PKH4p//q0YQn4SB3YpSuzcA1Yg=="],
 

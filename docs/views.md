@@ -22,7 +22,7 @@ A View has two lossless string forms:
 
 The difference is structural: ViewURI is one string (`@ko002 #jazz?order=shuffle`), SearchURL splits across params (`?q=@ko002 #jazz&order=shuffle`). `viewLabel(view)` returns the human query text (sources only, no options) — this is what goes into `?q=`.
 
-Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result. `?mention=foo` matches the exact `@foo` token in track descriptions, case-insensitively, without changing the source channel. In saved/deck views this is `@source mention:@foo`; `@foo` alone still selects foo's tracks. `mention:@` only applies alongside an `@channel` source; on its own it resolves to the `empty` strategy.
+Channel routes (`/[slug]/tracks?tags=jazz,dub&q=text`) use a third, friendlier URL form: `channelViewFromUrl(url, slug)` reads it into a View. There `?q=` is plain search text (no `@`/`#` syntax) and `?tags=` are comma-separated bare tags with `tagsMode=all` — each selected tag narrows the result. `?mention=foo` matches the exact `@foo` token in track descriptions, case-insensitively, without changing the source channel. In saved/deck views this is `@source mention:@foo`; `@foo` alone still selects foo's tracks. On its own, `mention:@foo` finds tracks from any channel that mention foo.
 
 ```
 @ko002
@@ -40,15 +40,20 @@ Multi-source (experimental): `;`-separated sources parse and serialize correctly
 
 `resolveViewStrategy(source)` picks a fetch path based on the first ViewSource:
 
-| Strategy           | Condition                          | Fetch                                      | Post-filter                      |
-| ------------------ | ---------------------------------- | ------------------------------------------ | -------------------------------- |
-| `channel`          | channels only                      | local query by slug, server-paginated      | sort only                        |
-| `channel-filtered` | channels + tags, mention or search | local query (all tracks), client-paginated | tags, exact mention, fuzzy, sort |
-| `tags-only`        | tags, no channels                  | remote Supabase overlaps                   | tagsMode=all, sort               |
-| `search-only`      | search text, no channels/tags      | local FTS live query                       | fuzzy, sort                      |
-| `empty`            | nothing specified                  | no fetch                                   | —                                |
+| Strategy           | Condition                                       | Fetch and filter                                                       |
+| ------------------ | ----------------------------------------------- | ---------------------------------------------------------------------- |
+| `channel`          | channels only                                   | local query by slug, paginated there                                   |
+| `channel-filtered` | one channel + tags, mention or text             | that channel's tracks (already loaded), filtered and paginated locally |
+| `remote`           | anything else: no channel, or several + filters | `sdk.search.searchTracks`, one database query                          |
+| `empty`            | nothing specified                               | no fetch                                                               |
 
-All strategies that fetch broadly (everything except `channel`) paginate client-side via `processViewTracks` + slice. The `channel` strategy delegates pagination to the query layer.
+The rule: whoever pages also filters. `remote` hands every part of the query to the database (`slug`, `tags @>`, `mentions @>`, full-text on `fts`), which orders, pages and returns the true count. Fetching one page and filtering it in the browser finds only the matches on that page; that was the `#techno #acid` bug.
+
+`channel-filtered` is the exception because one channel's tracks are already in the browser, so filtering them there is complete. `processViewTracks` matches tags and mentions with the sdk's `extractTokens`, the same rule the database uses, and adds fuzzy text matching. Several channels together go `remote`, since the API returns at most 4000 rows per request. Standalone builds have no database and filter whatever is loaded.
+
+## Tags and mentions
+
+A track's `tags` and `mentions` are filled by a database trigger from its description. The rule (`parse_tokens` in radio4000/supabase, `extractTokens`/`findTokens` in the sdk) is the one Twitter and Bluesky use: `#` or `@` at the start or after anything but a letter, digit, `_`, `&` or `/`. A tag runs to the next space or `#`, trailing punctuation cut; a mention is a slug (letters, digits, `_`, `-`). Lowercased. Search input is read with the same rule (`parseQuery`), so `#Techno,` finds tracks tagged `techno`. `link-entities.svelte` renders description links from `findTokens`, so a link always points at a tag that exists.
 
 ## Options
 
@@ -58,7 +63,7 @@ After `?`, global to all sources:
 - `direction` — `asc`, `desc` (default)
 - `limit` — 1–4000
 - `offset` — ≥ 0, pairs with `limit`
-- `tagsMode` — `any` (default), `all`
+- `tagsMode` — `all` is the only mode and the default for any source with tags; kept for old saved views
 - `seed` — optional deterministic shuffle seed (used when `order=shuffle`) to share the same randomized order by URL
 
 ## Saving and pinning views

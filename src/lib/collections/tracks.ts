@@ -13,7 +13,6 @@ import {logger} from '#lib/logger.js'
 import {getErrorMessage} from './utils'
 
 const log = logger.ns('tracks').seal()
-import {searchTracks} from '#lib/search-fts.js'
 import type {ChannelRef, Track, TrackWithMeta} from '#lib/types.js'
 
 /** Parse provider/media_id from a track's URL, filling in any missing fields. */
@@ -34,8 +33,6 @@ type TrackQueryParams = {
 	slugEq?: string
 	slugIn?: string[]
 	idIn?: string[]
-	tagsIn?: string[]
-	ftsEq?: string
 	createdAfter?: string
 	limit?: number
 }
@@ -51,12 +48,6 @@ function parseTrackParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]): T
 			| undefined,
 		idIn: options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as
 			| string[]
-			| undefined,
-		tagsIn: options.filters.find((f) => f.field[0] === 'tags' && f.operator === 'in')?.value as
-			| string[]
-			| undefined,
-		ftsEq: options.filters.find((f) => f.field[0] === 'fts' && f.operator === 'eq')?.value as
-			| string
 			| undefined,
 		createdAfter: options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')
 			?.value as string | undefined,
@@ -80,22 +71,13 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	if (params.idIn) {
 		return ['tracks', 'ids', ...params.idIn.toSorted()]
 	}
-	if (params.tagsIn) {
-		const key: (string | number)[] = ['tracks', 'tags', ...params.tagsIn.toSorted()]
-		if (params.limit) key.push('limit', params.limit)
-		return key
-	}
-	if (params.ftsEq) {
-		const key: (string | number)[] = ['tracks', 'search', params.ftsEq]
-		if (params.limit) key.push('limit', params.limit)
-		return key
-	}
 	return ['tracks']
 }
 
 /**
- * On-demand track collection, keyed by id. Fetched by slug (channel), id list (keep-alive
- * pins), tags, or full-text search — see `parseTrackParams`/`getTrackQueryKey`.
+ * On-demand track collection, keyed by id. Fetched by slug (channel) or id list (keep-alive
+ * pins) — see `parseTrackParams`/`getTrackQueryKey`. Searches across channels go through
+ * sdk.search.searchTracks in queryView, which writes its results in here.
  */
 export const tracksCollection = createCollection<Track, string>({
 	...queryCollectionOptions({
@@ -109,12 +91,7 @@ export const tracksCollection = createCollection<Track, string>({
 			const params = parseTrackParams(ctx.meta?.loadSubsetOptions)
 			const slugs = params.slugIn ?? (params.slugEq ? [params.slugEq] : [])
 
-			log.info('queryFn', {
-				slugs,
-				tagsIn: params.tagsIn,
-				ftsEq: params.ftsEq,
-				createdAfter: params.createdAfter
-			})
+			log.info('queryFn', {slugs, createdAfter: params.createdAfter})
 
 			if (!capabilities.globalBrowse) {
 				const all = [...tracksCollection.state.values()]
@@ -125,14 +102,6 @@ export const tracksCollection = createCollection<Track, string>({
 				if (slugs.length) {
 					const set = new Set(slugs)
 					return all.filter((t) => !!t.slug && set.has(t.slug))
-				}
-				if (params.tagsIn?.length)
-					return all.filter((t) => t.tags?.some((tag) => params.tagsIn?.includes(tag)))
-				if (params.ftsEq) {
-					const q = params.ftsEq.toLowerCase()
-					return all.filter(
-						(t) => t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-					)
 				}
 				return all
 			}
@@ -167,26 +136,6 @@ export const tracksCollection = createCollection<Track, string>({
 					})
 				)
 				return results.flat()
-			}
-
-			// Global: fetch by tags
-			if (params.tagsIn?.length) {
-				let query = sdk.supabase.from('channel_tracks').select('*')
-				query = query.overlaps('tags', params.tagsIn)
-				query = query.order('created_at', {ascending: false}).limit(params.limit || 50)
-				const {data, error} = await query
-				if (error) throw error
-				const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
-				tracksCollection.utils.writeUpsert(tracks)
-				return tracks
-			}
-
-			// Global: full-text search
-			if (params.ftsEq) {
-				const {tracks: rawTracks} = await searchTracks(params.ftsEq, {limit: params.limit || 50})
-				const tracks = rawTracks.map(normalizeTrackMedia)
-				tracksCollection.utils.writeUpsert(tracks)
-				return tracks
 			}
 
 			return []

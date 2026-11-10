@@ -1,11 +1,11 @@
-import {extractMentions, fuzzySearch, shuffleArray} from '#lib/utils.js'
+import {fuzzySearch, shuffleArray} from '#lib/utils.js'
 import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
 import {inArray} from '@tanstack/db'
 import {tracksCollection, normalizeTrackMedia} from '#lib/collections/tracks.js'
 import {channelsCollection} from '#lib/collections/channels.js'
-import {sdk} from '@radio4000/sdk'
-import {searchTracks} from '#lib/search-fts.js'
+import {sdk, extractTokens} from '@radio4000/sdk'
+import {capabilities} from '#lib/modes.js'
 import type {Channel, Deck, Track} from '#lib/types.js'
 import {viewURI, type View, type ViewSource} from '#lib/views.js'
 
@@ -14,14 +14,15 @@ const MAX_CLIENT_TRACKS = 4000
 const EMPTY_STRINGS: string[] = []
 
 /**
- * Which fetch+filter path queryView should use for a View.
- * - `channel`: paginated local query by slug — fast, server-paginated
- * - `channel-filtered`: fetch all channel tracks, post-filter by tags/mention/search, paginate client-side
- * - `tags-only`: remote Supabase query on the tags column (contains for tagsMode=all, overlaps otherwise), server-paginated
- * - `search-only`: local FTS live query
+ * Which fetch path queryView uses for a View.
+ * - `channel`: one or more channels, nothing else: local query by slug, paginated there
+ * - `channel-filtered`: one channel plus tags, mention or text: that channel's tracks are
+ *   already loaded, so filter them here (fuzzy text) and paginate here
+ * - `remote`: everything else: sdk.searchTracks, matched, ordered, paginated and counted
+ *   in the database
  * - `empty`: no source specified, returns nothing
  */
-export type ViewStrategy = 'channel' | 'channel-filtered' | 'tags-only' | 'search-only' | 'empty'
+export type ViewStrategy = 'channel' | 'channel-filtered' | 'remote' | 'empty'
 
 type ProcessViewTracksOptions = {
 	shuffleRand?: () => number
@@ -31,14 +32,15 @@ type ProcessViewTracksOptions = {
 
 /** Decide which fetch strategy to use based on the first source of a View. */
 export function resolveViewStrategy(source?: ViewSource): ViewStrategy {
-	const hasChannels = !!source?.channels?.length
-	const hasTags = !!source?.tags?.length
-	const hasSearch = !!source?.search?.trim()
-	if (hasChannels && (hasTags || hasSearch || source?.mention)) return 'channel-filtered'
-	if (hasChannels) return 'channel'
-	if (hasTags) return 'tags-only'
-	if (hasSearch) return 'search-only'
-	return 'empty'
+	const channels = source?.channels?.length ?? 0
+	const filtered = !!source?.tags?.length || !!source?.search?.trim() || !!source?.mention
+	if (!channels && !filtered) return 'empty'
+	if (!filtered) return 'channel'
+	// One channel's tracks are already in the browser. Several together can pass
+	// the database's 4000-row cap per response, so they go remote. Standalone
+	// builds have no database and filter whatever is loaded.
+	if (channels === 1 || !capabilities.globalBrowse) return 'channel-filtered'
+	return 'remote'
 }
 
 /** Auto-radio decks matching a specific View identity. */
@@ -48,8 +50,9 @@ export function getAutoDecksForView(decks: Deck[], view?: View): Deck[] {
 }
 
 /**
- * Post-process raw tracks: tags, exact description mention, fuzzy search, sort/shuffle.
- * This is the "refine locally" stage — input comes from a broad fetch (FTS, overlaps, or channel dump).
+ * Filter and sort tracks that are already in the browser: every tag, the
+ * mention, fuzzy text, then order. For one channel's tracks, decks and
+ * standalone builds; searches across channels run in the database instead.
  */
 export function processViewTracks(
 	tracks: Track[],
@@ -58,17 +61,18 @@ export function processViewTracks(
 ): Track[] {
 	let data = tracks
 	const q = view.sources[0]
-	// Tag post-filter for channel+tags. tags-only already matched server-side, so this is a no-op there.
-	if (q?.tags?.length) {
-		if (q.tagsMode === 'all') {
-			data = data.filter((t) => q.tags?.every((tag) => t.tags?.includes(tag)))
-		} else if (q.channels?.length) {
-			data = data.filter((t) => t.tags?.some((tag) => q.tags?.includes(tag)))
-		}
-	}
-	if (q?.mention) {
-		const mention = `@${q.mention.toLowerCase()}`
-		data = data.filter((t) => extractMentions(t.description ?? '').includes(mention))
+	// Same matching as the database: every tag, and the mention, read from the
+	// description with the rule that fills tracks.tags and tracks.mentions.
+	const tags = q?.tags?.map((t) => t.toLowerCase())
+	const mention = q?.mention?.toLowerCase()
+	if (tags?.length || mention) {
+		data = data.filter((t) => {
+			const found = extractTokens(t.description)
+			return (
+				(!tags?.length || tags.every((tag) => found.tags.includes(tag))) &&
+				(!mention || found.mentions.includes(mention))
+			)
+		})
 	}
 	if (q?.search) {
 		data = fuzzySearch(q.search, data, ['title', 'description'])
@@ -122,7 +126,7 @@ export function queryView(getView: () => View) {
 		[() => channelSlugsKey]
 	)
 
-	// Channel tracks: paginated when strategy=channel, full dump when strategy=channel-filtered
+	// Channel tracks: paginated when strategy=channel, all of them when strategy=channel-filtered
 	const tracksQuery = useLiveQuery(
 		(q) => {
 			if (strategy !== 'channel' && strategy !== 'channel-filtered')
@@ -146,80 +150,74 @@ export function queryView(getView: () => View) {
 		]
 	)
 
-	// Remote tags query, matched and paginated server-side: contains = "all", overlaps = "any".
-	// createQuery because TanStack DB's inArray can't do array-overlap client-side.
-	const tagsMode = $derived(getView().sources[0]?.tagsMode === 'all' ? 'all' : 'any')
-	const tagsQuery = createQuery(() => {
-		return {
-			queryKey: ['tracks', 'tags', tagsMode, ...tags, 'limit', limit, 'offset', offset],
-			queryFn: async () => {
-				const base = sdk.supabase.from('channel_tracks').select('*', {count: 'exact'})
-				const {data, error, count} = await (tagsMode === 'all'
-					? base.contains('tags', tags)
-					: base.overlaps('tags', tags)
-				)
-					.order('created_at', {ascending: false})
-					.range(offset, offset + limit - 1)
-				if (error) throw error
-				return {tracks: hydrateTracksFromRemote(data || []), count: count ?? 0}
-			},
-			enabled: strategy === 'tags-only',
-			staleTime: 24 * 60 * 60 * 1000,
-			placeholderData: keepPreviousData
-		}
-	})
-
-	// Remote FTS query (like tagsQuery — client-side eq() can't match tsvector)
-	const searchQuery = createQuery(() => {
-		return {
-			queryKey: ['tracks', 'search', searchTerm, 'limit', limit, 'offset', offset],
-			queryFn: async () => {
-				const {tracks, count} = await searchTracks(searchTerm, {limit, offset})
-				return {tracks: hydrateTracksFromRemote(tracks), count}
-			},
-			enabled: strategy === 'search-only' && !!searchTerm,
-			staleTime: 24 * 60 * 60 * 1000,
-			placeholderData: keepPreviousData
-		}
-	})
-
-	/** Raw tracks from whichever data source the current strategy uses. */
-	function rawTracks(): Track[] {
-		switch (strategy) {
-			case 'channel':
-			case 'channel-filtered':
-				return (tracksQuery.data ?? []) as Track[]
-			case 'tags-only':
-				return (tagsQuery.data?.tracks ?? []) as Track[]
-			case 'search-only':
-				return (searchQuery.data?.tracks ?? []) as Track[]
-			default:
-				return []
-		}
-	}
+	// Everything else is one database query: channels, every tag, the mention and the
+	// text all narrow it, and the database orders, pages and counts.
+	const order = $derived(getView().order)
+	const ascending = $derived(getView().direction === 'asc')
+	const remoteQuery = createQuery(() => ({
+		queryKey: [
+			'tracks',
+			'search',
+			{channels: channelSlugs, tags, mention, text: searchTerm, order, ascending, limit, offset}
+		],
+		queryFn: async () => {
+			const {data, error} = await sdk.search.searchTracks(
+				{
+					channels: channelSlugs,
+					tags,
+					mentions: mention ? [mention] : [],
+					text: searchTerm
+				},
+				{
+					limit,
+					offset,
+					ascending,
+					order: order === 'name' ? 'title' : order === 'updated' ? 'updated_at' : 'created_at'
+				}
+			)
+			if (error) throw new Error(error.message)
+			return {tracks: hydrateTracksFromRemote(data.tracks), count: data.count}
+		},
+		enabled: strategy === 'remote',
+		staleTime: 24 * 60 * 60 * 1000,
+		placeholderData: keepPreviousData
+	}))
 
 	return {
 		get strategy() {
 			return strategy
 		},
-		get tracks() {
-			const processed = processViewTracks(rawTracks(), getView())
-			if (strategy === 'channel-filtered') {
-				return processed.slice(offset, offset + limit)
+		get tracks(): Track[] {
+			switch (strategy) {
+				case 'channel':
+					return processViewTracks(tracksQuery.data as Track[], getView(), {
+						inputOrder: 'created-desc'
+					})
+				case 'channel-filtered':
+					return processViewTracks(tracksQuery.data as Track[], getView()).slice(
+						offset,
+						offset + limit
+					)
+				case 'remote': {
+					const tracks = (remoteQuery.data?.tracks ?? []) as Track[]
+					// Shuffle mixes the current page; the database has no stable random order.
+					return getView().order === 'shuffle' ? shuffleArray(tracks, Math.random) : tracks
+				}
+				default:
+					return []
 			}
-			return processed
 		},
 		get count(): number {
-			if (strategy === 'search-only') {
-				return searchQuery.data?.count ?? 0
+			switch (strategy) {
+				case 'channel':
+					return (tracksQuery.data ?? []).length
+				case 'channel-filtered':
+					return processViewTracks(tracksQuery.data as Track[], getView()).length
+				case 'remote':
+					return remoteQuery.data?.count ?? 0
+				default:
+					return 0
 			}
-			if (strategy === 'tags-only') {
-				return tagsQuery.data?.count ?? 0
-			}
-			if (strategy === 'channel-filtered') {
-				return processViewTracks(rawTracks(), getView()).length
-			}
-			return rawTracks().length
 		},
 		get channels() {
 			return (channelsQuery.data ?? []) as Channel[]
@@ -229,10 +227,8 @@ export function queryView(getView: () => View) {
 				case 'channel':
 				case 'channel-filtered':
 					return !tracksQuery.isReady
-				case 'tags-only':
-					return tagsQuery.isPending
-				case 'search-only':
-					return searchQuery.isPending
+				case 'remote':
+					return remoteQuery.isPending
 				default:
 					return false
 			}

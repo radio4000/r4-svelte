@@ -1,4 +1,5 @@
 import type {ReadonlyURL, ReadonlyURLSearchParams} from '$app/state'
+import {parseQuery} from '@radio4000/sdk'
 /** One source of tracks: channels, tags, exact description mention, and search text. */
 export type ViewSource = {
 	channels?: string[]
@@ -23,7 +24,6 @@ export type ViewURI = string & {readonly __brand: 'ViewURI'}
 
 const validOrders = ['updated', 'created', 'name', 'tracks', 'shuffle'] as const
 const validDirections = ['asc', 'desc'] as const
-const RE_SPLIT_TOKENS = /\s+/
 const RE_R4_PREFIX = /^r4:\/\//
 const RE_LEADING_AT = /^@/
 
@@ -58,35 +58,19 @@ function parseOptions(p: ReadonlyURLSearchParams, view: View): void {
 	}
 }
 
-/** Parse a source: `@slug` → channels, `#tag` → tags, `mention:@slug` → description mention, rest → search. */
+/** Parse a source: `@slug` → channels, `#tag` → tags, `mention:@slug` → description mention, rest → search.
+ *  Same grammar and tag rule as sdk parseQuery, so a View finds what `r4 search` finds. */
 export function parseSource(input: string): ViewSource {
+	const {channels, tags, mentions, text} = parseQuery(input)
 	const source: ViewSource = {}
-	const channels: string[] = []
-	const tags: string[] = []
-	const rest: string[] = []
-	for (const token of input.trim().split(RE_SPLIT_TOKENS).filter(Boolean)) {
-		if (token.startsWith('mention:@')) {
-			const mention = token.slice('mention:@'.length).toLowerCase()
-			if (mention) source.mention = mention
-		} else if (token.startsWith('@')) {
-			const slug = token.slice(1)
-			if (slug) channels.push(slug)
-		} else if (token.startsWith('#')) {
-			const tag = token.slice(1)
-			if (tag) tags.push(tag)
-		} else {
-			rest.push(token)
-		}
-	}
-	if (channels.length) source.channels = [...new Set(channels)]
-	// Multiple #tags typed together read as "tracks with all of these", not
-	// "any of these" — matches channelViewFromUrl's own tag-filter default.
+	if (channels.length) source.channels = channels
+	// Multiple #tags read as "tracks with all of these", like the channel page's tag filter.
 	if (tags.length) {
-		source.tags = [...new Set(tags)]
+		source.tags = tags
 		source.tagsMode = 'all'
 	}
-	const search = rest.join(' ')
-	if (search) source.search = search
+	if (mentions.length) source.mention = mentions[0]
+	if (text) source.search = text
 	return source
 }
 

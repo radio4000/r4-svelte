@@ -22,7 +22,10 @@
 	const view: View = $derived(viewFromUrl(page.url))
 	const primarySource = $derived(view.sources[0] ?? {})
 	const hasFilter = $derived(
-		!!primarySource.channels?.length || !!primarySource.tags?.length || !!primarySource.search
+		!!primarySource.channels?.length ||
+			!!primarySource.tags?.length ||
+			!!primarySource.mention ||
+			!!primarySource.search
 	)
 	const hasExtraSources = $derived(view.sources.length > 1)
 	const viewQuery = queryView(() => view)
