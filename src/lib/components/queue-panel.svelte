@@ -14,8 +14,6 @@
 	import * as m from '#lib/paraglide/messages.js'
 
 	/** @type {{deckId: number, scrollToActive?: (() => void) | undefined}} */
-	// Write-only bindable: the parent calls it, so the destructure itself is never read here.
-	// eslint-disable-next-line no-useless-assignment
 	let {deckId, scrollToActive = $bindable()} = $props()
 
 	let deck = $derived(appState.decks[deckId])
