@@ -212,12 +212,14 @@ describe('viewURI', () => {
 // ─── Stress tests ───────────────────────────────────────────────
 
 describe('parseSource: token splitting and adjacency', () => {
-	test('#fish#apples — no space between tags', () => {
-		// currently: one token '#fish#apples', starts with #, tag = 'fish#apples'
-		// arguably should be two tags, but testing actual behavior
-		const result = parseSource('#fish#apples')
-		// BUG? This gives a single tag 'fish#apples' instead of ['fish', 'apples']
-		expect(result).toEqual({tags: ['fish#apples'], tagsMode: 'all'})
+	test('#fish#apples — a tag stops at the next #, as in the database', () => {
+		expect(parseSource('#fish#apples')).toEqual({tags: ['fish'], tagsMode: 'all'})
+	})
+	test('tags are lowercased and lose trailing punctuation, like stored tags', () => {
+		expect(parseSource('#Techno, #ACID!')).toEqual({tags: ['techno', 'acid'], tagsMode: 'all'})
+	})
+	test('mention: is lowercased', () => {
+		expect(parseSource('@ko002 mention:@Alice')).toEqual({channels: ['ko002'], mention: 'alice'})
 	})
 	test('#fish #apples — space between tags', () => {
 		expect(parseSource('#fish #apples')).toEqual({tags: ['fish', 'apples'], tagsMode: 'all'})

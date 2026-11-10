@@ -1,6 +1,7 @@
 import type {ReadonlyURL} from '$app/state'
 import fuzzysort from 'fuzzysort'
 import {parseUrl} from 'media-now'
+import {extractTokens} from '@radio4000/sdk'
 import {appCloudinaryUrl, MOBILE_BREAKPOINT} from '#lib/config.js'
 import * as m from '#lib/paraglide/messages.js'
 
@@ -123,49 +124,16 @@ export function seededRandom(seed: string): () => number {
 	}
 }
 
-/**
- * Regex for matching hashtags and mentions - shared across components
- */
-export const ENTITY_REGEX =
-	/(^|\s)([#﹟＃@][\p{XID_Continue}\p{Extended_Pictographic}\p{Emoji_Component}_+-]+)/giu
-
 export const HASH_PREFIX_REGEX = /^#/
 
-/**
- * Parse text for entities (hashtags and mentions), invoking `callback` per match.
- * Falsy callback results are dropped from the returned array.
- */
-export function parseEntities<T>(
-	text: string,
-	callback: (match: string, prefix: string, entity: string, offset: number) => T
-): T[] {
-	if (!text || typeof text !== 'string') return []
-
-	const entities: T[] = []
-	text.replace(ENTITY_REGEX, (match, prefix, entity, offset) => {
-		entities.push(callback(match, prefix, entity, offset))
-		return match
-	})
-
-	return entities.filter(Boolean)
-}
-
-/**
- * Extract hashtags from text
- */
+/** Hashtags in text, as "#tag", lowercased. Same rule as tracks.tags in the database (sdk extractTokens). */
 export function extractHashtags(text: string): string[] {
-	return parseEntities(text, (_match, _prefix, entity) =>
-		entity.startsWith('#') ? entity.toLowerCase() : ''
-	)
+	return extractTokens(text).tags.map((t) => `#${t}`)
 }
 
-/**
- * Extract mentions from text
- */
+/** Mentions in text, as "@slug", lowercased. Same rule as tracks.mentions in the database. */
 export function extractMentions(text: string): string[] {
-	return parseEntities(text, (_match, _prefix, entity) =>
-		entity.startsWith('@') ? entity.toLowerCase() : ''
-	)
+	return extractTokens(text).mentions.map((m) => `@${m}`)
 }
 
 /**

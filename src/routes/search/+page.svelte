@@ -37,7 +37,7 @@
 	// URL is the single source of truth
 	const view = $derived(viewFromUrl(page.url))
 	const q = $derived(view.sources[0] ?? {})
-	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.search)
+	const hasFilter = $derived(!!q.channels?.length || !!q.tags?.length || !!q.mention || !!q.search)
 
 	function onViewsBarChange(v) {
 		search.seedInput(viewLabel(v))
