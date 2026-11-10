@@ -17,7 +17,7 @@ const EMPTY_STRINGS: string[] = []
  * Which fetch+filter path queryView should use for a View.
  * - `channel`: paginated local query by slug — fast, server-paginated
  * - `channel-filtered`: fetch all channel tracks, post-filter by tags/mention/search, paginate client-side
- * - `tags-only`: remote Supabase overlaps query (tags column), post-filter for tagsMode=all
+ * - `tags-only`: remote Supabase query on the tags column (contains for tagsMode=all, overlaps otherwise), server-paginated
  * - `search-only`: local FTS live query
  * - `empty`: no source specified, returns nothing
  */
@@ -58,8 +58,7 @@ export function processViewTracks(
 ): Track[] {
 	let data = tracks
 	const q = view.sources[0]
-	// Tag post-filter: channel+tags always needs it; tags-only needs it for tagsMode=all
-	// (Supabase overlaps = "any", so "all" mode requires a second pass here)
+	// Tag post-filter for channel+tags. tags-only already matched server-side, so this is a no-op there.
 	if (q?.tags?.length) {
 		if (q.tagsMode === 'all') {
 			data = data.filter((t) => q.tags?.every((tag) => t.tags?.includes(tag)))
@@ -147,23 +146,26 @@ export function queryView(getView: () => View) {
 		]
 	)
 
-	// Remote tags query: Supabase overlaps (broad "any" match).
+	// Remote tags query, matched and paginated server-side: contains = "all", overlaps = "any".
 	// createQuery because TanStack DB's inArray can't do array-overlap client-side.
+	const tagsMode = $derived(getView().sources[0]?.tagsMode === 'all' ? 'all' : 'any')
 	const tagsQuery = createQuery(() => {
 		return {
-			queryKey: ['tracks', 'tags', ...tags, 'limit', limit],
+			queryKey: ['tracks', 'tags', tagsMode, ...tags, 'limit', limit, 'offset', offset],
 			queryFn: async () => {
-				const {data, error} = await sdk.supabase
-					.from('channel_tracks')
-					.select('*')
-					.overlaps('tags', tags)
+				const base = sdk.supabase.from('channel_tracks').select('*', {count: 'exact'})
+				const {data, error, count} = await (tagsMode === 'all'
+					? base.contains('tags', tags)
+					: base.overlaps('tags', tags)
+				)
 					.order('created_at', {ascending: false})
-					.limit(limit)
+					.range(offset, offset + limit - 1)
 				if (error) throw error
-				return hydrateTracksFromRemote(data || [])
+				return {tracks: hydrateTracksFromRemote(data || []), count: count ?? 0}
 			},
 			enabled: strategy === 'tags-only',
-			staleTime: 24 * 60 * 60 * 1000
+			staleTime: 24 * 60 * 60 * 1000,
+			placeholderData: keepPreviousData
 		}
 	})
 
@@ -188,7 +190,7 @@ export function queryView(getView: () => View) {
 			case 'channel-filtered':
 				return (tracksQuery.data ?? []) as Track[]
 			case 'tags-only':
-				return (tagsQuery.data ?? []) as Track[]
+				return (tagsQuery.data?.tracks ?? []) as Track[]
 			case 'search-only':
 				return (searchQuery.data?.tracks ?? []) as Track[]
 			default:
@@ -202,7 +204,7 @@ export function queryView(getView: () => View) {
 		},
 		get tracks() {
 			const processed = processViewTracks(rawTracks(), getView())
-			if (strategy !== 'channel' && strategy !== 'empty' && strategy !== 'search-only') {
+			if (strategy === 'channel-filtered') {
 				return processed.slice(offset, offset + limit)
 			}
 			return processed
@@ -210,6 +212,9 @@ export function queryView(getView: () => View) {
 		get count(): number {
 			if (strategy === 'search-only') {
 				return searchQuery.data?.count ?? 0
+			}
+			if (strategy === 'tags-only') {
+				return tagsQuery.data?.count ?? 0
 			}
 			if (strategy === 'channel-filtered') {
 				return processViewTracks(rawTracks(), getView()).length
