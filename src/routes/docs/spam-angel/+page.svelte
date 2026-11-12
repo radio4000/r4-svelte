@@ -7,6 +7,7 @@
 	import {spamDecisionsCollection} from '#lib/collections/spam-decisions.js'
 	import {createQuery} from '@tanstack/svelte-query'
 	import {normalizeTrackMedia} from '#lib/collections/tracks.js'
+	import {appState} from '#lib/app-state.svelte.js'
 
 	const MAX_TRACK_COUNT = 10
 	const MIN_CONFIDENCE = 0.5
@@ -48,7 +49,26 @@
 		staleTime: 5 * 60 * 1000
 	}))
 
-	const allChannels = $derived(channelsQuery.data ?? [])
+	// Admins have "admin": true in app_metadata, set by the database owners (see
+	// radio4000/supabase docs/moderation.md). Admins also see quarantined channels,
+	// so the queue of quarantined accounts keeps them out of review.
+	const isAdmin = $derived(appState.user?.app_metadata?.admin === true)
+
+	const quarantinedQuery = createQuery(() => ({
+		queryKey: ['spam-angel', 'quarantined'],
+		queryFn: async () => {
+			const {data, error} = await sdk.supabase.rpc('quarantined_accounts')
+			if (error) throw error
+			return new Set((data ?? []).flatMap((account) => account.channel_slugs))
+		},
+		enabled: isAdmin
+	}))
+
+	const quarantinedSlugs = $derived(quarantinedQuery.data ?? new Set())
+
+	const allChannels = $derived(
+		(channelsQuery.data ?? []).filter((ch) => !quarantinedSlugs.has(ch.slug))
+	)
 	const loading = $derived(channelsQuery.isPending)
 	const error = $derived(channelsQuery.error?.message ?? null)
 
@@ -260,10 +280,25 @@
 		toDelete
 			.map(
 				(ch) =>
-					`-- ${ch.name} (@${ch.slug})\nselect ban_user_by_channel_slug('${escapeSqlString(ch.slug)}');`
+					`-- ${ch.name} (@${ch.slug})\nselect quarantine_user_by_channel_slug('${escapeSqlString(ch.slug)}');`
 			)
 			.join('\n\n')
 	)
+
+	/** Quarantine result per slug, this session: 'pending', 'done' or an error message. */
+	const quarantineStatus = new SvelteMap()
+
+	async function quarantineMarked() {
+		for (const channel of toDelete) {
+			const status = quarantineStatus.get(channel.slug)
+			if (!channel.slug || status === 'done' || status === 'pending') continue
+			quarantineStatus.set(channel.slug, 'pending')
+			const {error} = await sdk.supabase.rpc('quarantine_user_by_channel_slug', {
+				channel_slug: channel.slug
+			})
+			quarantineStatus.set(channel.slug, error ? error.message : 'done')
+		}
+	}
 
 	function copySQL() {
 		navigator.clipboard.writeText(sql)
@@ -295,8 +330,9 @@
 	<div>
 		<h1>Spam Angel</h1>
 		<p>
-			Review and mark suspected spam channels. Nothing is deleted here — use the generated SQL to
-			act.
+			Review and mark suspected spam channels, then quarantine them: their account is hidden and
+			can't sign in, and is deleted after 30 days unless an admin releases it. Admins quarantine
+			here; others copy the SQL for the dashboard.
 		</p>
 	</div>
 	<menu>
@@ -403,14 +439,28 @@
 		<details open>
 			<summary>
 				<span>Marked as spam ({toDelete.length})</span>
-				<button onclick={copySQL} disabled={toDelete.length === 0}>Copy SQL</button>
+				{#if isAdmin}
+					<button onclick={quarantineMarked} disabled={toDelete.length === 0}>Quarantine</button>
+				{:else}
+					<button onclick={copySQL} disabled={toDelete.length === 0}>Copy SQL</button>
+				{/if}
 			</summary>
 			<ul class="list">
 				{#each toDelete as channel (channel.id)}
+					{@const status = quarantineStatus.get(channel.slug)}
 					<li>
 						<span class="item-name">{channel.name}</span>
 						<span class="meta">@{channel.slug}</span>
-						<button onclick={() => undoDecision(channel.id)}>Undo</button>
+						{#if status === 'done'}
+							<span class="meta">quarantined</span>
+						{:else if status === 'pending'}
+							<span class="meta">quarantining…</span>
+						{:else if status}
+							<span class="meta">{status}</span>
+						{/if}
+						<button onclick={() => undoDecision(channel.id)} disabled={status === 'done'}
+							>Undo</button
+						>
 					</li>
 				{/each}
 			</ul>
