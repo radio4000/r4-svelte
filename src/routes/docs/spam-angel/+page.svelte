@@ -279,7 +279,10 @@
 </header>
 
 {#if isAdmin}
-	<p>Quarantine and release ask for a code from your authenticator app (2FA).</p>
+	<p>
+		Quarantine and release ask for a code from your authenticator app (2FA), added in your
+		<a href="/account/2fa">account</a>.
+	</p>
 	<AdminCodeDialog bind:this={codeDialog} />
 {:else}
 	<p>Only radio4000 admins quarantine. Sign in with an admin account to act on what you find.</p>

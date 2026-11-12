@@ -13,7 +13,7 @@ Deleting on sight is too aggressive — false positives hurt real users and the 
 The database does the moderation. Quarantine is the one way, and it acts on the account behind a channel slug, all of its channels included. Details in radio4000/supabase `docs/moderation.md`.
 
 - **Admins** have `"admin": true` in their `app_metadata`, set by the database owners in the dashboard SQL editor. No client holds the service role key.
-- **A code (2FA)**: to quarantine or release, admins also type a code from their authenticator app, valid 15 minutes, so that an admin's radio left signed in can't. The page asks when the database answers `admin code needed`, and sets the app up the first time (`admin-code-dialog.svelte`). Other accounts never see 2FA.
+- **A code (2FA)**: to quarantine or release, admins also type a code from their authenticator app, valid 15 minutes, so that an admin's radio left signed in can't. Admins add the app in their account settings (`/account/2fa`); the page asks for a code when the database answers `admin code needed` (`admin-code-dialog.svelte`). Other accounts never see 2FA.
 - **Quarantine** (`quarantine_user_by_channel_slug`) hides the account's channels, tracks and follows from everyone but admins, and blocks its sign in for 30 days.
 - **Release** (`release_user_by_channel_slug`) undoes it.
 - **Purge**: a daily job deletes accounts quarantined for more than 30 days.
