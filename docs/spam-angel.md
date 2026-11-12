@@ -20,9 +20,9 @@ The database does the moderation. Quarantine is the one way, and it acts on the 
 
 ## The `/docs/spam-angel` page
 
-`spam-detector.js` scores channels with fewer than 10 tracks (spam words, links that aren't music). You review them with the keyboard: `s` spam, `e` keep. Decisions stay in this browser.
+For admins only; others see what it is for. `spam-detector.js` scores channels with fewer than 10 tracks (spam words, links that aren't music), and you review them with the keyboard: `s` quarantines the channel's account, `e` keeps it, `u` undoes the last one (releasing a quarantine).
 
-Signed-in admins quarantine the marked channels from the page, and already quarantined accounts drop out of the review. Everyone else copies the SQL to run in the dashboard.
+The Quarantined column comes from the database, whoever quarantined the accounts, with their deletion day and a Release button. Kept channels stay in this browser.
 
 ## Owner experience
 
