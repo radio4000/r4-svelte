@@ -8,6 +8,7 @@
 	import {createQuery} from '@tanstack/svelte-query'
 	import {normalizeTrackMedia} from '#lib/collections/tracks.js'
 	import {appState} from '#lib/app-state.svelte.js'
+	import AdminCodeDialog from './admin-code-dialog.svelte'
 
 	const MAX_TRACK_COUNT = 10
 	const MIN_CONFIDENCE = 0.5
@@ -157,11 +158,17 @@
 		persistKept(channelId, false)
 	}
 
+	let codeDialog = $state(/** @type {AdminCodeDialog | undefined} */ (undefined))
+
 	/** Call a moderation function of the database for SLUG, then reload the quarantined accounts. */
 	async function moderate(name, slug) {
 		busy.add(slug)
 		actionError = null
-		const {error} = await sdk.supabase.rpc(name, {channel_slug: slug})
+		let {error} = await sdk.supabase.rpc(name, {channel_slug: slug})
+		// The database needs a recent code from the admin's authenticator app: ask, then retry.
+		if (error?.message === 'admin code needed' && (await codeDialog?.ask())) {
+			;({error} = await sdk.supabase.rpc(name, {channel_slug: slug}))
+		}
 		if (error) actionError = `@${slug}: ${error.message}`
 		await quarantinedQuery.refetch()
 		busy.delete(slug)
@@ -271,7 +278,10 @@
 	</menu>
 </header>
 
-{#if !isAdmin}
+{#if isAdmin}
+	<p>Quarantine and release ask for a code from your authenticator app (2FA).</p>
+	<AdminCodeDialog bind:this={codeDialog} />
+{:else}
 	<p>Only radio4000 admins quarantine. Sign in with an admin account to act on what you find.</p>
 {/if}
 
