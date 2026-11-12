@@ -20,7 +20,7 @@ The database does the moderation. Quarantine is the one way, and it acts on the 
 
 ## The `/docs/spam-angel` page
 
-For admins only; others see what it is for. `spam-detector.js` scores channels with fewer than 10 tracks (spam words, links that aren't music), and you review them with the keyboard: `s` quarantines the channel's account, `e` keeps it, `u` undoes the last one (releasing a quarantine).
+Everyone can review; only admins quarantine, and only they see the Quarantined column. `spam-detector.js` scores channels with fewer than 10 tracks (spam words, links that aren't music), and you review them with the keyboard: `s` quarantines the channel's account (admins), `e` keeps it, `u` undoes the last one (releasing a quarantine).
 
 The Quarantined column comes from the database, whoever quarantined the accounts, with their deletion day and a Release button. Kept channels stay in this browser.
 
@@ -31,5 +31,4 @@ A quarantined owner can't sign in: Supabase answers `user_banned`. The sign-in f
 ## Next
 
 - **Reports**: a "Report spam" action on channel pages for signed-in users, feeding the admins' queue. Whether enough reports should quarantine automatically is open: quarantine also blocks sign in, so false reports would cost a real user more than hiding a channel.
-- **Release in the page**: today, admins release from the SQL editor or r4.el.
 - **Appeal path**: a contact link in the sign-in notice is the minimum.

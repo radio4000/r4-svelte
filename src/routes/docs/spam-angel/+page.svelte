@@ -14,8 +14,8 @@
 	const TRACK_SLUG_BATCH_SIZE = 25
 
 	// Admins have "admin": true in app_metadata, set by the database owners, and the
-	// database checks it again (radio4000/supabase docs/moderation.md). Others see why
-	// the page is empty.
+	// database checks it again (radio4000/supabase docs/moderation.md). Everyone can
+	// review; only admins quarantine and see the quarantined accounts.
 	const isAdmin = $derived(appState.user?.app_metadata?.admin === true)
 
 	function chunk(values, size) {
@@ -51,7 +51,6 @@
 			if (error) throw error
 			return data ?? []
 		},
-		enabled: isAdmin,
 		staleTime: 5 * 60 * 1000
 	}))
 
@@ -75,7 +74,8 @@
 	const allChannels = $derived(
 		(channelsQuery.data ?? []).filter((ch) => ch.slug && !quarantinedSlugs.has(ch.slug))
 	)
-	const loading = $derived(channelsQuery.isPending || quarantinedQuery.isPending)
+	// A disabled query stays pending: wait for the quarantined accounts only as an admin.
+	const loading = $derived(channelsQuery.isPending || (isAdmin && quarantinedQuery.isPending))
 	const error = $derived(channelsQuery.error?.message ?? quarantinedQuery.error?.message ?? null)
 
 	// Fetch tracks for every candidate channel, grouped by slug. Supabase encodes `.in()`
@@ -190,7 +190,6 @@
 	}
 
 	function handleKeydown(event) {
-		if (!isAdmin) return
 		if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return
 		const handlesKey = ['j', 'k', 'ArrowDown', 'ArrowUp', 's', 'e', 'u'].includes(event.key)
 		if (!handlesKey) return
@@ -204,7 +203,7 @@
 		} else if (event.key === 'k' || event.key === 'ArrowUp') {
 			requestedFocusedIndex = Math.max(focusedIndex - 1, 0)
 		} else if (event.key === 's') {
-			if (channel) quarantine(channel)
+			if (channel && isAdmin) quarantine(channel)
 		} else if (event.key === 'e') {
 			if (channel) keep(channel)
 		} else if (event.key === 'u') {
@@ -267,110 +266,118 @@
 			sign in, and deleted after 30 days unless released.
 		</p>
 	</div>
-	{#if isAdmin}
-		<menu>
-			<button onclick={clearKept} disabled={kept.size === 0}>Clear kept</button>
-		</menu>
-	{/if}
+	<menu>
+		<button onclick={clearKept} disabled={kept.size === 0}>Clear kept</button>
+	</menu>
 </header>
 
 {#if !isAdmin}
-	<p>This page is for radio4000 admins. Sign in with an admin account to use it.</p>
-{:else}
-	{#if loading}
-		<p>Loading channels…</p>
-	{:else if error}
-		<p>Error: {error}</p>
-	{/if}
-	{#if actionError}
-		<p role="alert">{actionError}</p>
-	{/if}
+	<p>Only radio4000 admins quarantine. Sign in with an admin account to act on what you find.</p>
+{/if}
 
-	<div class="triage">
-		<section class="column" data-column="review">
-			<details open>
-				<summary>For review ({undecided.length})</summary>
-				<p>j/k or ↓/↑ to move · s to quarantine · e to keep · u to undo · showing ≥50%</p>
-				<ul class="list" bind:this={reviewList}>
-					{#each undecided as channel, i (channel.id)}
-						{@const ev = channel.analysis.evidence}
-						{@const hasMusic = ev.musicTerms.length > 0}
-						{@const isExpanded = expanded.has(channel.id)}
-						<li
-							data-focused={i === focusedIndex}
-							data-confidence={confidenceLevel(channel.analysis.confidence)}
-						>
-							<article>
-								<header>
-									<figure>
-										<a href="/{channel.slug}">
-											<ChannelAvatar id={channel.image} alt={channel.name} size={40} />
-										</a>
-									</figure>
-									<hgroup>
-										<h3><a href="/{channel.slug}">{channel.name}</a></h3>
-										<p>{channel.slug} · {formatDate(channel.created_at)}</p>
-									</hgroup>
-									<strong class="score" data-score
-										>{Math.round(channel.analysis.confidence * 100)}%</strong
+{#if loading}
+	<p>Loading channels…</p>
+{:else if error}
+	<p>Error: {error}</p>
+{/if}
+{#if actionError}
+	<p role="alert">{actionError}</p>
+{/if}
+
+<div class="triage">
+	<section class="column" data-column="review">
+		<details open>
+			<summary>For review ({undecided.length})</summary>
+			<p>
+				j/k or ↓/↑ to move · {isAdmin ? 's to quarantine · ' : ''}e to keep · u to undo · showing
+				≥50%
+			</p>
+			<ul class="list" bind:this={reviewList}>
+				{#each undecided as channel, i (channel.id)}
+					{@const ev = channel.analysis.evidence}
+					{@const hasMusic = ev.musicTerms.length > 0}
+					{@const isExpanded = expanded.has(channel.id)}
+					<li
+						data-focused={i === focusedIndex}
+						data-confidence={confidenceLevel(channel.analysis.confidence)}
+					>
+						<article>
+							<header>
+								<figure>
+									<a href="/{channel.slug}">
+										<ChannelAvatar id={channel.image} alt={channel.name} size={40} />
+									</a>
+								</figure>
+								<hgroup>
+									<h3><a href="/{channel.slug}">{channel.name}</a></h3>
+									<p>{channel.slug} · {formatDate(channel.created_at)}</p>
+								</hgroup>
+								<strong class="score" data-score
+									>{Math.round(channel.analysis.confidence * 100)}%</strong
+								>
+								<menu>
+									<button
+										class="danger"
+										onclick={() => quarantine(channel)}
+										disabled={!isAdmin}
+										title={isAdmin ? undefined : 'Only admins quarantine'}>Quarantine</button
 									>
-									<menu>
-										<button class="danger" onclick={() => quarantine(channel)}>Quarantine</button>
-										<button onclick={() => keep(channel)}>Keep</button>
-									</menu>
-								</header>
-								<ul aria-label="Spam signals">
-									{#if ev.trackSignals.length > 0}
-										<li data-signal="tracks">Tracks: {ev.trackSignals.slice(0, 3).join(', ')}</li>
-									{/if}
-									{#if ev.keywords.length > 0}
-										<li data-signal="spam">
-											Keywords: {ev.keywords.slice(0, 4).join(', ')}{ev.keywords.length > 4
-												? '…'
-												: ''}
-										</li>
-									{/if}
-									{#if ev.phrases.length > 0}
-										<li data-signal="spam">Phrase: “{ev.phrases[0]}”</li>
-									{/if}
-									{#if ev.locations.length > 0}
-										<li data-signal="location">Location: {ev.locations.join(', ')}</li>
-									{/if}
-									{#if hasMusic}
-										<li data-signal="music">Music: {ev.musicTerms.join(', ')}</li>
-									{/if}
-								</ul>
-
-								{#if isExpanded || (channel.description?.length ?? 0) > 100 || channel.tracks.length > 0}
-									<section>
-										{#if channel.description}
-											<p>
-												{isExpanded ? channel.description : channel.description?.slice(0, 150)}
-												{#if !isExpanded && (channel.description?.length ?? 0) > 150}…{/if}
-											</p>
-										{/if}
-										{#if isExpanded && channel.tracks.length > 0}
-											<ul>
-												{#each channel.tracks as track (track.id)}
-													<li>
-														<a href={track.url} rel="nofollow ugc noopener" target="_blank">
-															{track.title || track.url}
-														</a>
-													</li>
-												{/each}
-											</ul>
-										{:else if !isExpanded && ((channel.description?.length ?? 0) > 150 || channel.tracks.length > 0)}
-											<button onclick={() => toggleExpand(channel.id)}>Show details</button>
-										{/if}
-									</section>
+									<button onclick={() => keep(channel)}>Keep</button>
+								</menu>
+							</header>
+							<ul aria-label="Spam signals">
+								{#if ev.trackSignals.length > 0}
+									<li data-signal="tracks">Tracks: {ev.trackSignals.slice(0, 3).join(', ')}</li>
 								{/if}
-							</article>
-						</li>
-					{/each}
-				</ul>
-			</details>
-		</section>
+								{#if ev.keywords.length > 0}
+									<li data-signal="spam">
+										Keywords: {ev.keywords.slice(0, 4).join(', ')}{ev.keywords.length > 4
+											? '…'
+											: ''}
+									</li>
+								{/if}
+								{#if ev.phrases.length > 0}
+									<li data-signal="spam">Phrase: “{ev.phrases[0]}”</li>
+								{/if}
+								{#if ev.locations.length > 0}
+									<li data-signal="location">Location: {ev.locations.join(', ')}</li>
+								{/if}
+								{#if hasMusic}
+									<li data-signal="music">Music: {ev.musicTerms.join(', ')}</li>
+								{/if}
+							</ul>
 
+							{#if isExpanded || (channel.description?.length ?? 0) > 100 || channel.tracks.length > 0}
+								<section>
+									{#if channel.description}
+										<p>
+											{isExpanded ? channel.description : channel.description?.slice(0, 150)}
+											{#if !isExpanded && (channel.description?.length ?? 0) > 150}…{/if}
+										</p>
+									{/if}
+									{#if isExpanded && channel.tracks.length > 0}
+										<ul>
+											{#each channel.tracks as track (track.id)}
+												<li>
+													<a href={track.url} rel="nofollow ugc noopener" target="_blank">
+														{track.title || track.url}
+													</a>
+												</li>
+											{/each}
+										</ul>
+									{:else if !isExpanded && ((channel.description?.length ?? 0) > 150 || channel.tracks.length > 0)}
+										<button onclick={() => toggleExpand(channel.id)}>Show details</button>
+									{/if}
+								</section>
+							{/if}
+						</article>
+					</li>
+				{/each}
+			</ul>
+		</details>
+	</section>
+
+	{#if isAdmin}
 		<section class="column" data-column="quarantined">
 			<details open>
 				<summary>Quarantined ({quarantined.length})</summary>
@@ -392,23 +399,23 @@
 				</ul>
 			</details>
 		</section>
+	{/if}
 
-		<section class="column" data-column="kept">
-			<details open>
-				<summary>Kept ({keptChannels.length})</summary>
-				<ul class="list">
-					{#each keptChannels as channel (channel.id)}
-						<li>
-							<span class="item-name">{channel.name}</span>
-							<span class="meta">@{channel.slug}</span>
-							<button onclick={() => unkeep(channel.id)}>Undo</button>
-						</li>
-					{/each}
-				</ul>
-			</details>
-		</section>
-	</div>
-{/if}
+	<section class="column" data-column="kept">
+		<details open>
+			<summary>Kept ({keptChannels.length})</summary>
+			<ul class="list">
+				{#each keptChannels as channel (channel.id)}
+					<li>
+						<span class="item-name">{channel.name}</span>
+						<span class="meta">@{channel.slug}</span>
+						<button onclick={() => unkeep(channel.id)}>Undo</button>
+					</li>
+				{/each}
+			</ul>
+		</details>
+	</section>
+</div>
 
 <style>
 	header {
