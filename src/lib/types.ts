@@ -204,6 +204,8 @@ interface User {
 	email: string
 	identities?: UserIdentity[]
 	user_metadata?: {share_presence?: boolean; [key: string]: unknown}
+	/** Set by the database owners only, unlike user_metadata. `admin` moderates (spam-angel). */
+	app_metadata?: {admin?: boolean; [key: string]: unknown}
 }
 
 export type KeyBindingsConfig = Record<string, string>
