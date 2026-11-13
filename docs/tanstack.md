@@ -157,7 +157,7 @@ Each needs a distinct job; fold new probes into these rather than adding pages.
 
 ## what still needs proof
 
-Nothing tests `useLiveQuery` headlessly: vitest runs Svelte's server build (no `browser` condition), where `$effect.root` never runs its callback. A rune test needs `resolve.conditions: ['browser']` in the test config.
+Nothing tests `useLiveQuery` or `queryView` headlessly: vitest runs in Node, so the Svelte plugin compiles runes for the server and `$effect.root` never runs its callback. Adding the `browser` condition isn't enough (it also breaks SvelteKit's runtime in the other tests); rune tests need their own vitest project with a DOM environment (happy-dom or jsdom, not installed).
 
 Still only checked by hand in the browser — keep these alive with `agent-browser` (see [browser-testing.md](browser-testing.md)):
 

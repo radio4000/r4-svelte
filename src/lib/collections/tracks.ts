@@ -2,7 +2,7 @@ import {createCollection} from '@tanstack/svelte-db'
 import {untrack} from 'svelte'
 import {createSubscriber} from 'svelte/reactivity'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
-import {BasicIndex} from '@tanstack/db'
+import {BasicIndex, eq, queryOnce} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
@@ -102,6 +102,9 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	return key
 }
 
+/** How long a track subset is trusted before the next reader refetches it. */
+const TRACKS_STALE_MS = 5 * 60 * 1000
+
 /** Every channel's newest tracks: a window or a created_at filter, never the whole table. */
 function isGlobal(params: TrackQueryParams): boolean {
 	return (
@@ -130,7 +133,7 @@ export const tracksCollection = createCollection<Track, string>({
 		// A subset opened within 5 minutes is trusted as is. After that, the next reader to
 		// mount it shows the cached rows and refetches them in the background. Not on window
 		// focus: every pinned deck channel would redownload each time the tab comes back.
-		staleTime: 5 * 60 * 1000,
+		staleTime: TRACKS_STALE_MS,
 		refetchOnWindowFocus: false,
 		queryFn: async (ctx): Promise<Track[]> => {
 			const params = parseTrackParams(ctx.meta?.loadSubsetOptions as LoadSubsetOptions)
@@ -416,6 +419,25 @@ async function handleTrackDelete(id: string): Promise<void> {
 	const response = await sdk.tracks.deleteTrack(id)
 	log.info('delete_done', {id, error: response.error})
 	if (response.error) throw new Error(getErrorMessage(response.error))
+}
+
+/**
+ * Start loading a channel's tracks under the key its pages read (`['tracks', slug]`), for
+ * the channel route's hover preload. Doesn't hold the rows: the page's own query finds
+ * them in the cache. Skipped while that cache entry is fresh or already loading, since
+ * the route's load reruns on every navigation inside the channel.
+ */
+export function preloadChannelTracks(slug: string): void {
+	const state = queryClient.getQueryState(['tracks', slug])
+	if (state?.fetchStatus === 'fetching') return
+	if (state?.data && Date.now() - state.dataUpdatedAt < TRACKS_STALE_MS) return
+	// The exact query of the channel layout, so both share one cache entry
+	queryOnce((q) =>
+		q
+			.from({tracks: tracksCollection})
+			.where(({tracks}) => eq(tracks.slug, slug))
+			.orderBy(({tracks}) => tracks.created_at, 'desc')
+	).catch((error) => log.warn('preload failed', {slug, error}))
 }
 
 /**
