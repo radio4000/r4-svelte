@@ -93,13 +93,25 @@ export function processViewTracks(
 	return data
 }
 
-/** Parse provider/media_id from URLs and upsert into local collection. */
-function hydrateTracksFromRemote(data: Record<string, unknown>[]): Track[] {
+/** Parse provider/media_id from URLs, upsert into the collection, return the ids in order. */
+function hydrateTracksFromRemote(data: Record<string, unknown>[]): string[] {
 	const tracks = (data as Track[]).map(normalizeTrackMedia)
 	tracksCollection.utils.writeBatch(() => {
 		for (const t of tracks) tracksCollection.utils.writeUpsert(t)
 	})
-	return tracks
+	return tracks.map((t) => t.id)
+}
+
+/** `rows` in the order of `ids`; an id missing from `rows` comes from `fallback`, or is skipped. */
+export function inIdOrder(
+	rows: Track[],
+	ids: string[],
+	fallback: (id: string) => Track | undefined = () => undefined
+): Track[] {
+	// A plain lookup built per call, never stored or read reactively
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const byId = new Map(rows.map((t) => [t.id, t]))
+	return ids.flatMap((id) => byId.get(id) ?? fallback(id) ?? [])
 }
 
 /** Reactive view query. Call during component init. Returns {tracks, channels, loading, strategy} with getters. */
@@ -117,7 +129,12 @@ export function queryView(getView: () => View) {
 	const channelsQuery = useLiveQuery(
 		(q) => {
 			if (!channelSlugs.length) return null
-			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, channelSlugs))
+			// One slug asks exactly what the channel layout asks, so they share one cache entry
+			return q
+				.from({c: channelsCollection})
+				.where(({c}) =>
+					channelSlugs.length === 1 ? eq(c.slug, channelSlugs[0]) : inArray(c.slug, channelSlugs)
+				)
 		},
 		[() => channelSlugsKey]
 	)
@@ -167,12 +184,25 @@ export function queryView(getView: () => View) {
 				}
 			)
 			if (error) throw new Error(error.message)
-			return {tracks: hydrateTracksFromRemote(data.tracks), count: data.count}
+			return {ids: hydrateTracksFromRemote(data.tracks), count: data.count}
 		},
 		enabled: strategy === 'remote',
 		staleTime: 24 * 60 * 60 * 1000,
 		placeholderData: keepPreviousData
 	}))
+
+	// The search returns ids in the server's order; the rows are read back from the
+	// collection, so an edit to a track shows here too. Querying by id also owns the
+	// rows, so leaving a channel page can't evict a result still on screen.
+	const remoteIds = $derived((remoteQuery.data?.ids ?? EMPTY_STRINGS) as string[])
+	const remoteIdsKey = $derived(remoteIds.join(','))
+	const remoteRowsQuery = useLiveQuery(
+		(q) =>
+			strategy === 'remote' && remoteIds.length
+				? q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, remoteIds))
+				: null,
+		[() => strategy, () => remoteIdsKey]
+	)
 
 	return {
 		get strategy() {
@@ -190,7 +220,10 @@ export function queryView(getView: () => View) {
 						offset + limit
 					)
 				case 'remote': {
-					const tracks = (remoteQuery.data?.tracks ?? []) as Track[]
+					// Until the id query catches up (a new page), read the rows the search just wrote
+					const tracks = inIdOrder((remoteRowsQuery.data ?? []) as Track[], remoteIds, (id) =>
+						tracksCollection.get(id)
+					)
 					// Shuffle mixes the current page; the database has no stable random order.
 					return getView().order === 'shuffle' ? shuffleArray(tracks, Math.random) : tracks
 				}

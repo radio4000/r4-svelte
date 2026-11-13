@@ -39,21 +39,14 @@ The homepage adapts to who is logged in and what they follow.
 - If their channel is still incomplete (no tracks, no follows, or no image), show a dismissible onboarding checklist inside the dashboard until all steps are done
 - Their own channel card in list display
 - Favorite channels currently broadcasting (list)
-- **Feed tab** visible only when signed in
 - Sticky browse header can show quick controls for your channel: play/pause, live badge while broadcasting, auto-radio state
 - Homepage audience widget uses realtime `channelPresence` and shows both total listeners and live broadcast listeners for the user's channel
 
-### Feed tab
+### Feed
 
-The feed is a **reverse-chronological track timeline from followed channels** — what curators you follow have been adding recently. Conceptually: a social reading list for music, not a recommendation engine.
+The feed is not on the homepage. It lives at `/explore/tracks/network` (the "Feed" chip on the explore tracks pages; `/feed` and `/explore/feed` redirect there). It is a **reverse-chronological track timeline from followed channels**: what curators you follow have been adding recently. Conceptually a social reading list for music, not a recommendation engine.
 
-**What it shows:** tracks already loaded into `tracksCollection.state` that belong to followed channel slugs, sorted by `created_at` desc, limited to 50.
-
-**On first feed tab visit**, it eagerly calls `ensureTracksLoaded` for the 10 most recently active followed channels (ranked by `latest_track_at`). This gives recent tracks quickly without fetching all 200+ followed channels.
-
-**Limitation:** the feed only shows tracks that are in the local DB. Channels the user has never visited (and that aren't in the top-10 eager load) show nothing until visited. This is intentional — loading all tracks for all followed channels would be prohibitively expensive (e.g. 200 channels × 1500 tracks = 300k rows).
-
-The feed improves over time as the user browses channels: every channel page visit loads that channel's tracks into the local DB, which then appear in the feed.
+It shows every track your followed channels added in the last 30 days, grouped by day. `fetchRecentTracksForSlugs` loads them in one query per 50 followed channels, whether or not you have visited those channels. Signed out, or following nobody, it shows an empty state.
 
 ## Featured channels algorithm
 
