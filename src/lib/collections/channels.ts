@@ -77,9 +77,16 @@ export function fetchAppStats(): Promise<{channels: number; tracks: number}> {
 /** Translate pushed-down filters and ordering, including page-boundary tie requests. */
 function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 	const options = parseLoadSubsetOptions(opts)
-	const slug = options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as
-		| string
-		| undefined
+	const slugFilter = options.filters.find(
+		(f) => f.field[0] === 'slug' && (f.operator === 'eq' || f.operator === 'in')
+	)
+	const slugs = slugFilter
+		? slugFilter.operator === 'eq'
+			? [slugFilter.value as string]
+			: (slugFilter.value as string[])
+		: undefined
+	// One slug is the channel page's lookup; several are fetched together
+	const slug = slugs?.length === 1 ? slugs[0] : undefined
 	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as
 		| string[]
 		| undefined
@@ -89,22 +96,43 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 	const imageNotNull = options.filters.some(
 		(f) => f.field[0] === 'image' && f.operator === 'not_isNull'
 	)
-	const coordinatesNotNull = ['latitude', 'longitude'].every((field) =>
-		options.filters.some((f) => f.field[0] === field && f.operator === 'not_isNull')
+	const latitudeNotNull = options.filters.some(
+		(f) => f.field[0] === 'latitude' && f.operator === 'not_isNull'
+	)
+	const longitudeNotNull = options.filters.some(
+		(f) => f.field[0] === 'longitude' && f.operator === 'not_isNull'
 	)
 	const sort = options.sorts[0]
 	const shuffle =
 		sort?.field[0] === 'shuffle' || options.filters.some((f) => f.field[0] === 'shuffle')
 	const shuffleRank = options.filters.find((f) => f.field[0] === 'shuffle' && f.operator === 'eq')
 		?.value as number | undefined
-	const equalities = options.filters.filter((f) => f.operator === 'eq' && f.field[0] !== 'shuffle')
+	const equalities = options.filters.filter(
+		(f) => f.operator === 'eq' && f.field[0] !== 'shuffle' && f.field[0] !== 'slug'
+	)
+	// Anything else would be dropped, turning the request into a listing of every channel
+	const unknown = options.filters.filter(
+		(f) =>
+			!(
+				f.field[0] === 'slug' ||
+				f.field[0] === 'shuffle' ||
+				f.operator === 'eq' ||
+				(f.field[0] === 'id' && f.operator === 'in') ||
+				(f.field[0] === 'track_count' && f.operator === 'gte') ||
+				(['image', 'latitude', 'longitude'].includes(f.field[0] as string) &&
+					f.operator === 'not_isNull')
+			)
+	)
 	const offset = opts?.offset
 	return {
 		slug,
+		slugs,
 		idIn,
 		trackCountGte,
 		imageNotNull,
-		coordinatesNotNull,
+		latitudeNotNull,
+		longitudeNotNull,
+		unknown,
 		shuffle,
 		shuffleRank,
 		equalities,
@@ -134,7 +162,7 @@ export const channelsCollection = createCollection<Channel, string>({
 
 			if (!capabilities.globalBrowse) {
 				const localIds = new Set(appState.local_channel_ids ?? [])
-				if (p.slug) return all.filter((c) => c.slug === p.slug)
+				if (p.slugs) return all.filter((c) => p.slugs?.includes(c.slug))
 				return all.filter((c) => localIds.has(c.id))
 			}
 
@@ -147,6 +175,28 @@ export const channelsCollection = createCollection<Channel, string>({
 				const local = (appState.local_channels ?? []).find((c) => c.slug === p.slug)
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []
+			}
+			if (p.slugs) {
+				const localSlugs = new Set(
+					(appState.local_channels ?? [])
+						.filter((c) => appState.local_channel_ids?.includes(c.id))
+						.map((c) => c.slug)
+				)
+				const local = (appState.local_channels ?? []).filter(
+					(c) => localSlugs.has(c.slug) && p.slugs?.includes(c.slug)
+				)
+				const remote = p.slugs.filter((slug) => !localSlugs.has(slug))
+				const fetched: Channel[] = []
+				for (let i = 0; i < remote.length; i += 50) {
+					const {data, error} = await sdk.supabase
+						.from('channels_with_tracks')
+						.select('*')
+						.in('slug', remote.slice(i, i + 50))
+						.abortSignal(ctx.signal)
+					if (error) throw error
+					fetched.push(...((data ?? []) as Channel[]))
+				}
+				return [...local, ...fetched]
 			}
 			// Local imported channels are not in Supabase — serve them from appState directly
 			if (p.idIn) {
@@ -179,6 +229,10 @@ export const channelsCollection = createCollection<Channel, string>({
 				if (error) throw error
 				return [...localMatches, ...cachedMatches, ...(data || [])] as Channel[]
 			}
+			if (p.unknown.length) {
+				const filters = p.unknown.map((f) => `${f.field.join('.')} ${f.operator}`).join(', ')
+				log.warn(`channels: unknown filter (${filters}) dropped, listing every channel`)
+			}
 			// A missing limit means the whole matching set, not a default page. DB uses
 			// that response as authoritative: truncating it can evict other pages.
 			// Offset is the supported alternative to consuming the cursor hints.
@@ -196,7 +250,8 @@ export const channelsCollection = createCollection<Channel, string>({
 						cached.idIn ||
 						cached.trackCountGte !== p.trackCountGte ||
 						cached.imageNotNull !== p.imageNotNull ||
-						cached.coordinatesNotNull !== p.coordinatesNotNull
+						cached.latitudeNotNull !== p.latitudeNotNull ||
+						cached.longitudeNotNull !== p.longitudeNotNull
 					)
 						continue
 					for (const row of (query.state.data ?? []) as Channel[]) {
@@ -224,8 +279,8 @@ export const channelsCollection = createCollection<Channel, string>({
 				for (const filter of p.equalities) query = query.eq(filter.field.join('.'), filter.value)
 				if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
 				if (p.imageNotNull) query = query.not('image', 'is', null)
-				if (p.coordinatesNotNull)
-					query = query.not('latitude', 'is', null).not('longitude', 'is', null)
+				if (p.latitudeNotNull) query = query.not('latitude', 'is', null)
+				if (p.longitudeNotNull) query = query.not('longitude', 'is', null)
 				if (!p.shuffle) {
 					query = query
 						.order(p.orderColumn ?? 'created_at', {

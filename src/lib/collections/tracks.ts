@@ -10,7 +10,7 @@ import {appState} from '#lib/app-state.svelte.js'
 import {parseUrl} from 'media-now'
 import {uuid} from '#lib/utils.js'
 import {queryClient} from './query-client'
-import {channelsCollection, type Channel} from './channels'
+import type {Channel} from './channels'
 import {trackMetaCollection, trackMetaKey} from './track-meta'
 import {logger} from '#lib/logger.js'
 import {getErrorMessage} from './utils'
@@ -536,27 +536,6 @@ export async function fetchRecentTracks({
 	const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
 	tracksCollection.utils.writeUpsert(tracks)
 	return tracks
-}
-
-/** Load a channel's tracks into the collection if fewer than `track_count` are cached. */
-export async function ensureTracksLoaded(slug: string): Promise<void> {
-	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-	const channel = [...channelsCollection.state.values()].find((c) => c?.slug === slug)
-	if (existing.length && channel && existing.length >= (channel.track_count ?? 0)) return
-
-	const data = await queryClient.fetchQuery<Track[]>({
-		queryKey: ['tracks', slug],
-		queryFn: () => fetchTracksBySlug(slug),
-		staleTime: 0
-	})
-
-	// Ensure sync is started so write utils are available
-	if (!tracksCollection.isReady()) {
-		tracksCollection.startSyncImmediate()
-	}
-
-	log.debug('ensureTracksLoaded', slug, data.length)
-	tracksCollection.utils.writeUpsert(data)
 }
 
 /**

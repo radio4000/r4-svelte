@@ -176,10 +176,12 @@
 		const groups = new Map()
 		let index = 0
 		for (const track of tracks) {
-			// Extract year/month from ISO string (fast, avoids Date object creation)
-			const year = track.created_at.slice(0, 4)
-			const monthIndex = parseInt(track.created_at.slice(5, 7), 10) - 1
-			const month = months[monthIndex]
+			// Extract year/month from ISO string (fast, avoids Date object creation).
+			// A track without a date (an old import) goes in a group headed "—".
+			const createdAt = track.created_at ?? ''
+			const year = createdAt.slice(0, 4)
+			const monthIndex = parseInt(createdAt.slice(5, 7), 10) - 1
+			const month = months[monthIndex] ?? '—'
 
 			let yearGroup = groups.get(year)
 			if (!yearGroup) {
@@ -224,7 +226,7 @@
 		const items = []
 		for (const [year, monthsMap] of groupedTracks) {
 			for (const [month, monthTracks] of monthsMap) {
-				items.push({type: 'month', value: `${month} ${year}`, id: `month-${year}-${month}`})
+				items.push({type: 'month', value: `${month} ${year}`.trim(), id: `month-${year}-${month}`})
 				for (const {track, index} of monthTracks) {
 					items.push({type: 'track', track, index, id: track.id})
 				}
