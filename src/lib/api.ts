@@ -1,7 +1,7 @@
 import {tick} from 'svelte'
 import {goto} from '$app/navigation'
 import {resolve} from '$app/paths'
-import {appState, authStatus, addDeck} from '#lib/app-state.svelte.js'
+import {appState, authStatus} from '#lib/app-state.svelte.js'
 import {LOCAL_STORAGE_KEYS, IDB_DATABASES} from '#lib/storage-keys.js'
 import {
 	leaveBroadcast,
@@ -15,6 +15,8 @@ import {sdk} from '@radio4000/sdk'
 import {shuffleArray, isDbId, isMobileViewport, uuid} from '#lib/utils.js'
 import {getActiveQueue, queueInsertManyAfter, queueNext, queuePrev} from '#lib/player/queue.js'
 import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {channelTracks} from '#lib/player/channel-tracks.js'
+import {openDeck} from '#lib/player/open-deck.js'
 
 import type {Channel, ChannelRef, Deck, Track, PlayEndReason, PlayStartReason} from '#lib/types.js'
 import {
@@ -44,9 +46,7 @@ function getDeck(deckId: number): Deck | undefined {
 export function ensureActiveDeck(): Deck {
 	let deck = getDeck(appState.active_deck_id)
 	if (!deck) {
-		deck = addDeck()
-		deck.compact = true
-		appState.active_deck_id = deck.id
+		deck = openDeck({compact: true, activate: true})
 	}
 	return deck
 }
@@ -220,10 +220,8 @@ export async function playTrack(
 	let deck = getDeck(deckId)
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
-		deck = addDeck()
-		deck.compact = true
+		deck = openDeck({compact: true, activate: true})
 		deckId = deck.id
-		appState.active_deck_id = deckId
 		log.log('play_track_created_deck', {deckId})
 	}
 
@@ -321,9 +319,7 @@ export async function playTrack(
 		const slug = deck.playlist_slug
 		const queueChannel = () => {
 			if (getDeck(deckId)?.playlist_slug !== slug) return
-			const tracks = newestFirst(
-				[...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-			)
+			const tracks = newestFirst(channelTracks(slug))
 			setPlaylist(
 				deckId,
 				tracks.map((t) => t.id)
@@ -378,7 +374,7 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 	const d = getDeck(deckId)
 	if (d) clearAutoRadio(d)
 	await ensureTracksLoaded(slug)
-	const tracks = newestFirst([...tracksCollection.state.values()].filter((t) => t?.slug === slug))
+	const tracks = newestFirst(channelTracks(slug))
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return
@@ -391,9 +387,7 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 
 /** Play a track in a fresh deck rather than the active one (e.g. "open in new deck"). */
 export async function playTrackInNewDeck(trackId: string, slug?: string) {
-	const deck = addDeck()
-	deck.compact = true
-	appState.active_deck_id = deck.id
+	const deck = openDeck({compact: true, activate: true})
 	if (slug && !tracksCollection.get(trackId)) {
 		await ensureTracksLoaded(slug)
 	}
@@ -404,9 +398,7 @@ export async function playTrackInNewDeck(trackId: string, slug?: string) {
 
 /** Play a channel in a fresh deck rather than the active one (e.g. "open in new deck"). */
 export async function playChannelInNewDeck(channel: ChannelRef) {
-	const deck = addDeck()
-	deck.compact = true
-	appState.active_deck_id = deck.id
+	const deck = openDeck({compact: true, activate: true})
 	await playChannel(deck.id, channel)
 	// A newly opened extra deck loads paused — the user starts it explicitly.
 	setUserInitiatedPlay(deck.id, false)
@@ -419,7 +411,7 @@ export async function shufflePlayChannel(deckId: number, {id, slug}: ChannelRef)
 	const d = getDeck(deckId)
 	if (d) clearAutoRadio(d)
 	await ensureTracksLoaded(slug)
-	const tracks = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
+	const tracks = channelTracks(slug)
 	if (!tracks.length) {
 		log.warn('shuffle_play_no_tracks', {slug})
 		return
@@ -936,8 +928,7 @@ export async function resyncAutoRadio(deckId: number) {
 	const rotationStartUnix = deck.auto_radio_rotation_start
 
 	// Re-filter from local collection using the same view as joinAutoRadio
-	const channelTracks = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
-	const filtered = processViewTracks(channelTracks, view)
+	const filtered = processViewTracks(channelTracks(slug), view)
 	const autoTracks = toAutoTracks(filtered)
 	if (!autoTracks.length) return
 
@@ -1078,9 +1069,9 @@ export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
 	if (autoDecks.length && resyncId) {
 		await resyncAutoRadio(resyncId)
 	} else {
-		const channelTracks = tracks ?? (await loadChannelTracks(slug))
-		if (!hasAutoRadioCoverage(channelTracks)) return
-		await joinAutoRadio(appState.active_deck_id, toAutoTracks(channelTracks), {
+		const slugTracks = tracks ?? (await loadChannelTracks(slug))
+		if (!hasAutoRadioCoverage(slugTracks)) return
+		await joinAutoRadio(appState.active_deck_id, toAutoTracks(slugTracks), {
 			sources: [{channels: [slug]}]
 		})
 	}
@@ -1088,7 +1079,7 @@ export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
 
 async function loadChannelTracks(slug: string): Promise<Track[]> {
 	await ensureTracksLoaded(slug)
-	return [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	return channelTracks(slug)
 }
 
 // --- Local data ---

@@ -65,11 +65,6 @@ function logDedup(key, msg) {
 	log.debug(msg)
 }
 
-/** Supabase realtime channels keyed by deckId
- * @type {Map<number, any>}
- */
-const broadcastChannels = new Map()
-
 /** Broadcaster realtime state channels keyed by channelId
  * @type {Map<string, {channel: any, intervalId: ReturnType<typeof setInterval>}>}
  */
@@ -355,12 +350,6 @@ export async function startChannelBroadcast(channel, {deckId = appState.active_d
 
 /** @param {number} deckId */
 function stopBroadcastSync(deckId) {
-	const channel = broadcastChannels.get(deckId)
-	if (channel) {
-		log.log('stopping_sync', {deckId})
-		channel.unsubscribe()
-		broadcastChannels.delete(deckId)
-	}
 	seekJobSeqByDeck.delete(deckId)
 }
 
