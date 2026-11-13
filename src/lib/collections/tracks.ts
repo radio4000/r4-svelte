@@ -2,6 +2,8 @@ import {createCollection} from '@tanstack/svelte-db'
 import {untrack} from 'svelte'
 import {createSubscriber} from 'svelte/reactivity'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
+import {BasicIndex} from '@tanstack/db'
+import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
 import {parseUrl} from 'media-now'
@@ -80,7 +82,9 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
  * sdk.search.searchTracks in queryView, which writes its results in here.
  */
 export const tracksCollection = createCollection<Track, string>({
-	...queryCollectionOptions({
+	...queryCollectionOptions<Track, unknown, QueryKey, string>({
+		autoIndex: 'eager',
+		defaultIndexType: BasicIndex,
 		queryKey: (opts) => getTrackQueryKey(parseTrackParams(opts)),
 		syncMode: 'on-demand',
 		startSync: true,
@@ -514,10 +518,8 @@ export async function fetchRecentTracks({
 /** Load a channel's tracks into the collection if fewer than `track_count` are cached. */
 export async function ensureTracksLoaded(slug: string): Promise<void> {
 	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-	if (existing.length) {
-		const channel = [...channelsCollection.state.values()].find((c) => c?.slug === slug)
-		if (!channel || existing.length >= (channel.track_count ?? 0)) return
-	}
+	const channel = [...channelsCollection.state.values()].find((c) => c?.slug === slug)
+	if (existing.length && channel && existing.length >= (channel.track_count ?? 0)) return
 
 	const data = await queryClient.fetchQuery<Track[]>({
 		queryKey: ['tracks', slug],

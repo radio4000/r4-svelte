@@ -317,15 +317,20 @@ export async function playTrack(
 		deck.seek_position = 0
 	}
 	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id))) {
-		// Build playlist from tracks already loaded in collection (same channel/slug) only when needed.
-		// Channel-page playback usually set this context already; rebuilding it on every click is slow.
-		const channelTracks = newestFirst(
-			[...tracksCollection.state.values()].filter((t) => t?.slug === track.slug)
-		)
-		setPlaylist(
-			deckId,
-			channelTracks.map((t) => t.id)
-		)
+		// Queue what's loaded now, then again once the whole channel is in.
+		const slug = deck.playlist_slug
+		const queueChannel = () => {
+			if (getDeck(deckId)?.playlist_slug !== slug) return
+			const tracks = newestFirst(
+				[...tracksCollection.state.values()].filter((t) => t?.slug === slug)
+			)
+			setPlaylist(
+				deckId,
+				tracks.map((t) => t.id)
+			)
+		}
+		queueChannel()
+		if (slug) ensureTracksLoaded(slug).then(queueChannel, () => {})
 	}
 	// Ensure ephemeral track is included in the current playlist
 	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
