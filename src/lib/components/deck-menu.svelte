@@ -3,7 +3,7 @@
 	import {resolve} from '$app/paths'
 	import {appState, removeDeck} from '#lib/app-state.svelte.js'
 	import {toggleVideo, toggleQueuePanel, clearUserInitiatedPlay, rejoinAutoRadio} from '#lib/api.js'
-	import {getBroadcastingChannelId, notifyBroadcastState, leaveBroadcast} from '#lib/broadcast.js'
+	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {modeOf} from '#lib/player/deck-mode.js'
 	import {trackAddSearchParams} from '#lib/track-add.js'
@@ -69,10 +69,6 @@
 		clearUserInitiatedPlay(deckId)
 		removeDeck(deckId)
 		if (bchId) notifyBroadcastState(bchId)
-	}
-
-	function leaveBroadcastDecks() {
-		listeningDeckIds.forEach((id) => leaveBroadcast(id))
 	}
 
 	function shareTrack() {
@@ -191,13 +187,14 @@
 		</button>
 	{/if}
 
-	{#if !isListeningToBroadcast}
+	{#if mode.kind !== 'listening'}
 		<button class="close-deck" onclick={closeDeck}>
 			<Icon icon="close" />
 			{m.player_tooltip_close_deck()}
 		</button>
 	{:else if isListeningGroupControlDeck}
-		<button class="close-deck" onclick={leaveBroadcastDecks}>
+		<!-- Leaving closes every deck tuned to the broadcast -->
+		<button class="close-deck" onclick={() => mode.leave(deckId)}>
 			<Icon icon="close" />
 			{m.broadcasts_leave()}
 		</button>

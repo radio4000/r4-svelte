@@ -100,7 +100,7 @@
 				mediaDuration={deck?.media_duration ?? NaN}
 				trackDuration={displayTrack?.duration}
 				isPlaying={Boolean(deck?.is_playing)}
-				disabled={Boolean(deck?.listening_to_channel_id)}
+				disabled={!mode.seekable}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					const mediaElement = getMediaPlayer(deckId)

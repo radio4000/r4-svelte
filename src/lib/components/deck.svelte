@@ -115,7 +115,7 @@
 			deck: true,
 			expanded: deck?.expanded,
 			compact: deck?.compact,
-			listening: isListeningToBroadcast,
+			listening: mode.kind === 'listening',
 			'video-mix': Boolean(deck?.video_mix && isListeningToBroadcast),
 			broadcasting: isBroadcasting,
 			auto: mode.kind === 'auto',

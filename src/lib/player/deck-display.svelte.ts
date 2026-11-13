@@ -13,6 +13,7 @@ import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {unpackEphemeralTrack} from '#lib/broadcast-utils.js'
 import {hasAutoRadioCoverage} from '#lib/player/auto-radio.js'
+import {modeOf} from '#lib/player/deck-mode.js'
 import {channelPresence} from '#lib/presence.svelte.js'
 import {viewLabel} from '#lib/views.js'
 import type {Channel, Track, BroadcastDeckState} from '#lib/types.js'
@@ -37,6 +38,7 @@ export interface DeckDisplay {
 /** Build a DeckDisplay: track/channel info with broadcast and header fallbacks, plus auto-radio availability and listener count. */
 export function createDeckDisplay(deckId: number): DeckDisplay {
 	const deck = $derived(appState.decks[deckId])
+	const mode = $derived(modeOf(deck))
 
 	// Each query below is skipped (null) until its deck field is set: two displays per
 	// deck (player + compact bar) built twelve pipelines on every first play, most of
@@ -105,13 +107,13 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 	// URI identifying the auto-radio view this deck is playing, used to key
 	// per-view presence counts (a channel can have multiple auto-radio views live).
 	const autoUri = $derived(
-		deck?.auto_radio && deck.playlist_slug
+		mode.kind === 'auto' && deck?.playlist_slug
 			? viewLabel(deck.view ?? {sources: [{channels: [deck.playlist_slug]}]}) ||
 					`@${deck.playlist_slug}`
 			: undefined
 	)
 	const presenceCount = $derived(
-		deck?.listening_to_channel_id && listenSlug
+		mode.kind === 'listening' && listenSlug
 			? (channelPresence[listenSlug]?.broadcast ?? 0)
 			: deck?.broadcasting_channel_id && broadcastSlug
 				? (channelPresence[broadcastSlug]?.broadcast ?? 0)
@@ -152,10 +154,10 @@ export function createDeckDisplay(deckId: number): DeckDisplay {
 	const displayChannel = $derived(channel ?? lastChannel)
 
 	const headerChannel = $derived(
-		deck?.listening_to_channel_id ? (broadcasterChannel ?? displayChannel) : displayChannel
+		mode.kind === 'listening' ? (broadcasterChannel ?? displayChannel) : displayChannel
 	)
 	const secondaryHeaderChannel = $derived.by(() => {
-		if (!deck?.listening_to_channel_id || !headerChannel || !displayChannel) return undefined
+		if (mode.kind !== 'listening' || !headerChannel || !displayChannel) return undefined
 		const same =
 			(headerChannel.id && displayChannel.id && headerChannel.id === displayChannel.id) ||
 			(headerChannel.slug && displayChannel.slug && headerChannel.slug === displayChannel.slug)

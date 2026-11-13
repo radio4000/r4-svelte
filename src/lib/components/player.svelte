@@ -295,12 +295,12 @@
 				.catch((e) => log.error('playback_error save failed', e))
 		}
 		// Listeners follow the broadcaster; skipping locally fights the next state sync.
-		if (deck?.listening_to_channel_id) return
+		if (!mode.advancesOnEnd) return
 		next(deckId, 'youtube_error')
 	}
 
 	function handleEndTrack() {
-		if (deck?.listening_to_channel_id) return
+		if (!mode.advancesOnEnd) return
 		next(deckId, 'track_completed')
 	}
 
@@ -626,7 +626,7 @@
 				{mediaDuration}
 				trackDuration={track?.duration}
 				isPlaying={Boolean(deck?.is_playing)}
-				disabled={isListeningToBroadcast}
+				disabled={!mode.seekable}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					if (mediaElement) mediaElement.currentTime = val
@@ -637,10 +637,11 @@
 		<!-- 4. Channel/track info + mode info -->
 		<footer
 			class="track-panel"
-			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
+			class:active-track={Boolean(displayTrack) &&
+				!(mode.kind === 'listening' && broadcastingChannel)}
 			onclick={() => (appState.active_deck_id = deckId)}
 		>
-			{#if isListeningToBroadcast && broadcastingChannel}
+			{#if mode.kind === 'listening' && broadcastingChannel}
 				{#if displayTrack}
 					<div class="listening-track-panel active-track-bg">
 						<TrackCard

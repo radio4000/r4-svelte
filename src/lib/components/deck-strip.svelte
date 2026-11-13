@@ -7,7 +7,7 @@
 	import {captureEventsCollection} from '#lib/collections/capture-events.js'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq, inArray} from '@tanstack/db'
-	import {resyncBroadcastDeck} from '#lib/broadcast.js'
+	import {modeOf} from '#lib/player/deck-mode.js'
 	import {channelsCollection} from '#lib/collections/channels.js'
 	import {channelPresence} from '#lib/presence.svelte.js'
 	import Deck from '#lib/components/deck.svelte'
@@ -54,7 +54,7 @@
 	)
 	let visibleListeningDecksSynced = $derived(
 		visibleListeningDeckIds.length > 0 &&
-			visibleListeningDeckIds.every((id) => !appState.decks[id]?.listening_drifted)
+			visibleListeningDeckIds.every((id) => !modeOf(appState.decks[id]).drifted(appState.decks[id]))
 	)
 	// Reactive slug lookup for the (few) channels currently being listened to.
 	const listeningChannelIds = $derived(
@@ -125,7 +125,8 @@
 						<button
 							type="button"
 							class={['exit-mode-btn', 'sync-btn', {active: visibleListeningDecksSynced}]}
-							onclick={() => visibleListeningDeckIds.forEach((id) => resyncBroadcastDeck(id))}
+							onclick={() =>
+								visibleListeningDeckIds.forEach((id) => modeOf(appState.decks[id]).resync(id))}
 						>
 							<Icon icon="signal" size={12} />
 							{visibleListeningDecksSynced ? 'Live' : 'Sync'}
