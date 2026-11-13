@@ -88,6 +88,8 @@ export default defineConfig({
 	},
 	test: {
 		reporters: ['dot'],
+		// Node's own localStorage warns without --localstorage-file; tests don't use it.
+		execArgv: ['--no-experimental-webstorage'],
 		onConsoleLog: () => false
 	}
 })

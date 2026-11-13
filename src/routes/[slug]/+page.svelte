@@ -88,10 +88,7 @@
 					.from({b: broadcastsCollection})
 					.where(({b}) => eq(b.channel_id, channel.id))
 					.findOne()
-			: q
-					.from({b: broadcastsCollection})
-					.orderBy(({b}) => b.channel_id, 'asc')
-					.limit(0)
+			: null
 	)
 	let isChannelLive = $derived(Boolean(channelBroadcastQuery.data))
 	let isListeningToChannel = $derived(isListeningToChannelDeck(appState.decks, channel?.id))

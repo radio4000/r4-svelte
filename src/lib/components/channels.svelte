@@ -190,7 +190,7 @@
 		}
 		const localIds = localIdFilters[filter]?.()
 		if (localIds) {
-			if (!localIds.length) return base.orderBy(({ch}) => ch.created_at, 'asc').limit(0)
+			if (!localIds.length) return null
 			base = base.where(({ch}) => inArray(ch.id, localIds))
 		} else if (filter === 'featured') {
 			base = base

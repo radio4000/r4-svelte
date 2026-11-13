@@ -119,8 +119,7 @@ export function queryView(getView: () => View) {
 
 	const channelsQuery = useLiveQuery(
 		(q) => {
-			if (!channelSlugs.length)
-				return q.from({c: channelsCollection}).where(({c}) => inArray(c.id, ['']))
+			if (!channelSlugs.length) return null
 			return q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, channelSlugs))
 		},
 		[() => channelSlugsKey]
@@ -129,8 +128,7 @@ export function queryView(getView: () => View) {
 	// Channel tracks: paginated when strategy=channel, all of them when strategy=channel-filtered
 	const tracksQuery = useLiveQuery(
 		(q) => {
-			if (strategy !== 'channel' && strategy !== 'channel-filtered')
-				return q.from({tracks: tracksCollection}).where(({tracks}) => inArray(tracks.id, ['']))
+			if (strategy !== 'channel' && strategy !== 'channel-filtered') return null
 			const fetchAll = strategy === 'channel-filtered'
 			return q
 				.from({tracks: tracksCollection})
