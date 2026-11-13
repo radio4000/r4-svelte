@@ -53,7 +53,7 @@ export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 				// Upsert per fetch, not per call: home asks for the pool up to three
 				// times on load, and each upsert of 200 rows wakes every live query.
 				if (channels.length) {
-					await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+					if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 					channelsCollection.utils.writeUpsert(channels)
 				}
 				return channels

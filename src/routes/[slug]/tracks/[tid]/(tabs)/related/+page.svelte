@@ -2,10 +2,8 @@
 	import {getTrackDetailCtx} from '#lib/contexts.js'
 	import {appShortName} from '#lib/config.js'
 	import {tracksCollection} from '#lib/collections/tracks.js'
-	import {queryClient} from '#lib/collections/query-client.js'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
-	import {sdk} from '@radio4000/sdk'
 	import TrackCard from '#lib/components/track-card.svelte'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
 	import * as m from '#lib/paraglide/messages.js'
@@ -15,28 +13,7 @@
 	const trackMediaId = $derived(detail.trackMediaId)
 	const trackProvider = $derived(detail.trackProvider)
 
-	// Fetch all tracks with the same media_id across channels, cached by media_id
-	$effect(() => {
-		const mediaId = trackMediaId
-		if (!mediaId) return
-		queryClient.fetchQuery({
-			queryKey: ['tracks', 'media_id', mediaId],
-			staleTime: 0, //5 * 60 * 1000, // 5 mins
-			queryFn: async () => {
-				const {data: tracks, error} = await sdk.supabase
-					.from('channel_tracks')
-					.select('*')
-					.eq('media_id', mediaId)
-				if (error) throw error
-				tracksCollection.utils.writeBatch(() => {
-					for (const t of tracks) tracksCollection.utils.writeUpsert(t)
-				})
-				return tracks
-			}
-		})
-	})
-
-	// Reactive cross-channel results from the collection
+	// Same media across channels. The collection fetches it by media_id itself.
 	const relatedQuery = useLiveQuery((q) =>
 		q.from({t: tracksCollection}).where(({t}) => eq(t.media_id, trackMediaId || ''))
 	)

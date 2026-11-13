@@ -99,10 +99,9 @@ export async function writeImport(
 	tracks: Track[],
 	origin?: ImportOrigin
 ): Promise<void> {
-	await Promise.all([
-		channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
-		tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
-	])
+	// Direct writes need the sync running; on-demand collections load nothing else here
+	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
+	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
 
 	channelsCollection.utils.writeUpsert(channel)
 	queryClient.setQueryData(['channels', channel.slug], [channel])
@@ -161,9 +160,9 @@ function dateSuffix(isoDate: string | null | undefined): string {
 	return new Date(isoDate).toISOString().slice(0, 10).replace(DASH_RE, '')
 }
 
-/** Ensure channelsCollection is loaded from IDB before reading state. */
+/** Start channelsCollection's sync so its state can be read. On-demand, so it loads no rows itself. */
 async function ensureChannelsReady(): Promise<void> {
-	if (!channelsCollection.isReady()) await channelsCollection.preload()
+	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 }
 
 /**

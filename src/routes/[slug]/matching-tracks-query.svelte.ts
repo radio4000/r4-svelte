@@ -1,5 +1,5 @@
 import {page} from '$app/state'
-import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
 import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {eq} from '@tanstack/db'
 import type {Track} from '#lib/types.js'
@@ -9,7 +9,7 @@ import type {Track} from '#lib/types.js'
  * @other-channel" feature on the tracks and tags pages. Loads that channel's tracks
  * on demand since it's usually a channel the viewer hasn't visited.
  */
-export function getMatchingTracksQuery(currentSlug: () => string | undefined) {
+export function getMatchingTracksQuery(_currentSlug: () => string | undefined) {
 	const matchingSlug = $derived((page.url.searchParams.get('matching') ?? '').trim().toLowerCase())
 
 	const query = useLiveQuery(
@@ -22,11 +22,6 @@ export function getMatchingTracksQuery(currentSlug: () => string | undefined) {
 				: null,
 		[() => matchingSlug]
 	)
-
-	$effect(() => {
-		if (!matchingSlug || matchingSlug === currentSlug()) return
-		void ensureTracksLoaded(matchingSlug)
-	})
 
 	return {
 		get matchingSlug() {
