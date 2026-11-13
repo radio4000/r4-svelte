@@ -2,6 +2,8 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {createLiveQueryCollection, eq, gte, inArray} from '@tanstack/db'
 import {tracksCollection} from './tracks'
 import {queryClient} from './query-client'
+import {writeImport} from '#lib/import'
+import type {Channel, Track} from '#lib/types'
 
 // The real query adapter and DB lifecycle against a fake PostgREST that, like ours,
 // caps every response at 4000 rows.
@@ -36,6 +38,8 @@ const rows = [
 type Request = {query: URLSearchParams; signal?: AbortSignal | null}
 const requests: Request[] = []
 const lists: Array<{cleanup: () => Promise<void>}> = []
+/** Server-side edits and latency, for the refresh tests */
+const server = {delay: 0, removed: new Set<string>()}
 
 afterEach(async () => {
 	for (const l of lists.splice(0)) await l.cleanup()
@@ -43,6 +47,9 @@ afterEach(async () => {
 	queryClient.clear()
 	vi.restoreAllMocks()
 	requests.length = 0
+	server.delay = 0
+	server.removed.clear()
+	vi.useRealTimers()
 })
 
 function mockServer() {
@@ -50,7 +57,8 @@ function mockServer() {
 		const url = new URL(input instanceof Request ? input.url : String(input))
 		const query = url.searchParams
 		requests.push({query, signal: init?.signal})
-		let result = [...rows]
+		if (server.delay) await new Promise((resolve) => setTimeout(resolve, server.delay))
+		let result = rows.filter((r) => !server.removed.has(r.id))
 		for (const field of ['slug', 'id', 'media_id', 'created_at'] as const) {
 			const value = query.get(field)
 			if (value?.startsWith('eq.')) result = result.filter((r) => r[field] === value.slice(3))
@@ -262,5 +270,106 @@ describe('single tracks', () => {
 		expect(keys()).toContainEqual(['tracks', 'media', 'shared'])
 		// Distinct from the related tab's hand-made ['tracks', 'media_id', …] entry
 		expect(keys()).not.toContainEqual(['tracks', 'media_id', 'shared'])
+	})
+})
+
+describe('returning to a channel', () => {
+	const open = () =>
+		load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'small'))
+				.orderBy(({t}) => t.created_at, 'desc')
+		)
+	const leave = async () => {
+		for (const l of lists.splice(0)) await l.cleanup()
+	}
+	const minutes = (n: number) => vi.setSystemTime(Date.now() + n * 60_000)
+
+	test('within 5 minutes costs no request', async () => {
+		mockServer()
+		vi.useFakeTimers({toFake: ['Date']})
+		await open()
+		await leave()
+		minutes(4)
+		const before = requests.length
+		expect(await open()).toHaveLength(30)
+		expect(requests.length).toBe(before)
+	})
+
+	test('after 5 minutes shows the old rows at once and refreshes them in the background', async () => {
+		mockServer()
+		vi.useFakeTimers({toFake: ['Date']})
+		await open()
+		await leave()
+		minutes(6)
+		server.removed.add('small-00000')
+		server.delay = 100
+		const before = requests.length
+		const list = createLiveQueryCollection({
+			query: (q) =>
+				q
+					.from({t: tracksCollection})
+					.where(({t}) => eq(t.slug, 'small'))
+					.orderBy(({t}) => t.created_at, 'desc')
+		})
+		lists.push(list)
+		await list.preload()
+		// No wait for the network: the cached channel is on screen
+		expect(list.toArray).toHaveLength(30)
+		await new Promise((resolve) => setTimeout(resolve, 300))
+		expect(requests.length - before).toBe(1)
+		expect(list.toArray).toHaveLength(29)
+	})
+})
+
+describe('a local channel (imported, nothing on the server)', () => {
+	const local = channel('my-mixtape', 12) as unknown as Track[]
+	const mixtape = {id: 'local-1', slug: 'my-mixtape', name: 'My mixtape'} as Channel
+	const open = (where: 'eq' | 'in') =>
+		load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) =>
+					where === 'eq' ? eq(t.slug, 'my-mixtape') : inArray(t.slug, ['my-mixtape'])
+				)
+				.orderBy(({t}) => t.created_at, 'desc')
+		)
+	const leave = async () => {
+		for (const l of lists.splice(0)) await l.cleanup()
+	}
+
+	test('keeps its tracks after the import, on return and after 5 minutes', async () => {
+		mockServer()
+		vi.useFakeTimers({toFake: ['Date']})
+		await writeImport(mixtape, local)
+		expect(await open('eq')).toHaveLength(12)
+		expect(await open('in')).toHaveLength(12)
+		await leave()
+		expect(await open('eq')).toHaveLength(12)
+		await leave()
+		vi.setSystemTime(Date.now() + 6 * 60_000)
+		expect(await open('eq')).toHaveLength(12)
+		await new Promise((resolve) => setTimeout(resolve, 100))
+		expect(tracksCollection.toArray.filter((t) => t.slug === 'my-mixtape')).toHaveLength(12)
+		// Never asked the server about it
+		expect(requests.some((r) => r.query.get('slug')?.includes('my-mixtape'))).toBe(false)
+	})
+
+	test('tracks without dates (an m3u) get the import time, first track newest', async () => {
+		mockServer()
+		const playlist = ['One', 'Two', 'Three'].map(
+			(title, i) =>
+				({id: `m3u-${i}`, slug: 'my-playlist', title, url: `https://x.test/${i}`}) as Track
+		)
+		await writeImport({id: 'local-2', slug: 'my-playlist', name: 'Playlist'} as Channel, playlist)
+		const got = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'my-playlist'))
+				.orderBy(({t}) => t.created_at, 'desc')
+		)
+		expect(got.map((t) => t.title)).toEqual(['One', 'Two', 'Three'])
+		expect(got.every((t) => !Number.isNaN(Date.parse(t.created_at)))).toBe(true)
 	})
 })

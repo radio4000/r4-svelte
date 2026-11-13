@@ -6,6 +6,7 @@ import {BasicIndex} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
+import {appState} from '#lib/app-state.svelte.js'
 import {parseUrl} from 'media-now'
 import {uuid} from '#lib/utils.js'
 import {queryClient} from './query-client'
@@ -113,7 +114,11 @@ export const tracksCollection = createCollection<Track, string>({
 		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
-		staleTime: 24 * 60 * 60 * 1000,
+		// A subset opened within 5 minutes is trusted as is. After that, the next reader to
+		// mount it shows the cached rows and refetches them in the background. Not on window
+		// focus: every pinned deck channel would redownload each time the tab comes back.
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
 		queryFn: async (ctx): Promise<Track[]> => {
 			const params = parseTrackParams(ctx.meta?.loadSubsetOptions as LoadSubsetOptions)
 			const slugs = params.slugs ?? []
@@ -158,13 +163,17 @@ export const tracksCollection = createCollection<Track, string>({
 				return ((data || []) as Track[]).map(normalizeTrackMedia)
 			}
 
-			// Slug-based: fetch per channel
+			// Slug-based: fetch per channel. A local channel (imported) has nothing on the
+			// server; its rows were written in by import.ts, and an empty answer would wipe them.
 			if (slugs.length) {
+				const local = localChannelSlugs()
 				// An offset counts rows of the merged list, and a channel's share of those rows is
 				// unknown, so with several channels each one is read from its first row.
 				const merged = slugs.length > 1 && params.offset
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
+						if (local.has(s))
+							return [...tracksCollection.state.values()].filter((t) => t.slug === s)
 						const tracks = await fetchTracksBySlug(s, {
 							limit: merged && params.limit ? params.offset! + params.limit : params.limit,
 							offset: merged ? 0 : params.offset,
@@ -232,6 +241,12 @@ export const tracksCollection = createCollection<Track, string>({
 		log.info('onDelete done', {slug})
 	}
 })
+
+/** Slugs of channels that exist only in this browser (imports, seeds). */
+function localChannelSlugs(): Set<string> {
+	const ids = new Set(appState.local_channel_ids ?? [])
+	return new Set((appState.local_channels ?? []).filter((c) => ids.has(c.id)).map((c) => c.slug))
+}
 
 /**
  * Rows per request. Matches PostgREST `max_rows` (supabase/config.toml); a shorter page
@@ -469,67 +484,6 @@ export function batchDeleteTracks(channel: Channel, ids: string[]) {
 		.delete(ids, {metadata: {slug: channel.slug}})
 		.when('settled')
 		.then(() => {})
-}
-
-/** Compare cached tracks for `slug` against remote (count + latest updated_at); invalidates and returns whether stale. */
-export async function checkTracksFreshness(slug: string): Promise<boolean> {
-	return queryClient.fetchQuery({
-		queryKey: ['tracks-freshness', slug],
-		staleTime: 60_000,
-		queryFn: async () => {
-			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
-			const localLatest = cachedTracks.reduce(
-				(max: string | null, t: Track | null | undefined) => {
-					const updated = t?.updated_at
-					if (!updated) return max
-					return !max || updated > max ? updated : max
-				},
-				null as string | null
-			)
-
-			const {data, error, count} = await sdk.supabase
-				.from('channel_tracks')
-				.select('updated_at', {count: 'exact', head: false})
-				.eq('slug', slug)
-				.order('updated_at', {ascending: false})
-				.limit(1)
-
-			if (error) {
-				log.warn('freshness', {slug, error})
-				return false
-			}
-
-			const remoteLatest = data?.[0]?.updated_at
-			const remoteCount = count ?? 0
-
-			// Remote has no tracks for this slug — treat as local-only (imported backup).
-			// Don't invalidate or we'd wipe data that only exists locally.
-			if (remoteCount === 0 && cachedTracks.length > 0) {
-				log.info('freshness skip local-only', {slug, cached: cachedTracks.length})
-				return false
-			}
-
-			const countMismatch = remoteCount !== cachedTracks.length
-			const outdated =
-				countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
-
-			log.debug('freshness', {
-				slug,
-				cached: cachedTracks.length,
-				remote: remoteCount,
-				localLatest,
-				remoteLatest,
-				outdated: !!outdated
-			})
-
-			if (outdated) {
-				await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-				log.info('freshness invalidated', {slug})
-			}
-
-			return !!outdated
-		}
-	})
 }
 
 /**

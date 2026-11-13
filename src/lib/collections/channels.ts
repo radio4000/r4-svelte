@@ -142,8 +142,9 @@ export const channelsCollection = createCollection<Channel, string>({
 				log.info('channels queryFn (single)', {slug: p.slug})
 				const channel = await fetchChannelBySlug(p.slug)
 				if (channel) return [channel]
-				// No remote channel — preserve local imports so they aren't wiped
-				const local = all.find((c) => c?.slug === p.slug)
+				// No remote channel: a local import, read from appState, its durable copy. The
+				// collection's row is gone once the channel page that owned it unmounts.
+				const local = (appState.local_channels ?? []).find((c) => c.slug === p.slug)
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []
 			}
