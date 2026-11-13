@@ -2,7 +2,7 @@ import {createCollection} from '@tanstack/svelte-db'
 import {untrack} from 'svelte'
 import {createSubscriber} from 'svelte/reactivity'
 import {queryCollectionOptions, parseLoadSubsetOptions} from '@tanstack/query-db-collection'
-import {BasicIndex, eq, queryOnce} from '@tanstack/db'
+import {BasicIndex} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
@@ -422,22 +422,22 @@ async function handleTrackDelete(id: string): Promise<void> {
 }
 
 /**
- * Start loading a channel's tracks under the key its pages read (`['tracks', slug]`), for
- * the channel route's hover preload. Doesn't hold the rows: the page's own query finds
- * them in the cache. Skipped while that cache entry is fresh or already loading, since
- * the route's load reruns on every navigation inside the channel.
+ * Start loading a channel's tracks into the cache entry its pages read (`['tracks', slug]`),
+ * for the channel route's hover preload. Only the fetch: no live query, so a click without
+ * a hover doesn't sort the whole channel twice (here and in the layout). The page's query
+ * finds the rows in the cache, or joins the request in flight. Does nothing while the
+ * entry is fresh or loading, as the route's load reruns on every navigation in a channel.
  */
 export function preloadChannelTracks(slug: string): void {
-	const state = queryClient.getQueryState(['tracks', slug])
-	if (state?.fetchStatus === 'fetching') return
-	if (state?.data && Date.now() - state.dataUpdatedAt < TRACKS_STALE_MS) return
-	// The exact query of the channel layout, so both share one cache entry
-	queryOnce((q) =>
-		q
-			.from({tracks: tracksCollection})
-			.where(({tracks}) => eq(tracks.slug, slug))
-			.orderBy(({tracks}) => tracks.created_at, 'desc')
-	).catch((error) => log.warn('preload failed', {slug, error}))
+	if (!capabilities.globalBrowse || localChannelSlugs().has(slug)) return
+	queryClient
+		.prefetchQuery({
+			queryKey: ['tracks', slug],
+			// What the collection's queryFn fetches for `eq(slug)`
+			queryFn: ({signal}) => fetchNewestTracks([slug], {signal}),
+			staleTime: TRACKS_STALE_MS
+		})
+		.catch((error) => log.warn('preload failed', {slug, error}))
 }
 
 /**

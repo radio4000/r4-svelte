@@ -42,6 +42,8 @@ const lists: Array<{cleanup: () => Promise<void>}> = []
 const server = {delay: 0, removed: new Set<string>()}
 
 afterEach(async () => {
+	// Real time first: cleanup at a clock moved forward leaves later tests' caches stale
+	vi.useRealTimers()
 	for (const l of lists.splice(0)) await l.cleanup()
 	await tracksCollection.cleanup()
 	queryClient.clear()
@@ -49,7 +51,6 @@ afterEach(async () => {
 	requests.length = 0
 	server.delay = 0
 	server.removed.clear()
-	vi.useRealTimers()
 })
 
 function mockServer() {
@@ -337,6 +338,64 @@ describe('single tracks', () => {
 	})
 })
 
+// Before the tests that move the clock: after one of those, the next page open refetches a
+// fresh preloaded entry once. Not seen in the app, which never cleans up tracksCollection.
+describe('hover preload of a channel', () => {
+	const page = () =>
+		load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'other'))
+				.orderBy(({t}) => t.created_at, 'desc')
+		)
+	const settle = () => new Promise((resolve) => setTimeout(resolve, 50))
+
+	test('a click after the hover finished opens the channel with no request', async () => {
+		mockServer()
+		preloadChannelTracks('other')
+		await settle()
+		const before = requests.length
+		expect(before).toBe(1)
+		expect(await page()).toHaveLength(5)
+		expect(requests.length).toBe(before)
+	})
+
+	test('a click while the hover is still loading shares its request and keeps every row', async () => {
+		mockServer()
+		server.delay = 30
+		preloadChannelTracks('other')
+		// The page opens mid-load; the preload then finishes and lets go of its rows
+		const got = await page()
+		await settle()
+		expect(got).toHaveLength(5)
+		expect((lists[0] as unknown as {toArray: unknown[]}).toArray).toHaveLength(5)
+		expect(requests).toHaveLength(1)
+	})
+
+	test('hovering again while fresh asks nothing', async () => {
+		mockServer()
+		preloadChannelTracks('other')
+		await settle()
+		preloadChannelTracks('other')
+		preloadChannelTracks('other')
+		await settle()
+		expect(requests).toHaveLength(1)
+	})
+
+	test('a stale hover while the channel is open keeps its rows', async () => {
+		mockServer()
+		vi.useFakeTimers({shouldAdvanceTime: true})
+		await page()
+		vi.setSystemTime(Date.now() + 6 * 60_000)
+		server.delay = 30
+		preloadChannelTracks('other')
+		await settle()
+		await settle()
+		expect((lists[0] as unknown as {toArray: unknown[]}).toArray).toHaveLength(5)
+		expect(tracksCollection.toArray.filter((t) => t.slug === 'other')).toHaveLength(5)
+	})
+})
+
 describe('returning to a channel', () => {
 	const open = () =>
 		load((q) =>
@@ -435,61 +494,5 @@ describe('a local channel (imported, nothing on the server)', () => {
 		)
 		expect(got.map((t) => t.title)).toEqual(['One', 'Two', 'Three'])
 		expect(got.every((t) => !Number.isNaN(Date.parse(t.created_at)))).toBe(true)
-	})
-})
-
-describe('hover preload of a channel', () => {
-	const page = () =>
-		load((q) =>
-			q
-				.from({t: tracksCollection})
-				.where(({t}) => eq(t.slug, 'small'))
-				.orderBy(({t}) => t.created_at, 'desc')
-		)
-	const settle = () => new Promise((resolve) => setTimeout(resolve, 50))
-
-	test('a click after the hover finished opens the channel with no request', async () => {
-		mockServer()
-		preloadChannelTracks('small')
-		await settle()
-		const before = requests.length
-		expect(before).toBe(1)
-		expect(await page()).toHaveLength(30)
-		expect(requests.length).toBe(before)
-	})
-
-	test('a click while the hover is still loading shares its request and keeps every row', async () => {
-		mockServer()
-		server.delay = 30
-		preloadChannelTracks('small')
-		// The page opens mid-load; the preload then finishes and lets go of its rows
-		const got = await page()
-		await settle()
-		expect(got).toHaveLength(30)
-		expect((lists[0] as unknown as {toArray: unknown[]}).toArray).toHaveLength(30)
-		expect(requests).toHaveLength(1)
-	})
-
-	test('hovering again while fresh asks nothing', async () => {
-		mockServer()
-		preloadChannelTracks('small')
-		await settle()
-		preloadChannelTracks('small')
-		preloadChannelTracks('small')
-		await settle()
-		expect(requests).toHaveLength(1)
-	})
-
-	test('a stale hover while the channel is open keeps its rows', async () => {
-		mockServer()
-		vi.useFakeTimers({shouldAdvanceTime: true})
-		await page()
-		vi.setSystemTime(Date.now() + 6 * 60_000)
-		server.delay = 30
-		preloadChannelTracks('small')
-		await settle()
-		await settle()
-		expect((lists[0] as unknown as {toArray: unknown[]}).toArray).toHaveLength(30)
-		expect(tracksCollection.toArray.filter((t) => t.slug === 'small')).toHaveLength(30)
 	})
 })
