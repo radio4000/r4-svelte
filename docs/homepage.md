@@ -46,7 +46,7 @@ The homepage adapts to who is logged in and what they follow.
 
 The feed is not on the homepage. It lives at `/explore/tracks/network` (the "Feed" chip on the explore tracks pages; `/feed` and `/explore/feed` redirect there). It is a **reverse-chronological track timeline from followed channels**: what curators you follow have been adding recently. Conceptually a social reading list for music, not a recommendation engine.
 
-It shows every track your followed channels added in the last 30 days, grouped by day. `fetchRecentTracksForSlugs` loads them in one query per 50 followed channels, whether or not you have visited those channels. Signed out, or following nobody, it shows an empty state.
+It shows every track your followed channels added in the last 30 days, grouped by day. A live query on the tracks collection loads them, one request per 50 followed channels, whether or not you have visited those channels. Signed out, or following nobody, it shows an empty state.
 
 ## Featured channels algorithm
 

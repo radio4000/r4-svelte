@@ -1,10 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
+	import {gt, inArray} from '@tanstack/db'
 	import {appName} from '#lib/config.js'
-	import {fetchRecentTracks} from '#lib/collections/tracks.js'
-	import {loadFeaturedChannelTracks} from '#lib/collections/featured.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {getFeaturedPool} from '#lib/collections/featured.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {groupByDay} from '#lib/utils.js'
+	import {daysAgoIso} from '#lib/dates.js'
 	import TrackCard from '#lib/components/track-card.svelte'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
 	import ExplorePageHeader from '#lib/components/explore-page-header.svelte'
@@ -23,58 +26,58 @@
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
-
-	let tracks = $state(/** @type {import('#lib/types.js').Track[]} */ ([]))
-	let loadedAll = $state(false)
-	let loadingMore = $state(false)
-	let loaded = $state(false)
-	let currentOffset = $state(0)
+	// Once per visit: a new value each read would be a new query each time
+	const featuredSince = daysAgoIso(FEATURED_DAYS)
 
 	const filterParam = $derived(data.filter)
 
+	// Recent pages grow by LIMIT; switching filters starts over
+	let limit = $state(LIMIT)
 	$effect(() => {
-		const f = filterParam
-		tracks = []
-		loadedAll = false
-		loaded = false
-		currentOffset = 0
-		loadData(f)
+		void filterParam
+		limit = LIMIT
 	})
 
-	async function loadData(filter) {
-		loadingMore = true
-		try {
-			if (filter === 'recent') {
-				const result = await fetchRecentTracks({limit: LIMIT, offset: 0})
-				tracks = result
-				loadedAll = result.length < LIMIT
-				currentOffset = LIMIT
-			} else {
-				await loadFeatured()
-			}
-			loaded = true
-		} finally {
-			loadingMore = false
+	// Featured reads the newest tracks of the featured channel pool
+	let featuredSlugs = $state(/** @type {string[] | null} */ (null))
+	$effect(() => {
+		if (filterParam !== 'featured' || featuredSlugs) return
+		getFeaturedPool(FEATURED_DAYS).then((pool) => {
+			featuredSlugs = pool.map((ch) => ch.slug)
+		})
+	})
+
+	// Lexical, like the server's order: the default locale order would also load every row
+	const newestFirst = /** @type {const} */ ({direction: 'desc', stringSort: 'lexical'})
+	const tracksQuery = useLiveQuery((q) => {
+		if (filterParam === 'recent') {
+			return q
+				.from({t: tracksCollection})
+				.orderBy(({t}) => t.created_at, newestFirst)
+				.limit(limit)
 		}
-	}
+		if (filterParam === 'featured' && featuredSlugs?.length) {
+			const slugs = featuredSlugs
+			return q
+				.from({t: tracksCollection})
+				.where(({t}) => inArray(t.slug, slugs))
+				.where(({t}) => gt(t.created_at, featuredSince))
+				.orderBy(({t}) => t.created_at, newestFirst)
+				.limit(LIMIT)
+		}
+		return null
+	})
 
-	async function loadFeatured() {
-		const result = await loadFeaturedChannelTracks(FEATURED_DAYS)
-		tracks = result.tracks.slice(0, 50)
-		loadedAll = true
-	}
+	const tracks = $derived(/** @type {import('#lib/types.js').Track[]} */ (tracksQuery.data))
+	const loaded = $derived(
+		tracksQuery.isReady || (filterParam === 'featured' && featuredSlugs?.length === 0)
+	)
+	const loadingMore = $derived(tracksQuery.isLoading)
+	const loadedAll = $derived(filterParam !== 'recent' || (loaded && tracks.length < limit))
 
-	async function handleLoadMore() {
+	function handleLoadMore() {
 		if (filterParam !== 'recent' || loadedAll) return
-		loadingMore = true
-		try {
-			const result = await fetchRecentTracks({limit: LIMIT, offset: currentOffset})
-			tracks = [...tracks, ...result]
-			currentOffset += LIMIT
-			loadedAll = result.length < LIMIT
-		} finally {
-			loadingMore = false
-		}
+		limit += LIMIT
 	}
 
 	const groupedTracks = $derived(groupByDay(tracks))

@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {createLiveQueryCollection, eq, gte, inArray} from '@tanstack/db'
+import {createLiveQueryCollection, eq, gt, gte, inArray} from '@tanstack/db'
 import {tracksCollection} from './tracks'
 import {queryClient} from './query-client'
 import {writeImport} from '#lib/import'
@@ -62,6 +62,7 @@ function mockServer() {
 		for (const field of ['slug', 'id', 'media_id', 'created_at'] as const) {
 			const value = query.get(field)
 			if (value?.startsWith('eq.')) result = result.filter((r) => r[field] === value.slice(3))
+			if (value?.startsWith('gt.')) result = result.filter((r) => r[field] > value.slice(3))
 			if (value?.startsWith('in.')) {
 				const set = new Set(value.slice(4, -1).split(','))
 				result = result.filter((r) => set.has(r[field]))
@@ -235,6 +236,73 @@ describe('channel loads', () => {
 				.toSorted()
 		)
 		for (const r of requests) expect(r.query.get('limit')).toBe(String(MAX_ROWS))
+	})
+})
+
+const newestOf = (list: typeof rows) =>
+	list.toSorted((a, b) =>
+		a.created_at === b.created_at
+			? a.id.localeCompare(b.id)
+			: b.created_at.localeCompare(a.created_at)
+	)
+
+describe('lists across channels (explore, feed)', () => {
+	test('the newest tracks of every channel load by window, and load more asks from its offset', async () => {
+		mockServer()
+		const list = createLiveQueryCollection({
+			query: (q) =>
+				q
+					.from({t: tracksCollection})
+					.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
+					.limit(50)
+		})
+		lists.push(list)
+		await list.preload()
+		const all = newestOf(rows).map((r) => r.id)
+		expect((list.toArray as typeof rows).map((r) => r.id)).toEqual(all.slice(0, 50))
+		expect(keys()).toContainEqual(['tracks', 'all', 'limit', 50])
+		await list.utils.setWindow({limit: 100})
+		expect((list.toArray as typeof rows).map((r) => r.id)).toEqual(all.slice(0, 100))
+		// Never the whole table, and never by channel
+		for (const r of requests) {
+			expect(r.query.has('slug')).toBe(false)
+			expect(r.query.has('created_at') || Number(r.query.get('limit')) <= 50).toBe(true)
+		}
+	})
+
+	test('many channels since a date take one request per 50 channels', async () => {
+		mockServer()
+		const slugs = ['small', 'other', 'alice', 'bob', ...Array.from({length: 60}, (_, i) => `x${i}`)]
+		const since = rows.find((r) => r.slug === 'alice')?.created_at ?? ''
+		const got = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => inArray(t.slug, slugs))
+				.where(({t}) => gt(t.created_at, since))
+				.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
+		)
+		const expected = newestOf(rows.filter((r) => slugs.includes(r.slug) && r.created_at > since))
+		expect(got.map((r) => r.id)).toEqual(expected.map((r) => r.id))
+		expect(requests).toHaveLength(2)
+	})
+
+	test('many channels since a date, newest 10, take one request per 50 channels', async () => {
+		mockServer()
+		const got = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => inArray(t.slug, ['alice', 'bob', 'small']))
+				.where(({t}) => gt(t.created_at, '2000-01-01'))
+				.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
+				.limit(10)
+		)
+		const expected = newestOf(rows.filter((r) => ['alice', 'bob', 'small'].includes(r.slug)))
+		expect(got.map((r) => r.id)).toEqual(expected.slice(0, 10).map((r) => r.id))
+		expect(
+			requests.filter(
+				(r) => !r.query.get('created_at')?.startsWith('eq.')
+			)
+		).toHaveLength(1)
 	})
 })
 

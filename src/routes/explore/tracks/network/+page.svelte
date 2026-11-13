@@ -2,7 +2,9 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {appName} from '#lib/config.js'
-	import {fetchRecentTracksForSlugs} from '#lib/collections/tracks.js'
+	import {gt, inArray} from '@tanstack/db'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {groupByDay} from '#lib/utils.js'
 	import {daysAgoIso} from '#lib/dates.js'
 	import {getFollowedChannels} from '#lib/followed-channels.svelte.js'
@@ -22,24 +24,28 @@
 	})
 
 	const days = 30
+	// Once per visit: a new value each read would be a new query each time
+	const since = daysAgoIso(days)
 
 	const follows = getFollowedChannels()
+	// A string, so the query rebuilds only when the followed set changes
+	const slugsKey = $derived(
+		follows.followedChannels
+			.map((ch) => ch.slug)
+			.toSorted()
+			.join(',')
+	)
 
-	// Fetch tracks: only when requesting a wider window than already loaded
-	let maxLoadedDays = $state(0)
-	/** @type {import('#lib/types.js').Track[]} */
-	let recentTracks = $state([])
-	$effect(() => {
-		if (!follows.followedChannels.length || days <= maxLoadedDays) return
-		maxLoadedDays = days
-		const since = daysAgoIso(days)
-		fetchRecentTracksForSlugs(
-			follows.followedChannels.map((ch) => ch.slug),
-			since
-		).then((rows) => {
-			recentTracks = rows
-		})
+	const recentQuery = useLiveQuery((q) => {
+		if (!slugsKey) return null
+		const slugs = slugsKey.split(',')
+		return q
+			.from({t: tracksCollection})
+			.where(({t}) => inArray(t.slug, slugs))
+			.where(({t}) => gt(t.created_at, since))
+			.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
 	})
+	const recentTracks = $derived(/** @type {import('#lib/types.js').Track[]} */ (recentQuery.data))
 
 	// Feed: tracks from followed channels within selected window, grouped by day
 	const feedTracks = $derived(groupByDay(recentTracks))
@@ -74,7 +80,7 @@
 					{/each}
 				</ul>
 			{/each}
-		{:else if follows.isLoading || (follows.followedIds.length > 0 && maxLoadedDays === 0)}
+		{:else if follows.isLoading || (follows.followedIds.length > 0 && (!slugsKey || recentQuery.isLoading))}
 			<p class="empty">{m.common_loading()}</p>
 		{:else if follows.followedIds.length === 0}
 			<p class="empty">{m.home_feed_no_follows()}</p>
