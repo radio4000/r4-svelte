@@ -26,12 +26,12 @@ import {
 	writeFileSync,
 	readFileSync,
 	existsSync,
-	rmSync,
 	symlinkSync,
 	copyFileSync
 } from 'node:fs'
 import {tmpdir, loadavg, cpus} from 'node:os'
 import {join} from 'node:path'
+import {lock} from './lock.ts'
 import {TraceMap, originalPositionFor} from '@jridgewell/trace-mapping'
 
 const {values: args} = parseArgs({
@@ -725,18 +725,6 @@ async function serveRev(rev: string, port: number) {
 	return buildAndServe(dir, port)
 }
 
-// Two benches share one Chrome and skew each other, so only one runs at a time
-function lock() {
-	// In tmp, not the checkout: benches from other worktrees share the same Chrome
-	const file = join(tmpdir(), 'r4-bench.lock')
-	const pid = existsSync(file) ? Number(readFileSync(file, 'utf8')) : 0
-	const alive = pid > 0 && Bun.spawnSync(['kill', '-0', String(pid)]).exitCode === 0
-	if (alive)
-		throw new Error(`another bench is running (pid ${pid}); wait for it, they'd skew each other`)
-	writeFileSync(file, String(process.pid))
-	process.on('exit', () => rmSync(file, {force: true}))
-}
-
 // Medians per step for both sides, with the change; also saved as JSON and markdown
 function printAb(before: Record<string, StepResult[]>, after: Record<string, StepResult[]>) {
 	const [b, a] = [summarize(before), summarize(after)]
@@ -794,7 +782,7 @@ function printAb(before: Record<string, StepResult[]>, after: Record<string, Ste
 
 async function main() {
 	mkdirSync(RESULTS_DIR, {recursive: true})
-	lock()
+	lock('bench')
 	if (args.ab && args.trace) throw new Error('--ab and --trace: run them separately')
 	if (loadavg()[0] > cpus().length / 2)
 		log(

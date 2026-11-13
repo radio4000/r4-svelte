@@ -35,6 +35,8 @@ import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
 import {spawn, spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
+import {createServer} from 'node:net'
+import {lock} from '../../perf/lock.ts'
 
 const {values: args} = parseArgs({
 	options: {
@@ -813,6 +815,21 @@ const isUp = (url: string) =>
 		() => false
 	)
 
+const assertFree = (host: string, port: number) =>
+	new Promise<void>((resolve, reject) => {
+		const probe = createServer()
+		probe.once('error', (e: any) =>
+			e.code === 'EADDRNOTAVAIL' // no IPv6 on this machine
+				? resolve()
+				: reject(
+						new Error(
+							`port ${port} is already taken on ${host} (${e.code}); not starting a second preview`
+						)
+					)
+		)
+		probe.listen(port, host, () => probe.close(() => resolve()))
+	})
+
 // Same as bench's serveRev: a git worktree of `rev` in tmp, built and previewed
 async function serveRev(rev: string) {
 	const jj = sh(['jj', 'log', '-r', rev, '--no-graph', '-T', 'commit_id'])
@@ -836,6 +853,9 @@ async function serveRev(rev: string) {
 			if (!build.ok) throw new Error(`build failed:\n${build.err}`)
 			writeFileSync(stamp, commit)
 		}
+		// localhost may resolve to 127.0.0.1 or ::1, and one port can be bound on each at once,
+		// so --strictPort alone won't stop a second server. Refuse if either side is taken.
+		for (const host of ['127.0.0.1', '::1']) await assertFree(host, PORT)
 		const vite = join(ROOT, 'node_modules/.bin/vite')
 		const server = spawn(
 			process.execPath,
@@ -865,6 +885,7 @@ type Finding = {
 
 async function main() {
 	const t0 = performance.now()
+	lock('order test')
 	mkdirSync(RESULTS_DIR, {recursive: true})
 	let commit = 'external'
 	if (args.url) {
