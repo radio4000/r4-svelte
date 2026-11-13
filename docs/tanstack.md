@@ -59,6 +59,8 @@ For on-demand collections, push filtering into the live query when you can. For 
 
 `queryClient.fetchQuery()` and `prefetchQuery()` write to Query cache only. If the UI needs collection data, either let `useLiveQuery` drive the fetch, write rows in with `utils.writeUpsert`/`writeBatch`, or preload the collection in a route loader.
 
+One named exception: `preloadChannelTracks` (`tracks.ts`, called from `[slug]/+layout.ts`) prefetches the collection's own `['tracks', slug]` key with the fetch its queryFn makes. It only warms the cache for the layout's live query; a `queryOnce` there sorted the whole channel a second time on every click (home→channel worst frame 203→267ms), so don't turn it back into a live query.
+
 ### mutation handlers must write server rows back
 
 For server-backed collections like `tracks` and `channels`, `onInsert` and `onUpdate` must write the server-normalized row back into the collection. Without that `writeUpsert`, optimistic state drops before refetch lands and the UI flashes stale data. `src/lib/collections/tracks.ts` and `channels.ts` both depend on this.
@@ -140,7 +142,7 @@ Caveats learned the hard way:
 - Paged channel views accumulate `limit = currentPage * pageSize` and `.slice()` locally. DB can also request continuation windows with a nonzero offset; `channels.ts` returns exactly that window. TanStack Query caches each filter/sort/window separately.
 - An unbounded request is authoritative for its whole filter. Returning a default page (formerly 20 channels) can evict rows belonging to other paged queries. Explore uses lexical ordering matching the server and a unique ID tie-breaker; the default locale string ordering can trigger unbounded requests.
 - A function `queryKey` must encode exactly what its `queryFn` fetches: two subsets that share a key must get the same rows. `tracks.ts` used to drop the boundary `eq(created_at)` tie check from the key, so a 10-row window downloaded the whole channel.
-- A change of only `.limit()`/`.offset()` on an ordered query moves the window of the same live query collection: it stays `ready` and asks the server for the next page only (`offset`), so read `collection.isLoadingSubset` / the `loadingSubset:change` event for a "loading more" state (`explore/tracks/[filter]`). Any other change builds a new live query collection; the old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
+- A change of only `.limit()`/`.offset()` on an ordered query moves the window of the same live query collection: it stays `ready` and asks the server for the next page only (`offset`) — if the source has an index on the order field (`autoIndex: 'eager'`, as tracks and channels do); without one DB asks for the whole prefix again, so read `collection.isLoadingSubset` / the `loadingSubset:change` event for a "loading more" state (`explore/tracks/[filter]`). Any other change builds a new live query collection; the old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
 
 ### keepalive pin
 
@@ -157,7 +159,7 @@ Each needs a distinct job; fold new probes into these rather than adding pages.
 
 ## what still needs proof
 
-Nothing tests `useLiveQuery` or `queryView` headlessly: vitest runs in Node, so the Svelte plugin compiles runes for the server and `$effect.root` never runs its callback. Adding the `browser` condition isn't enough (it also breaks SvelteKit's runtime in the other tests); rune tests need their own vitest project with a DOM environment (happy-dom or jsdom, not installed).
+Runes are tested in the `dom` vitest project (`*.svelte.test.ts`, happy-dom, Svelte's client build; `vite.config.ts`): `useLiveQuery.svelte.test.ts` (load more asks only for the next page) and `views.svelte.test.ts` (a tag or search view on an open channel downloads nothing). `createQuery` needs a QueryClient in component context, so mount through a host like `src/lib/test-hosts/query-view.svelte`. Everything else runs in the `node` project as before.
 
 Still only checked by hand in the browser — keep these alive with `agent-browser` (see [browser-testing.md](browser-testing.md)):
 
