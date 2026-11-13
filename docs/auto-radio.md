@@ -38,13 +38,17 @@ The infinity button appears on:
 - **Tracks page** (`[slug]/tracks/+page.svelte`) — filtered results, view = `{channels: [slug], tags, search}`
 - **Search** (`/search/+page.svelte`) — search results, view passed directly from URL
 
+## Deck mode
+
+To a deck, auto-radio and listening to a broadcast are one thing: it follows a clock, not its queue. `player/deck-mode.ts` reads the mode from the deck's fields (`modeOf(deck)`: `queue`, `auto` or `listening`); decks and the player ask it what should play now, whether the deck drifted, how to resync and leave, and whether a track ending plays the next one. Auto-radio does advance on end: its queue is the week's shuffle.
+
 ## Drift
 
-Drift is computed continuously in `player.svelte` while playing:
+One effect in `player.svelte` asks the mode while playing (`isDrifted`):
 
-- Auto-radio drift: compare current playback (`deck.playlist_track` + `currentTime`) to the expected schedule snapshot from `playbackState(...)`.
-- Broadcast drift: compare current playback to `calculateSeekTime(...)` from `broadcast.js`.
-- Both use a `2s` tolerance.
+- Auto-radio: expected track and offset from `playbackState(...)`; skipped for 5s after a join/resync and in a track's first 2s.
+- Broadcast: expected offset from `calculateSeekTime(...)` in `broadcast-utils.js`.
+- Both use a `2s` tolerance. The result lands in `auto_radio_drifted` or `listening_drifted`.
 
 Drift is detected only by this comparison — range seek and other UI controls do not set `auto_radio_drifted` directly.
 
@@ -65,10 +69,11 @@ Auto-radio uses these `Deck` fields:
 
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
-- `player/auto-radio-actions.ts` — `joinAutoRadio`, `resyncAutoRadio`, `leaveAutoRadio`, `rejoinAutoRadio`, the channel "tap play" entry points (re-exported from `api.ts`)
+- `player/auto-radio-actions.ts` — `joinAutoRadio`, `resyncAutoRadio`, `leaveAutoRadio`, `rejoinAutoRadio`, the channel "tap play" entry points (re-exported from `api.ts`; imports `player/playback.ts`, never `api.ts`)
+- `player/deck-mode.ts` — the deck mode: expected position, drift, resync, leave
 - `components/auto-radio-button.svelte` — shared infinity auto button UI across headers/pages/search
-- `components/player.svelte` — computed drift detection
-- `broadcast.js` — `calculateSeekTime` (speed-aware expected position for listeners)
+- `components/player.svelte` — runs the drift check
+- `broadcast-utils.js` — `calculateSeekTime` (speed-aware expected position for listeners)
 - `[slug]/+layout.svelte` — full-channel join button
 - `[slug]/+page.svelte` — per-tag join buttons
 - `[slug]/tracks/+page.svelte` — filtered results join button

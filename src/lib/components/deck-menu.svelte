@@ -2,15 +2,10 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {appState, removeDeck} from '#lib/app-state.svelte.js'
-	import {
-		toggleVideo,
-		toggleQueuePanel,
-		clearUserInitiatedPlay,
-		leaveAutoRadio,
-		rejoinAutoRadio
-	} from '#lib/api.js'
+	import {toggleVideo, toggleQueuePanel, clearUserInitiatedPlay, rejoinAutoRadio} from '#lib/api.js'
 	import {getBroadcastingChannelId, notifyBroadcastState, leaveBroadcast} from '#lib/broadcast.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
+	import {modeOf} from '#lib/player/deck-mode.js'
 	import {trackAddSearchParams} from '#lib/track-add.js'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
@@ -29,6 +24,7 @@
 	} = $props()
 
 	let deck = $derived(appState.decks[deckId])
+	const mode = $derived(modeOf(deck))
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
 	let isListeningGroupControlDeck = $derived(isGroupControlDeck(deck, deckId, listeningDeckIds))
@@ -141,7 +137,7 @@
 			<Icon icon="tv" />
 			{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 		</button>
-		{#if !isListeningToBroadcast && !deck?.auto_radio}
+		{#if !mode.followsClock}
 			<button
 				onclick={() => toggleQueuePanel(deckId)}
 				class:active={!deck?.hide_queue_panel}
@@ -173,17 +169,17 @@
 		</a>
 	{/if}
 
-	{#if deck?.auto_radio}
+	{#if mode.kind === 'auto'}
 		<button
 			onclick={() => {
-				leaveAutoRadio(deckId)
+				mode.leave(deckId)
 				closeMenu?.()
 			}}
 		>
 			<Icon icon="infinite" />
 			{m.auto_radio_leave()}
 		</button>
-	{:else if autoRadioAvailable && !isListeningToBroadcast}
+	{:else if autoRadioAvailable && mode.kind === 'queue'}
 		<button
 			onclick={() => {
 				rejoinAutoRadio(deckId)

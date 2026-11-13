@@ -21,6 +21,7 @@
 import {untrack} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
 import {play, pause, next, previous, type MediaPlayer} from '#lib/api.js'
+import {modeOf} from '#lib/player/deck-mode.js'
 import {trackImageUrl} from '#lib/utils.js'
 import type {Channel, Track} from '#lib/types.js'
 
@@ -41,7 +42,6 @@ export interface MediaSessionDeps {
 
 export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 	const deck = $derived(appState.decks[deckId])
-	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
 	// With multiple decks, only the active one drives the OS media session.
 	function isActiveMediaSessionDeck() {
@@ -104,7 +104,7 @@ export function createMediaSession(deckId: number, deps: MediaSessionDeps) {
 		// Skipping only makes sense for a normal queue — the in-app UI hides prev/next
 		// the same way while listening to a broadcast (can't skip someone else's track)
 		// or in auto-radio (skipping breaks the deterministic-schedule contract).
-		const allowSkip = !isListeningToBroadcast && !deck?.auto_radio
+		const allowSkip = !modeOf(deck).followsClock
 		navigator.mediaSession.setActionHandler(
 			'previoustrack',
 			allowSkip && deps.canPrev ? () => previous(deckId, 'user_prev') : null

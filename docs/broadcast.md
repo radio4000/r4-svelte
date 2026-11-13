@@ -32,7 +32,8 @@ Listeners continuously compare local playback against expected broadcast positio
 
 - Expected position is derived from `track_played_at` / `seeked_at` / `seek_position` + `speed`.
 - Re-seek is skipped if already within a `2s` tolerance.
-- `deck.listening_drifted` is computed in `player.svelte` from this expected position.
+- `deck.listening_drifted` is computed in `player.svelte` from this expected position, through the deck mode (`player/deck-mode.ts`, shared with auto-radio).
+- To see drift in a test, don't seek the listener: a seek records its own `seeked_at`, which moves the expected position with it, and the broadcaster's 5s state push heals a slow listener anyway. Backdate the listener's `seeked_at` instead.
 
 ## Deck UI
 

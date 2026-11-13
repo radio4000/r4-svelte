@@ -13,9 +13,9 @@
  *    throttling. Unconfirmed on-device. Requires two consecutive stalled
  *    samples.
  *
- * Skipped entirely for broadcast/auto-radio decks — those self-heal on
- * foreground themselves (resumeBroadcastState in broadcast.js; auto-resync
- * next to resyncAutoRadio in api.ts).
+ * Skipped entirely for decks that follow a clock (deck-mode.ts: broadcast and
+ * auto-radio) — those self-heal on foreground themselves (resumeBroadcastState in
+ * broadcast.js; the auto-resync next to resyncAutoRadio in auto-radio-actions.ts).
  *
  * Rune factory (same pattern as deck-display.svelte.ts): call once during
  * component init; effects bind to the component's lifecycle.
@@ -36,6 +36,7 @@
 import {onDestroy} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
 import {play, type MediaPlayer} from '#lib/api.js'
+import {modeOf} from '#lib/player/deck-mode.js'
 import {logger} from '#lib/logger.js'
 
 const log = logger.ns('stall-recovery').seal()
@@ -48,7 +49,6 @@ export interface StallRecoveryDeps {
 
 export function createStallRecovery(deckId: number, deps: StallRecoveryDeps) {
 	const deck = $derived(appState.decks[deckId])
-	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 
 	function isMediaReadyForRecovery() {
 		if (!deps.mediaElement) return false
@@ -84,7 +84,7 @@ export function createStallRecovery(deckId: number, deps: StallRecoveryDeps) {
 	// when paused, or after currentTime also fails to progress during a short
 	// foreground observation.
 	$effect(() => {
-		if (isListeningToBroadcast || deck?.auto_radio) return
+		if (modeOf(deck).followsClock) return
 		let foregroundCheckTimer: ReturnType<typeof setTimeout> | undefined
 		const resume = () => {
 			clearTimeout(foregroundCheckTimer)
@@ -127,7 +127,7 @@ export function createStallRecovery(deckId: number, deps: StallRecoveryDeps) {
 	// Second line of defense — self-heals while still backgrounded. Requires two
 	// consecutive stalled samples and ignores providers that are still loading.
 	$effect(() => {
-		if (isListeningToBroadcast || deck?.auto_radio || !deck?.is_playing) return
+		if (modeOf(deck).followsClock || !deck?.is_playing) return
 		let lastTime = deps.mediaElement?.currentTime ?? 0
 		let stalledTicks = 0
 		const watchdog = setInterval(() => {

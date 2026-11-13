@@ -24,7 +24,7 @@ import {
 	seekTo,
 	setPlaylist,
 	togglePlayPause
-} from '#lib/api.js'
+} from '#lib/player/playback.js'
 
 const log = logger.ns('api').seal()
 

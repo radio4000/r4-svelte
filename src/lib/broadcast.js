@@ -8,7 +8,7 @@ import {
 	getMediaPlayer,
 	playChannel,
 	applyRemoteState
-} from '#lib/api.js'
+} from '#lib/player/playback.js'
 import {appState, addDeck, removeDeck} from '#lib/app-state.svelte.js'
 import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'

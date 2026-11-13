@@ -8,8 +8,6 @@
 		next,
 		previous,
 		getMediaPlayer,
-		resyncAutoRadio,
-		leaveAutoRadio,
 		rejoinAutoRadio,
 		toggleDeckCompact,
 		expandDeck,
@@ -18,6 +16,7 @@
 	import {isDbId, isMobileViewport} from '#lib/utils.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
+	import {modeOf} from '#lib/player/deck-mode.js'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '#lib/paraglide/messages.js'
@@ -37,6 +36,7 @@
 	let {deckId, showEdgeControls = true} = $props()
 
 	let deck = $derived(appState.decks[deckId])
+	const mode = $derived(modeOf(deck))
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
 	let isListeningGroupControlDeck = $derived(isGroupControlDeck(deck, deckId, listeningDeckIds))
 
@@ -143,11 +143,11 @@
 					{/if}
 				</div>
 			</div>
-			{#if !deck?.listening_to_channel_id && !deck?.auto_radio}
+			{#if !mode.followsClock}
 				<SpeedControl {deckId} {provider} />
 			{/if}
 			<menu class="deck-transport">
-				{#if !deck?.listening_to_channel_id && !deck?.auto_radio}
+				{#if mode.kind === 'queue'}
 					<button
 						onclick={() => previous(deckId, 'user_prev')}
 						aria-label={m.player_compact_prev()}
@@ -194,7 +194,7 @@
 					{#if display.autoRadioAvailable}
 						<AutoRadioButton size={14} onclick={() => rejoinAutoRadio(deckId)} />
 					{/if}
-				{:else if deck?.auto_radio}
+				{:else if mode.kind === 'auto'}
 					<button
 						class="play"
 						class:active={deck?.is_playing}
@@ -212,11 +212,10 @@
 					<VolumeControl {deckId} />
 					<AutoRadioButton
 						live
-						drifted={!!deck?.auto_radio_drifted}
+						drifted={mode.drifted(deck)}
 						size={14}
 						count={modePresenceCount}
-						onclick={() =>
-							deck?.auto_radio_drifted ? resyncAutoRadio(deckId) : leaveAutoRadio(deckId)}
+						onclick={() => (mode.drifted(deck) ? mode.resync(deckId) : mode.leave(deckId))}
 					/>
 				{:else if !deck?.listening_to_channel_id}
 					<VolumeControl {deckId} />
