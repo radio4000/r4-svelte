@@ -24,8 +24,10 @@
 	})
 
 	const days = 30
-	// Once per visit: a new value each read would be a new query each time
+	// The query asks from the start of that day, so a return visit reuses its cache entry;
+	// the list then cuts at the exact time
 	const since = daysAgoIso(days)
+	const sinceDay = since.slice(0, 10)
 
 	const follows = getFollowedChannels()
 	// A string, so the query rebuilds only when the followed set changes
@@ -42,10 +44,14 @@
 		return q
 			.from({t: tracksCollection})
 			.where(({t}) => inArray(t.slug, slugs))
-			.where(({t}) => gt(t.created_at, since))
+			.where(({t}) => gt(t.created_at, sinceDay))
 			.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
 	})
-	const recentTracks = $derived(/** @type {import('#lib/types.js').Track[]} */ (recentQuery.data))
+	const recentTracks = $derived(
+		/** @type {import('#lib/types.js').Track[]} */ (recentQuery.data).filter(
+			(t) => (t.created_at ?? '') > since
+		)
+	)
 
 	// Feed: tracks from followed channels within selected window, grouped by day
 	const feedTracks = $derived(groupByDay(recentTracks))

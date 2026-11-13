@@ -26,8 +26,10 @@
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
-	// Once per visit: a new value each read would be a new query each time
+	// The query asks from the start of that day, so a return visit reuses its cache entry;
+	// the list then cuts at the exact time
 	const featuredSince = daysAgoIso(FEATURED_DAYS)
+	const featuredSinceDay = featuredSince.slice(0, 10)
 
 	const filterParam = $derived(data.filter)
 
@@ -61,22 +63,43 @@
 			return q
 				.from({t: tracksCollection})
 				.where(({t}) => inArray(t.slug, slugs))
-				.where(({t}) => gt(t.created_at, featuredSince))
+				.where(({t}) => gt(t.created_at, featuredSinceDay))
 				.orderBy(({t}) => t.created_at, newestFirst)
 				.limit(LIMIT)
 		}
 		return null
 	})
 
-	const tracks = $derived(/** @type {import('#lib/types.js').Track[]} */ (tracksQuery.data))
+	const tracks = $derived.by(() => {
+		const rows = /** @type {import('#lib/types.js').Track[]} */ (tracksQuery.data)
+		if (filterParam !== 'featured') return rows
+		return rows.filter((t) => (t.created_at ?? '') > featuredSince)
+	})
 	const loaded = $derived(
 		tracksQuery.isReady || (filterParam === 'featured' && featuredSlugs?.length === 0)
 	)
-	const loadingMore = $derived(tracksQuery.isLoading)
-	const loadedAll = $derived(filterParam !== 'recent' || (loaded && tracks.length < limit))
+	// Load more moves the same query's window: it stays ready while the next page loads,
+	// so the page is pending from the click until rows arrive or the collection's fetch ends
+	let pending = $state(false)
+	$effect(() => {
+		const collection = tracksQuery.collection
+		if (!collection) return
+		return collection.on('loadingSubset:change', () => {
+			if (!collection.isLoadingSubset) pending = false
+		})
+	})
+	$effect(() => {
+		void tracks.length
+		pending = false
+	})
+	const loadingMore = $derived(tracksQuery.isLoading || pending)
+	const loadedAll = $derived(
+		filterParam !== 'recent' || (loaded && !loadingMore && tracks.length < limit)
+	)
 
 	function handleLoadMore() {
 		if (filterParam !== 'recent' || loadedAll) return
+		pending = true
 		limit += LIMIT
 	}
 
