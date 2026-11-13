@@ -65,7 +65,7 @@ Auto-radio uses these `Deck` fields:
 
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
-- `api.ts` — `joinAutoRadio`, `resyncAutoRadio`
+- `player/auto-radio-actions.ts` — `joinAutoRadio`, `resyncAutoRadio`, `leaveAutoRadio`, `rejoinAutoRadio`, the channel "tap play" entry points (re-exported from `api.ts`)
 - `components/auto-radio-button.svelte` — shared infinity auto button UI across headers/pages/search
 - `components/player.svelte` — computed drift detection
 - `broadcast.js` — `calculateSeekTime` (speed-aware expected position for listeners)
