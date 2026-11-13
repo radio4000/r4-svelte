@@ -214,7 +214,13 @@
 		}
 	})
 
+	/** @type {string | undefined} */
+	let startedTrackId
+	/** @type {string | undefined} */
+	let retriedTrackId
+
 	function handlePlay() {
+		startedTrackId = track?.id
 		log.log('handlePlay', {
 			mediaDuration: mediaElement?.duration,
 			trackDuration: track?.duration,
@@ -270,9 +276,18 @@
 			return
 		}
 		const code = typeof error === 'number' ? error : error.code
+		// 101/150 after the video started isn't the video (often an ad blocker): retry once.
+		const transient =
+			provider === 'youtube' && [101, 150].includes(code) && startedTrackId === track?.id
+		if (transient && retriedTrackId !== track?.id && mediaElement && 'reload' in mediaElement) {
+			retriedTrackId = track?.id
+			mediaElement.reload(mediaElement.currentTime ?? 0)
+			return
+		}
 		let msg = ''
 		// Persist durable failures only: YouTube bad id, missing/private, or embed blocked.
-		if (provider === 'youtube' && [2, 100, 101, 150].includes(code)) msg = `youtube:${code}`
+		if (!transient && provider === 'youtube' && [2, 100, 101, 150].includes(code))
+			msg = `youtube:${code}`
 		else if (provider === 'soundcloud' && code != null) msg = `soundcloud:${code}`
 		log.warn('Playback error', {provider, code, trackId: track?.id})
 		const id = track?.id

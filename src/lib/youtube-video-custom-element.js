@@ -314,6 +314,15 @@ class YouTube2Element extends HTMLElement {
 		this.api.playVideo()
 	}
 
+	/** Load the current video again from `startSeconds`, e.g. after a transient error. */
+	reload(startSeconds = 0) {
+		const videoId = this.#extractVideoId(this.src)
+		if (!this.api || !videoId) return
+		this.#errorCode = null
+		this.#switchStartedAt = Date.now()
+		this.api.loadVideoById({videoId, startSeconds})
+	}
+
 	async pause() {
 		this.#switchStartedAt = 0
 		this.#pauseRequested = true
