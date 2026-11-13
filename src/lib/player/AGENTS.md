@@ -6,4 +6,4 @@ deck-display.svelte.ts is the single source for what a deck shows right now. Don
 
 media-session, stall-recovery and audio-keepalive are platform workarounds, not player logic. Each file's header explains the bug it works around; read it before touching them.
 
-Player code that needs a whole channel calls `loadChannelTracks(slug)` (channel-tracks.ts) and uses the rows it returns. It shares the channel page's cache key and keeps the rows resident for a few seconds so the deck's keepalive pin can take over; don't fetch around the collection or `writeUpsert` a channel by hand.
+Player code that needs a whole channel calls `loadChannelTracks(slug)`, one track `loadTrack(id)` (channel-tracks.ts), and uses the rows returned. Both share the keys of the channel page and the deck pins, and keep the rows resident until the deck's keepalive pin takes them over; don't fetch around the collection or `writeUpsert` tracks by hand.

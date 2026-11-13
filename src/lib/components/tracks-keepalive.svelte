@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {eq, inArray} from '@tanstack/db'
 	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {holdPin} from '#lib/player/channel-tracks.js'
 
 	// Holds tracks resident in the on-demand collection while mounted — without a
 	// subscriber owning them, rows get evicted, which GCs the playing track and tears
@@ -30,12 +31,31 @@
 	$effect(() => {
 		if (!slugKey) return
 		const list = slugKey.split(',')
-		return pin((t) => (list.length === 1 ? eq(t.slug, list[0]) : inArray(t.slug, list)))
+		if (list.length > 1) return pin((t) => inArray(t.slug, list))
+		// One channel is on loadChannelTracks' key, so this pin owns the rows from the moment
+		// it subscribes: take them over from that door's lease (channel-tracks.ts).
+		return both(
+			pin((t) => eq(t.slug, list[0])),
+			holdPin({slug: list[0]})
+		)
 	})
 
 	$effect(() => {
 		if (!idKey) return
 		const list = idKey.split(',')
-		return pin((t) => inArray(t.id, list))
+		if (list.length > 1) return pin((t) => inArray(t.id, list))
+		// One track (the current-track pin) is on loadTrack's key: same hand-over
+		return both(
+			pin((t) => inArray(t.id, list)),
+			holdPin({id: list[0]})
+		)
 	})
+
+	/** Teardown for a pin and its hold together. */
+	function both(unpin: () => void, release: () => void) {
+		return () => {
+			release()
+			unpin()
+		}
+	}
 </script>

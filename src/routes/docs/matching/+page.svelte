@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {appState} from '#lib/app-state.svelte.js'
-	import {ensureTracksLoaded, tracksCollection} from '#lib/collections/tracks.js'
+	import {loadChannelTracks} from '#lib/player/channel-tracks.js'
+	import type {Track} from '#lib/types.js'
 	import {computeChannelMatchScore} from '#lib/channel-match-score.js'
 
 	let sourceSlug = $state(appState.channel?.slug ?? '')
@@ -8,16 +9,9 @@
 	let loading = $state(false)
 	let error = $state('')
 
-	let sourceTracks = $derived.by(() => {
-		void tracksCollection.state.size
-		if (!sourceSlug) return []
-		return [...tracksCollection.state.values()].filter((t) => t.slug === sourceSlug)
-	})
-	let targetTracks = $derived.by(() => {
-		void tracksCollection.state.size
-		if (!targetSlug) return []
-		return [...tracksCollection.state.values()].filter((t) => t.slug === targetSlug)
-	})
+	// The loaded rows themselves: the collection lets them go once nothing pins them
+	let sourceTracks = $state.raw<Track[]>([])
+	let targetTracks = $state.raw<Track[]>([])
 	let score = $derived(computeChannelMatchScore(sourceTracks, targetTracks))
 
 	async function loadBoth() {
@@ -25,7 +19,10 @@
 		if (!sourceSlug || !targetSlug) return
 		loading = true
 		try {
-			await Promise.all([ensureTracksLoaded(sourceSlug), ensureTracksLoaded(targetSlug)])
+			;[sourceTracks, targetTracks] = await Promise.all([
+				loadChannelTracks(sourceSlug),
+				loadChannelTracks(targetSlug)
+			])
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e)
 		} finally {

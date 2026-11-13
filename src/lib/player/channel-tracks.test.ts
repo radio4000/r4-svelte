@@ -2,10 +2,12 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createLiveQueryCollection, eq, inArray} from '@tanstack/db'
 import {tracksCollection} from '#lib/collections/tracks.js'
 import {queryClient} from '#lib/collections/query-client.js'
-import {loadChannelTracks, channelTracks} from './channel-tracks'
+import {loadChannelTracks, loadTrack, channelTracks, holdPin} from './channel-tracks'
 
 // The real tracks collection against a fake PostgREST capped at 4000 rows, like ours.
 const MAX_ROWS = 4000
+/** LEASE_CEILING_MS in channel-tracks.ts */
+const CEILING = 30_000
 
 function channel(slug: string, count: number) {
 	return Array.from({length: count}, (_, i) => ({
@@ -32,7 +34,8 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-	await vi.advanceTimersByTimeAsync(5000)
+	for (const c of cleanups.splice(0)) await c()
+	await vi.advanceTimersByTimeAsync(CEILING)
 	vi.useRealTimers()
 	for (const c of cleanups.splice(0)) await c()
 	await tracksCollection.cleanup()
@@ -77,11 +80,20 @@ function channelPage(slug: string) {
 	return list
 }
 
-/** The deck keepalive's pin (`tracks-keepalive.svelte`). */
-function pin(where: Parameters<typeof tracksCollection.subscribeChanges>[1]) {
+/** The deck keepalive's pin (`tracks-keepalive.svelte`). A one-channel or one-track pin
+ *  passes `hold`, taking it over from the door, as the keepalive does. */
+function pin(
+	where: Parameters<typeof tracksCollection.subscribeChanges>[1],
+	hold?: Parameters<typeof holdPin>[0]
+) {
 	const sub = tracksCollection.subscribeChanges(() => {}, {...where, includeInitialState: true})
-	cleanups.push(() => sub.unsubscribe())
-	return sub
+	const release = hold ? holdPin(hold) : undefined
+	const drop = () => {
+		release?.()
+		sub.unsubscribe()
+	}
+	cleanups.push(drop)
+	return drop
 }
 
 describe('loadChannelTracks', () => {
@@ -94,30 +106,59 @@ describe('loadChannelTracks', () => {
 		expect(requests.map((r) => r.get('offset'))).toEqual(['0', '4000'])
 	})
 
-	test('keeps the rows in the collection after it returns, then lets them go', async () => {
+	test('keeps the rows in the collection after it returns, until the ceiling', async () => {
 		mockServer()
 		const got = await loadChannelTracks('small')
 		expect(tracksCollection.get(got[0].id)).toBeDefined()
 		expect(channelTracks('small')).toHaveLength(30)
-		await vi.advanceTimersByTimeAsync(5000)
+		await vi.advanceTimersByTimeAsync(CEILING - 1)
+		expect(channelTracks('small')).toHaveLength(30)
+		await vi.advanceTimersByTimeAsync(1)
 		expect(channelTracks('small')).toHaveLength(0)
 	})
 
-	test('a deck pin taken during the handoff keeps the rows', async () => {
+	test('hands the rows to a deck pin the moment it pins the channel, however late', async () => {
 		mockServer()
 		await loadChannelTracks('small')
-		pin({where: (t) => eq(t.slug, 'small')})
-		await vi.advanceTimersByTimeAsync(5000)
+		await vi.advanceTimersByTimeAsync(20_000) // a slow phone
+		expect(channelTracks('small')).toHaveLength(30)
+		const unpin = pin({where: (t) => eq(t.slug, 'small')}, {slug: 'small'})
+		expect(channelTracks('small')).toHaveLength(30)
+		unpin() // the lease is gone already: no owner left, no waiting for the ceiling
+		expect(channelTracks('small')).toHaveLength(0)
+	})
+
+	test('a channel already pinned is handed over at once', async () => {
+		mockServer()
+		const unpin = pin({where: (t) => eq(t.slug, 'small')}, {slug: 'small'})
+		await vi.advanceTimersByTimeAsync(10)
+		await loadChannelTracks('small')
+		unpin()
+		expect(channelTracks('small')).toHaveLength(0)
+	})
+
+	test('a several-channel pin, on its own key, leaves the rows to the lease while it loads', async () => {
+		mockServer()
+		await loadChannelTracks('small')
+		server.delay = 50
+		pin({where: (t) => inArray(t.slug, ['small', 'big'])})
+		for (let ms = 0; ms < 200; ms += 10) {
+			expect(channelTracks('small')).toHaveLength(30)
+			await vi.advanceTimersByTimeAsync(10)
+		}
+		expect(channelTracks('big')).toHaveLength(4500)
+		await vi.advanceTimersByTimeAsync(CEILING)
 		expect(channelTracks('small')).toHaveLength(30)
 	})
 
-	test('a current-track pin by id taken during the handoff keeps that row', async () => {
+	test('a current-track pin by id keeps that row without another request', async () => {
 		mockServer()
 		await loadChannelTracks('small')
 		const before = requests.length
 		pin({where: (t) => inArray(t.id, ['small-00003'])})
-		await vi.advanceTimersByTimeAsync(5000)
+		await vi.advanceTimersByTimeAsync(CEILING)
 		expect(tracksCollection.get('small-00003')).toBeDefined()
+		expect(channelTracks('small')).toHaveLength(1)
 		expect(requests.length).toBe(before)
 	})
 
@@ -129,7 +170,7 @@ describe('loadChannelTracks', () => {
 		const got = await loadChannelTracks('small')
 		expect(got.map((t) => t.id)).toEqual(page.toArray.map((t) => t.id))
 		expect(requests.length).toBe(before)
-		await vi.advanceTimersByTimeAsync(5000)
+		await vi.advanceTimersByTimeAsync(CEILING)
 		expect(channelTracks('small')).toHaveLength(30)
 	})
 
@@ -163,5 +204,40 @@ describe('loadChannelTracks', () => {
 		expect(a).toHaveLength(30)
 		expect(b).toHaveLength(30)
 		expect(requests).toHaveLength(1)
+	})
+})
+
+describe('loadTrack', () => {
+	test('fetches one track that is not loaded, by id alone', async () => {
+		mockServer()
+		const got = await loadTrack('small-00007')
+		expect(got?.id).toBe('small-00007')
+		expect(requests).toHaveLength(1)
+		expect(requests[0].get('id')).toBe('in.(small-00007)')
+	})
+
+	test('a track already loaded costs no request', async () => {
+		mockServer()
+		await loadChannelTracks('small')
+		const before = requests.length
+		expect((await loadTrack('small-00007'))?.id).toBe('small-00007')
+		expect(requests.length).toBe(before)
+	})
+
+	test('a track that does not exist is undefined', async () => {
+		mockServer()
+		expect(await loadTrack('nope')).toBeUndefined()
+	})
+
+	test('keeps the track until the current-track pin takes it over', async () => {
+		mockServer()
+		await loadTrack('small-00007')
+		await vi.advanceTimersByTimeAsync(20_000)
+		expect(tracksCollection.get('small-00007')).toBeDefined()
+		const before = requests.length
+		const unpin = pin({where: (t) => inArray(t.id, ['small-00007'])}, {id: 'small-00007'})
+		expect(requests.length).toBe(before)
+		unpin()
+		expect(tracksCollection.get('small-00007')).toBeUndefined()
 	})
 })

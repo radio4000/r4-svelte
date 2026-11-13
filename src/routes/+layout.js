@@ -4,13 +4,8 @@ import {validateListeningState} from '#lib/broadcast.js'
 import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
 import {queryClient} from '#lib/collections/query-client.js'
-import {
-	tracksCollection,
-	ensureTracksLoaded,
-	addTrack,
-	updateTrack,
-	deleteTrack
-} from '#lib/collections/tracks.js'
+import {tracksCollection, addTrack, updateTrack, deleteTrack} from '#lib/collections/tracks.js'
+import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 import {trackMetaCollection} from '#lib/collections/track-meta.js'
 import {channelsCollection} from '#lib/collections/channels.js'
 import {spamDecisionsCollection} from '#lib/collections/spam-decisions.js'
@@ -68,7 +63,7 @@ async function restoreDeckTracks() {
 	}
 	await Promise.all(
 		Array.from(/** @type {Set<string>} */ (deckSlugs), (slug) =>
-			ensureTracksLoaded(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
+			loadChannelTracks(slug).catch((err) => log.warn('deck_tracks_restore_failed', {slug, err}))
 		)
 	)
 }

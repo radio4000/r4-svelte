@@ -14,7 +14,8 @@ import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 import {channelsCollection} from '#lib/collections/channels.js'
-import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
+import {loadChannelTracks, loadTrack} from '#lib/player/channel-tracks.js'
 import {isDbId} from '#lib/utils.js'
 import {sortedDeckIds, sortedListeningDeckIds, isBroadcasting} from '#lib/deck.js'
 import {
@@ -141,7 +142,7 @@ export async function joinBroadcast(deckId, channelId) {
 		const slug = broadcast?.channels.slug
 		if (slug) {
 			try {
-				await ensureTracksLoaded(slug)
+				await loadChannelTracks(slug)
 				log.log(`prefetching ${slug}`)
 			} catch (error) {
 				log.warn('prefetch_skipped', {slug, error: /** @type {Error} */ (error).message})
@@ -279,7 +280,7 @@ export async function startBroadcast(channelId, trackId) {
 		return
 	}
 	const slug = channelsCollection.state.get(channelId)?.slug
-	if (slug) await ensureTracksLoaded(slug)
+	if (slug) await loadChannelTracks(slug)
 	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)
@@ -428,13 +429,10 @@ async function playBroadcastTrack(deckId, broadcast) {
 			tracksCollection.utils.writeUpsert(track)
 			log.log('play_broadcast_ephemeral', {track_id, url: track.url})
 		} else {
-			// Track not loaded - fetch it directly by ID
+			// Track not loaded: the collection fetches it by id
 			try {
-				const {data, error} = await sdk.tracks.readTrack(track_id)
-				if (error || !data) throw new Error(`Track ${track_id} not found`)
-				// await tracksCollection.preload()
-				tracksCollection.utils.writeUpsert(/** @type {import('#lib/types.js').Track} */ (data))
-				track = /** @type {import('#lib/types.js').Track} */ (data)
+				track = await loadTrack(track_id)
+				if (!track) throw new Error(`Track ${track_id} not found`)
 			} catch (error) {
 				log.error(`play failed:`, /** @type {Error} */ (error).message)
 				return false

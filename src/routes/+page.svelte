@@ -9,7 +9,8 @@
 	import {getFollowedChannels, getChannelConnections} from '#lib/followed-channels.svelte.js'
 	import {getFeaturedPool, pickFeatured, dailySeed} from '#lib/collections/featured.js'
 	import {getFeaturedSuggestions} from '#lib/featured-suggestions.svelte.js'
-	import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 	import {
 		getChannelTags,
 		extractHashtags,
@@ -112,8 +113,7 @@
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
 
-	// Reactive: subscribes to the collection so tags appear once ensureTracksLoaded
-	// writes them. A plain tracksCollection.state read wouldn't re-run on that write.
+	// Loads the whole channel by itself, on the key the channel page and player share
 	const channelTracksQuery = useLiveQuery((q) =>
 		userChannel?.slug
 			? q.from({t: tracksCollection}).where(({t}) => eq(t.slug, userChannel.slug))
@@ -138,23 +138,11 @@
 
 	const tagsLoading = $derived(showTrackWidget && userChannelTopTags.length === 0)
 
-	$effect(() => {
-		const slug = userChannel?.slug
-		if (!slug || !showTrackWidget) return
-		void ensureTracksLoaded(slug)
-	})
-
 	async function playChannelTag(tag) {
 		if (!userChannel) return
 		const slug = userChannel.slug
-		await ensureTracksLoaded(slug)
-		const tracks = /** @type {import('#lib/types.js').Track[]} */ (
-			newestFirst(
-				[...tracksCollection.state.values()].filter(
-					(t) =>
-						/** @type {any} */ (t).slug === slug && /** @type {any} */ (t.tags ?? []).includes(tag)
-				)
-			)
+		const tracks = newestFirst(
+			(await loadChannelTracks(slug)).filter((t) => (t.tags ?? []).includes(tag))
 		)
 		if (!tracks.length) return
 		loadDeckView(

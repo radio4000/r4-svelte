@@ -8,7 +8,7 @@
 		type CaptureEvent
 	} from '#lib/collections/capture-events.js'
 	import {playTrack} from '#lib/api.js'
-	import {ensureTracksLoaded} from '#lib/collections/tracks.js'
+	import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 	import {appState} from '#lib/app-state.svelte.js'
 	import * as m from '#lib/paraglide/messages.js'
 	import {getLocale} from '#lib/paraglide/runtime.js'
@@ -94,7 +94,7 @@
 		const p = play.properties ?? {}
 		const slug = p.channel_slug as string
 		const trackId = p.track_id as string
-		if (slug) await ensureTracksLoaded(slug)
+		if (slug) await loadChannelTracks(slug)
 		await playTrack(appState.active_deck_id, trackId, null, 'user_click_track')
 	}
 

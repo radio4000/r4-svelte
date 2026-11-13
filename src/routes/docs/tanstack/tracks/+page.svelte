@@ -3,13 +3,8 @@
 	import Menu from '../menu.svelte'
 	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {eq} from '@tanstack/db'
-	import {
-		tracksCollection,
-		addTrack,
-		updateTrack,
-		deleteTrack,
-		ensureTracksLoaded
-	} from '#lib/collections/tracks.js'
+	import {tracksCollection, addTrack, updateTrack, deleteTrack} from '#lib/collections/tracks.js'
+	import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 	import {queryClient} from '#lib/collections/query-client.js'
 	import {appState} from '#lib/app-state.svelte.js'
 
@@ -90,7 +85,7 @@
 		testResult = 'Loading...'
 		try {
 			const before = [...tracksCollection.state.values()].filter((t) => t.slug === testSlug).length
-			await ensureTracksLoaded(testSlug)
+			await loadChannelTracks(testSlug)
 			const after = [...tracksCollection.state.values()].filter((t) => t.slug === testSlug).length
 			testResult = `${testSlug}: ${before} → ${after} tracks`
 		} catch (err) {
@@ -155,7 +150,7 @@
 	<p>Populate the collection with tracks from different channels, then see them combined below.</p>
 	<fieldset class="row">
 		<input type="text" bind:value={testSlug} placeholder="slug" />
-		<button onclick={loadTracks}>ensureTracksLoaded</button>
+		<button onclick={loadTracks}>loadChannelTracks</button>
 	</fieldset>
 	{#if testResult}<pre>{testResult}</pre>{/if}
 </section>
