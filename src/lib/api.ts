@@ -12,13 +12,13 @@ import {capture} from '#lib/analytics.js'
 import {sdk} from '@radio4000/sdk'
 import {shuffleArray, isDbId} from '#lib/utils.js'
 import {getActiveQueue, queueInsertManyAfter, queueNext, queuePrev} from '#lib/player/queue.js'
-import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
-import {channelTracks} from '#lib/player/channel-tracks.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
+import {channelTracks, loadChannelTracks} from '#lib/player/channel-tracks.js'
 import {openDeck} from '#lib/player/open-deck.js'
 import {capturePlayHistory} from '#lib/player/play-history.js'
 import {getDeck, maybeBroadcastNotify, clearAutoRadio} from '#lib/decks.js'
 
-import type {Channel, ChannelRef, Deck, PlayEndReason, PlayStartReason} from '#lib/types.js'
+import type {Channel, ChannelRef, Deck, PlayEndReason, PlayStartReason, Track} from '#lib/types.js'
 import {normalizeView, type View} from '#lib/views.js'
 
 const log = logger.ns('api').seal()
@@ -68,12 +68,13 @@ function sameStringArray(a: string[], b: string[]): boolean {
 	return a === b || (a.length === b.length && a.every((value, index) => value === b[index]))
 }
 
-/** Tracks by created_at, newest first. Parses each date once rather than per
- *  comparison, which cost ~50ms per play on a 2.6k-track channel at 4x CPU. */
-export function newestFirst<T extends {created_at: string}>(tracks: T[]): T[] {
+/** Tracks by created_at, newest first, ties by id: the server's order, whichever way the
+ *  rows arrived. Parses each date once rather than per comparison, which cost ~50ms per
+ *  play on a 2.6k-track channel at 4x CPU. */
+export function newestFirst<T extends {created_at: string; id: string}>(tracks: T[]): T[] {
 	return tracks
 		.map((track) => ({track, ms: new Date(track.created_at).getTime()}))
-		.sort((a, b) => b.ms - a.ms)
+		.sort((a, b) => b.ms - a.ms || (a.track.id < b.track.id ? -1 : a.track.id > b.track.id ? 1 : 0))
 		.map(({track}) => track)
 }
 
@@ -207,11 +208,11 @@ export async function playTrack(
 		deck.auto_radio_rotation_start = undefined
 	}
 
-	let track = tracksCollection.get(id)
+	let track: Track | undefined = tracksCollection.get(id)
 	// After a reload the deck's channel loads behind the first render; next/prev can beat it
 	if (!track && deck.playlist_slug) {
-		await ensureTracksLoaded(deck.playlist_slug).catch(() => {})
-		track = tracksCollection.get(id)
+		const tracks = await loadChannelTracks(deck.playlist_slug).catch(() => [])
+		track = tracks.find((t) => t.id === id)
 	}
 	if (!track) {
 		log.warn('play_track_not_loaded', {id})
@@ -257,16 +258,15 @@ export async function playTrack(
 	if (!isEphemeral && (!deck.playlist_tracks.length || !deck.playlist_tracks.includes(id))) {
 		// Queue what's loaded now, then again once the whole channel is in.
 		const slug = deck.playlist_slug
-		const queueChannel = () => {
+		const queueChannel = (tracks: Track[]) => {
 			if (getDeck(deckId)?.playlist_slug !== slug) return
-			const tracks = newestFirst(channelTracks(slug))
 			setPlaylist(
 				deckId,
-				tracks.map((t) => t.id)
+				newestFirst(tracks).map((t) => t.id)
 			)
 		}
-		queueChannel()
-		if (slug) ensureTracksLoaded(slug).then(queueChannel, () => {})
+		queueChannel(channelTracks(slug))
+		if (slug) loadChannelTracks(slug).then(queueChannel, () => {})
 	}
 	// Ensure ephemeral track is included in the current playlist
 	if (isEphemeral && !deck.playlist_tracks.includes(id)) {
@@ -313,8 +313,7 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 	leaveBroadcast(deckId)
 	const d = getDeck(deckId)
 	if (d) clearAutoRadio(d)
-	await ensureTracksLoaded(slug)
-	const tracks = newestFirst(channelTracks(slug))
+	const tracks = newestFirst(await loadChannelTracks(slug))
 	if (!tracks.length) {
 		log.warn('play_channel_no_tracks', {slug})
 		return
@@ -329,7 +328,7 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 export async function playTrackInNewDeck(trackId: string, slug?: string) {
 	const deck = openDeck({compact: true, activate: true})
 	if (slug && !tracksCollection.get(trackId)) {
-		await ensureTracksLoaded(slug)
+		await loadChannelTracks(slug)
 	}
 	await playTrack(deck.id, trackId, null, 'user_click_track')
 	// A newly opened extra deck loads paused — the user starts it explicitly.
@@ -350,8 +349,7 @@ export async function shufflePlayChannel(deckId: number, {id, slug}: ChannelRef)
 	leaveBroadcast(deckId)
 	const d = getDeck(deckId)
 	if (d) clearAutoRadio(d)
-	await ensureTracksLoaded(slug)
-	const tracks = channelTracks(slug)
+	const tracks = await loadChannelTracks(slug)
 	if (!tracks.length) {
 		log.warn('shuffle_play_no_tracks', {slug})
 		return

@@ -2,8 +2,7 @@ import {appState} from '#lib/app-state.svelte.js'
 import {leaveBroadcast} from '#lib/broadcast.js'
 import {capture} from '#lib/analytics.js'
 import {logger} from '#lib/logger.js'
-import {ensureTracksLoaded} from '#lib/collections/tracks.js'
-import {channelTracks} from '#lib/player/channel-tracks.js'
+import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 import {
 	weeklyShuffle,
 	playbackState,
@@ -118,8 +117,8 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!slug) return
 	const rotationStartUnix = deck.auto_radio_rotation_start
 
-	// Re-filter from local collection using the same view as joinAutoRadio
-	const filtered = processViewTracks(channelTracks(slug), view)
+	// Re-filter the channel using the same view as joinAutoRadio
+	const filtered = processViewTracks(await loadChannelTracks(slug), view)
 	const autoTracks = toAutoTracks(filtered)
 	if (!autoTracks.length) return
 
@@ -266,9 +265,4 @@ export async function toggleChannelAutoRadio(slug: string, tracks?: Track[]) {
 			sources: [{channels: [slug]}]
 		})
 	}
-}
-
-async function loadChannelTracks(slug: string): Promise<Track[]> {
-	await ensureTracksLoaded(slug)
-	return channelTracks(slug)
 }
