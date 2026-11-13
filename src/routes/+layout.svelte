@@ -21,13 +21,24 @@
 	import {onMount} from 'svelte'
 	import {fly} from 'svelte/transition'
 	import {cubicOut} from 'svelte/easing'
-	import {SvelteMap, MediaQuery} from 'svelte/reactivity'
+	import {SvelteMap} from 'svelte/reactivity'
 	import {beforeNavigate, afterNavigate, goto} from '$app/navigation'
 	import {page} from '$app/state'
 	import {DISABLED_ROUTES, DISABLED_ROUTE_FALLBACK} from '#lib/modes.js'
-	import {syncAnalyticsConsent, capture} from '#lib/analytics.js'
+	import {capture} from '#lib/analytics.js'
 	// import {setChannelsCtx} from '#lib/contexts.js'
 	import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
+	import {
+		applyEmbedMode,
+		applyTheme,
+		applyLocaleAttributes,
+		applyCustomCss,
+		applyFontFamily,
+		applyAnalyticsConsent,
+		applyPointerCursor,
+		applyFloatingUi,
+		applyBorders
+	} from '#lib/ui-prefs.svelte.js'
 	import {logger} from '#lib/logger.js'
 	import {span} from '#lib/perf.js'
 	import * as m from '#lib/paraglide/messages.js'
@@ -61,7 +72,6 @@
 		const interval = setInterval(() => (solidarityDay = isSolidarityDay()), 60_000)
 		return () => clearInterval(interval)
 	})
-	const rtlLocales = new Set(['ar', 'ur'])
 	let anyDeckExpanded = $derived(Object.values(appState.decks).some((deck) => deck.expanded))
 	let anyDeckActive = $derived(
 		Object.values(appState.decks).some(
@@ -119,11 +129,7 @@
 		return undefined
 	}
 
-	// Overwrite on every load — server is authoritative for embed mode
-	$effect(() => {
-		appState.embed_mode = data.embedMode
-		document.documentElement.classList.toggle('embed-mode', data.embedMode)
-	})
+	applyEmbedMode(() => data.embedMode)
 
 	onMount(async () => {
 		if (DISABLED_ROUTES.some((p) => page.route.id?.startsWith(p))) {
@@ -229,46 +235,13 @@
 		return () => window.removeEventListener('popstate', onPopState)
 	})
 
-	// Theme application
-	const prefersLight = new MediaQuery('(prefers-color-scheme: light)')
-	const theme = $derived(appState.theme ?? (prefersLight.current ? 'light' : 'dark'))
 	const uiLocale = $derived(appState.language ?? getLocale())
 
-	$effect(() => {
-		const isDark = theme === 'dark'
-		document.documentElement.classList.toggle('dark', isDark)
-		document.documentElement.classList.toggle('light', !isDark)
-		// Status bar follows the app theme, not the OS (--gray-1, as in app.html)
-		for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
-			meta.setAttribute('content', isDark ? '#15110b' : '#fefbf7')
-		}
-	})
-
-	$effect(() => {
-		if (typeof document === 'undefined') return
-		document.documentElement.lang = uiLocale
-		document.documentElement.dir = rtlLocales.has(uiLocale) ? 'rtl' : 'ltr'
-	})
-
-	$effect(() => {
-		applyCustomCssVariables(appState.custom_css_variables)
-	})
-
-	// Apply font family
-	$effect(() => {
-		const ff = appState.font_family
-		if (ff) {
-			const value = ff.startsWith('var(') ? `${ff}, sans-serif` : `'${ff}', sans-serif`
-			document.documentElement.style.setProperty('--font-sans', value)
-		} else {
-			document.documentElement.style.removeProperty('--font-sans')
-		}
-	})
-
-	// Sync PostHog opt-in/out with user preference
-	$effect(() => {
-		syncAnalyticsConsent(appState.analytics_opt_in ?? false)
-	})
+	applyTheme()
+	applyLocaleAttributes(() => uiLocale)
+	applyCustomCss()
+	applyFontFamily()
+	applyAnalyticsConsent()
 
 	// Disabled: all analytics events are anonymous for privacy.
 	// $effect(() => {
@@ -280,40 +253,9 @@
 	// 	}
 	// })
 
-	// Apply pointer cursor preference
-	$effect(() => {
-		if (appState.use_pointer_cursor) {
-			document.documentElement.style.removeProperty('--interactive-cursor')
-		} else {
-			document.documentElement.style.setProperty('--interactive-cursor', 'default')
-		}
-	})
-
-	// Apply floating UI preference — padding/gap for the floating card look.
-	// When off, flush the shell but keep --floating-bg / --floating-border so
-	// header, decks, and section seams still use the same tokens (one-sided
-	// dividers via html.no-floating-ui). Corner rounding stays --border-radius.
-	$effect(() => {
-		const root = document.documentElement
-		const floating = appState.floating_ui !== false
-		root.classList.toggle('no-floating-ui', !floating)
-		if (floating) {
-			root.style.removeProperty('--floating-padding')
-			root.style.removeProperty('--floating-gap')
-		} else {
-			// 0px, not 0: a bare number makes the shell's max(…, env()) padding invalid
-			root.style.setProperty('--floating-padding', '0px')
-			root.style.setProperty('--floating-gap', '0')
-		}
-		// Never override bg/border tokens — flush mode reuses them for seams.
-		root.style.removeProperty('--floating-bg')
-		root.style.removeProperty('--floating-border')
-	})
-
-	// Apply "Show borders" preference — see html.no-borders in variables.css.
-	$effect(() => {
-		document.documentElement.classList.toggle('no-borders', appState.show_borders === false)
-	})
+	applyPointerCursor()
+	applyFloatingUi()
+	applyBorders()
 
 	// "Close" the database on page unload. I have not noticed any difference, but seems like a good thing to do.
 	$effect(() => {

@@ -12,7 +12,7 @@ Radio4000 uses [PostHog](https://posthog.com) for product analytics and web anal
 
 The `appState.analytics_opt_in` boolean (default `false`) controls whether data is sent. Users toggle it at `/settings/analytics`.
 
-When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` is called reactively in `+layout.svelte`.
+When the value changes, PostHog's `opt_in_capturing()` / `opt_out_capturing()` is called reactively in `+layout.svelte` (the effect itself lives in `ui-prefs.svelte.ts`).
 
 ## Identity
 
