@@ -13,6 +13,7 @@ import {
 } from '#lib/player/auto-radio.js'
 import {findAutoDecksForChannel, findChannelDeck, pickAutoResyncDeck} from '#lib/deck.js'
 import {getDeck, clearAutoRadio} from '#lib/decks.js'
+import {openDeck} from '#lib/player/open-deck.js'
 import {processViewTracks} from '#lib/views.svelte.js'
 import {serializeView, viewLabel, normalizeView, type View} from '#lib/views.js'
 import type {Track, ChannelRef} from '#lib/types.js'
@@ -55,6 +56,10 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	)
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
+
+	// No deck open (all closed, or a broadcast just left): open one now, as playTrack would.
+	// Otherwise the playlist below lands nowhere and playTrack queues the channel newest-first.
+	if (!getDeck(deckId)) deckId = openDeck({compact: true, activate: true}).id
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
 	const label = view ? viewLabel(view) : undefined

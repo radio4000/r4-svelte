@@ -26,10 +26,11 @@ Steps:
 1. Filters to tracks with known durations (`toAutoTracks`)
 2. Derives epoch from oldest track (`epochFromTracks`)
 3. Computes weekly shuffle (with view seed if provided)
-4. Starts the scheduled track via `playTrack`
-5. Sets playlist first (label from `viewToQuery(view)`, e.g. `@ko002 #jazz`)
-6. Marks deck as `auto_radio` and stores rotation params
-7. Seeks to the computed offset once the player is ready
+4. Opens a compact, active deck if none is open (the queue needs a deck to land on)
+5. Starts the scheduled track via `playTrack`
+6. Sets playlist first (label from `viewToQuery(view)`, e.g. `@ko002 #jazz`)
+7. Marks deck as `auto_radio` and stores rotation params
+8. Seeks to the computed offset once the player is ready
 
 The infinity button appears on:
 
