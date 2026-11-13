@@ -92,5 +92,11 @@
 	},
 	"imports": {
 		"#lib/*": "./src/lib/*"
+	},
+	"intent": {
+		"skills": [
+			"@tanstack/db#db-core",
+			"@tanstack/svelte-db#svelte-db"
+		]
 	}
 }
