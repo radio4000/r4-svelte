@@ -140,6 +140,7 @@ Caveats learned the hard way:
 
 - Paged channel views accumulate `limit = currentPage * pageSize` and `.slice()` locally. DB can also request continuation windows with a nonzero offset; `channels.ts` returns exactly that window. TanStack Query caches each filter/sort/window separately.
 - An unbounded request is authoritative for its whole filter. Returning a default page (formerly 20 channels) can evict rows belonging to other paged queries. Explore uses lexical ordering matching the server and a unique ID tie-breaker; the default locale string ordering can trigger unbounded requests.
+- A function `queryKey` must encode exactly what its `queryFn` fetches: two subsets that share a key must get the same rows. `tracks.ts` used to drop the boundary `eq(created_at)` tie check from the key, so a 10-row window downloaded the whole channel.
 - Each dep change in `useLiveQuery` builds a new live query collection. The old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
 
 ### keepalive pin

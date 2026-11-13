@@ -35,3 +35,7 @@ For collections, queries, mutations, and live queries, see [tanstack.md](tanstac
 ## Channels
 
 Channels are not preloaded. `channelsCollection` is on-demand: each page's live query fetches the subset it needs, and TanStack Query caches each requested window. The adapter honors offsets and drains unbounded requests; id lookups fetch only missing rows.
+
+## Tracks
+
+`tracksCollection` is on-demand too. A channel's tracks share one key, `['tracks', slug]`, whether a query asks `eq(slug)` or `inArray(slug, [slug])`, and load completely, paging past the API's 4000-row cap. `eq(id)`/`inArray(id)` fetch only missing rows; `eq(media_id)` fetches that media across channels. A limit or offset reaches the server only for newest-first queries on filters `parseTrackParams` knows; anything else fetches the whole matching set and the live query narrows it.

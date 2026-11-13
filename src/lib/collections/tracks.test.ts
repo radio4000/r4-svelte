@@ -1,0 +1,229 @@
+import {afterEach, describe, expect, test, vi} from 'vitest'
+import {createLiveQueryCollection, eq, gte, inArray} from '@tanstack/db'
+import {tracksCollection} from './tracks'
+import {queryClient} from './query-client'
+
+// The real query adapter and DB lifecycle against a fake PostgREST that, like ours,
+// caps every response at 4000 rows.
+const MAX_ROWS = 4000
+
+function channel(slug: string, count: number) {
+	return Array.from({length: count}, (_, i) => ({
+		id: `${slug}-${String(i).padStart(5, '0')}`,
+		slug,
+		title: `Track ${i}`,
+		url: `https://youtube.com/watch?v=${slug}${i}`,
+		provider: 'youtube',
+		media_id: i === 0 ? 'shared' : `${slug}${i}`,
+		description: '',
+		// Pairs share created_at, like an import, so pages need the id tie-break
+		created_at: new Date(Date.UTC(2020, 0, 1) + Math.floor((count - i) / 2) * 60_000).toISOString(),
+		updated_at: '2020-01-01T00:00:00.000Z'
+	}))
+}
+const rows = [...channel('big', 4500), ...channel('small', 30), ...channel('other', 5)]
+
+type Request = {query: URLSearchParams; signal?: AbortSignal | null}
+const requests: Request[] = []
+const lists: Array<{cleanup: () => Promise<void>}> = []
+
+afterEach(async () => {
+	for (const l of lists.splice(0)) await l.cleanup()
+	await tracksCollection.cleanup()
+	queryClient.clear()
+	vi.restoreAllMocks()
+	requests.length = 0
+})
+
+function mockServer() {
+	vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+		const url = new URL(input instanceof Request ? input.url : String(input))
+		const query = url.searchParams
+		requests.push({query, signal: init?.signal})
+		let result = [...rows]
+		for (const field of ['slug', 'id', 'media_id', 'created_at'] as const) {
+			const value = query.get(field)
+			if (value?.startsWith('eq.')) result = result.filter((r) => r[field] === value.slice(3))
+			if (value?.startsWith('in.')) {
+				const set = new Set(value.slice(4, -1).split(','))
+				result = result.filter((r) => set.has(r[field]))
+			}
+		}
+		if (query.get('order')?.startsWith('created_at.desc')) {
+			result.sort((a, b) =>
+				a.created_at === b.created_at
+					? a.id.localeCompare(b.id)
+					: b.created_at.localeCompare(a.created_at)
+			)
+		}
+		const offset = Number(query.get('offset') ?? 0)
+		const limit = Math.min(Number(query.get('limit') ?? MAX_ROWS), MAX_ROWS)
+		return new Response(JSON.stringify(result.slice(offset, offset + limit)), {
+			headers: {'Content-Type': 'application/json'}
+		})
+	})
+}
+
+async function load(build: Parameters<typeof createLiveQueryCollection>[0]['query']) {
+	const list = createLiveQueryCollection({query: build})
+	lists.push(list)
+	await list.preload()
+	return list.toArray as Array<(typeof rows)[number]>
+}
+
+const keys = () =>
+	queryClient
+		.getQueryCache()
+		.getAll()
+		.map((q) => q.queryKey)
+
+const newest = (slug: string) =>
+	rows
+		.filter((r) => r.slug === slug)
+		.toSorted((a, b) =>
+			a.created_at === b.created_at
+				? a.id.localeCompare(b.id)
+				: b.created_at.localeCompare(a.created_at)
+		)
+
+describe('channel loads', () => {
+	test('a channel over the 4000-row cap loads completely, without repeats', async () => {
+		mockServer()
+		const got = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'big'))
+				.orderBy(({t}) => t.created_at, 'desc')
+		)
+		expect(got.map((r) => r.id)).toEqual(newest('big').map((r) => r.id))
+		expect(requests.map((r) => r.query.get('offset'))).toEqual(['0', '4000'])
+		expect(keys()).toContainEqual(['tracks', 'big'])
+	})
+
+	test('requests carry the abort signal', async () => {
+		mockServer()
+		await load((q) => q.from({t: tracksCollection}).where(({t}) => eq(t.slug, 'small')))
+		expect(requests[0].signal).toBeInstanceOf(AbortSignal)
+	})
+
+	test('a one-slug list shares the channel key, so the second reader downloads nothing', async () => {
+		mockServer()
+		await load((q) => q.from({t: tracksCollection}).where(({t}) => eq(t.slug, 'small')))
+		const before = requests.length
+		const got = await load((q) =>
+			q.from({t: tracksCollection}).where(({t}) => inArray(t.slug, ['small']))
+		)
+		expect(got).toHaveLength(30)
+		expect(requests.length).toBe(before)
+		expect(keys()).toEqual([['tracks', 'small']])
+	})
+
+	test('a window keeps its limit in the key, and a grown window asks from its offset', async () => {
+		mockServer()
+		const list = createLiveQueryCollection({
+			query: (q) =>
+				q
+					.from({t: tracksCollection})
+					.where(({t}) => eq(t.slug, 'big'))
+					.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
+					.limit(10)
+		})
+		lists.push(list)
+		await list.preload()
+		expect(keys()).toContainEqual(['tracks', 'big', 'limit', 10])
+		await list.utils.setWindow({limit: 30})
+		const ids = (list.toArray as typeof rows).map((r) => r.id)
+		expect(ids).toEqual(
+			newest('big')
+				.slice(0, 30)
+				.map((r) => r.id)
+		)
+		const continued = keys().find((k) => k.includes('offset'))
+		expect(continued?.slice(0, 2)).toEqual(['tracks', 'big'])
+		expect(requests.some((r) => Number(r.query.get('offset')) > 0)).toBe(true)
+		// Never the whole 4500-row channel for a 30-row window; the tie check at the page
+		// edge asks for just the rows sharing that created_at
+		expect(keys()).not.toContainEqual(['tracks', 'big'])
+		for (const r of requests) {
+			expect(r.query.has('created_at') || Number(r.query.get('limit')) < MAX_ROWS).toBe(true)
+		}
+	})
+
+	test('several slugs keep a list key', async () => {
+		mockServer()
+		const got = await load((q) =>
+			q.from({t: tracksCollection}).where(({t}) => inArray(t.slug, ['small', 'other']))
+		)
+		expect(got).toHaveLength(35)
+		expect(keys()).toContainEqual(['tracks', 'slugs', 'other', 'small'])
+	})
+
+	test('a window the server cannot serve as asked fetches the whole channel instead', async () => {
+		mockServer()
+		// Ordered by title: the newest 5 would be the wrong 5
+		const byTitle = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'small'))
+				.orderBy(({t}) => t.title, 'asc')
+				.limit(5)
+		)
+		expect(byTitle.map((r) => r.title)).toEqual(
+			newest('small')
+				.map((r) => r.title)
+				.toSorted((a, b) => a.localeCompare(b))
+				.slice(0, 5)
+		)
+		// A filter we don't fetch by: the limit would cut before the filter
+		const filtered = await load((q) =>
+			q
+				.from({t: tracksCollection})
+				.where(({t}) => eq(t.slug, 'small'))
+				.where(({t}) => gte(t.title, 'Track 2'))
+				.orderBy(({t}) => t.created_at, 'desc')
+				.limit(50)
+		)
+		expect(filtered.map((r) => r.title).toSorted()).toEqual(
+			newest('small')
+				.map((r) => r.title)
+				.filter((t) => t >= 'Track 2')
+				.toSorted()
+		)
+		for (const r of requests) expect(r.query.get('limit')).toBe(String(MAX_ROWS))
+	})
+})
+
+describe('single tracks', () => {
+	test('a live query for one track by id fetches just that track', async () => {
+		mockServer()
+		const got = await load((q) =>
+			q.from({t: tracksCollection}).where(({t}) => eq(t.id, 'small-00003'))
+		)
+		expect(got.map((r) => r.id)).toEqual(['small-00003'])
+		expect(requests).toHaveLength(1)
+		expect(requests[0].query.get('id')).toBe('in.(small-00003)')
+		expect(keys()).toContainEqual(['tracks', 'ids', 'small-00003'])
+	})
+
+	test('a track already loaded by id needs no request', async () => {
+		mockServer()
+		await load((q) => q.from({t: tracksCollection}).where(({t}) => eq(t.slug, 'small')))
+		const before = requests.length
+		const got = await load((q) =>
+			q.from({t: tracksCollection}).where(({t}) => inArray(t.id, ['small-00001', 'small-00002']))
+		)
+		expect(got).toHaveLength(2)
+		expect(requests.length).toBe(before)
+	})
+
+	test('tracks by media_id load across channels under their own key', async () => {
+		mockServer()
+		const got = await load((q) =>
+			q.from({t: tracksCollection}).where(({t}) => eq(t.media_id, 'shared'))
+		)
+		expect(got.map((r) => r.slug).toSorted()).toEqual(['big', 'other', 'small'])
+		expect(keys()).toContainEqual(['tracks', 'media', 'shared'])
+		// Distinct from the related tab's hand-made ['tracks', 'media_id', …] entry
+		expect(keys()).not.toContainEqual(['tracks', 'media_id', 'shared'])
+	})
+})
