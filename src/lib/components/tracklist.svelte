@@ -259,7 +259,8 @@
 			<SvelteVirtualList
 				bind:this={virtualList}
 				items={flatItems}
-				defaultEstimatedItemHeight={72}
+				itemKey={(item) => item.id}
+				defaultEstimatedItemHeight={66}
 				bufferSize={20}
 				viewportClass="virtual-viewport"
 			>
