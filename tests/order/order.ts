@@ -8,6 +8,12 @@
 //   bun run test:order --only search-before-channel,back-forward
 //   bun run test:order --url http://localhost:4173   # an existing build (never dev, never an IP)
 //   bun run test:order --out ../r4-svelte-freshup/order-findings.md
+//   bun run test:order --signed-in        # also the flows that sign in as the robot (writes a
+//                                         # track to /robot-afterhours and deletes it again;
+//                                         # needs R4_ROBOT_EMAIL and R4_ROBOT_PASSWORD in
+//                                         # .env.local) and import a playlist (local only).
+//                                         # Flows are in flows.ts; the signed-out ones (queue,
+//                                         # a 4000-track channel) run by default
 //
 // For every page a walk passes through, it records what the page shows once quiet: the
 // ordered ids of track rows, the channel cards and tags, the counts the page claims, and
@@ -37,6 +43,7 @@ import {spawn, spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {createServer} from 'node:net'
 import {lock} from '../../perf/lock.ts'
+import {FLOWS, type Flow} from './flows.ts'
 
 const {values: args} = parseArgs({
 	options: {
@@ -47,6 +54,7 @@ const {values: args} = parseArgs({
 		parallel: {type: 'string', default: '3'},
 		cpu: {type: 'string', default: '1'},
 		out: {type: 'string'},
+		'signed-in': {type: 'boolean', default: false},
 		help: {type: 'boolean', short: 'h', default: false}
 	}
 })
@@ -54,7 +62,7 @@ if (args.help) {
 	console.log(
 		readFileSync(fileURLToPath(import.meta.url), 'utf8')
 			.split('\n')
-			.slice(1, 11)
+			.slice(1, 17)
 			.join('\n')
 	)
 	process.exit(0)
@@ -872,6 +880,45 @@ async function serveRev(rev: string) {
 	return {url, commit}
 }
 
+// --- flows (flows.ts) ---------------------------------------------------------------
+
+const kit = (browser: Browser) => ({
+	open: () => newPage(browser),
+	act: (page: Page, a: [Action[0], string?]) => act(page, a as Action),
+	settle,
+	shoot
+})
+
+/** Each flow once. Robot flows share one channel, so they go one at a time. */
+async function runFlows(browser: Browser, flows: Flow[], run: number) {
+	const out: [Flow, Awaited<ReturnType<Flow['run']>>][] = []
+	const go = async (f: Flow) => {
+		try {
+			out.push([f, await f.run(kit(browser))])
+		} catch (err: any) {
+			console.log(`  run ${run} ${f.name} failed: ${err.message}`)
+			out.push([
+				f,
+				{
+					fails: [{step: 'flow crashed', path: '', detail: String(err.message).split('\n')[0]}],
+					notes: []
+				}
+			])
+		}
+	}
+	await Promise.all([
+		pool(
+			flows.filter((f) => f.flag === 'default'),
+			PARALLEL,
+			go
+		),
+		(async () => {
+			for (const f of flows.filter((f) => f.flag === 'signed-in')) await go(f)
+		})()
+	])
+	return out
+}
+
 // --- main ----------------------------------------------------------------------
 
 type Finding = {
@@ -895,21 +942,33 @@ async function main() {
 		if (!(await isUp(BASE))) throw new Error(`nothing at ${BASE}`)
 	} else ({url: BASE, commit} = await serveRev(args.rev!))
 
-	const walks = args.only ? WALKS.filter((w) => args.only!.split(',').includes(w.name)) : WALKS
-	if (!walks.length) throw new Error(`--only matched nothing. Walks: ${WALKS.map((w) => w.name)}`)
+	const wanted = args.only?.split(',')
+	const walks = wanted ? WALKS.filter((w) => wanted.includes(w.name)) : WALKS
+	const flows: Flow[] = FLOWS.filter((f) =>
+		wanted ? wanted.includes(f.name) : f.flag === 'default' || args['signed-in']
+	)
+	const needFlag = flows.filter((f) => f.flag === 'signed-in' && !args['signed-in'])
+	if (needFlag.length)
+		throw new Error(`${needFlag.map((f) => f.name)} need --signed-in (robot account, local import)`)
+	if (!walks.length && !flows.length)
+		throw new Error(`--only matched nothing. Walks: ${[...WALKS, ...FLOWS].map((w) => w.name)}`)
 	const paths = [
 		...new Set(
 			walks.flatMap((w) => urlsOf(w).filter((u, i): u is string => !!u && w.steps[i][0] !== 'skim'))
 		)
 	]
 	console.log(
-		`order · ${BASE} · ${walks.length} walks · ${paths.length} pages · ${RUNS} runs · ${PARALLEL} at a time`
+		`order · ${BASE} · ${walks.length} walks · ${paths.length} pages · ${flows.length} flows · ${RUNS} runs · ${PARALLEL} at a time`
 	)
 
 	const browser = await openBrowser()
 	// finding key → which runs it showed up in
 	const found = new Map<string, Finding & {details: string[]}>()
 	const coldNoise: string[] = []
+	const recorded = new Map<
+		string,
+		{flow: string; step: string; path: string; runs: string[]; details: string[]}
+	>()
 	const raw: any[] = []
 	for (let run = 1; run <= RUNS; run++) {
 		const colds = new Map<string, Shot>()
@@ -931,6 +990,38 @@ async function main() {
 					coldNoise.push(`run ${run} ${p}: ${f} differ between two cold loads`)
 		}
 		let count = 0
+		const flowResults = await runFlows(browser, flows, run)
+		for (const [flow, result] of flowResults) {
+			for (const f of result.fails) {
+				count++
+				const key = `${flow.name}|${f.step}`
+				const found1 = found.get(key) ?? {
+					walk: flow.name,
+					via: f.step,
+					path: f.path,
+					kind: 'flow',
+					runs: [],
+					weight: 500,
+					details: []
+				}
+				found1.runs.push(String(run))
+				found1.details.push(f.detail)
+				found.set(key, found1)
+			}
+			for (const n of result.notes) {
+				const key = `${flow.name}|${n.step}`
+				const seen = recorded.get(key) ?? {
+					flow: flow.name,
+					step: n.step,
+					path: n.path,
+					runs: [],
+					details: []
+				}
+				seen.runs.push(String(run))
+				seen.details.push(n.detail)
+				recorded.set(key, seen)
+			}
+		}
 		for (const c of checkpoints) {
 			const all = compare(colds.get(c.path)!, colds2.get(c.path)!, c.shot)
 			// One finding per page visit; its kinds and details joined
@@ -966,7 +1057,8 @@ async function main() {
 			run,
 			colds: Object.fromEntries(colds),
 			colds2: Object.fromEntries(colds2),
-			checkpoints
+			checkpoints,
+			flows: flowResults.map(([f, r]) => ({flow: f.name, ...r}))
 		})
 		console.log(
 			`  run ${run}: ${checkpoints.length} checkpoints, ${count} differences · ${Math.round((performance.now() - t0) / 1000)}s`
@@ -987,17 +1079,25 @@ async function main() {
 	const lines = findings.map((f) => {
 		const n = f.runs.length
 		const tag = n === RUNS ? `reproduced ${n} of ${RUNS}` : `flaky, ${n} of ${RUNS}`
+		if (f.kind === 'flow')
+			return `- ${f.walk}, step "${f.via}"${f.path ? ` (\`${f.path}\`)` : ''}: expected ${f.details[0]}. ${tag}.`
 		return `- \`${f.path}\` after ${f.walk}: ${f.details[0]}. Walk: ${f.via}. ${tag}.`
 	})
+	const recordedLines = Array.from(
+		recorded.values(),
+		(r) =>
+			`- ${r.flow}, "${r.step}"${r.path ? ` (\`${r.path}\`)` : ''}: ${r.details[0]}${new Set(r.details).size > 1 ? ` (varies: ${[...new Set(r.details)].slice(0, 3).join(' / ')})` : ''}. ${r.runs.length} of ${RUNS}.`
+	)
 	const md = [
 		`# Order findings`,
 		``,
-		`${date.slice(0, 16).replace('T', ' ')} · ${args.url ? BASE : `${args.rev} ${commit.slice(0, 8)}`} · ${walks.length} walks, ${paths.length} pages, ${RUNS} runs · \`bun run test:order\``,
+		`${date.slice(0, 16).replace('T', ' ')} · ${args.url ? BASE : `${args.rev} ${commit.slice(0, 8)}`} · ${walks.length} walks, ${paths.length} pages, ${flows.length} flows, ${RUNS} runs · \`bun run test:order\``,
 		``,
 		`Each line: a page, the walk that reached it, and what differed from loading that URL cold. Reproduced in every run first, then by damage: no rows, missing or extra rows, wrong url, stuck loading, wrong count, wrong order.`,
 		``,
 		...(lines.length ? lines : ['None.']),
 		``,
+		...(recordedLines.length ? [`## Recorded, not failures`, ``, ...recordedLines, ``] : []),
 		`## Pages that differ from themselves cold`,
 		``,
 		...(coldNoise.length ? coldNoise.map((l) => `- ${l}`) : ['None.']),
@@ -1006,6 +1106,7 @@ async function main() {
 	writeFileSync(`${stem}.md`, md)
 	if (args.out) writeFileSync(args.out, md)
 	console.log(`\n${lines.join('\n') || 'no findings'}`)
+	if (recordedLines.length) console.log(`\nrecorded:\n${recordedLines.join('\n')}`)
 	if (coldNoise.length) console.log(`\ncold noise:\n${coldNoise.join('\n')}`)
 	console.log(
 		`\n${findings.length} findings · ${Math.round((performance.now() - t0) / 1000)}s · saved ${stem}.md and .json`
