@@ -40,16 +40,16 @@ Multi-source (experimental): `;`-separated sources parse and serialize correctly
 
 `resolveViewStrategy(source)` picks a fetch path based on the first ViewSource:
 
-| Strategy           | Condition                                       | Fetch and filter                                                       |
-| ------------------ | ----------------------------------------------- | ---------------------------------------------------------------------- |
-| `channel`          | channels only                                   | local query by slug, paginated there                                   |
-| `channel-filtered` | one channel + tags, mention or text             | that channel's tracks (already loaded), filtered and paginated locally |
-| `remote`           | anything else: no channel, or several + filters | `sdk.search.searchTracks`, one database query                          |
-| `empty`            | nothing specified                               | no fetch                                                               |
+| Strategy           | Condition                                       | Fetch and filter                                   |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------- |
+| `channel`          | channels only                                   | each channel's full track list, paginated locally  |
+| `channel-filtered` | one channel + tags, mention or text             | the same full list, filtered and paginated locally |
+| `remote`           | anything else: no channel, or several + filters | `sdk.search.searchTracks`, one database query      |
+| `empty`            | nothing specified                               | no fetch                                           |
 
 The rule: whoever pages also filters. `remote` hands every part of the query to the database (`slug`, `tags @>`, `mentions @>`, full-text on `fts`), which orders, pages and returns the true count. Fetching one page and filtering it in the browser finds only the matches on that page; that was the `#techno #acid` bug.
 
-`channel-filtered` is the exception because one channel's tracks are already in the browser, so filtering them there is complete. `processViewTracks` matches tags and mentions with the sdk's `extractTokens`, the same rule the database uses, and adds fuzzy text matching. Several channels together go `remote`, since the API returns at most 4000 rows per request. Standalone builds have no database and filter whatever is loaded.
+`channel-filtered` is the exception because one channel's tracks are already in the browser, so filtering them there is complete. `processViewTracks` matches tags and mentions with the sdk's `extractTokens`, the same rule the database uses, and adds fuzzy text matching. Both channel strategies run the channel layout's own query (`eq(slug)`, newest first, no limit), so they share its cache entry: opening search or a tag view for a channel you just viewed downloads nothing, and changing filters or pages never refetches. Several channels with a filter go `remote`, so a filter doesn't download every channel. Standalone builds have no database and filter whatever is loaded.
 
 ## Tags and mentions
 

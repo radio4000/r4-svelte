@@ -160,11 +160,14 @@ export const tracksCollection = createCollection<Track, string>({
 
 			// Slug-based: fetch per channel
 			if (slugs.length) {
+				// An offset counts rows of the merged list, and a channel's share of those rows is
+				// unknown, so with several channels each one is read from its first row.
+				const merged = slugs.length > 1 && params.offset
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
 						const tracks = await fetchTracksBySlug(s, {
-							limit: params.limit,
-							offset: params.offset,
+							limit: merged && params.limit ? params.offset! + params.limit : params.limit,
+							offset: merged ? 0 : params.offset,
 							createdAt: params.createdAt,
 							createdAfter: params.createdAfter,
 							signal: ctx.signal

@@ -21,7 +21,17 @@ function channel(slug: string, count: number) {
 		updated_at: '2020-01-01T00:00:00.000Z'
 	}))
 }
-const rows = [...channel('big', 4500), ...channel('small', 30), ...channel('other', 5)]
+const rows = [
+	...channel('big', 4500),
+	...channel('small', 30),
+	...channel('other', 5),
+	// Two channels whose tracks interleave in time
+	...channel('alice', 40),
+	...channel('bob', 40).map((r) => ({
+		...r,
+		created_at: r.created_at.replace(':00.000Z', ':30.000Z')
+	}))
+]
 
 type Request = {query: URLSearchParams; signal?: AbortSignal | null}
 const requests: Request[] = []
@@ -158,6 +168,33 @@ describe('channel loads', () => {
 		expect(keys()).toContainEqual(['tracks', 'slugs', 'other', 'small'])
 	})
 
+	test('several slugs with a grown window read each channel from its first row', async () => {
+		mockServer()
+		const list = createLiveQueryCollection({
+			query: (q) =>
+				q
+					.from({t: tracksCollection})
+					.where(({t}) => inArray(t.slug, ['alice', 'bob']))
+					.orderBy(({t}) => t.created_at, {direction: 'desc', stringSort: 'lexical'})
+					.limit(10)
+		})
+		lists.push(list)
+		await list.preload()
+		await list.utils.setWindow({limit: 50})
+		const merged = rows
+			.filter((r) => r.slug === 'alice' || r.slug === 'bob')
+			.toSorted((a, b) =>
+				a.created_at === b.created_at
+					? a.id.localeCompare(b.id)
+					: b.created_at.localeCompare(a.created_at)
+			)
+		// The continuation's offset counts merged rows; each channel is asked from its own 0
+		expect(requests.some((r) => Number(r.query.get('offset')) > 0)).toBe(false)
+		expect((list.toArray as typeof rows).map((r) => r.id)).toEqual(
+			merged.slice(0, 50).map((r) => r.id)
+		)
+	})
+
 	test('a window the server cannot serve as asked fetches the whole channel instead', async () => {
 		mockServer()
 		// Ordered by title: the newest 5 would be the wrong 5
@@ -221,7 +258,7 @@ describe('single tracks', () => {
 		const got = await load((q) =>
 			q.from({t: tracksCollection}).where(({t}) => eq(t.media_id, 'shared'))
 		)
-		expect(got.map((r) => r.slug).toSorted()).toEqual(['big', 'other', 'small'])
+		expect(got.map((r) => r.slug).toSorted()).toEqual(['alice', 'big', 'bob', 'other', 'small'])
 		expect(keys()).toContainEqual(['tracks', 'media', 'shared'])
 		// Distinct from the related tab's hand-made ['tracks', 'media_id', …] entry
 		expect(keys()).not.toContainEqual(['tracks', 'media_id', 'shared'])

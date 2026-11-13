@@ -1,7 +1,7 @@
 import {fuzzySearch, shuffleArray} from '#lib/utils.js'
 import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 import {createQuery, keepPreviousData} from '@tanstack/svelte-query'
-import {inArray} from '@tanstack/db'
+import {eq, inArray} from '@tanstack/db'
 import {tracksCollection, normalizeTrackMedia} from '#lib/collections/tracks.js'
 import {channelsCollection} from '#lib/collections/channels.js'
 import {sdk, extractTokens} from '@radio4000/sdk'
@@ -9,15 +9,13 @@ import {capabilities} from '#lib/modes.js'
 import type {Channel, Deck, Track} from '#lib/types.js'
 import {viewURI, type View, type ViewSource} from '#lib/views.js'
 
-/** Max tracks fetched for client-side filtering (search, tags, channel+filter combos). */
-const MAX_CLIENT_TRACKS = 4000
 const EMPTY_STRINGS: string[] = []
 
 /**
  * Which fetch path queryView uses for a View.
- * - `channel`: one or more channels, nothing else: local query by slug, paginated there
- * - `channel-filtered`: one channel plus tags, mention or text: that channel's tracks are
- *   already loaded, so filter them here (fuzzy text) and paginate here
+ * - `channel`: one or more channels, nothing else: their full track lists, paginated here
+ * - `channel-filtered`: one channel plus tags, mention or text: the same full list,
+ *   filtered here (fuzzy text) and paginated here
  * - `remote`: everything else: sdk.searchTracks, matched, ordered, paginated and counted
  *   in the database
  * - `empty`: no source specified, returns nothing
@@ -36,9 +34,9 @@ export function resolveViewStrategy(source?: ViewSource): ViewStrategy {
 	const filtered = !!source?.tags?.length || !!source?.search?.trim() || !!source?.mention
 	if (!channels && !filtered) return 'empty'
 	if (!filtered) return 'channel'
-	// One channel's tracks are already in the browser. Several together can pass
-	// the database's 4000-row cap per response, so they go remote. Standalone
-	// builds have no database and filter whatever is loaded.
+	// One channel's tracks are already in the browser. Several together go remote,
+	// so a filter doesn't download every channel. Standalone builds have no
+	// database and filter whatever is loaded.
 	if (channels === 1 || !capabilities.globalBrowse) return 'channel-filtered'
 	return 'remote'
 }
@@ -110,7 +108,6 @@ export function queryView(getView: () => View) {
 	const channelSlugs = $derived(getView().sources[0]?.channels ?? EMPTY_STRINGS)
 	const channelSlugsKey = $derived(channelSlugs.join(','))
 	const tags = $derived(getView().sources[0]?.tags?.toSorted() ?? EMPTY_STRINGS)
-	const tagsKey = $derived(tags.join(','))
 	const searchTerm = $derived(getView().sources[0]?.search?.trim() || '')
 	const mention = $derived(getView().sources[0]?.mention ?? '')
 	const limit = $derived(getView().limit ?? 50)
@@ -125,27 +122,23 @@ export function queryView(getView: () => View) {
 		[() => channelSlugsKey]
 	)
 
-	// Channel tracks: paginated when strategy=channel, all of them when strategy=channel-filtered
+	// Both channel strategies read each channel's full track list, the same query the
+	// channel layout runs, so they share its cache entry and download nothing it already
+	// has. Filters, order and pages apply here, so changing them never refetches.
+	const local = $derived(strategy === 'channel' || strategy === 'channel-filtered')
 	const tracksQuery = useLiveQuery(
 		(q) => {
-			if (strategy !== 'channel' && strategy !== 'channel-filtered') return null
-			const fetchAll = strategy === 'channel-filtered'
+			if (!local) return null
 			return q
 				.from({tracks: tracksCollection})
-				.where(({tracks}) => inArray(tracks.slug, channelSlugs))
+				.where(({tracks}) =>
+					channelSlugs.length === 1
+						? eq(tracks.slug, channelSlugs[0])
+						: inArray(tracks.slug, channelSlugs)
+				)
 				.orderBy(({tracks}) => tracks.created_at, 'desc')
-				.limit(fetchAll ? MAX_CLIENT_TRACKS : limit)
-				.offset(fetchAll ? 0 : offset)
 		},
-		[
-			() => strategy,
-			() => channelSlugsKey,
-			() => searchTerm,
-			() => mention,
-			() => tagsKey,
-			() => limit,
-			() => offset
-		]
+		[() => local, () => channelSlugsKey]
 	)
 
 	// Everything else is one database query: channels, every tag, the mention and the
@@ -190,7 +183,7 @@ export function queryView(getView: () => View) {
 				case 'channel':
 					return processViewTracks(tracksQuery.data as Track[], getView(), {
 						inputOrder: 'created-desc'
-					})
+					}).slice(offset, offset + limit)
 				case 'channel-filtered':
 					return processViewTracks(tracksQuery.data as Track[], getView()).slice(
 						offset,
