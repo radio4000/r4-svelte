@@ -68,7 +68,7 @@ function featuredScore(channel) {
 }
 ```
 
-Quality pool: `trackCountGte: 10, imageNotNull: true, limit: 50` fetched from remote, then scored and sliced client-side. No DB changes needed.
+Quality pool (`getFeaturedPool` in `src/lib/collections/featured.ts`): channels with artwork and at least 10 tracks, active in the last 30 days, newest activity first, then scored and sliced client-side by `pickFeatured`. It is a live query on the channels collection with no order or limit, kept for an hour after its last read. No DB changes needed.
 
 `featuredScore` lives in `src/lib/utils.ts`.
 
