@@ -9,3 +9,4 @@ Gotchas:
 - Every queryFn and handler branches on `capabilities.globalBrowse` / `capabilities.mutations` (`#lib/modes.js`) — embed/standalone mode vs the full app. Easy to break.
 - `writeUpsert` accepts a single item or an array. `writeBatch` is only needed to mix operation types (insert + delete) in one atomic batch.
 - A live-query `orderBy` on a column the rows don't have (`shuffle`) ties, and insertion order wins, so rows loaded earlier for another reason (the user's follows) crowd the list, and only for signed-in users. Rank the rows yourself (`rankShuffled`) and filter on the rank with `gte`, since `isNull` doesn't match missing fields.
+- A long-lived live query with `orderBy` and `limit` on an on-demand collection refetches its whole window (plus a tie request) whenever another page unloads rows it had counted, even rows outside the window. For a pool read in the background, filter it down (`gte` on a date) instead of windowing it; see featured.ts.

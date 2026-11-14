@@ -93,6 +93,10 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 	const trackCountGte = options.filters.find(
 		(f) => f.field[0] === 'track_count' && f.operator === 'gte'
 	)?.value as number | undefined
+	// The featured pool: channels active since a day
+	const latestTrackAtGte = options.filters.find(
+		(f) => f.field[0] === 'latest_track_at' && f.operator === 'gte'
+	)?.value as string | undefined
 	const imageNotNull = options.filters.some(
 		(f) => f.field[0] === 'image' && f.operator === 'not_isNull'
 	)
@@ -119,6 +123,7 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 				f.operator === 'eq' ||
 				(f.field[0] === 'id' && f.operator === 'in') ||
 				(f.field[0] === 'track_count' && f.operator === 'gte') ||
+				(f.field[0] === 'latest_track_at' && f.operator === 'gte') ||
 				(['image', 'latitude', 'longitude'].includes(f.field[0] as string) &&
 					f.operator === 'not_isNull')
 			)
@@ -129,6 +134,7 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 		slugs,
 		idIn,
 		trackCountGte,
+		latestTrackAtGte,
 		imageNotNull,
 		latitudeNotNull,
 		longitudeNotNull,
@@ -278,6 +284,7 @@ export const channelsCollection = createCollection<Channel, string>({
 				// DB closes page-boundary ties with an equality request, without a limit.
 				for (const filter of p.equalities) query = query.eq(filter.field.join('.'), filter.value)
 				if (p.trackCountGte) query = query.gte('track_count', p.trackCountGte)
+				if (p.latestTrackAtGte) query = query.gte('latest_track_at', p.latestTrackAtGte)
 				if (p.imageNotNull) query = query.not('image', 'is', null)
 				if (p.latitudeNotNull) query = query.not('latitude', 'is', null)
 				if (p.longitudeNotNull) query = query.not('longitude', 'is', null)

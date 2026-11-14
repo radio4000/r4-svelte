@@ -28,14 +28,16 @@ export function pickFeatured(
 /** Channels kept owned after the pool was last read, like the old hour-long cache. */
 const POOL_HOLD_MS = 60 * 60 * 1000
 
-let pool: ReturnType<typeof createPool> | undefined
+const pools = new Map<string, ReturnType<typeof createPool>>()
 
 /**
- * The quality pool as a channels query: active channels with artwork and at least ten
- * tracks, the 200 most recently updated. The collection owns these rows, so channel
- * pages opened from home find them, and they stay owned for an hour after the last read.
+ * The quality pool as a channels query: channels with artwork and at least ten tracks,
+ * active since `sinceDay`. The collection owns these rows, so channel pages opened from
+ * home find them, and they stay owned for an hour after the last read. No order or limit
+ * on purpose: an ordered window refills itself from the server, refetching, whenever
+ * another page unloads channels it had counted, which was every explore and search step.
  */
-function createPool() {
+function createPool(sinceDay: string) {
 	return createLiveQueryCollection({
 		gcTime: POOL_HOLD_MS,
 		query: (q) =>
@@ -43,29 +45,34 @@ function createPool() {
 				.from({ch: channelsCollection})
 				.where(({ch}) => gte(ch.track_count, 10))
 				.where(({ch}) => not(isNull(ch.image)))
-				// Lexical, like the server: the default locale order would also load the whole set
-				.orderBy(({ch}) => ch.latest_track_at, {
-					direction: 'desc',
-					nulls: 'last',
-					stringSort: 'lexical'
-				})
-				.orderBy(({ch}) => ch.id, {direction: 'asc', stringSort: 'lexical'})
-				.limit(200)
+				.where(({ch}) => gte(ch.latest_track_at, sinceDay))
 	})
 }
 
-/** The quality channel pool, newest activity first, limited to channels active in `days`. */
+/** The quality channel pool, channels with artwork and ten tracks active in the last `days`. */
 export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 	const since = daysAgoIso(days)
+	// Whole days, so the request stays the same all day and the rows are reused
+	const sinceDay = since.slice(0, 10)
+	let pool = pools.get(sinceDay)
 	try {
-		pool ??= createPool()
+		if (!pool) {
+			// A new day replaces yesterday's pool
+			for (const old of pools.values()) void old.cleanup()
+			pools.clear()
+			pool = createPool(sinceDay)
+			pools.set(sinceDay, pool)
+		}
 		const rows = (await pool.toArrayWhenReady()) as Channel[]
-		return rows.filter((ch) => ch.latest_track_at && ch.latest_track_at >= since)
+		return rows
+			.filter((ch) => ch.latest_track_at && ch.latest_track_at >= since)
+			// Newest activity first, as the server ordered it
+			.toSorted((a, b) => (a.latest_track_at! < b.latest_track_at! ? 1 : a.latest_track_at! > b.latest_track_at! ? -1 : 0))
 	} catch (e) {
 		console.warn('[featured] failed to load channel pool', e)
 		// The next read starts over instead of waiting on a failed load
 		void pool?.cleanup()
-		pool = undefined
+		pools.delete(sinceDay)
 		return []
 	}
 }
