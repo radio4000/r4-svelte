@@ -159,8 +159,6 @@ Each needs a distinct job; fold new probes into these rather than adding pages.
 
 ## what still needs proof
 
-Runes are tested in the `dom` vitest project (`*.svelte.test.ts`, happy-dom, Svelte's client build; `vite.config.ts`): `useLiveQuery.svelte.test.ts` (load more asks only for the next page) and `views.svelte.test.ts` (a tag or search view on an open channel downloads nothing). `createQuery` needs a QueryClient in component context, so mount through a host like `src/lib/test-hosts/query-view.svelte`. Everything else runs in the `node` project as before.
-
 Still only checked by hand in the browser — keep these alive with `agent-browser` (see [browser-testing.md](browser-testing.md)):
 
 - `setQueryData` updates `createQuery` subscribers immediately

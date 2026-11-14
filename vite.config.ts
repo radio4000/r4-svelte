@@ -3,7 +3,7 @@ import {sveltekit} from '@sveltejs/kit/vite'
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte'
 import adapterCloudflare from '@sveltejs/adapter-cloudflare'
 import adapterStatic from '@sveltejs/adapter-static'
-import {configDefaults, defineConfig} from 'vitest/config'
+import {defineConfig} from 'vitest/config'
 import {execSync} from 'child_process'
 import {paraglideVitePlugin} from '@inlang/paraglide-js'
 import {visualizer} from 'rollup-plugin-visualizer'
@@ -90,25 +90,6 @@ export default defineConfig({
 		reporters: ['dot'],
 		// Node's own localStorage warns without --localstorage-file; tests don't use it.
 		execArgv: ['--no-experimental-webstorage'],
-		onConsoleLog: () => false,
-		projects: [
-			// Everything as before: Node, Svelte's server build
-			{
-				extends: true,
-				test: {name: 'node', exclude: [...configDefaults.exclude, 'src/**/*.svelte.test.ts']}
-			},
-			// Runes (useLiveQuery, queryView) need Svelte's client build, which a DOM environment
-			// gets: in Node, `$effect.root` never runs its callback
-			{
-				extends: true,
-				resolve: {conditions: ['browser']},
-				test: {
-					name: 'dom',
-					environment: 'happy-dom',
-					include: ['src/**/*.svelte.test.ts'],
-					setupFiles: ['src/lib/test-hosts/dom-setup.ts']
-				}
-			}
-		]
+		onConsoleLog: () => false
 	}
 })

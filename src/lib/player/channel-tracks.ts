@@ -46,7 +46,7 @@ type Where = NonNullable<Parameters<typeof tracksCollection.subscribeChanges>[1]
  * queryOnce alone releases its rows when it finishes, so anything that then reads the
  * collection (`tracksCollection.get(id)`, the deck display) would find them gone. Same
  * key on purpose: one refcounted owner, never two overlapping subsets with different
- * lifetimes (upstream-release-race.test.ts).
+ * lifetimes, which TanStack DB releases out of order.
  */
 async function leased<T>(key: string, where: Where, query: () => Promise<T>): Promise<T> {
 	const lease = tracksCollection.subscribeChanges(() => {}, {where, includeInitialState: true})

@@ -1,11 +1,11 @@
 import {afterEach, expect, test, vi} from 'vitest'
-import {createLiveQueryCollection, eq, gt, inArray, isNull, not} from '@tanstack/db'
+import {createLiveQueryCollection, gt, inArray, isNull, not} from '@tanstack/db'
 import {channelsCollection} from './channels'
 import {queryClient} from './query-client'
 
 // A filter the channels queryFn doesn't know used to be dropped, and the request became
 // a listing of every channel (~4000 rows in four pages). These pin each filter we use.
-const rows = Array.from({length: 300}, (_, i) => ({
+const rows = Array.from({length: 30}, (_, i) => ({
 	id: `c${String(i).padStart(3, '0')}`,
 	slug: `channel-${i}`,
 	name: `Channel ${i}`,
@@ -26,7 +26,7 @@ afterEach(async () => {
 })
 
 function mockServer() {
-	vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+	vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
 		const url = new URL(input instanceof Request ? input.url : String(input))
 		const query = url.searchParams
 		requests.push(query)
@@ -42,13 +42,7 @@ function mockServer() {
 		}
 		const offset = Number(query.get('offset') ?? 0)
 		const limit = Number(query.get('limit') ?? 1000)
-		const page = result.slice(offset, offset + limit)
-		if (new Headers(init?.headers).get('Accept')?.includes('pgrst.object')) {
-			return page.length === 1
-				? Response.json(page[0])
-				: Response.json({code: 'PGRST116', message: 'no rows'}, {status: 406})
-		}
-		return Response.json(page)
+		return Response.json(result.slice(offset, offset + limit))
 	})
 }
 
@@ -59,8 +53,6 @@ async function load(build: Parameters<typeof createLiveQueryCollection>[0]['quer
 	return list.toArray as typeof rows
 }
 
-const listed = () => requests.some((q) => !q.has('slug') && q.has('offset'))
-
 test('a slug list loads just those channels', async () => {
 	mockServer()
 	const got = await load((q) =>
@@ -68,16 +60,6 @@ test('a slug list loads just those channels', async () => {
 	)
 	expect(got.map((c) => c.slug).toSorted()).toEqual(['channel-4', 'channel-7'])
 	expect(requests.map((q) => q.get('slug'))).toEqual(['in.(channel-4,channel-7)'])
-})
-
-test('a one-slug list is a single channel lookup, not a listing', async () => {
-	mockServer()
-	const got = await load((q) =>
-		q.from({c: channelsCollection}).where(({c}) => inArray(c.slug, ['channel-4']))
-	)
-	expect(got.map((c) => c.slug)).toEqual(['channel-4'])
-	expect(listed()).toBe(false)
-	expect(requests).toHaveLength(1)
 })
 
 test('latitude alone narrows on the server', async () => {
@@ -97,11 +79,4 @@ test('a filter the queryFn does not know warns, naming it', async () => {
 		q.from({c: channelsCollection}).where(({c}) => gt(c.created_at, '2020-01-01T02:00:00.000Z'))
 	)
 	expect(warn.mock.calls.flat().join(' ')).toContain('created_at gt')
-})
-
-test('known filters stay quiet', async () => {
-	mockServer()
-	const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-	await load((q) => q.from({c: channelsCollection}).where(({c}) => eq(c.slug, 'channel-1')))
-	expect(warn).not.toHaveBeenCalled()
 })

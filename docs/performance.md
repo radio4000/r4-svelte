@@ -28,7 +28,7 @@ Read `blocking` and `worst frame` first: they're main-thread cost. `ms` includes
 
 Bench on `localhost`, never an IP like `127.0.0.1`: YouTube refuses to embed there (error 150), the deck skips through the queue, and every step that plays measures the skipping. The bench refuses IP URLs.
 
-Before benching, close dev servers and other browsers; they inflate traces by 20% or more, and the bench warns when the machine is busy. Only one bench or order test (`bun run test:order`) runs at a time across the machine: they share one lock (`perf/lock.ts`) and refuse to start while it is held. The order test's preview also refuses a port already bound on 127.0.0.1 or ::1.
+Before benching, close dev servers and other browsers; they inflate traces by 20% or more, and the bench warns when the machine is busy. Only one bench runs at a time across the machine.
 
 Agents: start the bench in the background and wait for its last line, `saved …`. Never use `pgrep -f bench` or `pkill -f "vite preview"`: both match your own shell, so one never ends and the other kills it.
 
