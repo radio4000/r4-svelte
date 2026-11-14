@@ -12,3 +12,5 @@ Preview serves the last build: stop it, rebuild, restart (rebuilding under a run
 
 - In a browser: [browser-testing](browser-testing.md)
 - Speed: [performance](performance.md)
+
+`bun run types` checks the transpiled Svelte files it leaves in `.svelte-kit/.svelte-check/` and never deletes old ones, so a renamed or removed component can report errors that no longer exist or hide real ones; when the count looks wrong, `rm -rf .svelte-kit/.svelte-check` and run it again.

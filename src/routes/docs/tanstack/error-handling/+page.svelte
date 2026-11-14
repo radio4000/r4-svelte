@@ -50,10 +50,10 @@
 		{id: 2, title: 'done row', done: true}
 	]
 
-	const localCollection = createCollection<LocalItem, number>(
+	const localCollection = createCollection(
 		localOnlyCollectionOptions({
 			id: 'tanstack-assertions-local',
-			getKey: (item) => item.id
+			getKey: (item: LocalItem) => item.id
 		})
 	)
 

@@ -8,7 +8,7 @@ import {logger} from '#lib/logger.js'
 const log = logger.ns('follows').seal()
 
 // Channel IDs the current user follows
-export const followsCollection = createCollection<{id: string}, string>(
+export const followsCollection = createCollection(
 	queryCollectionOptions({
 		queryKey: () => {
 			const userChannelId = appState.channels?.[0]
