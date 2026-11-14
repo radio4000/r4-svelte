@@ -46,7 +46,7 @@ The live `player.svelte` copies playback position and duration into `deck.media_
 
 Both make a deck follow a clock instead of its queue: `player/deck-mode.ts`, see [auto-radio.md](auto-radio.md#deck-mode).
 
-`player/playback.ts` holds playTrack, the queue loaders and the transport. `api.ts` re-exports them; code under `player/` and `broadcast.js` imports `playback.ts` directly, so nothing imports `api.ts` back.
+`player/playback.ts` holds playTrack, the queue loaders and the transport. `api.ts` re-exports them; code under `player/` and `broadcast.js` imports `playback.ts` directly, so nothing imports `api.ts` back. `src/lib` has no import cycles; keep it so: `playback.ts`, `decks.ts` and `broadcast-teardown.js` never import `broadcast.js` (it imports them).
 
 ## Layout
 

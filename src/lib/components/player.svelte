@@ -21,7 +21,6 @@
 	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '#lib/deck.js'
 	import {toAutoTracks} from '#lib/player/auto-radio.js'
 	import {modeOf, isDrifted} from '#lib/player/deck-mode.js'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
 	import {createMediaSession} from '#lib/player/media-session.svelte.js'
 	import {createStallRecovery} from '#lib/player/stall-recovery.svelte.js'
@@ -324,8 +323,6 @@
 		// Don't persist muted=true when it's a side-effect of volume reaching 0
 		if (volume > 0 || !muted) deck.muted = muted
 		log.log('volumeChange', {volume, muted})
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
 	function handleSeeked() {

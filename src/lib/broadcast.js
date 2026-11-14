@@ -4,12 +4,24 @@ import {
 	play,
 	seekTo,
 	setUserInitiatedPlay,
-	clearUserInitiatedPlay,
 	getMediaPlayer,
 	playChannel,
 	applyRemoteState
 } from '#lib/player/playback.js'
 import {appState, addDeck, removeDeck} from '#lib/app-state.svelte.js'
+import {clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
+import {
+	leaveBroadcast,
+	stopBroadcastSync,
+	stopBroadcastStateListener,
+	stopBroadcastTableListener,
+	closeListeningDecksForChannel,
+	broadcastStateListeners,
+	broadcastTableListeners,
+	lastReceivedStateSeqByChannel,
+	seekJobSeqByDeck
+} from '#lib/broadcast-teardown.js'
+import {watch} from '#lib/watch.svelte.js'
 import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection} from '#lib/collections/broadcasts.js'
@@ -31,6 +43,8 @@ import {capture} from '#lib/analytics.js'
 /** @typedef {import('#lib/types.js').Broadcast} Broadcast */
 /** @typedef {import('#lib/types.js').BroadcastDeckState} BroadcastDeckState */
 /** @typedef {ReturnType<typeof getMediaPlayer>} MediaPlayer */
+
+export {leaveBroadcast}
 
 const log = logger.ns('broadcast').seal()
 // Leave time to choose a track or recover buffering without disconnecting listeners.
@@ -75,18 +89,7 @@ const broadcastStateChannels = new Map()
  */
 const broadcastLivenessMonitors = new Map()
 
-/** Listener realtime state channels keyed by channelId
- * @type {Map<string, any>}
- */
-const broadcastStateListeners = new Map()
-
-/** Broadcast table listeners keyed by channelId (for state refresh)
- * @type {Map<string, any>}
- */
-const broadcastTableListeners = new Map()
 const broadcastStateSeqByChannel = new Map()
-const lastReceivedStateSeqByChannel = new Map()
-const seekJobSeqByDeck = new Map()
 
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {
@@ -225,25 +228,6 @@ export async function resyncBroadcastDeck(deckId) {
 	await syncDeckToBroadcastState(deckId, channelId, matchedState)
 }
 
-/** @param {number} deckId */
-export function leaveBroadcast(deckId) {
-	const channelId = appState.decks[deckId]?.listening_to_channel_id
-	stopBroadcastSync(deckId)
-	if (channelId) {
-		stopBroadcastStateListener(channelId)
-		stopBroadcastTableListener(channelId)
-		closeListeningDecksForChannel(channelId)
-	} else {
-		// Fallback: if invoked on a non-listening deck, preserve old behavior.
-		const deck = appState.decks[deckId]
-		if (deck) {
-			deck.listening_to_channel_id = undefined
-			deck.is_playing = false
-		}
-	}
-	log.log(`left deck ${deckId}`)
-}
-
 /**
  * Helper to upsert a broadcast record with full deck state.
  * @param {string} channelId
@@ -347,11 +331,6 @@ export async function startChannelBroadcast(channel, {deckId = appState.active_d
 	const deck = appState.decks[sourceDeckId]
 	if (deck) deck.broadcasting_channel_id = channel.id
 	return {ok: true}
-}
-
-/** @param {number} deckId */
-function stopBroadcastSync(deckId) {
-	seekJobSeqByDeck.delete(deckId)
 }
 
 function nextSeekJobId(deckId) {
@@ -668,15 +647,6 @@ function startBroadcastStateListener(channelId) {
 	broadcastStateListeners.set(channelId, channel)
 }
 
-function stopBroadcastStateListener(channelId) {
-	const channel = broadcastStateListeners.get(channelId)
-	if (channel) {
-		channel.unsubscribe()
-		broadcastStateListeners.delete(channelId)
-	}
-	lastReceivedStateSeqByChannel.delete(channelId)
-}
-
 function startBroadcastTableListener(channelId) {
 	if (broadcastTableListeners.has(channelId)) return
 	const channel = sdk.supabase
@@ -712,14 +682,6 @@ function startBroadcastTableListener(channelId) {
 	broadcastTableListeners.set(channelId, channel)
 }
 
-function stopBroadcastTableListener(channelId) {
-	const channel = broadcastTableListeners.get(channelId)
-	if (channel) {
-		channel.unsubscribe()
-		broadcastTableListeners.delete(channelId)
-	}
-}
-
 /**
  * True once a newer state message has superseded `seq` for this channel. Lets an
  * in-flight applyBroadcastState/syncDeckToBroadcastState call recognize — after an
@@ -731,17 +693,6 @@ function stopBroadcastTableListener(channelId) {
  */
 function isSuperseded(channelId, seq) {
 	return typeof seq === 'number' && lastReceivedStateSeqByChannel.get(channelId) !== seq
-}
-
-function closeListeningDecksForChannel(channelId) {
-	const decksToClose = Object.entries(appState.decks)
-		.filter(([, deck]) => deck.listening_to_channel_id === channelId)
-		.map(([id]) => Number(id))
-	for (const id of decksToClose) {
-		stopBroadcastSync(id)
-		clearUserInitiatedPlay(id)
-		removeDeck(id)
-	}
 }
 
 /**
@@ -919,4 +870,41 @@ if (typeof document !== 'undefined') {
 	}
 	document.addEventListener('visibilitychange', resumeBroadcastState)
 	window.addEventListener('pageshow', resumeBroadcastState)
+}
+
+// Send side: watch the broadcaster's decks instead of being called by every action.
+// Fires a microtask after a change to anything listeners receive (track, play/pause,
+// seek, volume, mute, speed, which decks are open), batched per task. A new track or
+// restart (track_played_at) also writes the table row, so late joiners see it.
+if (typeof window !== 'undefined') {
+	/** @type {string | undefined} */
+	let lastPlays
+	watch(
+		() => {
+			const channelId = getBroadcastingChannelId()
+			return channelId ? {channelId, decks: getBroadcastDeckState()} : undefined
+		},
+		(snapshot) => {
+			if (!snapshot) {
+				lastPlays = undefined
+				return
+			}
+			const {channelId, decks} = snapshot
+			notifyBroadcastState(channelId)
+			const plays = decks.map((d) => `${d.track_id}@${d.track_played_at}`).join()
+			const firstSnapshot = lastPlays === undefined
+			if (plays === lastPlays) return
+			lastPlays = plays
+			// startBroadcast already wrote the row this broadcast began with
+			if (firstSnapshot) return
+			upsertRemoteBroadcast(channelId)
+				.then(() => log.log('broadcast_auto_updated', {channelId}))
+				.catch((error) =>
+					log.error('broadcast_auto_update_failed', {
+						channelId,
+						error: /** @type {Error} */ (error).message
+					})
+				)
+		}
+	)
 }

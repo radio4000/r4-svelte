@@ -6,12 +6,8 @@
  */
 import {tick} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
-import {
-	leaveBroadcast,
-	notifyBroadcastState,
-	upsertRemoteBroadcast,
-	getBroadcastingChannelId
-} from '#lib/broadcast.js'
+import {leaveBroadcast} from '#lib/broadcast-teardown.js'
+import {setUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
 import {logger} from '#lib/logger.js'
 import {capture} from '#lib/analytics.js'
 import {shuffleArray, isDbId} from '#lib/utils.js'
@@ -19,11 +15,17 @@ import {tracksCollection} from '#lib/collections/tracks.js'
 import {channelTracks, loadChannelTracks} from '#lib/player/channel-tracks.js'
 import {openDeck} from '#lib/player/open-deck.js'
 import {capturePlayHistory} from '#lib/player/play-history.js'
-import {getDeck, maybeBroadcastNotify, clearAutoRadio} from '#lib/decks.js'
+import {getDeck, clearAutoRadio} from '#lib/decks.js'
 import {normalizeView, type View} from '#lib/views.js'
 import type {ChannelRef, Deck, PlayEndReason, PlayStartReason, Track} from '#lib/types.js'
 
 const log = logger.ns('api').seal()
+
+export {
+	getUserInitiatedPlay,
+	setUserInitiatedPlay,
+	clearUserInitiatedPlay
+} from '#lib/player/user-initiated-play.js'
 
 function isNormalPlayStart(startReason: PlayStartReason): boolean {
 	return (
@@ -51,23 +53,6 @@ export function newestFirst<T extends {created_at: string; id: string}>(tracks: 
 		.map((track) => ({track, ms: new Date(track.created_at).getTime()}))
 		.sort((a, b) => b.ms - a.ms || (a.track.id < b.track.id ? -1 : a.track.id > b.track.id ? 1 : 0))
 		.map(({track}) => track)
-}
-
-const userInitiatedPlayMap = new Map<number, boolean>()
-
-/** Get the user-initiated play flag for a deck */
-export function getUserInitiatedPlay(deckId: number) {
-	return userInitiatedPlayMap.get(deckId) ?? false
-}
-
-/** Set the user-initiated play flag for a deck */
-export function setUserInitiatedPlay(deckId: number, value: boolean) {
-	userInitiatedPlayMap.set(deckId, value)
-}
-
-/** Remove the user-initiated play flag when a deck is destroyed. */
-export function clearUserInitiatedPlay(deckId: number) {
-	userInitiatedPlayMap.delete(deckId)
 }
 
 export type MediaPlayer = HTMLElement & {
@@ -205,27 +190,7 @@ export async function playTrack(
 		deck.playlist_tracks = [...deck.playlist_tracks, id]
 	}
 
-	// Auto-update broadcast if currently broadcasting.
-	// Notify live listeners immediately via WebSocket, then persist to DB for late joiners.
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId && startReason !== 'broadcast_sync') {
-		notifyBroadcastState(broadcastingChannelId)
-		upsertRemoteBroadcast(broadcastingChannelId)
-			.then(() => {
-				log.log('broadcast_auto_updated', {
-					channelId: broadcastingChannelId,
-					trackId: id,
-					startReason
-				})
-			})
-			.catch((error) => {
-				log.error('broadcast_auto_update_failed', {
-					channelId: broadcastingChannelId,
-					trackId: id,
-					error: /** @type {Error} */ error.message
-				})
-			})
-	}
+	// Broadcast listeners hear about the new track from broadcast.js, which watches the decks.
 
 	// Wait for Svelte to update the DOM (render the player element) before calling play
 	await tick()
@@ -318,7 +283,6 @@ export async function togglePlayPause(deckId: number) {
 		}
 		// User intent was to play — always play once the element is ready
 		player.play()
-		maybeBroadcastNotify()
 		return
 	}
 	if (player.paused) {
@@ -326,16 +290,14 @@ export async function togglePlayPause(deckId: number) {
 	} else {
 		player.pause()
 	}
-	maybeBroadcastNotify()
 }
 
-/** Record a seek position and notify broadcast listeners */
+/** Record a seek position; broadcast.js sends it on to listeners when broadcasting. */
 export function recordSeekPosition(deckId: number, seconds: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.seeked_at = new Date().toISOString()
 	deck.seek_position = seconds
-	maybeBroadcastNotify()
 }
 
 /** Apply a partial remote state update to a deck (broadcast sync) */
@@ -368,14 +330,12 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 		return result
 			.then(() => {
 				log.log('play() succeeded')
-				maybeBroadcastNotify()
 			})
 			.catch((error) => {
 				if (deck) deck.is_playing = false
 				log.warn('play() was prevented:', error.message || error)
 			})
 	}
-	maybeBroadcastNotify()
 	return Promise.resolve()
 }
 
@@ -385,7 +345,6 @@ export function pause(player: MediaPlayer) {
 		return
 	}
 	player.pause()
-	maybeBroadcastNotify()
 }
 
 export function togglePlay(player: MediaPlayer) {

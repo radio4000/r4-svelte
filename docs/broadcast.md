@@ -13,8 +13,11 @@ broadcaster: appState.decks → broadcast.decks (remote) → realtime → listen
 ## Core functions
 
 - `startBroadcast` / `stopBroadcast` — broadcaster creates/removes the remote row
-- `joinBroadcast` / `leaveBroadcast` — listener subscribes/unsubscribes
+- `joinBroadcast` / `leaveBroadcast` — listener subscribes/unsubscribes (`leaveBroadcast` lives in `broadcast-teardown.js`, re-exported)
 - `upsertRemoteBroadcast` — pushes current deck state to remote (called automatically on track changes)
+
+Sending is an observer: `broadcast.js` watches the broadcaster's decks (`watch.svelte.ts`) and sends a microtask after anything listeners receive changes. Deck and playback code don't call it. Measured 2026-11-14: a track change leaves 5–10ms after the click (was 3–4ms), everything else within 1–3ms of before. Volume and speed controls still send themselves too; the observer's copy follows 0.5ms later.
+
 - `resyncBroadcastDeck` — re-syncs one drifted listener deck to current broadcast state without rebuilding the deck layout
 - `calculateSeekTime` — computes expected listener seek position from broadcast state (speed-aware)
 
@@ -46,7 +49,8 @@ In the deck player, a full-width Live mode button sits below the header and abov
 
 ## Files
 
-- `src/lib/broadcast.js` — core logic (realtime channels, join/leave, liveness)
+- `src/lib/broadcast.js` — core logic (realtime channels, join, send, liveness)
+- `src/lib/broadcast-teardown.js` — a listener's subscriptions and leaving them; imports nothing that imports it back
 - `src/lib/broadcast-utils.js` — pure wire-format and sync helpers (tested)
 - `src/lib/collections/broadcasts.js` — collection with realtime subscription
 - `src/routes/broadcast/+page.svelte` — the broadcaster's on-air view: whether your own channel is live. Not a list; anyone else, listeners included, reads "No one is broadcasting" there. Nothing links to it.

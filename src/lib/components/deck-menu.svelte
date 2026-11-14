@@ -3,7 +3,6 @@
 	import {resolve} from '$app/paths'
 	import {appState, removeDeck} from '#lib/app-state.svelte.js'
 	import {toggleVideo, toggleQueuePanel, clearUserInitiatedPlay, rejoinAutoRadio} from '#lib/api.js'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {modeOf} from '#lib/player/deck-mode.js'
 	import {trackAddSearchParams} from '#lib/track-add.js'
@@ -65,10 +64,8 @@
 	}
 
 	function closeDeck() {
-		const bchId = getBroadcastingChannelId()
 		clearUserInitiatedPlay(deckId)
 		removeDeck(deckId)
-		if (bchId) notifyBroadcastState(bchId)
 	}
 
 	function shareTrack() {

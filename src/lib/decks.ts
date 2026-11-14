@@ -1,17 +1,10 @@
 import {appState} from '#lib/app-state.svelte.js'
-import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
 import {sortedListeningDeckIds} from '#lib/deck.js'
 import {isMobileViewport} from '#lib/utils.js'
 import type {Deck} from '#lib/types.js'
 
 export function getDeck(deckId: number): Deck | undefined {
 	return appState.decks[deckId]
-}
-
-/** Notify broadcast listeners if currently broadcasting */
-export function maybeBroadcastNotify() {
-	const broadcastingChannelId = getBroadcastingChannelId()
-	if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 }
 
 /** Clear a deck's auto-radio mode flags (not auto_radio_rotation_start — callers that need a
@@ -41,7 +34,6 @@ export function toggleQueuePanel(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	deck.hide_queue_panel = !deck.hide_queue_panel
-	maybeBroadcastNotify()
 }
 
 /** Toggle video player visibility. Listening decks (tuned to the same broadcast) toggle together. */
@@ -50,7 +42,6 @@ export function toggleVideo(deckId: number) {
 	if (!deck) return
 	const newValue = !deck.hide_video_player
 	applyToListeningGroup(deck, (d) => (d.hide_video_player = newValue))
-	maybeBroadcastNotify()
 }
 
 /** Expand a deck fullscreen. Any other expanded deck returns to compact.
