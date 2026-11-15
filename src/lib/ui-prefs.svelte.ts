@@ -2,10 +2,9 @@ import {MediaQuery} from 'svelte/reactivity'
 import {appState} from '#lib/app-state.svelte.js'
 import {syncAnalyticsConsent} from '#lib/analytics.js'
 import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
+import {getTextDirection} from '#lib/paraglide/runtime.js'
 
 /** One `$effect` each, called during the root layout's init. Call order is effect order, which is behaviour. */
-
-const rtlLocales = new Set(['ar', 'ur'])
 
 /** Overwrite on every load — server is authoritative for embed mode. */
 export function applyEmbedMode(embedMode: () => boolean) {
@@ -35,7 +34,7 @@ export function applyLocaleAttributes(uiLocale: () => string) {
 	$effect(() => {
 		if (typeof document === 'undefined') return
 		document.documentElement.lang = uiLocale()
-		document.documentElement.dir = rtlLocales.has(uiLocale()) ? 'rtl' : 'ltr'
+		document.documentElement.dir = getTextDirection(uiLocale())
 	})
 }
 
