@@ -103,7 +103,7 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	return key
 }
 
-const TRACKS_STALE_MS = 5 * 60 * 1000
+const TRACKS_STALE_MS = 24 * 60 * 60 * 1000
 
 /**
  * On-demand track collection, keyed by id. Searches across channels go through
@@ -118,7 +118,7 @@ export const tracksCollection = createCollection<Track, string>({
 		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
-		// Not on focus: every pinned deck channel would redownload when the tab comes back.
+		// Kept fresh by checkTracksFreshness. Not on focus: every pinned deck channel would redownload.
 		staleTime: TRACKS_STALE_MS,
 		refetchOnWindowFocus: false,
 		queryFn: async (ctx): Promise<Track[]> => {
@@ -396,6 +396,39 @@ export function preloadChannelTracks(slug: string): void {
 			staleTime: TRACKS_STALE_MS
 		})
 		.catch((error) => log.warn('preload failed', {slug, error}))
+}
+
+const checkedAt = new Map<string, number>()
+
+/** Refetch a channel's tracks when the server's count or newest updated_at differs from the rows we hold. */
+export async function checkTracksFreshness(slug: string): Promise<boolean> {
+	const state = queryClient.getQueryState(['tracks', slug])
+	if (!capabilities.globalBrowse || state?.status !== 'success' || state.fetchStatus !== 'idle')
+		return false
+	if (Date.now() - Math.max(checkedAt.get(slug) ?? 0, state.dataUpdatedAt) < 10_000) return false
+	checkedAt.set(slug, Date.now())
+	const rows = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const localLatest = rows.reduce((max, t) => (t.updated_at && t.updated_at > max ? t.updated_at : max), '')
+
+	const {data, error, count} = await sdk.supabase
+		.from('channel_tracks')
+		.select('updated_at', {count: 'exact', head: false})
+		.eq('slug', slug)
+		.order('updated_at', {ascending: false})
+		.limit(1)
+	if (error) {
+		log.warn('freshness', {slug, error})
+		return false
+	}
+	const remoteLatest = data?.[0]?.updated_at
+	const remoteCount = count ?? 0
+
+	// Nothing on the server but rows held: a local-only (imported) channel. Invalidating would wipe it.
+	if (remoteCount === 0 && rows.length > 0) return false
+	const outdated = remoteCount !== rows.length || (!!remoteLatest && remoteLatest > localLatest)
+	log.info('freshness', {slug, held: rows.length, remote: remoteCount, outdated})
+	if (outdated) await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+	return outdated
 }
 
 /**

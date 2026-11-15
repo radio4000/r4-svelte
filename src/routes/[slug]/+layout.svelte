@@ -9,7 +9,7 @@
 	import {joinBroadcast} from '#lib/broadcast.js'
 	import {appState, canEditChannel, isLocalChannel} from '#lib/app-state.svelte.js'
 	import {tooltip} from '#lib/components/tooltip-attachment.svelte.js'
-	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {tracksCollection, checkTracksFreshness} from '#lib/collections/tracks.js'
 	import {channelsCollection} from '#lib/collections/channels.js'
 	import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 	import {shufflePlayChannel, playChannelInNewDeck, toggleChannelPlay} from '#lib/api.js'
@@ -180,6 +180,11 @@
 		return () => unwatchPresence(s)
 	})
 
+	$effect(() => {
+		const s = slug
+		if (tracksQuery.isReady) untrack(() => checkTracksFreshness(s))
+	})
+
 	// Pass tid so track-detail pages start from the viewed track.
 	async function onPlayAction() {
 		if (!channel || playLoading) return
@@ -227,6 +232,10 @@
 		}
 	})
 </script>
+
+<svelte:document
+	onvisibilitychange={() => document.visibilityState === 'visible' && checkTracksFreshness(slug)}
+/>
 
 <svelte:head>
 	{#if channel}
