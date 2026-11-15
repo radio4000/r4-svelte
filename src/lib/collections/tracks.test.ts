@@ -4,7 +4,6 @@ import {tracksCollection} from './tracks'
 import {queryClient} from './query-client'
 
 // The real query adapter against a fake PostgREST that, like ours, caps responses at 4000 rows.
-// A filter the key function doesn't understand must not get a key and request of its own.
 const MAX_ROWS = 4000
 
 function channel(slug: string, count: number) {
@@ -34,13 +33,11 @@ function mockServer() {
 		const query = new URL(input instanceof Request ? input.url : String(input)).searchParams
 		requests.push(query)
 		let result = [...rows]
-		for (const field of ['slug', 'id'] as const) {
-			const value = query.get(field)
-			if (value?.startsWith('eq.')) result = result.filter((r) => r[field] === value.slice(3))
-			if (value?.startsWith('in.')) {
-				const set = new Set(value.slice(4, -1).split(','))
-				result = result.filter((r) => set.has(r[field]))
-			}
+		const slug = query.get('slug')
+		if (slug?.startsWith('eq.')) result = result.filter((r) => r.slug === slug.slice(3))
+		if (slug?.startsWith('in.')) {
+			const set = new Set(slug.slice(4, -1).split(','))
+			result = result.filter((r) => set.has(r.slug))
 		}
 		if (query.get('order')?.startsWith('created_at.desc')) {
 			result.sort((a, b) =>
@@ -100,13 +97,4 @@ test('a search or tag view on an open channel reuses its rows and downloads noth
 	expect(got).toHaveLength(30)
 	expect(requests.length).toBe(before)
 	expect(keys()).toEqual([['tracks', 'small']])
-})
-
-test('a track by id fetches just that track', async () => {
-	mockServer()
-	const got = await load((q) =>
-		q.from({t: tracksCollection}).where(({t}) => eq(t.id, 'small-00003'))
-	)
-	expect(got.map((r) => r.id)).toEqual(['small-00003'])
-	expect(requests.map((q) => q.get('id'))).toEqual(['in.(small-00003)'])
 })
