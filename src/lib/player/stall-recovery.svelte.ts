@@ -35,7 +35,7 @@
 import {onDestroy} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
 import {play, type MediaPlayer} from '#lib/api.js'
-import {modeOf} from '#lib/player/deck-mode.js'
+import {followsClock} from '#lib/player/deck-mode.js'
 import {logger} from '#lib/logger.js'
 
 const log = logger.ns('stall-recovery').seal()
@@ -83,7 +83,7 @@ export function createStallRecovery(deckId: number, deps: StallRecoveryDeps) {
 	// when paused, or after currentTime also fails to progress during a short
 	// foreground observation.
 	$effect(() => {
-		if (modeOf(deck).followsClock) return
+		if (followsClock(deck)) return
 		let foregroundCheckTimer: ReturnType<typeof setTimeout> | undefined
 		const resume = () => {
 			clearTimeout(foregroundCheckTimer)
@@ -126,7 +126,7 @@ export function createStallRecovery(deckId: number, deps: StallRecoveryDeps) {
 	// Second line of defense — self-heals while still backgrounded. Requires two
 	// consecutive stalled samples and ignores providers that are still loading.
 	$effect(() => {
-		if (modeOf(deck).followsClock || !deck?.is_playing) return
+		if (followsClock(deck) || !deck?.is_playing) return
 		let lastTime = deps.mediaElement?.currentTime ?? 0
 		let stalledTicks = 0
 		const watchdog = setInterval(() => {

@@ -3,8 +3,10 @@
 	import {resolve} from '$app/paths'
 	import {appState, removeDeck} from '#lib/app-state.svelte.js'
 	import {toggleVideo, toggleQueuePanel, clearUserInitiatedPlay, rejoinAutoRadio} from '#lib/api.js'
+	import {leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {leaveBroadcast} from '#lib/broadcast-teardown.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
-	import {modeOf} from '#lib/player/deck-mode.js'
 	import {trackAddSearchParams} from '#lib/track-add.js'
 	import Icon from '#lib/components/icon.svelte'
 	import * as m from '#lib/paraglide/messages.js'
@@ -23,7 +25,6 @@
 	} = $props()
 
 	let deck = $derived(appState.decks[deckId])
-	const mode = $derived(modeOf(deck))
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
 	let isListeningGroupControlDeck = $derived(isGroupControlDeck(deck, deckId, listeningDeckIds))
@@ -130,7 +131,7 @@
 			<Icon icon="tv" />
 			{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 		</button>
-		{#if !mode.followsClock}
+		{#if !followsClock(deck)}
 			<button
 				onclick={() => toggleQueuePanel(deckId)}
 				class:active={!deck?.hide_queue_panel}
@@ -162,17 +163,17 @@
 		</a>
 	{/if}
 
-	{#if mode.kind === 'auto'}
+	{#if deck?.auto_radio}
 		<button
 			onclick={() => {
-				mode.leave(deckId)
+				leaveAutoRadio(deckId)
 				closeMenu?.()
 			}}
 		>
 			<Icon icon="infinite" />
 			{m.auto_radio_leave()}
 		</button>
-	{:else if autoRadioAvailable && mode.kind === 'queue'}
+	{:else if autoRadioAvailable && !isListeningToBroadcast}
 		<button
 			onclick={() => {
 				rejoinAutoRadio(deckId)
@@ -184,14 +185,14 @@
 		</button>
 	{/if}
 
-	{#if mode.kind !== 'listening'}
+	{#if !isListeningToBroadcast}
 		<button class="close-deck" onclick={closeDeck}>
 			<Icon icon="close" />
 			{m.player_tooltip_close_deck()}
 		</button>
 	{:else if isListeningGroupControlDeck}
 		<!-- Leaving closes every deck tuned to the broadcast -->
-		<button class="close-deck" onclick={() => mode.leave(deckId)}>
+		<button class="close-deck" onclick={() => leaveBroadcast(deckId)}>
 			<Icon icon="close" />
 			{m.broadcasts_leave()}
 		</button>

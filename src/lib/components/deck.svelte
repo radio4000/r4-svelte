@@ -5,7 +5,7 @@
 	import {cubicOut} from 'svelte/easing'
 	import {appState} from '#lib/app-state.svelte.js'
 	import {showPlayerParam, sortedListeningDeckIds} from '#lib/deck.js'
-	import {modeOf} from '#lib/player/deck-mode.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import Player from '#lib/components/player.svelte'
 	import QueuePanel from '#lib/components/queue-panel.svelte'
 
@@ -16,7 +16,7 @@
 	let showPlayer = $derived(showPlayerParam(page.url))
 	let isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
 	let isBroadcasting = $derived(Boolean(deck?.broadcasting_channel_id))
-	const mode = $derived(modeOf(deck))
+	let isAutoRadio = $derived(Boolean(deck?.auto_radio))
 	let firstListeningDeckId = $derived(sortedListeningDeckIds(appState.decks)[0])
 
 	// For deck 1: only show when there are tracks queued/playing or any history
@@ -115,10 +115,10 @@
 			deck: true,
 			expanded: deck?.expanded,
 			compact: deck?.compact,
-			listening: mode.kind === 'listening',
+			listening: isListeningToBroadcast,
 			'video-mix': Boolean(deck?.video_mix && isListeningToBroadcast),
 			broadcasting: isBroadcasting,
-			auto: mode.kind === 'auto',
+			auto: isAutoRadio,
 			resizing,
 			'hide-queue': deck?.hide_queue_panel,
 			'hide-video': deck?.hide_video_player
@@ -132,7 +132,7 @@
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
 			<Player {deckId} {scrollToActive} {deckEl}>
-				{#if !mode.followsClock}
+				{#if !followsClock(deck)}
 					<QueuePanel {deckId} bind:scrollToActive />
 				{/if}
 			</Player>

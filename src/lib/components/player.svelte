@@ -19,8 +19,10 @@
 	import {requestAudioKeepAlive, releaseAudioKeepAlive} from '#lib/player/audio-keepalive.js'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '#lib/deck.js'
-	import {toAutoTracks} from '#lib/player/auto-radio.js'
-	import {modeOf, isDrifted} from '#lib/player/deck-mode.js'
+	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '#lib/player/auto-radio.js'
+	import {resyncAutoRadio, leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
+	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '#lib/broadcast-utils.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
 	import {createMediaSession} from '#lib/player/media-session.svelte.js'
 	import {createStallRecovery} from '#lib/player/stall-recovery.svelte.js'
@@ -66,7 +68,6 @@
 	let {deckId, deckEl, children, scrollToActive} = $props()
 
 	let deck = $derived(appState.decks[deckId])
-	const mode = $derived(modeOf(deck))
 	let isActiveDeck = $derived(appState.active_deck_id === deckId)
 	let hasMultipleDecks = $derived(Object.keys(appState.decks).length > 1)
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
@@ -294,12 +295,12 @@
 				.catch((e) => log.error('playback_error save failed', e))
 		}
 		// Listeners follow the broadcaster; skipping locally fights the next state sync.
-		if (!mode.advancesOnEnd) return
+		if (deck?.listening_to_channel_id) return
 		next(deckId, 'youtube_error')
 	}
 
 	function handleEndTrack() {
-		if (!mode.advancesOnEnd) return
+		if (deck?.listening_to_channel_id) return
 		next(deckId, 'track_completed')
 	}
 
@@ -422,28 +423,27 @@
 		return () => releaseAudioKeepAlive(deckId)
 	})
 
-	// Drift — re-evaluates on every timeupdate (~250ms while playing)
-	/** @type {import('#lib/player/deck-mode.js').PlaybackContext} */
-	const playbackContext = {
-		get currentTime() {
-			return mediaCurrentTime
-		},
-		get track() {
-			return track
-		},
-		get autoTracks() {
-			return syncAutoTracks
-		},
-		get autoTotalDuration() {
-			return syncTotalDuration
-		}
-	}
+	// Auto-radio drift — re-evaluates on every timeupdate (~250ms while playing)
 	$effect(() => {
-		if (!deck) return
-		const drifted = isDrifted(deck, playbackContext)
-		if (drifted === undefined) return
+		if (!deck?.auto_radio || deck.auto_radio_rotation_start == null) return
+		const t = mediaCurrentTime
+		// Skip while the join/resync seek is still landing. joinAutoRadio/resyncAutoRadio
+		// set auto_radio_drifted=false immediately, but the seek settles asynchronously —
+		// evaluating in between flags a false positive on the very next timeupdate.
+		if (Date.now() - (deck.auto_radio_synced_at ?? 0) < AUTO_RADIO_SYNC_GRACE_MS) return
+		if (t < DRIFT_TOLERANCE_SECONDS) return
+		const snap = playbackState(
+			syncAutoTracks,
+			syncTotalDuration,
+			deck.auto_radio_rotation_start,
+			Date.now()
+		)
+		const drifted =
+			!snap ||
+			deck.playlist_track !== snap.currentTrack.id ||
+			Math.abs(t - snap.offsetSeconds) > DRIFT_TOLERANCE_SECONDS
 		untrack(() => {
-			if (deck) mode.setDrifted(deck, drifted)
+			if (deck) deck.auto_radio_drifted = drifted
 		})
 	})
 
@@ -452,7 +452,7 @@
 	const sharePresence = $derived(appState.user?.user_metadata?.share_presence !== false)
 	$effect(() => {
 		if (!sharePresence) return
-		const autoSlug = mode.kind === 'auto' ? deck?.playlist_slug : undefined
+		const autoSlug = deck?.auto_radio ? deck.playlist_slug : undefined
 
 		if (autoSlug) {
 			untrack(() => trackAutoRadioPresence(autoSlug, deck.view))
@@ -466,6 +466,20 @@
 			untrack(() => trackBroadcastPresence(broadcastSlug))
 			return () => untrackBroadcastPresence(broadcastSlug)
 		}
+	})
+
+	// Broadcast drift — O(1) arithmetic per tick
+	$effect(() => {
+		if (!deck?.listening_to_channel_id) return
+		const t = mediaCurrentTime
+		const tr = track
+		if (!tr) return
+		const expected = calculateSeekTime(deck, tr)
+		if (expected == null) return
+		const drifted = Math.abs(t - expected) > DRIFT_TOLERANCE_SECONDS
+		untrack(() => {
+			if (deck) deck.listening_drifted = drifted
+		})
 	})
 </script>
 
@@ -622,7 +636,7 @@
 				{mediaDuration}
 				trackDuration={track?.duration}
 				isPlaying={Boolean(deck?.is_playing)}
-				disabled={!mode.seekable}
+				disabled={isListeningToBroadcast}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					if (mediaElement) mediaElement.currentTime = val
@@ -633,11 +647,10 @@
 		<!-- 4. Channel/track info + mode info -->
 		<footer
 			class="track-panel"
-			class:active-track={Boolean(displayTrack) &&
-				!(mode.kind === 'listening' && broadcastingChannel)}
+			class:active-track={Boolean(displayTrack) && !(isListeningToBroadcast && broadcastingChannel)}
 			onclick={() => (appState.active_deck_id = deckId)}
 		>
-			{#if mode.kind === 'listening' && broadcastingChannel}
+			{#if isListeningToBroadcast && broadcastingChannel}
 				{#if displayTrack}
 					<div class="listening-track-panel active-track-bg">
 						<TrackCard
@@ -658,16 +671,16 @@
 					canEdit={Boolean(channel && canEditChannel(channel.id))}
 					menuValign="top"
 					menuAlign="end"
-					onLocate={mode.followsClock ? undefined : scrollToActive}
-					disableDoubleClickPlay={mode.followsClock}
-					linkTitleToTrack={mode.followsClock}
+					onLocate={followsClock(deck) ? undefined : scrollToActive}
+					disableDoubleClickPlay={followsClock(deck)}
+					linkTitleToTrack={followsClock(deck)}
 				/>
 			{/if}
 		</footer>
 
-		{#if mode.kind !== 'listening'}
+		{#if !isListeningToBroadcast || deck?.auto_radio}
 			<menu class="controls">
-				{#if mode.kind === 'queue'}
+				{#if !followsClock(deck)}
 					{@render btnPrev()}
 					{@render btnPlay()}
 					{@render btnNext()}
@@ -688,15 +701,16 @@
 					{#if display.autoRadioAvailable}
 						<AutoRadioButton size={14} onclick={() => rejoinAutoRadio(deckId)} />
 					{/if}
-				{:else if mode.kind === 'auto'}
+				{:else if deck?.auto_radio}
 					{@render btnPlay()}
 					<VolumeControl {deckId} />
 					<AutoRadioButton
 						live
-						drifted={mode.drifted(deck)}
+						drifted={!!deck?.auto_radio_drifted}
 						size={14}
 						count={headerPresenceCount}
-						onclick={() => (mode.drifted(deck) ? mode.resync(deckId) : mode.leave(deckId))}
+						onclick={() =>
+							deck?.auto_radio_drifted ? resyncAutoRadio(deckId) : leaveAutoRadio(deckId)}
 					/>
 				{/if}
 			</menu>

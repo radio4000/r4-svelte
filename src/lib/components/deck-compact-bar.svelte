@@ -16,7 +16,8 @@
 	import {isDbId, isMobileViewport} from '#lib/utils.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
-	import {modeOf} from '#lib/player/deck-mode.js'
+	import {resyncAutoRadio, leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '#lib/paraglide/messages.js'
@@ -36,7 +37,6 @@
 	let {deckId, showEdgeControls = true} = $props()
 
 	let deck = $derived(appState.decks[deckId])
-	const mode = $derived(modeOf(deck))
 	let listeningDeckIds = $derived(sortedListeningDeckIds(appState.decks))
 	let isListeningGroupControlDeck = $derived(isGroupControlDeck(deck, deckId, listeningDeckIds))
 
@@ -100,7 +100,7 @@
 				mediaDuration={deck?.media_duration ?? NaN}
 				trackDuration={displayTrack?.duration}
 				isPlaying={Boolean(deck?.is_playing)}
-				disabled={!mode.seekable}
+				disabled={Boolean(deck?.listening_to_channel_id)}
 				onseek={(val) => {
 					if (deck) deck.media_current_time = val
 					const mediaElement = getMediaPlayer(deckId)
@@ -143,11 +143,11 @@
 					{/if}
 				</div>
 			</div>
-			{#if !mode.followsClock}
+			{#if !followsClock(deck)}
 				<SpeedControl {deckId} {provider} />
 			{/if}
 			<menu class="deck-transport">
-				{#if mode.kind === 'queue'}
+				{#if !followsClock(deck)}
 					<button
 						onclick={() => previous(deckId, 'user_prev')}
 						aria-label={m.player_compact_prev()}
@@ -194,7 +194,7 @@
 					{#if display.autoRadioAvailable}
 						<AutoRadioButton size={14} onclick={() => rejoinAutoRadio(deckId)} />
 					{/if}
-				{:else if mode.kind === 'auto'}
+				{:else if deck?.auto_radio}
 					<button
 						class="play"
 						class:active={deck?.is_playing}
@@ -212,10 +212,11 @@
 					<VolumeControl {deckId} />
 					<AutoRadioButton
 						live
-						drifted={mode.drifted(deck)}
+						drifted={!!deck?.auto_radio_drifted}
 						size={14}
 						count={modePresenceCount}
-						onclick={() => (mode.drifted(deck) ? mode.resync(deckId) : mode.leave(deckId))}
+						onclick={() =>
+							deck?.auto_radio_drifted ? resyncAutoRadio(deckId) : leaveAutoRadio(deckId)}
 					/>
 				{:else if !deck?.listening_to_channel_id}
 					<VolumeControl {deckId} />
