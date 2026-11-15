@@ -2,8 +2,7 @@ import {capture} from '#lib/analytics.js'
 import {uuid} from '#lib/utils.js'
 import type {Deck, PlayEndReason, PlayStartReason, Track} from '#lib/types.js'
 
-/** Capture track_end for the track being left and track_play for the one starting, and
- *  reset the deck's listen counters. Runs in playTrack before deck.playlist_track changes. */
+/** Must run before deck.playlist_track changes. */
 export function capturePlayHistory(
 	deck: Deck,
 	track: Track,

@@ -13,7 +13,6 @@
 	const trackMediaId = $derived(detail.trackMediaId)
 	const trackProvider = $derived(detail.trackProvider)
 
-	// Same media across channels. The collection fetches it by media_id itself.
 	const relatedQuery = useLiveQuery((q) =>
 		q.from({t: tracksCollection}).where(({t}) => eq(t.media_id, trackMediaId || ''))
 	)

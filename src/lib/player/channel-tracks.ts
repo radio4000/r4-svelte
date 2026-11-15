@@ -2,23 +2,17 @@ import {eq, queryOnce} from '@tanstack/db'
 import {tracksCollection} from '#lib/collections/tracks.js'
 import type {Track} from '#lib/types.js'
 
-/** The loaded tracks of one channel, scanned from the local tracks collection (unordered). */
+/** Unordered. */
 export function channelTracks(slug: string | undefined): Track[] {
 	return [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
 }
 
-/** Subsets a deck keepalive pin owns on a door's own key (`slug:x` or `id:x`), per pin. */
 const pinned = new Map<string, number>()
-/** Leases waiting for such a pin, by the same key. */
 const waiting = new Map<string, Set<() => void>>()
 
 /**
- * The deck keepalive (tracks-keepalive.svelte) calls this when it pins one channel or one
- * track, and the returned function when the pin goes. Such a pin is on the door's own
- * query key, so it owns the rows from the moment it subscribes, and a door lease on the
- * same channel or track hands over then. Pins on several channels or tracks have keys of
- * their own and don't call this. (A subscription's `status` stays 'ready' while its subset
- * loads, so it can't tell us when such a pin has its rows.)
+ * Hands a lease over to a pin on the same key. Needed because a subscription's `status`
+ * stays 'ready' while its subset loads, so it can't say when the pin has its rows.
  */
 export function holdPin(pin: {slug: string} | {id: string}): () => void {
 	const key = 'slug' in pin ? `slug:${pin.slug}` : `id:${pin.id}`
@@ -31,22 +25,13 @@ export function holdPin(pin: {slug: string} | {id: string}): () => void {
 	}
 }
 
-/**
- * Ceiling on a lease no pin takes over: a load that ends in no deck (no tracks, a page
- * that only reads the rows), or in a queue pinned by several channels or ids. Then the
- * rows go back to on-demand GC.
- */
 const LEASE_CEILING_MS = 30_000
 
 type Where = NonNullable<Parameters<typeof tracksCollection.subscribeChanges>[1]>['where']
 
 /**
- * Run a one-shot query while a lease on the same subset holds its rows, then keep the
- * lease until a deck pin on that subset takes over (`holdPin`) or LEASE_CEILING_MS.
- * queryOnce alone releases its rows when it finishes, so anything that then reads the
- * collection (`tracksCollection.get(id)`, the deck display) would find them gone. Same
- * key on purpose: one refcounted owner, never two overlapping subsets with different
- * lifetimes, which TanStack DB releases out of order.
+ * queryOnce releases its rows when it finishes; the lease keeps them until a pin takes over.
+ * Same key on purpose: TanStack drops rows when two overlapping subsets release out of order.
  */
 async function leased<T>(key: string, where: Where, query: () => Promise<T>): Promise<T> {
 	const lease = tracksCollection.subscribeChanges(() => {}, {where, includeInitialState: true})
@@ -72,11 +57,6 @@ async function leased<T>(key: string, where: Where, query: () => Promise<T>): Pr
 	return result
 }
 
-/**
- * All of a channel's tracks, newest first, for player code outside components. Goes
- * through the collection's own query on `['tracks', slug]`, the key the channel page and
- * the deck pin use, so a channel already open or cached downloads nothing.
- */
 export function loadChannelTracks(slug: string): Promise<Track[]> {
 	return leased(
 		`slug:${slug}`,
@@ -92,11 +72,6 @@ export function loadChannelTracks(slug: string): Promise<Track[]> {
 	)
 }
 
-/**
- * One track by id, for player code outside components; undefined if it doesn't exist.
- * Goes through the collection's own query on `['tracks', 'ids', id]`, the key of a deck's
- * current-track pin, so a track already loaded costs no request.
- */
 export function loadTrack(id: string): Promise<Track | undefined> {
 	return leased(
 		`id:${id}`,

@@ -32,8 +32,7 @@
 		if (!slugKey) return
 		const list = slugKey.split(',')
 		if (list.length > 1) return pin((t) => inArray(t.slug, list))
-		// One channel is on loadChannelTracks' key, so this pin owns the rows from the moment
-		// it subscribes: take them over from that door's lease (channel-tracks.ts).
+		// Same key as loadChannelTracks: take the rows over from its lease
 		return both(
 			pin((t) => eq(t.slug, list[0])),
 			holdPin({slug: list[0]})
@@ -44,7 +43,7 @@
 		if (!idKey) return
 		const list = idKey.split(',')
 		if (list.length > 1) return pin((t) => inArray(t.id, list))
-		// One track (the current-track pin) is on loadTrack's key: same hand-over
+		// Same key as loadTrack: same hand-over
 		return both(
 			pin((t) => inArray(t.id, list)),
 			holdPin({id: list[0]})

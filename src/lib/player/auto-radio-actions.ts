@@ -57,8 +57,7 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	const snap = playbackState(shuffled, totalDuration, rotationStartUnix, Date.now())
 	if (!snap) return
 
-	// No deck open (all closed, or a broadcast just left): open one now, as playTrack would.
-	// Otherwise the playlist below lands nowhere and playTrack queues the channel newest-first.
+	// Without a deck the playlist below lands nowhere and playTrack queues newest-first.
 	if (!getDeck(deckId)) deckId = openDeck({compact: true, activate: true}).id
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
@@ -122,7 +121,6 @@ export async function resyncAutoRadio(deckId: number) {
 	if (!slug) return
 	const rotationStartUnix = deck.auto_radio_rotation_start
 
-	// Re-filter the channel using the same view as joinAutoRadio
 	const filtered = processViewTracks(await loadChannelTracks(slug), view)
 	const autoTracks = toAutoTracks(filtered)
 	if (!autoTracks.length) return

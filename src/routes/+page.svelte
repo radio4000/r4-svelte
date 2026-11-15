@@ -113,7 +113,6 @@
 	const userChannelTrackCount = $derived(userChannel?.track_count ?? 0)
 	const showTrackWidget = $derived(userChannelTrackCount > 0)
 
-	// Loads the whole channel by itself, on the key the channel page and player share
 	const channelTracksQuery = useLiveQuery((q) =>
 		userChannel?.slug
 			? q.from({t: tracksCollection}).where(({t}) => eq(t.slug, userChannel.slug))

@@ -3,8 +3,7 @@ import {createLiveQueryCollection, gt, inArray, isNull, not} from '@tanstack/db'
 import {channelsCollection} from './channels'
 import {queryClient} from './query-client'
 
-// A filter the channels queryFn doesn't know used to be dropped, and the request became
-// a listing of every channel (~4000 rows in four pages). These pin each filter we use.
+// An unknown filter must not turn the request into a listing of every channel.
 const rows = Array.from({length: 30}, (_, i) => ({
 	id: `c${String(i).padStart(3, '0')}`,
 	slug: `channel-${i}`,

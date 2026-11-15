@@ -1,5 +1,4 @@
-/** Per-deck "the user asked for this to play" flag, read by player.svelte to decide autoplay.
- *  Its own module so listener teardown can clear it without importing playback.ts. */
+/** Per-deck "the user asked for this to play" flag. Must not import playback.ts. */
 const userInitiatedPlayMap = new Map<number, boolean>()
 
 /** Get the user-initiated play flag for a deck */

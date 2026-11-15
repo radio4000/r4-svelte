@@ -41,12 +41,6 @@ agent-browser snapshot
 
 If the snapshot shows the homepage, you're ready.
 
-### Before/after builds
-
-To compare two revisions without touching the checkout or a running preview, export each to /tmp (`git archive <commit> | tar -x -C <dir>`), symlink `node_modules`, copy `.env*`, build and `vite preview --port <free port>`. The copy needs a `.git` (`git init` and one empty commit): `vite.config.ts` runs `git rev-parse HEAD` and the build fails without it.
-
-The agent-browser network log (`network requests`) can miss requests made after an in-app click. Read the page's own resource timing instead: `performance.clearResourceTimings()` before the click, then `performance.getEntriesByType('resource')`.
-
 ### Internal state
 
 The app exposes `window.r5` in the browser console. Cross-check UI against internal state:
@@ -102,7 +96,7 @@ agent-browser eval "window.r5.api.playChannelInNewDeck({id:'<id-b>', slug:'chann
 # active flips to it via window.r5.decks(), not that audio resumed.
 ```
 
-Broadcast needs two sessions (`--session a`, `--session b`). Move the broadcaster with in-app clicks only: a full page load (`open`) ends its broadcast on unload.
+Broadcast needs two sessions (`--session a`, `--session b`); move the broadcaster with in-app clicks only, as a full page load ends its broadcast.
 
 Keep decks muted while testing: `eval "Object.values(window.r5.appState.decks).forEach(d => d.muted = true)"`.
 

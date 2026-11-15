@@ -93,11 +93,7 @@ export function parseTrackTxt(content: string): {title: string; description: str
 	return {title, description, url}
 }
 
-/**
- * Give tracks without dates (playlists, folders) the import time, a second apart in list
- * order, so the first track sorts newest. Lists group tracks by `created_at` month and
- * crash without one.
- */
+/** Undated tracks get the import time, a second apart. Lists group by `created_at` month and crash without one. */
 function stampImported(tracks: Track[]): Track[] {
 	const now = Date.now()
 	return tracks.map((t, i) => {
@@ -175,7 +171,7 @@ function dateSuffix(isoDate: string | null | undefined): string {
 	return new Date(isoDate).toISOString().slice(0, 10).replace(DASH_RE, '')
 }
 
-/** Start channelsCollection's sync so its state can be read. On-demand, so it loads no rows itself. */
+/** On-demand, so starting the sync loads no rows itself. */
 async function ensureChannelsReady(): Promise<void> {
 	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 }

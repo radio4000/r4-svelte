@@ -37,9 +37,8 @@ export async function load({url, route, params}) {
 	}
 
 	// Fetch only on the server; the browser reads the collections, and on hydration
-	// +layout.svelte reuses the server's data via hydratable(). In the browser, start the
-	// layout's tracks query so a hover (data-sveltekit-preload-data) warms the channel; not
-	// awaited, so a click never waits on it and the page joins the request in flight.
+	// +layout.svelte reuses the server's data via hydratable(). Not awaited: a click never
+	// waits on the preload.
 	if (browser) {
 		preloadChannelTracks(params.slug)
 		return {view: viewFromUrl(url), channel: null, tracks: []}

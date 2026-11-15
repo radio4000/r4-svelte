@@ -33,14 +33,12 @@
 
 	const filterParam = $derived(data.filter)
 
-	// Recent pages grow by LIMIT; switching filters starts over
 	let limit = $state(LIMIT)
 	$effect(() => {
 		void filterParam
 		limit = LIMIT
 	})
 
-	// Featured reads the newest tracks of the featured channel pool
 	let featuredSlugs = $state(/** @type {string[] | null} */ (null))
 	$effect(() => {
 		if (filterParam !== 'featured' || featuredSlugs) return

@@ -108,8 +108,7 @@ export function inIdOrder(
 	ids: string[],
 	fallback: (id: string) => Track | undefined = () => undefined
 ): Track[] {
-	// A plain lookup built per call, never stored or read reactively
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- per-call lookup, not reactive
 	const byId = new Map(rows.map((t) => [t.id, t]))
 	return ids.flatMap((id) => byId.get(id) ?? fallback(id) ?? [])
 }
@@ -129,7 +128,7 @@ export function queryView(getView: () => View) {
 	const channelsQuery = useLiveQuery(
 		(q) => {
 			if (!channelSlugs.length) return null
-			// One slug asks exactly what the channel layout asks, so they share one cache entry
+			// eq for one slug: the channel layout's query, so they share one cache entry
 			return q
 				.from({c: channelsCollection})
 				.where(({c}) =>
@@ -139,9 +138,8 @@ export function queryView(getView: () => View) {
 		[() => channelSlugsKey]
 	)
 
-	// Both channel strategies read each channel's full track list, the same query the
-	// channel layout runs, so they share its cache entry and download nothing it already
-	// has. Filters, order and pages apply here, so changing them never refetches.
+	// The channel layout's query, so they share its cache entry. Filters, order and pages
+	// apply here, so changing them never refetches.
 	const local = $derived(strategy === 'channel' || strategy === 'channel-filtered')
 	const tracksQuery = useLiveQuery(
 		(q) => {
@@ -191,9 +189,8 @@ export function queryView(getView: () => View) {
 		placeholderData: keepPreviousData
 	}))
 
-	// The search returns ids in the server's order; the rows are read back from the
-	// collection, so an edit to a track shows here too. Querying by id also owns the
-	// rows, so leaving a channel page can't evict a result still on screen.
+	// Rows read back by id: edits show here, and owning them keeps a channel page's
+	// unmount from evicting a result still on screen.
 	const remoteIds = $derived((remoteQuery.data?.ids ?? EMPTY_STRINGS) as string[])
 	const remoteIdsKey = $derived(remoteIds.join(','))
 	const remoteRowsQuery = useLiveQuery(

@@ -1,25 +1,18 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: matches @tanstack/svelte-db signature which uses `any`
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Copy of @tanstack/svelte-db useLiveQuery (1.0.0-rc.1.5), kept close to upstream so it diffs cleanly.
-// Like upstream: a limit/offset change moves the window of the same live query in place
-// (`previousCollection` + `onWindowChange`, applied in $effect.pre), and the subscribing
-// effect reruns only when the collection changes. Our changes, each still needed in rc.1.5:
+// Our changes:
 //
 // - rows live in one $state.raw snapshot instead of deep $state + a SvelteMap patched per change.
-//   Upstream still deep-proxies, so one delete in a 2.6k-track channel hands every TrackCard
-//   a "new" track and re-renders them all. `state` is read lazily off the snapshot.
-// - observer mode is wholesale: we re-read the snapshot on each notification, which is what
-//   that mode is for. Granular (upstream's default) also subscribes with initial state and
-//   delivers change lists we'd discard, and fed a direct on-demand collection it asks for an
-//   unfiltered load (for channels: every channel).
-// - when the query itself changes (slug A to B, not just its window), the previous observer
-//   stays subscribed until the new one is ready. Upstream disposes it at once, which releases
-//   rows the new query is still fetching (r4-svelte-freshup/upstream-tanstack-report.md).
+//   Deep state hands every TrackCard a "new" track on each sync. `state` is read lazily off the snapshot.
+// - observer mode is wholesale. Granular mode asks a direct on-demand collection for an unfiltered load.
+// - when the query changes (not just its window), the previous observer stays subscribed until the
+//   new one is ready; disposing it at once releases rows the new query is still fetching.
 // - every write in the observer callback is untracked. The callback can fire during $derived
 //   evaluation (invalidateQueries → collection update → graph flush → emit), where a bare $state
-//   write throws state_unsafe_mutation. Upstream still writes `metadata` outside untrack.
+//   write throws state_unsafe_mutation.
 // - the initial snapshot ignores DbProvider `hydrating`: upstream reads it via `useDbContext`,
-//   which svelte-db still doesn't export. We use no DbProvider, so the server snapshot is SSR-only.
+//   which svelte-db doesn't export. We use no DbProvider, so the server snapshot is SSR-only.
 // - `livequery:*` perf spans (#lib/perf.js)
 import {untrack} from 'svelte'
 import {
@@ -106,7 +99,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	const contextDbClient = useOptionalDbClient()
 	// Source Collection IDs this hook's client-backed queries read, kept until it unmounts.
 	const sourceIdClaims = createLiveQuerySourceIdClaims()
-	// The last resolution: a limit/offset change keeps its Collection and moves the window.
+	// A limit/offset change keeps the previous Collection and moves its window.
 	let previous: any
 
 	const resolved = $derived.by(() => {
@@ -290,19 +283,19 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	}
 
-	// A window move keeps the Collection; apply it outside the derived, as upstream does
+	// Outside the derived, as upstream does
 	$effect.pre(() => {
 		const next = resolved
 		untrack(() => next.move?.())
 	})
 
-	// What the observer is bound to: a window move changes `resolved` but not this
+	// A window move changes `resolved` but not this
 	const observerInput = $derived.by(() => {
 		const next = resolved
 		return next.client ? next : next.collection
 	})
 
-	// Subscribe when the Collection (or client page identity) changes
+	// Watch for collection changes and subscribe to updates
 	$effect(() => {
 		void observerInput
 		// Resuming a collection can read app state; only `observerInput` may rerun this effect.

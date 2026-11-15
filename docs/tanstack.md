@@ -4,12 +4,7 @@ Radio4000 notes, not TanStack API docs. Load the TanStack skills first; keep thi
 
 ## skills
 
-Install and list them, then load the one that fits the task:
-
-```bash
-bunx @tanstack/intent@latest install
-bunx @tanstack/intent@latest list
-```
+Read the one that fits the task:
 
 | task                                                           | load                                                                     |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -59,7 +54,7 @@ For on-demand collections, push filtering into the live query when you can. For 
 
 `queryClient.fetchQuery()` and `prefetchQuery()` write to Query cache only. If the UI needs collection data, either let `useLiveQuery` drive the fetch, write rows in with `utils.writeUpsert`/`writeBatch`, or preload the collection in a route loader.
 
-One named exception: `preloadChannelTracks` (`tracks.ts`, called from `[slug]/+layout.ts`) prefetches the collection's own `['tracks', slug]` key with the fetch its queryFn makes. It only warms the cache for the layout's live query; a `queryOnce` there sorted the whole channel a second time on every click (home→channel worst frame 203→267ms), so don't turn it back into a live query.
+One named exception: `preloadChannelTracks` (`tracks.ts`, called from `[slug]/+layout.ts`) prefetches the collection's own `['tracks', slug]` key with the fetch its queryFn makes. It only warms the cache for the layout's live query; a live query there would sort the whole channel a second time on every click.
 
 ### mutation handlers must write server rows back
 
@@ -141,7 +136,7 @@ Caveats learned the hard way:
 
 - Paged channel views accumulate `limit = currentPage * pageSize` and `.slice()` locally. DB can also request continuation windows with a nonzero offset; `channels.ts` returns exactly that window. TanStack Query caches each filter/sort/window separately.
 - An unbounded request is authoritative for its whole filter. Returning a default page (formerly 20 channels) can evict rows belonging to other paged queries. Explore uses lexical ordering matching the server and a unique ID tie-breaker; the default locale string ordering can trigger unbounded requests.
-- A function `queryKey` must encode exactly what its `queryFn` fetches: two subsets that share a key must get the same rows. `tracks.ts` used to drop the boundary `eq(created_at)` tie check from the key, so a 10-row window downloaded the whole channel.
+- A function `queryKey` must encode exactly what its `queryFn` fetches: two subsets that share a key must get the same rows.
 - A change of only `.limit()`/`.offset()` on an ordered query moves the window of the same live query collection: it stays `ready` and asks the server for the next page only (`offset`) — if the source has an index on the order field (`autoIndex: 'eager'`, as tracks and channels do); without one DB asks for the whole prefix again, so read `collection.isLoadingSubset` / the `loadingSubset:change` event for a "loading more" state (`explore/tracks/[filter]`). Any other change builds a new live query collection; the old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
 
 ### keepalive pin

@@ -44,9 +44,9 @@ The homepage adapts to who is logged in and what they follow.
 
 ### Feed
 
-The feed is not on the homepage. It lives at `/explore/tracks/network` (the "Feed" chip on the explore tracks pages; `/feed` and `/explore/feed` redirect there). It is a **reverse-chronological track timeline from followed channels**: what curators you follow have been adding recently. Conceptually a social reading list for music, not a recommendation engine.
+The feed is not on the homepage. It lives at `/explore/tracks/network`. It is a **reverse-chronological track timeline from followed channels**: what curators you follow have been adding recently. Conceptually a social reading list for music, not a recommendation engine.
 
-It shows every track your followed channels added in the last 30 days, grouped by day. A live query on the tracks collection loads them, one request per 50 followed channels, whether or not you have visited those channels. Signed out, or following nobody, it shows an empty state.
+It shows every track your followed channels added in the last 30 days, grouped by day, whether or not you have visited those channels.
 
 ## Featured channels algorithm
 
@@ -68,7 +68,7 @@ function featuredScore(channel) {
 }
 ```
 
-Quality pool (`getFeaturedPool` in `src/lib/collections/featured.ts`): channels with artwork and at least 10 tracks, active in the last 30 days, newest activity first, then scored and sliced client-side by `pickFeatured`. It is a live query on the channels collection with no order or limit, kept for an hour after its last read. No DB changes needed.
+Quality pool (`getFeaturedPool`): channels with artwork and at least 10 tracks, active in the last 30 days, then scored and sliced client-side. No DB changes needed.
 
 `featuredScore` lives in `src/lib/utils.ts`.
 

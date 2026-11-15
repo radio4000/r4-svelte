@@ -1,9 +1,4 @@
-/**
- * Deck playback primitives: find a deck's media element, play a track or channel into a
- * deck, load its queue, and the transport (play, pause, seek). Moved out of api.ts, which
- * re-exports all of it, so the deck modes (auto-radio, broadcast listening) can use them
- * without importing api.ts back.
- */
+/** Deck playback primitives. Never import api.ts here: it re-exports this module. */
 import {tick} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
 import {leaveBroadcast} from '#lib/broadcast-teardown.js'
@@ -45,9 +40,7 @@ function sameStringArray(a: string[], b: string[]): boolean {
 	return a === b || (a.length === b.length && a.every((value, index) => value === b[index]))
 }
 
-/** Tracks by created_at, newest first, ties by id: the server's order, whichever way the
- *  rows arrived. Parses each date once rather than per comparison, which cost ~50ms per
- *  play on a 2.6k-track channel at 4x CPU. */
+/** The server's order: newest first, ties by id. Parses each date once, not per comparison. */
 export function newestFirst<T extends {created_at: string; id: string}>(tracks: T[]): T[] {
 	return tracks
 		.map((track) => ({track, ms: new Date(track.created_at).getTime()}))
@@ -190,8 +183,6 @@ export async function playTrack(
 		deck.playlist_tracks = [...deck.playlist_tracks, id]
 	}
 
-	// Broadcast listeners hear about the new track from broadcast.js, which watches the decks.
-
 	// Wait for Svelte to update the DOM (render the player element) before calling play
 	await tick()
 	const player = await waitForMediaPlayer(deckId)
@@ -292,7 +283,7 @@ export async function togglePlayPause(deckId: number) {
 	}
 }
 
-/** Record a seek position; broadcast.js sends it on to listeners when broadcasting. */
+/** Record a seek position and notify broadcast listeners */
 export function recordSeekPosition(deckId: number, seconds: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return

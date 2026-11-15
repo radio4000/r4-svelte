@@ -3,11 +3,7 @@ import {appState} from '#lib/app-state.svelte.js'
 import {syncAnalyticsConsent} from '#lib/analytics.js'
 import {applyCustomCssVariables} from '#lib/apply-css-variables.js'
 
-/**
- * The root layout's preference effects, one function per effect. Each registers a single
- * `$effect` and must be called during component init of `+layout.svelte`, in the order the
- * layout lists them: effect order is behaviour.
- */
+/** One `$effect` each, called during the root layout's init. Call order is effect order, which is behaviour. */
 
 const rtlLocales = new Set(['ar', 'ur'])
 

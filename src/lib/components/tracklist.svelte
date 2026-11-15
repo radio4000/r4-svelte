@@ -176,8 +176,7 @@
 		const groups = new Map()
 		let index = 0
 		for (const track of tracks) {
-			// Extract year/month from ISO string (fast, avoids Date object creation).
-			// A track without a date (an old import) goes in a group headed "—".
+			// Extract year/month from ISO string (fast, avoids Date object creation)
 			const createdAt = track.created_at ?? ''
 			const year = createdAt.slice(0, 4)
 			const monthIndex = parseInt(createdAt.slice(5, 7), 10) - 1

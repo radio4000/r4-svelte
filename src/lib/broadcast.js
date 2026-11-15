@@ -408,7 +408,6 @@ async function playBroadcastTrack(deckId, broadcast) {
 			tracksCollection.utils.writeUpsert(track)
 			log.log('play_broadcast_ephemeral', {track_id, url: track.url})
 		} else {
-			// Track not loaded: the collection fetches it by id
 			try {
 				track = await loadTrack(track_id)
 				if (!track) throw new Error(`Track ${track_id} not found`)
@@ -872,10 +871,8 @@ if (typeof document !== 'undefined') {
 	window.addEventListener('pageshow', resumeBroadcastState)
 }
 
-// Send side: watch the broadcaster's decks instead of being called by every action.
-// Fires a microtask after a change to anything listeners receive (track, play/pause,
-// seek, volume, mute, speed, which decks are open), batched per task. A new track or
-// restart (track_played_at) also writes the table row, so late joiners see it.
+// Send side: watches the broadcaster's decks. A new track or restart also writes the
+// table row, so late joiners see it.
 if (typeof window !== 'undefined') {
 	/** @type {string | undefined} */
 	let lastPlays

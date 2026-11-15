@@ -34,19 +34,12 @@ export function normalizeTrackMedia<
 
 type LoadSubsetOptions = Parameters<typeof parseLoadSubsetOptions>[0] & {offset?: number}
 
-/**
- * What a track subset asks the server for. Exactly what `getTrackQueryKey` encodes and
- * the queryFn fetches, so one key always means one answer.
- */
+/** One key, one answer: `getTrackQueryKey` and the queryFn must agree on these. */
 type TrackQueryParams = {
-	/**
-	 * One slug is a channel and shares the channel's `['tracks', slug]` key. None means
-	 * every channel, fetched only with a window or a created_at filter, never whole.
-	 */
 	slugs?: string[]
 	ids?: string[]
 	mediaId?: string
-	/** DB's tie check at a page boundary: the rows sharing the last row's created_at. */
+	/** TanStack DB's tie request at a page boundary. */
 	createdAt?: string
 	createdAfter?: string
 	limit?: number
@@ -54,10 +47,8 @@ type TrackQueryParams = {
 }
 
 /**
- * Read the filters, order and window a live query pushes down. A window (limit/offset)
- * is only kept when the server can serve it as asked: newest first and no filter we
- * don't fetch by. Otherwise we fetch the whole matching set, a superset the live query
- * narrows locally.
+ * Keeps limit/offset only when the server can serve them as asked (newest first, every
+ * filter known); otherwise fetches the superset and the live query narrows it.
  */
 function parseTrackParams(opts: LoadSubsetOptions): TrackQueryParams {
 	const {filters, sorts, limit} = parseLoadSubsetOptions(opts)
@@ -86,7 +77,7 @@ function parseTrackParams(opts: LoadSubsetOptions): TrackQueryParams {
 	return params
 }
 
-/** Query key for a subset. Ids win over media_id over slugs, the same precedence as the queryFn. */
+/** Same precedence as the queryFn: ids, then media_id, then slugs. */
 function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	if (params.ids) return ['tracks', 'ids', ...params.ids.toSorted()]
 	if (params.mediaId !== undefined) return ['tracks', 'media', params.mediaId]
@@ -102,10 +93,8 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	return key
 }
 
-/** How long a track subset is trusted before the next reader refetches it. */
 const TRACKS_STALE_MS = 5 * 60 * 1000
 
-/** Every channel's newest tracks: a window or a created_at filter, never the whole table. */
 function isGlobal(params: TrackQueryParams): boolean {
 	return (
 		!params.slugs?.length &&
@@ -116,9 +105,7 @@ function isGlobal(params: TrackQueryParams): boolean {
 }
 
 /**
- * On-demand track collection, keyed by id. Fetched by slug (a channel, all of it unless a
- * window is asked for), by id (one track or a keep-alive pin) or by media_id; see
- * `parseTrackParams`/`getTrackQueryKey`. Searches across channels go through
+ * On-demand track collection, keyed by id. Searches across channels go through
  * sdk.search.searchTracks in queryView, which writes its results in here.
  */
 export const tracksCollection = createCollection<Track, string>({
@@ -130,9 +117,7 @@ export const tracksCollection = createCollection<Track, string>({
 		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
-		// A subset opened within 5 minutes is trusted as is. After that, the next reader to
-		// mount it shows the cached rows and refetches them in the background. Not on window
-		// focus: every pinned deck channel would redownload each time the tab comes back.
+		// Not on focus: every pinned deck channel would redownload when the tab comes back.
 		staleTime: TRACKS_STALE_MS,
 		refetchOnWindowFocus: false,
 		queryFn: async (ctx): Promise<Track[]> => {
@@ -155,9 +140,7 @@ export const tracksCollection = createCollection<Track, string>({
 				return all
 			}
 
-			// Id-based: keep-alive pins (e.g. a deck's queue) and single-track readers. Return
-			// rows already in the collection; only fetch ids that aren't loaded yet. This owns
-			// those rows so on-demand GC won't evict them while the pin is subscribed.
+			// Return the loaded rows too: owning them keeps on-demand GC off them while pinned.
 			if (params.ids?.length) {
 				const idSet = new Set(params.ids)
 				const present = [...tracksCollection.state.values()].filter((t) => idSet.has(t.id))
@@ -167,7 +150,6 @@ export const tracksCollection = createCollection<Track, string>({
 				return [...present, ...fetched]
 			}
 
-			// The same media across channels (a track's related tab)
 			if (params.mediaId !== undefined) {
 				if (!params.mediaId) return []
 				const {data, error} = await sdk.supabase
@@ -179,8 +161,6 @@ export const tracksCollection = createCollection<Track, string>({
 				return ((data || []) as Track[]).map(normalizeTrackMedia)
 			}
 
-			// Newest across every channel (explore's recent list), or the rows tying with its
-			// last one at a page boundary
 			if (isGlobal(params)) {
 				return fetchNewestTracks(undefined, {
 					limit: params.limit,
@@ -191,9 +171,7 @@ export const tracksCollection = createCollection<Track, string>({
 				})
 			}
 
-			// Part of many channels (the feed, featured tracks: since a date, maybe the newest
-			// N): one request per 50 channels instead of one per channel. A whole load stays per
-			// channel to fill each channel's key, and an offset counts rows of the merged list.
+			// A whole load stays per channel to fill each channel's own key.
 			const whole = !params.limit && !params.createdAt && !params.createdAfter
 			if (slugs.length > 1 && !whole && !params.offset) {
 				const local = localChannelSlugs()
@@ -221,12 +199,10 @@ export const tracksCollection = createCollection<Track, string>({
 				return params.limit ? merged.slice(0, params.limit) : merged
 			}
 
-			// Slug-based: fetch per channel. A local channel (imported) has nothing on the
-			// server; its rows were written in by import.ts, and an empty answer would wipe them.
+			// A local channel has nothing on the server; an empty answer would wipe its rows.
 			if (slugs.length) {
 				const local = localChannelSlugs()
-				// An offset counts rows of the merged list, and a channel's share of those rows is
-				// unknown, so with several channels each one is read from its first row.
+				// An offset counts rows of the merged list, so each channel reads from its first row.
 				const merged = slugs.length > 1 && params.offset
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
@@ -240,8 +216,7 @@ export const tracksCollection = createCollection<Track, string>({
 							signal: ctx.signal
 						})
 						log.info('queryFn fetched', {slug: s, count: tracks.length})
-						// A full load of several channels also fills each channel's own key, so a
-						// later `eq(slug)` query hits it. One slug already is that key.
+						// So a later `eq(slug)` query hits the cache.
 						const full =
 							!params.limit && !params.offset && !params.createdAt && !params.createdAfter
 						if (full && slugs.length > 1) queryClient.setQueryData(['tracks', s], tracks)
@@ -300,31 +275,23 @@ export const tracksCollection = createCollection<Track, string>({
 	}
 })
 
-/** Slugs of channels that exist only in this browser (imports, seeds). */
 function localChannelSlugs(): Set<string> {
 	const ids = new Set(appState.local_channel_ids ?? [])
 	return new Set((appState.local_channels ?? []).filter((c) => ids.has(c.id)).map((c) => c.slug))
 }
 
-/**
- * Rows per request. Matches PostgREST `max_rows` (supabase/config.toml); a shorter page
- * means the end. Channels over it (mrvinyl-r4 has ~4.9k) take several requests.
- */
+/** PostgREST `max_rows`: a shorter page means the end. */
 const SLUG_PAGE = 4000
 
-/** Channels per request when reading many at once, to stay within URL limits. */
+/** Stays within URL limits. */
 const SLUGS_PER_REQUEST = 50
 
-/** The server's order: newest first, ties by id. */
+/** Must match the server's order. */
 function newestFirst(a: Track, b: Track): number {
 	const at = (b.created_at ?? '').localeCompare(a.created_at ?? '')
 	return at || a.id.localeCompare(b.id)
 }
 
-/**
- * Tracks of some channels (or every channel without `slugs`), newest first: all of them,
- * or the `limit`/`offset` window.
- */
 async function fetchNewestTracks(
 	slugs: string[] | undefined,
 	opts: {
@@ -421,19 +388,13 @@ async function handleTrackDelete(id: string): Promise<void> {
 	if (response.error) throw new Error(getErrorMessage(response.error))
 }
 
-/**
- * Start loading a channel's tracks into the cache entry its pages read (`['tracks', slug]`),
- * for the channel route's hover preload. Only the fetch: no live query, so a click without
- * a hover doesn't sort the whole channel twice (here and in the layout). The page's query
- * finds the rows in the cache, or joins the request in flight. Does nothing while the
- * entry is fresh or loading, as the route's load reruns on every navigation in a channel.
- */
+/** Fetch only, no live query: a click without a hover would otherwise sort the channel twice. */
 export function preloadChannelTracks(slug: string): void {
 	if (!capabilities.globalBrowse || localChannelSlugs().has(slug)) return
 	queryClient
 		.prefetchQuery({
 			queryKey: ['tracks', slug],
-			// What the collection's queryFn fetches for `eq(slug)`
+			// Must match what the queryFn fetches for `eq(slug)`
 			queryFn: ({signal}) => fetchNewestTracks([slug], {signal}),
 			staleTime: TRACKS_STALE_MS
 		})

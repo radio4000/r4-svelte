@@ -1,8 +1,4 @@
-/**
- * Listener teardown: the realtime subscriptions a listener holds, and leaving them.
- * Split from broadcast.js so playback can leave a broadcast (a normal play does)
- * without importing broadcast.js, which imports playback.
- */
+/** Listener teardown. Never import broadcast.js here: it imports playback, which imports this. */
 import {appState, removeDeck} from '#lib/app-state.svelte.js'
 import {logger} from '#lib/logger.js'
 import {clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'

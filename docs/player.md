@@ -32,7 +32,7 @@ Arrow keys navigate tracklists — up/down to move, enter/space to play the sele
 
 ## Seeking
 
-`seekTo(deckId, seconds)` in `player/playback.ts` (re-exported from `api.ts`) queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
+`seekTo(deckId, seconds)` in `player/playback.ts` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
 
 When seeking after a track change, use `requestAnimationFrame` to wait for Svelte to render the new element.
 
@@ -44,9 +44,9 @@ The live `player.svelte` copies playback position and duration into `deck.media_
 
 ## Auto-radio and listening
 
-Both make a deck follow a clock instead of its queue: `player/deck-mode.ts`, see [auto-radio.md](auto-radio.md#deck-mode).
+See [auto-radio.md](auto-radio.md#deck-mode).
 
-`player/playback.ts` holds playTrack, the queue loaders and the transport. `api.ts` re-exports them; code under `player/` and `broadcast.js` imports `playback.ts` directly, so nothing imports `api.ts` back. `src/lib` has no import cycles; keep it so: `playback.ts`, `decks.ts` and `broadcast-teardown.js` never import `broadcast.js` (it imports them).
+`src/lib` has no import cycles; keep it so. Code under `player/` and `broadcast.js` imports `playback.ts`, never `api.ts`; `playback.ts`, `decks.ts` and `broadcast-teardown.js` never import `broadcast.js`.
 
 ## Layout
 

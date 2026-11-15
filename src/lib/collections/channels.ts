@@ -85,7 +85,6 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 			? [slugFilter.value as string]
 			: (slugFilter.value as string[])
 		: undefined
-	// One slug is the channel page's lookup; several are fetched together
 	const slug = slugs?.length === 1 ? slugs[0] : undefined
 	const idIn = options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as
 		| string[]
@@ -93,7 +92,6 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 	const trackCountGte = options.filters.find(
 		(f) => f.field[0] === 'track_count' && f.operator === 'gte'
 	)?.value as number | undefined
-	// The featured pool: channels active since a day
 	const latestTrackAtGte = options.filters.find(
 		(f) => f.field[0] === 'latest_track_at' && f.operator === 'gte'
 	)?.value as string | undefined
@@ -176,8 +174,7 @@ export const channelsCollection = createCollection<Channel, string>({
 				log.info('channels queryFn (single)', {slug: p.slug})
 				const channel = await fetchChannelBySlug(p.slug)
 				if (channel) return [channel]
-				// No remote channel: a local import, read from appState, its durable copy. The
-				// collection's row is gone once the channel page that owned it unmounts.
+				// A local import: appState holds the durable copy, the collection's row goes with its page.
 				const local = (appState.local_channels ?? []).find((c) => c.slug === p.slug)
 				if (local && appState.local_channel_ids?.includes(local.id)) return [local]
 				return []

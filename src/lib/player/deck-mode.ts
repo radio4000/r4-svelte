@@ -1,13 +1,6 @@
 /**
- * Deck mode: whether a deck plays its own queue or follows a clock.
- *
- * Auto-radio and listening to a broadcast are the same thing to a deck: something
- * outside the queue says which track and second should be playing now. Decks and the
- * player ask the mode (`modeOf(deck)`) instead of branching on the fields below.
- *
- * The mode is read from persisted deck fields, never stored: `listening_to_channel_id`
- * wins over `auto_radio`, else the deck plays its queue. Saved decks and the broadcast
- * wire format stay as they are.
+ * Whether a deck plays its own queue or follows a clock (auto-radio, a broadcast).
+ * Ask `modeOf(deck)` instead of branching on deck fields. Derived, never stored.
  */
 import type {Deck, Track} from '#lib/types.js'
 import {playbackState, AUTO_RADIO_SYNC_GRACE_MS, type AutoTrack} from '#lib/player/auto-radio.js'
@@ -17,15 +10,13 @@ import {resyncBroadcastDeck, leaveBroadcast} from '#lib/broadcast.js'
 
 export type DeckModeKind = 'queue' | 'auto' | 'listening'
 
-/** Where playback should be now. No `trackId` means only the offset is checked. */
+/** No `trackId` means only the offset is checked. */
 export type Expected = {trackId?: string; offset: number}
 
-/** What the player knows right now. Getters, so a deck only depends on what its mode reads. */
+/** Getters, so a deck only depends on what its mode reads. */
 export interface PlaybackContext {
 	readonly currentTime: number
-	/** The deck's resolved track row. */
 	readonly track: Track | undefined
-	/** The deck's queue as auto-radio tracks (those with a duration), in queue order. */
 	readonly autoTracks: AutoTrack[]
 	readonly autoTotalDuration: number
 }
@@ -36,16 +27,13 @@ export interface DeckMode {
 	readonly followsClock: boolean
 	/** A track ending or failing plays the next one in the queue. Auto-radio's queue is the schedule. */
 	readonly advancesOnEnd: boolean
-	/** The progress bar seeks. */
 	readonly seekable: boolean
 	/** What should be playing now: an expectation, `null` when there is no schedule (counts as
 	 *  drifted), or `undefined` when it can't be judged yet. */
 	expected(deck: Deck, ctx: PlaybackContext): Expected | null | undefined
 	drifted(deck: Deck | undefined): boolean
 	setDrifted(deck: Deck, drifted: boolean): void
-	/** Jump back to what should be playing now. */
 	resync(deckId: number): Promise<void>
-	/** Stop following the clock. */
 	leave(deckId: number): void
 }
 
@@ -109,15 +97,13 @@ const listeningMode: DeckMode = {
 	leave: (deckId) => leaveBroadcast(deckId)
 }
 
-/** The mode a deck is in, read from its fields. */
 export function modeOf(deck: Deck | undefined): DeckMode {
 	if (deck?.listening_to_channel_id) return listeningMode
 	if (deck?.auto_radio) return autoMode
 	return queueMode
 }
 
-/** The drift rule both clocks share: off by more than 2s, or on the wrong track.
- *  `undefined` when the mode can't judge yet. */
+/** `undefined` when the mode can't judge yet. */
 export function isDrifted(deck: Deck, ctx: PlaybackContext): boolean | undefined {
 	const expected = modeOf(deck).expected(deck, ctx)
 	if (expected === undefined) return undefined

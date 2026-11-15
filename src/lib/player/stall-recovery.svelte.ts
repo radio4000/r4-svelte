@@ -13,9 +13,8 @@
  *    throttling. Unconfirmed on-device. Requires two consecutive stalled
  *    samples.
  *
- * Skipped entirely for decks that follow a clock (deck-mode.ts: broadcast and
- * auto-radio) — those self-heal on foreground themselves (resumeBroadcastState in
- * broadcast.js; the auto-resync next to resyncAutoRadio in auto-radio-actions.ts).
+ * Skipped entirely for decks that follow a clock — those self-heal on
+ * foreground themselves.
  *
  * Rune factory (same pattern as deck-display.svelte.ts): call once during
  * component init; effects bind to the component's lifecycle.

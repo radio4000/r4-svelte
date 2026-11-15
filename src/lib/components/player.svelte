@@ -139,7 +139,7 @@
 		}
 	)
 
-	// Track list for auto-radio drift. Resolve each id via O(1) Map lookups on the
+	// Track list for drift detection. Resolve each id via O(1) Map lookups on the
 	// collection; watchTracks() re-runs this on any track change without building a
 	// d2ts inArray pipeline over the whole playlist. See docs/tanstack.md.
 	const syncAutoTracks = $derived.by(() => {
@@ -422,8 +422,7 @@
 		return () => releaseAudioKeepAlive(deckId)
 	})
 
-	// Drift: is the deck where its clock (auto-radio schedule or broadcast) says it should be?
-	// Re-evaluates on every timeupdate (~250ms while playing); queue decks read nothing here.
+	// Drift — re-evaluates on every timeupdate (~250ms while playing)
 	/** @type {import('#lib/player/deck-mode.js').PlaybackContext} */
 	const playbackContext = {
 		get currentTime() {

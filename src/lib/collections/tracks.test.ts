@@ -4,8 +4,7 @@ import {tracksCollection} from './tracks'
 import {queryClient} from './query-client'
 
 // The real query adapter against a fake PostgREST that, like ours, caps responses at 4000 rows.
-// Each case is a bug the key function had: a filter it did not understand got a key and
-// a request of its own.
+// A filter the key function doesn't understand must not get a key and request of its own.
 const MAX_ROWS = 4000
 
 function channel(slug: string, count: number) {
@@ -91,7 +90,7 @@ test('a search or tag view on an open channel reuses its rows and downloads noth
 			.orderBy(({t}) => t.created_at, 'desc')
 	)
 	const before = requests.length
-	// What queryView asks for a filtered view of that channel (views.svelte.ts)
+	// What queryView asks for a filtered view of that channel
 	const got = await load((q) =>
 		q
 			.from({t: tracksCollection})
