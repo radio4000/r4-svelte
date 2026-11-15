@@ -27,16 +27,10 @@ import {
 	togglePlayPause
 } from '#lib/player/playback.js'
 
-const log = logger.ns('api').seal()
+const log = logger.ns('auto-radio').seal()
 
 // --- Auto-radio ---
 
-/**
- * Join auto-radio: deterministic "live radio" playback.
- * Computes the weekly shuffle and seeks to the current position so all
- * listeners hear the same track at the same second.
- * Pass a view to differentiate shuffles (e.g. tag subsets) and set the label.
- */
 export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View) {
 	const autoTracks = toAutoTracks(tracks)
 	if (!autoTracks.length) return
@@ -58,7 +52,7 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	if (!snap) return
 
 	// Without a deck the playlist below lands nowhere and playTrack queues newest-first.
-	if (!getDeck(deckId)) deckId = openDeck({compact: true, activate: true}).id
+	if (!getDeck(deckId)) deckId = openDeck().id
 
 	// Pre-set the filtered playlist so playTrack doesn't briefly load all channel tracks
 	const label = view ? viewLabel(view) : undefined
@@ -66,7 +60,6 @@ export async function joinAutoRadio(deckId: number, tracks: Track[], view?: View
 	if (view) loadDeckView(deckId, view, ids, {title: label})
 	else setPlaylist(deckId, ids, {title: label})
 	await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
-	// playTrack → setPlaylist clears deck.view; restore it so resyncAutoRadio can run
 	if (appState.decks[deckId]) {
 		appState.decks[deckId].auto_radio = true
 		appState.decks[deckId].auto_radio_drifted = false
@@ -107,11 +100,6 @@ async function seekToAutoRadioOffset(
 	}
 }
 
-/**
- * Resync the deck to the current auto-radio position.
- * Uses the stored rotation params to recompute the expected track + offset,
- * navigating to the right track if needed, then seeking.
- */
 export async function resyncAutoRadio(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck?.auto_radio || !deck.view || deck.auto_radio_rotation_start == null) return
@@ -143,7 +131,6 @@ export async function resyncAutoRadio(deckId: number) {
 		await playTrack(deckId, snap.currentTrack.id, null, 'play_channel')
 	}
 
-	// Restore auto-radio flags after loadDeckView/playTrack
 	const d = getDeck(deckId)
 	if (d) {
 		d.auto_radio = true
@@ -155,18 +142,12 @@ export async function resyncAutoRadio(deckId: number) {
 
 	if (isSameTrack) {
 		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
-		// Ensure playing — user expects the button to always start playback
 		if (!getDeck(deckId)?.is_playing) togglePlayPause(deckId)
 	} else {
 		await seekToAutoRadioOffset(deckId, shuffled, totalDuration, rotationStartUnix)
 	}
 }
 
-// Resync drifted auto-radio decks on tab/screen foreground — mirrors broadcast.js's
-// resumeBroadcastState (same rationale: backgrounded mobile tabs stall local timers,
-// and platform bugs like iOS's background play() failures can silently stall
-// playback). Without this, a drifted deck sits out of sync until the user notices
-// the manual "resync" affordance and taps it.
 if (typeof document !== 'undefined') {
 	const resumeAutoRadio = () => {
 		if (document.visibilityState !== 'visible') return
@@ -194,9 +175,6 @@ export function leaveAutoRadio(deckId: number) {
 	log.log('leave_auto_radio', {deckId})
 }
 
-/** Join auto-radio for the channel the deck is currently playing — the way back
- *  after {@link leaveAutoRadio}. Reuses the deck's view when it targets the same
- *  channel (e.g. a tag-filtered rotation), else joins the full channel. */
 export async function rejoinAutoRadio(deckId: number) {
 	const deck = getDeck(deckId)
 	const slug = deck?.playlist_slug
@@ -210,12 +188,6 @@ export async function rejoinAutoRadio(deckId: number) {
 
 // --- Channel entry points ("tap play") ---
 
-/**
- * Default "tap play" for a channel. Starts live auto-radio when the channel has
- * enough duration data, otherwise falls back to latest-first playback.
- * Always targets the active deck — auto-radio is keyed by the active deck
- * (see {@link toggleChannelAutoRadio}), so there is no deck to thread through.
- */
 export async function playChannelAuto(channel: ChannelRef) {
 	const tracks = await loadChannelTracks(channel.slug)
 	if (hasAutoRadioCoverage(tracks)) {
@@ -225,15 +197,6 @@ export async function playChannelAuto(channel: ChannelRef) {
 	}
 }
 
-/**
- * Primary "tap play" for a channel — keyed by the channel, not a deck. Resolves the
- * deck holding the channel via {@link findChannelDeck} (the same helper surfaces use
- * for display), so the deck shown and the deck acted on are always the same one.
- * If a deck already holds this channel: focus it, then resync a drifted auto-radio
- * else pause/resume. Otherwise start fresh on the active deck from `trackId`, or
- * smartly via {@link playChannelAuto} (auto-radio if the channel has coverage, else
- * latest-first).
- */
 export async function toggleChannelPlay(channel: ChannelRef, trackId?: string) {
 	const deck = findChannelDeck(appState.decks, appState.active_deck_id, channel.slug)
 	if (deck) {
@@ -245,9 +208,6 @@ export async function toggleChannelPlay(channel: ChannelRef, trackId?: string) {
 		else togglePlayPause(deck.id)
 		return
 	}
-	// Fresh start on the active deck. leaveBroadcast is required for the auto path —
-	// joinAutoRadio never leaves a broadcast. The playChannel path leaves it again
-	// internally; the double-call is harmless.
 	const deckId = appState.active_deck_id
 	leaveBroadcast(deckId)
 	if (trackId) await playChannel(deckId, channel, trackId)

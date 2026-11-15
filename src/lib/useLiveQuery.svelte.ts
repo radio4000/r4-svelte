@@ -289,11 +289,9 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		untrack(() => next.move?.())
 	})
 
+	const inputOf = (next: typeof resolved) => (next.client ? next : next.collection)
 	// A window move changes `resolved` but not this
-	const observerInput = $derived.by(() => {
-		const next = resolved
-		return next.client ? next : next.collection
-	})
+	const observerInput = $derived(inputOf(resolved))
 
 	// Watch for collection changes and subscribe to updates
 	$effect(() => {
@@ -301,8 +299,6 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		// Resuming a collection can read app state; only `observerInput` may rerun this effect.
 		return untrack(() => subscribeTo(resolved))
 	})
-
-	const inputOf = (next: typeof resolved) => (next.client ? next : next.collection)
 
 	function subscribeTo(nextResolved: typeof resolved) {
 		if (inputOf(nextResolved) === inputOf(currentResolved)) {

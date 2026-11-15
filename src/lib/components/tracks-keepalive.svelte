@@ -33,28 +33,23 @@
 		const list = slugKey.split(',')
 		if (list.length > 1) return pin((t) => inArray(t.slug, list))
 		// Same key as loadChannelTracks: take the rows over from its lease
-		return both(
-			pin((t) => eq(t.slug, list[0])),
-			holdPin({slug: list[0]})
-		)
+		const unpin = pin((t) => eq(t.slug, list[0]))
+		const release = holdPin({slug: list[0]})
+		return () => {
+			release()
+			unpin()
+		}
 	})
 
 	$effect(() => {
 		if (!idKey) return
 		const list = idKey.split(',')
 		if (list.length > 1) return pin((t) => inArray(t.id, list))
-		// Same key as loadTrack: same hand-over
-		return both(
-			pin((t) => inArray(t.id, list)),
-			holdPin({id: list[0]})
-		)
-	})
-
-	/** Teardown for a pin and its hold together. */
-	function both(unpin: () => void, release: () => void) {
+		const unpin = pin((t) => inArray(t.id, list))
+		const release = holdPin({id: list[0]})
 		return () => {
 			release()
 			unpin()
 		}
-	}
+	})
 </script>

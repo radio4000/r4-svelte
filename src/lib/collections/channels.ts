@@ -112,20 +112,6 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 	const equalities = options.filters.filter(
 		(f) => f.operator === 'eq' && f.field[0] !== 'shuffle' && f.field[0] !== 'slug'
 	)
-	// Anything else would be dropped, turning the request into a listing of every channel
-	const unknown = options.filters.filter(
-		(f) =>
-			!(
-				f.field[0] === 'slug' ||
-				f.field[0] === 'shuffle' ||
-				f.operator === 'eq' ||
-				(f.field[0] === 'id' && f.operator === 'in') ||
-				(f.field[0] === 'track_count' && f.operator === 'gte') ||
-				(f.field[0] === 'latest_track_at' && f.operator === 'gte') ||
-				(['image', 'latitude', 'longitude'].includes(f.field[0] as string) &&
-					f.operator === 'not_isNull')
-			)
-	)
 	const offset = opts?.offset
 	return {
 		slug,
@@ -136,7 +122,6 @@ function parseChannelParams(opts: LoadSubsetOptions | undefined) {
 		imageNotNull,
 		latitudeNotNull,
 		longitudeNotNull,
-		unknown,
 		shuffle,
 		shuffleRank,
 		equalities,
@@ -231,10 +216,6 @@ export const channelsCollection = createCollection<Channel, string>({
 				const {data, error} = await idQuery.limit(missingIds.length)
 				if (error) throw error
 				return [...localMatches, ...cachedMatches, ...(data || [])] as Channel[]
-			}
-			if (p.unknown.length) {
-				const filters = p.unknown.map((f) => `${f.field.join('.')} ${f.operator}`).join(', ')
-				log.warn(`channels: unknown filter (${filters}) dropped, listing every channel`)
 			}
 			// A missing limit means the whole matching set, not a default page. DB uses
 			// that response as authoritative: truncating it can evict other pages.

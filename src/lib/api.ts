@@ -16,15 +16,20 @@ import {
 	loadDeckView,
 	pause,
 	playChannel,
-	playTrack,
-	setUserInitiatedPlay
+	playTrack
 } from '#lib/player/playback.js'
+import {setUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
 
 import type {Channel, ChannelRef, Deck, PlayEndReason, PlayStartReason} from '#lib/types.js'
 
 const log = logger.ns('api').seal()
 
 export {setTheme, toggleTheme, openSearch} from '#lib/ui.js'
+export {
+	getUserInitiatedPlay,
+	setUserInitiatedPlay,
+	clearUserInitiatedPlay
+} from '#lib/player/user-initiated-play.js'
 export {
 	toggleQueuePanel,
 	toggleVideo,
@@ -34,18 +39,11 @@ export {
 } from '#lib/decks.js'
 export {
 	joinAutoRadio,
-	resyncAutoRadio,
-	leaveAutoRadio,
 	rejoinAutoRadio,
-	playChannelAuto,
-	toggleChannelPlay,
-	toggleChannelAutoRadio
+	toggleChannelPlay
 } from '#lib/player/auto-radio-actions.js'
 export {
 	newestFirst,
-	getUserInitiatedPlay,
-	setUserInitiatedPlay,
-	clearUserInitiatedPlay,
 	getMediaPlayer,
 	playTrack,
 	playChannel,
@@ -53,11 +51,8 @@ export {
 	loadDeckView,
 	togglePlayPause,
 	recordSeekPosition,
-	applyRemoteState,
 	play,
 	pause,
-	togglePlay,
-	seekTo,
 	type MediaPlayer
 } from '#lib/player/playback.js'
 
@@ -65,7 +60,7 @@ export {
 export function ensureActiveDeck(): Deck {
 	let deck = getDeck(appState.active_deck_id)
 	if (!deck) {
-		deck = openDeck({compact: true, activate: true})
+		deck = openDeck()
 	}
 	return deck
 }
@@ -115,7 +110,7 @@ export async function checkUser(sessionUser?: {id: string}) {
 
 /** Play a track in a fresh deck rather than the active one (e.g. "open in new deck"). */
 export async function playTrackInNewDeck(trackId: string, slug?: string) {
-	const deck = openDeck({compact: true, activate: true})
+	const deck = openDeck()
 	if (slug && !tracksCollection.get(trackId)) {
 		await loadChannelTracks(slug)
 	}
@@ -126,7 +121,7 @@ export async function playTrackInNewDeck(trackId: string, slug?: string) {
 
 /** Play a channel in a fresh deck rather than the active one (e.g. "open in new deck"). */
 export async function playChannelInNewDeck(channel: ChannelRef) {
-	const deck = openDeck({compact: true, activate: true})
+	const deck = openDeck()
 	await playChannel(deck.id, channel)
 	// A newly opened extra deck loads paused — the user starts it explicitly.
 	setUserInitiatedPlay(deck.id, false)

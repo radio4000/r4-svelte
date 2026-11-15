@@ -106,7 +106,7 @@ function hydrateTracksFromRemote(data: Record<string, unknown>[]): string[] {
 export function inIdOrder(
 	rows: Track[],
 	ids: string[],
-	fallback: (id: string) => Track | undefined = () => undefined
+	fallback: (id: string) => Track | undefined
 ): Track[] {
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- per-call lookup, not reactive
 	const byId = new Map(rows.map((t) => [t.id, t]))

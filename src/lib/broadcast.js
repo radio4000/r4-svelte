@@ -3,13 +3,12 @@ import {
 	playTrack,
 	play,
 	seekTo,
-	setUserInitiatedPlay,
 	getMediaPlayer,
 	playChannel,
 	applyRemoteState
 } from '#lib/player/playback.js'
 import {appState, addDeck, removeDeck} from '#lib/app-state.svelte.js'
-import {clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
+import {setUserInitiatedPlay, clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
 import {
 	leaveBroadcast,
 	stopBroadcastSync,

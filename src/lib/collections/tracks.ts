@@ -203,15 +203,13 @@ export const tracksCollection = createCollection<Track, string>({
 			// A local channel has nothing on the server; an empty answer would wipe its rows.
 			if (slugs.length) {
 				const local = localChannelSlugs()
-				// An offset counts rows of the merged list, so each channel reads from its first row.
-				const merged = slugs.length > 1 && params.offset
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
 						if (local.has(s))
 							return [...tracksCollection.state.values()].filter((t) => t.slug === s)
 						const tracks = await fetchNewestTracks([s], {
-							limit: merged && params.limit ? params.offset! + params.limit : params.limit,
-							offset: merged ? 0 : params.offset,
+							limit: params.limit,
+							offset: params.offset,
 							createdAt: params.createdAt,
 							createdAfter: params.createdAfter,
 							signal: ctx.signal
@@ -300,8 +298,8 @@ async function fetchNewestTracks(
 		offset?: number
 		createdAt?: string
 		createdAfter?: string
-		signal?: AbortSignal
-	} = {}
+		signal: AbortSignal
+	}
 ): Promise<Track[]> {
 	const {limit = Infinity, offset = 0, createdAt, createdAfter, signal} = opts
 	log.info('tracks fetch', {slugs, limit: opts.limit, offset, createdAt, createdAfter})
@@ -318,8 +316,7 @@ async function fetchNewestTracks(
 			.order('id', {ascending: true})
 		if (createdAt) query = query.eq('created_at', createdAt)
 		if (createdAfter) query = query.gt('created_at', createdAfter)
-		query = query.range(from, from + size - 1)
-		if (signal) query = query.abortSignal(signal)
+		query = query.range(from, from + size - 1).abortSignal(signal)
 		const {data, error} = await query
 		if (error) throw error
 		const page = (data || []) as Track[]
@@ -330,17 +327,16 @@ async function fetchNewestTracks(
 }
 
 /** Fetch tracks by id, batched to stay within URL limits. Newest first. */
-async function fetchTracksByIds(ids: string[], signal?: AbortSignal): Promise<Track[]> {
+async function fetchTracksByIds(ids: string[], signal: AbortSignal): Promise<Track[]> {
 	if (!ids.length) return []
 	const BATCH = 50
 	const all: Track[] = []
 	for (let i = 0; i < ids.length; i += BATCH) {
-		let query = sdk.supabase
+		const {data, error} = await sdk.supabase
 			.from('channel_tracks')
 			.select('*')
 			.in('id', ids.slice(i, i + BATCH))
-		if (signal) query = query.abortSignal(signal)
-		const {data, error} = await query
+			.abortSignal(signal)
 		if (error) throw error
 		all.push(...((data || []) as Track[]).map(normalizeTrackMedia))
 	}

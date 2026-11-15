@@ -27,7 +27,8 @@ export function pickFeatured(
 
 const POOL_HOLD_MS = 60 * 60 * 1000
 
-const pools = new Map<string, ReturnType<typeof createPool>>()
+let pool: ReturnType<typeof createPool> | undefined
+let poolDay: string | undefined
 
 /**
  * No order or limit on purpose: an ordered window refetches whenever another page
@@ -47,26 +48,27 @@ function createPool(sinceDay: string) {
 
 export async function getFeaturedPool(days = 30): Promise<Channel[]> {
 	const since = daysAgoIso(days)
-	// Whole days, so the request stays the same all day and the rows are reused
 	const sinceDay = since.slice(0, 10)
-	let pool = pools.get(sinceDay)
 	try {
-		if (!pool) {
-			// A new day replaces yesterday's pool
-			for (const old of pools.values()) void old.cleanup()
-			pools.clear()
+		if (!pool || poolDay !== sinceDay) {
+			void pool?.cleanup()
 			pool = createPool(sinceDay)
-			pools.set(sinceDay, pool)
+			poolDay = sinceDay
 		}
 		const rows = (await pool.toArrayWhenReady()) as Channel[]
 		return rows
 			.filter((ch) => ch.latest_track_at && ch.latest_track_at >= since)
-			.toSorted((a, b) => (a.latest_track_at! < b.latest_track_at! ? 1 : a.latest_track_at! > b.latest_track_at! ? -1 : 0))
+			.toSorted((a, b) =>
+				a.latest_track_at! < b.latest_track_at!
+					? 1
+					: a.latest_track_at! > b.latest_track_at!
+						? -1
+						: 0
+			)
 	} catch (e) {
 		console.warn('[featured] failed to load channel pool', e)
-		// The next read starts over instead of waiting on a failed load
 		void pool?.cleanup()
-		pools.delete(sinceDay)
+		pool = undefined
 		return []
 	}
 }

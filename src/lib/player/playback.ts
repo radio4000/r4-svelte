@@ -1,4 +1,4 @@
-/** Deck playback primitives. Never import api.ts here: it re-exports this module. */
+/** Deck playback primitives. */
 import {tick} from 'svelte'
 import {appState} from '#lib/app-state.svelte.js'
 import {leaveBroadcast} from '#lib/broadcast-teardown.js'
@@ -7,20 +7,14 @@ import {logger} from '#lib/logger.js'
 import {capture} from '#lib/analytics.js'
 import {shuffleArray, isDbId} from '#lib/utils.js'
 import {tracksCollection} from '#lib/collections/tracks.js'
-import {channelTracks, loadChannelTracks} from '#lib/player/channel-tracks.js'
+import {loadChannelTracks} from '#lib/player/channel-tracks.js'
 import {openDeck} from '#lib/player/open-deck.js'
 import {capturePlayHistory} from '#lib/player/play-history.js'
 import {getDeck, clearAutoRadio} from '#lib/decks.js'
 import {normalizeView, type View} from '#lib/views.js'
 import type {ChannelRef, Deck, PlayEndReason, PlayStartReason, Track} from '#lib/types.js'
 
-const log = logger.ns('api').seal()
-
-export {
-	getUserInitiatedPlay,
-	setUserInitiatedPlay,
-	clearUserInitiatedPlay
-} from '#lib/player/user-initiated-play.js'
+const log = logger.ns('playback').seal()
 
 function isNormalPlayStart(startReason: PlayStartReason): boolean {
 	return (
@@ -89,10 +83,6 @@ async function waitForMediaPlayer(deckId: number, timeoutMs = 3000): Promise<Med
 
 // --- Track/channel playback ---
 
-/** Core playback entry point: loads a track into a deck and plays it, building the deck's
- *  playlist from same-channel tracks when needed. Every play action (click, next/prev,
- *  auto-radio, broadcast sync) routes through here with a startReason/endReason pair used
- *  for history and analytics. */
 export async function playTrack(
 	deckId: number,
 	id: string,
@@ -103,7 +93,7 @@ export async function playTrack(
 	let deck = getDeck(deckId)
 	if (!deck) {
 		// Auto-create deck when all decks have been closed
-		deck = openDeck({compact: true, activate: true})
+		deck = openDeck()
 		deckId = deck.id
 		log.log('play_track_created_deck', {deckId})
 	}
@@ -175,7 +165,7 @@ export async function playTrack(
 				newestFirst(tracks).map((t) => t.id)
 			)
 		}
-		queueChannel(channelTracks(slug))
+		queueChannel([...tracksCollection.state.values()].filter((t) => t?.slug === slug))
 		if (slug) loadChannelTracks(slug).then(queueChannel, () => {})
 	}
 	// Ensure ephemeral track is included in the current playlist
@@ -214,8 +204,6 @@ export async function playChannel(deckId: number, {id, slug}: ChannelRef, trackI
 
 // --- Queue loading ---
 
-/** Low-level queue setter. Clears deck.view when queue identity changes — callers that need
- *  view-backed queues should use loadDeckView() instead. */
 export function setPlaylist(
 	deckId: number,
 	trackIds: string[],
@@ -240,9 +228,6 @@ export function setPlaylist(
 	if (changed && deck.view !== undefined) deck.view = undefined
 }
 
-/** Load a queue into a deck from an explicit View.
- *  Uses setPlaylist() for queue setup, then restores deck.view
- *  with the normalized view — the only sanctioned view-aware queue load path. */
 export function loadDeckView(
 	deckId: number,
 	view: View,
@@ -262,8 +247,6 @@ export async function togglePlayPause(deckId: number) {
 	const deck = getDeck(deckId)
 	let player = getMediaPlayer(deckId)
 	if (!player) {
-		// Media element not in DOM yet (track data still loading from IDB).
-		// Optimistically mark as playing and wait for the element to appear.
 		if (deck) deck.is_playing = true
 		setUserInitiatedPlay(deckId, true)
 		player = await waitForMediaPlayer(deckId, 5000)
@@ -272,7 +255,6 @@ export async function togglePlayPause(deckId: number) {
 			log.warn('togglePlayPause: timed out waiting for media player')
 			return
 		}
-		// User intent was to play — always play once the element is ready
 		player.play()
 		return
 	}
@@ -283,7 +265,7 @@ export async function togglePlayPause(deckId: number) {
 	}
 }
 
-/** Record a seek position and notify broadcast listeners */
+/** Record a seek position. */
 export function recordSeekPosition(deckId: number, seconds: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
@@ -313,7 +295,6 @@ export function play(deckId: number, player?: MediaPlayer | null) {
 	try {
 		result = player.play()
 	} catch (error) {
-		// YouTube API not ready yet (this.api is null) — swallow the sync throw
 		log.warn('play() threw (player not ready):', (error as Error).message || error)
 		return Promise.resolve()
 	}
@@ -344,8 +325,6 @@ export function togglePlay(player: MediaPlayer) {
 		return
 	}
 	if (player.paused) {
-		// play() needs deckId but togglePlay gets a player ref directly from component
-		// The component will use its own deckId-scoped play call
 		player.play()
 	} else {
 		pause(player)

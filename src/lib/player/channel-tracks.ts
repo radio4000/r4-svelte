@@ -2,11 +2,6 @@ import {eq, queryOnce} from '@tanstack/db'
 import {tracksCollection} from '#lib/collections/tracks.js'
 import type {Track} from '#lib/types.js'
 
-/** Unordered. */
-export function channelTracks(slug: string | undefined): Track[] {
-	return [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-}
-
 const pinned = new Map<string, number>()
 const waiting = new Map<string, Set<() => void>>()
 
