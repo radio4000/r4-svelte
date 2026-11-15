@@ -38,7 +38,6 @@
 		"@sveltejs/kit": "^3.2.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tanstack/eslint-plugin-query": "^5.107.1",
-		"@tanstack/intent": "^0.5.6",
 		"@types/eslint": "^9.6.1",
 		"@types/node": "^26.6.6",
 		"@types/youtube": "^0.3.0",
@@ -93,11 +92,5 @@
 	},
 	"imports": {
 		"#lib/*": "./src/lib/*"
-	},
-	"intent": {
-		"skills": [
-			"@tanstack/db#db-core",
-			"@tanstack/svelte-db#svelte-db"
-		]
 	}
 }
