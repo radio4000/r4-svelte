@@ -1,4 +1,4 @@
-/** Per-deck "the user asked for this to play" flag. Must not import playback.ts. */
+/** Per-deck "the user asked for this to play" flag. */
 const userInitiatedPlayMap = new Map<number, boolean>()
 
 /** Get the user-initiated play flag for a deck */

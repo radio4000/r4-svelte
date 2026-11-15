@@ -1,4 +1,4 @@
-/** Listener teardown. Never import broadcast.js here: it imports playback, which imports this. */
+/** Listener teardown. */
 import {appState, removeDeck} from '#lib/app-state.svelte.js'
 import {logger} from '#lib/logger.js'
 import {clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
@@ -34,7 +34,6 @@ export function leaveBroadcast(deckId) {
 		stopBroadcastTableListener(channelId)
 		closeListeningDecksForChannel(channelId)
 	} else {
-		// Fallback: if invoked on a non-listening deck, preserve old behavior.
 		const deck = appState.decks[deckId]
 		if (deck) {
 			deck.listening_to_channel_id = undefined

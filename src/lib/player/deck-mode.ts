@@ -1,7 +1,4 @@
-/**
- * Whether a deck plays its own queue or follows a clock (auto-radio, a broadcast).
- * Ask `modeOf(deck)` instead of branching on deck fields. Derived, never stored.
- */
+/** Whether a deck plays its own queue or follows a clock (auto-radio, a broadcast). */
 import type {Deck, Track} from '#lib/types.js'
 import {playbackState, AUTO_RADIO_SYNC_GRACE_MS, type AutoTrack} from '#lib/player/auto-radio.js'
 import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '#lib/broadcast-utils.js'
@@ -23,7 +20,6 @@ export interface PlaybackContext {
 
 export interface DeckMode {
 	readonly kind: DeckModeKind
-	/** Follows a clock: no prev/next/shuffle/speed, no queue panel, no stall nudges, no lock-screen skip. */
 	readonly followsClock: boolean
 	/** A track ending or failing plays the next one in the queue. Auto-radio's queue is the schedule. */
 	readonly advancesOnEnd: boolean

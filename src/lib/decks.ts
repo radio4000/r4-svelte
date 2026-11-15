@@ -7,18 +7,13 @@ export function getDeck(deckId: number): Deck | undefined {
 	return appState.decks[deckId]
 }
 
-/** Clear a deck's auto-radio mode flags (not auto_radio_rotation_start — callers that need a
- *  full reset, like a normal-play mode switch, clear that separately). */
 export function clearAutoRadio(deck: Deck) {
 	deck.auto_radio = undefined
 	deck.auto_radio_drifted = undefined
 }
 
-/** Apply a change to a deck, or to every deck in its listening group if it's listening to a
- *  broadcast — the group of decks tuned to the same channel act as one unit for layout toggles. */
 export function applyToListeningGroup(deck: Deck, fn: (d: Deck) => void) {
 	if (deck.listening_to_channel_id) {
-		// Only one broadcast is listened to at a time, so all listening decks form one group.
 		for (const id of sortedListeningDeckIds(appState.decks)) {
 			const d = appState.decks[id]
 			if (d) fn(d)
@@ -36,7 +31,6 @@ export function toggleQueuePanel(deckId: number) {
 	deck.hide_queue_panel = !deck.hide_queue_panel
 }
 
-/** Toggle video player visibility. Listening decks (tuned to the same broadcast) toggle together. */
 export function toggleVideo(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
@@ -44,8 +38,6 @@ export function toggleVideo(deckId: number) {
 	applyToListeningGroup(deck, (d) => (d.hide_video_player = newValue))
 }
 
-/** Expand a deck fullscreen. Any other expanded deck returns to compact.
- *  Listening decks expand as a group, like the other layout toggles. */
 export function expandDeck(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
@@ -63,12 +55,10 @@ export function expandDeck(deckId: number) {
 	}
 }
 
-/** Compact/expand a deck. On mobile, leaving compact goes fullscreen via expandDeck. */
 export function toggleDeckCompact(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	const newValue = !deck.compact
-	// Mobile has no in-strip state: leaving compact goes straight to fullscreen
 	if (!newValue && isMobileViewport()) {
 		expandDeck(deckId)
 		return
@@ -79,12 +69,10 @@ export function toggleDeckCompact(deckId: number) {
 	})
 }
 
-/** Fullscreen a deck (on desktop applies to the whole listening group). */
 export function togglePlayerExpanded(deckId: number) {
 	const deck = getDeck(deckId)
 	if (!deck) return
 	const newValue = !deck.expanded
-	// Mobile has no in-strip state: expand fullscreen or collapse to compact
 	if (isMobileViewport()) {
 		if (newValue) expandDeck(deckId)
 		else toggleDeckCompact(deckId)

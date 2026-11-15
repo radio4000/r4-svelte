@@ -26,8 +26,6 @@
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
-	// The query asks from the start of that day, so a return visit reuses its cache entry;
-	// the list then cuts at the exact time
 	const featuredSince = daysAgoIso(FEATURED_DAYS)
 	const featuredSinceDay = featuredSince.slice(0, 10)
 

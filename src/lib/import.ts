@@ -171,7 +171,6 @@ function dateSuffix(isoDate: string | null | undefined): string {
 	return new Date(isoDate).toISOString().slice(0, 10).replace(DASH_RE, '')
 }
 
-/** On-demand, so starting the sync loads no rows itself. */
 async function ensureChannelsReady(): Promise<void> {
 	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 }

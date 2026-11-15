@@ -24,8 +24,6 @@
 	})
 
 	const days = 30
-	// The query asks from the start of that day, so a return visit reuses its cache entry;
-	// the list then cuts at the exact time
 	const since = daysAgoIso(days)
 	const sinceDay = since.slice(0, 10)
 
