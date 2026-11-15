@@ -46,8 +46,6 @@ The live `player.svelte` copies playback position and duration into `deck.media_
 
 See [auto-radio.md](auto-radio.md#deck-mode).
 
-`src/lib` has no import cycles; keep it so. Code under `player/` and `broadcast.js` imports `playback.ts`, never `api.ts`; `playback.ts`, `decks.ts` and `broadcast-teardown.js` never import `broadcast.js`.
-
 ## Layout
 
 See [decks.md](decks.md) for the full component tree, layout flags, and deck anatomy.
