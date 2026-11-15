@@ -46,6 +46,16 @@ type TrackQueryParams = {
 	offset?: number
 }
 
+/** Every channel, but only a limit or a date range of it: an unbounded request for all tracks is refused. */
+function isBoundedAcrossChannels(params: TrackQueryParams): boolean {
+	return (
+		!params.slugs?.length &&
+		!params.ids &&
+		params.mediaId === undefined &&
+		Boolean(params.limit || params.createdAt || params.createdAfter)
+	)
+}
+
 /**
  * Keeps limit/offset only when the server can serve them as asked (newest first, every
  * filter known); otherwise fetches the superset and the live query narrows it.
@@ -84,7 +94,7 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 	let key: (string | number)[]
 	if (params.slugs?.length === 1) key = ['tracks', params.slugs[0]]
 	else if (params.slugs?.length) key = ['tracks', 'slugs', ...params.slugs.toSorted()]
-	else if (isGlobal(params)) key = ['tracks', 'all']
+	else if (isBoundedAcrossChannels(params)) key = ['tracks', 'all']
 	else return ['tracks']
 	if (params.limit) key.push('limit', params.limit)
 	if (params.offset) key.push('offset', params.offset)
@@ -94,15 +104,6 @@ function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
 }
 
 const TRACKS_STALE_MS = 5 * 60 * 1000
-
-function isGlobal(params: TrackQueryParams): boolean {
-	return (
-		!params.slugs?.length &&
-		!params.ids &&
-		params.mediaId === undefined &&
-		Boolean(params.limit || params.createdAt || params.createdAfter)
-	)
-}
 
 /**
  * On-demand track collection, keyed by id. Searches across channels go through
@@ -161,7 +162,7 @@ export const tracksCollection = createCollection<Track, string>({
 				return ((data || []) as Track[]).map(normalizeTrackMedia)
 			}
 
-			if (isGlobal(params)) {
+			if (isBoundedAcrossChannels(params)) {
 				return fetchNewestTracks(undefined, {
 					limit: params.limit,
 					offset: params.offset,
