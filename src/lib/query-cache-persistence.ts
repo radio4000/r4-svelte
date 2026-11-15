@@ -127,8 +127,6 @@ function shouldDehydrateQuery(query: {
 	if (key === 'channels' && queryKey.includes('shuffle')) return false
 	// Broadcast state is ephemeral (realtime), stale data causes ghost sessions
 	if (key === 'broadcasts') return false
-	// Freshness checks must always hit the server
-	if (key === 'tracks-freshness') return false
 	// Keep query-cache persistence focused on small canonical snapshots.
 	// Broad, derived, or partial query shapes duplicate large datasets and are cheaper to recompute.
 	if (key === 'channels') return queryKey.length === 2 && typeof queryKey[1] === 'string'

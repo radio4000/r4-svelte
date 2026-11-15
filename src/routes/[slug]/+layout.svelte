@@ -180,11 +180,9 @@
 		return () => unwatchPresence(s)
 	})
 
-	// Check freshness in background (cached for 60s)
 	$effect(() => {
-		if (slug) {
-			checkTracksFreshness(slug)
-		}
+		const s = slug
+		if (tracksQuery.isReady) untrack(() => checkTracksFreshness(s))
 	})
 
 	// Pass tid so track-detail pages start from the viewed track.
@@ -234,6 +232,10 @@
 		}
 	})
 </script>
+
+<svelte:document
+	onvisibilitychange={() => document.visibilityState === 'visible' && checkTracksFreshness(slug)}
+/>
 
 <svelte:head>
 	{#if channel}

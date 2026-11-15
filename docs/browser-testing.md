@@ -96,6 +96,8 @@ agent-browser eval "window.r5.api.playChannelInNewDeck({id:'<id-b>', slug:'chann
 # active flips to it via window.r5.decks(), not that audio resumed.
 ```
 
+Broadcast needs two sessions (`--session a`, `--session b`); move the broadcaster with in-app clicks only, as a full page load ends its broadcast.
+
 Keep decks muted while testing: `eval "Object.values(window.r5.appState.decks).forEach(d => d.muted = true)"`.
 
 ### UI patterns

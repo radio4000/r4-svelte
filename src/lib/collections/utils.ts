@@ -17,5 +17,5 @@ export function getErrorMessage(err: unknown): string {
 export function createLocalCollection<T extends object, TKey extends string | number = string>(
 	config: LocalStorageCollectionConfig<T, never, TKey> & {schema?: never}
 ) {
-	return createCollection<T, TKey>(localStorageCollectionOptions(config))
+	return createCollection(localStorageCollectionOptions(config))
 }

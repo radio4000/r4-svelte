@@ -4,12 +4,7 @@ Radio4000 notes, not TanStack API docs. Load the TanStack skills first; keep thi
 
 ## skills
 
-Install and list them, then load the one that fits the task:
-
-```bash
-bunx @tanstack/intent@latest install
-bunx @tanstack/intent@latest list
-```
+Read the one that fits the task:
 
 | task                                                           | load                                                                     |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -26,7 +21,7 @@ If a question is mostly about TanStack itself, use those or the official docs. A
 
 TanStack Query caches responses. TanStack DB stores rows. In app code the boundary is `src/lib/collections/` plus `src/lib/useLiveQuery.svelte.ts`.
 
-Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper is a near-upstream copy of the svelte-db hook that keeps rows in one `$state.raw` snapshot (so a single change doesn't re-render every row), untracks writes to avoid `state_unsafe_mutation`, uses the observer’s `wholesale` mode to watch cached rows without an unfiltered fetch, and is the verified path for app behavior; its header lists the diffs. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
+Always import `useLiveQuery` from `#lib/useLiveQuery.svelte`, never from `@tanstack/svelte-db`. The wrapper is a near-upstream copy of the svelte-db hook that keeps rows in one `$state.raw` snapshot (so a single change doesn't re-render every row), untracks writes to avoid `state_unsafe_mutation`, uses the observer’s `wholesale` mode because it re-reads that snapshot on every change, and is the verified path for app behavior; its header lists the diffs. Deps arrays are optional — Svelte 5 auto-tracks reactive reads in the callback.
 
 ## contracts we rely on
 
@@ -79,9 +74,9 @@ let queueTracks = $derived.by(() => {
 })
 ```
 
-`watchTracks` is one `subscribeChanges` shared by every reader (Svelte's `createSubscriber`), held while any is mounted. Used in `queue-panel.svelte`, `player.svelte` (`syncAutoTracks`) and `deck-display.svelte.ts` (auto-radio coverage). A direct-collection query, `useLiveQuery(collection)`, works the same way without a pipeline, but copies every row into each reader's state on every change; `channel-activity.svelte.ts` still uses it.
+`watchTracks` is one `subscribeChanges` shared by every reader (Svelte's `createSubscriber`), held while any is mounted. Used in `queue-panel.svelte`, `player.svelte` (`syncAutoTracks`) and `deck-display.svelte.ts` (auto-radio coverage). A direct-collection query, `useLiveQuery(collection)`, works the same way without a pipeline, but copies every row into each reader's state on every change; don't use it on tracks or channels.
 
-For an app-lifetime singleton outside a component (e.g. `channel-activity.svelte.ts`), create the direct-collection queries inside `$effect.root` so their internal effects have an owner — same pattern as the persistence effects in `app-state.svelte.ts`.
+An app-lifetime singleton outside a component (`channel-activity.svelte.ts`) can subscribe with `subscribeChanges` at module level and bump a `$state` counter its `$derived` reads; a `useLiveQuery` there would need `$effect.root` to own its effects.
 
 ## query patterns
 
@@ -107,13 +102,12 @@ let jazzTracks = $derived((query.data ?? []).filter((track) => track.tags?.inclu
 ### one-off — fetch and move on
 
 ```js
-const data = await queryClient.fetchQuery({
-	queryKey: ['tracks', slug],
-	queryFn: () => fetchTracksBySlug(slug)
-})
+const tracks = await queryOnce((q) =>
+	q.from({t: tracksCollection}).where(({t}) => eq(t.slug, slug))
+)
 ```
 
-For loaders, freshness checks, and other non-reactive reads.
+For loaders and other non-reactive reads. It goes through the collection's own queryFn and key, so it shares the cache with live queries; it releases its rows when done, so hold them with a pin if something reads them later (`player/channel-tracks.ts`).
 
 ### reactive limit (pagination)
 
@@ -140,7 +134,8 @@ Caveats learned the hard way:
 
 - Paged channel views accumulate `limit = currentPage * pageSize` and `.slice()` locally. DB can also request continuation windows with a nonzero offset; `channels.ts` returns exactly that window. TanStack Query caches each filter/sort/window separately.
 - An unbounded request is authoritative for its whole filter. Returning a default page (formerly 20 channels) can evict rows belonging to other paged queries. Explore uses lexical ordering matching the server and a unique ID tie-breaker; the default locale string ordering can trigger unbounded requests.
-- Each dep change in `useLiveQuery` builds a new live query collection. The old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
+- A function `queryKey` must encode exactly what its `queryFn` fetches: two subsets that share a key must get the same rows.
+- A change of only `.limit()`/`.offset()` moves the same live query's window; it stays `ready`, so read `isLoadingSubset` for "loading more". Any other change builds a new live query collection; the old observer stays subscribed until its replacement is ready, then is disposed and garbage-collected after 1ms (`gcTime`). Releasing it earlier removes source rows during the replacement’s fetch and can force a full-source recovery. Unmount releases every observer.
 
 ### keepalive pin
 
@@ -156,8 +151,6 @@ Each needs a distinct job; fold new probes into these rather than adding pages.
 - `/docs/tanstack/error-handling` — keeps the error-state rough edge visible
 
 ## what still needs proof
-
-`collection.state` vs `useLiveQuery` reactivity is proven headlessly in `src/lib/state-reactivity.svelte.test.ts` (`useLiveQuery` updates on insert/update/delete; a `$derived` over `.state` does not, and an unrelated reactive dep masks the bug by re-running the derived).
 
 Still only checked by hand in the browser — keep these alive with `agent-browser` (see [browser-testing.md](browser-testing.md)):
 

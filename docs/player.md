@@ -32,7 +32,7 @@ Arrow keys navigate tracklists — up/down to move, enter/space to play the sele
 
 ## Seeking
 
-`seekTo(seconds)` in `api.ts` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
+`seekTo(deckId, seconds)` in `player/playback.ts` queries the player element directly (`youtube-video` or `soundcloud-player`) and sets `currentTime`. The custom elements' setters await their internal `#loadComplete` promise before calling the provider API.
 
 When seeking after a track change, use `requestAnimationFrame` to wait for Svelte to render the new element.
 
@@ -42,7 +42,7 @@ When seeking after a track change, use `requestAnimationFrame` to wait for Svelt
 The live `player.svelte` copies playback position and duration into `deck.media_current_time` / `media_duration` so the compact bar can show progress without its own media element.
 `captureEventsCollection` records play events with start/end reasons (see [capture events](play-history.md)).
 
-## Auto-radio
+## Auto-radio and listening
 
 See [auto-radio.md](auto-radio.md).
 

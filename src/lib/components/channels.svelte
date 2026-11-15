@@ -312,7 +312,7 @@
 			}
 			// Write any still-missing channels into the collection
 			const localChannels = appState.local_channels ?? []
-			await (channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload())
+			if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 			for (const ch of localChannels) {
 				if (!channelsCollection.get(ch.id)) channelsCollection.utils.writeUpsert(ch)
 			}

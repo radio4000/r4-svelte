@@ -93,16 +93,26 @@ export function parseTrackTxt(content: string): {title: string; description: str
 	return {title, description, url}
 }
 
+/** Undated tracks get the import time, a second apart. Lists group by `created_at` month and crash without one. */
+function stampImported(tracks: Track[]): Track[] {
+	const now = Date.now()
+	return tracks.map((t, i) => {
+		if (t.created_at) return t
+		const at = new Date(now - i * 1000).toISOString()
+		return {...t, created_at: at, updated_at: t.updated_at ?? at}
+	})
+}
+
 /** Write a channel + tracks into local collections. */
 export async function writeImport(
 	channel: Channel,
-	tracks: Track[],
+	imported: Track[],
 	origin?: ImportOrigin
 ): Promise<void> {
-	await Promise.all([
-		channelsCollection.isReady() ? Promise.resolve() : channelsCollection.preload(),
-		tracksCollection.isReady() ? Promise.resolve() : tracksCollection.preload()
-	])
+	const tracks = stampImported(imported)
+	// Direct writes need the sync running; on-demand collections load nothing else here
+	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
+	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
 
 	channelsCollection.utils.writeUpsert(channel)
 	queryClient.setQueryData(['channels', channel.slug], [channel])
@@ -161,9 +171,8 @@ function dateSuffix(isoDate: string | null | undefined): string {
 	return new Date(isoDate).toISOString().slice(0, 10).replace(DASH_RE, '')
 }
 
-/** Ensure channelsCollection is loaded from IDB before reading state. */
 async function ensureChannelsReady(): Promise<void> {
-	if (!channelsCollection.isReady()) await channelsCollection.preload()
+	if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 }
 
 /**

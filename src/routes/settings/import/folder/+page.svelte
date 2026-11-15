@@ -72,7 +72,7 @@
 			validateBackup(raw)
 
 			const slug = importedSlug(raw.channel.slug, raw.channel.id)
-			if (!channelsCollection.isReady()) await channelsCollection.preload()
+			if (!channelsCollection.isReady()) channelsCollection.startSyncImmediate()
 			const existing = [...channelsCollection.state.values()].find((c) => c.slug === slug)
 			if (existing) return {channel: existing, imported: 0, source: 'r4download'}
 

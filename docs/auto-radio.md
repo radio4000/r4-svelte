@@ -26,10 +26,11 @@ Steps:
 1. Filters to tracks with known durations (`toAutoTracks`)
 2. Derives epoch from oldest track (`epochFromTracks`)
 3. Computes weekly shuffle (with view seed if provided)
-4. Starts the scheduled track via `playTrack`
-5. Sets playlist first (label from `viewToQuery(view)`, e.g. `@ko002 #jazz`)
-6. Marks deck as `auto_radio` and stores rotation params
-7. Seeks to the computed offset once the player is ready
+4. Opens a compact, active deck if none is open (the queue needs a deck to land on)
+5. Starts the scheduled track via `playTrack`
+6. Sets playlist first (label from `viewToQuery(view)`, e.g. `@ko002 #jazz`)
+7. Marks deck as `auto_radio` and stores rotation params
+8. Seeks to the computed offset once the player is ready
 
 The infinity button appears on:
 
@@ -43,7 +44,7 @@ The infinity button appears on:
 Drift is computed continuously in `player.svelte` while playing:
 
 - Auto-radio drift: compare current playback (`deck.playlist_track` + `currentTime`) to the expected schedule snapshot from `playbackState(...)`.
-- Broadcast drift: compare current playback to `calculateSeekTime(...)` from `broadcast.js`.
+- Broadcast drift: compare current playback to `calculateSeekTime(...)` from `broadcast-utils.js`.
 - Both use a `2s` tolerance.
 
 Drift is detected only by this comparison — range seek and other UI controls do not set `auto_radio_drifted` directly.
@@ -65,10 +66,10 @@ Auto-radio uses these `Deck` fields:
 
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
-- `api.ts` — `joinAutoRadio`, `resyncAutoRadio`
+- `player/auto-radio-actions.ts` — `joinAutoRadio`, `resyncAutoRadio`, `leaveAutoRadio`, `rejoinAutoRadio`
 - `components/auto-radio-button.svelte` — shared infinity auto button UI across headers/pages/search
 - `components/player.svelte` — computed drift detection
-- `broadcast.js` — `calculateSeekTime` (speed-aware expected position for listeners)
+- `broadcast-utils.js` — `calculateSeekTime` (speed-aware expected position for listeners)
 - `[slug]/+layout.svelte` — full-channel join button
 - `[slug]/+page.svelte` — per-tag join buttons
 - `[slug]/tracks/+page.svelte` — filtered results join button

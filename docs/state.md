@@ -26,12 +26,16 @@ On app boot (`+layout.js`):
 
 1. `collectionsHydrated` / `cacheReady` — currently no-ops (see above)
 2. `preload()` — seed channels (embed/local modes), validate broadcast listening state, expose `window.r5` debug handles. The app renders once this resolves.
-3. `deckTracksRestored` — after first render, `ensureTracksLoaded()` for each saved deck's channel. Nothing waits on it except the deck's queue keepalive; the current track's keepalive fetches that one row by id, so the deck shows it first. `playTrack()` waits for the channel if asked to play an id that isn't loaded yet.
+3. `deckTracksRestored` — after first render, `loadChannelTracks()` for each saved deck's channel. Nothing waits on it except the deck's queue keepalive; the current track's keepalive fetches that one row by id, so the deck shows it first. `playTrack()` waits for the channel if asked to play an id that isn't loaded yet.
 4. `useLiveQuery` in routes/components fetches on demand, populating collections
-5. `checkTracksFreshness()` validates per-channel tracks against remote (see `tracks.ts`); refetches in the background if outdated
+5. Track subsets are trusted for 24 hours (`staleTime`); opening a channel, or returning to its tab, asks the server for its track count and newest edit and refetches only if they differ
 
 For collections, queries, mutations, and live queries, see [tanstack.md](tanstack.md).
 
 ## Channels
 
 Channels are not preloaded. `channelsCollection` is on-demand: each page's live query fetches the subset it needs, and TanStack Query caches each requested window. The adapter honors offsets and drains unbounded requests; id lookups fetch only missing rows.
+
+## Tracks
+
+`tracksCollection` is on-demand too. A channel's tracks share one key, `['tracks', slug]`, and load completely, paging past the API's 4000-row cap. A limit or offset reaches the server only for newest-first queries on filters `parseTrackParams` knows; anything else fetches the whole matching set and the live query narrows it.

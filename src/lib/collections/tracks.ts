@@ -6,10 +6,11 @@ import {BasicIndex} from '@tanstack/db'
 import type {QueryKey} from '@tanstack/query-core'
 import {sdk} from '@radio4000/sdk'
 import {capabilities} from '#lib/modes.js'
+import {appState} from '#lib/app-state.svelte.js'
 import {parseUrl} from 'media-now'
 import {uuid} from '#lib/utils.js'
 import {queryClient} from './query-client'
-import {channelsCollection, type Channel} from './channels'
+import type {Channel} from './channels'
 import {trackMetaCollection, trackMetaKey} from './track-meta'
 import {logger} from '#lib/logger.js'
 import {getErrorMessage} from './utils'
@@ -31,54 +32,81 @@ export function normalizeTrackMedia<
 	}
 }
 
+type LoadSubsetOptions = Parameters<typeof parseLoadSubsetOptions>[0] & {offset?: number}
+
+/** One key, one answer: `getTrackQueryKey` and the queryFn must agree on these. */
 type TrackQueryParams = {
-	slugEq?: string
-	slugIn?: string[]
-	idIn?: string[]
+	slugs?: string[]
+	ids?: string[]
+	mediaId?: string
+	/** TanStack DB's tie request at a page boundary. */
+	createdAt?: string
 	createdAfter?: string
 	limit?: number
+	offset?: number
 }
 
-function parseTrackParams(opts: Parameters<typeof parseLoadSubsetOptions>[0]): TrackQueryParams {
-	const options = parseLoadSubsetOptions(opts)
-	return {
-		slugEq: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'eq')?.value as
-			| string
-			| undefined,
-		slugIn: options.filters.find((f) => f.field[0] === 'slug' && f.operator === 'in')?.value as
-			| string[]
-			| undefined,
-		idIn: options.filters.find((f) => f.field[0] === 'id' && f.operator === 'in')?.value as
-			| string[]
-			| undefined,
-		createdAfter: options.filters.find((f) => f.field[0] === 'created_at' && f.operator === 'gt')
-			?.value as string | undefined,
-		limit: options.limit
-	}
-}
-
-function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
-	if (params.slugIn) {
-		const key: (string | number)[] = ['tracks', 'slugs', ...params.slugIn.toSorted()]
-		if (params.limit) key.push('limit', params.limit)
-		if (params.createdAfter) key.push('after', params.createdAfter)
-		return key
-	}
-	if (params.slugEq) {
-		const key: (string | number)[] = ['tracks', params.slugEq]
-		if (params.limit) key.push('limit', params.limit)
-		if (params.createdAfter) key.push('after', params.createdAfter)
-		return key
-	}
-	if (params.idIn) {
-		return ['tracks', 'ids', ...params.idIn.toSorted()]
-	}
-	return ['tracks']
+/** Every channel, but only a limit or a date range of it: an unbounded request for all tracks is refused. */
+function isBoundedAcrossChannels(params: TrackQueryParams): boolean {
+	return (
+		!params.slugs?.length &&
+		!params.ids &&
+		params.mediaId === undefined &&
+		Boolean(params.limit || params.createdAt || params.createdAfter)
+	)
 }
 
 /**
- * On-demand track collection, keyed by id. Fetched by slug (channel) or id list (keep-alive
- * pins) — see `parseTrackParams`/`getTrackQueryKey`. Searches across channels go through
+ * Keeps limit/offset only when the server can serve them as asked (newest first, every
+ * filter known); otherwise fetches the superset and the live query narrows it.
+ */
+function parseTrackParams(opts: LoadSubsetOptions): TrackQueryParams {
+	const {filters, sorts, limit} = parseLoadSubsetOptions(opts)
+	const params: TrackQueryParams = {}
+	let understood = true
+	for (const {field, operator, value} of filters) {
+		const name = field.join('.')
+		if (name === 'slug' && operator === 'eq') params.slugs = [value as string]
+		else if (name === 'slug' && operator === 'in') params.slugs = value as string[]
+		else if (name === 'id' && operator === 'eq') params.ids = [value as string]
+		else if (name === 'id' && operator === 'in') params.ids = value as string[]
+		else if (name === 'media_id' && operator === 'eq') params.mediaId = value as string
+		else if (name === 'created_at' && operator === 'eq') params.createdAt = value as string
+		else if (name === 'created_at' && operator === 'gt') params.createdAfter = value as string
+		else understood = false
+	}
+	const newestFirst =
+		sorts.length === 0 ||
+		(sorts.length === 1 &&
+			sorts[0].field.join('.') === 'created_at' &&
+			sorts[0].direction === 'desc')
+	if (understood && newestFirst) {
+		if (limit) params.limit = limit
+		if (opts?.offset) params.offset = opts.offset
+	}
+	return params
+}
+
+/** Same precedence as the queryFn: ids, then media_id, then slugs. */
+function getTrackQueryKey(params: TrackQueryParams): (string | number)[] {
+	if (params.ids) return ['tracks', 'ids', ...params.ids.toSorted()]
+	if (params.mediaId !== undefined) return ['tracks', 'media', params.mediaId]
+	let key: (string | number)[]
+	if (params.slugs?.length === 1) key = ['tracks', params.slugs[0]]
+	else if (params.slugs?.length) key = ['tracks', 'slugs', ...params.slugs.toSorted()]
+	else if (isBoundedAcrossChannels(params)) key = ['tracks', 'all']
+	else return ['tracks']
+	if (params.limit) key.push('limit', params.limit)
+	if (params.offset) key.push('offset', params.offset)
+	if (params.createdAt) key.push('at', params.createdAt)
+	if (params.createdAfter) key.push('after', params.createdAfter)
+	return key
+}
+
+const TRACKS_STALE_MS = 24 * 60 * 60 * 1000
+
+/**
+ * On-demand track collection, keyed by id. Searches across channels go through
  * sdk.search.searchTracks in queryView, which writes its results in here.
  */
 export const tracksCollection = createCollection<Track, string>({
@@ -90,19 +118,22 @@ export const tracksCollection = createCollection<Track, string>({
 		startSync: true,
 		queryClient,
 		getKey: (item) => item.id,
-		staleTime: 24 * 60 * 60 * 1000,
+		// Kept fresh by checkTracksFreshness. Not on focus: every pinned deck channel would redownload.
+		staleTime: TRACKS_STALE_MS,
+		refetchOnWindowFocus: false,
 		queryFn: async (ctx): Promise<Track[]> => {
-			const params = parseTrackParams(ctx.meta?.loadSubsetOptions)
-			const slugs = params.slugIn ?? (params.slugEq ? [params.slugEq] : [])
+			const params = parseTrackParams(ctx.meta?.loadSubsetOptions as LoadSubsetOptions)
+			const slugs = params.slugs ?? []
 
 			log.info('queryFn', {slugs, createdAfter: params.createdAfter})
 
 			if (!capabilities.globalBrowse) {
 				const all = [...tracksCollection.state.values()]
-				if (params.idIn?.length) {
-					const set = new Set(params.idIn)
+				if (params.ids?.length) {
+					const set = new Set(params.ids)
 					return all.filter((t) => set.has(t.id))
 				}
+				if (params.mediaId !== undefined) return all.filter((t) => t.media_id === params.mediaId)
 				if (slugs.length) {
 					const set = new Set(slugs)
 					return all.filter((t) => !!t.slug && set.has(t.slug))
@@ -110,32 +141,84 @@ export const tracksCollection = createCollection<Track, string>({
 				return all
 			}
 
-			// Id-based: keep-alive pins (e.g. a deck's queue). Return rows already in
-			// the collection; only fetch ids that aren't loaded yet. This owns those
-			// rows so on-demand GC won't evict them while the pin is subscribed.
-			if (params.idIn?.length) {
-				const idSet = new Set(params.idIn)
+			// Return the loaded rows too: owning them keeps on-demand GC off them while pinned.
+			if (params.ids?.length) {
+				const idSet = new Set(params.ids)
 				const present = [...tracksCollection.state.values()].filter((t) => idSet.has(t.id))
-				const missing = params.idIn.filter((id) => !tracksCollection.state.get(id))
+				const missing = params.ids.filter((id) => !tracksCollection.state.get(id))
 				if (!missing.length) return present
-				const fetched = await fetchTracksByIds(missing)
+				const fetched = await fetchTracksByIds(missing, ctx.signal)
 				return [...present, ...fetched]
 			}
 
-			// Slug-based: fetch per channel
+			if (params.mediaId !== undefined) {
+				if (!params.mediaId) return []
+				const {data, error} = await sdk.supabase
+					.from('channel_tracks')
+					.select('*')
+					.eq('media_id', params.mediaId)
+					.abortSignal(ctx.signal)
+				if (error) throw error
+				return ((data || []) as Track[]).map(normalizeTrackMedia)
+			}
+
+			if (isBoundedAcrossChannels(params)) {
+				return fetchNewestTracks(undefined, {
+					limit: params.limit,
+					offset: params.offset,
+					createdAt: params.createdAt,
+					createdAfter: params.createdAfter,
+					signal: ctx.signal
+				})
+			}
+
+			// A whole load stays per channel to fill each channel's own key.
+			const whole = !params.limit && !params.createdAt && !params.createdAfter
+			if (slugs.length > 1 && !whole && !params.offset) {
+				const local = localChannelSlugs()
+				const remote = slugs.filter((s) => !local.has(s))
+				const batches: Promise<Track[]>[] = []
+				for (let i = 0; i < remote.length; i += SLUGS_PER_REQUEST) {
+					batches.push(
+						fetchNewestTracks(remote.slice(i, i + SLUGS_PER_REQUEST), {
+							limit: params.limit,
+							createdAt: params.createdAt,
+							createdAfter: params.createdAfter,
+							signal: ctx.signal
+						})
+					)
+				}
+				const localRows = [...tracksCollection.state.values()].filter(
+					(t) =>
+						!!t.slug &&
+						local.has(t.slug) &&
+						slugs.includes(t.slug) &&
+						(!params.createdAfter || (t.created_at ?? '') > params.createdAfter) &&
+						(!params.createdAt || t.created_at === params.createdAt)
+				)
+				const merged = [...localRows, ...(await Promise.all(batches)).flat()].toSorted(newestFirst)
+				return params.limit ? merged.slice(0, params.limit) : merged
+			}
+
+			// A local channel has nothing on the server; an empty answer would wipe its rows.
 			if (slugs.length) {
+				const local = localChannelSlugs()
 				const results = await Promise.all(
 					slugs.map(async (s: string) => {
-						const tracks = await fetchTracksBySlug(s, {
+						if (local.has(s))
+							return [...tracksCollection.state.values()].filter((t) => t.slug === s)
+						const tracks = await fetchNewestTracks([s], {
 							limit: params.limit,
-							createdAfter: params.createdAfter
+							offset: params.offset,
+							createdAt: params.createdAt,
+							createdAfter: params.createdAfter,
+							signal: ctx.signal
 						})
 						log.info('queryFn fetched', {slug: s, count: tracks.length})
-						// Keep the canonical per-slug cache entry reserved for full channel snapshots.
-						// Partial slug fetches (limit/createdAfter) must not overwrite that persisted key.
-						if (!params.limit && !params.createdAfter) {
-							queryClient.setQueryData(['tracks', s], tracks)
-						}
+						// So a later `eq(slug)` query hits the cache.
+						const full =
+							!params.limit && !params.offset && !params.createdAt && !params.createdAfter
+						if (full && slugs.length > 1) queryClient.setQueryData(['tracks', s], tracks)
 						return tracks
 					})
 				)
@@ -191,26 +274,60 @@ export const tracksCollection = createCollection<Track, string>({
 	}
 })
 
-async function fetchTracksBySlug(
-	slug: string,
-	opts?: {limit?: number; createdAfter?: string}
-): Promise<Track[]> {
-	log.info('tracks fetch', {slug, limit: opts?.limit, createdAfter: opts?.createdAfter})
-	let query = sdk.supabase
-		.from('channel_tracks')
-		.select('*')
-		.eq('slug', slug)
-		.order('created_at', {ascending: false})
-	if (opts?.limit) query = query.limit(opts.limit)
-	if (opts?.createdAfter) query = query.gt('created_at', opts.createdAfter)
+function localChannelSlugs(): Set<string> {
+	const ids = new Set(appState.local_channel_ids ?? [])
+	return new Set((appState.local_channels ?? []).filter((c) => ids.has(c.id)).map((c) => c.slug))
+}
 
-	const {data, error} = await query
-	if (error) throw error
-	return ((data || []) as Track[]).map(normalizeTrackMedia)
+/** PostgREST `max_rows`: a shorter page means the end. */
+const SLUG_PAGE = 4000
+
+/** Stays within URL limits. */
+const SLUGS_PER_REQUEST = 50
+
+/** Must match the server's order. */
+function newestFirst(a: Track, b: Track): number {
+	const at = (b.created_at ?? '').localeCompare(a.created_at ?? '')
+	return at || a.id.localeCompare(b.id)
+}
+
+async function fetchNewestTracks(
+	slugs: string[] | undefined,
+	opts: {
+		limit?: number
+		offset?: number
+		createdAt?: string
+		createdAfter?: string
+		signal: AbortSignal
+	}
+): Promise<Track[]> {
+	const {limit = Infinity, offset = 0, createdAt, createdAfter, signal} = opts
+	log.info('tracks fetch', {slugs, limit: opts.limit, offset, createdAt, createdAfter})
+	const rows: Track[] = []
+	while (rows.length < limit) {
+		const size = Math.min(SLUG_PAGE, limit - rows.length)
+		const from = offset + rows.length
+		let query = sdk.supabase.from('channel_tracks').select('*')
+		if (slugs?.length === 1) query = query.eq('slug', slugs[0])
+		else if (slugs) query = query.in('slug', slugs)
+		query = query
+			.order('created_at', {ascending: false})
+			// Tracks imported together share created_at; a second key keeps pages from overlapping.
+			.order('id', {ascending: true})
+		if (createdAt) query = query.eq('created_at', createdAt)
+		if (createdAfter) query = query.gt('created_at', createdAfter)
+		query = query.range(from, from + size - 1).abortSignal(signal)
+		const {data, error} = await query
+		if (error) throw error
+		const page = (data || []) as Track[]
+		rows.push(...page)
+		if (page.length < size) break
+	}
+	return rows.map(normalizeTrackMedia)
 }
 
 /** Fetch tracks by id, batched to stay within URL limits. Newest first. */
-async function fetchTracksByIds(ids: string[]): Promise<Track[]> {
+async function fetchTracksByIds(ids: string[], signal: AbortSignal): Promise<Track[]> {
 	if (!ids.length) return []
 	const BATCH = 50
 	const all: Track[] = []
@@ -219,6 +336,7 @@ async function fetchTracksByIds(ids: string[]): Promise<Track[]> {
 			.from('channel_tracks')
 			.select('*')
 			.in('id', ids.slice(i, i + BATCH))
+			.abortSignal(signal)
 		if (error) throw error
 		all.push(...((data || []) as Track[]).map(normalizeTrackMedia))
 	}
@@ -265,6 +383,52 @@ async function handleTrackDelete(id: string): Promise<void> {
 	const response = await sdk.tracks.deleteTrack(id)
 	log.info('delete_done', {id, error: response.error})
 	if (response.error) throw new Error(getErrorMessage(response.error))
+}
+
+/** Fetch only, no live query: a click without a hover would otherwise sort the channel twice. */
+export function preloadChannelTracks(slug: string): void {
+	if (!capabilities.globalBrowse || localChannelSlugs().has(slug)) return
+	queryClient
+		.prefetchQuery({
+			queryKey: ['tracks', slug],
+			// Must match what the queryFn fetches for `eq(slug)`
+			queryFn: ({signal}) => fetchNewestTracks([slug], {signal}),
+			staleTime: TRACKS_STALE_MS
+		})
+		.catch((error) => log.warn('preload failed', {slug, error}))
+}
+
+const checkedAt = new Map<string, number>()
+
+/** Refetch a channel's tracks when the server's count or newest updated_at differs from the rows we hold. */
+export async function checkTracksFreshness(slug: string): Promise<boolean> {
+	const state = queryClient.getQueryState(['tracks', slug])
+	if (!capabilities.globalBrowse || state?.status !== 'success' || state.fetchStatus !== 'idle')
+		return false
+	if (Date.now() - Math.max(checkedAt.get(slug) ?? 0, state.dataUpdatedAt) < 10_000) return false
+	checkedAt.set(slug, Date.now())
+	const rows = [...tracksCollection.state.values()].filter((t) => t.slug === slug)
+	const localLatest = rows.reduce((max, t) => (t.updated_at && t.updated_at > max ? t.updated_at : max), '')
+
+	const {data, error, count} = await sdk.supabase
+		.from('channel_tracks')
+		.select('updated_at', {count: 'exact', head: false})
+		.eq('slug', slug)
+		.order('updated_at', {ascending: false})
+		.limit(1)
+	if (error) {
+		log.warn('freshness', {slug, error})
+		return false
+	}
+	const remoteLatest = data?.[0]?.updated_at
+	const remoteCount = count ?? 0
+
+	// Nothing on the server but rows held: a local-only (imported) channel. Invalidating would wipe it.
+	if (remoteCount === 0 && rows.length > 0) return false
+	const outdated = remoteCount !== rows.length || (!!remoteLatest && remoteLatest > localLatest)
+	log.info('freshness', {slug, held: rows.length, remote: remoteCount, outdated})
+	if (outdated) await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
+	return outdated
 }
 
 /**
@@ -400,140 +564,6 @@ export function batchDeleteTracks(channel: Channel, ids: string[]) {
 		.delete(ids, {metadata: {slug: channel.slug}})
 		.when('settled')
 		.then(() => {})
-}
-
-/** Compare cached tracks for `slug` against remote (count + latest updated_at); invalidates and returns whether stale. */
-export async function checkTracksFreshness(slug: string): Promise<boolean> {
-	return queryClient.fetchQuery({
-		queryKey: ['tracks-freshness', slug],
-		staleTime: 60_000,
-		queryFn: async () => {
-			const cachedTracks = (queryClient.getQueryData(['tracks', slug]) as Track[]) || []
-			const localLatest = cachedTracks.reduce(
-				(max: string | null, t: Track | null | undefined) => {
-					const updated = t?.updated_at
-					if (!updated) return max
-					return !max || updated > max ? updated : max
-				},
-				null as string | null
-			)
-
-			const {data, error, count} = await sdk.supabase
-				.from('channel_tracks')
-				.select('updated_at', {count: 'exact', head: false})
-				.eq('slug', slug)
-				.order('updated_at', {ascending: false})
-				.limit(1)
-
-			if (error) {
-				log.warn('freshness', {slug, error})
-				return false
-			}
-
-			const remoteLatest = data?.[0]?.updated_at
-			const remoteCount = count ?? 0
-
-			// Remote has no tracks for this slug — treat as local-only (imported backup).
-			// Don't invalidate or we'd wipe data that only exists locally.
-			if (remoteCount === 0 && cachedTracks.length > 0) {
-				log.info('freshness skip local-only', {slug, cached: cachedTracks.length})
-				return false
-			}
-
-			const countMismatch = remoteCount !== cachedTracks.length
-			const outdated =
-				countMismatch || (remoteLatest && (!localLatest || remoteLatest > localLatest))
-
-			log.debug('freshness', {
-				slug,
-				cached: cachedTracks.length,
-				remote: remoteCount,
-				localLatest,
-				remoteLatest,
-				outdated: !!outdated
-			})
-
-			if (outdated) {
-				await queryClient.invalidateQueries({queryKey: ['tracks', slug]})
-				log.info('freshness invalidated', {slug})
-			}
-
-			return !!outdated
-		}
-	})
-}
-
-/**
- * Fetch tracks created after `createdAfter` for multiple channel slugs in one query.
- * Results are upserted into tracksCollection and returned (newest first).
- * Batches slugs to stay within URL limits.
- */
-export async function fetchRecentTracksForSlugs(
-	slugs: string[],
-	createdAfter: string
-): Promise<Track[]> {
-	if (!slugs.length) return []
-	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
-	const BATCH = 50
-	const all: Track[] = []
-	for (let i = 0; i < slugs.length; i += BATCH) {
-		const batch = slugs.slice(i, i + BATCH)
-		const {data, error} = await sdk.supabase
-			.from('channel_tracks')
-			.select('*')
-			.in('slug', batch)
-			.gt('created_at', createdAfter)
-			.order('created_at', {ascending: false})
-		if (error) throw error
-		const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
-		tracksCollection.utils.writeUpsert(tracks)
-		all.push(...tracks)
-	}
-	return all.toSorted((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-}
-
-/**
- * Fetch the most recently added tracks globally, ordered by created_at DESC.
- * Results are upserted into tracksCollection.
- */
-export async function fetchRecentTracks({
-	limit = 50,
-	offset = 0
-}: {
-	limit?: number
-	offset?: number
-} = {}): Promise<Track[]> {
-	if (!tracksCollection.isReady()) tracksCollection.startSyncImmediate()
-	const {data, error} = await sdk.supabase
-		.from('channel_tracks')
-		.select('*')
-		.order('created_at', {ascending: false})
-		.range(offset, offset + limit - 1)
-	if (error) throw error
-	const tracks = ((data || []) as Track[]).map(normalizeTrackMedia)
-	tracksCollection.utils.writeUpsert(tracks)
-	return tracks
-}
-
-/** Load a channel's tracks into the collection if fewer than `track_count` are cached. */
-export async function ensureTracksLoaded(slug: string): Promise<void> {
-	const existing = [...tracksCollection.state.values()].filter((t) => t?.slug === slug)
-	const channel = [...channelsCollection.state.values()].find((c) => c?.slug === slug)
-	if (existing.length && channel && existing.length >= (channel.track_count ?? 0)) return
-
-	const data = await queryClient.fetchQuery<Track[]>({
-		queryKey: ['tracks', slug],
-		queryFn: () => fetchTracksBySlug(slug),
-		staleTime: 0
-	})
-
-	// Ensure sync is started so write utils are available
-	if (!tracksCollection.isReady()) {
-		tracksCollection.startSyncImmediate()
-	}
-
-	log.debug('ensureTracksLoaded', slug, data.length)
-	tracksCollection.utils.writeUpsert(data)
 }
 
 /**

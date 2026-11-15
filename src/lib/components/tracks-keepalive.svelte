@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {eq, inArray} from '@tanstack/db'
 	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {holdPin} from '#lib/player/channel-tracks.js'
 
 	// Holds tracks resident in the on-demand collection while mounted — without a
 	// subscriber owning them, rows get evicted, which GCs the playing track and tears
@@ -30,12 +31,25 @@
 	$effect(() => {
 		if (!slugKey) return
 		const list = slugKey.split(',')
-		return pin((t) => (list.length === 1 ? eq(t.slug, list[0]) : inArray(t.slug, list)))
+		if (list.length > 1) return pin((t) => inArray(t.slug, list))
+		// Same key as loadChannelTracks: take the rows over from its lease
+		const unpin = pin((t) => eq(t.slug, list[0]))
+		const release = holdPin({slug: list[0]})
+		return () => {
+			release()
+			unpin()
+		}
 	})
 
 	$effect(() => {
 		if (!idKey) return
 		const list = idKey.split(',')
-		return pin((t) => inArray(t.id, list))
+		if (list.length > 1) return pin((t) => inArray(t.id, list))
+		const unpin = pin((t) => inArray(t.id, list))
+		const release = holdPin({id: list[0]})
+		return () => {
+			release()
+			unpin()
+		}
 	})
 </script>

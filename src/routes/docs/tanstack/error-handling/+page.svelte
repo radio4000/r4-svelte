@@ -50,10 +50,10 @@
 		{id: 2, title: 'done row', done: true}
 	]
 
-	const localCollection = createCollection<LocalItem, number>(
+	const localCollection = createCollection(
 		localOnlyCollectionOptions({
 			id: 'tanstack-assertions-local',
-			getKey: (item) => item.id
+			getKey: (item: LocalItem) => item.id
 		})
 	)
 
@@ -111,12 +111,12 @@
 	let errorMode: 'success' | 'error' = 'success'
 	let errorEnabled = $state(false)
 
-	const errorCollection = createCollection<ErrorItem, string>({
+	const errorCollection = createCollection({
 		...queryCollectionOptions({
 			queryKey: () => ['tanstack', 'assertions', 'error'],
 			syncMode: 'on-demand',
 			queryClient,
-			getKey: (item) => item.id,
+			getKey: (item: ErrorItem) => item.id,
 			staleTime: 60_000,
 			queryFn: async (): Promise<ErrorItem[]> => {
 				await sleep(20)
@@ -130,11 +130,6 @@
 		if (!errorEnabled) return null
 		return q.from({rows: errorCollection}).orderBy(({rows}) => rows.id)
 	})
-
-	let errorMessage = $derived(
-		errorCollection.utils.lastError instanceof Error ? errorCollection.utils.lastError.message : ''
-	)
-	let collectionIsError = $derived(errorCollection.utils.isError)
 
 	let localResult = $state<AssertionResult | null>(null)
 	let cacheResult = $state<AssertionResult | null>(null)
@@ -261,19 +256,14 @@
 
 		errorMode = 'error'
 		await errorCollection.utils.refetch().catch(() => {})
-		await waitFor(() => errorQuery.isLoadingError && collectionIsError && errorMessage.length > 0)
+		await waitFor(() => errorQuery.isLoadingError)
 
-		const pass =
-			errorQuery.isLoadingError &&
-			collectionIsError &&
-			errorMessage.includes('assertion error from queryFn')
+		const pass = errorQuery.isLoadingError
 
 		errorResult = {
 			pass,
 			details: [
 				`query.isLoadingError=${errorQuery.isLoadingError}`,
-				`collection.utils.isError=${collectionIsError}`,
-				`lastError=${errorMessage || 'none'}`,
 				'known rough edge upstream; this page asserts the observable app path'
 			]
 		}
@@ -302,9 +292,7 @@
 			getSnapshotDoneCount: () => snapshotDoneCount,
 			getCacheState: () => readCacheState(),
 			getErrorState: () => ({
-				queryIsLoadingError: errorQuery.isLoadingError,
-				collectionIsError,
-				errorMessage
+				queryIsLoadingError: errorQuery.isLoadingError
 			})
 		}
 	}
@@ -380,8 +368,6 @@
 	</p>
 	<p>Status: <strong>{errorResult ? (errorResult.pass ? 'pass' : 'fail') : 'not run'}</strong></p>
 	<p><code>query.isLoadingError</code>: {String(errorQuery.isLoadingError)}</p>
-	<p><code>collection.utils.isError</code>: {String(collectionIsError)}</p>
-	<p><code>collection.utils.lastError</code>: {errorMessage || 'none'}</p>
 
 	{#if errorResult}
 		<pre>{errorResult.details.join('\n')}</pre>

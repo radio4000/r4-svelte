@@ -5,6 +5,7 @@
 	import {cubicOut} from 'svelte/easing'
 	import {appState} from '#lib/app-state.svelte.js'
 	import {showPlayerParam, sortedListeningDeckIds} from '#lib/deck.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import Player from '#lib/components/player.svelte'
 	import QueuePanel from '#lib/components/queue-panel.svelte'
 
@@ -131,7 +132,7 @@
 		<div class="resize-handle" onpointerdown={onResizeStart}></div>
 		<div class="deck-body">
 			<Player {deckId} {scrollToActive} {deckEl}>
-				{#if !isListeningToBroadcast && !isAutoRadio}
+				{#if !followsClock(deck)}
 					<QueuePanel {deckId} bind:scrollToActive />
 				{/if}
 			</Player>

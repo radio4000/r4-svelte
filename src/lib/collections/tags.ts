@@ -9,13 +9,13 @@ export interface Tag {
 }
 
 /** All tags in use across tracks, with usage counts (for tag browse/filter UIs). */
-export const tagsCollection = createCollection<Tag, string>(
+export const tagsCollection = createCollection(
 	queryCollectionOptions({
 		queryKey: ['tags'],
 		queryClient,
 		getKey: (item) => item.tag,
 		staleTime: 60 * 60 * 1000,
-		queryFn: async () => {
+		queryFn: async (): Promise<Tag[]> => {
 			const {data, error} = await sdk.supabase
 				.from('tags')
 				.select('tag, count')

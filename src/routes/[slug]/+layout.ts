@@ -4,7 +4,7 @@ import {error, redirect} from '@sveltejs/kit'
 import {resolve} from '$app/paths'
 import {sdk} from '@radio4000/sdk'
 import {isMissingRow} from './not-found'
-import {normalizeTrackMedia} from '#lib/collections/tracks.js'
+import {normalizeTrackMedia, preloadChannelTracks} from '#lib/collections/tracks.js'
 import {SECTION_TRACK_LIMIT} from '#lib/config.js'
 import type {Channel, Track} from '#lib/types.js'
 
@@ -39,6 +39,7 @@ export async function load({url, route, params}) {
 	// Fetch only on the server; the browser reads the collections, and on hydration
 	// +layout.svelte reuses the server's data via hydratable().
 	if (browser) {
+		preloadChannelTracks(params.slug)
 		return {view: viewFromUrl(url), channel: null, tracks: []}
 	}
 

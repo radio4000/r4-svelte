@@ -3,18 +3,30 @@ import {
 	playTrack,
 	play,
 	seekTo,
-	setUserInitiatedPlay,
-	clearUserInitiatedPlay,
 	getMediaPlayer,
 	playChannel,
 	applyRemoteState
-} from '#lib/api.js'
+} from '#lib/player/playback.js'
 import {appState, addDeck, removeDeck} from '#lib/app-state.svelte.js'
+import {setUserInitiatedPlay, clearUserInitiatedPlay} from '#lib/player/user-initiated-play.js'
+import {
+	leaveBroadcast,
+	stopBroadcastSync,
+	stopBroadcastStateListener,
+	stopBroadcastTableListener,
+	closeListeningDecksForChannel,
+	broadcastStateListeners,
+	broadcastTableListeners,
+	lastReceivedStateSeqByChannel,
+	seekJobSeqByDeck
+} from '#lib/broadcast-teardown.js'
+import {watch} from '#lib/watch.svelte.js'
 import {logger} from '#lib/logger.js'
 import {sdk} from '@radio4000/sdk'
 import {broadcastsCollection} from '#lib/collections/broadcasts.js'
 import {channelsCollection} from '#lib/collections/channels.js'
-import {tracksCollection, ensureTracksLoaded} from '#lib/collections/tracks.js'
+import {tracksCollection} from '#lib/collections/tracks.js'
+import {loadChannelTracks, loadTrack} from '#lib/player/channel-tracks.js'
 import {isDbId} from '#lib/utils.js'
 import {sortedDeckIds, sortedListeningDeckIds, isBroadcasting} from '#lib/deck.js'
 import {
@@ -30,6 +42,8 @@ import {capture} from '#lib/analytics.js'
 /** @typedef {import('#lib/types.js').Broadcast} Broadcast */
 /** @typedef {import('#lib/types.js').BroadcastDeckState} BroadcastDeckState */
 /** @typedef {ReturnType<typeof getMediaPlayer>} MediaPlayer */
+
+export {leaveBroadcast}
 
 const log = logger.ns('broadcast').seal()
 // Leave time to choose a track or recover buffering without disconnecting listeners.
@@ -65,11 +79,6 @@ function logDedup(key, msg) {
 	log.debug(msg)
 }
 
-/** Supabase realtime channels keyed by deckId
- * @type {Map<number, any>}
- */
-const broadcastChannels = new Map()
-
 /** Broadcaster realtime state channels keyed by channelId
  * @type {Map<string, {channel: any, intervalId: ReturnType<typeof setInterval>}>}
  */
@@ -79,18 +88,7 @@ const broadcastStateChannels = new Map()
  */
 const broadcastLivenessMonitors = new Map()
 
-/** Listener realtime state channels keyed by channelId
- * @type {Map<string, any>}
- */
-const broadcastStateListeners = new Map()
-
-/** Broadcast table listeners keyed by channelId (for state refresh)
- * @type {Map<string, any>}
- */
-const broadcastTableListeners = new Map()
 const broadcastStateSeqByChannel = new Map()
-const lastReceivedStateSeqByChannel = new Map()
-const seekJobSeqByDeck = new Map()
 
 /** @param {string} channelId */
 export function isUserBroadcasting(channelId) {
@@ -146,7 +144,7 @@ export async function joinBroadcast(deckId, channelId) {
 		const slug = broadcast?.channels.slug
 		if (slug) {
 			try {
-				await ensureTracksLoaded(slug)
+				await loadChannelTracks(slug)
 				log.log(`prefetching ${slug}`)
 			} catch (error) {
 				log.warn('prefetch_skipped', {slug, error: /** @type {Error} */ (error).message})
@@ -229,25 +227,6 @@ export async function resyncBroadcastDeck(deckId) {
 	await syncDeckToBroadcastState(deckId, channelId, matchedState)
 }
 
-/** @param {number} deckId */
-export function leaveBroadcast(deckId) {
-	const channelId = appState.decks[deckId]?.listening_to_channel_id
-	stopBroadcastSync(deckId)
-	if (channelId) {
-		stopBroadcastStateListener(channelId)
-		stopBroadcastTableListener(channelId)
-		closeListeningDecksForChannel(channelId)
-	} else {
-		// Fallback: if invoked on a non-listening deck, preserve old behavior.
-		const deck = appState.decks[deckId]
-		if (deck) {
-			deck.listening_to_channel_id = undefined
-			deck.is_playing = false
-		}
-	}
-	log.log(`left deck ${deckId}`)
-}
-
 /**
  * Helper to upsert a broadcast record with full deck state.
  * @param {string} channelId
@@ -284,7 +263,7 @@ export async function startBroadcast(channelId, trackId) {
 		return
 	}
 	const slug = channelsCollection.state.get(channelId)?.slug
-	if (slug) await ensureTracksLoaded(slug)
+	if (slug) await loadChannelTracks(slug)
 	await upsertRemoteBroadcast(channelId)
 	startBroadcastState(channelId)
 	broadcastStateUpdate(channelId)
@@ -351,17 +330,6 @@ export async function startChannelBroadcast(channel, {deckId = appState.active_d
 	const deck = appState.decks[sourceDeckId]
 	if (deck) deck.broadcasting_channel_id = channel.id
 	return {ok: true}
-}
-
-/** @param {number} deckId */
-function stopBroadcastSync(deckId) {
-	const channel = broadcastChannels.get(deckId)
-	if (channel) {
-		log.log('stopping_sync', {deckId})
-		channel.unsubscribe()
-		broadcastChannels.delete(deckId)
-	}
-	seekJobSeqByDeck.delete(deckId)
 }
 
 function nextSeekJobId(deckId) {
@@ -439,13 +407,9 @@ async function playBroadcastTrack(deckId, broadcast) {
 			tracksCollection.utils.writeUpsert(track)
 			log.log('play_broadcast_ephemeral', {track_id, url: track.url})
 		} else {
-			// Track not loaded - fetch it directly by ID
 			try {
-				const {data, error} = await sdk.tracks.readTrack(track_id)
-				if (error || !data) throw new Error(`Track ${track_id} not found`)
-				// await tracksCollection.preload()
-				tracksCollection.utils.writeUpsert(/** @type {import('#lib/types.js').Track} */ (data))
-				track = /** @type {import('#lib/types.js').Track} */ (data)
+				track = await loadTrack(track_id)
+				if (!track) throw new Error(`Track ${track_id} not found`)
 			} catch (error) {
 				log.error(`play failed:`, /** @type {Error} */ (error).message)
 				return false
@@ -681,15 +645,6 @@ function startBroadcastStateListener(channelId) {
 	broadcastStateListeners.set(channelId, channel)
 }
 
-function stopBroadcastStateListener(channelId) {
-	const channel = broadcastStateListeners.get(channelId)
-	if (channel) {
-		channel.unsubscribe()
-		broadcastStateListeners.delete(channelId)
-	}
-	lastReceivedStateSeqByChannel.delete(channelId)
-}
-
 function startBroadcastTableListener(channelId) {
 	if (broadcastTableListeners.has(channelId)) return
 	const channel = sdk.supabase
@@ -725,14 +680,6 @@ function startBroadcastTableListener(channelId) {
 	broadcastTableListeners.set(channelId, channel)
 }
 
-function stopBroadcastTableListener(channelId) {
-	const channel = broadcastTableListeners.get(channelId)
-	if (channel) {
-		channel.unsubscribe()
-		broadcastTableListeners.delete(channelId)
-	}
-}
-
 /**
  * True once a newer state message has superseded `seq` for this channel. Lets an
  * in-flight applyBroadcastState/syncDeckToBroadcastState call recognize — after an
@@ -744,17 +691,6 @@ function stopBroadcastTableListener(channelId) {
  */
 function isSuperseded(channelId, seq) {
 	return typeof seq === 'number' && lastReceivedStateSeqByChannel.get(channelId) !== seq
-}
-
-function closeListeningDecksForChannel(channelId) {
-	const decksToClose = Object.entries(appState.decks)
-		.filter(([, deck]) => deck.listening_to_channel_id === channelId)
-		.map(([id]) => Number(id))
-	for (const id of decksToClose) {
-		stopBroadcastSync(id)
-		clearUserInitiatedPlay(id)
-		removeDeck(id)
-	}
 }
 
 /**
@@ -932,4 +868,39 @@ if (typeof document !== 'undefined') {
 	}
 	document.addEventListener('visibilitychange', resumeBroadcastState)
 	window.addEventListener('pageshow', resumeBroadcastState)
+}
+
+// Send side: watches the broadcaster's decks. A new track or restart also writes the
+// table row, so late joiners see it.
+if (typeof window !== 'undefined') {
+	/** @type {string | undefined} */
+	let lastPlays
+	watch(
+		() => {
+			const channelId = getBroadcastingChannelId()
+			return channelId ? {channelId, decks: getBroadcastDeckState()} : undefined
+		},
+		(snapshot) => {
+			if (!snapshot) {
+				lastPlays = undefined
+				return
+			}
+			const {channelId, decks} = snapshot
+			notifyBroadcastState(channelId)
+			const plays = decks.map((d) => `${d.track_id}@${d.track_played_at}`).join()
+			const firstSnapshot = lastPlays === undefined
+			if (plays === lastPlays) return
+			lastPlays = plays
+			// startBroadcast already wrote the row this broadcast began with
+			if (firstSnapshot) return
+			upsertRemoteBroadcast(channelId)
+				.then(() => log.log('broadcast_auto_updated', {channelId}))
+				.catch((error) =>
+					log.error('broadcast_auto_update_failed', {
+						channelId,
+						error: /** @type {Error} */ (error).message
+					})
+				)
+		}
+	)
 }

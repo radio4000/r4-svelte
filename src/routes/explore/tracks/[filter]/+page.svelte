@@ -1,10 +1,13 @@
 <script>
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
+	import {gt, inArray} from '@tanstack/db'
 	import {appName} from '#lib/config.js'
-	import {fetchRecentTracks} from '#lib/collections/tracks.js'
-	import {loadFeaturedChannelTracks} from '#lib/collections/featured.js'
+	import {tracksCollection} from '#lib/collections/tracks.js'
+	import {getFeaturedPool} from '#lib/collections/featured.js'
+	import {useLiveQuery} from '#lib/useLiveQuery.svelte.js'
 	import {groupByDay} from '#lib/utils.js'
+	import {daysAgoIso} from '#lib/dates.js'
 	import TrackCard from '#lib/components/track-card.svelte'
 	import ChannelMicroCard from '#lib/components/channel-micro-card.svelte'
 	import ExplorePageHeader from '#lib/components/explore-page-header.svelte'
@@ -23,58 +26,77 @@
 
 	const LIMIT = 50
 	const FEATURED_DAYS = 30
-
-	let tracks = $state(/** @type {import('#lib/types.js').Track[]} */ ([]))
-	let loadedAll = $state(false)
-	let loadingMore = $state(false)
-	let loaded = $state(false)
-	let currentOffset = $state(0)
+	const featuredSince = daysAgoIso(FEATURED_DAYS)
+	const featuredSinceDay = featuredSince.slice(0, 10)
 
 	const filterParam = $derived(data.filter)
 
+	let limit = $state(LIMIT)
 	$effect(() => {
-		const f = filterParam
-		tracks = []
-		loadedAll = false
-		loaded = false
-		currentOffset = 0
-		loadData(f)
+		void filterParam
+		limit = LIMIT
 	})
 
-	async function loadData(filter) {
-		loadingMore = true
-		try {
-			if (filter === 'recent') {
-				const result = await fetchRecentTracks({limit: LIMIT, offset: 0})
-				tracks = result
-				loadedAll = result.length < LIMIT
-				currentOffset = LIMIT
-			} else {
-				await loadFeatured()
-			}
-			loaded = true
-		} finally {
-			loadingMore = false
+	let featuredSlugs = $state(/** @type {string[] | null} */ (null))
+	$effect(() => {
+		if (filterParam !== 'featured' || featuredSlugs) return
+		getFeaturedPool(FEATURED_DAYS).then((pool) => {
+			featuredSlugs = pool.map((ch) => ch.slug)
+		})
+	})
+
+	// Lexical, like the server's order: the default locale order would also load every row
+	const newestFirst = /** @type {const} */ ({direction: 'desc', stringSort: 'lexical'})
+	const tracksQuery = useLiveQuery((q) => {
+		if (filterParam === 'recent') {
+			return q
+				.from({t: tracksCollection})
+				.orderBy(({t}) => t.created_at, newestFirst)
+				.limit(limit)
 		}
-	}
+		if (filterParam === 'featured' && featuredSlugs?.length) {
+			const slugs = featuredSlugs
+			return q
+				.from({t: tracksCollection})
+				.where(({t}) => inArray(t.slug, slugs))
+				.where(({t}) => gt(t.created_at, featuredSinceDay))
+				.orderBy(({t}) => t.created_at, newestFirst)
+				.limit(LIMIT)
+		}
+		return null
+	})
 
-	async function loadFeatured() {
-		const result = await loadFeaturedChannelTracks(FEATURED_DAYS)
-		tracks = result.tracks.slice(0, 50)
-		loadedAll = true
-	}
+	const tracks = $derived.by(() => {
+		const rows = /** @type {import('#lib/types.js').Track[]} */ (tracksQuery.data)
+		if (filterParam !== 'featured') return rows
+		return rows.filter((t) => (t.created_at ?? '') > featuredSince)
+	})
+	const loaded = $derived(
+		tracksQuery.isReady || (filterParam === 'featured' && featuredSlugs?.length === 0)
+	)
+	// Load more moves the same query's window: it stays ready while the next page loads,
+	// so the page is pending from the click until rows arrive or the collection's fetch ends
+	let pending = $state(false)
+	$effect(() => {
+		const collection = tracksQuery.collection
+		if (!collection) return
+		return collection.on('loadingSubset:change', () => {
+			if (!collection.isLoadingSubset) pending = false
+		})
+	})
+	$effect(() => {
+		void tracks.length
+		pending = false
+	})
+	const loadingMore = $derived(tracksQuery.isLoading || pending)
+	const loadedAll = $derived(
+		filterParam !== 'recent' || (loaded && !loadingMore && tracks.length < limit)
+	)
 
-	async function handleLoadMore() {
+	function handleLoadMore() {
 		if (filterParam !== 'recent' || loadedAll) return
-		loadingMore = true
-		try {
-			const result = await fetchRecentTracks({limit: LIMIT, offset: currentOffset})
-			tracks = [...tracks, ...result]
-			currentOffset += LIMIT
-			loadedAll = result.length < LIMIT
-		} finally {
-			loadingMore = false
-		}
+		pending = true
+		limit += LIMIT
 	}
 
 	const groupedTracks = $derived(groupByDay(tracks))

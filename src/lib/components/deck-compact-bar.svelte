@@ -8,8 +8,6 @@
 		next,
 		previous,
 		getMediaPlayer,
-		resyncAutoRadio,
-		leaveAutoRadio,
 		rejoinAutoRadio,
 		toggleDeckCompact,
 		expandDeck,
@@ -18,6 +16,8 @@
 	import {isDbId, isMobileViewport} from '#lib/utils.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
+	import {resyncAutoRadio, leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {parseUrl} from 'media-now/parse-url'
 	import * as m from '#lib/paraglide/messages.js'
@@ -143,11 +143,11 @@
 					{/if}
 				</div>
 			</div>
-			{#if !deck?.listening_to_channel_id && !deck?.auto_radio}
+			{#if !followsClock(deck)}
 				<SpeedControl {deckId} {provider} />
 			{/if}
 			<menu class="deck-transport">
-				{#if !deck?.listening_to_channel_id && !deck?.auto_radio}
+				{#if !followsClock(deck)}
 					<button
 						onclick={() => previous(deckId, 'user_prev')}
 						aria-label={m.player_compact_prev()}

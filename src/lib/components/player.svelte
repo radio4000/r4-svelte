@@ -11,8 +11,6 @@
 		toggleDeckCompact,
 		getUserInitiatedPlay,
 		setUserInitiatedPlay,
-		resyncAutoRadio,
-		leaveAutoRadio,
 		rejoinAutoRadio,
 		recordSeekPosition,
 		toggleShuffle
@@ -22,7 +20,8 @@
 	import {getActiveQueue, canPlay, canPrev, canNext} from '#lib/player/queue.js'
 	import {sortedListeningDeckIds, sortedDeckIds, isGroupControlDeck} from '#lib/deck.js'
 	import {playbackState, toAutoTracks, AUTO_RADIO_SYNC_GRACE_MS} from '#lib/player/auto-radio.js'
-	import {getBroadcastingChannelId, notifyBroadcastState} from '#lib/broadcast.js'
+	import {resyncAutoRadio, leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import {calculateSeekTime, DRIFT_TOLERANCE_SECONDS} from '#lib/broadcast-utils.js'
 	import {createDeckDisplay} from '#lib/player/deck-display.svelte.js'
 	import {createMediaSession} from '#lib/player/media-session.svelte.js'
@@ -159,7 +158,6 @@
 	let didPlay = $state(false)
 	let userHasPlayed = $state(false)
 	const isListeningToBroadcast = $derived(Boolean(deck?.listening_to_channel_id))
-	const isSyncedListeningMode = $derived(Boolean(isListeningToBroadcast || deck?.auto_radio))
 	let showDeckActions = $derived(!isListeningToBroadcast || isListeningGroupControlDeck)
 
 	const listenSlug = $derived(display.listenSlug)
@@ -326,8 +324,6 @@
 		// Don't persist muted=true when it's a side-effect of volume reaching 0
 		if (volume > 0 || !muted) deck.muted = muted
 		log.log('volumeChange', {volume, muted})
-		const broadcastingChannelId = getBroadcastingChannelId()
-		if (broadcastingChannelId) notifyBroadcastState(broadcastingChannelId)
 	}
 
 	function handleSeeked() {
@@ -675,16 +671,16 @@
 					canEdit={Boolean(channel && canEditChannel(channel.id))}
 					menuValign="top"
 					menuAlign="end"
-					onLocate={isSyncedListeningMode ? undefined : scrollToActive}
-					disableDoubleClickPlay={isSyncedListeningMode}
-					linkTitleToTrack={isSyncedListeningMode}
+					onLocate={followsClock(deck) ? undefined : scrollToActive}
+					disableDoubleClickPlay={followsClock(deck)}
+					linkTitleToTrack={followsClock(deck)}
 				/>
 			{/if}
 		</footer>
 
 		{#if !isListeningToBroadcast || deck?.auto_radio}
 			<menu class="controls">
-				{#if !isListeningToBroadcast && !deck?.auto_radio}
+				{#if !followsClock(deck)}
 					{@render btnPrev()}
 					{@render btnPlay()}
 					{@render btnNext()}

@@ -12,7 +12,7 @@ import {
 	channelViewFromUrl,
 	parseTagsParam
 } from './views'
-import {processViewTracks, resolveViewStrategy} from './views.svelte'
+import {inIdOrder, processViewTracks, resolveViewStrategy} from './views.svelte'
 import type {View} from './views'
 import type {Track} from './types'
 
@@ -757,5 +757,18 @@ describe('parseTagsParam', () => {
 	})
 	test('null gives empty array', () => {
 		expect(parseTagsParam(null)).toEqual([])
+	})
+})
+
+describe('inIdOrder', () => {
+	const row = (id: string, title = id) => ({id, title}) as Track
+	test('keeps the server order, takes the current row, falls back, skips the rest', () => {
+		const rows = [row('b', 'B edited'), row('a')]
+		const fallback = (id: string) => (id === 'c' ? row('c') : undefined)
+		expect(inIdOrder(rows, ['a', 'c', 'b', 'gone'], fallback).map((t) => t.title)).toEqual([
+			'a',
+			'c',
+			'B edited'
+		])
 	})
 })

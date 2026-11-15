@@ -1,19 +1,16 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: matches @tanstack/svelte-db signature which uses `any`
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Copy of @tanstack/svelte-db useLiveQuery (1.0.0-rc.1.1), kept close to upstream so it diffs cleanly.
+// Copy of @tanstack/svelte-db useLiveQuery (1.0.0-rc.1.5), kept close to upstream so it diffs cleanly.
 // Our changes:
 //
 // - rows live in one $state.raw snapshot instead of deep $state + a SvelteMap patched per change.
-//   Deep state re-proxies every row on each sync, so one delete in a 2.6k-track channel hands
-//   every TrackCard a "new" track and re-renders them all. `state` is read lazily off the snapshot.
-// - observer mode is wholesale, matching our snapshot reads. Granular mode requests
-//   an unfiltered initial snapshot from direct on-demand collections.
-// - previous observers stay subscribed until their replacement is ready, so releasing
-//   old page rows cannot force an in-flight ordered query to reload its whole source.
+//   Deep state hands every TrackCard a "new" track on each sync. `state` is read lazily off the snapshot.
+// - observer mode is wholesale. Granular mode asks a direct on-demand collection for an unfiltered load.
+// - when the query changes (not just its window), the previous observer stays subscribed until the
+//   new one is ready; disposing it at once releases rows the new query is still fetching.
 // - every write in the observer callback is untracked. The callback can fire during $derived
 //   evaluation (invalidateQueries → collection update → graph flush → emit), where a bare $state
-//   write throws state_unsafe_mutation. Upstream only untracks the row writes, not `status`.
-// - the subscribing $effect tracks only `resolved` (see the comment there).
+//   write throws state_unsafe_mutation.
 // - the initial snapshot ignores DbProvider `hydrating`: upstream reads it via `useDbContext`,
 //   which svelte-db doesn't export. We use no DbProvider, so the server snapshot is SSR-only.
 // - `livequery:*` perf spans (#lib/perf.js)
@@ -22,6 +19,7 @@ import {
 	UnhashableQueryIRError,
 	createLiveQueryObserver,
 	createLiveQuerySourceIdClaims,
+	deepEquals,
 	getLiveQueryHash,
 	getPublicCollection,
 	getStableValueHash,
@@ -101,8 +99,11 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 	const contextDbClient = useOptionalDbClient()
 	// Source Collection IDs this hook's client-backed queries read, kept until it unmounts.
 	const sourceIdClaims = createLiveQuerySourceIdClaims()
+	// A limit/offset change keeps the previous Collection and moves its window.
+	let previous: any
 
 	const resolved = $derived.by(() => {
+		let commitWindow: (() => void) | undefined
 		// First check if the original parameter might be a getter
 		// by seeing if toValue returns something different than the original
 		let unwrappedParam = configOrQueryOrCollection
@@ -132,12 +133,14 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 			if (unwrappedParam.status === `idle`) {
 				unwrappedParam.startSyncImmediate()
 			}
-			return {
+			previous = {
 				collection: unwrappedParam,
 				client: dbClient,
 				queryHash: getStableValueHash([`collection`, unwrappedParam.id], `queryKey`),
-				resumeDeferredCollections: () => {}
+				resumeDeferredCollections: () => {},
+				move: undefined
 			}
+			return previous
 		}
 
 		// Reference deps to make computed reactive to them
@@ -146,9 +149,17 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		const deferredCollections = new Set<any>()
 		// A query rejected anywhere after preparation releases the sync starts it deferred.
 		try {
-			const preparedValue = prepareLiveQueryValue(unwrappedParam, dbClient, deferredCollections)
 			const configuredQueryKey = unwrappedParam?.queryKey
 			const queryKey = configuredQueryKey ? toValue(configuredQueryKey) : undefined
+			if (
+				dbClient &&
+				queryKey?.length &&
+				previous?.collection &&
+				previous.client === dbClient &&
+				deepEquals(previous.queryKey, queryKey)
+			)
+				return previous
+			const preparedValue = prepareLiveQueryValue(unwrappedParam, dbClient, deferredCollections)
 			// A client-backed query without queryKey needs a stable IR identity.
 			const derivedHash =
 				dbClient && !queryKey?.length
@@ -181,7 +192,13 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 				// Hydration keys the live-query Collection by identity, so it never pools.
 				collection = resolveLiveQueryValue(preparedValue, {
 					gcTime: DEFAULT_GC_TIME_MS,
-					pool: dbClient ? false : undefined
+					pool: dbClient ? false : undefined,
+					previousCollection:
+						previous?.ownsCollection && previous.client === dbClient ? previous.collection : null,
+					windowOwner: sourceIdClaims,
+					onWindowChange: (move: () => void) => {
+						commitWindow = move
+					}
 				})
 			}
 
@@ -191,8 +208,11 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 					? releaseDeferredOnReclaim(collection, deferredCollections)
 					: undefined
 
-			return {
+			previous = {
 				collection,
+				queryKey: queryKey && [...queryKey],
+				ownsCollection: !isCollection(preparedValue),
+				move: commitWindow,
 				client: dbClient,
 				queryHash,
 				resumeDeferredCollections: () => {
@@ -200,6 +220,7 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 					resumeDeferredLiveQueryCollections(deferredCollections)
 				}
 			}
+			return previous
 		} catch (error) {
 			return rejectLiveQueryInput(deferredCollections, error)
 		}
@@ -262,15 +283,27 @@ export function useLiveQuery(configOrQueryOrCollection: any, deps: Array<() => u
 		}
 	}
 
+	// Outside the derived, as upstream does
+	$effect.pre(() => {
+		const next = resolved
+		untrack(() => next.move?.())
+	})
+
+	const inputOf = (next: typeof resolved) => (next.client ? next : next.collection)
+	// A window move changes `resolved` but not this
+	const observerInput = $derived(inputOf(resolved))
+
 	// Watch for collection changes and subscribe to updates
 	$effect(() => {
-		const nextResolved = resolved
-		// Resuming a collection can read app state; only `resolved` may rerun this effect.
-		return untrack(() => subscribeTo(nextResolved))
+		void observerInput
+		// Resuming a collection can read app state; only `observerInput` may rerun this effect.
+		return untrack(() => subscribeTo(resolved))
 	})
 
 	function subscribeTo(nextResolved: typeof resolved) {
-		if (nextResolved !== currentResolved) {
+		if (inputOf(nextResolved) === inputOf(currentResolved)) {
+			currentResolved = nextResolved
+		} else {
 			if (!subscriptions.has(currentObserver)) currentObserver.dispose()
 			currentResolved = nextResolved
 			currentObserver = observe(nextResolved)

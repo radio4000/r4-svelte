@@ -8,13 +8,12 @@
 	import {queryView} from '#lib/views.svelte.js'
 	import {appState, createDefaultDeck} from '#lib/app-state.svelte.js'
 	import {loadDeckView} from '#lib/api.js'
-	import {ensureTracksLoaded} from '#lib/collections/tracks.js'
 	import * as m from '#lib/paraglide/messages.js'
 
 	/*
 		This page basically takes a View from the ?q url param,
 		turns it into a valid Deck,
-		runs ensureTracksLoaded -> setPlaylist on the deck
+		loads each view's tracks (queryView) -> setPlaylist on the deck
 
 		(and hides the main app layout)
 */
@@ -85,13 +84,6 @@
 			} satisfies View
 		}))
 	)
-
-	$effect(() => {
-		for (const {view} of deckViews) {
-			const slugs = view.sources.flatMap((s) => s.channels ?? [])
-			for (const slug of slugs) ensureTracksLoaded(slug)
-		}
-	})
 
 	const viewQueries = $derived(
 		deckViews.map(({deckId, view}) => ({deckId, view, query: queryView(() => view)}))

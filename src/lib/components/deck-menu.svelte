@@ -2,14 +2,10 @@
 	import {goto} from '$app/navigation'
 	import {resolve} from '$app/paths'
 	import {appState, removeDeck} from '#lib/app-state.svelte.js'
-	import {
-		toggleVideo,
-		toggleQueuePanel,
-		clearUserInitiatedPlay,
-		leaveAutoRadio,
-		rejoinAutoRadio
-	} from '#lib/api.js'
-	import {getBroadcastingChannelId, notifyBroadcastState, leaveBroadcast} from '#lib/broadcast.js'
+	import {toggleVideo, toggleQueuePanel, clearUserInitiatedPlay, rejoinAutoRadio} from '#lib/api.js'
+	import {leaveAutoRadio} from '#lib/player/auto-radio-actions.js'
+	import {leaveBroadcast} from '#lib/broadcast-teardown.js'
+	import {followsClock} from '#lib/player/deck-mode.js'
 	import {isGroupControlDeck, sortedListeningDeckIds} from '#lib/deck.js'
 	import {trackAddSearchParams} from '#lib/track-add.js'
 	import Icon from '#lib/components/icon.svelte'
@@ -69,14 +65,8 @@
 	}
 
 	function closeDeck() {
-		const bchId = getBroadcastingChannelId()
 		clearUserInitiatedPlay(deckId)
 		removeDeck(deckId)
-		if (bchId) notifyBroadcastState(bchId)
-	}
-
-	function leaveBroadcastDecks() {
-		listeningDeckIds.forEach((id) => leaveBroadcast(id))
 	}
 
 	function shareTrack() {
@@ -141,7 +131,7 @@
 			<Icon icon="tv" />
 			{deck?.hide_video_player ? m.player_hidden() : m.player_visible()}
 		</button>
-		{#if !isListeningToBroadcast && !deck?.auto_radio}
+		{#if !followsClock(deck)}
 			<button
 				onclick={() => toggleQueuePanel(deckId)}
 				class:active={!deck?.hide_queue_panel}
@@ -201,7 +191,8 @@
 			{m.player_tooltip_close_deck()}
 		</button>
 	{:else if isListeningGroupControlDeck}
-		<button class="close-deck" onclick={leaveBroadcastDecks}>
+		<!-- Leaving closes every deck tuned to the broadcast -->
+		<button class="close-deck" onclick={() => leaveBroadcast(deckId)}>
 			<Icon icon="close" />
 			{m.broadcasts_leave()}
 		</button>
