@@ -44,7 +44,7 @@ The live `player.svelte` copies playback position and duration into `deck.media_
 
 ## Auto-radio and listening
 
-See [auto-radio.md](auto-radio.md#deck-mode).
+See [auto-radio.md](auto-radio.md).
 
 ## Layout
 

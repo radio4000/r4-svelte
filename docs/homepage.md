@@ -44,9 +44,9 @@ The homepage adapts to who is logged in and what they follow.
 
 ### Feed
 
-The feed is not on the homepage. It lives at `/explore/tracks/network`. It is a **reverse-chronological track timeline from followed channels**: what curators you follow have been adding recently. Conceptually a social reading list for music, not a recommendation engine.
+The feed is a **reverse-chronological track timeline from followed channels** — what curators you follow have been adding recently. Conceptually: a social reading list for music, not a recommendation engine.
 
-It shows every track your followed channels added in the last 30 days, grouped by day, whether or not you have visited those channels.
+It lives at `/explore/tracks/network` and shows every track your followed channels added in the last 30 days, grouped by day, whether or not you have visited those channels.
 
 ## Featured channels algorithm
 

@@ -2,8 +2,6 @@
 
 player.svelte (in ../components) is the per-deck playback UI — one instance per deck, keyed by deckId which never changes across its lifetime (hence the `untrack()` around `createDeckDisplay`). Architecture in docs/player.md and docs/decks.md; auto-radio in docs/auto-radio.md; queue math in docs/queue.md.
 
-Ask `modeOf(deck)` (deck-mode.ts) rather than branching on `auto_radio`/`listening_to_channel_id`. Modules it imports must not import it back.
-
 deck-display.svelte.ts is the single source for what a deck shows right now. Don't re-derive its fallback chains ad hoc.
 
 media-session, stall-recovery and audio-keepalive are platform workarounds, not player logic. Each file's header explains the bug it works around; read it before touching them.

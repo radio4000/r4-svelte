@@ -39,10 +39,6 @@ The infinity button appears on:
 - **Tracks page** (`[slug]/tracks/+page.svelte`) — filtered results, view = `{channels: [slug], tags, search}`
 - **Search** (`/search/+page.svelte`) — search results, view passed directly from URL
 
-## Deck mode
-
-To a deck, auto-radio and listening to a broadcast are one thing: it follows a clock, not its queue. Ask `modeOf(deck)` (`player/deck-mode.ts`) instead of branching on the deck's fields.
-
 ## Drift
 
 Drift is computed continuously in `player.svelte` while playing:
@@ -71,7 +67,6 @@ Auto-radio uses these `Deck` fields:
 - `player/auto-radio.ts` — pure functions: `weeklyShuffle`, `playbackState`, `toAutoTracks`, `epochFromTracks`, `hashString`, `AutoRadio` class
 - `player/auto-radio.test.ts` — determinism, viewSeed, epochFromTracks, hashString tests
 - `player/auto-radio-actions.ts` — `joinAutoRadio`, `resyncAutoRadio`, `leaveAutoRadio`, `rejoinAutoRadio`
-- `player/deck-mode.ts` — the deck mode
 - `components/auto-radio-button.svelte` — shared infinity auto button UI across headers/pages/search
 - `components/player.svelte` — computed drift detection
 - `broadcast-utils.js` — `calculateSeekTime` (speed-aware expected position for listeners)

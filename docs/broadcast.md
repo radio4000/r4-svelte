@@ -14,13 +14,11 @@ Broadcast cleanup is handled inside `broadcast.js` liveness monitoring (not UI h
 
 Listeners continuously compare local playback against expected broadcast position.
 
-- To see drift in a test, don't seek the listener: a seek records its own `seeked_at`, which moves the expected position with it. Backdate the listener's `seeked_at` instead.
-
 ## Files
 
 - `src/lib/broadcast.js` — core logic (realtime channels, join, send, liveness)
 - `src/lib/broadcast-teardown.js` — a listener's subscriptions and leaving them
 - `src/lib/broadcast-utils.js` — pure wire-format and sync helpers (tested)
 - `src/lib/collections/broadcasts.js` — collection with realtime subscription
-- `src/routes/broadcast/+page.svelte` — the broadcaster's on-air view: whether your own channel is live. Not a list.
+- `src/routes/broadcast/+page.svelte` — the broadcaster's on-air view: whether your own channel is live.
 - `src/lib/components/broadcast-controls.svelte` — UI
