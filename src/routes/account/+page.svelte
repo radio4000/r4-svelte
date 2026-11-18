@@ -91,6 +91,16 @@
 						<a class="btn" href={resolve('/account/email')}>{m.account_change_email()}</a>
 					</menu>
 				</div>
+				{#if appState.user.app_metadata?.admin === true}
+					<!-- 2FA is for admins only, for now: they need a code to moderate. -->
+					<div>
+						<p>
+							<span>{m.account_2fa()}</span>
+							<small>{m.account_2fa_note()}</small>
+						</p>
+						<a class="btn" href={resolve('/account/2fa')}>{m.account_2fa_manage()}</a>
+					</div>
+				{/if}
 				{#each providers as provider (provider)}
 					{@const identity = getIdentity(provider)}
 					<div>

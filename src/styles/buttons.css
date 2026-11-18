@@ -169,9 +169,17 @@ button.danger:focus-visible,
 	border-color: color-mix(in lab, var(--color-red), black 10%);
 }
 
+/* A disabled danger button looks like any disabled button, not like one ready to delete */
+button.danger:disabled,
+.btn.danger:disabled {
+	background: var(--button-bg);
+	color: var(--gray-8);
+	border-color: var(--color-control-border);
+}
+
 @media (hover: hover) and (pointer: fine) {
-	button.danger:hover,
-	.btn.danger:hover {
+	button.danger:not(:disabled):hover,
+	.btn.danger:not(:disabled):hover {
 		background: color-mix(in lab, var(--color-red), black 10%);
 		border-color: color-mix(in lab, var(--color-red), black 10%);
 	}
